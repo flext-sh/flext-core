@@ -56,454 +56,78 @@ class FlextInfraRefactorEngine:
         self.rules: list[FlextInfraRefactorRule] = []
         self.rule_filters: list[str] = []
 
-    def _default_config_path(self) -> Path:
-        return Path(__file__).parent / "config.yml"
+    @staticmethod
+    def _discover_workspace_projects(workspace_root: Path) -> list[Path]:
+        projects: list[Path] = []
 
-    def set_rule_filters(self, filters: list[str]) -> None:
-        """Set active rule filters used while loading rules."""
-        self.rule_filters = [item.lower() for item in filters]
+        root_has_pyproject = (workspace_root / "pyproject.toml").exists()
+        root_has_makefile = (workspace_root / "Makefile").exists()
+        if root_has_pyproject and root_has_makefile:
+            projects.append(workspace_root)
 
-    def load_config(self) -> r[dict[str, Any]]:
-        """Load YAML configuration for this engine instance."""
-        try:
-            content = self.config_path.read_text(encoding="utf-8")
-            loaded = yaml.safe_load(content)
-            self.config = loaded if loaded is not None else {}
-            output.info(f"Loaded config from {self.config_path}")
-            return r[dict[str, Any]].ok(self.config)
-        except Exception as exc:
-            return r[dict[str, Any]].fail(f"Failed to load config: {exc}")
+        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            if not (entry / "pyproject.toml").exists():
+                continue
+            if not (entry / "Makefile").exists():
+                continue
+            projects.append(entry)
 
-    def load_rules(self) -> r[list[FlextInfraRefactorRule]]:
-        """Load and instantiate enabled rules from rules directory."""
-        try:
-            rules_dir = self.config_path.parent / "rules"
-            loaded_rules: list[FlextInfraRefactorRule] = []
-            unknown_rules: list[str] = []
+        return projects
 
-            for rule_file in sorted(rules_dir.glob("*.yml")):
-                output.info(f"Loading rules from {rule_file.name}")
-                rule_config = yaml.safe_load(rule_file.read_text(encoding="utf-8"))
-                if rule_config is None:
-                    continue
-                rules = rule_config.get("rules", [])
+    @staticmethod
+    def _extract_engine_file_filters(
+        config_value: object,
+    ) -> tuple[list[str], list[str]]:
+        if not isinstance(config_value, dict):
+            return [], []
 
-                for rule_def in rules:
-                    if not rule_def.get("enabled", True):
-                        continue
+        typed_config = cast("dict[str, object]", config_value)
 
-                    rule_validation = self._validate_rule_definition(rule_def)
-                    if rule_validation is not None:
-                        unknown_rules.append(rule_validation)
-                        continue
+        ignore_raw = typed_config.get("ignore_patterns", None)
+        ext_raw = typed_config.get("file_extensions", None)
+        ignore_patterns: list[str] = []
+        if isinstance(ignore_raw, list):
+            ignore_patterns.extend(
+                item
+                for item in cast("list[object]", ignore_raw)
+                if isinstance(item, str)
+            )
 
-                    rule = self._build_rule(rule_def)
-                    if rule is None:
-                        unknown_rules.append(str(rule_def.get("id", "unknown")))
-                        continue
+        extensions: list[str] = []
+        if isinstance(ext_raw, list):
+            extensions.extend(
+                item for item in cast("list[object]", ext_raw) if isinstance(item, str)
+            )
+        return ignore_patterns, extensions
 
-                    if self.rule_filters:
-                        if any(rule.matches_filter(item) for item in self.rule_filters):
-                            loaded_rules.append(rule)
-                    else:
-                        loaded_rules.append(rule)
+    @staticmethod
+    def _extract_project_scan_dirs(config_value: object) -> list[str]:
+        if not isinstance(config_value, dict):
+            return ["src", "tests", "scripts", "examples"]
 
-            if unknown_rules:
-                unknown = ", ".join(sorted(unknown_rules))
-                return r[list[FlextInfraRefactorRule]].fail(
-                    f"Unknown rule mapping for: {unknown}"
-                )
+        typed_config = cast("dict[str, object]", config_value)
+        scan_dirs_raw = typed_config.get("project_scan_dirs", None)
+        if not isinstance(scan_dirs_raw, list):
+            return ["src", "tests", "scripts", "examples"]
 
-            self.rules = loaded_rules
-            output.info(f"Loaded {len(self.rules)} rules")
-            if self.rule_filters:
-                output.info(f"Active filters: {', '.join(self.rule_filters)}")
-            return r[list[FlextInfraRefactorRule]].ok(loaded_rules)
-        except Exception as exc:
-            return r[list[FlextInfraRefactorRule]].fail(f"Failed to load rules: {exc}")
-
-    def _build_rule(
-        self,
-        rule_def: Mapping[str, Any],
-    ) -> FlextInfraRefactorRule | None:
-        rule_id = str(rule_def.get("id", "unknown"))
-        fix_action = (
-            str(rule_def.get("fix_action", rule_def.get("action", ""))).strip().lower()
-        )
-        check = str(rule_def.get("check", "")).strip().lower()
-
-        if (
-            fix_action in c.Infra.Refactor.FUTURE_FIX_ACTIONS
-            or check in c.Infra.Refactor.FUTURE_CHECKS
-        ):
-            return FlextInfraRefactorEnsureFutureAnnotationsRule(rule_def)
-        if fix_action in c.Infra.Refactor.LEGACY_FIX_ACTIONS:
-            return FlextInfraRefactorLegacyRemovalRule(rule_def)
-        if fix_action in c.Infra.Refactor.IMPORT_FIX_ACTIONS:
-            return FlextInfraRefactorImportModernizerRule(rule_def)
-        if fix_action in c.Infra.Refactor.CLASS_FIX_ACTIONS:
-            return FlextInfraRefactorClassReconstructorRule(rule_def)
-        if fix_action in c.Infra.Refactor.MRO_FIX_ACTIONS:
-            return FlextInfraRefactorMRORedundancyChecker(rule_def)
-        if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
-            if fix_action == "propagate_signature_migrations":
-                return FlextInfraRefactorSignaturePropagationRule(rule_def)
-            return FlextInfraRefactorSymbolPropagationRule(rule_def)
-        if fix_action in c.Infra.Refactor.PATTERN_FIX_ACTIONS:
-            return FlextInfraRefactorPatternCorrectionsRule(rule_def)
-
-        rule_id_lower = rule_id.lower()
-        if "ensure-future" in rule_id_lower or "future-annotations" in rule_id_lower:
-            return FlextInfraRefactorEnsureFutureAnnotationsRule(rule_def)
-        if any(
-            key in rule_id_lower
-            for key in ["legacy", "alias", "deprecated", "wrapper", "bypass"]
-        ):
-            return FlextInfraRefactorLegacyRemovalRule(rule_def)
-        if any(key in rule_id_lower for key in ["import", "modernize"]):
-            return FlextInfraRefactorImportModernizerRule(rule_def)
-        if any(key in rule_id_lower for key in ["class", "reorder", "method"]):
-            return FlextInfraRefactorClassReconstructorRule(rule_def)
-        if "mro" in rule_id_lower:
-            return FlextInfraRefactorMRORedundancyChecker(rule_def)
-        if any(
-            key in rule_id_lower for key in ["propagate", "symbol-rename", "rename"]
-        ):
-            if "signature" in rule_id_lower:
-                return FlextInfraRefactorSignaturePropagationRule(rule_def)
-            return FlextInfraRefactorSymbolPropagationRule(rule_def)
-        if any(
-            key in rule_id_lower
-            for key in ["redundant-cast", "dict-to-mapping", "container-invariance"]
-        ):
-            return FlextInfraRefactorPatternCorrectionsRule(rule_def)
-        return None
-
-    def _validate_rule_definition(self, rule_def: Mapping[str, Any]) -> str | None:
-        """Return validation error for malformed declarative rules."""
-        rule_id = str(rule_def.get("id", "unknown"))
-        fix_action = str(rule_def.get("fix_action", "")).strip().lower()
-        if not fix_action:
-            return None
-
-        if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
-            if fix_action == "propagate_symbol_renames" and not isinstance(
-                rule_def.get("import_symbol_renames"), dict
-            ):
-                return f"{rule_id}: import_symbol_renames must be a mapping"
-            if fix_action == "propagate_signature_migrations":
-                migrations = rule_def.get("signature_migrations")
-                if not isinstance(migrations, list) or not migrations:
-                    return f"{rule_id}: signature_migrations must be a non-empty list"
-
-        if fix_action == "remove_redundant_casts":
-            targets = rule_def.get("redundant_type_targets")
-            if not isinstance(targets, list) or not targets:
-                return f"{rule_id}: redundant_type_targets must be a non-empty list"
-
-        return None
-
-    def list_rules(self) -> list[dict[str, Any]]:
-        """Return loaded rules metadata for listing."""
-        return [
-            {
-                "id": rule.rule_id,
-                "name": rule.name,
-                "description": rule.description,
-                "enabled": rule.enabled,
-                "severity": rule.severity,
-            }
-            for rule in self.rules
+        scan_dirs = [
+            item.strip()
+            for item in cast("list[object]", scan_dirs_raw)
+            if isinstance(item, str) and item.strip()
         ]
-
-    def refactor_file(
-        self,
-        file_path: Path,
-        *,
-        dry_run: bool = False,
-    ) -> FlextInfraRefactorResult:
-        """Refactor one file with currently loaded rules."""
-        try:
-            if file_path.suffix != ".py":
-                return FlextInfraRefactorResult(
-                    file_path=file_path,
-                    success=True,
-                    modified=False,
-                    changes=["Skipped non-Python file"],
-                    refactored_code=None,
-                )
-            source = file_path.read_text(encoding="utf-8")
-            tree = cst.parse_module(source)
-            all_changes: list[str] = []
-
-            for rule in self.rules:
-                if rule.enabled:
-                    tree, changes = rule.apply(tree, file_path)
-                    all_changes.extend(changes)
-
-            result_code = tree.code
-            modified = result_code != source
-            if not dry_run and modified:
-                file_path.write_text(result_code, encoding="utf-8")
-
-            return FlextInfraRefactorResult(
-                file_path=file_path,
-                success=True,
-                modified=modified,
-                changes=all_changes,
-                refactored_code=result_code,
-            )
-        except Exception as exc:
-            return FlextInfraRefactorResult(
-                file_path=file_path,
-                success=False,
-                modified=False,
-                error=str(exc),
-                changes=[],
-                refactored_code=None,
-            )
-
-    def refactor_files(
-        self,
-        file_paths: list[Path],
-        *,
-        dry_run: bool = False,
-    ) -> list[FlextInfraRefactorResult]:
-        """Refactor many files and collect individual results."""
-        results: list[FlextInfraRefactorResult] = []
-        for file_path in file_paths:
-            if file_path.suffix != ".py":
-                output.info(f"Skipped non-Python file: {file_path.name}")
-                results.append(
-                    FlextInfraRefactorResult(
-                        file_path=file_path,
-                        success=True,
-                        modified=False,
-                        changes=["Skipped non-Python file"],
-                        refactored_code=None,
-                    )
-                )
-                continue
-            result = self.refactor_file(file_path, dry_run=dry_run)
-            results.append(result)
-            if result.success:
-                if result.modified:
-                    output.info(
-                        f"{'[DRY-RUN] ' if dry_run else ''}Modified: {file_path.name}"
-                    )
-                    for change in result.changes:
-                        output.info(f"  - {change}")
-                else:
-                    output.info(f"Unchanged: {file_path.name}")
-            else:
-                output.error(f"Failed: {file_path.name} - {result.error}")
-        return results
-
-    def refactor_project(
-        self,
-        project_path: Path,
-        *,
-        dry_run: bool = False,
-        pattern: str = "*.py",
-    ) -> list[FlextInfraRefactorResult]:
-        """Refactor files under configured project directories matching the pattern."""
-        files = self.collect_project_files(project_path, pattern=pattern)
-        output.info(f"Found {len(files)} files to process")
-        return self.refactor_files(files, dry_run=dry_run)
-
-    def collect_project_files(
-        self,
-        project_path: Path,
-        *,
-        pattern: str = "*.py",
-    ) -> list[Path]:
-        """Collect project files that match current engine scope filters."""
-        engine_config_obj = self.config.get("refactor_engine")
-        scan_dirs = self._extract_project_scan_dirs(engine_config_obj)
-        candidate_roots = [project_path / rel_dir for rel_dir in scan_dirs]
-        existing_roots = [root for root in candidate_roots if root.exists()]
-
-        if not existing_roots:
-            output.error(
-                f"No configured scan directories in {project_path}: {', '.join(scan_dirs)}"
-            )
-            return []
-
-        ignore_items, extension_items = self._extract_engine_file_filters(
-            engine_config_obj
-        )
-        ignore_patterns = {str(item) for item in ignore_items}
-        allowed_extensions = {str(item) for item in extension_items}
-
-        files: list[Path] = []
-        for root_dir in existing_roots:
-            for py_file in root_dir.rglob(pattern):
-                relative_path = py_file.relative_to(project_path)
-                relative_path_str = str(relative_path)
-
-                if allowed_extensions and py_file.suffix not in allowed_extensions:
-                    continue
-                if py_file.name in ignore_patterns:
-                    continue
-                if any(part in ignore_patterns for part in relative_path.parts):
-                    continue
-                if any(
-                    fnmatch.fnmatch(relative_path_str, ignore_pattern)
-                    for ignore_pattern in ignore_patterns
-                ):
-                    continue
-                files.append(py_file)
-        return files
-
-    def refactor_workspace(
-        self,
-        workspace_root: Path,
-        *,
-        dry_run: bool = False,
-        pattern: str = "*.py",
-    ) -> list[FlextInfraRefactorResult]:
-        """Refactor all discoverable workspace projects with one command."""
-        root = workspace_root.resolve()
-        if not root.exists() or not root.is_dir():
-            output.error(f"Invalid workspace root: {workspace_root}")
-            return []
-
-        project_paths = self._discover_workspace_projects(root)
-        if not project_paths:
-            output.error(
-                f"No projects discovered under workspace root: {workspace_root}"
-            )
-            return []
-
-        output.info(f"Discovered {len(project_paths)} projects in workspace")
-        results: list[FlextInfraRefactorResult] = []
-        for project in project_paths:
-            output.header(f"Project: {project}")
-            results.extend(
-                self.refactor_project(project, dry_run=dry_run, pattern=pattern)
-            )
-        return results
-
-    def collect_workspace_files(
-        self,
-        workspace_root: Path,
-        *,
-        pattern: str = "*.py",
-    ) -> list[Path]:
-        """Collect all candidate files under workspace projects."""
-        root = workspace_root.resolve()
-        project_paths = self._discover_workspace_projects(root)
-        all_files: list[Path] = []
-        for project in project_paths:
-            all_files.extend(self.collect_project_files(project, pattern=pattern))
-        return all_files
+        if not scan_dirs:
+            return ["src", "tests", "scripts", "examples"]
+        return scan_dirs
 
     @staticmethod
-    def print_violation_summary(analysis: Mapping[str, object]) -> None:
-        """Print aggregate violation counts and hottest files."""
-
-        def _to_int(value: object) -> int:
-            if isinstance(value, int):
-                return value
-            if isinstance(value, str) and value.isdigit():
-                return int(value)
-            return 0
-
-        output.header("Violation Analysis")
-        totals_obj = analysis.get("totals", {})
-        top_files_obj = analysis.get("top_files", [])
-        files_scanned = _to_int(analysis.get("files_scanned", 0))
-
-        output.info(f"Files scanned: {files_scanned}")
-        if not isinstance(totals_obj, dict) or not totals_obj:
-            output.info("No tracked violations found.")
-            return
-
-        typed_totals = cast("dict[object, object]", totals_obj)
-        totals_ranked: list[tuple[str, int]] = []
-        for raw_name, raw_count in typed_totals.items():
-            if not isinstance(raw_name, str):
-                continue
-            totals_ranked.append((raw_name, _to_int(raw_count)))
-        totals_ranked.sort(key=itemgetter(1), reverse=True)
-
-        output.info("Top pattern counts:")
-        for name, count in totals_ranked:
-            output.info(f"  - {name}: {count}")
-
-        if not isinstance(top_files_obj, list) or not top_files_obj:
-            return
-        output.info("Hottest files:")
-        for entry in cast("list[object]", top_files_obj)[:10]:
-            if not isinstance(entry, dict):
-                continue
-            typed_entry = cast("dict[object, object]", entry)
-            file_name = str(typed_entry.get("file", ""))
-            total_count = _to_int(typed_entry.get("total", 0))
-            output.info(f"  - {file_name}: {total_count}")
-
-    @staticmethod
-    def print_rules_table(rules: list[dict[str, Any]]) -> None:
-        """Print rule table in terminal-friendly format."""
-        output.header("Available Rules")
-        if not rules:
-            output.info("No rules loaded.")
-            return
-
-        id_width = max(len(item["id"]) for item in rules) + 2
-        name_width = max(len(item["name"]) for item in rules) + 2
-        header = (
-            f"{'ID':<{id_width}} {'Name':<{name_width}} {'Severity':<10} {'Status'}"
-        )
-        output.info(header)
-        output.info("-" * len(header))
-        for rule in rules:
-            status = "✓" if rule["enabled"] else "✗"
-            line = f"{rule['id']:<{id_width}} {rule['name']:<{name_width}} {rule['severity']:<10} {status}"
-            output.info(line)
-            if rule["description"]:
-                output.info(f"  - {rule['description']}")
-
-    @staticmethod
-    def print_diff(original: str, refactored: str, file_path: Path) -> None:
-        """Print unified diff between original and refactored file contents."""
-        output.header(f"Diff for {file_path.name}")
-        diff = difflib.unified_diff(
-            original.splitlines(keepends=True),
-            refactored.splitlines(keepends=True),
-            fromfile=f"{file_path.name} (original)",
-            tofile=f"{file_path.name} (refactored)",
-            lineterm="",
-        )
-        diff_text = "".join(diff)
-        if diff_text:
-            output.info(diff_text)
-        else:
-            output.info("No changes")
-
-    @staticmethod
-    def print_summary(
-        results: list[FlextInfraRefactorResult],
-        *,
-        dry_run: bool,
-    ) -> None:
-        """Print refactor execution summary."""
-        modified = sum(1 for item in results if item.modified)
-        failed = sum(1 for item in results if not item.success)
-        unchanged = sum(1 for item in results if item.success and not item.modified)
-
-        output.header("Summary")
-        output.info(f"Total files: {len(results)}")
-        output.info(f"Modified: {modified}")
-        output.info(f"Unchanged: {unchanged}")
-        output.info(f"Failed: {failed}")
-
-        if dry_run:
-            output.info("[DRY-RUN] No changes applied")
-        elif failed == 0:
-            output.info("All changes applied successfully")
-        else:
-            output.info(f"{failed} files failed")
+    def _project_name_from_path(file_path: Path) -> str:
+        """Infer project name from path using nearest pyproject marker."""
+        for parent in file_path.parents:
+            if (parent / "pyproject.toml").exists() and (parent / "Makefile").exists():
+                return parent.name
+        return "unknown"
 
     @staticmethod
     def build_impact_map(
@@ -575,99 +199,6 @@ class FlextInfraRefactorEngine:
                     })
 
         return impact_map
-
-    @staticmethod
-    def write_impact_map(
-        results: list[FlextInfraRefactorResult],
-        output_path: Path,
-    ) -> bool:
-        """Write impact map file in JSON format."""
-        impact_map = FlextInfraRefactorEngine.build_impact_map(results)
-        try:
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(
-                json.dumps(impact_map, indent=2, ensure_ascii=True) + "\n",
-                encoding="utf-8",
-            )
-            output.info(f"Impact map written: {output_path}")
-            output.info(f"Impact map entries: {len(impact_map)}")
-            return True
-        except OSError as exc:
-            output.error(f"Failed to write impact map {output_path}: {exc}")
-            return False
-
-    @staticmethod
-    def _extract_engine_file_filters(
-        config_value: object,
-    ) -> tuple[list[str], list[str]]:
-        if not isinstance(config_value, dict):
-            return [], []
-
-        typed_config = cast("dict[str, object]", config_value)
-
-        ignore_raw = typed_config.get("ignore_patterns", None)
-        ext_raw = typed_config.get("file_extensions", None)
-        ignore_patterns: list[str] = []
-        if isinstance(ignore_raw, list):
-            ignore_patterns.extend(
-                item
-                for item in cast("list[object]", ignore_raw)
-                if isinstance(item, str)
-            )
-
-        extensions: list[str] = []
-        if isinstance(ext_raw, list):
-            extensions.extend(
-                item for item in cast("list[object]", ext_raw) if isinstance(item, str)
-            )
-        return ignore_patterns, extensions
-
-    @staticmethod
-    def _extract_project_scan_dirs(config_value: object) -> list[str]:
-        if not isinstance(config_value, dict):
-            return ["src", "tests", "scripts", "examples"]
-
-        typed_config = cast("dict[str, object]", config_value)
-        scan_dirs_raw = typed_config.get("project_scan_dirs", None)
-        if not isinstance(scan_dirs_raw, list):
-            return ["src", "tests", "scripts", "examples"]
-
-        scan_dirs = [
-            item.strip()
-            for item in cast("list[object]", scan_dirs_raw)
-            if isinstance(item, str) and item.strip()
-        ]
-        if not scan_dirs:
-            return ["src", "tests", "scripts", "examples"]
-        return scan_dirs
-
-    @staticmethod
-    def _discover_workspace_projects(workspace_root: Path) -> list[Path]:
-        projects: list[Path] = []
-
-        root_has_pyproject = (workspace_root / "pyproject.toml").exists()
-        root_has_makefile = (workspace_root / "Makefile").exists()
-        if root_has_pyproject and root_has_makefile:
-            projects.append(workspace_root)
-
-        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
-            if not entry.is_dir() or entry.name.startswith("."):
-                continue
-            if not (entry / "pyproject.toml").exists():
-                continue
-            if not (entry / "Makefile").exists():
-                continue
-            projects.append(entry)
-
-        return projects
-
-    @staticmethod
-    def _project_name_from_path(file_path: Path) -> str:
-        """Infer project name from path using nearest pyproject marker."""
-        for parent in file_path.parents:
-            if (parent / "pyproject.toml").exists() and (parent / "Makefile").exists():
-                return parent.name
-        return "unknown"
 
     @staticmethod
     def main() -> None:
@@ -790,6 +321,475 @@ class FlextInfraRefactorEngine:
             )
         failed = sum(1 for item in results if not item.success)
         sys.exit(0 if failed == 0 else 1)
+
+    @staticmethod
+    def print_diff(original: str, refactored: str, file_path: Path) -> None:
+        """Print unified diff between original and refactored file contents."""
+        output.header(f"Diff for {file_path.name}")
+        diff = difflib.unified_diff(
+            original.splitlines(keepends=True),
+            refactored.splitlines(keepends=True),
+            fromfile=f"{file_path.name} (original)",
+            tofile=f"{file_path.name} (refactored)",
+            lineterm="",
+        )
+        diff_text = "".join(diff)
+        if diff_text:
+            output.info(diff_text)
+        else:
+            output.info("No changes")
+
+    @staticmethod
+    def print_rules_table(rules: list[dict[str, Any]]) -> None:
+        """Print rule table in terminal-friendly format."""
+        output.header("Available Rules")
+        if not rules:
+            output.info("No rules loaded.")
+            return
+
+        id_width = max(len(item["id"]) for item in rules) + 2
+        name_width = max(len(item["name"]) for item in rules) + 2
+        header = (
+            f"{'ID':<{id_width}} {'Name':<{name_width}} {'Severity':<10} {'Status'}"
+        )
+        output.info(header)
+        output.info("-" * len(header))
+        for rule in rules:
+            status = "✓" if rule["enabled"] else "✗"
+            line = f"{rule['id']:<{id_width}} {rule['name']:<{name_width}} {rule['severity']:<10} {status}"
+            output.info(line)
+            if rule["description"]:
+                output.info(f"  - {rule['description']}")
+
+    @staticmethod
+    def print_summary(
+        results: list[FlextInfraRefactorResult],
+        *,
+        dry_run: bool,
+    ) -> None:
+        """Print refactor execution summary."""
+        modified = sum(1 for item in results if item.modified)
+        failed = sum(1 for item in results if not item.success)
+        unchanged = sum(1 for item in results if item.success and not item.modified)
+
+        output.header("Summary")
+        output.info(f"Total files: {len(results)}")
+        output.info(f"Modified: {modified}")
+        output.info(f"Unchanged: {unchanged}")
+        output.info(f"Failed: {failed}")
+
+        if dry_run:
+            output.info("[DRY-RUN] No changes applied")
+        elif failed == 0:
+            output.info("All changes applied successfully")
+        else:
+            output.info(f"{failed} files failed")
+
+    @staticmethod
+    def print_violation_summary(analysis: Mapping[str, object]) -> None:
+        """Print aggregate violation counts and hottest files."""
+
+        def _to_int(value: object) -> int:
+            if isinstance(value, int):
+                return value
+            if isinstance(value, str) and value.isdigit():
+                return int(value)
+            return 0
+
+        output.header("Violation Analysis")
+        totals_obj = analysis.get("totals", {})
+        top_files_obj = analysis.get("top_files", [])
+        files_scanned = _to_int(analysis.get("files_scanned", 0))
+
+        output.info(f"Files scanned: {files_scanned}")
+        if not isinstance(totals_obj, dict) or not totals_obj:
+            output.info("No tracked violations found.")
+            return
+
+        typed_totals = cast("dict[object, object]", totals_obj)
+        totals_ranked: list[tuple[str, int]] = []
+        for raw_name, raw_count in typed_totals.items():
+            if not isinstance(raw_name, str):
+                continue
+            totals_ranked.append((raw_name, _to_int(raw_count)))
+        totals_ranked.sort(key=itemgetter(1), reverse=True)
+
+        output.info("Top pattern counts:")
+        for name, count in totals_ranked:
+            output.info(f"  - {name}: {count}")
+
+        if not isinstance(top_files_obj, list) or not top_files_obj:
+            return
+        output.info("Hottest files:")
+        for entry in cast("list[object]", top_files_obj)[:10]:
+            if not isinstance(entry, dict):
+                continue
+            typed_entry = cast("dict[object, object]", entry)
+            file_name = str(typed_entry.get("file", ""))
+            total_count = _to_int(typed_entry.get("total", 0))
+            output.info(f"  - {file_name}: {total_count}")
+
+    @staticmethod
+    def write_impact_map(
+        results: list[FlextInfraRefactorResult],
+        output_path: Path,
+    ) -> bool:
+        """Write impact map file in JSON format."""
+        impact_map = FlextInfraRefactorEngine.build_impact_map(results)
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(impact_map, indent=2, ensure_ascii=True) + "\n",
+                encoding="utf-8",
+            )
+            output.info(f"Impact map written: {output_path}")
+            output.info(f"Impact map entries: {len(impact_map)}")
+            return True
+        except OSError as exc:
+            output.error(f"Failed to write impact map {output_path}: {exc}")
+            return False
+
+    def collect_project_files(
+        self,
+        project_path: Path,
+        *,
+        pattern: str = "*.py",
+    ) -> list[Path]:
+        """Collect project files that match current engine scope filters."""
+        engine_config_obj = self.config.get("refactor_engine")
+        scan_dirs = self._extract_project_scan_dirs(engine_config_obj)
+        candidate_roots = [project_path / rel_dir for rel_dir in scan_dirs]
+        existing_roots = [root for root in candidate_roots if root.exists()]
+
+        if not existing_roots:
+            output.error(
+                f"No configured scan directories in {project_path}: {', '.join(scan_dirs)}"
+            )
+            return []
+
+        ignore_items, extension_items = self._extract_engine_file_filters(
+            engine_config_obj
+        )
+        ignore_patterns = {str(item) for item in ignore_items}
+        allowed_extensions = {str(item) for item in extension_items}
+
+        files: list[Path] = []
+        for root_dir in existing_roots:
+            for py_file in root_dir.rglob(pattern):
+                relative_path = py_file.relative_to(project_path)
+                relative_path_str = str(relative_path)
+
+                if allowed_extensions and py_file.suffix not in allowed_extensions:
+                    continue
+                if py_file.name in ignore_patterns:
+                    continue
+                if any(part in ignore_patterns for part in relative_path.parts):
+                    continue
+                if any(
+                    fnmatch.fnmatch(relative_path_str, ignore_pattern)
+                    for ignore_pattern in ignore_patterns
+                ):
+                    continue
+                files.append(py_file)
+        return files
+
+    def collect_workspace_files(
+        self,
+        workspace_root: Path,
+        *,
+        pattern: str = "*.py",
+    ) -> list[Path]:
+        """Collect all candidate files under workspace projects."""
+        root = workspace_root.resolve()
+        project_paths = self._discover_workspace_projects(root)
+        all_files: list[Path] = []
+        for project in project_paths:
+            all_files.extend(self.collect_project_files(project, pattern=pattern))
+        return all_files
+
+    def list_rules(self) -> list[dict[str, Any]]:
+        """Return loaded rules metadata for listing."""
+        return [
+            {
+                "id": rule.rule_id,
+                "name": rule.name,
+                "description": rule.description,
+                "enabled": rule.enabled,
+                "severity": rule.severity,
+            }
+            for rule in self.rules
+        ]
+
+    def load_config(self) -> r[dict[str, Any]]:
+        """Load YAML configuration for this engine instance."""
+        try:
+            content = self.config_path.read_text(encoding="utf-8")
+            loaded = yaml.safe_load(content)
+            self.config = loaded if loaded is not None else {}
+            output.info(f"Loaded config from {self.config_path}")
+            return r[dict[str, Any]].ok(self.config)
+        except Exception as exc:
+            return r[dict[str, Any]].fail(f"Failed to load config: {exc}")
+
+    def load_rules(self) -> r[list[FlextInfraRefactorRule]]:
+        """Load and instantiate enabled rules from rules directory."""
+        try:
+            rules_dir = self.config_path.parent / "rules"
+            loaded_rules: list[FlextInfraRefactorRule] = []
+            unknown_rules: list[str] = []
+
+            for rule_file in sorted(rules_dir.glob("*.yml")):
+                output.info(f"Loading rules from {rule_file.name}")
+                rule_config = yaml.safe_load(rule_file.read_text(encoding="utf-8"))
+                if rule_config is None:
+                    continue
+                rules = rule_config.get("rules", [])
+
+                for rule_def in rules:
+                    if not rule_def.get("enabled", True):
+                        continue
+
+                    rule_validation = self._validate_rule_definition(rule_def)
+                    if rule_validation is not None:
+                        unknown_rules.append(rule_validation)
+                        continue
+
+                    rule = self._build_rule(rule_def)
+                    if rule is None:
+                        unknown_rules.append(str(rule_def.get("id", "unknown")))
+                        continue
+
+                    if self.rule_filters:
+                        if any(rule.matches_filter(item) for item in self.rule_filters):
+                            loaded_rules.append(rule)
+                    else:
+                        loaded_rules.append(rule)
+
+            if unknown_rules:
+                unknown = ", ".join(sorted(unknown_rules))
+                return r[list[FlextInfraRefactorRule]].fail(
+                    f"Unknown rule mapping for: {unknown}"
+                )
+
+            self.rules = loaded_rules
+            output.info(f"Loaded {len(self.rules)} rules")
+            if self.rule_filters:
+                output.info(f"Active filters: {', '.join(self.rule_filters)}")
+            return r[list[FlextInfraRefactorRule]].ok(loaded_rules)
+        except Exception as exc:
+            return r[list[FlextInfraRefactorRule]].fail(f"Failed to load rules: {exc}")
+
+    def refactor_file(
+        self,
+        file_path: Path,
+        *,
+        dry_run: bool = False,
+    ) -> FlextInfraRefactorResult:
+        """Refactor one file with currently loaded rules."""
+        try:
+            if file_path.suffix != ".py":
+                return FlextInfraRefactorResult(
+                    file_path=file_path,
+                    success=True,
+                    modified=False,
+                    changes=["Skipped non-Python file"],
+                    refactored_code=None,
+                )
+            source = file_path.read_text(encoding="utf-8")
+            tree = cst.parse_module(source)
+            all_changes: list[str] = []
+
+            for rule in self.rules:
+                if rule.enabled:
+                    tree, changes = rule.apply(tree, file_path)
+                    all_changes.extend(changes)
+
+            result_code = tree.code
+            modified = result_code != source
+            if not dry_run and modified:
+                file_path.write_text(result_code, encoding="utf-8")
+
+            return FlextInfraRefactorResult(
+                file_path=file_path,
+                success=True,
+                modified=modified,
+                changes=all_changes,
+                refactored_code=result_code,
+            )
+        except Exception as exc:
+            return FlextInfraRefactorResult(
+                file_path=file_path,
+                success=False,
+                modified=False,
+                error=str(exc),
+                changes=[],
+                refactored_code=None,
+            )
+
+    def refactor_files(
+        self,
+        file_paths: list[Path],
+        *,
+        dry_run: bool = False,
+    ) -> list[FlextInfraRefactorResult]:
+        """Refactor many files and collect individual results."""
+        results: list[FlextInfraRefactorResult] = []
+        for file_path in file_paths:
+            if file_path.suffix != ".py":
+                output.info(f"Skipped non-Python file: {file_path.name}")
+                results.append(
+                    FlextInfraRefactorResult(
+                        file_path=file_path,
+                        success=True,
+                        modified=False,
+                        changes=["Skipped non-Python file"],
+                        refactored_code=None,
+                    )
+                )
+                continue
+            result = self.refactor_file(file_path, dry_run=dry_run)
+            results.append(result)
+            if result.success:
+                if result.modified:
+                    output.info(
+                        f"{'[DRY-RUN] ' if dry_run else ''}Modified: {file_path.name}"
+                    )
+                    for change in result.changes:
+                        output.info(f"  - {change}")
+                else:
+                    output.info(f"Unchanged: {file_path.name}")
+            else:
+                output.error(f"Failed: {file_path.name} - {result.error}")
+        return results
+
+    def refactor_project(
+        self,
+        project_path: Path,
+        *,
+        dry_run: bool = False,
+        pattern: str = "*.py",
+    ) -> list[FlextInfraRefactorResult]:
+        """Refactor files under configured project directories matching the pattern."""
+        files = self.collect_project_files(project_path, pattern=pattern)
+        output.info(f"Found {len(files)} files to process")
+        return self.refactor_files(files, dry_run=dry_run)
+
+    def refactor_workspace(
+        self,
+        workspace_root: Path,
+        *,
+        dry_run: bool = False,
+        pattern: str = "*.py",
+    ) -> list[FlextInfraRefactorResult]:
+        """Refactor all discoverable workspace projects with one command."""
+        root = workspace_root.resolve()
+        if not root.exists() or not root.is_dir():
+            output.error(f"Invalid workspace root: {workspace_root}")
+            return []
+
+        project_paths = self._discover_workspace_projects(root)
+        if not project_paths:
+            output.error(
+                f"No projects discovered under workspace root: {workspace_root}"
+            )
+            return []
+
+        output.info(f"Discovered {len(project_paths)} projects in workspace")
+        results: list[FlextInfraRefactorResult] = []
+        for project in project_paths:
+            output.header(f"Project: {project}")
+            results.extend(
+                self.refactor_project(project, dry_run=dry_run, pattern=pattern)
+            )
+        return results
+
+    def set_rule_filters(self, filters: list[str]) -> None:
+        """Set active rule filters used while loading rules."""
+        self.rule_filters = [item.lower() for item in filters]
+
+    def _build_rule(
+        self,
+        rule_def: Mapping[str, Any],
+    ) -> FlextInfraRefactorRule | None:
+        rule_id = str(rule_def.get("id", "unknown"))
+        fix_action = (
+            str(rule_def.get("fix_action", rule_def.get("action", ""))).strip().lower()
+        )
+        check = str(rule_def.get("check", "")).strip().lower()
+
+        if (
+            fix_action in c.Infra.Refactor.FUTURE_FIX_ACTIONS
+            or check in c.Infra.Refactor.FUTURE_CHECKS
+        ):
+            return FlextInfraRefactorEnsureFutureAnnotationsRule(rule_def)
+        if fix_action in c.Infra.Refactor.LEGACY_FIX_ACTIONS:
+            return FlextInfraRefactorLegacyRemovalRule(rule_def)
+        if fix_action in c.Infra.Refactor.IMPORT_FIX_ACTIONS:
+            return FlextInfraRefactorImportModernizerRule(rule_def)
+        if fix_action in c.Infra.Refactor.CLASS_FIX_ACTIONS:
+            return FlextInfraRefactorClassReconstructorRule(rule_def)
+        if fix_action in c.Infra.Refactor.MRO_FIX_ACTIONS:
+            return FlextInfraRefactorMRORedundancyChecker(rule_def)
+        if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
+            if fix_action == "propagate_signature_migrations":
+                return FlextInfraRefactorSignaturePropagationRule(rule_def)
+            return FlextInfraRefactorSymbolPropagationRule(rule_def)
+        if fix_action in c.Infra.Refactor.PATTERN_FIX_ACTIONS:
+            return FlextInfraRefactorPatternCorrectionsRule(rule_def)
+
+        rule_id_lower = rule_id.lower()
+        if "ensure-future" in rule_id_lower or "future-annotations" in rule_id_lower:
+            return FlextInfraRefactorEnsureFutureAnnotationsRule(rule_def)
+        if any(
+            key in rule_id_lower
+            for key in ["legacy", "alias", "deprecated", "wrapper", "bypass"]
+        ):
+            return FlextInfraRefactorLegacyRemovalRule(rule_def)
+        if any(key in rule_id_lower for key in ["import", "modernize"]):
+            return FlextInfraRefactorImportModernizerRule(rule_def)
+        if any(key in rule_id_lower for key in ["class", "reorder", "method"]):
+            return FlextInfraRefactorClassReconstructorRule(rule_def)
+        if "mro" in rule_id_lower:
+            return FlextInfraRefactorMRORedundancyChecker(rule_def)
+        if any(
+            key in rule_id_lower for key in ["propagate", "symbol-rename", "rename"]
+        ):
+            if "signature" in rule_id_lower:
+                return FlextInfraRefactorSignaturePropagationRule(rule_def)
+            return FlextInfraRefactorSymbolPropagationRule(rule_def)
+        if any(
+            key in rule_id_lower
+            for key in ["redundant-cast", "dict-to-mapping", "container-invariance"]
+        ):
+            return FlextInfraRefactorPatternCorrectionsRule(rule_def)
+        return None
+
+    def _default_config_path(self) -> Path:
+        return Path(__file__).parent / "config.yml"
+
+    def _validate_rule_definition(self, rule_def: Mapping[str, Any]) -> str | None:
+        """Return validation error for malformed declarative rules."""
+        rule_id = str(rule_def.get("id", "unknown"))
+        fix_action = str(rule_def.get("fix_action", "")).strip().lower()
+        if not fix_action:
+            return None
+
+        if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
+            if fix_action == "propagate_symbol_renames" and not isinstance(
+                rule_def.get("import_symbol_renames"), dict
+            ):
+                return f"{rule_id}: import_symbol_renames must be a mapping"
+            if fix_action == "propagate_signature_migrations":
+                migrations = rule_def.get("signature_migrations")
+                if not isinstance(migrations, list) or not migrations:
+                    return f"{rule_id}: signature_migrations must be a non-empty list"
+
+        if fix_action == "remove_redundant_casts":
+            targets = rule_def.get("redundant_type_targets")
+            if not isinstance(targets, list) or not targets:
+                return f"{rule_id}: redundant_type_targets must be a non-empty list"
+
+        return None
 
 
 __all__ = ["FlextInfraRefactorEngine"]

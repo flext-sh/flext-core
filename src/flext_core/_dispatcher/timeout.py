@@ -40,27 +40,11 @@ class TimeoutEnforcer:
         self._executor_workers = max(executor_workers, c.Reliability.RETRY_COUNT_MIN)
         self._executor: concurrent.futures.ThreadPoolExecutor | None = None
 
-    def should_use_executor(self) -> bool:
-        """Return ``True`` when a dedicated timeout executor is enabled.
-
-        Returns:
-            bool: True if timeout executor is enabled, False otherwise.
-
-        """
-        return self._use_timeout_executor
-
-    def reset_executor(self) -> None:
-        """Reset executor after shutdown to allow lazy re-creation."""
-        self._executor = None
-
-    def resolve_workers(self) -> int:
-        """Return the configured worker count for the dispatcher executor.
-
-        Returns:
-            int: Number of worker threads configured for the executor.
-
-        """
-        return self._executor_workers
+    def cleanup(self) -> None:
+        """Release executor resources used by dispatcher timeout handling."""
+        if self._executor is not None:
+            self._executor.shutdown(wait=False, cancel_futures=True)
+            self._executor = None
 
     def ensure_executor(self) -> concurrent.futures.ThreadPoolExecutor:
         """Create the shared executor on demand with lazy initialization.
@@ -88,11 +72,27 @@ class TimeoutEnforcer:
             "executor_workers": self._executor_workers if self._executor else 0,
         }
 
-    def cleanup(self) -> None:
-        """Release executor resources used by dispatcher timeout handling."""
-        if self._executor is not None:
-            self._executor.shutdown(wait=False, cancel_futures=True)
-            self._executor = None
+    def reset_executor(self) -> None:
+        """Reset executor after shutdown to allow lazy re-creation."""
+        self._executor = None
+
+    def resolve_workers(self) -> int:
+        """Return the configured worker count for the dispatcher executor.
+
+        Returns:
+            int: Number of worker threads configured for the executor.
+
+        """
+        return self._executor_workers
+
+    def should_use_executor(self) -> bool:
+        """Return ``True`` when a dedicated timeout executor is enabled.
+
+        Returns:
+            bool: True if timeout executor is enabled, False otherwise.
+
+        """
+        return self._use_timeout_executor
 
 
 __all__ = ["TimeoutEnforcer"]

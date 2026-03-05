@@ -22,38 +22,149 @@ class Ex08FlextContainer(Examples):
     _registered_service_name: str
     _registered_service_value: int
 
-    def _exercise_singleton_and_creation(self) -> FlextContainer:
-        """Exercise get_global/create/builder creation and singleton semantics."""
-        self.section("singleton_and_creation")
+    @override
+    def exercise(self) -> None:
+        """Run all sections and record deterministic golden output."""
+        root = self._exercise_singleton_and_creation()
+        self._exercise_registration_and_resolution(root)
+        self._exercise_fluent_and_config(root)
+        scoped_full = self._exercise_wiring_and_scoped(root)
+        self._exercise_internal_and_cleanup(scoped_full, root)
 
+    def _exercise_fluent_and_config(self, container: FlextContainer) -> None:
+        """Exercise fluent registration and configuration APIs."""
+        self.section("fluent_and_config")
+
+        fluent_service_name = f"svc.{self.rand_str(6)}"
+        fluent_factory_name = f"svc.{self.rand_str(6)}"
+        fluent_resource_name = f"svc.{self.rand_str(6)}"
+        fluent_service_value = self.rand_str(10)
+        fluent_factory_value = self.rand_str(10)
+        fluent_resource_value = self.rand_str(10)
+        max_factories = self.rand_int(1, 1000)
+
+        with_service_result = container.register(
+            fluent_service_name, fluent_service_value
+        )
+        with_factory_result = container.register(
+            fluent_factory_name, lambda: fluent_factory_value, kind="factory"
+        )
+        with_resource_result = container.register(
+            fluent_resource_name, lambda: fluent_resource_value, kind="resource"
+        )
+        with_config_result = container.configure({"max_factories": max_factories})
+
+        self.check("with_service.returns_self", with_service_result is container)
+        self.check("with_factory.returns_self", with_factory_result is container)
+        self.check("with_resource.returns_self", with_resource_result is container)
+        self.check("with_config.returns_self", with_config_result is container)
+
+        configured_max_services = self.rand_int(1, 1000)
+        configured_factory_caching = self.rand_bool()
+        container.configure({
+            "max_services": configured_max_services,
+            "enable_factory_caching": configured_factory_caching,
+        })
+        config_map = container.get_config()
+        max_services = config_map["max_services"]
+        enable_factory_caching = config_map["enable_factory_caching"]
+
+        max_services_num = max_services if isinstance(max_services, int) else -1
+        factory_cache_flag = (
+            enable_factory_caching
+            if isinstance(enable_factory_caching, bool)
+            else False
+        )
+
+        self.check(
+            "configure.get_config.max_services_matches",
+            max_services_num == configured_max_services,
+        )
+        self.check(
+            "configure.get_config.enable_factory_caching_matches",
+            factory_cache_flag == configured_factory_caching,
+        )
+        self.check(
+            "with_service.get.value_matches",
+            container.get(fluent_service_name, type_cls=str).unwrap_or("")
+            == fluent_service_value,
+        )
+        self.check(
+            "with_factory.get.value_matches",
+            container.get(fluent_factory_name, type_cls=str).unwrap_or("")
+            == fluent_factory_value,
+        )
+        self.check(
+            "with_resource.get.value_matches",
+            container.get(fluent_resource_name, type_cls=str).unwrap_or("")
+            == fluent_resource_value,
+        )
+
+    def _exercise_internal_and_cleanup(
+        self, container: FlextContainer, root: FlextContainer
+    ) -> None:
+        """Exercise lifecycle helpers and cleanup APIs."""
+        self.section("internal_and_cleanup")
+
+        container.initialize_di_components()
+        self.check(
+            "initialize_di_components.bridge_exists", hasattr(container, "_di_bridge")
+        )
+        self.check(
+            "initialize_di_components.container_exists",
+            hasattr(container, "_di_container"),
+        )
+
+        container.initialize_registrations(
+            config=root.config.model_copy(deep=True),
+            context=cast("p.Context", FlextContext()),
+        )
+        self.check(
+            "initialize_registrations.list_services_empty",
+            len(container.list_services()),
+        )
+
+        container.sync_config_to_di()
+        container.register_existing_providers()
+        container.register_core_services()
+
+        self.check(
+            "sync_config_to_di.service_config_present", container.has_service("config")
+        )
+        self.check(
+            "register_core_services.logger_present", container.has_service("logger")
+        )
+        self.check(
+            "register_core_services.command_bus_present",
+            container.has_service("command_bus"),
+        )
+
+        logger_default = container.create_module_logger()
+        logger_custom = container.create_module_logger(f"examples.{self.rand_str(6)}")
+        self.check("create_module_logger.default.type", type(logger_default).__name__)
+        self.check("create_module_logger.custom.type", type(logger_custom).__name__)
+
+        removable_name = f"svc.{self.rand_str(6)}"
+        missing_remove_name = f"svc.{self.rand_str(6)}"
+        _ = container.register(removable_name, self.rand_int(1, 1000))
+        unregister_ok = container.unregister(removable_name)
+        unregister_missing = container.unregister(missing_remove_name)
+        self.check("unregister.existing.success", unregister_ok.is_success)
+        self.check("unregister.missing.failure", unregister_missing.is_failure)
+
+        container.clear_all()
+        self.check("clear_all.count", len(container.list_services()))
+
+        before_reset = root
         FlextContainer.reset_for_testing()
-        root_context = FlextContext()
-        root = FlextContainer.get_global(context=cast("p.Context", root_context))
-
-        self.check("get_global.type", type(root).__name__)
-        self.check("get_global.context.type", type(root.context).__name__)
-        self.check("get_global.config.type", type(root.config).__name__)
-        self.check("get_global.same_instance", root is FlextContainer.get_global())
-
-        created_false = FlextContainer.create(auto_register_factories=False)
-        created_true = FlextContainer.create(auto_register_factories=True)
-        builder_false = FlextContainer.Builder.create(auto_register_factories=False)
-        builder_true = FlextContainer.Builder.create(auto_register_factories=True)
-
-        self.check("create.false.same_instance", created_false is root)
-        self.check("create.true.same_instance", created_true is root)
-        self.check("builder.create.false.same_instance", builder_false is root)
-        self.check("builder.create.true.same_instance", builder_true is root)
-        random_ok_val = self.rand_int(1, 1000)
-        self.check(
-            "result.ok.roundtrip", r[int].ok(random_ok_val).value == random_ok_val
+        after_reset = FlextContainer.get_global(
+            context=cast("p.Context", FlextContext())
         )
+        self.check("reset_singleton.new_instance", before_reset is not after_reset)
         self.check(
-            "runtime.normalize.bool", FlextRuntime.normalize_to_general_value(True)
+            "reset_singleton.get_global.same_after_reset",
+            after_reset is FlextContainer.get_global(),
         )
-        self.check("constants.default_max_services", c.Container.DEFAULT_MAX_SERVICES)
-
-        return root
 
     def _exercise_registration_and_resolution(self, container: FlextContainer) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""
@@ -206,74 +317,38 @@ class Ex08FlextContainer(Examples):
         self.check("list_services.contains.factory", factory_name in service_list)
         self.check("list_services.contains.resource", resource_name in service_list)
 
-    def _exercise_fluent_and_config(self, container: FlextContainer) -> None:
-        """Exercise fluent registration and configuration APIs."""
-        self.section("fluent_and_config")
+    def _exercise_singleton_and_creation(self) -> FlextContainer:
+        """Exercise get_global/create/builder creation and singleton semantics."""
+        self.section("singleton_and_creation")
 
-        fluent_service_name = f"svc.{self.rand_str(6)}"
-        fluent_factory_name = f"svc.{self.rand_str(6)}"
-        fluent_resource_name = f"svc.{self.rand_str(6)}"
-        fluent_service_value = self.rand_str(10)
-        fluent_factory_value = self.rand_str(10)
-        fluent_resource_value = self.rand_str(10)
-        max_factories = self.rand_int(1, 1000)
+        FlextContainer.reset_for_testing()
+        root_context = FlextContext()
+        root = FlextContainer.get_global(context=cast("p.Context", root_context))
 
-        with_service_result = container.register(
-            fluent_service_name, fluent_service_value
-        )
-        with_factory_result = container.register(
-            fluent_factory_name, lambda: fluent_factory_value, kind="factory"
-        )
-        with_resource_result = container.register(
-            fluent_resource_name, lambda: fluent_resource_value, kind="resource"
-        )
-        with_config_result = container.configure({"max_factories": max_factories})
+        self.check("get_global.type", type(root).__name__)
+        self.check("get_global.context.type", type(root.context).__name__)
+        self.check("get_global.config.type", type(root.config).__name__)
+        self.check("get_global.same_instance", root is FlextContainer.get_global())
 
-        self.check("with_service.returns_self", with_service_result is container)
-        self.check("with_factory.returns_self", with_factory_result is container)
-        self.check("with_resource.returns_self", with_resource_result is container)
-        self.check("with_config.returns_self", with_config_result is container)
+        created_false = FlextContainer.create(auto_register_factories=False)
+        created_true = FlextContainer.create(auto_register_factories=True)
+        builder_false = FlextContainer.Builder.create(auto_register_factories=False)
+        builder_true = FlextContainer.Builder.create(auto_register_factories=True)
 
-        configured_max_services = self.rand_int(1, 1000)
-        configured_factory_caching = self.rand_bool()
-        container.configure({
-            "max_services": configured_max_services,
-            "enable_factory_caching": configured_factory_caching,
-        })
-        config_map = container.get_config()
-        max_services = config_map["max_services"]
-        enable_factory_caching = config_map["enable_factory_caching"]
-
-        max_services_num = max_services if isinstance(max_services, int) else -1
-        factory_cache_flag = (
-            enable_factory_caching
-            if isinstance(enable_factory_caching, bool)
-            else False
-        )
-
+        self.check("create.false.same_instance", created_false is root)
+        self.check("create.true.same_instance", created_true is root)
+        self.check("builder.create.false.same_instance", builder_false is root)
+        self.check("builder.create.true.same_instance", builder_true is root)
+        random_ok_val = self.rand_int(1, 1000)
         self.check(
-            "configure.get_config.max_services_matches",
-            max_services_num == configured_max_services,
+            "result.ok.roundtrip", r[int].ok(random_ok_val).value == random_ok_val
         )
         self.check(
-            "configure.get_config.enable_factory_caching_matches",
-            factory_cache_flag == configured_factory_caching,
+            "runtime.normalize.bool", FlextRuntime.normalize_to_general_value(True)
         )
-        self.check(
-            "with_service.get.value_matches",
-            container.get(fluent_service_name, type_cls=str).unwrap_or("")
-            == fluent_service_value,
-        )
-        self.check(
-            "with_factory.get.value_matches",
-            container.get(fluent_factory_name, type_cls=str).unwrap_or("")
-            == fluent_factory_value,
-        )
-        self.check(
-            "with_resource.get.value_matches",
-            container.get(fluent_resource_name, type_cls=str).unwrap_or("")
-            == fluent_resource_value,
-        )
+        self.check("constants.default_max_services", c.Container.DEFAULT_MAX_SERVICES)
+
+        return root
 
     def _exercise_wiring_and_scoped(self, container: FlextContainer) -> FlextContainer:
         """Exercise wire_modules and scoped with all supported parameter styles."""
@@ -358,81 +433,6 @@ class Ex08FlextContainer(Examples):
         )
 
         return scoped_full
-
-    def _exercise_internal_and_cleanup(
-        self, container: FlextContainer, root: FlextContainer
-    ) -> None:
-        """Exercise lifecycle helpers and cleanup APIs."""
-        self.section("internal_and_cleanup")
-
-        container.initialize_di_components()
-        self.check(
-            "initialize_di_components.bridge_exists", hasattr(container, "_di_bridge")
-        )
-        self.check(
-            "initialize_di_components.container_exists",
-            hasattr(container, "_di_container"),
-        )
-
-        container.initialize_registrations(
-            config=root.config.model_copy(deep=True),
-            context=cast("p.Context", FlextContext()),
-        )
-        self.check(
-            "initialize_registrations.list_services_empty",
-            len(container.list_services()),
-        )
-
-        container.sync_config_to_di()
-        container.register_existing_providers()
-        container.register_core_services()
-
-        self.check(
-            "sync_config_to_di.service_config_present", container.has_service("config")
-        )
-        self.check(
-            "register_core_services.logger_present", container.has_service("logger")
-        )
-        self.check(
-            "register_core_services.command_bus_present",
-            container.has_service("command_bus"),
-        )
-
-        logger_default = container.create_module_logger()
-        logger_custom = container.create_module_logger(f"examples.{self.rand_str(6)}")
-        self.check("create_module_logger.default.type", type(logger_default).__name__)
-        self.check("create_module_logger.custom.type", type(logger_custom).__name__)
-
-        removable_name = f"svc.{self.rand_str(6)}"
-        missing_remove_name = f"svc.{self.rand_str(6)}"
-        _ = container.register(removable_name, self.rand_int(1, 1000))
-        unregister_ok = container.unregister(removable_name)
-        unregister_missing = container.unregister(missing_remove_name)
-        self.check("unregister.existing.success", unregister_ok.is_success)
-        self.check("unregister.missing.failure", unregister_missing.is_failure)
-
-        container.clear_all()
-        self.check("clear_all.count", len(container.list_services()))
-
-        before_reset = root
-        FlextContainer.reset_for_testing()
-        after_reset = FlextContainer.get_global(
-            context=cast("p.Context", FlextContext())
-        )
-        self.check("reset_singleton.new_instance", before_reset is not after_reset)
-        self.check(
-            "reset_singleton.get_global.same_after_reset",
-            after_reset is FlextContainer.get_global(),
-        )
-
-    @override
-    def exercise(self) -> None:
-        """Run all sections and record deterministic golden output."""
-        root = self._exercise_singleton_and_creation()
-        self._exercise_registration_and_resolution(root)
-        self._exercise_fluent_and_config(root)
-        scoped_full = self._exercise_wiring_and_scoped(root)
-        self._exercise_internal_and_cleanup(scoped_full, root)
 
 
 if __name__ == "__main__":

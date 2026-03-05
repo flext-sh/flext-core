@@ -69,6 +69,127 @@ class Order(m.AggregateRoot):
 class IntegrationService(s[m.ConfigMap]):
     """Service demonstrating complete flext-core integration."""
 
+    @staticmethod
+    def _demonstrate_config_integration() -> None:
+        """Show FlextSettings integration."""
+        print("\n=== FlextSettings Integration ===")
+
+        config = FlextSettings.get_global()
+        log_level = config.log_level
+        print(f"✅ Config access: log_level={log_level}")
+
+    @staticmethod
+    def _demonstrate_container_integration() -> None:
+        """Show FlextContainer integration."""
+        print("\n=== FlextContainer Integration ===")
+
+        container = FlextContainer()
+        logger = FlextLogger.create_module_logger(__name__)
+        _ = container.register("logger", logger)
+
+        logger_result = container.get("logger")
+        if logger_result.is_success:
+            print("✅ Container service resolution")
+
+    @staticmethod
+    def _demonstrate_context_integration() -> None:
+        """Show FlextContext integration."""
+        print("\n=== FlextContext Integration ===")
+
+        with FlextContext.Correlation.new_correlation():
+            correlation_id = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
+            )
+            print(f"✅ Context correlation: {correlation_id}")
+
+    @staticmethod
+    def _demonstrate_decorators_integration() -> None:
+        """Show FlextDecorators integration."""
+        print("\n=== FlextDecorators Integration ===")
+
+        @FlextDecorators.log_operation(operation_name="integration_demo")
+        def decorated_function(value: int) -> int:
+            """Function with decorator."""
+            return value * 2
+
+        result = decorated_function(5)
+        print(f"✅ Decorated function: {result}")
+
+    @staticmethod
+    def _demonstrate_logger_integration() -> None:
+        """Show FlextLogger integration."""
+        print("\n=== FlextLogger Integration ===")
+
+        logger = FlextLogger.create_module_logger(__name__)
+        logger.info("Integration demonstration", component="logger")
+        print("✅ Structured logging")
+
+    @staticmethod
+    def _demonstrate_models_integration() -> None:
+        """Show m integration."""
+        print("\n=== m Integration ===")
+
+        user = User(
+            unique_id=u.generate("entity"),
+            name="Integration User",
+            email="integration@example.com",
+        )
+        print(f"✅ Entity created: {user.name}")
+
+        order = Order(
+            unique_id=u.generate("entity"),
+            customer_id=user.entity_id,
+        )
+        print(f"✅ Aggregate created: {order.status.value}")
+
+    @staticmethod
+    def _demonstrate_registry_dispatcher_integration() -> None:
+        """Show FlextRegistry and FlextDispatcher integration."""
+        print("\n=== Registry/Dispatcher Integration ===")
+
+        dispatcher = FlextDispatcher()
+        _registry = FlextRegistry()
+        _ = dispatcher
+        print("✅ Registry/Dispatcher initialized")
+
+    @staticmethod
+    def _demonstrate_result_patterns() -> None:
+        """Show r patterns."""
+        print("\n=== r Patterns ===")
+
+        def to_upper(x: str) -> str:
+            return x.upper()
+
+        def add_processed(x: str) -> r[str]:
+            return r[str].ok(f"{x}_processed")
+
+        # Railway pattern
+        result = r[str].ok("initial").map(to_upper).flat_map(add_processed)
+        if result.is_success:
+            print(f"✅ Railway pattern: {result.value}")
+
+    @staticmethod
+    def _demonstrate_utilities_integration() -> None:
+        """Show u integration."""
+        print("\n=== u Integration ===")
+
+        # Validation
+        email_result = u.validate_pattern(
+            "test@example.com",
+            c.Platform.PATTERN_EMAIL,
+            "email",
+        )
+        if email_result.is_success:
+            print("✅ Validation utility")
+
+        # ID generation
+        correlation_id = u.generate("correlation")
+        print(f"✅ ID generation: {correlation_id[:12]}...")
+
+        # Text processing
+        cleaned = u.clean_text("  test  ")
+        print(f"✅ Text processing: '{cleaned}'")
+
     @override
     def execute(
         self,
@@ -121,127 +242,6 @@ class IntegrationService(s[m.ConfigMap]):
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
             return r[m.ConfigMap].fail(error_msg)
-
-    @staticmethod
-    def _demonstrate_result_patterns() -> None:
-        """Show r patterns."""
-        print("\n=== r Patterns ===")
-
-        def to_upper(x: str) -> str:
-            return x.upper()
-
-        def add_processed(x: str) -> r[str]:
-            return r[str].ok(f"{x}_processed")
-
-        # Railway pattern
-        result = r[str].ok("initial").map(to_upper).flat_map(add_processed)
-        if result.is_success:
-            print(f"✅ Railway pattern: {result.value}")
-
-    @staticmethod
-    def _demonstrate_container_integration() -> None:
-        """Show FlextContainer integration."""
-        print("\n=== FlextContainer Integration ===")
-
-        container = FlextContainer()
-        logger = FlextLogger.create_module_logger(__name__)
-        _ = container.register("logger", logger)
-
-        logger_result = container.get("logger")
-        if logger_result.is_success:
-            print("✅ Container service resolution")
-
-    @staticmethod
-    def _demonstrate_context_integration() -> None:
-        """Show FlextContext integration."""
-        print("\n=== FlextContext Integration ===")
-
-        with FlextContext.Correlation.new_correlation():
-            correlation_id = (
-                FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
-            )
-            print(f"✅ Context correlation: {correlation_id}")
-
-    @staticmethod
-    def _demonstrate_logger_integration() -> None:
-        """Show FlextLogger integration."""
-        print("\n=== FlextLogger Integration ===")
-
-        logger = FlextLogger.create_module_logger(__name__)
-        logger.info("Integration demonstration", component="logger")
-        print("✅ Structured logging")
-
-    @staticmethod
-    def _demonstrate_config_integration() -> None:
-        """Show FlextSettings integration."""
-        print("\n=== FlextSettings Integration ===")
-
-        config = FlextSettings.get_global()
-        log_level = config.log_level
-        print(f"✅ Config access: log_level={log_level}")
-
-    @staticmethod
-    def _demonstrate_models_integration() -> None:
-        """Show m integration."""
-        print("\n=== m Integration ===")
-
-        user = User(
-            unique_id=u.generate("entity"),
-            name="Integration User",
-            email="integration@example.com",
-        )
-        print(f"✅ Entity created: {user.name}")
-
-        order = Order(
-            unique_id=u.generate("entity"),
-            customer_id=user.entity_id,
-        )
-        print(f"✅ Aggregate created: {order.status.value}")
-
-    @staticmethod
-    def _demonstrate_decorators_integration() -> None:
-        """Show FlextDecorators integration."""
-        print("\n=== FlextDecorators Integration ===")
-
-        @FlextDecorators.log_operation(operation_name="integration_demo")
-        def decorated_function(value: int) -> int:
-            """Function with decorator."""
-            return value * 2
-
-        result = decorated_function(5)
-        print(f"✅ Decorated function: {result}")
-
-    @staticmethod
-    def _demonstrate_registry_dispatcher_integration() -> None:
-        """Show FlextRegistry and FlextDispatcher integration."""
-        print("\n=== Registry/Dispatcher Integration ===")
-
-        dispatcher = FlextDispatcher()
-        _registry = FlextRegistry()
-        _ = dispatcher
-        print("✅ Registry/Dispatcher initialized")
-
-    @staticmethod
-    def _demonstrate_utilities_integration() -> None:
-        """Show u integration."""
-        print("\n=== u Integration ===")
-
-        # Validation
-        email_result = u.validate_pattern(
-            "test@example.com",
-            c.Platform.PATTERN_EMAIL,
-            "email",
-        )
-        if email_result.is_success:
-            print("✅ Validation utility")
-
-        # ID generation
-        correlation_id = u.generate("correlation")
-        print(f"✅ ID generation: {correlation_id[:12]}...")
-
-        # Text processing
-        cleaned = u.clean_text("  test  ")
-        print(f"✅ Text processing: '{cleaned}'")
 
 
 def main() -> None:

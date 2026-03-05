@@ -46,19 +46,19 @@ class _WhalesClientConfigProtocol(Protocol):
 
 
 class _WhalesComposeProtocol(Protocol):
-    def up(
-        self,
-        *,
-        services: Sequence[str],
-        detach: bool,
-        remove_orphans: bool,
-    ) -> None: ...
 
     def down(
         self,
         *,
         remove_orphans: bool,
         volumes: bool,
+    ) -> None: ...
+    def up(
+        self,
+        *,
+        services: Sequence[str],
+        detach: bool,
+        remove_orphans: bool,
     ) -> None: ...
 
 
@@ -157,75 +157,17 @@ class FlextTestsDocker:
         """Get shared container configurations."""
         return c.Tests.Docker.SHARED_CONTAINERS
 
-    def get_client(self) -> DockerSDKClient | FlextTestsDocker._OfflineDockerClient:
-        """Get Docker client with lazy initialization.
-
-        Returns either a real DockerClient connected to daemon, or an offline stub
-        if the daemon is unavailable.
-        """
-        if self._client is None:
-            try:
-                self._client = docker_from_env()
-            except (DockerException, OSError, TypeError, ValueError) as error:
-                self.logger.exception(
-                    "Failed to initialize Docker client",
-                    error=str(error),
-                )
-                self._client = self._OfflineDockerClient()
-        return self._client
-
-    def _load_dirty_state(self) -> None:
-        """Load dirty container state from persistent storage."""
-        try:
-            if self._state_file.exists():
-                state_text = self._state_file.read_text(encoding="utf-8")
-                state_raw: Mapping[str, Sequence[str]] = TypeAdapter(
-                    Mapping[str, Sequence[str]],
-                ).validate_json(state_text)
-                dirty_raw = state_raw.get("dirty_containers", ())
-                self._dirty_containers = {
-                    str(container_name) for container_name in dirty_raw
-                }
-        except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
-            self.logger.warning("Failed to load dirty state", error=str(exc))
-            self._dirty_containers = set()
-
-    def _save_dirty_state(self) -> None:
-        """Save dirty container state to persistent storage."""
-        try:
-            self._state_file.parent.mkdir(parents=True, exist_ok=True)
-            with self._state_file.open("w") as f:
-                json.dump({"dirty_containers": list(self._dirty_containers)}, f)
-        except (OSError, TypeError) as exc:
-            self.logger.warning("Failed to save dirty state", error=str(exc))
-
-    def mark_container_dirty(self, container_name: str) -> r[bool]:
-        """Mark a container as dirty for recreation on next use."""
-        try:
-            self._dirty_containers.add(container_name)
-            self._save_dirty_state()
-            self.logger.info("Container marked dirty", container=container_name)
-            return r[bool].ok(value=True)
-        except (OSError, TypeError) as exc:
-            return r[bool].fail(f"Failed to mark dirty: {exc}")
-
-    def mark_container_clean(self, container_name: str) -> r[bool]:
-        """Mark a container as clean after successful recreation."""
-        try:
-            self._dirty_containers.discard(container_name)
-            self._save_dirty_state()
-            self.logger.info("Container marked clean", container=container_name)
-            return r[bool].ok(value=True)
-        except (OSError, TypeError) as exc:
-            return r[bool].fail(f"Failed to mark clean: {exc}")
-
-    def is_container_dirty(self, container_name: str) -> bool:
-        """Check if a container is marked as dirty."""
-        return container_name in self._dirty_containers
-
-    def get_dirty_containers(self) -> list[str]:
-        """Get list of all dirty containers."""
-        return list(self._dirty_containers)
+    @staticmethod
+    def _extract_host_port(bindings: list[dict[str, str]] | None) -> str:
+        if not isinstance(bindings, Sequence) or isinstance(bindings, str | bytes):
+            return ""
+        if not bindings:
+            return ""
+        first_binding = bindings[0]
+        if not isinstance(first_binding, Mapping):
+            return ""
+        host_port = first_binding.get("HostPort", "")
+        return str(host_port)
 
     def cleanup_dirty_containers(
         self,
@@ -256,6 +198,87 @@ class FlextTestsDocker:
                 cleaned.append(container_name)
 
         return r[list[str]].ok(cleaned)
+
+    def compose_down(self, compose_file: str) -> r[str]:
+        """Stop services using docker-compose via python_on_whales."""
+        try:
+            compose_path = Path(compose_file)
+            if not compose_path.is_absolute():
+                compose_path = self.workspace_root / compose_file
+
+            if docker is None:
+                return r[str].fail("python_on_whales is not available")
+            docker_client = docker
+
+            original_files = docker_client.client_config.compose_files
+            try:
+                docker_client.client_config.compose_files = [str(compose_path)]
+                docker_client.compose.down(volumes=True, remove_orphans=True)
+            finally:
+                docker_client.client_config.compose_files = original_files
+
+            return r[str].ok("Compose down successful")
+
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
+            self.logger.warning("Compose down failed", error=str(exc))
+            return r[str].fail(f"Compose down failed: {exc}")
+
+    def compose_up(
+        self,
+        compose_file: str,
+        service: str | None = None,
+        *,
+        force_recreate: bool = False,
+    ) -> r[str]:
+        """Start services using docker-compose via python_on_whales."""
+        try:
+            compose_path = Path(compose_file)
+            if not compose_path.is_absolute():
+                compose_path = self.workspace_root / compose_file
+
+            if docker is None:
+                return r[str].fail("python_on_whales is not available")
+            docker_client = docker
+
+            original_files = docker_client.client_config.compose_files
+            try:
+                docker_client.client_config.compose_files = [str(compose_path)]
+
+                if force_recreate:
+                    with contextlib.suppress(Exception):
+                        docker_client.compose.down(remove_orphans=True, volumes=True)
+
+                services = [service] if service else []
+                docker_client.compose.up(
+                    services=services,
+                    detach=True,
+                    remove_orphans=True,
+                )
+            finally:
+                docker_client.client_config.compose_files = original_files
+
+            return r[str].ok("Compose up successful")
+
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
+            self.logger.exception("Compose up failed")
+            return r[str].fail(f"Compose up failed: {exc}")
+
+    def get_client(self) -> DockerSDKClient | FlextTestsDocker._OfflineDockerClient:
+        """Get Docker client with lazy initialization.
+
+        Returns either a real DockerClient connected to daemon, or an offline stub
+        if the daemon is unavailable.
+        """
+        if self._client is None:
+            try:
+                self._client = docker_from_env()
+            except (DockerException, OSError, TypeError, ValueError) as error:
+                self.logger.exception(
+                    "Failed to initialize Docker client",
+                    error=str(error),
+                )
+                self._client = self._OfflineDockerClient()
+        return self._client
 
     def get_container_info(
         self,
@@ -301,6 +324,46 @@ class FlextTestsDocker:
         """Get container status (alias for get_container_info)."""
         return self.get_container_info(container_name)
 
+    def get_dirty_containers(self) -> list[str]:
+        """Get list of all dirty containers."""
+        return list(self._dirty_containers)
+
+    def is_container_dirty(self, container_name: str) -> bool:
+        """Check if a container is marked as dirty."""
+        return container_name in self._dirty_containers
+
+    def mark_container_clean(self, container_name: str) -> r[bool]:
+        """Mark a container as clean after successful recreation."""
+        try:
+            self._dirty_containers.discard(container_name)
+            self._save_dirty_state()
+            self.logger.info("Container marked clean", container=container_name)
+            return r[bool].ok(value=True)
+        except (OSError, TypeError) as exc:
+            return r[bool].fail(f"Failed to mark clean: {exc}")
+
+    def mark_container_dirty(self, container_name: str) -> r[bool]:
+        """Mark a container as dirty for recreation on next use."""
+        try:
+            self._dirty_containers.add(container_name)
+            self._save_dirty_state()
+            self.logger.info("Container marked dirty", container=container_name)
+            return r[bool].ok(value=True)
+        except (OSError, TypeError) as exc:
+            return r[bool].fail(f"Failed to mark dirty: {exc}")
+
+    def start_compose_stack(
+        self,
+        compose_file: str,
+        network_name: str | None = None,
+    ) -> r[str]:
+        """Start a Docker Compose stack."""
+        _ = network_name
+        result = self.compose_up(compose_file)
+        if result.is_failure:
+            return r[str].fail(f"Stack start failed: {result.error}")
+        return r[str].ok("Stack started successfully")
+
     def start_existing_container(self, name: str) -> r[str]:
         """Start an existing stopped container without recreating it."""
         try:
@@ -321,94 +384,6 @@ class FlextTestsDocker:
             return r[str].fail(f"Container {name} not found")
         except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             return r[str].fail(f"Failed to start container: {exc}")
-
-    @staticmethod
-    def _extract_host_port(bindings: list[dict[str, str]] | None) -> str:
-        if not isinstance(bindings, Sequence) or isinstance(bindings, str | bytes):
-            return ""
-        if not bindings:
-            return ""
-        first_binding = bindings[0]
-        if not isinstance(first_binding, Mapping):
-            return ""
-        host_port = first_binding.get("HostPort", "")
-        return str(host_port)
-
-    def compose_up(
-        self,
-        compose_file: str,
-        service: str | None = None,
-        *,
-        force_recreate: bool = False,
-    ) -> r[str]:
-        """Start services using docker-compose via python_on_whales."""
-        try:
-            compose_path = Path(compose_file)
-            if not compose_path.is_absolute():
-                compose_path = self.workspace_root / compose_file
-
-            if docker is None:
-                return r[str].fail("python_on_whales is not available")
-            docker_client = docker
-
-            original_files = docker_client.client_config.compose_files
-            try:
-                docker_client.client_config.compose_files = [str(compose_path)]
-
-                if force_recreate:
-                    with contextlib.suppress(Exception):
-                        docker_client.compose.down(remove_orphans=True, volumes=True)
-
-                services = [service] if service else []
-                docker_client.compose.up(
-                    services=services,
-                    detach=True,
-                    remove_orphans=True,
-                )
-            finally:
-                docker_client.client_config.compose_files = original_files
-
-            return r[str].ok("Compose up successful")
-
-        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
-            self.logger.exception("Compose up failed")
-            return r[str].fail(f"Compose up failed: {exc}")
-
-    def compose_down(self, compose_file: str) -> r[str]:
-        """Stop services using docker-compose via python_on_whales."""
-        try:
-            compose_path = Path(compose_file)
-            if not compose_path.is_absolute():
-                compose_path = self.workspace_root / compose_file
-
-            if docker is None:
-                return r[str].fail("python_on_whales is not available")
-            docker_client = docker
-
-            original_files = docker_client.client_config.compose_files
-            try:
-                docker_client.client_config.compose_files = [str(compose_path)]
-                docker_client.compose.down(volumes=True, remove_orphans=True)
-            finally:
-                docker_client.client_config.compose_files = original_files
-
-            return r[str].ok("Compose down successful")
-
-        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
-            self.logger.warning("Compose down failed", error=str(exc))
-            return r[str].fail(f"Compose down failed: {exc}")
-
-    def start_compose_stack(
-        self,
-        compose_file: str,
-        network_name: str | None = None,
-    ) -> r[str]:
-        """Start a Docker Compose stack."""
-        _ = network_name
-        result = self.compose_up(compose_file)
-        if result.is_failure:
-            return r[str].fail(f"Stack start failed: {result.error}")
-        return r[str].ok("Stack started successfully")
 
     def wait_for_port_ready(
         self,
@@ -444,6 +419,31 @@ class FlextTestsDocker:
 
         except OSError as exc:
             return r[bool].fail(f"Failed to wait for port: {exc}")
+
+    def _load_dirty_state(self) -> None:
+        """Load dirty container state from persistent storage."""
+        try:
+            if self._state_file.exists():
+                state_text = self._state_file.read_text(encoding="utf-8")
+                state_raw: Mapping[str, Sequence[str]] = TypeAdapter(
+                    Mapping[str, Sequence[str]],
+                ).validate_json(state_text)
+                dirty_raw = state_raw.get("dirty_containers", ())
+                self._dirty_containers = {
+                    str(container_name) for container_name in dirty_raw
+                }
+        except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+            self.logger.warning("Failed to load dirty state", error=str(exc))
+            self._dirty_containers = set()
+
+    def _save_dirty_state(self) -> None:
+        """Save dirty container state to persistent storage."""
+        try:
+            self._state_file.parent.mkdir(parents=True, exist_ok=True)
+            with self._state_file.open("w") as f:
+                json.dump({"dirty_containers": list(self._dirty_containers)}, f)
+        except (OSError, TypeError) as exc:
+            self.logger.warning("Failed to save dirty state", error=str(exc))
 
 
 __all__ = ["FlextTestsDocker"]

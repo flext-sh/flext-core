@@ -250,22 +250,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    @classmethod
-    def _reset_instance(cls) -> None:
-        """Reset singleton instance for testing purposes.
-
-        This method is intended for use in tests only to allow
-        clean state between test runs.
-        """
-        with cls._lock:
-            keys_to_remove = [
-                instance_cls
-                for instance_cls in cls._instances
-                if instance_cls is cls or issubclass(instance_cls, cls)
-            ]
-            for instance_cls in keys_to_remove:
-                del cls._instances[instance_cls]
-
     def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize config with data.
 
@@ -288,43 +272,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         self._di_provider: t.Scalar | None = None
 
-    @model_validator(mode="after")
-    def validate_configuration(self) -> Self:
-        """Validate configuration.
-
-        Business Rule: Validates configuration consistency after model initialization.
-        Checks database URL scheme validity and ensures trace mode requires debug mode.
-        Raises ValueError if configuration is invalid, preventing invalid configurations
-        from being used in production systems.
-
-        Audit Implication: Configuration validation ensures audit trail completeness by
-        preventing invalid configurations from being used. All configurations are validated
-        before being used in production systems. Used by Pydantic v2 model_validator for
-        cross-field validation.
-
-        Returns:
-            Self: Validated configuration instance
-
-        Raises:
-            ValueError: If configuration is invalid
-
-        """
-        # Check database URL scheme if provided
-        if self.database_url and not self.database_url.startswith((
-            "postgresql://",
-            "mysql://",
-            "sqlite://",
-        )):
-            msg = "Invalid database URL scheme"
-            raise ValueError(msg)
-
-        # Check that trace mode requires debug mode
-        if self.trace and not self.debug:
-            msg = "Trace mode requires debug mode"
-            raise ValueError(msg)
-
-        return self
-
     @computed_field
     @property
     def effective_log_level(self) -> c.Settings.LogLevel:
@@ -337,6 +284,22 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             return c.Settings.LogLevel.INFO
         # self.log_level is already LogLevelLiteral (from field_validator)
         return self.log_level
+
+    @classmethod
+    def _reset_instance(cls) -> None:
+        """Reset singleton instance for testing purposes.
+
+        This method is intended for use in tests only to allow
+        clean state between test runs.
+        """
+        with cls._lock:
+            keys_to_remove = [
+                instance_cls
+                for instance_cls in cls._instances
+                if instance_cls is cls or issubclass(instance_cls, cls)
+            ]
+            for instance_cls in keys_to_remove:
+                del cls._instances[instance_cls]
 
     @classmethod
     def get_global(
@@ -376,21 +339,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         """Backward-compatible alias for global settings materialization."""
         return cls.get_global(overrides=overrides)
 
-    def get_di_config_provider(self) -> t.Scalar:
-        """Get dependency injection provider for this config.
-
-        Returns a providers.Singleton instance via the runtime bridge.
-        Type annotation stays framework-level to avoid DI imports in this module.
-        """
-        if self._di_provider is None:
-            providers_module = FlextRuntime.dependency_providers()
-            self._di_provider = providers_module.Singleton(lambda: self)
-        provider = self._di_provider
-        if provider is None:
-            msg = "DI provider not initialized"
-            raise RuntimeError(msg)
-        return provider
-
     def apply_override(
         self,
         key: str,
@@ -410,6 +358,58 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             return False
         setattr(self, key, value)
         return True
+
+    def get_di_config_provider(self) -> t.Scalar:
+        """Get dependency injection provider for this config.
+
+        Returns a providers.Singleton instance via the runtime bridge.
+        Type annotation stays framework-level to avoid DI imports in this module.
+        """
+        if self._di_provider is None:
+            providers_module = FlextRuntime.dependency_providers()
+            self._di_provider = providers_module.Singleton(lambda: self)
+        provider = self._di_provider
+        if provider is None:
+            msg = "DI provider not initialized"
+            raise RuntimeError(msg)
+        return provider
+
+    @model_validator(mode="after")
+    def validate_configuration(self) -> Self:
+        """Validate configuration.
+
+        Business Rule: Validates configuration consistency after model initialization.
+        Checks database URL scheme validity and ensures trace mode requires debug mode.
+        Raises ValueError if configuration is invalid, preventing invalid configurations
+        from being used in production systems.
+
+        Audit Implication: Configuration validation ensures audit trail completeness by
+        preventing invalid configurations from being used. All configurations are validated
+        before being used in production systems. Used by Pydantic v2 model_validator for
+        cross-field validation.
+
+        Returns:
+            Self: Validated configuration instance
+
+        Raises:
+            ValueError: If configuration is invalid
+
+        """
+        # Check database URL scheme if provided
+        if self.database_url and not self.database_url.startswith((
+            "postgresql://",
+            "mysql://",
+            "sqlite://",
+        )):
+            msg = "Invalid database URL scheme"
+            raise ValueError(msg)
+
+        # Check that trace mode requires debug mode
+        if self.trace and not self.debug:
+            msg = "Trace mode requires debug mode"
+            raise ValueError(msg)
+
+        return self
 
     class AutoConfig(BaseModel):
         """Auto-configuration model for dynamic config creation."""
@@ -446,109 +446,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     _context_overrides: ClassVar[
         MutableMapping[str, MutableMapping[str, t.Scalar]]
     ] = {}
-
-    @classmethod
-    def register_namespace(
-        cls,
-        namespace: str,
-        config_class: type[BaseSettings] | None = None,
-        *,
-        decorator: bool = False,
-    ) -> Callable[[type[T_Settings]], type[T_Settings]] | None:
-        """Register a configuration class for a namespace.
-
-        When ``decorator=True``, returns a decorator that registers the class.
-
-        Args:
-            namespace: Namespace identifier
-            config_class: Configuration class to register
-            decorator: If True, return a decorator-style registrar
-
-        """
-        if decorator:
-
-            def namespace_decorator(
-                class_to_register: type[T_Settings],
-            ) -> type[T_Settings]:
-                """Register the configuration class while preserving type."""
-                cls._namespace_registry[namespace] = class_to_register
-                return class_to_register
-
-            return namespace_decorator
-
-        if config_class is None:
-            msg = "config_class is required when decorator=False"
-            raise ValueError(msg)
-
-        cls._namespace_registry[namespace] = config_class
-        return None
-
-    @staticmethod
-    def auto_register(
-        namespace: str,
-    ) -> Callable[[type[T_Settings]], type[T_Settings]]:
-        """Build a decorator that registers a settings class by namespace."""
-
-        def decorator(cls: type[T_Settings]) -> type[T_Settings]:
-            FlextSettings._namespace_registry[namespace] = cls
-            return cls
-
-        return decorator
-
-    @classmethod
-    def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
-        """Backward-compatible namespace registry lookup."""
-        return cls._namespace_registry.get(namespace)
-
-    @classmethod
-    def get_global_instance(cls) -> Self:
-        """Return the singleton settings instance."""
-        return cls.get_global()
-
-    @classmethod
-    def get_instance(cls) -> Self:
-        """Backward-compatible alias for singleton settings access."""
-        return cls.get_global()
-
-    def get_namespace(
-        self,
-        namespace: str,
-        config_type: type[T_Namespace],
-    ) -> T_Namespace:
-        """Get configuration instance for a namespace.
-
-        Business Rule: Resolves namespace configuration class from registry and
-        instantiates it. Validates namespace exists and config class is subclass of
-        expected type. Raises ValueError if namespace not found, TypeError if type
-        mismatch. Used for dynamic namespace configuration resolution.
-
-        Audit Implication: Namespace resolution ensures audit trail completeness by
-        validating namespace configurations before use. All namespace configurations
-        are validated before being used in production systems.
-
-        Args:
-            namespace: Namespace identifier
-            config_type: Expected configuration type
-
-        Returns:
-            Configuration instance
-
-        Raises:
-            ValueError: If namespace not found
-            TypeError: If type mismatch
-
-        """
-        config_class_raw = self._namespace_registry.get(namespace)
-        if config_class_raw is None:
-            msg = f"Namespace '{namespace}' not registered"
-            raise ValueError(msg)
-        if not issubclass(config_class_raw, config_type):
-            msg = f"Namespace '{namespace}' config class {config_class_raw} is not subclass of {config_type}"
-            raise TypeError(msg)
-        # Instantiate the config class properly - Pydantic models need regular instantiation
-        # config_class is already validated as subclass of config_type, safe to instantiate
-        config_class: type[T_Namespace] = config_class_raw
-        return config_class()
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Resolve namespace-style attribute access to registered settings."""
@@ -607,6 +504,21 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         return base
 
     @classmethod
+    def get_global_instance(cls) -> Self:
+        """Return the singleton settings instance."""
+        return cls.get_global()
+
+    @classmethod
+    def get_instance(cls) -> Self:
+        """Backward-compatible alias for singleton settings access."""
+        return cls.get_global()
+
+    @classmethod
+    def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
+        """Backward-compatible namespace registry lookup."""
+        return cls._namespace_registry.get(namespace)
+
+    @classmethod
     def register_context_overrides(
         cls,
         context_id: str,
@@ -633,6 +545,42 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         cls._context_overrides[context_id].update(overrides)
 
     @classmethod
+    def register_namespace(
+        cls,
+        namespace: str,
+        config_class: type[BaseSettings] | None = None,
+        *,
+        decorator: bool = False,
+    ) -> Callable[[type[T_Settings]], type[T_Settings]] | None:
+        """Register a configuration class for a namespace.
+
+        When ``decorator=True``, returns a decorator that registers the class.
+
+        Args:
+            namespace: Namespace identifier
+            config_class: Configuration class to register
+            decorator: If True, return a decorator-style registrar
+
+        """
+        if decorator:
+
+            def namespace_decorator(
+                class_to_register: type[T_Settings],
+            ) -> type[T_Settings]:
+                """Register the configuration class while preserving type."""
+                cls._namespace_registry[namespace] = class_to_register
+                return class_to_register
+
+            return namespace_decorator
+
+        if config_class is None:
+            msg = "config_class is required when decorator=False"
+            raise ValueError(msg)
+
+        cls._namespace_registry[namespace] = config_class
+        return None
+
+    @classmethod
     def reset_for_testing(cls) -> None:
         """Reset the global singleton instance for testing."""
         cls._instances.clear()
@@ -642,6 +590,58 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     def reset_global_instance(cls) -> None:
         """Reset singleton settings state for test/runtime reinitialization."""
         cls.reset_for_testing()
+
+    @staticmethod
+    def auto_register(
+        namespace: str,
+    ) -> Callable[[type[T_Settings]], type[T_Settings]]:
+        """Build a decorator that registers a settings class by namespace."""
+
+        def decorator(cls: type[T_Settings]) -> type[T_Settings]:
+            FlextSettings._namespace_registry[namespace] = cls
+            return cls
+
+        return decorator
+
+    def get_namespace(
+        self,
+        namespace: str,
+        config_type: type[T_Namespace],
+    ) -> T_Namespace:
+        """Get configuration instance for a namespace.
+
+        Business Rule: Resolves namespace configuration class from registry and
+        instantiates it. Validates namespace exists and config class is subclass of
+        expected type. Raises ValueError if namespace not found, TypeError if type
+        mismatch. Used for dynamic namespace configuration resolution.
+
+        Audit Implication: Namespace resolution ensures audit trail completeness by
+        validating namespace configurations before use. All namespace configurations
+        are validated before being used in production systems.
+
+        Args:
+            namespace: Namespace identifier
+            config_type: Expected configuration type
+
+        Returns:
+            Configuration instance
+
+        Raises:
+            ValueError: If namespace not found
+            TypeError: If type mismatch
+
+        """
+        config_class_raw = self._namespace_registry.get(namespace)
+        if config_class_raw is None:
+            msg = f"Namespace '{namespace}' not registered"
+            raise ValueError(msg)
+        if not issubclass(config_class_raw, config_type):
+            msg = f"Namespace '{namespace}' config class {config_class_raw} is not subclass of {config_type}"
+            raise TypeError(msg)
+        # Instantiate the config class properly - Pydantic models need regular instantiation
+        # config_class is already validated as subclass of config_type, safe to instantiate
+        config_class: type[T_Namespace] = config_class_raw
+        return config_class()
 
 
 __all__ = ["FlextSettings"]

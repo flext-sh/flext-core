@@ -68,25 +68,17 @@ class FlextTestsBuilders:
     # CRITICAL: Every instance __init__ MUST set _data to a dict
     _data: t.Tests.Builders.BuilderDict
 
+    def __init__(self, **data: t.Tests.ContainerValue) -> None:
+        """Initialize builder with optional initial data."""
+        super().__init__()
+        # Initialize without inheritance
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        # Always initialize as empty dict (class attribute is default, instance needs fresh copy)
+        self._data = dict(data)
+
     @staticmethod
     def _is_result_obj(value: object) -> TypeGuard[r[t.Tests.ContainerValue]]:
         return isinstance(value, r)
-
-    @staticmethod
-    def _to_payload_value(value: object) -> t.Tests.ContainerValue:
-        if value is None or isinstance(
-            value,
-            t.Primitives | bytes | BaseModel,
-        ):
-            return value
-        if isinstance(value, Mapping):
-            return {
-                str(key): FlextTestsBuilders._to_payload_value(item)
-                for key, item in value.items()
-            }
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            return [FlextTestsBuilders._to_payload_value(item) for item in value]
-        return str(value)
 
     @staticmethod
     def _to_guard_input(value: t.Tests.ContainerValue) -> t.Container:
@@ -108,30 +100,21 @@ class FlextTestsBuilders:
             for item in value
         ]
 
-    def __init__(self, **data: t.Tests.ContainerValue) -> None:
-        """Initialize builder with optional initial data."""
-        super().__init__()
-        # Initialize without inheritance
-        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
-        # Always initialize as empty dict (class attribute is default, instance needs fresh copy)
-        self._data = dict(data)
-
-    def _ensure_data_initialized(self) -> None:
-        """Ensure _data is initialized (helper for type safety)."""
-        if not self._data:
-            self._data = {}
-
-    def execute(self) -> r[t.Tests.Builders.BuilderDict]:
-        """Execute service - builds and returns as FlextResult.
-
-        Returns:
-            FlextResult containing built data.
-
-        """
-        self._ensure_data_initialized()
-        assert self._data is not None, "_data must be initialized"
-        data: t.Tests.Builders.BuilderDict = dict(self._data)
-        return r[t.Tests.Builders.BuilderDict].ok(data)
+    @staticmethod
+    def _to_payload_value(value: object) -> t.Tests.ContainerValue:
+        if value is None or isinstance(
+            value,
+            t.Primitives | bytes | BaseModel,
+        ):
+            return value
+        if isinstance(value, Mapping):
+            return {
+                str(key): FlextTestsBuilders._to_payload_value(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+            return [FlextTestsBuilders._to_payload_value(item) for item in value]
+        return str(value)
 
     # =========================================================================
     # CORE PUBLIC METHODS - Minimal and Powerful
@@ -488,6 +471,440 @@ class FlextTestsBuilders:
 
         return self
 
+    # =========================================================================
+    # BATCH OPERATIONS & SCENARIOS
+    # =========================================================================
+
+    def batch(
+        self,
+        key: str,
+        scenarios: Sequence[tuple[str, t.Tests.ContainerValue]],
+        **kwargs: t.Tests.ContainerValue,
+    ) -> Self:
+        """Build batch of test scenarios.
+
+        Uses Pydantic 2 models for parameter validation and computation.
+        All parameters are validated using m.Tests.Builders.BatchParams model.
+
+        Args:
+            key: Key to store batch under.
+            scenarios: Sequence of (scenario_id, data) tuples.
+            **kwargs: Additional parameters (as_results, with_failures)
+
+        Returns:
+            Self for method chaining.
+
+        Examples:
+            # Create test scenarios
+            tb().batch("cases", [
+                ("valid_email", "test@example.com"),
+                ("invalid_email", "not-an-email"),
+            ])
+
+            # With result wrapping
+            tb().batch("results", [
+                ("success", 42),
+                ("another", 100),
+            ], as_results=True)
+
+            # Mixed success/failure
+            tb().batch("results", [("ok", 1)], with_failures=[("err", "failed")])
+
+        """
+        # Convert kwargs to validated model using FlextUtilities
+        # u.Model.from_kwargs() accepts **kwargs: object - Pydantic 2 handles conversions automatically
+        # scenarios is passed as keyword argument - Pydantic 2 will validate the type
+        try:
+            params = m.Tests.Builders.BatchParams.model_validate(
+                {"key": key, "scenarios": scenarios, **kwargs},
+            )
+        except (TypeError, ValueError, AttributeError) as exc:
+            error_msg = f"Invalid batch() parameters: {exc}"
+            raise ValueError(error_msg) from exc
+
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        builder_data: t.Tests.Builders.BuilderDict = self._data
+        # Builders store DATA only - as_results wrapping happens when accessed
+        batch_data: list[t.Tests.ContainerValue] = []
+        for scenario_id, scenario_data in params.scenarios:
+            # Store as dict with id and data - results wrapped later
+            if params.as_results:
+                batch_data.append(
+                    {
+                        "_id": scenario_id,
+                        "_result_ok": scenario_data,
+                        "_is_result_marker": True,
+                    },
+                )
+            else:
+                batch_data.append(scenario_data)
+
+        if params.with_failures:
+            for fail_id, fail_error in params.with_failures:
+                # Store failure markers - results wrapped later
+                batch_data.append(
+                    {
+                        "_id": fail_id,
+                        "_result_fail": fail_error,
+                        "_is_result_marker": True,
+                    },
+                )
+
+        # list[payload value] is compatible with BuilderValue
+        builder_data[params.key] = batch_data
+        # Update instance attribute after local modifications
+        self._data = builder_data
+        return self
+
+    def build(
+        self,
+        **kwargs: t.Tests.ContainerValue,  # Accept payload values - validated by BuildParams
+    ) -> (
+        t.Tests.Builders.BuildOutputValue
+        | Sequence[t.Tests.Builders.BuildOutputValue]
+        | Sequence[tuple[str, t.Tests.Builders.BuildOutputValue]]
+    ):
+        """Build the dataset with output type control.
+
+        Uses Pydantic 2 models for parameter validation and computation.
+        All parameters are validated using m.Tests.Builders.BuildParams model.
+
+        Args:
+            **kwargs: Build parameters (as_model, as_list, flatten, etc.)
+
+        Returns:
+            Built dataset in requested format.
+
+        Examples:
+            # Default dict
+            data = tb().add("x", 1).build()
+
+            # Parametrized for pytest
+            cases = tb().add("test_id", "case_1").add("value", 42).build(as_parametrized=True)
+            # [("case_1", {"test_id": "case_1", "value": 42})]
+
+            # With validation
+            data = tb().add("count", 5).build(validate_with=lambda d: d["count"] > 0)
+
+            # With transformation
+            doubled = tb().add("x", 1).build(map_result=lambda d: d["x"] * 2)
+
+        """
+        # Convert kwargs to validated model using FlextUtilities
+        # Use from_kwargs for simple kwargs (all payload-compatible)
+        try:
+            params = m.Tests.Builders.BuildParams.model_validate(kwargs)
+        except (TypeError, ValueError, AttributeError) as exc:
+            error_msg = f"Invalid build() parameters: {exc}"
+            raise ValueError(error_msg) from exc
+
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        builder_data: t.Tests.Builders.BuilderDict = dict(self._data)
+
+        # Convert batch results with _is_result or _is_failure flags to FlextResult
+        data = self._process_batch_results(builder_data)
+
+        if params.filter_none:
+            data = {k: v for k, v in data.items() if v is not None}
+
+        if params.flatten:
+            # Use fallback flatten implementation - needs BuilderDict input
+            flat_input: t.Tests.Builders.BuilderDict = {}
+            for k, v in data.items():
+                if not isinstance(v, r):
+                    flat_input[k] = self._to_payload_value(v)
+            data = dict(self._flatten_dict(flat_input))
+
+        # Apply validation
+        data_for_hooks: t.Tests.Builders.BuilderOutputDict = {
+            str(key): value for key, value in data.items()
+        }
+        if params.validate_with is not None and not params.validate_with(
+            data_for_hooks,
+        ):
+            error_msg = "Validation failed during build"
+            raise ValueError(error_msg)
+
+        # Apply assertion
+        if params.assert_with is not None:
+            params.assert_with(data_for_hooks)
+
+        # Apply transformation
+        if params.map_result is not None:
+            return params.map_result(data_for_hooks)
+
+        if params.keys_only:
+            return [*data.keys()]
+
+        if params.values_only:
+            return [*data.values()]
+
+        if params.as_list:
+            return list(data.items())
+
+        if params.as_parametrized:
+            test_id = str(data.get(params.parametrize_key, "default"))
+            return [(test_id, data)]
+
+        if params.as_model is not None:
+            model_kwargs: dict[str, t.Tests.ContainerValue] = {
+                k: self._to_payload_value(v) for k, v in data.items()
+            }
+            return params.as_model(**model_kwargs)
+
+        return data
+
+    # =========================================================================
+    # BUILDER COMPOSITION & CLONING
+    # =========================================================================
+
+    def copy_builder(self) -> Self:
+        """Create independent copy of builder state.
+
+        Examples:
+            # Create base builder
+            base = tb().add("users", factory="users", count=5)
+
+            # Create variations
+            REDACTED_LDAP_BIND_PASSWORD_variant = base.copy_builder().add("role", "REDACTED_LDAP_BIND_PASSWORD")
+            user_variant = base.copy_builder().add("role", "user")
+
+        Returns:
+            New builder instance with copied data.
+
+        """
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        # Create new instance of same class (for proper subclass support)
+        new_builder = type(self)()
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        new_builder._data = dict(self._data)
+        return new_builder
+
+    def execute(self) -> r[t.Tests.Builders.BuilderDict]:
+        """Execute service - builds and returns as FlextResult.
+
+        Returns:
+            FlextResult containing built data.
+
+        """
+        self._ensure_data_initialized()
+        assert self._data is not None, "_data must be initialized"
+        data: t.Tests.Builders.BuilderDict = dict(self._data)
+        return r[t.Tests.Builders.BuilderDict].ok(data)
+
+    def fork(self, **updates: t.Tests.ContainerValue) -> Self:
+        """Copy and immediately add updates.
+
+        Uses Pydantic 2 models for parameter validation.
+        All updates are validated using m.Tests.Builders.AddParams model via add().
+
+        Examples:
+            base = tb().add("config", mapping={"env": "test"})
+
+            # Fork with updates
+            prod = base.fork(env="prod", debug=False)
+            dev = base.fork(env="dev", debug=True)
+
+        Args:
+            **updates: Key-value pairs to add to copied builder (validated via add()).
+
+        Returns:
+            New builder instance with copied data and updates.
+
+        """
+        new_builder = self.copy_builder()
+        # Add each update using add() method for validation
+        # add() uses u.Model.from_kwargs() internally for validation
+        # Payload value is compatible with BuilderValue (it's a subset)
+        for key, value in updates.items():
+            _ = new_builder.add(key, value=value)
+        return new_builder
+
+    @overload
+    def get(self, path: str) -> t.Tests.Builders.BuilderValue | None: ...
+
+    @overload
+    def get[T](
+        self,
+        path: str,
+        default: T,
+    ) -> t.Tests.Builders.BuilderValue | T: ...
+
+    @overload
+    def get[T](
+        self,
+        path: str,
+        default: T | None = None,
+        *,
+        as_type: type[T],
+    ) -> T | None: ...
+
+    def get[T](
+        self,
+        path: str,
+        default: T | None = None,
+        *,
+        as_type: type[T] | None = None,
+    ) -> t.Tests.Builders.BuilderValue | T | None:
+        """Get value from path.
+
+        Args:
+            path: Dot-separated path.
+            default: Default value if not found.
+            as_type: Type to validate and narrow result to.
+
+        Returns:
+            Value at path or default.
+
+        """
+        self._ensure_data_initialized()
+        parts = path.split(".")
+        current: t.Container = self._data
+
+        for part in parts:
+            if not isinstance(current, Mapping):
+                return default
+            current_mapping = current
+            if part not in current_mapping:
+                return default
+            current = current_mapping[part]
+
+        # Return the value
+        if current is None:
+            return default
+        # For as_type, type check provides narrowing
+        if as_type is not None:
+            if isinstance(current, as_type):
+                typed_current: T = current
+                return typed_current
+            return default
+        if isinstance(current, t.Primitives | bytes | BaseModel):
+            return current
+        if isinstance(current, Mapping):
+            return {str(k): self._to_payload_value(v) for k, v in current.items()}
+        if isinstance(current, Sequence):
+            return [self._to_payload_value(item) for item in current]
+        return default
+
+    def merge_from(
+        self,
+        other: FlextTestsBuilders,
+        *,
+        strategy: str = "deep",
+        exclude_keys: frozenset[str] | None = None,
+    ) -> Self:
+        """Merge data from another builder.
+
+        Uses Pydantic 2 models for parameter validation.
+        All parameters are validated using m.Tests.Builders.MergeFromParams model.
+        Uses FlextUtilities.merge() internally.
+
+        Examples:
+            common = tb().add("base", 1)
+            specific = tb().add("extra", 2)
+
+            combined = common.copy_builder().merge_from(specific)
+            # {"base": 1, "extra": 2}
+
+        Args:
+            other: Another builder to merge from.
+            strategy: Merge strategy ("deep", "override", "append", etc.).
+            exclude_keys: Set of keys to exclude from merge.
+
+        Returns:
+            Self for method chaining.
+
+        """
+        # Convert kwargs to validated model using FlextUtilities
+        # Convert frozenset to list for payload compatibility
+        # Pydantic 2 will coerce list back to frozenset in the model
+        try:
+            params = m.Tests.Builders.MergeFromParams.model_validate(
+                {
+                    "strategy": strategy,
+                    "exclude_keys": list(exclude_keys) if exclude_keys else None,
+                },
+            )
+        except (TypeError, ValueError, AttributeError) as exc:
+            error_msg = f"Invalid merge_from() parameters: {exc}"
+            raise ValueError(error_msg) from exc
+
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        # Ensure other builder's _data is also initialized
+        other._ensure_data_initialized()
+        assert other._data is not None, "other._data must be initialized"
+        other_data = dict(other._data)
+        if params.exclude_keys:
+            other_data = {
+                k: v for k, v in other_data.items() if k not in params.exclude_keys
+            }
+
+        # Convert BuilderDict to ConfigurationDict for merge
+        # Use TypeGuard t.Guards.is_general_value for proper type narrowing
+        self_dict: dict[str, t.Tests.ContainerValue] = {
+            k: v for k, v in self._data.items() if t.Guards.is_general_value(v)
+        }
+        other_dict: dict[str, t.Tests.ContainerValue] = {
+            k: v for k, v in other_data.items() if t.Guards.is_general_value(v)
+        }
+        merge_result = u.merge(
+            {k: self._to_guard_input(v) for k, v in self_dict.items()},
+            {k: self._to_guard_input(v) for k, v in other_dict.items()},
+            strategy=params.strategy,
+        )
+        if merge_result.is_success:
+            self._ensure_data_initialized()
+            # _data is always a dict after __init__ and _ensure_data_initialized
+            for k, v in merge_result.value.items():
+                self._data[k] = self._to_payload_value(v)
+        return self
+
+    def reset(self) -> Self:
+        """Reset builder state.
+
+        Returns:
+            Self for method chaining.
+
+        """
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        self._data = {}
+        return self
+
+    def scenarios(
+        self,
+        *cases: tuple[str, Mapping[str, t.Tests.Builders.BuilderValue]],
+    ) -> list[t.Tests.Builders.ParametrizedCase]:
+        """Build pytest.mark.parametrize compatible scenarios.
+
+        Examples:
+            # Define scenarios directly
+            cases = tb().scenarios(
+                ("test_valid", {"input": "hello", "expected": 5}),
+                ("test_empty", {"input": "", "expected": 0}),
+                ("test_unicode", {"input": "🎉", "expected": 1}),
+            )
+
+            @pytest.mark.parametrize("test_id,data", cases)
+            def test_length(self, test_id, data):
+                assert len(data["input"]) == data["expected"]
+
+        Args:
+            *cases: Variable number of (test_id, data) tuples.
+
+        Returns:
+            List of parametrized test cases.
+
+        """
+        return list(cases)
+
     def set(
         self,
         path: str,
@@ -567,72 +984,6 @@ class FlextTestsBuilders:
         # current is BuilderDict, which accepts BuilderValue
         current[parts[-1]] = final_value
         return self
-
-    @overload
-    def get(self, path: str) -> t.Tests.Builders.BuilderValue | None: ...
-
-    @overload
-    def get[T](
-        self,
-        path: str,
-        default: T,
-    ) -> t.Tests.Builders.BuilderValue | T: ...
-
-    @overload
-    def get[T](
-        self,
-        path: str,
-        default: T | None = None,
-        *,
-        as_type: type[T],
-    ) -> T | None: ...
-
-    def get[T](
-        self,
-        path: str,
-        default: T | None = None,
-        *,
-        as_type: type[T] | None = None,
-    ) -> t.Tests.Builders.BuilderValue | T | None:
-        """Get value from path.
-
-        Args:
-            path: Dot-separated path.
-            default: Default value if not found.
-            as_type: Type to validate and narrow result to.
-
-        Returns:
-            Value at path or default.
-
-        """
-        self._ensure_data_initialized()
-        parts = path.split(".")
-        current: t.Container = self._data
-
-        for part in parts:
-            if not isinstance(current, Mapping):
-                return default
-            current_mapping = current
-            if part not in current_mapping:
-                return default
-            current = current_mapping[part]
-
-        # Return the value
-        if current is None:
-            return default
-        # For as_type, type check provides narrowing
-        if as_type is not None:
-            if isinstance(current, as_type):
-                typed_current: T = current
-                return typed_current
-            return default
-        if isinstance(current, t.Primitives | bytes | BaseModel):
-            return current
-        if isinstance(current, Mapping):
-            return {str(k): self._to_payload_value(v) for k, v in current.items()}
-        if isinstance(current, Sequence):
-            return [self._to_payload_value(item) for item in current]
-        return default
 
     def to_result(
         self,
@@ -758,116 +1109,29 @@ class FlextTestsBuilders:
             return result.value
         return result
 
-    def build(
-        self,
-        **kwargs: t.Tests.ContainerValue,  # Accept payload values - validated by BuildParams
-    ) -> (
-        t.Tests.Builders.BuildOutputValue
-        | Sequence[t.Tests.Builders.BuildOutputValue]
-        | Sequence[tuple[str, t.Tests.Builders.BuildOutputValue]]
-    ):
-        """Build the dataset with output type control.
-
-        Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Tests.Builders.BuildParams model.
+    def with_configs(self, *, production: bool = False) -> Self:
+        """Add configuration to builder.
 
         Args:
-            **kwargs: Build parameters (as_model, as_list, flatten, etc.)
-
-        Returns:
-            Built dataset in requested format.
-
-        Examples:
-            # Default dict
-            data = tb().add("x", 1).build()
-
-            # Parametrized for pytest
-            cases = tb().add("test_id", "case_1").add("value", 42).build(as_parametrized=True)
-            # [("case_1", {"test_id": "case_1", "value": 42})]
-
-            # With validation
-            data = tb().add("count", 5).build(validate_with=lambda d: d["count"] > 0)
-
-            # With transformation
-            doubled = tb().add("x", 1).build(map_result=lambda d: d["x"] * 2)
-
-        """
-        # Convert kwargs to validated model using FlextUtilities
-        # Use from_kwargs for simple kwargs (all payload-compatible)
-        try:
-            params = m.Tests.Builders.BuildParams.model_validate(kwargs)
-        except (TypeError, ValueError, AttributeError) as exc:
-            error_msg = f"Invalid build() parameters: {exc}"
-            raise ValueError(error_msg) from exc
-
-        self._ensure_data_initialized()
-        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
-        assert self._data is not None, "_data must be initialized"
-        builder_data: t.Tests.Builders.BuilderDict = dict(self._data)
-
-        # Convert batch results with _is_result or _is_failure flags to FlextResult
-        data = self._process_batch_results(builder_data)
-
-        if params.filter_none:
-            data = {k: v for k, v in data.items() if v is not None}
-
-        if params.flatten:
-            # Use fallback flatten implementation - needs BuilderDict input
-            flat_input: t.Tests.Builders.BuilderDict = {}
-            for k, v in data.items():
-                if not isinstance(v, r):
-                    flat_input[k] = self._to_payload_value(v)
-            data = dict(self._flatten_dict(flat_input))
-
-        # Apply validation
-        data_for_hooks: t.Tests.Builders.BuilderOutputDict = {
-            str(key): value for key, value in data.items()
-        }
-        if params.validate_with is not None and not params.validate_with(
-            data_for_hooks,
-        ):
-            error_msg = "Validation failed during build"
-            raise ValueError(error_msg)
-
-        # Apply assertion
-        if params.assert_with is not None:
-            params.assert_with(data_for_hooks)
-
-        # Apply transformation
-        if params.map_result is not None:
-            return params.map_result(data_for_hooks)
-
-        if params.keys_only:
-            return [*data.keys()]
-
-        if params.values_only:
-            return [*data.values()]
-
-        if params.as_list:
-            return list(data.items())
-
-        if params.as_parametrized:
-            test_id = str(data.get(params.parametrize_key, "default"))
-            return [(test_id, data)]
-
-        if params.as_model is not None:
-            model_kwargs: dict[str, t.Tests.ContainerValue] = {
-                k: self._to_payload_value(v) for k, v in data.items()
-            }
-            return params.as_model(**model_kwargs)
-
-        return data
-
-    def reset(self) -> Self:
-        """Reset builder state.
+            production: If True, use production settings; otherwise development.
 
         Returns:
             Self for method chaining.
 
+        Example:
+            builder.with_configs(production=True)
+            data = builder.build()
+            assert data["configs"]["environment"] == "production"
+
         """
-        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
-        self._data = {}
-        return self
+        config: dict[str, t.Tests.ContainerValue] = {
+            "environment": "production" if production else "development",
+            "debug": not production,
+            "service_type": "api",
+            "timeout": 30,
+        }
+        # ConfigurationDict is compatible with BuilderValue
+        return self.add("configs", value=config)
 
     # =========================================================================
     # CONVENIENCE METHODS (Legacy API - Kept for backward compatibility)
@@ -900,30 +1164,6 @@ class FlextTestsBuilders:
         # list[ConfigurationDict] is compatible with BuilderValue
         return self.add("users", value=users)
 
-    def with_configs(self, *, production: bool = False) -> Self:
-        """Add configuration to builder.
-
-        Args:
-            production: If True, use production settings; otherwise development.
-
-        Returns:
-            Self for method chaining.
-
-        Example:
-            builder.with_configs(production=True)
-            data = builder.build()
-            assert data["configs"]["environment"] == "production"
-
-        """
-        config: dict[str, t.Tests.ContainerValue] = {
-            "environment": "production" if production else "development",
-            "debug": not production,
-            "service_type": "api",
-            "timeout": 30,
-        }
-        # ConfigurationDict is compatible with BuilderValue
-        return self.add("configs", value=config)
-
     def with_validation_fields(self, count: int = 5) -> Self:
         """Add validation test fields to builder.
 
@@ -946,345 +1186,6 @@ class FlextTestsBuilders:
         }
         # ConfigurationDict is compatible with BuilderValue
         return self.add("validation_fields", value=validation_fields)
-
-    # =========================================================================
-    # BUILDER COMPOSITION & CLONING
-    # =========================================================================
-
-    def copy_builder(self) -> Self:
-        """Create independent copy of builder state.
-
-        Examples:
-            # Create base builder
-            base = tb().add("users", factory="users", count=5)
-
-            # Create variations
-            REDACTED_LDAP_BIND_PASSWORD_variant = base.copy_builder().add("role", "REDACTED_LDAP_BIND_PASSWORD")
-            user_variant = base.copy_builder().add("role", "user")
-
-        Returns:
-            New builder instance with copied data.
-
-        """
-        self._ensure_data_initialized()
-        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
-        assert self._data is not None, "_data must be initialized"
-        # Create new instance of same class (for proper subclass support)
-        new_builder = type(self)()
-        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
-        new_builder._data = dict(self._data)
-        return new_builder
-
-    def fork(self, **updates: t.Tests.ContainerValue) -> Self:
-        """Copy and immediately add updates.
-
-        Uses Pydantic 2 models for parameter validation.
-        All updates are validated using m.Tests.Builders.AddParams model via add().
-
-        Examples:
-            base = tb().add("config", mapping={"env": "test"})
-
-            # Fork with updates
-            prod = base.fork(env="prod", debug=False)
-            dev = base.fork(env="dev", debug=True)
-
-        Args:
-            **updates: Key-value pairs to add to copied builder (validated via add()).
-
-        Returns:
-            New builder instance with copied data and updates.
-
-        """
-        new_builder = self.copy_builder()
-        # Add each update using add() method for validation
-        # add() uses u.Model.from_kwargs() internally for validation
-        # Payload value is compatible with BuilderValue (it's a subset)
-        for key, value in updates.items():
-            _ = new_builder.add(key, value=value)
-        return new_builder
-
-    def merge_from(
-        self,
-        other: FlextTestsBuilders,
-        *,
-        strategy: str = "deep",
-        exclude_keys: frozenset[str] | None = None,
-    ) -> Self:
-        """Merge data from another builder.
-
-        Uses Pydantic 2 models for parameter validation.
-        All parameters are validated using m.Tests.Builders.MergeFromParams model.
-        Uses FlextUtilities.merge() internally.
-
-        Examples:
-            common = tb().add("base", 1)
-            specific = tb().add("extra", 2)
-
-            combined = common.copy_builder().merge_from(specific)
-            # {"base": 1, "extra": 2}
-
-        Args:
-            other: Another builder to merge from.
-            strategy: Merge strategy ("deep", "override", "append", etc.).
-            exclude_keys: Set of keys to exclude from merge.
-
-        Returns:
-            Self for method chaining.
-
-        """
-        # Convert kwargs to validated model using FlextUtilities
-        # Convert frozenset to list for payload compatibility
-        # Pydantic 2 will coerce list back to frozenset in the model
-        try:
-            params = m.Tests.Builders.MergeFromParams.model_validate(
-                {
-                    "strategy": strategy,
-                    "exclude_keys": list(exclude_keys) if exclude_keys else None,
-                },
-            )
-        except (TypeError, ValueError, AttributeError) as exc:
-            error_msg = f"Invalid merge_from() parameters: {exc}"
-            raise ValueError(error_msg) from exc
-
-        self._ensure_data_initialized()
-        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
-        assert self._data is not None, "_data must be initialized"
-        # Ensure other builder's _data is also initialized
-        other._ensure_data_initialized()
-        assert other._data is not None, "other._data must be initialized"
-        other_data = dict(other._data)
-        if params.exclude_keys:
-            other_data = {
-                k: v for k, v in other_data.items() if k not in params.exclude_keys
-            }
-
-        # Convert BuilderDict to ConfigurationDict for merge
-        # Use TypeGuard t.Guards.is_general_value for proper type narrowing
-        self_dict: dict[str, t.Tests.ContainerValue] = {
-            k: v for k, v in self._data.items() if t.Guards.is_general_value(v)
-        }
-        other_dict: dict[str, t.Tests.ContainerValue] = {
-            k: v for k, v in other_data.items() if t.Guards.is_general_value(v)
-        }
-        merge_result = u.merge(
-            {k: self._to_guard_input(v) for k, v in self_dict.items()},
-            {k: self._to_guard_input(v) for k, v in other_dict.items()},
-            strategy=params.strategy,
-        )
-        if merge_result.is_success:
-            self._ensure_data_initialized()
-            # _data is always a dict after __init__ and _ensure_data_initialized
-            for k, v in merge_result.value.items():
-                self._data[k] = self._to_payload_value(v)
-        return self
-
-    # =========================================================================
-    # BATCH OPERATIONS & SCENARIOS
-    # =========================================================================
-
-    def batch(
-        self,
-        key: str,
-        scenarios: Sequence[tuple[str, t.Tests.ContainerValue]],
-        **kwargs: t.Tests.ContainerValue,
-    ) -> Self:
-        """Build batch of test scenarios.
-
-        Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Tests.Builders.BatchParams model.
-
-        Args:
-            key: Key to store batch under.
-            scenarios: Sequence of (scenario_id, data) tuples.
-            **kwargs: Additional parameters (as_results, with_failures)
-
-        Returns:
-            Self for method chaining.
-
-        Examples:
-            # Create test scenarios
-            tb().batch("cases", [
-                ("valid_email", "test@example.com"),
-                ("invalid_email", "not-an-email"),
-            ])
-
-            # With result wrapping
-            tb().batch("results", [
-                ("success", 42),
-                ("another", 100),
-            ], as_results=True)
-
-            # Mixed success/failure
-            tb().batch("results", [("ok", 1)], with_failures=[("err", "failed")])
-
-        """
-        # Convert kwargs to validated model using FlextUtilities
-        # u.Model.from_kwargs() accepts **kwargs: object - Pydantic 2 handles conversions automatically
-        # scenarios is passed as keyword argument - Pydantic 2 will validate the type
-        try:
-            params = m.Tests.Builders.BatchParams.model_validate(
-                {"key": key, "scenarios": scenarios, **kwargs},
-            )
-        except (TypeError, ValueError, AttributeError) as exc:
-            error_msg = f"Invalid batch() parameters: {exc}"
-            raise ValueError(error_msg) from exc
-
-        self._ensure_data_initialized()
-        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
-        assert self._data is not None, "_data must be initialized"
-        builder_data: t.Tests.Builders.BuilderDict = self._data
-        # Builders store DATA only - as_results wrapping happens when accessed
-        batch_data: list[t.Tests.ContainerValue] = []
-        for scenario_id, scenario_data in params.scenarios:
-            # Store as dict with id and data - results wrapped later
-            if params.as_results:
-                batch_data.append(
-                    {
-                        "_id": scenario_id,
-                        "_result_ok": scenario_data,
-                        "_is_result_marker": True,
-                    },
-                )
-            else:
-                batch_data.append(scenario_data)
-
-        if params.with_failures:
-            for fail_id, fail_error in params.with_failures:
-                # Store failure markers - results wrapped later
-                batch_data.append(
-                    {
-                        "_id": fail_id,
-                        "_result_fail": fail_error,
-                        "_is_result_marker": True,
-                    },
-                )
-
-        # list[payload value] is compatible with BuilderValue
-        builder_data[params.key] = batch_data
-        # Update instance attribute after local modifications
-        self._data = builder_data
-        return self
-
-    def scenarios(
-        self,
-        *cases: tuple[str, Mapping[str, t.Tests.Builders.BuilderValue]],
-    ) -> list[t.Tests.Builders.ParametrizedCase]:
-        """Build pytest.mark.parametrize compatible scenarios.
-
-        Examples:
-            # Define scenarios directly
-            cases = tb().scenarios(
-                ("test_valid", {"input": "hello", "expected": 5}),
-                ("test_empty", {"input": "", "expected": 0}),
-                ("test_unicode", {"input": "🎉", "expected": 1}),
-            )
-
-            @pytest.mark.parametrize("test_id,data", cases)
-            def test_length(self, test_id, data):
-                assert len(data["input"]) == data["expected"]
-
-        Args:
-            *cases: Variable number of (test_id, data) tuples.
-
-        Returns:
-            List of parametrized test cases.
-
-        """
-        return list(cases)
-
-    # =========================================================================
-    # NO CONVENIENCE METHODS - Following FLEXT patterns:
-    # Use add() directly with parameters, no wrappers or shortcuts
-    # =========================================================================
-
-    # =========================================================================
-    # PRIVATE HELPER METHODS
-    # =========================================================================
-
-    def _get_model_kind(self, model: type[BaseModel]) -> str:
-        """Map Pydantic model class to factory kind string.
-
-        Args:
-            model: Pydantic model class.
-
-        Returns:
-            Factory kind string ("user", "config", "service", "entity", "value").
-
-        """
-        model_name = model.__name__.lower()
-        if "user" in model_name:
-            return "user"
-        if "config" in model_name:
-            return "config"
-        if "service" in model_name:
-            return "service"
-        if "entity" in model_name:
-            return "entity"
-        if "value" in model_name:
-            return "value"
-        msg = f"Unknown model kind for {model.__name__}"
-        raise ValueError(msg)
-
-    def _generate_from_factory(
-        self,
-        factory: str,
-        count: int,
-    ) -> t.Tests.Builders.BuilderValue:
-        """Generate data using factory methods.
-
-        Args:
-            factory: Factory type name.
-            count: Number of items to generate.
-
-        Returns:
-            Generated data.
-
-        """
-        if factory == "users":
-            batch_result = tt.batch("user", count=count)
-            users_data: list[dict[str, t.Tests.ContainerValue]] = [
-                {
-                    c.Tests.Builders.KEY_ID: item.id,
-                    c.Tests.Builders.KEY_NAME: item.name,
-                    c.Tests.Builders.KEY_EMAIL: item.email,
-                    c.Tests.Builders.KEY_ACTIVE: item.active,
-                }
-                for item in batch_result
-                if isinstance(item, m.Tests.Factory.User)
-            ]
-            return users_data
-
-        if factory == "configs":
-            return self._create_config(production=False, debug=True)
-
-        if factory == "services":
-            services: list[dict[str, str]] = []
-            for i in range(count):
-                service_result = tt.model("service", name=f"service_{i}")
-                if not isinstance(service_result, m.Tests.Factory.Service):
-                    continue
-                services.append({
-                    "id": service_result.id,
-                    "name": service_result.name,
-                    "type": service_result.type,
-                    "status": service_result.status,
-                })
-            return services
-
-        if factory == "results":
-            # Generate list of success results with integers
-            values = list(range(count))
-            results = tt.results(values)
-            return [
-                {
-                    "success": res.is_success,
-                    "value": res.value if res.is_success else None,
-                }
-                for res in results
-            ]
-
-        error_msg = f"Unknown factory: {factory}"
-        raise ValueError(error_msg)
 
     def _create_config(
         self,
@@ -1363,6 +1264,134 @@ class FlextTestsBuilders:
         }
         return config_data
 
+    def _ensure_data_initialized(self) -> None:
+        """Ensure _data is initialized (helper for type safety)."""
+        if not self._data:
+            self._data = {}
+
+    def _flatten_dict(
+        self,
+        data: t.Tests.Builders.BuilderDict,
+        parent_key: str = "",
+        sep: str = ".",
+    ) -> t.Tests.Builders.BuilderDict:
+        """Flatten nested dict using dot notation keys.
+
+        Args:
+            data: Dict to flatten.
+            parent_key: Parent key prefix.
+            sep: Separator for keys.
+
+        Returns:
+            Flattened dict.
+
+        """
+        items: list[tuple[str, t.Tests.Builders.BuilderValue]] = []
+        for key, value in data.items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
+            # Check if value is a dict (not BaseModel)
+            if isinstance(value, dict):
+                items.extend(
+                    self._flatten_dict(value, new_key, sep).items(),
+                )
+            else:
+                items.append((new_key, value))
+        return dict(items)
+
+    def _generate_from_factory(
+        self,
+        factory: str,
+        count: int,
+    ) -> t.Tests.Builders.BuilderValue:
+        """Generate data using factory methods.
+
+        Args:
+            factory: Factory type name.
+            count: Number of items to generate.
+
+        Returns:
+            Generated data.
+
+        """
+        if factory == "users":
+            batch_result = tt.batch("user", count=count)
+            users_data: list[dict[str, t.Tests.ContainerValue]] = [
+                {
+                    c.Tests.Builders.KEY_ID: item.id,
+                    c.Tests.Builders.KEY_NAME: item.name,
+                    c.Tests.Builders.KEY_EMAIL: item.email,
+                    c.Tests.Builders.KEY_ACTIVE: item.active,
+                }
+                for item in batch_result
+                if isinstance(item, m.Tests.Factory.User)
+            ]
+            return users_data
+
+        if factory == "configs":
+            return self._create_config(production=False, debug=True)
+
+        if factory == "services":
+            services: list[dict[str, str]] = []
+            for i in range(count):
+                service_result = tt.model("service", name=f"service_{i}")
+                if not isinstance(service_result, m.Tests.Factory.Service):
+                    continue
+                services.append({
+                    "id": service_result.id,
+                    "name": service_result.name,
+                    "type": service_result.type,
+                    "status": service_result.status,
+                })
+            return services
+
+        if factory == "results":
+            # Generate list of success results with integers
+            values = list(range(count))
+            results = tt.results(values)
+            return [
+                {
+                    "success": res.is_success,
+                    "value": res.value if res.is_success else None,
+                }
+                for res in results
+            ]
+
+        error_msg = f"Unknown factory: {factory}"
+        raise ValueError(error_msg)
+
+    # =========================================================================
+    # NO CONVENIENCE METHODS - Following FLEXT patterns:
+    # Use add() directly with parameters, no wrappers or shortcuts
+    # =========================================================================
+
+    # =========================================================================
+    # PRIVATE HELPER METHODS
+    # =========================================================================
+
+    def _get_model_kind(self, model: type[BaseModel]) -> str:
+        """Map Pydantic model class to factory kind string.
+
+        Args:
+            model: Pydantic model class.
+
+        Returns:
+            Factory kind string ("user", "config", "service", "entity", "value").
+
+        """
+        model_name = model.__name__.lower()
+        if "user" in model_name:
+            return "user"
+        if "config" in model_name:
+            return "config"
+        if "service" in model_name:
+            return "service"
+        if "entity" in model_name:
+            return "entity"
+        if "value" in model_name:
+            return "value"
+        msg = f"Unknown model kind for {model.__name__}"
+        raise ValueError(msg)
+
     def _process_batch_results(
         self,
         data: t.Tests.Builders.BuilderDict,
@@ -1422,35 +1451,6 @@ class FlextTestsBuilders:
                 processed[key] = value
         return processed
 
-    def _flatten_dict(
-        self,
-        data: t.Tests.Builders.BuilderDict,
-        parent_key: str = "",
-        sep: str = ".",
-    ) -> t.Tests.Builders.BuilderDict:
-        """Flatten nested dict using dot notation keys.
-
-        Args:
-            data: Dict to flatten.
-            parent_key: Parent key prefix.
-            sep: Separator for keys.
-
-        Returns:
-            Flattened dict.
-
-        """
-        items: list[tuple[str, t.Tests.Builders.BuilderValue]] = []
-        for key, value in data.items():
-            new_key = f"{parent_key}{sep}{key}" if parent_key else key
-            # Check if value is a dict (not BaseModel)
-            if isinstance(value, dict):
-                items.extend(
-                    self._flatten_dict(value, new_key, sep).items(),
-                )
-            else:
-                items.append((new_key, value))
-        return dict(items)
-
     # =========================================================================
     # STATIC NAMESPACE: tb.Tests.* - DELEGATION PATTERN
     # =========================================================================
@@ -1470,9 +1470,33 @@ class FlextTestsBuilders:
             """
 
             @staticmethod
-            def ok[T](value: T) -> r[T]:
-                """Create success result using r[T] directly."""
-                return r[T].ok(value)
+            def all_success[T](results: Sequence[r[T]]) -> bool:
+                """Check if all results are successful."""
+                return all(res.is_success for res in results)
+
+            @staticmethod
+            def assert_failure(result: r[t.Tests.ContainerValue]) -> str:
+                """Assert failure - r[T] satisfies protocol p.Result[T]."""
+                return u.Tests.Result.assert_failure(result)
+
+            @staticmethod
+            def assert_success[T](result: r[T]) -> T:
+                """Assert success - r[T] satisfies protocol p.Result[T]."""
+                return u.Tests.Result.assert_success(result)
+
+            @staticmethod
+            def batch_fail[T](
+                errors: Sequence[str],
+                expected_type: type[T] | None = None,
+            ) -> list[r[T]]:
+                """Create batch of failure results - DELEGATES to tt.results()."""
+                _ = expected_type
+                return tt.results(values=[], errors=list(errors))
+
+            @staticmethod
+            def batch_ok[T](values: Sequence[T]) -> list[r[T]]:
+                """Create batch of success results - DELEGATES to tt.results()."""
+                return tt.results(values=list(values))
 
             @staticmethod
             def fail[T](
@@ -1487,20 +1511,6 @@ class FlextTestsBuilders:
                 return r[T].fail(error, error_code=error_code, error_data=data)
 
             @staticmethod
-            def batch_ok[T](values: Sequence[T]) -> list[r[T]]:
-                """Create batch of success results - DELEGATES to tt.results()."""
-                return tt.results(values=list(values))
-
-            @staticmethod
-            def batch_fail[T](
-                errors: Sequence[str],
-                expected_type: type[T] | None = None,
-            ) -> list[r[T]]:
-                """Create batch of failure results - DELEGATES to tt.results()."""
-                _ = expected_type
-                return tt.results(values=[], errors=list(errors))
-
-            @staticmethod
             def mixed[T](
                 successes: Sequence[T],
                 errors: Sequence[str],
@@ -1509,9 +1519,9 @@ class FlextTestsBuilders:
                 return tt.results(values=list(successes), errors=list(errors))
 
             @staticmethod
-            def all_success[T](results: Sequence[r[T]]) -> bool:
-                """Check if all results are successful."""
-                return all(res.is_success for res in results)
+            def ok[T](value: T) -> r[T]:
+                """Create success result using r[T] directly."""
+                return r[T].ok(value)
 
             @staticmethod
             def partition[T](
@@ -1522,28 +1532,11 @@ class FlextTestsBuilders:
                 errors = [str(res.error) for res in results if res.is_failure]
                 return successes, errors
 
-            @staticmethod
-            def assert_success[T](result: r[T]) -> T:
-                """Assert success - r[T] satisfies protocol p.Result[T]."""
-                return u.Tests.Result.assert_success(result)
-
-            @staticmethod
-            def assert_failure(result: r[t.Tests.ContainerValue]) -> str:
-                """Assert failure - r[T] satisfies protocol p.Result[T]."""
-                return u.Tests.Result.assert_failure(result)
-
         class Batch:
             """Batch operations - tb.Tests.Batch.*.
 
             DELEGATES TO: u.Tests.GenericHelpers.*, u.Tests.TestCaseHelpers.*
             """
-
-            @staticmethod
-            def scenarios[T](
-                *cases: tuple[str, T],
-            ) -> list[tuple[str, T]]:
-                """Create parametrized test cases."""
-                return list(cases)
 
             @staticmethod
             def from_dict[T](
@@ -1582,6 +1575,13 @@ class FlextTestsBuilders:
                 return parametrized
 
             @staticmethod
+            def scenarios[T](
+                *cases: tuple[str, T],
+            ) -> list[tuple[str, T]]:
+                """Create parametrized test cases."""
+                return list(cases)
+
+            @staticmethod
             def test_cases(
                 operation: str,
                 descriptions: Sequence[str],
@@ -1602,39 +1602,6 @@ class FlextTestsBuilders:
 
             DELEGATES TO: u.Collection.*, u.Mapper.*, u.Tests.Factory.*
             """
-
-            @staticmethod
-            def typed(
-                **kwargs: t.Tests.ContainerValue,
-            ) -> Mapping[str, t.Tests.ContainerValue]:
-                """Create typed dictionary - returns Mapping[str, t.Tests.ContainerValue]."""
-                return dict(kwargs)
-
-            @staticmethod
-            def merged(
-                *dicts: Mapping[str, t.Tests.ContainerValue],
-            ) -> Mapping[str, t.Tests.ContainerValue]:
-                """Merge dictionaries - DELEGATES to u.merge()."""
-                result: MutableMapping[str, t.Tests.ContainerValue] = {}
-                for d in dicts:
-                    merge_result = u.merge(
-                        {
-                            k: FlextTestsBuilders._to_guard_input(v)
-                            for k, v in result.items()
-                        },
-                        {
-                            str(k): FlextTestsBuilders._to_guard_input(
-                                FlextTestsBuilders._to_payload_value(v),
-                            )
-                            for k, v in d.items()
-                        },
-                    )
-                    if merge_result.is_success:
-                        result = {
-                            str(k): FlextTestsBuilders._to_payload_value(v)
-                            for k, v in merge_result.value.items()
-                        }
-                return result
 
             @staticmethod
             def flatten(
@@ -1672,6 +1639,42 @@ class FlextTestsBuilders:
                 return _flatten(dict(nested))
 
             @staticmethod
+            def id() -> str:
+                """Generate UUID - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.generate_id()
+
+            @staticmethod
+            def merged(
+                *dicts: Mapping[str, t.Tests.ContainerValue],
+            ) -> Mapping[str, t.Tests.ContainerValue]:
+                """Merge dictionaries - DELEGATES to u.merge()."""
+                result: MutableMapping[str, t.Tests.ContainerValue] = {}
+                for d in dicts:
+                    merge_result = u.merge(
+                        {
+                            k: FlextTestsBuilders._to_guard_input(v)
+                            for k, v in result.items()
+                        },
+                        {
+                            str(k): FlextTestsBuilders._to_guard_input(
+                                FlextTestsBuilders._to_payload_value(v),
+                            )
+                            for k, v in d.items()
+                        },
+                    )
+                    if merge_result.is_success:
+                        result = {
+                            str(k): FlextTestsBuilders._to_payload_value(v)
+                            for k, v in merge_result.value.items()
+                        }
+                return result
+
+            @staticmethod
+            def short_id(length: int = 8) -> str:
+                """Generate short ID - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.generate_short_id(length)
+
+            @staticmethod
             def transform[T, U](
                 items: Sequence[T],
                 func: Callable[[T], U],
@@ -1680,105 +1683,17 @@ class FlextTestsBuilders:
                 return [func(item) for item in items]
 
             @staticmethod
-            def id() -> str:
-                """Generate UUID - DELEGATES to u.Tests.Factory."""
-                return u.Tests.Factory.generate_id()
-
-            @staticmethod
-            def short_id(length: int = 8) -> str:
-                """Generate short ID - DELEGATES to u.Tests.Factory."""
-                return u.Tests.Factory.generate_short_id(length)
+            def typed(
+                **kwargs: t.Tests.ContainerValue,
+            ) -> Mapping[str, t.Tests.ContainerValue]:
+                """Create typed dictionary - returns Mapping[str, t.Tests.ContainerValue]."""
+                return dict(kwargs)
 
         class Model:
             """Model creation helpers - tb.Tests.Model.*.
 
             DELEGATES TO: tt.model(), tt.batch(), u.Tests.DomainHelpers.*
             """
-
-            @staticmethod
-            def user(**overrides: t.Tests.ContainerValue) -> m.Tests.Factory.User:
-                """Create user - DELEGATES to tt.model()."""
-                result = tt.model("user", **overrides)
-                if isinstance(result, m.Tests.Factory.User):
-                    return result
-                raise TypeError(
-                    f"Expected User from tt.model('user'), got {type(result).__name__}",
-                )
-
-            @staticmethod
-            def config(**overrides: t.Tests.ContainerValue) -> m.Tests.Factory.Config:
-                """Create config - DELEGATES to tt.model()."""
-                result = tt.model("config", **overrides)
-                if isinstance(result, m.Tests.Factory.Config):
-                    return result
-                raise TypeError(
-                    f"Expected Config from tt.model('config'), got {type(result).__name__}",
-                )
-
-            @staticmethod
-            def service(**overrides: t.Tests.ContainerValue) -> m.Tests.Factory.Service:
-                """Create service - DELEGATES to tt.model()."""
-                result = tt.model("service", **overrides)
-                if isinstance(result, m.Tests.Factory.Service):
-                    return result
-                raise TypeError(
-                    f"Expected Service from tt.model('service'), got {type(result).__name__}",
-                )
-
-            @staticmethod
-            def entity[T: m.Tests.Factory.Entity](
-                entity_class: type[T],
-                name: str = "",
-                value: t.Tests.ContainerValue = "",
-            ) -> T:
-                """Create entity - DELEGATES to u.Tests.DomainHelpers."""
-
-                def entity_factory(
-                    *,
-                    name: str,
-                    value: t.Tests.ContainerValue,
-                ) -> T:
-                    return entity_class(name=name, value=value)
-
-                return u.Tests.DomainHelpers.create_test_entity_instance(
-                    name=name,
-                    value=value,
-                    entity_class=entity_factory,
-                )
-
-            @staticmethod
-            def value_object[T: m.Tests.Factory.Value](
-                value_class: type[T],
-                data: str = "",
-                count: int = 1,
-            ) -> T:
-                """Create value object - DELEGATES to u.Tests.DomainHelpers."""
-
-                def value_factory(
-                    *,
-                    data: str,
-                    count: int,
-                ) -> T:
-                    return value_class(data=data, count=count)
-
-                return u.Tests.DomainHelpers.create_test_value_object_instance(
-                    data=data,
-                    count=count,
-                    value_class=value_factory,
-                )
-
-            @staticmethod
-            def batch_users(
-                count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
-            ) -> list[m.Tests.Factory.User]:
-                """Create batch users - DELEGATES to tt.batch()."""
-                # tt.batch returns list of models - filter to User instances
-                batch_result = tt.batch("user", count=count)
-                return [
-                    item
-                    for item in batch_result
-                    if isinstance(item, m.Tests.Factory.User)
-                ]
 
             @staticmethod
             def batch_entities[T: m.Tests.Factory.Entity](
@@ -1804,16 +1719,96 @@ class FlextTestsBuilders:
                     return result.value
                 raise ValueError(result.error)
 
+            @staticmethod
+            def batch_users(
+                count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
+            ) -> list[m.Tests.Factory.User]:
+                """Create batch users - DELEGATES to tt.batch()."""
+                # tt.batch returns list of models - filter to User instances
+                batch_result = tt.batch("user", count=count)
+                return [
+                    item
+                    for item in batch_result
+                    if isinstance(item, m.Tests.Factory.User)
+                ]
+
+            @staticmethod
+            def config(**overrides: t.Tests.ContainerValue) -> m.Tests.Factory.Config:
+                """Create config - DELEGATES to tt.model()."""
+                result = tt.model("config", **overrides)
+                if isinstance(result, m.Tests.Factory.Config):
+                    return result
+                raise TypeError(
+                    f"Expected Config from tt.model('config'), got {type(result).__name__}",
+                )
+
+            @staticmethod
+            def entity[T: m.Tests.Factory.Entity](
+                entity_class: type[T],
+                name: str = "",
+                value: t.Tests.ContainerValue = "",
+            ) -> T:
+                """Create entity - DELEGATES to u.Tests.DomainHelpers."""
+
+                def entity_factory(
+                    *,
+                    name: str,
+                    value: t.Tests.ContainerValue,
+                ) -> T:
+                    return entity_class(name=name, value=value)
+
+                return u.Tests.DomainHelpers.create_test_entity_instance(
+                    name=name,
+                    value=value,
+                    entity_class=entity_factory,
+                )
+
+            @staticmethod
+            def service(**overrides: t.Tests.ContainerValue) -> m.Tests.Factory.Service:
+                """Create service - DELEGATES to tt.model()."""
+                result = tt.model("service", **overrides)
+                if isinstance(result, m.Tests.Factory.Service):
+                    return result
+                raise TypeError(
+                    f"Expected Service from tt.model('service'), got {type(result).__name__}",
+                )
+
+            @staticmethod
+            def user(**overrides: t.Tests.ContainerValue) -> m.Tests.Factory.User:
+                """Create user - DELEGATES to tt.model()."""
+                result = tt.model("user", **overrides)
+                if isinstance(result, m.Tests.Factory.User):
+                    return result
+                raise TypeError(
+                    f"Expected User from tt.model('user'), got {type(result).__name__}",
+                )
+
+            @staticmethod
+            def value_object[T: m.Tests.Factory.Value](
+                value_class: type[T],
+                data: str = "",
+                count: int = 1,
+            ) -> T:
+                """Create value object - DELEGATES to u.Tests.DomainHelpers."""
+
+                def value_factory(
+                    *,
+                    data: str,
+                    count: int,
+                ) -> T:
+                    return value_class(data=data, count=count)
+
+                return u.Tests.DomainHelpers.create_test_value_object_instance(
+                    data=data,
+                    count=count,
+                    value_class=value_factory,
+                )
+
         class Operation:
             """Operation helpers - tb.Tests.Operation.*.
 
             DELEGATES TO: u.Tests.Factory.*, tt.op()
             """
-
-            @staticmethod
-            def simple() -> Callable[[], t.Tests.ContainerValue]:
-                """Simple operation - DELEGATES to u.Tests.Factory."""
-                return u.Tests.Factory.simple_operation
 
             @staticmethod
             def add() -> Callable[
@@ -1822,11 +1817,6 @@ class FlextTestsBuilders:
             ]:
                 """Add operation - DELEGATES to u.Tests.Factory."""
                 return u.Tests.Factory.add_operation
-
-            @staticmethod
-            def format() -> Callable[[str, int], str]:
-                """Format operation - DELEGATES to u.Tests.Factory."""
-                return u.Tests.Factory.format_operation
 
             @staticmethod
             def error(message: str) -> Callable[[], t.Tests.ContainerValue]:
@@ -1839,6 +1829,16 @@ class FlextTestsBuilders:
             ) -> r[t.Tests.ContainerValue]:
                 """Execute service - DELEGATES to u.Tests.Factory."""
                 return u.Tests.Factory.execute_user_service(overrides or {})
+
+            @staticmethod
+            def format() -> Callable[[str, int], str]:
+                """Format operation - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.format_operation
+
+            @staticmethod
+            def simple() -> Callable[[], t.Tests.ContainerValue]:
+                """Simple operation - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.simple_operation
 
 
 # Short alias for convenient test usage

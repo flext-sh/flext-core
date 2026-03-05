@@ -58,6 +58,98 @@ class FlextUtilitiesArgs:
             return None
 
     # ─────────────────────────────────────────────────────────────
+    # METHOD 3: Signature introspection for auto-parsing
+    # ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def get_enum_params(
+        func: p.CallableWithHints,
+    ) -> Mapping[str, type[StrEnum]]:
+        """Extract parameters that are StrEnum from function signature.
+
+        Example:
+             def process(self, status: Status, name: str) -> bool: ...
+
+             params = FlextUtilitiesArgs.get_enum_params(process)
+             # params = {"status": Status}
+
+        """
+        try:
+            hints = get_type_hints(func)
+        except (NameError, TypeError, AttributeError):
+            return {}
+
+        enum_params: dict[str, type[StrEnum]] = {}
+
+        for name, hint in hints.items():
+            if name == "return":
+                continue
+
+            # Unwrap Annotated
+            current_hint = hint
+            origin = get_origin(hint)
+            if origin is Annotated:
+                current_hint = get_args(hint)[0]
+                origin = get_origin(current_hint)
+
+            # Check if it's a StrEnum
+            validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
+            if validated_hint is not None:
+                enum_params[name] = validated_hint
+
+            # Check Union types (str | Status) - Python 3.10+ uses UnionType
+            elif origin is UnionType:
+                for arg in get_args(current_hint):
+                    validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
+                    if validated_arg is not None:
+                        enum_params[name] = validated_arg
+                        break
+
+        return enum_params
+
+    # ─────────────────────────────────────────────────────────────
+    # METHOD 2: Parse kwargs to typed dict
+    # ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def parse_kwargs[E: StrEnum](
+        kwargs: Mapping[str, t.Container],
+        enum_fields: Mapping[str, type[E]],
+    ) -> r[Mapping[str, t.Container]]:
+        """Parse kwargs converting specific fields to StrEnums.
+
+        Example:
+             result = FlextUtilitiesArgs.parse_kwargs(
+                 kwargs={"status": "active", "name": "John"},
+                 enum_fields={"status": Status},
+             )
+             if result.is_success:
+                 # result.value = {"status": Status.ACTIVE, "name": "John"}
+
+        """
+        # Convert Mapping to dict for mutability
+        parsed = dict(kwargs)
+        errors: list[str] = []
+
+        for field, enum_cls in enum_fields.items():
+            if field in parsed:
+                value = parsed[field]
+                adapter = TypeAdapter(enum_cls)
+                try:
+                    parsed[field] = adapter.validate_python(value)
+                except ValidationError:
+                    members_dict = getattr(enum_cls, "__members__", {})
+                    enum_members = list(members_dict.values())
+                    valid = ", ".join(m.value for m in enum_members)
+                    errors.append(f"{field}: '{value}' not in [{valid}]")
+
+        if errors:
+            return r[t.ConfigurationMapping].fail(
+                f"Invalid values: {'; '.join(errors)}",
+            )
+        return r[t.ConfigurationMapping].ok(parsed)
+
+    # ─────────────────────────────────────────────────────────────
     # METHOD 1: @validate_call from Pydantic (recommended)
     # ─────────────────────────────────────────────────────────────
 
@@ -140,98 +232,6 @@ class FlextUtilitiesArgs:
 
         # wrapper has correct type via @wraps preserving signature
         return wrapper
-
-    # ─────────────────────────────────────────────────────────────
-    # METHOD 2: Parse kwargs to typed dict
-    # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.Container],
-        enum_fields: Mapping[str, type[E]],
-    ) -> r[Mapping[str, t.Container]]:
-        """Parse kwargs converting specific fields to StrEnums.
-
-        Example:
-             result = FlextUtilitiesArgs.parse_kwargs(
-                 kwargs={"status": "active", "name": "John"},
-                 enum_fields={"status": Status},
-             )
-             if result.is_success:
-                 # result.value = {"status": Status.ACTIVE, "name": "John"}
-
-        """
-        # Convert Mapping to dict for mutability
-        parsed = dict(kwargs)
-        errors: list[str] = []
-
-        for field, enum_cls in enum_fields.items():
-            if field in parsed:
-                value = parsed[field]
-                adapter = TypeAdapter(enum_cls)
-                try:
-                    parsed[field] = adapter.validate_python(value)
-                except ValidationError:
-                    members_dict = getattr(enum_cls, "__members__", {})
-                    enum_members = list(members_dict.values())
-                    valid = ", ".join(m.value for m in enum_members)
-                    errors.append(f"{field}: '{value}' not in [{valid}]")
-
-        if errors:
-            return r[t.ConfigurationMapping].fail(
-                f"Invalid values: {'; '.join(errors)}",
-            )
-        return r[t.ConfigurationMapping].ok(parsed)
-
-    # ─────────────────────────────────────────────────────────────
-    # METHOD 3: Signature introspection for auto-parsing
-    # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def get_enum_params(
-        func: p.CallableWithHints,
-    ) -> Mapping[str, type[StrEnum]]:
-        """Extract parameters that are StrEnum from function signature.
-
-        Example:
-             def process(self, status: Status, name: str) -> bool: ...
-
-             params = FlextUtilitiesArgs.get_enum_params(process)
-             # params = {"status": Status}
-
-        """
-        try:
-            hints = get_type_hints(func)
-        except (NameError, TypeError, AttributeError):
-            return {}
-
-        enum_params: dict[str, type[StrEnum]] = {}
-
-        for name, hint in hints.items():
-            if name == "return":
-                continue
-
-            # Unwrap Annotated
-            current_hint = hint
-            origin = get_origin(hint)
-            if origin is Annotated:
-                current_hint = get_args(hint)[0]
-                origin = get_origin(current_hint)
-
-            # Check if it's a StrEnum
-            validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
-            if validated_hint is not None:
-                enum_params[name] = validated_hint
-
-            # Check Union types (str | Status) - Python 3.10+ uses UnionType
-            elif origin is UnionType:
-                for arg in get_args(current_hint):
-                    validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
-                    if validated_arg is not None:
-                        enum_params[name] = validated_arg
-                        break
-
-        return enum_params
 
 
 __all__ = [

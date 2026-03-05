@@ -98,36 +98,6 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
     management with Python 3.13+ advanced patterns.
     """
 
-    @override
-    def execute(self) -> FlextResult[m.ConfigMap]:
-        """Execute comprehensive configuration demonstrations using railway pattern."""
-        return (
-            self
-            ._log_start()
-            .flat_map(lambda _: self._run_demonstrations())
-            .flat_map(self._create_success_metadata)
-            .lash(self._handle_execution_error)
-        )
-
-    def _log_start(self) -> FlextResult[bool]:
-        """Log the start of demonstration."""
-        self.logger.info("Starting advanced configuration management demonstration")
-        return FlextResult[bool].ok(value=True)
-
-    def _run_demonstrations(self) -> FlextResult[tuple[str, ...]]:
-        """Run all configuration demonstrations using railway pattern with traverse (DRY)."""
-        demonstrations: Sequence[tuple[str, Callable[[], FlextResult[bool]]]] = [
-            ("basic_config", self._demonstrate_basic_config),
-            ("environment_config", self._demonstrate_environment_config),
-            ("validation_config", self._demonstrate_validation_config),
-            ("singleton_pattern", self._demonstrate_singleton_pattern),
-        ]
-
-        results = [demo_func() for _, demo_func in demonstrations]
-        return FlextResult.traverse(results, lambda r: r).map(
-            lambda _: tuple(name for name, _ in demonstrations),
-        )
-
     @staticmethod
     def _create_success_metadata(
         patterns: tuple[str, ...],
@@ -152,18 +122,6 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                     ],
                 },
             ),
-        )
-
-    @staticmethod
-    def _handle_execution_error(
-        error: str,
-    ) -> FlextResult[m.ConfigMap]:
-        """Handle execution errors with proper logging."""
-        error_msg = f"Configuration demonstration failed: {error}"
-        print(error_msg)
-        return FlextResult[m.ConfigMap].fail(
-            error_msg,
-            error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
 
     @staticmethod
@@ -218,6 +176,28 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             return FlextResult[bool].ok(value=True)
 
         return set_env_vars().flat_map(create_and_display_config)
+
+    @staticmethod
+    def _demonstrate_singleton_pattern() -> FlextResult[bool]:
+        """Show singleton configuration pattern with railway pattern."""
+
+        def create_configs() -> FlextResult[tuple[AppConfig, AppConfig]]:
+            """Create multiple config instances."""
+            config1 = AppConfig(database_url="sqlite:///:memory:")
+            config2 = AppConfig(database_url="postgresql://prod/db")
+            return FlextResult[tuple[AppConfig, AppConfig]].ok((config1, config2))
+
+        def display_singleton(
+            configs: tuple[AppConfig, AppConfig],
+        ) -> FlextResult[bool]:
+            """Display singleton behavior."""
+            config1, config2 = configs
+            print("\n=== Singleton Pattern ===")
+            print(f"✅ Config instances: {id(config1)} vs {id(config2)}")
+            print("✅ Note: FlextSettings uses singleton pattern per settings class")
+            return FlextResult[bool].ok(value=True)
+
+        return create_configs().flat_map(display_singleton)
 
     @staticmethod
     def _demonstrate_validation_config() -> FlextResult[bool]:
@@ -282,26 +262,46 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
         )
 
     @staticmethod
-    def _demonstrate_singleton_pattern() -> FlextResult[bool]:
-        """Show singleton configuration pattern with railway pattern."""
+    def _handle_execution_error(
+        error: str,
+    ) -> FlextResult[m.ConfigMap]:
+        """Handle execution errors with proper logging."""
+        error_msg = f"Configuration demonstration failed: {error}"
+        print(error_msg)
+        return FlextResult[m.ConfigMap].fail(
+            error_msg,
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+        )
 
-        def create_configs() -> FlextResult[tuple[AppConfig, AppConfig]]:
-            """Create multiple config instances."""
-            config1 = AppConfig(database_url="sqlite:///:memory:")
-            config2 = AppConfig(database_url="postgresql://prod/db")
-            return FlextResult[tuple[AppConfig, AppConfig]].ok((config1, config2))
+    @override
+    def execute(self) -> FlextResult[m.ConfigMap]:
+        """Execute comprehensive configuration demonstrations using railway pattern."""
+        return (
+            self
+            ._log_start()
+            .flat_map(lambda _: self._run_demonstrations())
+            .flat_map(self._create_success_metadata)
+            .lash(self._handle_execution_error)
+        )
 
-        def display_singleton(
-            configs: tuple[AppConfig, AppConfig],
-        ) -> FlextResult[bool]:
-            """Display singleton behavior."""
-            config1, config2 = configs
-            print("\n=== Singleton Pattern ===")
-            print(f"✅ Config instances: {id(config1)} vs {id(config2)}")
-            print("✅ Note: FlextSettings uses singleton pattern per settings class")
-            return FlextResult[bool].ok(value=True)
+    def _log_start(self) -> FlextResult[bool]:
+        """Log the start of demonstration."""
+        self.logger.info("Starting advanced configuration management demonstration")
+        return FlextResult[bool].ok(value=True)
 
-        return create_configs().flat_map(display_singleton)
+    def _run_demonstrations(self) -> FlextResult[tuple[str, ...]]:
+        """Run all configuration demonstrations using railway pattern with traverse (DRY)."""
+        demonstrations: Sequence[tuple[str, Callable[[], FlextResult[bool]]]] = [
+            ("basic_config", self._demonstrate_basic_config),
+            ("environment_config", self._demonstrate_environment_config),
+            ("validation_config", self._demonstrate_validation_config),
+            ("singleton_pattern", self._demonstrate_singleton_pattern),
+        ]
+
+        results = [demo_func() for _, demo_func in demonstrations]
+        return FlextResult.traverse(results, lambda r: r).map(
+            lambda _: tuple(name for name, _ in demonstrations),
+        )
 
 
 def demonstrate_file_config() -> FlextResult[bool]:

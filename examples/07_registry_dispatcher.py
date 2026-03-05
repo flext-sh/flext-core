@@ -111,72 +111,6 @@ class _DemoPlugin(m.Value):
 class RegistryDispatcherService(s[m.ConfigMap]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
-    @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
-        """Execute registry and dispatcher demonstrations."""
-        print("Starting registry and dispatcher demonstration")
-
-        try:
-            self._demonstrate_registry()
-            self._demonstrate_dispatcher()
-            self._demonstrate_integration()
-
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
-                    root={
-                        "patterns_demonstrated": [
-                            "handler_registration",
-                            "batch_registration",
-                            "command_dispatch",
-                            "query_dispatch",
-                            "registry_integration",
-                        ],
-                        "handler_types": [
-                            c.Cqrs.HandlerType.COMMAND.value,
-                            c.Cqrs.HandlerType.QUERY.value,
-                        ],
-                        "features": [
-                            "idempotent_registration",
-                            "batch_operations",
-                            "dispatcher_integration",
-                            "cqrs_patterns",
-                        ],
-                    },
-                ),
-            )
-
-        except Exception as e:
-            error_msg = f"Registry/Dispatcher demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
-
-    @staticmethod
-    def _demonstrate_registry() -> None:
-        """Show registry operations."""
-        print("\n=== Registry Operations ===")
-
-        registry = FlextRegistry()
-
-        create_plugin = _DemoPlugin(name="create_user")
-        register_result = registry.register_plugin(
-            "handlers",
-            "create_user",
-            create_plugin,
-        )
-        if register_result.is_success:
-            print("✅ Plugin registered successfully")
-
-        query_plugin = _DemoPlugin(name="get_user")
-        _ = registry.register_plugin(
-            "handlers",
-            "get_user",
-            query_plugin,
-        )
-        plugins_result = registry.list_plugins("handlers")
-        if plugins_result.is_success:
-            print(f"✅ Plugin catalog: {plugins_result.value}")
-
     @staticmethod
     def _demonstrate_dispatcher() -> None:
         """Show dispatcher operations."""
@@ -238,6 +172,72 @@ class RegistryDispatcherService(s[m.ConfigMap]):
             user_data = query_result.value
             if isinstance(user_data, m.ConfigMap):
                 print(f"✅ Query dispatched: {user_data.get('name')}")
+
+    @staticmethod
+    def _demonstrate_registry() -> None:
+        """Show registry operations."""
+        print("\n=== Registry Operations ===")
+
+        registry = FlextRegistry()
+
+        create_plugin = _DemoPlugin(name="create_user")
+        register_result = registry.register_plugin(
+            "handlers",
+            "create_user",
+            create_plugin,
+        )
+        if register_result.is_success:
+            print("✅ Plugin registered successfully")
+
+        query_plugin = _DemoPlugin(name="get_user")
+        _ = registry.register_plugin(
+            "handlers",
+            "get_user",
+            query_plugin,
+        )
+        plugins_result = registry.list_plugins("handlers")
+        if plugins_result.is_success:
+            print(f"✅ Plugin catalog: {plugins_result.value}")
+
+    @override
+    def execute(
+        self,
+    ) -> r[m.ConfigMap]:
+        """Execute registry and dispatcher demonstrations."""
+        print("Starting registry and dispatcher demonstration")
+
+        try:
+            self._demonstrate_registry()
+            self._demonstrate_dispatcher()
+            self._demonstrate_integration()
+
+            return r[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "patterns_demonstrated": [
+                            "handler_registration",
+                            "batch_registration",
+                            "command_dispatch",
+                            "query_dispatch",
+                            "registry_integration",
+                        ],
+                        "handler_types": [
+                            c.Cqrs.HandlerType.COMMAND.value,
+                            c.Cqrs.HandlerType.QUERY.value,
+                        ],
+                        "features": [
+                            "idempotent_registration",
+                            "batch_operations",
+                            "dispatcher_integration",
+                            "cqrs_patterns",
+                        ],
+                    },
+                ),
+            )
+
+        except Exception as e:
+            error_msg = f"Registry/Dispatcher demonstration failed: {e}"
+            return r[m.ConfigMap].fail(error_msg)
 
 
 def main() -> None:

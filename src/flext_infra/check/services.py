@@ -80,15 +80,15 @@ class _ProjectResult(BaseModel):
 
     @computed_field
     @property
-    def total_errors(self) -> int:
-        """Total issue count across all gates."""
-        return sum(len(v.issues) for v in self.gates.values())
-
-    @computed_field
-    @property
     def passed(self) -> bool:
         """Whether every gate passed."""
         return all(v.result.passed for v in self.gates.values())
+
+    @computed_field
+    @property
+    def total_errors(self) -> int:
+        """Total issue count across all gates."""
+        return sum(len(v.issues) for v in self.gates.values())
 
 
 class _RunCommandResult(BaseModel):
@@ -367,10 +367,218 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 self._workspace_root / c.Infra.Reporting.REPORTS_DIR_NAME / "check"
             )
 
+    @staticmethod
+    def _dirs_with_py(project_dir: Path, dirs: list[str]) -> list[str]:
+        out: list[str] = []
+        for directory in dirs:
+            path = project_dir / directory
+            if not path.is_dir():
+                continue
+            if next(path.rglob("*.py"), None) or next(path.rglob("*.pyi"), None):
+                out.append(directory)
+        return out
+
+    @staticmethod
+    def generate_sarif_report(
+        results: list[_ProjectResult],
+        gates: list[str],
+    ) -> Mapping[str, t.Container]:
+        """Render gate results as a SARIF 2.1.0 payload."""
+        tool_info = {
+            c.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
+            c.Gates.FORMAT: (
+                "Ruff Formatter",
+                "https://docs.astral.sh/ruff/formatter/",
+            ),
+            c.Gates.PYREFLY: ("Pyrefly", "https://github.com/facebook/pyrefly"),
+            c.Gates.MYPY: ("Mypy", "https://mypy.readthedocs.io/"),
+            c.Gates.PYRIGHT: ("Pyright", "https://github.com/microsoft/pyright"),
+            c.Gates.SECURITY: ("Bandit", "https://bandit.readthedocs.io/"),
+            c.Gates.MARKDOWN: (
+                "MarkdownLint",
+                "https://github.com/DavidAnson/markdownlint",
+            ),
+            c.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
+        }
+
+        sarif_runs: list[_SarifRun] = []
+        for gate in gates:
+            tool_name, tool_url = tool_info.get(gate, (gate, ""))
+            sarif_results: list[_SarifResult] = []
+            rules_seen: set[str] = set()
+            rules: list[_SarifRuleDescriptor] = []
+
+            for project in results:
+                gate_result = project.gates.get(gate)
+                if not gate_result:
+                    continue
+                for issue in gate_result.issues:
+                    rule_id = issue.code or "unknown"
+                    if rule_id not in rules_seen:
+                        rules_seen.add(rule_id)
+                        rules.append(
+                            _SarifRuleDescriptor(
+                                id=rule_id,
+                                shortDescription=_SarifMessageText(text=rule_id),
+                            ),
+                        )
+                    sarif_results.append(
+                        _SarifResult(
+                            rule_id=rule_id,
+                            level=("error" if issue.severity == "error" else "warning"),
+                            message=_SarifMessageText(text=issue.message),
+                            locations=[
+                                _SarifLocation(
+                                    physicalLocation=_SarifPhysicalLocation(
+                                        artifactLocation=_SarifArtifactLocation(
+                                            uri=issue.file,
+                                        ),
+                                        region=_SarifRegion(
+                                            start_line=max(issue.line, 1),
+                                            start_column=max(issue.column, 1),
+                                        ),
+                                    ),
+                                ),
+                            ],
+                        ),
+                    )
+
+            sarif_runs.append(
+                _SarifRun(
+                    tool=_SarifTool(
+                        driver=_SarifToolDriver(
+                            name=tool_name,
+                            information_uri=tool_url,
+                            rules=rules,
+                        ),
+                    ),
+                    results=sarif_results,
+                ),
+            )
+
+        return _SarifReport(runs=sarif_runs).model_dump(by_alias=True)
+
+    @staticmethod
+    def parse_gate_csv(raw: str) -> list[str]:
+        """Parse comma-separated gate names into a normalized list."""
+        return [gate.strip() for gate in raw.split(",") if gate.strip()]
+
+    @staticmethod
+    def resolve_gates(gates: Sequence[str]) -> r[list[str]]:
+        """Validate and normalize user-provided gate names."""
+        allowed = {
+            c.Gates.LINT,
+            c.Gates.FORMAT,
+            c.Gates.PYREFLY,
+            c.Gates.MYPY,
+            c.Gates.PYRIGHT,
+            c.Gates.SECURITY,
+            c.Gates.MARKDOWN,
+            c.Gates.GO,
+        }
+        resolved: list[str] = []
+        for gate in gates:
+            name = gate.strip()
+            if not name:
+                continue
+            mapped = c.Gates.PYREFLY if name == c.Gates.TYPE_ALIAS else name
+            if mapped not in allowed:
+                return r[list[str]].fail(f"ERROR: unknown gate '{gate}'")
+            if mapped not in resolved:
+                resolved.append(mapped)
+        return r[list[str]].ok(resolved)
+
     @override
     def execute(self) -> r[list[_ProjectResult]]:
         """Return a failure because this service requires explicit run inputs."""
         return r[list[_ProjectResult]].fail("Use run() or run_projects() directly")
+
+    def format(self, project_dir: Path) -> r[m.GateResult]:
+        """Run the Ruff format check gate for a project."""
+        return r[m.GateResult].ok(self._run_ruff_format(project_dir).result)
+
+    def generate_markdown_report(
+        self,
+        results: list[_ProjectResult],
+        gates: list[str],
+        timestamp: str,
+    ) -> str:
+        """Render the workspace check report in Markdown format."""
+        lines: list[str] = [
+            "# FLEXT Check Report",
+            "",
+            f"**Generated**: {timestamp}  ",
+            f"**Projects**: {len(results)}  ",
+            f"**Gates**: {', '.join(gates)}  ",
+            "",
+            "## Summary",
+            "",
+        ]
+
+        header = "| Project |"
+        sep = "|---------|"
+        for gate in gates:
+            header += f" {gate.capitalize()} |"
+            sep += "------|"
+        header += " Total | Status |"
+        sep += "-------|--------|"
+        lines.extend([header, sep])
+
+        total_all = 0
+        failed_count = 0
+        for project in results:
+            row = f"| {project.project} |"
+            for gate in gates:
+                gate_result = project.gates.get(gate)
+                row += f" {len(gate_result.issues) if gate_result else 0} |"
+            status = c.Status.PASS if project.passed else f"**{c.Status.FAIL}**"
+            if not project.passed:
+                failed_count += 1
+            row += f" {project.total_errors} | {status} |"
+            total_all += project.total_errors
+            lines.append(row)
+
+        lines.extend(
+            [
+                "",
+                f"**Total errors**: {total_all}  ",
+                f"**Failed projects**: {failed_count}/{len(results)}  ",
+                "",
+            ],
+        )
+
+        for project in sorted(
+            results,
+            key=lambda item: item.total_errors,
+            reverse=True,
+        ):
+            if project.total_errors == 0:
+                continue
+            lines.extend([f"## {project.project}", ""])
+            for gate in gates:
+                gate_result = project.gates.get(gate)
+                if not gate_result or len(gate_result.issues) == 0:
+                    continue
+                lines.extend([
+                    f"### {gate} ({len(gate_result.issues)} errors)",
+                    "",
+                    "```",
+                ])
+                lines.extend(
+                    issue.formatted
+                    for issue in gate_result.issues[: c.Infra.Check.MAX_DISPLAY_ISSUES]
+                )
+                if len(gate_result.issues) > c.Infra.Check.MAX_DISPLAY_ISSUES:
+                    lines.append(
+                        f"... and {len(gate_result.issues) - c.Infra.Check.MAX_DISPLAY_ISSUES} more errors",
+                    )
+                lines.extend(["```", ""])
+
+        return "\n".join(lines)
+
+    def lint(self, project_dir: Path) -> r[m.GateResult]:
+        """Run the Ruff lint gate for a project."""
+        return r[m.GateResult].ok(self._run_ruff_lint(project_dir).result)
 
     def run(
         self,
@@ -474,202 +682,24 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
 
         return r[list[_ProjectResult]].ok(results)
 
-    def lint(self, project_dir: Path) -> r[m.GateResult]:
-        """Run the Ruff lint gate for a project."""
-        return r[m.GateResult].ok(self._run_ruff_lint(project_dir).result)
-
-    def format(self, project_dir: Path) -> r[m.GateResult]:
-        """Run the Ruff format check gate for a project."""
-        return r[m.GateResult].ok(self._run_ruff_format(project_dir).result)
-
-    @staticmethod
-    def resolve_gates(gates: Sequence[str]) -> r[list[str]]:
-        """Validate and normalize user-provided gate names."""
-        allowed = {
-            c.Gates.LINT,
-            c.Gates.FORMAT,
-            c.Gates.PYREFLY,
-            c.Gates.MYPY,
-            c.Gates.PYRIGHT,
-            c.Gates.SECURITY,
-            c.Gates.MARKDOWN,
-            c.Gates.GO,
-        }
-        resolved: list[str] = []
-        for gate in gates:
-            name = gate.strip()
-            if not name:
-                continue
-            mapped = c.Gates.PYREFLY if name == c.Gates.TYPE_ALIAS else name
-            if mapped not in allowed:
-                return r[list[str]].fail(f"ERROR: unknown gate '{gate}'")
-            if mapped not in resolved:
-                resolved.append(mapped)
-        return r[list[str]].ok(resolved)
-
-    @staticmethod
-    def parse_gate_csv(raw: str) -> list[str]:
-        """Parse comma-separated gate names into a normalized list."""
-        return [gate.strip() for gate in raw.split(",") if gate.strip()]
-
-    def generate_markdown_report(
+    def _build_gate_result(
         self,
-        results: list[_ProjectResult],
-        gates: list[str],
-        timestamp: str,
-    ) -> str:
-        """Render the workspace check report in Markdown format."""
-        lines: list[str] = [
-            "# FLEXT Check Report",
-            "",
-            f"**Generated**: {timestamp}  ",
-            f"**Projects**: {len(results)}  ",
-            f"**Gates**: {', '.join(gates)}  ",
-            "",
-            "## Summary",
-            "",
-        ]
-
-        header = "| Project |"
-        sep = "|---------|"
-        for gate in gates:
-            header += f" {gate.capitalize()} |"
-            sep += "------|"
-        header += " Total | Status |"
-        sep += "-------|--------|"
-        lines.extend([header, sep])
-
-        total_all = 0
-        failed_count = 0
-        for project in results:
-            row = f"| {project.project} |"
-            for gate in gates:
-                gate_result = project.gates.get(gate)
-                row += f" {len(gate_result.issues) if gate_result else 0} |"
-            status = c.Status.PASS if project.passed else f"**{c.Status.FAIL}**"
-            if not project.passed:
-                failed_count += 1
-            row += f" {project.total_errors} | {status} |"
-            total_all += project.total_errors
-            lines.append(row)
-
-        lines.extend(
-            [
-                "",
-                f"**Total errors**: {total_all}  ",
-                f"**Failed projects**: {failed_count}/{len(results)}  ",
-                "",
-            ],
+        *,
+        gate: str,
+        project: str,
+        passed: bool,
+        issues: list[_CheckIssue],
+        duration: float,
+        raw_output: str,
+    ) -> _GateExecution:
+        model = m.GateResult(
+            gate=gate,
+            project=project,
+            passed=passed,
+            errors=[issue.formatted for issue in issues],
+            duration=round(duration, 3),
         )
-
-        for project in sorted(
-            results,
-            key=lambda item: item.total_errors,
-            reverse=True,
-        ):
-            if project.total_errors == 0:
-                continue
-            lines.extend([f"## {project.project}", ""])
-            for gate in gates:
-                gate_result = project.gates.get(gate)
-                if not gate_result or len(gate_result.issues) == 0:
-                    continue
-                lines.extend([
-                    f"### {gate} ({len(gate_result.issues)} errors)",
-                    "",
-                    "```",
-                ])
-                lines.extend(
-                    issue.formatted
-                    for issue in gate_result.issues[: c.Infra.Check.MAX_DISPLAY_ISSUES]
-                )
-                if len(gate_result.issues) > c.Infra.Check.MAX_DISPLAY_ISSUES:
-                    lines.append(
-                        f"... and {len(gate_result.issues) - c.Infra.Check.MAX_DISPLAY_ISSUES} more errors",
-                    )
-                lines.extend(["```", ""])
-
-        return "\n".join(lines)
-
-    @staticmethod
-    def generate_sarif_report(
-        results: list[_ProjectResult],
-        gates: list[str],
-    ) -> Mapping[str, t.Container]:
-        """Render gate results as a SARIF 2.1.0 payload."""
-        tool_info = {
-            c.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
-            c.Gates.FORMAT: (
-                "Ruff Formatter",
-                "https://docs.astral.sh/ruff/formatter/",
-            ),
-            c.Gates.PYREFLY: ("Pyrefly", "https://github.com/facebook/pyrefly"),
-            c.Gates.MYPY: ("Mypy", "https://mypy.readthedocs.io/"),
-            c.Gates.PYRIGHT: ("Pyright", "https://github.com/microsoft/pyright"),
-            c.Gates.SECURITY: ("Bandit", "https://bandit.readthedocs.io/"),
-            c.Gates.MARKDOWN: (
-                "MarkdownLint",
-                "https://github.com/DavidAnson/markdownlint",
-            ),
-            c.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
-        }
-
-        sarif_runs: list[_SarifRun] = []
-        for gate in gates:
-            tool_name, tool_url = tool_info.get(gate, (gate, ""))
-            sarif_results: list[_SarifResult] = []
-            rules_seen: set[str] = set()
-            rules: list[_SarifRuleDescriptor] = []
-
-            for project in results:
-                gate_result = project.gates.get(gate)
-                if not gate_result:
-                    continue
-                for issue in gate_result.issues:
-                    rule_id = issue.code or "unknown"
-                    if rule_id not in rules_seen:
-                        rules_seen.add(rule_id)
-                        rules.append(
-                            _SarifRuleDescriptor(
-                                id=rule_id,
-                                shortDescription=_SarifMessageText(text=rule_id),
-                            ),
-                        )
-                    sarif_results.append(
-                        _SarifResult(
-                            rule_id=rule_id,
-                            level=("error" if issue.severity == "error" else "warning"),
-                            message=_SarifMessageText(text=issue.message),
-                            locations=[
-                                _SarifLocation(
-                                    physicalLocation=_SarifPhysicalLocation(
-                                        artifactLocation=_SarifArtifactLocation(
-                                            uri=issue.file,
-                                        ),
-                                        region=_SarifRegion(
-                                            start_line=max(issue.line, 1),
-                                            start_column=max(issue.column, 1),
-                                        ),
-                                    ),
-                                ),
-                            ],
-                        ),
-                    )
-
-            sarif_runs.append(
-                _SarifRun(
-                    tool=_SarifTool(
-                        driver=_SarifToolDriver(
-                            name=tool_name,
-                            information_uri=tool_url,
-                            rules=rules,
-                        ),
-                    ),
-                    results=sarif_results,
-                ),
-            )
-
-        return _SarifReport(runs=sarif_runs).model_dump(by_alias=True)
+        return _GateExecution(result=model, issues=issues, raw_output=raw_output)
 
     def _check_project(
         self,
@@ -694,6 +724,14 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 result.gates[gate] = runner()
         return result
 
+    def _collect_markdown_files(self, project_dir: Path) -> list[Path]:
+        files: list[Path] = []
+        for path in project_dir.rglob("*.md"):
+            if any(part in c.Excluded.CHECK_EXCLUDED_DIRS for part in path.parts):
+                continue
+            files.append(path)
+        return files
+
     def _existing_check_dirs(self, project_dir: Path) -> list[str]:
         dirs = (
             c.Check.DEFAULT_CHECK_DIRS
@@ -702,16 +740,11 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         return [directory for directory in dirs if (project_dir / directory).is_dir()]
 
-    @staticmethod
-    def _dirs_with_py(project_dir: Path, dirs: list[str]) -> list[str]:
-        out: list[str] = []
-        for directory in dirs:
-            path = project_dir / directory
-            if not path.is_dir():
-                continue
-            if next(path.rglob("*.py"), None) or next(path.rglob("*.pyi"), None):
-                out.append(directory)
-        return out
+    def _resolve_workspace_root(self, workspace_root: Path | None) -> Path:
+        if workspace_root is not None:
+            return workspace_root.resolve()
+        result = self._path_resolver.workspace_root()
+        return result.value if result.is_success else Path.cwd().resolve()
 
     def _run(
         self,
@@ -738,304 +771,6 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             stdout=output.stdout,
             stderr=output.stderr,
             returncode=output.exit_code,
-        )
-
-    def _build_gate_result(
-        self,
-        *,
-        gate: str,
-        project: str,
-        passed: bool,
-        issues: list[_CheckIssue],
-        duration: float,
-        raw_output: str,
-    ) -> _GateExecution:
-        model = m.GateResult(
-            gate=gate,
-            project=project,
-            passed=passed,
-            errors=[issue.formatted for issue in issues],
-            duration=round(duration, 3),
-        )
-        return _GateExecution(result=model, issues=issues, raw_output=raw_output)
-
-    def _run_ruff_lint(self, project_dir: Path) -> _GateExecution:
-        started = time.monotonic()
-        check_dirs = self._existing_check_dirs(project_dir)
-        targets = check_dirs or ["."]
-        result = self._run(
-            [
-                sys.executable,
-                "-m",
-                "ruff",
-                "check",
-                *targets,
-                "--output-format",
-                "json",
-                "--quiet",
-            ],
-            project_dir,
-        )
-        issues: list[_CheckIssue] = []
-        try:
-            for entry in json.loads(result.stdout or "[]"):
-                parsed = _RuffLintError.model_validate(entry)
-                issues.append(
-                    _CheckIssue(
-                        file=parsed.filename,
-                        line=parsed.location.row,
-                        column=parsed.location.column,
-                        code=parsed.code,
-                        message=parsed.message,
-                    ),
-                )
-        except (json.JSONDecodeError, ValidationError):
-            pass
-        return self._build_gate_result(
-            gate="lint",
-            project=project_dir.name,
-            passed=result.returncode == 0,
-            issues=issues,
-            duration=time.monotonic() - started,
-            raw_output=result.stderr,
-        )
-
-    def _run_ruff_format(self, project_dir: Path) -> _GateExecution:
-        started = time.monotonic()
-        check_dirs = self._existing_check_dirs(project_dir)
-        targets = check_dirs or ["."]
-        result = self._run(
-            [sys.executable, "-m", "ruff", "format", "--check", *targets, "--quiet"],
-            project_dir,
-        )
-        issues: list[_CheckIssue] = []
-        if result.returncode != 0 and result.stdout.strip():
-            seen: set[str] = set()
-            for line in result.stdout.strip().splitlines():
-                path = line.strip()
-                if not path:
-                    continue
-                match = c.Infra.Check.RUFF_FORMAT_FILE_RE.match(path)
-                if match:
-                    file_path = match.group(1).strip()
-                    if file_path in seen:
-                        continue
-                    seen.add(file_path)
-                    issues.append(
-                        _CheckIssue(
-                            file=file_path,
-                            line=0,
-                            column=0,
-                            code="format",
-                            message="Would be reformatted",
-                        ),
-                    )
-                elif path.endswith(".py") and " " not in path and path not in seen:
-                    seen.add(path)
-                    issues.append(
-                        _CheckIssue(
-                            file=path,
-                            line=0,
-                            column=0,
-                            code="format",
-                            message="Would be reformatted",
-                        ),
-                    )
-        return self._build_gate_result(
-            gate="format",
-            project=project_dir.name,
-            passed=result.returncode == 0,
-            issues=issues,
-            duration=time.monotonic() - started,
-            raw_output=result.stderr,
-        )
-
-    def _run_pyrefly(self, project_dir: Path, reports_dir: Path) -> _GateExecution:
-        started = time.monotonic()
-        check_dirs = self._existing_check_dirs(project_dir)
-        targets = check_dirs or [c.Paths.DEFAULT_SRC_DIR]
-        json_file = reports_dir / f"{project_dir.name}-pyrefly.json"
-        cmd = [
-            sys.executable,
-            "-m",
-            "pyrefly",
-            "check",
-            *targets,
-            "--config",
-            c.Files.PYPROJECT_FILENAME,
-            "--output-format",
-            "json",
-            "-o",
-            str(json_file),
-            "--summary=none",
-        ]
-        result = self._run(cmd, project_dir)
-        issues: list[_CheckIssue] = []
-        if json_file.exists():
-            try:
-                raw = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
-                if isinstance(raw, dict):
-                    output = _PyreflyOutput.model_validate(raw)
-                    pyrefly_errors = output.errors
-                else:
-                    pyrefly_errors = [
-                        _PyreflyError.model_validate(item) for item in raw
-                    ]
-                issues.extend(
-                    _CheckIssue(
-                        file=err.path,
-                        line=err.line,
-                        column=err.column,
-                        code=err.name,
-                        message=err.description,
-                        severity=err.severity,
-                    )
-                    for err in pyrefly_errors
-                )
-            except (json.JSONDecodeError, ValidationError):
-                pass
-
-        if not issues and result.returncode != 0:
-            match = re.search(r"(\d+)\s+errors?", result.stderr + result.stdout)
-            if match:
-                count = int(match.group(1))
-                issues = [
-                    _CheckIssue(
-                        file="?",
-                        line=0,
-                        column=0,
-                        code="pyrefly",
-                        message=f"Pyrefly reported {count} error(s)",
-                    ),
-                ] * count
-
-        return self._build_gate_result(
-            gate="pyrefly",
-            project=project_dir.name,
-            passed=result.returncode == 0,
-            issues=issues,
-            duration=time.monotonic() - started,
-            raw_output=result.stderr,
-        )
-
-    def _run_mypy(self, project_dir: Path) -> _GateExecution:
-        started = time.monotonic()
-        check_dirs = self._existing_check_dirs(project_dir)
-        mypy_dirs = self._dirs_with_py(project_dir, check_dirs)
-        if not mypy_dirs:
-            return self._build_gate_result(
-                gate="mypy",
-                project=project_dir.name,
-                passed=True,
-                issues=[],
-                duration=time.monotonic() - started,
-                raw_output="",
-            )
-
-        proj_py = project_dir / c.Files.PYPROJECT_FILENAME
-        cfg = (
-            proj_py
-            if proj_py.exists()
-            and "[tool.mypy]" in proj_py.read_text(encoding=c.Encoding.DEFAULT)
-            else self._workspace_root / c.Files.PYPROJECT_FILENAME
-        )
-        typings_generated = self._workspace_root / "typings" / "generated"
-        mypy_env = os.environ.copy()
-        if typings_generated.is_dir():
-            existing = mypy_env.get("MYPYPATH", "")
-            mypy_env["MYPYPATH"] = str(typings_generated) + (
-                f":{existing}" if existing else ""
-            )
-
-        result = self._run(
-            [
-                sys.executable,
-                "-m",
-                "mypy",
-                *mypy_dirs,
-                "--config-file",
-                str(cfg),
-                "--output",
-                "json",
-            ],
-            project_dir,
-            env=mypy_env,
-        )
-
-        issues: list[_CheckIssue] = []
-        for raw_line in (result.stdout or "").splitlines():
-            stripped = raw_line.strip()
-            if not stripped:
-                continue
-            try:
-                parsed = _MypyJsonError.model_validate(json.loads(stripped))
-                if parsed.severity in {"error", "warning", "note"}:
-                    issues.append(
-                        _CheckIssue(
-                            file=parsed.file,
-                            line=parsed.line,
-                            column=parsed.column,
-                            code=parsed.code,
-                            message=parsed.message,
-                            severity=parsed.severity,
-                        ),
-                    )
-            except (json.JSONDecodeError, ValidationError):
-                continue
-
-        return self._build_gate_result(
-            gate="mypy",
-            project=project_dir.name,
-            passed=result.returncode == 0,
-            issues=issues,
-            duration=time.monotonic() - started,
-            raw_output=result.stderr,
-        )
-
-    def _run_pyright(self, project_dir: Path) -> _GateExecution:
-        started = time.monotonic()
-        check_dirs = self._dirs_with_py(
-            project_dir,
-            self._existing_check_dirs(project_dir),
-        )
-        if not check_dirs:
-            return self._build_gate_result(
-                gate="pyright",
-                project=project_dir.name,
-                passed=True,
-                issues=[],
-                duration=time.monotonic() - started,
-                raw_output="",
-            )
-        result = self._run(
-            [sys.executable, "-m", "pyright", *check_dirs, "--outputjson"],
-            project_dir,
-            timeout=600,
-        )
-        issues: list[_CheckIssue] = []
-        try:
-            output = _PyrightOutput.model_validate(json.loads(result.stdout or "{}"))
-            issues.extend(
-                _CheckIssue(
-                    file=diag.file,
-                    line=diag.range.start.line + 1,
-                    column=diag.range.start.character + 1,
-                    code=diag.rule,
-                    message=diag.message,
-                    severity=diag.severity,
-                )
-                for diag in output.generalDiagnostics
-            )
-        except (json.JSONDecodeError, ValidationError):
-            pass
-
-        return self._build_gate_result(
-            gate="pyright",
-            project=project_dir.name,
-            passed=result.returncode == 0,
-            issues=issues,
-            duration=time.monotonic() - started,
-            raw_output=result.stderr,
         )
 
     def _run_bandit(self, project_dir: Path) -> _GateExecution:
@@ -1082,71 +817,6 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             pass
         return self._build_gate_result(
             gate="security",
-            project=project_dir.name,
-            passed=result.returncode == 0,
-            issues=issues,
-            duration=time.monotonic() - started,
-            raw_output=result.stderr,
-        )
-
-    def _collect_markdown_files(self, project_dir: Path) -> list[Path]:
-        files: list[Path] = []
-        for path in project_dir.rglob("*.md"):
-            if any(part in c.Excluded.CHECK_EXCLUDED_DIRS for part in path.parts):
-                continue
-            files.append(path)
-        return files
-
-    def _run_markdown(self, project_dir: Path) -> _GateExecution:
-        started = time.monotonic()
-        md_files = self._collect_markdown_files(project_dir)
-        if not md_files:
-            return self._build_gate_result(
-                gate="markdown",
-                project=project_dir.name,
-                passed=True,
-                issues=[],
-                duration=time.monotonic() - started,
-                raw_output="",
-            )
-        cmd = ["markdownlint"]
-        root_config = self._workspace_root / ".markdownlint.json"
-        local_config = project_dir / ".markdownlint.json"
-        if root_config.exists():
-            cmd.extend(["--config", str(root_config)])
-        elif local_config.exists():
-            cmd.extend(["--config", str(local_config)])
-        cmd.extend(str(path.relative_to(project_dir)) for path in md_files)
-        result = self._run(cmd, project_dir)
-        issues: list[_CheckIssue] = []
-        for line in (result.stdout + "\n" + result.stderr).splitlines():
-            match = c.Infra.Check.MARKDOWN_RE.match(line.strip())
-            if not match:
-                continue
-            issues.append(
-                _CheckIssue(
-                    file=match.group("file"),
-                    line=int(match.group("line")),
-                    column=int(match.group("col") or 1),
-                    code=match.group("code"),
-                    message=match.group("msg"),
-                ),
-            )
-        if result.returncode != 0 and not issues:
-            issues.append(
-                _CheckIssue(
-                    file=".",
-                    line=1,
-                    column=1,
-                    code="markdownlint",
-                    message=(
-                        result.stdout or result.stderr or "markdownlint failed"
-                    ).strip(),
-                ),
-            )
-
-        return self._build_gate_result(
-            gate="markdown",
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -1238,11 +908,341 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             raw_output=raw_output,
         )
 
-    def _resolve_workspace_root(self, workspace_root: Path | None) -> Path:
-        if workspace_root is not None:
-            return workspace_root.resolve()
-        result = self._path_resolver.workspace_root()
-        return result.value if result.is_success else Path.cwd().resolve()
+    def _run_markdown(self, project_dir: Path) -> _GateExecution:
+        started = time.monotonic()
+        md_files = self._collect_markdown_files(project_dir)
+        if not md_files:
+            return self._build_gate_result(
+                gate="markdown",
+                project=project_dir.name,
+                passed=True,
+                issues=[],
+                duration=time.monotonic() - started,
+                raw_output="",
+            )
+        cmd = ["markdownlint"]
+        root_config = self._workspace_root / ".markdownlint.json"
+        local_config = project_dir / ".markdownlint.json"
+        if root_config.exists():
+            cmd.extend(["--config", str(root_config)])
+        elif local_config.exists():
+            cmd.extend(["--config", str(local_config)])
+        cmd.extend(str(path.relative_to(project_dir)) for path in md_files)
+        result = self._run(cmd, project_dir)
+        issues: list[_CheckIssue] = []
+        for line in (result.stdout + "\n" + result.stderr).splitlines():
+            match = c.Infra.Check.MARKDOWN_RE.match(line.strip())
+            if not match:
+                continue
+            issues.append(
+                _CheckIssue(
+                    file=match.group("file"),
+                    line=int(match.group("line")),
+                    column=int(match.group("col") or 1),
+                    code=match.group("code"),
+                    message=match.group("msg"),
+                ),
+            )
+        if result.returncode != 0 and not issues:
+            issues.append(
+                _CheckIssue(
+                    file=".",
+                    line=1,
+                    column=1,
+                    code="markdownlint",
+                    message=(
+                        result.stdout or result.stderr or "markdownlint failed"
+                    ).strip(),
+                ),
+            )
+
+        return self._build_gate_result(
+            gate="markdown",
+            project=project_dir.name,
+            passed=result.returncode == 0,
+            issues=issues,
+            duration=time.monotonic() - started,
+            raw_output=result.stderr,
+        )
+
+    def _run_mypy(self, project_dir: Path) -> _GateExecution:
+        started = time.monotonic()
+        check_dirs = self._existing_check_dirs(project_dir)
+        mypy_dirs = self._dirs_with_py(project_dir, check_dirs)
+        if not mypy_dirs:
+            return self._build_gate_result(
+                gate="mypy",
+                project=project_dir.name,
+                passed=True,
+                issues=[],
+                duration=time.monotonic() - started,
+                raw_output="",
+            )
+
+        proj_py = project_dir / c.Files.PYPROJECT_FILENAME
+        cfg = (
+            proj_py
+            if proj_py.exists()
+            and "[tool.mypy]" in proj_py.read_text(encoding=c.Encoding.DEFAULT)
+            else self._workspace_root / c.Files.PYPROJECT_FILENAME
+        )
+        typings_generated = self._workspace_root / "typings" / "generated"
+        mypy_env = os.environ.copy()
+        if typings_generated.is_dir():
+            existing = mypy_env.get("MYPYPATH", "")
+            mypy_env["MYPYPATH"] = str(typings_generated) + (
+                f":{existing}" if existing else ""
+            )
+
+        result = self._run(
+            [
+                sys.executable,
+                "-m",
+                "mypy",
+                *mypy_dirs,
+                "--config-file",
+                str(cfg),
+                "--output",
+                "json",
+            ],
+            project_dir,
+            env=mypy_env,
+        )
+
+        issues: list[_CheckIssue] = []
+        for raw_line in (result.stdout or "").splitlines():
+            stripped = raw_line.strip()
+            if not stripped:
+                continue
+            try:
+                parsed = _MypyJsonError.model_validate(json.loads(stripped))
+                if parsed.severity in {"error", "warning", "note"}:
+                    issues.append(
+                        _CheckIssue(
+                            file=parsed.file,
+                            line=parsed.line,
+                            column=parsed.column,
+                            code=parsed.code,
+                            message=parsed.message,
+                            severity=parsed.severity,
+                        ),
+                    )
+            except (json.JSONDecodeError, ValidationError):
+                continue
+
+        return self._build_gate_result(
+            gate="mypy",
+            project=project_dir.name,
+            passed=result.returncode == 0,
+            issues=issues,
+            duration=time.monotonic() - started,
+            raw_output=result.stderr,
+        )
+
+    def _run_pyrefly(self, project_dir: Path, reports_dir: Path) -> _GateExecution:
+        started = time.monotonic()
+        check_dirs = self._existing_check_dirs(project_dir)
+        targets = check_dirs or [c.Paths.DEFAULT_SRC_DIR]
+        json_file = reports_dir / f"{project_dir.name}-pyrefly.json"
+        cmd = [
+            sys.executable,
+            "-m",
+            "pyrefly",
+            "check",
+            *targets,
+            "--config",
+            c.Files.PYPROJECT_FILENAME,
+            "--output-format",
+            "json",
+            "-o",
+            str(json_file),
+            "--summary=none",
+        ]
+        result = self._run(cmd, project_dir)
+        issues: list[_CheckIssue] = []
+        if json_file.exists():
+            try:
+                raw = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
+                if isinstance(raw, dict):
+                    output = _PyreflyOutput.model_validate(raw)
+                    pyrefly_errors = output.errors
+                else:
+                    pyrefly_errors = [
+                        _PyreflyError.model_validate(item) for item in raw
+                    ]
+                issues.extend(
+                    _CheckIssue(
+                        file=err.path,
+                        line=err.line,
+                        column=err.column,
+                        code=err.name,
+                        message=err.description,
+                        severity=err.severity,
+                    )
+                    for err in pyrefly_errors
+                )
+            except (json.JSONDecodeError, ValidationError):
+                pass
+
+        if not issues and result.returncode != 0:
+            match = re.search(r"(\d+)\s+errors?", result.stderr + result.stdout)
+            if match:
+                count = int(match.group(1))
+                issues = [
+                    _CheckIssue(
+                        file="?",
+                        line=0,
+                        column=0,
+                        code="pyrefly",
+                        message=f"Pyrefly reported {count} error(s)",
+                    ),
+                ] * count
+
+        return self._build_gate_result(
+            gate="pyrefly",
+            project=project_dir.name,
+            passed=result.returncode == 0,
+            issues=issues,
+            duration=time.monotonic() - started,
+            raw_output=result.stderr,
+        )
+
+    def _run_pyright(self, project_dir: Path) -> _GateExecution:
+        started = time.monotonic()
+        check_dirs = self._dirs_with_py(
+            project_dir,
+            self._existing_check_dirs(project_dir),
+        )
+        if not check_dirs:
+            return self._build_gate_result(
+                gate="pyright",
+                project=project_dir.name,
+                passed=True,
+                issues=[],
+                duration=time.monotonic() - started,
+                raw_output="",
+            )
+        result = self._run(
+            [sys.executable, "-m", "pyright", *check_dirs, "--outputjson"],
+            project_dir,
+            timeout=600,
+        )
+        issues: list[_CheckIssue] = []
+        try:
+            output = _PyrightOutput.model_validate(json.loads(result.stdout or "{}"))
+            issues.extend(
+                _CheckIssue(
+                    file=diag.file,
+                    line=diag.range.start.line + 1,
+                    column=diag.range.start.character + 1,
+                    code=diag.rule,
+                    message=diag.message,
+                    severity=diag.severity,
+                )
+                for diag in output.generalDiagnostics
+            )
+        except (json.JSONDecodeError, ValidationError):
+            pass
+
+        return self._build_gate_result(
+            gate="pyright",
+            project=project_dir.name,
+            passed=result.returncode == 0,
+            issues=issues,
+            duration=time.monotonic() - started,
+            raw_output=result.stderr,
+        )
+
+    def _run_ruff_format(self, project_dir: Path) -> _GateExecution:
+        started = time.monotonic()
+        check_dirs = self._existing_check_dirs(project_dir)
+        targets = check_dirs or ["."]
+        result = self._run(
+            [sys.executable, "-m", "ruff", "format", "--check", *targets, "--quiet"],
+            project_dir,
+        )
+        issues: list[_CheckIssue] = []
+        if result.returncode != 0 and result.stdout.strip():
+            seen: set[str] = set()
+            for line in result.stdout.strip().splitlines():
+                path = line.strip()
+                if not path:
+                    continue
+                match = c.Infra.Check.RUFF_FORMAT_FILE_RE.match(path)
+                if match:
+                    file_path = match.group(1).strip()
+                    if file_path in seen:
+                        continue
+                    seen.add(file_path)
+                    issues.append(
+                        _CheckIssue(
+                            file=file_path,
+                            line=0,
+                            column=0,
+                            code="format",
+                            message="Would be reformatted",
+                        ),
+                    )
+                elif path.endswith(".py") and " " not in path and path not in seen:
+                    seen.add(path)
+                    issues.append(
+                        _CheckIssue(
+                            file=path,
+                            line=0,
+                            column=0,
+                            code="format",
+                            message="Would be reformatted",
+                        ),
+                    )
+        return self._build_gate_result(
+            gate="format",
+            project=project_dir.name,
+            passed=result.returncode == 0,
+            issues=issues,
+            duration=time.monotonic() - started,
+            raw_output=result.stderr,
+        )
+
+    def _run_ruff_lint(self, project_dir: Path) -> _GateExecution:
+        started = time.monotonic()
+        check_dirs = self._existing_check_dirs(project_dir)
+        targets = check_dirs or ["."]
+        result = self._run(
+            [
+                sys.executable,
+                "-m",
+                "ruff",
+                "check",
+                *targets,
+                "--output-format",
+                "json",
+                "--quiet",
+            ],
+            project_dir,
+        )
+        issues: list[_CheckIssue] = []
+        try:
+            for entry in json.loads(result.stdout or "[]"):
+                parsed = _RuffLintError.model_validate(entry)
+                issues.append(
+                    _CheckIssue(
+                        file=parsed.filename,
+                        line=parsed.location.row,
+                        column=parsed.location.column,
+                        code=parsed.code,
+                        message=parsed.message,
+                    ),
+                )
+        except (json.JSONDecodeError, ValidationError):
+            pass
+        return self._build_gate_result(
+            gate="lint",
+            project=project_dir.name,
+            passed=result.returncode == 0,
+            issues=issues,
+            duration=time.monotonic() - started,
+            raw_output=result.stderr,
+        )
 
 
 class FlextInfraConfigFixer(FlextService[list[str]]):
@@ -1255,52 +1255,19 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         self._discovery = FlextInfraDiscoveryService()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
 
+    @staticmethod
+    def _to_array(items_list: list[str]) -> items.Array:
+        arr = tomlkit.array()
+        for item in items_list:
+            arr.append(item)
+        if len(items_list) > 1:
+            arr.multiline(True)
+        return arr
+
     @override
     def execute(self) -> r[list[str]]:
         """Return a failure because this service requires explicit run inputs."""
         return r[list[str]].fail("Use run() directly")
-
-    def run(
-        self,
-        projects: Sequence[str],
-        *,
-        dry_run: bool = False,
-        verbose: bool = False,
-    ) -> r[list[str]]:
-        """Apply pyrefly config fixes for selected projects."""
-        project_paths = [self._resolve_project_path(project) for project in projects]
-        files_result = self.find_pyproject_files(project_paths or None)
-        if files_result.is_failure:
-            return r[list[str]].fail(
-                files_result.error or "failed to find pyproject files",
-            )
-
-        messages: list[str] = []
-        total_fixes = 0
-        for path in files_result.value:
-            fixes_result = self.process_file(path, dry_run=dry_run)
-            if fixes_result.is_failure:
-                return r[list[str]].fail(
-                    fixes_result.error or f"failed to process {path}",
-                )
-            fixes = fixes_result.value
-            if not fixes:
-                continue
-            total_fixes += len(fixes)
-            if verbose:
-                try:
-                    rel = path.relative_to(self._workspace_root)
-                except ValueError:
-                    rel = path
-                for fix in fixes:
-                    line = f"  {'(dry)' if dry_run else '✓'} {rel}: {fix}"
-                    _logger.info("pyrefly_config_fix", detail=line)
-                    messages.append(line)
-
-        if verbose and total_fixes == 0:
-            _logger.info("pyrefly_configs_clean")
-
-        return r[list[str]].ok(messages)
 
     def find_pyproject_files(
         self,
@@ -1356,6 +1323,73 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
                 return r[list[str]].fail(f"failed to write {path}: {exc}")
 
         return r[list[str]].ok(all_fixes)
+
+    def run(
+        self,
+        projects: Sequence[str],
+        *,
+        dry_run: bool = False,
+        verbose: bool = False,
+    ) -> r[list[str]]:
+        """Apply pyrefly config fixes for selected projects."""
+        project_paths = [self._resolve_project_path(project) for project in projects]
+        files_result = self.find_pyproject_files(project_paths or None)
+        if files_result.is_failure:
+            return r[list[str]].fail(
+                files_result.error or "failed to find pyproject files",
+            )
+
+        messages: list[str] = []
+        total_fixes = 0
+        for path in files_result.value:
+            fixes_result = self.process_file(path, dry_run=dry_run)
+            if fixes_result.is_failure:
+                return r[list[str]].fail(
+                    fixes_result.error or f"failed to process {path}",
+                )
+            fixes = fixes_result.value
+            if not fixes:
+                continue
+            total_fixes += len(fixes)
+            if verbose:
+                try:
+                    rel = path.relative_to(self._workspace_root)
+                except ValueError:
+                    rel = path
+                for fix in fixes:
+                    line = f"  {'(dry)' if dry_run else '✓'} {rel}: {fix}"
+                    _logger.info("pyrefly_config_fix", detail=line)
+                    messages.append(line)
+
+        if verbose and total_fixes == 0:
+            _logger.info("pyrefly_configs_clean")
+
+        return r[list[str]].ok(messages)
+
+    def _ensure_project_excludes_tk(
+        self,
+        pyrefly: MutableMapping[str, t.Container],
+    ) -> list[str]:
+        fixes: list[str] = []
+        excludes = pyrefly.get("project-excludes")
+
+        current: list[str] = []
+        if isinstance(excludes, list):
+            current = [str(x) for x in excludes]
+
+        # Check without quotes too just in case
+        stripped_to_add: list[str] = []
+        for glob in c.Infra.Check.REQUIRED_EXCLUDES:
+            clean_glob = glob.strip('"').strip("'")
+            if clean_glob not in current and glob not in current:
+                stripped_to_add.append(clean_glob)
+
+        if stripped_to_add:
+            updated = sorted(set(current) | set(stripped_to_add))
+            pyrefly["project-excludes"] = self._to_array(updated)
+            fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
+
+        return fixes
 
     def _fix_search_paths_tk(
         self,
@@ -1428,40 +1462,6 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
             pyrefly["sub-config"] = new_configs
 
         return fixes
-
-    def _ensure_project_excludes_tk(
-        self,
-        pyrefly: MutableMapping[str, t.Container],
-    ) -> list[str]:
-        fixes: list[str] = []
-        excludes = pyrefly.get("project-excludes")
-
-        current: list[str] = []
-        if isinstance(excludes, list):
-            current = [str(x) for x in excludes]
-
-        # Check without quotes too just in case
-        stripped_to_add: list[str] = []
-        for glob in c.Infra.Check.REQUIRED_EXCLUDES:
-            clean_glob = glob.strip('"').strip("'")
-            if clean_glob not in current and glob not in current:
-                stripped_to_add.append(clean_glob)
-
-        if stripped_to_add:
-            updated = sorted(set(current) | set(stripped_to_add))
-            pyrefly["project-excludes"] = self._to_array(updated)
-            fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
-
-        return fixes
-
-    @staticmethod
-    def _to_array(items_list: list[str]) -> items.Array:
-        arr = tomlkit.array()
-        for item in items_list:
-            arr.append(item)
-        if len(items_list) > 1:
-            arr.multiline(True)
-        return arr
 
     def _resolve_project_path(self, raw: str) -> Path:
         path = Path(raw)

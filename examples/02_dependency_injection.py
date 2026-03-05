@@ -204,34 +204,68 @@ class EmailService(m.ArbitraryTypesModel):
 class DependencyInjectionService(s[m.ConfigMap]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
-    @override
-    def execute(self) -> r[m.ConfigMap]:
-        """Execute DI demonstrations."""
-        self.logger.info("Starting dependency injection demonstration")
+    @staticmethod
+    def _demonstrate_advanced_patterns(container: FlextContainer) -> None:
+        """Show advanced DI patterns."""
+        print("\n=== Advanced DI Patterns ===")
 
-        container = self._setup_container()
+        service_names = ["database", "cache", "email"]
+        services: dict[str, t.RegisterableService] = {
+            name: container.get(name).value
+            for name in service_names
+            if container.get(name).is_success
+        }
+        print(f"✅ Auto-wired services: {len(services)}")
 
-        self._demonstrate_registration(container)
-        self._demonstrate_resolution(container)
-        self._demonstrate_advanced_patterns(container)
+        print(f"✅ Singleton: {FlextContainer() is FlextContainer()}")
 
-        result_data: m.ConfigMap = m.ConfigMap(
-            root={
-                "patterns_demonstrated": 5,
-                "services_registered": ["database", "cache", "email"],
-                "di_patterns": [
-                    "service_registration",
-                    "dependency_resolution",
-                    "auto_wiring",
-                    "lifecycle_management",
-                    "error_handling",
-                ],
-                "completed_at": datetime.now(UTC).isoformat(),
-            },
+        original_count = len(container.list_services())
+        container.clear_all()
+        print(
+            f"✅ Container cleared: {original_count} → {len(container.list_services())}",
         )
 
-        self.logger.info("Dependency injection demonstration completed")
-        return r[m.ConfigMap].ok(result_data)
+        # Error handling
+        missing_result: r[t.RegisterableService] = container.get("non_existent")
+        db_result: r[t.RegisterableService] = container.get("database")
+        if db_result.is_success:
+            db_service = db_result.value
+            if isinstance(db_service, DatabaseService):
+                invalid_query = db_service.query("INVALID QUERY")
+                print(
+                    f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
+                )
+
+    @staticmethod
+    def _demonstrate_resolution(container: FlextContainer) -> None:
+        """Show dependency resolution patterns."""
+        print("\n=== Dependency Resolution ===")
+
+        def test_database(db: DatabaseService) -> r[bool]:
+            return db.connect()
+
+        def test_cache(cache: CacheService) -> r[bool]:
+            return cache.set("test_key", "test_value")
+
+        def test_email(email: EmailService) -> r[bool]:
+            return email.send("test@example.com", "Test", "Hello")
+
+        # Test each service with type narrowing
+        for service_name in ["database", "cache", "email"]:
+            result: r[t.RegisterableService] = container.get(service_name)
+            if result.is_success:
+                service = result.value
+                if service_name == "database" and isinstance(service, DatabaseService):
+                    test_result = test_database(service)
+                elif service_name == "cache" and isinstance(service, CacheService):
+                    test_result = test_cache(service)
+                elif service_name == "email" and isinstance(service, EmailService):
+                    test_result = test_email(service)
+                else:
+                    test_result = r[bool].fail("Service type mismatch")
+                print(f"✅ {service_name}: {test_result.is_success}")
+            else:
+                print(f"❌ {service_name}: Failed to resolve")
 
     @staticmethod
     def _setup_container() -> FlextContainer:
@@ -273,6 +307,35 @@ class DependencyInjectionService(s[m.ConfigMap]):
 
         return container
 
+    @override
+    def execute(self) -> r[m.ConfigMap]:
+        """Execute DI demonstrations."""
+        self.logger.info("Starting dependency injection demonstration")
+
+        container = self._setup_container()
+
+        self._demonstrate_registration(container)
+        self._demonstrate_resolution(container)
+        self._demonstrate_advanced_patterns(container)
+
+        result_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "patterns_demonstrated": 5,
+                "services_registered": ["database", "cache", "email"],
+                "di_patterns": [
+                    "service_registration",
+                    "dependency_resolution",
+                    "auto_wiring",
+                    "lifecycle_management",
+                    "error_handling",
+                ],
+                "completed_at": datetime.now(UTC).isoformat(),
+            },
+        )
+
+        self.logger.info("Dependency injection demonstration completed")
+        return r[m.ConfigMap].ok(result_data)
+
     def _demonstrate_registration(self, container: FlextContainer) -> None:
         """Show service registration patterns."""
         self.logger.info("=== Service Registration ===")
@@ -288,69 +351,6 @@ class DependencyInjectionService(s[m.ConfigMap]):
             self.logger.info("✅ %s registered: %s", name, has_service)
 
         self.logger.info(f"📋 Services: {container.list_services()}")
-
-    @staticmethod
-    def _demonstrate_resolution(container: FlextContainer) -> None:
-        """Show dependency resolution patterns."""
-        print("\n=== Dependency Resolution ===")
-
-        def test_database(db: DatabaseService) -> r[bool]:
-            return db.connect()
-
-        def test_cache(cache: CacheService) -> r[bool]:
-            return cache.set("test_key", "test_value")
-
-        def test_email(email: EmailService) -> r[bool]:
-            return email.send("test@example.com", "Test", "Hello")
-
-        # Test each service with type narrowing
-        for service_name in ["database", "cache", "email"]:
-            result: r[t.RegisterableService] = container.get(service_name)
-            if result.is_success:
-                service = result.value
-                if service_name == "database" and isinstance(service, DatabaseService):
-                    test_result = test_database(service)
-                elif service_name == "cache" and isinstance(service, CacheService):
-                    test_result = test_cache(service)
-                elif service_name == "email" and isinstance(service, EmailService):
-                    test_result = test_email(service)
-                else:
-                    test_result = r[bool].fail("Service type mismatch")
-                print(f"✅ {service_name}: {test_result.is_success}")
-            else:
-                print(f"❌ {service_name}: Failed to resolve")
-
-    @staticmethod
-    def _demonstrate_advanced_patterns(container: FlextContainer) -> None:
-        """Show advanced DI patterns."""
-        print("\n=== Advanced DI Patterns ===")
-
-        service_names = ["database", "cache", "email"]
-        services: dict[str, t.RegisterableService] = {
-            name: container.get(name).value
-            for name in service_names
-            if container.get(name).is_success
-        }
-        print(f"✅ Auto-wired services: {len(services)}")
-
-        print(f"✅ Singleton: {FlextContainer() is FlextContainer()}")
-
-        original_count = len(container.list_services())
-        container.clear_all()
-        print(
-            f"✅ Container cleared: {original_count} → {len(container.list_services())}",
-        )
-
-        # Error handling
-        missing_result: r[t.RegisterableService] = container.get("non_existent")
-        db_result: r[t.RegisterableService] = container.get("database")
-        if db_result.is_success:
-            db_service = db_result.value
-            if isinstance(db_service, DatabaseService):
-                invalid_query = db_service.query("INVALID QUERY")
-                print(
-                    f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
-                )
 
 
 def main() -> None:

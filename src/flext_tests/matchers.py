@@ -239,6 +239,191 @@ class FlextTestsMatchers:
         tm.that() -> tm.that(value, is_=is_=type, none=False, none=False)
     """
 
+    @staticmethod
+    def assert_result_success[TResult](
+        result: r[TResult],
+        msg: str | None = None,
+    ) -> TResult:
+        """Assert result is success and return unwrapped value.
+
+        Args:
+            result: FlextResult to check
+            msg: Optional custom error message
+
+        Returns:
+            Unwrapped value from result
+
+        Raises:
+            AssertionError: If result is failure
+
+        """
+        # Direct implementation to preserve exact TResult type
+        if not result.is_success:
+            error_msg = msg or f"Expected success but got failure: {result.error}"
+            raise AssertionError(error_msg)
+        return result.value
+
+    @staticmethod
+    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain[TResult]:
+        """Start chained assertions on result (railway pattern)."""
+        return m.Tests.Matcher.Chain[TResult](result=result)
+
+    @staticmethod
+    def fail[TResult](
+        result: r[TResult],
+        **kwargs: t.Tests.Matcher.MatcherKwargValue,
+    ) -> str:
+        r"""Enhanced assertion for FlextResult failure with optional error validation.
+
+        Examples:
+            # Basic failure assertions
+            tm.fail(result)                   # Assert failure
+            tm.fail(result, has="not found")  # Failure with error containing
+            tm.fail(result, code="VALIDATION")  # Failure with specific code
+            tm.fail(result, match=r"Error: \\d+")  # Error matches regex
+
+            # Multiple error checks
+            tm.fail(result, has=["invalid", "required"], lacks="internal")
+
+            # Error metadata checks
+            tm.fail(result, code="VALIDATION", data={"field": "email"})
+
+        Args:
+            result: FlextResult to check
+            error: Expected error substring (legacy parameter, use has=)
+            msg: Optional custom error message
+            has: Unified containment - error contains substring(s) (replaces contains)
+            lacks: Unified non-containment - error does NOT contain substring(s) (replaces excludes)
+            starts: Assert error starts with prefix
+            ends: Assert error ends with suffix
+            match: Assert error matches regex
+            code: Assert error code equals
+            code_has: Assert error code contains substring(s)
+            data: Assert error data contains key-value pairs
+            contains: Legacy parameter (deprecated, use has=)
+            excludes: Legacy parameter (deprecated, use lacks=)
+
+
+        Returns:
+            Error message from result
+
+        Raises:
+            AssertionError: If result is success or error doesn't satisfy constraints
+            ValueError: If parameter validation fails (via Pydantic model)
+
+        Uses Pydantic 2 models for parameter validation and computation.
+        All parameters are validated via m.Tests.Matcher.FailParams model.
+
+        """
+        # Convert kwargs to validated model using FlextUtilities
+        # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
+        # Legacy 'error' parameter is handled by FailParams model validator
+        try:
+            params = m.Tests.Matcher.FailParams.model_validate(kwargs)
+        except (TypeError, ValueError, AttributeError) as exc:
+            raise ValueError(f"Parameter validation failed: {exc}") from exc
+
+        if result.is_success:
+            raise AssertionError(
+                params.msg
+                or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=result.value),
+            )
+        err = result.error or ""
+
+        # Apply error message validation if any check parameters provided
+        # Legacy parameters (error, contains, excludes) already converted to has/lacks by model validator
+        if params.has or params.lacks or params.starts or params.ends or params.match:
+            _check_has_lacks(err, params.has, params.lacks, params.msg, as_str=True)
+            # String assertions
+            if params.starts is not None and not u.chk(err, starts=params.starts):
+                raise AssertionError(
+                    params.msg
+                    or c.Tests.Matcher.ERR_NOT_STARTSWITH.format(
+                        text=err,
+                        prefix=params.starts,
+                    ),
+                )
+            if params.ends is not None and not u.chk(err, ends=params.ends):
+                raise AssertionError(
+                    params.msg
+                    or c.Tests.Matcher.ERR_NOT_ENDSWITH.format(
+                        text=err,
+                        suffix=params.ends,
+                    ),
+                )
+            if params.match is not None and not u.chk(err, match=params.match):
+                raise AssertionError(
+                    params.msg
+                    or c.Tests.Matcher.ERR_NOT_MATCHES.format(
+                        text=err,
+                        pattern=params.match,
+                    ),
+                )
+
+        # Error code validation
+        if params.code is not None:
+            actual_code = result.error_code
+            if actual_code != params.code:
+                raise AssertionError(
+                    params.msg
+                    or c.Tests.Matcher.ERR_ERROR_CODE_MISMATCH.format(
+                        expected=params.code,
+                        actual=actual_code,
+                    ),
+                )
+
+        if params.code_has is not None:
+            actual_code = result.error_code or ""
+            # ErrorCodeSpec is str | Sequence[str] - need to handle both cases
+            # Convert to list[str] for uniform processing
+            code_has_value = params.code_has
+            if isinstance(code_has_value, str):
+                items_list: list[str] = [code_has_value]
+            else:
+                # Sequence[str] case - convert to list
+                items_list = [str(x) for x in code_has_value]
+            for item in items_list:
+                if item not in actual_code:
+                    raise AssertionError(
+                        params.msg
+                        or c.Tests.Matcher.ERR_ERROR_CODE_NOT_CONTAINS.format(
+                            expected=item,
+                            actual=actual_code,
+                        ),
+                    )
+
+        # Error data validation
+        if params.data is not None:
+            actual_raw = result.error_data
+            actual_data: MutableMapping[str, t.Tests.ContainerValue] = {}
+            if actual_raw is not None:
+                root_value: object = (
+                    actual_raw.root
+                    if isinstance(actual_raw, m.ConfigMap)
+                    else actual_raw
+                )
+                if isinstance(root_value, Mapping):
+                    actual_data = {
+                        str(k): _to_test_payload(v) for k, v in root_value.items()
+                    }
+            for key, expected_value in params.data.items():
+                if key not in actual_data:
+                    raise AssertionError(
+                        params.msg
+                        or c.Tests.Matcher.ERR_ERROR_DATA_KEY_MISSING.format(key=key),
+                    )
+                if actual_data[key] != expected_value:
+                    raise AssertionError(
+                        params.msg
+                        or c.Tests.Matcher.ERR_ERROR_DATA_VALUE_MISMATCH.format(
+                            key=key,
+                            expected=expected_value,
+                            actual=actual_data[key],
+                        ),
+                    )
+
+        return err
+
     # =========================================================================
     # CORE ASSERTIONS
     # =========================================================================
@@ -486,160 +671,128 @@ class FlextTestsMatchers:
         return result_value
 
     @staticmethod
-    def fail[TResult](
-        result: r[TResult],
-        **kwargs: t.Tests.Matcher.MatcherKwargValue,
-    ) -> str:
-        r"""Enhanced assertion for FlextResult failure with optional error validation.
+    @contextmanager
+    def scope(
+        **kwargs: t.Tests.ContainerValue,
+    ) -> Iterator[m.Tests.Matcher.TestScope]:
+        """Enhanced isolated test execution scope.
 
-        Examples:
-            # Basic failure assertions
-            tm.fail(result)                   # Assert failure
-            tm.fail(result, has="not found")  # Failure with error containing
-            tm.fail(result, code="VALIDATION")  # Failure with specific code
-            tm.fail(result, match=r"Error: \\d+")  # Error matches regex
+        Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
+        All parameters are validated automatically via u.Model.from_kwargs.
 
-            # Multiple error checks
-            tm.fail(result, has=["invalid", "required"], lacks="internal")
-
-            # Error metadata checks
-            tm.fail(result, code="VALIDATION", data={"field": "email"})
+        Provides isolated configuration, container, and context for tests.
+        Supports temporary environment variables, working directory changes,
+        and automatic cleanup functions.
 
         Args:
-            result: FlextResult to check
-            error: Expected error substring (legacy parameter, use has=)
-            msg: Optional custom error message
-            has: Unified containment - error contains substring(s) (replaces contains)
-            lacks: Unified non-containment - error does NOT contain substring(s) (replaces excludes)
-            starts: Assert error starts with prefix
-            ends: Assert error ends with suffix
-            match: Assert error matches regex
-            code: Assert error code equals
-            code_has: Assert error code contains substring(s)
-            data: Assert error data contains key-value pairs
-            contains: Legacy parameter (deprecated, use has=)
-            excludes: Legacy parameter (deprecated, use lacks=)
+            **kwargs: Parameters validated via m.Tests.Matcher.ScopeParams model
+                - config: Initial configuration values
+                - container: Initial container/service mappings
+                - context: Initial context values
+                - cleanup: Sequence of cleanup functions to call on exit
+                - env: Temporary environment variables (restored on exit)
+                - cwd: Temporary working directory (restored on exit)
 
+        Yields:
+            TestScope with config, container, and context dicts
 
-        Returns:
-            Error message from result
+        Examples:
+            with tm.scope() as s:
+                s.container["service"] = mock_service
+                result = operation()
+                tm.ok(result)
+
+            with tm.scope(config={"debug": True}, env={"API_KEY": "test"}) as s:
+                # Test with specific config and env vars
+                pass
+
+            with tm.scope(cleanup=[lambda: cleanup_resource()]) as s:
+                # Auto-cleanup on exit
+                pass
 
         Raises:
-            AssertionError: If result is success or error doesn't satisfy constraints
             ValueError: If parameter validation fails (via Pydantic model)
 
-        Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated via m.Tests.Matcher.FailParams model.
-
         """
-        # Convert kwargs to validated model using FlextUtilities
+        # Create and validate parameters using Pydantic 2 model
         # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
-        # Legacy 'error' parameter is handled by FailParams model validator
         try:
-            params = m.Tests.Matcher.FailParams.model_validate(kwargs)
+            params = m.Tests.Matcher.ScopeParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
 
-        if result.is_success:
-            raise AssertionError(
-                params.msg
-                or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=result.value),
-            )
-        err = result.error or ""
+        # Save original environment and working directory
+        original_env: dict[str, str | None] = {}
+        original_cwd: Path | None = None
 
-        # Apply error message validation if any check parameters provided
-        # Legacy parameters (error, contains, excludes) already converted to has/lacks by model validator
-        if params.has or params.lacks or params.starts or params.ends or params.match:
-            _check_has_lacks(err, params.has, params.lacks, params.msg, as_str=True)
-            # String assertions
-            if params.starts is not None and not u.chk(err, starts=params.starts):
-                raise AssertionError(
-                    params.msg
-                    or c.Tests.Matcher.ERR_NOT_STARTSWITH.format(
-                        text=err,
-                        prefix=params.starts,
-                    ),
-                )
-            if params.ends is not None and not u.chk(err, ends=params.ends):
-                raise AssertionError(
-                    params.msg
-                    or c.Tests.Matcher.ERR_NOT_ENDSWITH.format(
-                        text=err,
-                        suffix=params.ends,
-                    ),
-                )
-            if params.match is not None and not u.chk(err, match=params.match):
-                raise AssertionError(
-                    params.msg
-                    or c.Tests.Matcher.ERR_NOT_MATCHES.format(
-                        text=err,
-                        pattern=params.match,
-                    ),
-                )
+        try:
+            # Set temporary environment variables
+            if params.env is not None:
+                for key, value in params.env.items():
+                    original_env[key] = os.environ.get(key)
+                    os.environ[key] = value
 
-        # Error code validation
-        if params.code is not None:
-            actual_code = result.error_code
-            if actual_code != params.code:
-                raise AssertionError(
-                    params.msg
-                    or c.Tests.Matcher.ERR_ERROR_CODE_MISMATCH.format(
-                        expected=params.code,
-                        actual=actual_code,
-                    ),
+            # Change working directory
+            if params.cwd is not None:
+                original_cwd = Path.cwd()
+                cwd_path = (
+                    Path(params.cwd) if u.is_type(params.cwd, "str") else params.cwd
                 )
+                os.chdir(cwd_path)
 
-        if params.code_has is not None:
-            actual_code = result.error_code or ""
-            # ErrorCodeSpec is str | Sequence[str] - need to handle both cases
-            # Convert to list[str] for uniform processing
-            code_has_value = params.code_has
-            if isinstance(code_has_value, str):
-                items_list: list[str] = [code_has_value]
-            else:
-                # Sequence[str] case - convert to list
-                items_list = [str(x) for x in code_has_value]
-            for item in items_list:
-                if item not in actual_code:
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_ERROR_CODE_NOT_CONTAINS.format(
-                            expected=item,
-                            actual=actual_code,
-                        ),
-                    )
+            # Create scope - use dict[str, t.Tests.ContainerValue] to match TestScope field types
+            cfg: dict[str, t.Tests.ContainerValue] = {}
+            if params.config:
+                cfg = {str(key): value for key, value in params.config.items()}
+            # Filter container to payload values - services may be arbitrary objects
+            container_dict: dict[str, t.Tests.ContainerValue] = {
+                k: v
+                for k, v in (params.container or {}).items()
+                if t.Guards.is_general_value(v)
+            }
+            context_map: dict[str, t.Tests.ContainerValue] = {}
+            if params.context:
+                context_map = {str(key): value for key, value in params.context.items()}
 
-        # Error data validation
-        if params.data is not None:
-            actual_raw = result.error_data
-            actual_data: MutableMapping[str, t.Tests.ContainerValue] = {}
-            if actual_raw is not None:
-                root_value: object = (
-                    actual_raw.root
-                    if isinstance(actual_raw, m.ConfigMap)
-                    else actual_raw
-                )
-                if isinstance(root_value, Mapping):
-                    actual_data = {
-                        str(k): _to_test_payload(v) for k, v in root_value.items()
-                    }
-            for key, expected_value in params.data.items():
-                if key not in actual_data:
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_ERROR_DATA_KEY_MISSING.format(key=key),
-                    )
-                if actual_data[key] != expected_value:
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_ERROR_DATA_VALUE_MISMATCH.format(
-                            key=key,
-                            expected=expected_value,
-                            actual=actual_data[key],
-                        ),
-                    )
+            yield m.Tests.Matcher.TestScope.model_validate({
+                "config": cfg,
+                "container": container_dict,
+                "context": context_map,
+            })
 
-        return err
+        finally:
+            # Restore environment variables
+            if params.env is not None:
+                for key, original_value in original_env.items():
+                    if original_value is None:
+                        _ = os.environ.pop(key, None)
+                    else:
+                        os.environ[key] = original_value
+
+            # Restore working directory
+            if original_cwd is not None:
+                os.chdir(original_cwd)
+
+            # Run cleanup functions
+            if params.cleanup is not None:
+                for cleanup_func in params.cleanup:
+                    try:
+                        cleanup_func()
+                    except (
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                        AttributeError,
+                    ) as e:
+                        # Log but don't fail on cleanup errors
+                        warnings.warn(
+                            c.Tests.Matcher.ERR_SCOPE_CLEANUP_FAILED.format(
+                                error=str(e),
+                            ),
+                            RuntimeWarning,
+                            stacklevel=2,
+                        )
 
     @staticmethod
     def that(
@@ -1196,159 +1349,6 @@ class FlextTestsMatchers:
             raise AssertionError(
                 params.msg or c.Tests.Matcher.ERR_PREDICATE_FAILED.format(value=value),
             )
-
-    @staticmethod
-    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain[TResult]:
-        """Start chained assertions on result (railway pattern)."""
-        return m.Tests.Matcher.Chain[TResult](result=result)
-
-    @staticmethod
-    @contextmanager
-    def scope(
-        **kwargs: t.Tests.ContainerValue,
-    ) -> Iterator[m.Tests.Matcher.TestScope]:
-        """Enhanced isolated test execution scope.
-
-        Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
-        All parameters are validated automatically via u.Model.from_kwargs.
-
-        Provides isolated configuration, container, and context for tests.
-        Supports temporary environment variables, working directory changes,
-        and automatic cleanup functions.
-
-        Args:
-            **kwargs: Parameters validated via m.Tests.Matcher.ScopeParams model
-                - config: Initial configuration values
-                - container: Initial container/service mappings
-                - context: Initial context values
-                - cleanup: Sequence of cleanup functions to call on exit
-                - env: Temporary environment variables (restored on exit)
-                - cwd: Temporary working directory (restored on exit)
-
-        Yields:
-            TestScope with config, container, and context dicts
-
-        Examples:
-            with tm.scope() as s:
-                s.container["service"] = mock_service
-                result = operation()
-                tm.ok(result)
-
-            with tm.scope(config={"debug": True}, env={"API_KEY": "test"}) as s:
-                # Test with specific config and env vars
-                pass
-
-            with tm.scope(cleanup=[lambda: cleanup_resource()]) as s:
-                # Auto-cleanup on exit
-                pass
-
-        Raises:
-            ValueError: If parameter validation fails (via Pydantic model)
-
-        """
-        # Create and validate parameters using Pydantic 2 model
-        # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
-        try:
-            params = m.Tests.Matcher.ScopeParams.model_validate(kwargs)
-        except (TypeError, ValueError, AttributeError) as exc:
-            raise ValueError(f"Parameter validation failed: {exc}") from exc
-
-        # Save original environment and working directory
-        original_env: dict[str, str | None] = {}
-        original_cwd: Path | None = None
-
-        try:
-            # Set temporary environment variables
-            if params.env is not None:
-                for key, value in params.env.items():
-                    original_env[key] = os.environ.get(key)
-                    os.environ[key] = value
-
-            # Change working directory
-            if params.cwd is not None:
-                original_cwd = Path.cwd()
-                cwd_path = (
-                    Path(params.cwd) if u.is_type(params.cwd, "str") else params.cwd
-                )
-                os.chdir(cwd_path)
-
-            # Create scope - use dict[str, t.Tests.ContainerValue] to match TestScope field types
-            cfg: dict[str, t.Tests.ContainerValue] = {}
-            if params.config:
-                cfg = {str(key): value for key, value in params.config.items()}
-            # Filter container to payload values - services may be arbitrary objects
-            container_dict: dict[str, t.Tests.ContainerValue] = {
-                k: v
-                for k, v in (params.container or {}).items()
-                if t.Guards.is_general_value(v)
-            }
-            context_map: dict[str, t.Tests.ContainerValue] = {}
-            if params.context:
-                context_map = {str(key): value for key, value in params.context.items()}
-
-            yield m.Tests.Matcher.TestScope.model_validate({
-                "config": cfg,
-                "container": container_dict,
-                "context": context_map,
-            })
-
-        finally:
-            # Restore environment variables
-            if params.env is not None:
-                for key, original_value in original_env.items():
-                    if original_value is None:
-                        _ = os.environ.pop(key, None)
-                    else:
-                        os.environ[key] = original_value
-
-            # Restore working directory
-            if original_cwd is not None:
-                os.chdir(original_cwd)
-
-            # Run cleanup functions
-            if params.cleanup is not None:
-                for cleanup_func in params.cleanup:
-                    try:
-                        cleanup_func()
-                    except (
-                        OSError,
-                        RuntimeError,
-                        TypeError,
-                        ValueError,
-                        AttributeError,
-                    ) as e:
-                        # Log but don't fail on cleanup errors
-                        warnings.warn(
-                            c.Tests.Matcher.ERR_SCOPE_CLEANUP_FAILED.format(
-                                error=str(e),
-                            ),
-                            RuntimeWarning,
-                            stacklevel=2,
-                        )
-
-    @staticmethod
-    def assert_result_success[TResult](
-        result: r[TResult],
-        msg: str | None = None,
-    ) -> TResult:
-        """Assert result is success and return unwrapped value.
-
-        Args:
-            result: FlextResult to check
-            msg: Optional custom error message
-
-        Returns:
-            Unwrapped value from result
-
-        Raises:
-            AssertionError: If result is failure
-
-        """
-        # Direct implementation to preserve exact TResult type
-        if not result.is_success:
-            error_msg = msg or f"Expected success but got failure: {result.error}"
-            raise AssertionError(error_msg)
-        return result.value
 
 
 tm = FlextTestsMatchers

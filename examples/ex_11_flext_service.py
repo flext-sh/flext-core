@@ -83,20 +83,17 @@ class _DeclarativeService(s[str]):
         if self.auto_execute:
             self._execution_result = self.execute()
 
+    @property
+    def execution_count(self) -> int:
+        return self._execute_count
+
     @override
     def execute(self) -> r[str]:
         self._execute_count += 1
         return r[str].ok(f"auto:{self._execute_count}")
 
-    @property
-    def execution_count(self) -> int:
-        return self._execute_count
-
 
 class _RuntimeFactoryService(s[str]):
-    @override
-    def execute(self) -> r[str]:
-        return r[str].ok("factory")
 
     @classmethod
     def create_runtime_default(cls) -> m.ServiceRuntime:
@@ -117,6 +114,9 @@ class _RuntimeFactoryService(s[str]):
             wire_packages=["flext_core"],
             wire_classes=[_EchoService],
         )
+    @override
+    def execute(self) -> r[str]:
+        return r[str].ok("factory")
 
 
 class _HandlerLike(UserDict[str, str]):
@@ -145,16 +145,16 @@ class _ServiceLike:
         self._inner = _EchoService()
 
     @property
-    def context(self) -> p.Context:
-        return self._inner.context
-
-    @property
     def config(self) -> p.Config:
         return self._inner.config
 
     @property
     def container(self) -> p.DI:
         return self._inner.container
+
+    @property
+    def context(self) -> p.Context:
+        return self._inner.context
 
     def execute(self) -> s.RuntimeResult[t.ContainerValue]:
         return s.RuntimeResult[t.ContainerValue].ok("service-like")
@@ -167,25 +167,25 @@ class _ServiceLike:
 
 
 class _ProcessorProtocolGood:
+
+    def model_dump(self) -> Mapping[str, str]:
+        return {"status": "ok"}
     def process(self) -> str:
         return "ok"
 
     def validate(self) -> bool:
         return True
 
-    def model_dump(self) -> Mapping[str, str]:
-        return {"status": "ok"}
-
     def _protocol_name(self) -> str:
         return "ProcessorProtocolGood"
 
 
 class _ProcessorProtocolBad:
-    def validate(self) -> bool:
-        return False
 
     def model_dump(self) -> Mapping[str, str]:
         return {"status": "bad"}
+    def validate(self) -> bool:
+        return False
 
     def _protocol_name(self) -> str:
         return "ProcessorProtocolBad"
@@ -193,121 +193,6 @@ class _ProcessorProtocolBad:
 
 class Ex11FlextService(Examples):
     """Exercise FlextService public API."""
-
-    @override
-    def exercise(self) -> None:
-        """Run all FlextService example sections."""
-        self.demo_service_core_api()
-        self.demo_runtime_creation_and_serialization()
-        self.demo_mixins_and_runtime_methods()
-        self.demo_namespace_bootstrap_cqrs_validation()
-        self.demo_namespace_runtime_and_integration()
-
-    def demo_service_core_api(self) -> None:
-        """Exercise constructor, execute, properties, validation, and metadata APIs."""
-        self.section("service_core_api")
-
-        fallback = self.rand_str(4)
-
-        self.check("alias.FlextService_is_s", FlextService is s)
-
-        service = _EchoService()
-        execute_value = service.execute().unwrap_or(fallback)
-        self.check("execute.unwrap", execute_value)
-        self.check("execute.unwrap.matches", execute_value == "echo:ok")
-        result_attr = service.result
-        if callable(result_attr):
-            result_value: t.ContainerValue = result_attr()
-        else:
-            result_value = result_attr
-        self.check("result.property", result_value)
-        runtime_view = service.runtime
-        self.check("runtime.type", type(runtime_view).__name__)
-        self.check("runtime.has_config_attr", hasattr(runtime_view, "config"))
-        self.check("runtime.has_context_attr", hasattr(runtime_view, "context"))
-        self.check("runtime.has_container_attr", hasattr(runtime_view, "container"))
-        self.check("context.type", type(service.context).__name__)
-        self.check("config.type", type(service.config).__name__)
-        self.check("container.type", type(service.container).__name__)
-
-        self.check(
-            "validate_business_rules.default",
-            service.validate_business_rules().is_success,
-        )
-        self.check("is_valid.default", service.is_valid())
-        self.check("service_info.type", service.get_service_info().get("service_type"))
-
-        rule_service = _RuleService()
-        self.check(
-            "validate_business_rules.override.success",
-            rule_service.validate_business_rules().is_success,
-        )
-        self.check(
-            "validate_business_rules.override.error",
-            rule_service.validate_business_rules().error,
-        )
-        self.check("is_valid.override", rule_service.is_valid())
-
-        crashing = _ValidationCrashService()
-        self.check("is_valid.exception_guard", crashing.is_valid())
-
-        failing = _FailingService()
-        try:
-            _ = failing.result
-            self.check("result.failure.raises", False)
-        except FlextExceptions.BaseError as exc:
-            self.check("result.failure.raises", True)
-            self.check("result.failure.type", type(exc).__name__)
-
-        declarative = _DeclarativeService()
-        self.check("auto_execute.declared", declarative.auto_execute)
-        self.check("auto_execute.execute_count_after_init", declarative.execution_count)
-        auto_result_attr = declarative.result
-        if callable(auto_result_attr):
-            auto_result: t.ContainerValue = auto_result_attr()
-        else:
-            auto_result = auto_result_attr
-        self.check("auto_execute.result", auto_result)
-        self.check(
-            "auto_execute.execute_count_after_result", declarative.execution_count
-        )
-
-    def demo_runtime_creation_and_serialization(self) -> None:
-        """Exercise runtime factory params and serialization helpers."""
-        self.section("runtime_creation_and_serialization")
-
-        payload_text = self.rand_str(6)
-        payload_count = self.rand_int(1, 9)
-        map_key_a = self.rand_str(3)
-        map_key_b = self.rand_str(3)
-        map_val_a = self.rand_int(1, 9)
-        map_val_b = self.rand_str(4)
-
-        base = _EchoService()
-
-        runtime_default = _RuntimeFactoryService.create_runtime_default()
-        self.check(
-            "create_runtime.default.context", type(runtime_default.context).__name__
-        )
-
-        runtime_full = _RuntimeFactoryService.create_runtime_full()
-        self.check(
-            "create_runtime.full.container", type(runtime_full.container).__name__
-        )
-        self.check("create_runtime.full.config", type(runtime_full.config).__name__)
-
-        payload = _Payload(text=payload_text, count=payload_count)
-        self.check("to_dict.none", s.to_dict(None))
-        self.check(
-            "to_dict.mapping", s.to_dict({map_key_a: map_val_a, map_key_b: map_val_b})
-        )
-        self.check("to_dict.model", s.to_dict(payload))
-
-        model_dump_value = base.model_dump(exclude={"runtime"})
-        self.check("model_dump.type", type(model_dump_value).__name__)
-        self.check("model_dump.has_result", "result" in model_dump_value)
-        model_dump_json_value = base.model_dump_json(exclude={"runtime"})
-        self.check("model_dump_json.type", type(model_dump_json_value).__name__)
 
     def demo_mixins_and_runtime_methods(self) -> None:
         """Exercise inherited mixin/runtime APIs on FlextService."""
@@ -702,6 +587,121 @@ class Ex11FlextService(Examples):
         self.check(
             "validate_http_status_codes.fail", s.validate_http_status_codes([99]).error
         )
+
+    def demo_runtime_creation_and_serialization(self) -> None:
+        """Exercise runtime factory params and serialization helpers."""
+        self.section("runtime_creation_and_serialization")
+
+        payload_text = self.rand_str(6)
+        payload_count = self.rand_int(1, 9)
+        map_key_a = self.rand_str(3)
+        map_key_b = self.rand_str(3)
+        map_val_a = self.rand_int(1, 9)
+        map_val_b = self.rand_str(4)
+
+        base = _EchoService()
+
+        runtime_default = _RuntimeFactoryService.create_runtime_default()
+        self.check(
+            "create_runtime.default.context", type(runtime_default.context).__name__
+        )
+
+        runtime_full = _RuntimeFactoryService.create_runtime_full()
+        self.check(
+            "create_runtime.full.container", type(runtime_full.container).__name__
+        )
+        self.check("create_runtime.full.config", type(runtime_full.config).__name__)
+
+        payload = _Payload(text=payload_text, count=payload_count)
+        self.check("to_dict.none", s.to_dict(None))
+        self.check(
+            "to_dict.mapping", s.to_dict({map_key_a: map_val_a, map_key_b: map_val_b})
+        )
+        self.check("to_dict.model", s.to_dict(payload))
+
+        model_dump_value = base.model_dump(exclude={"runtime"})
+        self.check("model_dump.type", type(model_dump_value).__name__)
+        self.check("model_dump.has_result", "result" in model_dump_value)
+        model_dump_json_value = base.model_dump_json(exclude={"runtime"})
+        self.check("model_dump_json.type", type(model_dump_json_value).__name__)
+
+    def demo_service_core_api(self) -> None:
+        """Exercise constructor, execute, properties, validation, and metadata APIs."""
+        self.section("service_core_api")
+
+        fallback = self.rand_str(4)
+
+        self.check("alias.FlextService_is_s", FlextService is s)
+
+        service = _EchoService()
+        execute_value = service.execute().unwrap_or(fallback)
+        self.check("execute.unwrap", execute_value)
+        self.check("execute.unwrap.matches", execute_value == "echo:ok")
+        result_attr = service.result
+        if callable(result_attr):
+            result_value: t.ContainerValue = result_attr()
+        else:
+            result_value = result_attr
+        self.check("result.property", result_value)
+        runtime_view = service.runtime
+        self.check("runtime.type", type(runtime_view).__name__)
+        self.check("runtime.has_config_attr", hasattr(runtime_view, "config"))
+        self.check("runtime.has_context_attr", hasattr(runtime_view, "context"))
+        self.check("runtime.has_container_attr", hasattr(runtime_view, "container"))
+        self.check("context.type", type(service.context).__name__)
+        self.check("config.type", type(service.config).__name__)
+        self.check("container.type", type(service.container).__name__)
+
+        self.check(
+            "validate_business_rules.default",
+            service.validate_business_rules().is_success,
+        )
+        self.check("is_valid.default", service.is_valid())
+        self.check("service_info.type", service.get_service_info().get("service_type"))
+
+        rule_service = _RuleService()
+        self.check(
+            "validate_business_rules.override.success",
+            rule_service.validate_business_rules().is_success,
+        )
+        self.check(
+            "validate_business_rules.override.error",
+            rule_service.validate_business_rules().error,
+        )
+        self.check("is_valid.override", rule_service.is_valid())
+
+        crashing = _ValidationCrashService()
+        self.check("is_valid.exception_guard", crashing.is_valid())
+
+        failing = _FailingService()
+        try:
+            _ = failing.result
+            self.check("result.failure.raises", False)
+        except FlextExceptions.BaseError as exc:
+            self.check("result.failure.raises", True)
+            self.check("result.failure.type", type(exc).__name__)
+
+        declarative = _DeclarativeService()
+        self.check("auto_execute.declared", declarative.auto_execute)
+        self.check("auto_execute.execute_count_after_init", declarative.execution_count)
+        auto_result_attr = declarative.result
+        if callable(auto_result_attr):
+            auto_result: t.ContainerValue = auto_result_attr()
+        else:
+            auto_result = auto_result_attr
+        self.check("auto_execute.result", auto_result)
+        self.check(
+            "auto_execute.execute_count_after_result", declarative.execution_count
+        )
+
+    @override
+    def exercise(self) -> None:
+        """Run all FlextService example sections."""
+        self.demo_service_core_api()
+        self.demo_runtime_creation_and_serialization()
+        self.demo_mixins_and_runtime_methods()
+        self.demo_namespace_bootstrap_cqrs_validation()
+        self.demo_namespace_runtime_and_integration()
 
 
 if __name__ == "__main__":

@@ -49,6 +49,29 @@ class FlextInfraDocValidator:
     returning structured FlextResult reports.
     """
 
+    @staticmethod
+    def _has_adr_reference(skill_path: Path) -> bool:
+        """Check whether a skill file contains an ADR reference."""
+        text = skill_path.read_text(
+            encoding=c.Encoding.DEFAULT,
+            errors="ignore",
+        ).lower()
+        return "adr" in text
+
+    @staticmethod
+    def _maybe_write_todo(scope: FlextInfraDocScope, *, apply_mode: bool) -> bool:
+        """Write a TODOS.md file for the scope if apply mode is enabled."""
+        if scope.name == "root" or not apply_mode:
+            return False
+        path = scope.path / "TODOS.md"
+        content = (
+            "# TODOS\n\n"
+            "- [ ] Resolve documentation validation findings "
+            "from `.reports/docs/validate-report.md`.\n"
+        )
+        _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+        return True
+
     def validate(
         self,
         root: Path,
@@ -88,6 +111,31 @@ class FlextInfraDocValidator:
             reports.append(report)
 
         return r[list[ValidateReport]].ok(reports)
+
+    def _run_adr_skill_check(self, root: Path) -> tuple[int, list[str]]:
+        """Run ADR skill check and return exit code with missing skill names."""
+        skills_root = root / ".claude/skills"
+        required: list[str] = []
+        config = root / "docs/architecture/architecture_config.json"
+        if config.exists():
+            payload = json.loads(
+                config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
+            )
+            docs_validation = payload.get("docs_validation", {})
+            configured = docs_validation.get("required_skills", [])
+            if isinstance(configured, list):
+                required = [
+                    item for item in configured if isinstance(item, str) and item
+                ]
+        if not required:
+            required = ["rules-docs", "scripts-maintenance", "readme-standardization"]
+
+        missing: list[str] = []
+        for name in required:
+            skill = skills_root / name / "SKILL.md"
+            if not skill.exists() or not self._has_adr_reference(skill):
+                missing.append(name)
+        return (0 if not missing else 1), missing
 
     def _validate_scope(
         self,
@@ -154,54 +202,6 @@ class FlextInfraDocValidator:
             missing_adr_skills=missing_adr_skills,
             todo_written=wrote_todo,
         )
-
-    @staticmethod
-    def _has_adr_reference(skill_path: Path) -> bool:
-        """Check whether a skill file contains an ADR reference."""
-        text = skill_path.read_text(
-            encoding=c.Encoding.DEFAULT,
-            errors="ignore",
-        ).lower()
-        return "adr" in text
-
-    def _run_adr_skill_check(self, root: Path) -> tuple[int, list[str]]:
-        """Run ADR skill check and return exit code with missing skill names."""
-        skills_root = root / ".claude/skills"
-        required: list[str] = []
-        config = root / "docs/architecture/architecture_config.json"
-        if config.exists():
-            payload = json.loads(
-                config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
-            )
-            docs_validation = payload.get("docs_validation", {})
-            configured = docs_validation.get("required_skills", [])
-            if isinstance(configured, list):
-                required = [
-                    item for item in configured if isinstance(item, str) and item
-                ]
-        if not required:
-            required = ["rules-docs", "scripts-maintenance", "readme-standardization"]
-
-        missing: list[str] = []
-        for name in required:
-            skill = skills_root / name / "SKILL.md"
-            if not skill.exists() or not self._has_adr_reference(skill):
-                missing.append(name)
-        return (0 if not missing else 1), missing
-
-    @staticmethod
-    def _maybe_write_todo(scope: FlextInfraDocScope, *, apply_mode: bool) -> bool:
-        """Write a TODOS.md file for the scope if apply mode is enabled."""
-        if scope.name == "root" or not apply_mode:
-            return False
-        path = scope.path / "TODOS.md"
-        content = (
-            "# TODOS\n\n"
-            "- [ ] Resolve documentation validation findings "
-            "from `.reports/docs/validate-report.md`.\n"
-        )
-        _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
-        return True
 
 
 __all__ = ["FlextInfraDocValidator", "ValidateReport"]

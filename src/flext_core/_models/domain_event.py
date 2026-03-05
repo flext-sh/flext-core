@@ -74,6 +74,13 @@ class FlextModelsDomainEvent:
     ComparableConfigMap = _ComparableConfigMap
 
     @staticmethod
+    def _normalize_event_data(
+        value: t.Container,
+    ) -> _ComparableConfigMap:
+        """BeforeValidator: normalize event data to _ComparableConfigMap."""
+        return _normalize_event_data(value)
+
+    @staticmethod
     def to_config_map(
         data: FlextModelsContainers.ConfigMap | None,
     ) -> _ComparableConfigMap:
@@ -86,13 +93,6 @@ class FlextModelsDomainEvent:
                 for key, value in data.items()
             },
         )
-
-    @staticmethod
-    def _normalize_event_data(
-        value: t.Container,
-    ) -> _ComparableConfigMap:
-        """BeforeValidator: normalize event data to _ComparableConfigMap."""
-        return _normalize_event_data(value)
 
     class Entry(
         FlextModelFoundation.ArbitraryTypesModel,

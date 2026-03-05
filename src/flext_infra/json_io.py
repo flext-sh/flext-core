@@ -31,6 +31,11 @@ class FlextInfraJsonService(FlextService[bool]):
         """Initialize the JSON service."""
         super().__init__()
 
+    @override
+    def execute(self) -> FlextResult[bool]:
+        """Execute the service (required by FlextService base class)."""
+        return r[bool].ok(True)
+
     def read(self, path: Path) -> FlextResult[Mapping[str, t.Container]]:
         """Read and parse a JSON file.
 
@@ -97,11 +102,6 @@ class FlextInfraJsonService(FlextService[bool]):
             _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
         except (TypeError, OSError) as exc:
             return r[bool].fail(f"JSON write error: {exc}")
-        return r[bool].ok(True)
-
-    @override
-    def execute(self) -> FlextResult[bool]:
-        """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
 

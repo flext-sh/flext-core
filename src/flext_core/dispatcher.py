@@ -70,59 +70,6 @@ class FlextDispatcher:
         self._auto_handlers: list[_DispatchableHandler] = []
         self._event_subscribers: MutableMapping[str, list[_DispatchableHandler]] = {}
 
-    def register_handler(
-        self,
-        handler: _DispatchableHandler,
-        *,
-        is_event: bool = False,
-    ) -> r[bool]:
-        """Register a handler for a specific message type.
-
-        Args:
-            handler: A callable or object with handle/can_handle methods.
-                     Must expose message_type, event_type, or can_handle
-                     for route discovery.
-            is_event: If True, register as event subscriber.
-
-        Returns:
-            r[bool]: Success or failure with error message.
-
-        """
-        route_name: str | None = None
-
-        # Extract route from handler metadata
-        has_message_type = getattr(handler, "message_type", None)
-        has_event_type = getattr(handler, "event_type", None)
-        has_can_handle = getattr(handler, "can_handle", None)
-
-        if has_message_type:
-            route_name = self._resolve_route(has_message_type)
-        elif has_event_type:
-            route_name = self._resolve_route(has_event_type)
-        elif callable(has_can_handle):
-            self._auto_handlers.append(handler)
-            self._logger.info("Registered auto-discovery handler", handler=str(handler))
-            return r[bool].ok(value=True)
-        else:
-            return r[bool].fail(
-                "Handler must expose message_type, event_type, or can_handle",
-            )
-
-        if is_event:
-            if route_name not in self._event_subscribers:
-                self._event_subscribers[route_name] = []
-            self._event_subscribers[route_name].append(handler)
-            self._logger.info("Registered event subscriber", route=route_name)
-        else:
-            self._handlers[route_name] = handler
-            self._logger.info("Registered handler", route=route_name)
-
-        return r[bool].ok(value=True)
-
-    def _protocol_name(self) -> str:
-        """Return the protocol name for introspection."""
-        return "core-command-bus"
-
     def dispatch(
         self,
         message: p.Routable,
@@ -202,6 +149,55 @@ class FlextDispatcher:
 
         return r[bool].ok(value=True)
 
+    def register_handler(
+        self,
+        handler: _DispatchableHandler,
+        *,
+        is_event: bool = False,
+    ) -> r[bool]:
+        """Register a handler for a specific message type.
+
+        Args:
+            handler: A callable or object with handle/can_handle methods.
+                     Must expose message_type, event_type, or can_handle
+                     for route discovery.
+            is_event: If True, register as event subscriber.
+
+        Returns:
+            r[bool]: Success or failure with error message.
+
+        """
+        route_name: str | None = None
+
+        # Extract route from handler metadata
+        has_message_type = getattr(handler, "message_type", None)
+        has_event_type = getattr(handler, "event_type", None)
+        has_can_handle = getattr(handler, "can_handle", None)
+
+        if has_message_type:
+            route_name = self._resolve_route(has_message_type)
+        elif has_event_type:
+            route_name = self._resolve_route(has_event_type)
+        elif callable(has_can_handle):
+            self._auto_handlers.append(handler)
+            self._logger.info("Registered auto-discovery handler", handler=str(handler))
+            return r[bool].ok(value=True)
+        else:
+            return r[bool].fail(
+                "Handler must expose message_type, event_type, or can_handle",
+            )
+
+        if is_event:
+            if route_name not in self._event_subscribers:
+                self._event_subscribers[route_name] = []
+            self._event_subscribers[route_name].append(handler)
+            self._logger.info("Registered event subscriber", route=route_name)
+        else:
+            self._handlers[route_name] = handler
+            self._logger.info("Registered handler", route=route_name)
+
+        return r[bool].ok(value=True)
+
     def _execute_handler(
         self,
         handler: _DispatchableHandler,
@@ -250,6 +246,10 @@ class FlextDispatcher:
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
+
+    def _protocol_name(self) -> str:
+        """Return the protocol name for introspection."""
+        return "core-command-bus"
 
     def _resolve_route(self, msg: p.Routable | type[p.Routable] | str) -> str:
         """Resolve route name strictly from Routable attributes or string."""

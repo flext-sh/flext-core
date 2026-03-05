@@ -68,6 +68,15 @@ class FlextInfraSkillValidator:
         self._toml = FlextInfraTomlService()
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
+    @staticmethod
+    def _render_template(root: Path, template: str, skill: str) -> Path:
+        """Render a skill path template."""
+        rendered = template.replace("{skill}", skill)
+        candidate = Path(rendered)
+        if candidate.is_absolute():
+            return candidate
+        return (root / candidate).resolve()
+
     def validate(
         self,
         workspace_root: Path,
@@ -297,15 +306,6 @@ class FlextInfraSkillValidator:
         if result.exit_code == 1:
             count = max(count, 1)
         return count
-
-    @staticmethod
-    def _render_template(root: Path, template: str, skill: str) -> Path:
-        """Render a skill path template."""
-        rendered = template.replace("{skill}", skill)
-        candidate = Path(rendered)
-        if candidate.is_absolute():
-            return candidate
-        return (root / candidate).resolve()
 
 
 __all__ = ["FlextInfraSkillValidator"]

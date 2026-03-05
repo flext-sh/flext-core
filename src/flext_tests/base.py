@@ -36,24 +36,6 @@ class FlextTestsServiceBase[T]:
     - assert_failure(result) -> verify failure and get error
     """
 
-    def assert_success[TResult](self, result: r[TResult]) -> TResult:
-        """Assert result is success and return unwrapped value.
-
-        Args:
-            result: FlextResult to check
-
-        Returns:
-            TResult: Unwrapped value from successful result
-
-        Raises:
-            AssertionError: If result is not successful
-
-        """
-        if not result.is_success:
-            msg = f"Expected success but got failure: {result.error}"
-            raise AssertionError(msg)
-        return result.value
-
     def assert_failure[TResult](self, result: r[TResult]) -> str:
         """Assert result is failure and return error message.
 
@@ -71,6 +53,24 @@ class FlextTestsServiceBase[T]:
             msg = "Expected failure but got success"
             raise AssertionError(msg)
         return result.error or ""
+
+    def assert_success[TResult](self, result: r[TResult]) -> TResult:
+        """Assert result is success and return unwrapped value.
+
+        Args:
+            result: FlextResult to check
+
+        Returns:
+            TResult: Unwrapped value from successful result
+
+        Raises:
+            AssertionError: If result is not successful
+
+        """
+        if not result.is_success:
+            msg = f"Expected success but got failure: {result.error}"
+            raise AssertionError(msg)
+        return result.value
 
 
 class FlextTestsUtilityBase(FlextService[T]):

@@ -77,6 +77,140 @@ class FlextUtilitiesCache:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
+    def clear_object_cache(
+        obj: object,
+    ) -> r[bool]:
+        """Clear cache-like attributes on an object.
+
+        Business Rule: Safe Cache Invalidation
+        =====================================
+        This method provides safe cache clearing for objects that may
+        have cached data that needs invalidation.
+
+        Attribute Detection:
+        - Checks FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
+        - Common names: _cache, _cached, cache, cached_data, etc.
+        - Configurable via constants module
+
+        Clearing Strategy:
+        1. Dict-like caches (has .clear() method) → call clear()
+        2. Simple cached values → set to None
+        3. Missing attributes → skip silently
+
+        Error Handling:
+        - Returns FlextResult (railway pattern)
+        - ok(True) on success (even if no caches found)
+        - fail(error_msg) on any exception
+
+        Thread Safety:
+        - NOT thread-safe (cache clearing is a mutation)
+        - Caller responsible for synchronization if needed
+
+        Args:
+            obj: Object with potential cache attributes
+
+        Returns:
+            r[bool]: ok(True) on success, fail(msg) on error
+
+        """
+        try:
+            # Common cache attribute names to check and clear
+            cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
+
+            cleared_count = 0
+            for attr_name in cache_attributes:
+                if hasattr(obj, attr_name):
+                    cache_attr = getattr(obj, attr_name)
+                    if cache_attr is not None:
+                        # Clear mapping-like caches
+                        if hasattr(cache_attr, "clear") and callable(
+                            cache_attr.clear,
+                        ):
+                            _ = cache_attr.clear()
+                            cleared_count += 1
+                        # Reset to None for simple cached values
+                        else:
+                            setattr(obj, attr_name, None)
+                            cleared_count += 1
+
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+            return r[bool].fail(f"Failed to clear caches: {e}")
+
+    @staticmethod
+    def generate_cache_key(
+        *args: t.ContainerValue,
+        **kwargs: t.ContainerValue,
+    ) -> str:
+        """Generate a deterministic cache key from arguments.
+
+        Business Rule: SHA-256 Cache Key Generation
+        ==========================================
+        Generates a unique, deterministic cache key from function arguments.
+
+        Algorithm:
+        1. Convert args to string representation
+        2. Sort kwargs items (deterministic order)
+        3. Concatenate both representations
+        4. SHA-256 hash for fixed-length, collision-resistant key
+
+        Properties:
+        - Deterministic: Same args/kwargs → same key
+        - Fixed length: 64 hex characters (256 bits)
+        - Collision-resistant: SHA-256 provides cryptographic security
+        - URL-safe: Hexadecimal characters only
+
+        Limitations:
+        - Objects with non-deterministic __str__ may produce different keys
+        - For complex objects, consider normalizing first
+
+        Args:
+            *args: Positional arguments to include in key
+            **kwargs: Keyword arguments to include in key
+
+        Returns:
+            64-character hexadecimal SHA-256 hash
+
+        """
+        key_data = str(args) + str(sorted(kwargs.items()))
+        return hashlib.sha256(key_data.encode()).hexdigest()
+
+    @staticmethod
+    def generate_cache_key_for_command(
+        command: t.ContainerValue,
+        command_type: type,
+    ) -> str:
+        if isinstance(command, Mapping):
+            sorted_data = FlextUtilitiesCache.sort_dict_keys(command)
+            return f"{command_type.__name__}_{hash(str(sorted_data))}"
+        command_str = "None" if command is None else str(command)
+        try:
+            return f"{command_type.__name__}_{hash(command_str)}"
+        except TypeError:
+            encoded = command_str.encode(c.Utilities.DEFAULT_ENCODING)
+            return f"{command_type.__name__}_{abs(hash(encoded))}"
+
+    @staticmethod
+    def has_cache_attributes(obj: object) -> bool:
+        """Check if an object exposes any known cache-related attributes.
+
+        Business Rule: Cache Detection
+        ==============================
+        Quick check to determine if an object might have cached data.
+        Useful for deciding whether to attempt cache clearing.
+
+        Args:
+            obj: t.Container object
+
+        Returns:
+            True if any known cache attribute exists, False otherwise
+
+        """
+        cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
+        # NOTE: Cannot use u.map() here due to circular import (utilities.py imports cache.py)
+        return any(hasattr(obj, attr) for attr in cache_attributes)
+
+    @staticmethod
     def normalize_component(
         component: t.ContainerValue,
     ) -> t.ContainerValue:
@@ -140,40 +274,6 @@ class FlextUtilitiesCache:
         return str(component)
 
     @staticmethod
-    def sort_key(key: t.SortableObjectType) -> tuple[int, str]:
-        """Generate a sort key for deterministic ordering across types.
-
-        Business Rule: Type-Aware Deterministic Sorting
-        ===============================================
-        Python's default sorting fails when mixing types (str vs int).
-        This method provides a deterministic sort key that:
-
-        1. Groups by type (strings first, numbers second, others last)
-        2. Sorts within each group using string representation
-        3. Case-insensitive for strings (prevents 'Z' < 'a' issues)
-
-        Sort Priority:
-        - (0, lower_str) → strings (most common dict keys)
-        - (1, str_num) → numbers (int, float)
-        - (2, str_repr) → other types (fallback)
-
-        Why tuple[int, str]?
-        - First element groups by type (Python compares tuples element-wise)
-        - Second element provides within-group ordering
-        - Deterministic across Python runs
-
-        Args:
-            key: Sortable object (str, int, tuple, etc. - usually dict key)
-
-        Returns:
-            Tuple for sorted() key function
-
-        """
-        if isinstance(key, str):
-            return (0, key.lower())
-        return (1, str(key))
-
-    @staticmethod
     def sort_dict_keys(
         data: t.ContainerValue,
     ) -> t.ContainerValue:
@@ -224,138 +324,38 @@ class FlextUtilitiesCache:
         return data
 
     @staticmethod
-    def clear_object_cache(
-        obj: object,
-    ) -> r[bool]:
-        """Clear cache-like attributes on an object.
+    def sort_key(key: t.SortableObjectType) -> tuple[int, str]:
+        """Generate a sort key for deterministic ordering across types.
 
-        Business Rule: Safe Cache Invalidation
-        =====================================
-        This method provides safe cache clearing for objects that may
-        have cached data that needs invalidation.
+        Business Rule: Type-Aware Deterministic Sorting
+        ===============================================
+        Python's default sorting fails when mixing types (str vs int).
+        This method provides a deterministic sort key that:
 
-        Attribute Detection:
-        - Checks FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-        - Common names: _cache, _cached, cache, cached_data, etc.
-        - Configurable via constants module
+        1. Groups by type (strings first, numbers second, others last)
+        2. Sorts within each group using string representation
+        3. Case-insensitive for strings (prevents 'Z' < 'a' issues)
 
-        Clearing Strategy:
-        1. Dict-like caches (has .clear() method) → call clear()
-        2. Simple cached values → set to None
-        3. Missing attributes → skip silently
+        Sort Priority:
+        - (0, lower_str) → strings (most common dict keys)
+        - (1, str_num) → numbers (int, float)
+        - (2, str_repr) → other types (fallback)
 
-        Error Handling:
-        - Returns FlextResult (railway pattern)
-        - ok(True) on success (even if no caches found)
-        - fail(error_msg) on any exception
-
-        Thread Safety:
-        - NOT thread-safe (cache clearing is a mutation)
-        - Caller responsible for synchronization if needed
+        Why tuple[int, str]?
+        - First element groups by type (Python compares tuples element-wise)
+        - Second element provides within-group ordering
+        - Deterministic across Python runs
 
         Args:
-            obj: Object with potential cache attributes
+            key: Sortable object (str, int, tuple, etc. - usually dict key)
 
         Returns:
-            r[bool]: ok(True) on success, fail(msg) on error
+            Tuple for sorted() key function
 
         """
-        try:
-            # Common cache attribute names to check and clear
-            cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
-
-            cleared_count = 0
-            for attr_name in cache_attributes:
-                if hasattr(obj, attr_name):
-                    cache_attr = getattr(obj, attr_name)
-                    if cache_attr is not None:
-                        # Clear mapping-like caches
-                        if hasattr(cache_attr, "clear") and callable(
-                            cache_attr.clear,
-                        ):
-                            _ = cache_attr.clear()
-                            cleared_count += 1
-                        # Reset to None for simple cached values
-                        else:
-                            setattr(obj, attr_name, None)
-                            cleared_count += 1
-
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Failed to clear caches: {e}")
-
-    @staticmethod
-    def has_cache_attributes(obj: object) -> bool:
-        """Check if an object exposes any known cache-related attributes.
-
-        Business Rule: Cache Detection
-        ==============================
-        Quick check to determine if an object might have cached data.
-        Useful for deciding whether to attempt cache clearing.
-
-        Args:
-            obj: t.Container object
-
-        Returns:
-            True if any known cache attribute exists, False otherwise
-
-        """
-        cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
-        # NOTE: Cannot use u.map() here due to circular import (utilities.py imports cache.py)
-        return any(hasattr(obj, attr) for attr in cache_attributes)
-
-    @staticmethod
-    def generate_cache_key(
-        *args: t.ContainerValue,
-        **kwargs: t.ContainerValue,
-    ) -> str:
-        """Generate a deterministic cache key from arguments.
-
-        Business Rule: SHA-256 Cache Key Generation
-        ==========================================
-        Generates a unique, deterministic cache key from function arguments.
-
-        Algorithm:
-        1. Convert args to string representation
-        2. Sort kwargs items (deterministic order)
-        3. Concatenate both representations
-        4. SHA-256 hash for fixed-length, collision-resistant key
-
-        Properties:
-        - Deterministic: Same args/kwargs → same key
-        - Fixed length: 64 hex characters (256 bits)
-        - Collision-resistant: SHA-256 provides cryptographic security
-        - URL-safe: Hexadecimal characters only
-
-        Limitations:
-        - Objects with non-deterministic __str__ may produce different keys
-        - For complex objects, consider normalizing first
-
-        Args:
-            *args: Positional arguments to include in key
-            **kwargs: Keyword arguments to include in key
-
-        Returns:
-            64-character hexadecimal SHA-256 hash
-
-        """
-        key_data = str(args) + str(sorted(kwargs.items()))
-        return hashlib.sha256(key_data.encode()).hexdigest()
-
-    @staticmethod
-    def generate_cache_key_for_command(
-        command: t.ContainerValue,
-        command_type: type,
-    ) -> str:
-        if isinstance(command, Mapping):
-            sorted_data = FlextUtilitiesCache.sort_dict_keys(command)
-            return f"{command_type.__name__}_{hash(str(sorted_data))}"
-        command_str = "None" if command is None else str(command)
-        try:
-            return f"{command_type.__name__}_{hash(command_str)}"
-        except TypeError:
-            encoded = command_str.encode(c.Utilities.DEFAULT_ENCODING)
-            return f"{command_type.__name__}_{abs(hash(encoded))}"
+        if isinstance(key, str):
+            return (0, key.lower())
+        return (1, str(key))
 
 
 __all__ = [

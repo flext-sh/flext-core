@@ -123,6 +123,11 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             return c.Infra.Refactor.MethodCategory.PROTECTED
         return c.Infra.Refactor.MethodCategory.PUBLIC
 
+    def _record_change(self, message: str) -> None:
+        self.changes.append(message)
+        if self._on_change is not None:
+            self._on_change(message)
+
     def _sort_methods(
         self,
         methods: list[FlextInfraRefactorMethodInfo],
@@ -191,11 +196,6 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             return (len(self._order_config), 0, method.name)
 
         return sorted(methods, key=sort_key)
-
-    def _record_change(self, message: str) -> None:
-        self.changes.append(message)
-        if self._on_change is not None:
-            self._on_change(message)
 
 
 __all__ = ["FlextInfraRefactorClassReconstructor"]

@@ -382,6 +382,18 @@ class Order(m.AggregateRoot):
         default=c.Domain.OrderStatus.PENDING,
     )
 
+    @property
+    @computed_field
+    def total(self) -> Money:
+        """Railway-aware order total calculation."""
+        if not self.items:
+            return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
+        currency = self.items[0].price.currency
+        total_amount = Decimal(
+            sum(item.price.amount * item.quantity for item in self.items),
+        )
+        return Money(amount=total_amount, currency=currency)
+
     def add_item(self, item: OrderItem) -> r[Order]:
         """Railway pattern for item addition with domain rules."""
         if self.status != c.Domain.OrderStatus.PENDING:
@@ -399,18 +411,6 @@ class Order(m.AggregateRoot):
             return r.fail("Order already processed")
         self.status = c.Domain.OrderStatus.CONFIRMED
         return r.ok(self)
-
-    @property
-    @computed_field
-    def total(self) -> Money:
-        """Railway-aware order total calculation."""
-        if not self.items:
-            return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
-        currency = self.items[0].price.currency
-        total_amount = Decimal(
-            sum(item.price.amount * item.quantity for item in self.items),
-        )
-        return Money(amount=total_amount, currency=currency)
 
 
 # No model_rebuild() needed - Pydantic v2 with 'from __future__ import annotations'

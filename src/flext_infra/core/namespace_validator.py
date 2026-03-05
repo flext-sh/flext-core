@@ -27,6 +27,82 @@ class FlextInfraNamespaceValidator:
     definitions are centralized in ``typings.py``.
     """
 
+    @staticmethod
+    def _annotation_contains(annotation: ast.expr | None, name: str) -> bool:
+        """Check whether an annotation AST node references a given name."""
+        if annotation is None:
+            return False
+        if isinstance(annotation, ast.Name) and annotation.id == name:
+            return True
+        if isinstance(annotation, ast.Attribute) and annotation.attr == name:
+            return True
+        # Handle Subscript like Final[int]
+        if isinstance(annotation, ast.Subscript):
+            return FlextInfraNamespaceValidator._annotation_contains(
+                annotation.value, name
+            )
+        return False
+
+    @staticmethod
+    def _base_contains(base: ast.expr, name: str) -> bool:
+        """Check whether a class base AST node references a given name."""
+        if isinstance(base, ast.Name) and base.id == name:
+            return True
+        return isinstance(base, ast.Attribute) and base.attr == name
+
+    @staticmethod
+    def _derive_prefix(project_root: Path) -> str:
+        """Derive the expected class name prefix from the package directory.
+
+        Finds the first package under ``src/`` and converts its name to
+        PascalCase: ``flext_infra`` → ``FlextInfra``.
+        """
+        src_dir = project_root / "src"
+        if not src_dir.is_dir():
+            return ""
+        for child in sorted(src_dir.iterdir()):
+            if child.is_dir() and (child / "__init__.py").exists():
+                return "".join(part.title() for part in child.name.split("_"))
+        return ""
+
+    @staticmethod
+    def _get_assign_target_name(node: ast.Assign) -> str:
+        """Extract the first target name from an Assign node."""
+        if node.targets and isinstance(node.targets[0], ast.Name):
+            return node.targets[0].id
+        return ""
+
+    # -- annotation / base helpers --------------------------------------------
+
+    @staticmethod
+    def _get_call_name(func: ast.expr) -> str:
+        """Extract the function name from a Call node's func attribute."""
+        if isinstance(func, ast.Name):
+            return func.id
+        if isinstance(func, ast.Attribute):
+            return func.attr
+        return ""
+
+    @staticmethod
+    def _get_target_name(target: ast.expr) -> str:
+        """Extract the name from an assignment target."""
+        if isinstance(target, ast.Name):
+            return target.id
+        return ""
+
+    @staticmethod
+    def derive_prefix(project_root: Path) -> str:
+        """Public wrapper for deriving the class name prefix from a project.
+
+        Args:
+            project_root: Root directory of the project.
+
+        Returns:
+            The PascalCase prefix derived from the package name.
+
+        """
+        return FlextInfraNamespaceValidator._derive_prefix(project_root)
+
     def validate(
         self, project_root: Path, *, scan_tests: bool = False
     ) -> r[m.ValidationReport]:
@@ -68,128 +144,6 @@ class FlextInfraNamespaceValidator:
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
             return r[m.ValidationReport].fail(f"Namespace validation failed: {exc}")
-
-    # -- file discovery -------------------------------------------------------
-
-    def _discover_files(self, root: Path, *, scan_tests: bool) -> list[Path]:
-        """Walk ``src/`` (and optionally ``tests/``) for non-exempt .py files."""
-        result: list[Path] = []
-        dirs_to_scan = [root / "src"]
-        if scan_tests:
-            dirs_to_scan.append(root / "tests")
-
-        for base_dir in dirs_to_scan:
-            if not base_dir.is_dir():
-                continue
-            result.extend(
-                py_file
-                for py_file in sorted(base_dir.rglob("*.py"))
-                if not self._is_exempt_file(py_file)
-            )
-
-        return sorted(result)
-
-    def _is_exempt_file(self, filepath: Path) -> bool:
-        """Check whether a file should be skipped from validation."""
-        name = filepath.name
-        if name in c.Infra.Core.EXEMPT_FILENAMES:
-            return True
-        return any(name.startswith(pfx) for pfx in c.Infra.Core.EXEMPT_PREFIXES)
-
-    @staticmethod
-    def _derive_prefix(project_root: Path) -> str:
-        """Derive the expected class name prefix from the package directory.
-
-        Finds the first package under ``src/`` and converts its name to
-        PascalCase: ``flext_infra`` → ``FlextInfra``.
-        """
-        src_dir = project_root / "src"
-        if not src_dir.is_dir():
-            return ""
-        for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / "__init__.py").exists():
-                return "".join(part.title() for part in child.name.split("_"))
-        return ""
-
-    @staticmethod
-    def derive_prefix(project_root: Path) -> str:
-        """Public wrapper for deriving the class name prefix from a project.
-
-        Args:
-            project_root: Root directory of the project.
-
-        Returns:
-            The PascalCase prefix derived from the package name.
-
-        """
-        return FlextInfraNamespaceValidator._derive_prefix(project_root)
-
-    # -- AST helpers ----------------------------------------------------------
-
-    def _parse_file(self, path: Path) -> ast.Module | None:
-        """Parse a Python file into an AST, returning None on failure."""
-        try:
-            source = path.read_text(encoding="utf-8")
-            return ast.parse(source, filename=str(path))
-        except (SyntaxError, UnicodeDecodeError):
-            return None
-
-    def _is_allowed_module_level(self, node: ast.stmt, filepath: Path) -> bool:
-        """Check whether a non-class top-level statement is allowed."""
-        # Imports are always allowed
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            return True
-
-        # Module docstring (string expression)
-        if (
-            isinstance(node, ast.Expr)
-            and isinstance(node.value, ast.Constant)
-            and isinstance(node.value.value, str)
-        ):
-            return True
-
-        # __all__ / __version__ assignments
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if (
-                    isinstance(target, ast.Name)
-                    and target.id in c.Infra.Core.DUNDER_ALLOWED
-                ):
-                    return True
-
-        # Single/two-letter alias assignments (c = FlextConstants, tc = ...)
-        if isinstance(node, ast.Assign) and len(node.targets) == 1:
-            target = node.targets[0]
-            if isinstance(target, ast.Name) and target.id in c.Infra.Core.ALIAS_NAMES:
-                return True
-
-        # TypeVar / ParamSpec / TypeVarTuple calls — only in typings.py
-        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
-            func = node.value.func
-            func_name = self._get_call_name(func)
-            if func_name in c.Infra.Core.TYPEVAR_CALLABLES:
-                return filepath.name == "typings.py"
-
-        # PEP 695 TypeAlias — only in typings.py
-        if isinstance(node, ast.TypeAlias):
-            return filepath.name == "typings.py"
-
-        # TypeAlias annotated assignments — only in typings.py
-        if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-            node.annotation, "TypeAlias"
-        ):
-            return filepath.name == "typings.py"
-
-        # _private Final constants — only in constants.py
-        if (
-            isinstance(node, ast.AnnAssign)
-            and isinstance(node.target, ast.Name)
-            and node.target.id.startswith("_")
-            and self._annotation_contains(node.annotation, "Final")
-        ):
-            return filepath.name == "constants.py"
-
-        return False
 
     # -- Rule implementations -------------------------------------------------
 
@@ -391,50 +345,96 @@ class FlextInfraNamespaceValidator:
 
         return violations
 
-    # -- annotation / base helpers --------------------------------------------
+    # -- file discovery -------------------------------------------------------
 
-    @staticmethod
-    def _get_call_name(func: ast.expr) -> str:
-        """Extract the function name from a Call node's func attribute."""
-        if isinstance(func, ast.Name):
-            return func.id
-        if isinstance(func, ast.Attribute):
-            return func.attr
-        return ""
+    def _discover_files(self, root: Path, *, scan_tests: bool) -> list[Path]:
+        """Walk ``src/`` (and optionally ``tests/``) for non-exempt .py files."""
+        result: list[Path] = []
+        dirs_to_scan = [root / "src"]
+        if scan_tests:
+            dirs_to_scan.append(root / "tests")
 
-    @staticmethod
-    def _get_target_name(target: ast.expr) -> str:
-        """Extract the name from an assignment target."""
-        if isinstance(target, ast.Name):
-            return target.id
-        return ""
-
-    @staticmethod
-    def _get_assign_target_name(node: ast.Assign) -> str:
-        """Extract the first target name from an Assign node."""
-        if node.targets and isinstance(node.targets[0], ast.Name):
-            return node.targets[0].id
-        return ""
-
-    @staticmethod
-    def _annotation_contains(annotation: ast.expr | None, name: str) -> bool:
-        """Check whether an annotation AST node references a given name."""
-        if annotation is None:
-            return False
-        if isinstance(annotation, ast.Name) and annotation.id == name:
-            return True
-        if isinstance(annotation, ast.Attribute) and annotation.attr == name:
-            return True
-        # Handle Subscript like Final[int]
-        if isinstance(annotation, ast.Subscript):
-            return FlextInfraNamespaceValidator._annotation_contains(
-                annotation.value, name
+        for base_dir in dirs_to_scan:
+            if not base_dir.is_dir():
+                continue
+            result.extend(
+                py_file
+                for py_file in sorted(base_dir.rglob("*.py"))
+                if not self._is_exempt_file(py_file)
             )
+
+        return sorted(result)
+
+    def _is_allowed_module_level(self, node: ast.stmt, filepath: Path) -> bool:
+        """Check whether a non-class top-level statement is allowed."""
+        # Imports are always allowed
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            return True
+
+        # Module docstring (string expression)
+        if (
+            isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+        ):
+            return True
+
+        # __all__ / __version__ assignments
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id in c.Infra.Core.DUNDER_ALLOWED
+                ):
+                    return True
+
+        # Single/two-letter alias assignments (c = FlextConstants, tc = ...)
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name) and target.id in c.Infra.Core.ALIAS_NAMES:
+                return True
+
+        # TypeVar / ParamSpec / TypeVarTuple calls — only in typings.py
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            func = node.value.func
+            func_name = self._get_call_name(func)
+            if func_name in c.Infra.Core.TYPEVAR_CALLABLES:
+                return filepath.name == "typings.py"
+
+        # PEP 695 TypeAlias — only in typings.py
+        if isinstance(node, ast.TypeAlias):
+            return filepath.name == "typings.py"
+
+        # TypeAlias annotated assignments — only in typings.py
+        if isinstance(node, ast.AnnAssign) and self._annotation_contains(
+            node.annotation, "TypeAlias"
+        ):
+            return filepath.name == "typings.py"
+
+        # _private Final constants — only in constants.py
+        if (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id.startswith("_")
+            and self._annotation_contains(node.annotation, "Final")
+        ):
+            return filepath.name == "constants.py"
+
         return False
 
-    @staticmethod
-    def _base_contains(base: ast.expr, name: str) -> bool:
-        """Check whether a class base AST node references a given name."""
-        if isinstance(base, ast.Name) and base.id == name:
+    def _is_exempt_file(self, filepath: Path) -> bool:
+        """Check whether a file should be skipped from validation."""
+        name = filepath.name
+        if name in c.Infra.Core.EXEMPT_FILENAMES:
             return True
-        return isinstance(base, ast.Attribute) and base.attr == name
+        return any(name.startswith(pfx) for pfx in c.Infra.Core.EXEMPT_PREFIXES)
+
+    # -- AST helpers ----------------------------------------------------------
+
+    def _parse_file(self, path: Path) -> ast.Module | None:
+        """Parse a Python file into an AST, returning None on failure."""
+        try:
+            source = path.read_text(encoding="utf-8")
+            return ast.parse(source, filename=str(path))
+        except (SyntaxError, UnicodeDecodeError):
+            return None

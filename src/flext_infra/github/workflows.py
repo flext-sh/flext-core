@@ -52,6 +52,28 @@ class FlextInfraWorkflowSyncer:
         self._json = json_io or FlextInfraJsonService()
         self._templates = templates or FlextInfraTemplateEngine()
 
+    def render_template(self, template_path: Path) -> FlextResult[str]:
+        """Read and render a workflow template with generated header.
+
+        Args:
+            template_path: Path to the template file.
+
+        Returns:
+            FlextResult with the rendered template content.
+
+        """
+        try:
+            body = template_path.read_text(encoding=c.Encoding.DEFAULT)
+        except OSError as exc:
+            return r[str].fail(f"failed to read template: {exc}")
+
+        header = self._templates.GENERATED_SHELL_HEADER.format(
+            source="flext_infra.github.workflows",
+        )
+        if body.startswith(header):
+            return r[str].ok(body)
+        return r[str].ok(header + body)
+
     def resolve_source_workflow(
         self,
         workspace_root: Path,
@@ -81,28 +103,6 @@ class FlextInfraWorkflowSyncer:
         if default_source.exists():
             return r[Path].ok(default_source)
         return r[Path].fail(f"missing source workflow: {default_source}")
-
-    def render_template(self, template_path: Path) -> FlextResult[str]:
-        """Read and render a workflow template with generated header.
-
-        Args:
-            template_path: Path to the template file.
-
-        Returns:
-            FlextResult with the rendered template content.
-
-        """
-        try:
-            body = template_path.read_text(encoding=c.Encoding.DEFAULT)
-        except OSError as exc:
-            return r[str].fail(f"failed to read template: {exc}")
-
-        header = self._templates.GENERATED_SHELL_HEADER.format(
-            source="flext_infra.github.workflows",
-        )
-        if body.startswith(header):
-            return r[str].ok(body)
-        return r[str].ok(header + body)
 
     def sync_project(
         self,

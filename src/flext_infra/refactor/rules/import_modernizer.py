@@ -63,6 +63,13 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         wrapper = MetadataWrapper(tree)
         return wrapper.visit(transformer), transformer.changes
 
+    def _bound_name_from_import_alias(self, alias: cst.ImportAlias) -> str:
+        if alias.asname is not None and isinstance(alias.asname.name, cst.Name):
+            return alias.asname.name.value
+        if isinstance(alias.name, cst.Name):
+            return alias.name.value
+        return alias.name.attr.value
+
     def _collect_blocked_aliases(
         self,
         tree: cst.Module,
@@ -136,6 +143,36 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                 self._function_depth = 0
 
             @override
+            def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:
+                del original_node
+                self._function_depth -= 1
+
+            @override
+            def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
+                if self._function_depth == 0:
+                    return
+                target = node.target
+                if isinstance(target, cst.Name) and target.value in runtime_aliases:
+                    shadowed_aliases.add(target.value)
+
+            @override
+            def visit_Assign(self, node: cst.Assign) -> None:
+                if self._function_depth == 0:
+                    return
+                for assign_target in node.targets:
+                    target = assign_target.target
+                    if isinstance(target, cst.Name) and target.value in runtime_aliases:
+                        shadowed_aliases.add(target.value)
+
+            @override
+            def visit_For(self, node: cst.For) -> None:
+                if self._function_depth == 0:
+                    return
+                target = node.target
+                if isinstance(target, cst.Name) and target.value in runtime_aliases:
+                    shadowed_aliases.add(target.value)
+
+            @override
             def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
                 self._function_depth += 1
                 param_names = [
@@ -155,45 +192,13 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                     if param_name in runtime_aliases:
                         shadowed_aliases.add(param_name)
 
-            @override
-            def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:
-                del original_node
-                self._function_depth -= 1
-
-            @override
-            def visit_Assign(self, node: cst.Assign) -> None:
-                if self._function_depth == 0:
-                    return
-                for assign_target in node.targets:
-                    target = assign_target.target
-                    if isinstance(target, cst.Name) and target.value in runtime_aliases:
-                        shadowed_aliases.add(target.value)
-
-            @override
-            def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
-                if self._function_depth == 0:
-                    return
-                target = node.target
-                if isinstance(target, cst.Name) and target.value in runtime_aliases:
-                    shadowed_aliases.add(target.value)
-
-            @override
-            def visit_For(self, node: cst.For) -> None:
-                if self._function_depth == 0:
-                    return
-                target = node.target
-                if isinstance(target, cst.Name) and target.value in runtime_aliases:
-                    shadowed_aliases.add(target.value)
-
         tree.visit(FunctionShadowCollector())
         return shadowed_aliases
 
-    def _bound_name_from_import_alias(self, alias: cst.ImportAlias) -> str:
-        if alias.asname is not None and isinstance(alias.asname.name, cst.Name):
-            return alias.asname.name.value
-        if isinstance(alias.name, cst.Name):
-            return alias.name.value
-        return alias.name.attr.value
+    def _fix_lazy_imports(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
+        transformer = FlextInfraRefactorLazyImportFixer()
+        new_tree = tree.visit(transformer)
+        return new_tree, transformer.changes
 
     def _module_name_from_expr(self, module: cst.BaseExpression | None) -> str:
         if module is None:
@@ -210,11 +215,6 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                 parts.append(current.value)
             return ".".join(reversed(parts))
         return ""
-
-    def _fix_lazy_imports(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
-        transformer = FlextInfraRefactorLazyImportFixer()
-        new_tree = tree.visit(transformer)
-        return new_tree, transformer.changes
 
 
 __all__ = ["FlextInfraRefactorImportModernizerRule"]

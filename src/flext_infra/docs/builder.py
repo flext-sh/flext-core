@@ -46,6 +46,25 @@ class FlextInfraDocBuilder:
         """Initialize the documentation builder."""
         self._runner = FlextInfraCommandRunner()
 
+    @staticmethod
+    def _write_reports(scope: FlextInfraDocScope, report: BuildReport) -> None:
+        """Persist build JSON summary and markdown report."""
+        _ = FlextInfraDocsShared.write_json(
+            scope.report_dir / "build-summary.json",
+            {"summary": report.model_dump()},
+        )
+        _ = FlextInfraDocsShared.write_markdown(
+            scope.report_dir / "build-report.md",
+            [
+                "# Docs Build Report",
+                "",
+                f"Scope: {report.scope}",
+                f"Result: {report.result}",
+                f"Reason: {report.reason}",
+                f"Site dir: {report.site_dir}",
+            ],
+        )
+
     def build(
         self,
         root: Path,
@@ -143,25 +162,6 @@ class FlextInfraDocBuilder:
             result=c.Status.FAIL,
             reason=tail,
             site_dir=site_dir.as_posix(),
-        )
-
-    @staticmethod
-    def _write_reports(scope: FlextInfraDocScope, report: BuildReport) -> None:
-        """Persist build JSON summary and markdown report."""
-        _ = FlextInfraDocsShared.write_json(
-            scope.report_dir / "build-summary.json",
-            {"summary": report.model_dump()},
-        )
-        _ = FlextInfraDocsShared.write_markdown(
-            scope.report_dir / "build-report.md",
-            [
-                "# Docs Build Report",
-                "",
-                f"Scope: {report.scope}",
-                f"Result: {report.result}",
-                f"Reason: {report.reason}",
-                f"Site dir: {report.site_dir}",
-            ],
         )
 
 

@@ -306,19 +306,6 @@ class FlextTestsConstants(FlextConstants):
             SUCCESS_MESSAGE: Final[str] = "success"
 
             @classmethod
-            def user_email(cls, user_id: str) -> str:
-                """Generate user email from template.
-
-                Args:
-                    user_id: User identifier for email generation.
-
-                Returns:
-                    Formatted email address.
-
-                """
-                return cls.DEFAULT_USER_EMAIL_TEMPLATE.format(id=user_id)
-
-            @classmethod
             def service_name(cls, service_type: str) -> str:
                 """Generate service name from template.
 
@@ -330,6 +317,19 @@ class FlextTestsConstants(FlextConstants):
 
                 """
                 return cls.DEFAULT_SERVICE_NAME_TEMPLATE.format(type=service_type)
+
+            @classmethod
+            def user_email(cls, user_id: str) -> str:
+                """Generate user email from template.
+
+                Args:
+                    user_id: User identifier for email generation.
+
+                Returns:
+                    Formatted email address.
+
+                """
+                return cls.DEFAULT_USER_EMAIL_TEMPLATE.format(id=user_id)
 
         class Execution:
             """Test execution constants for test infrastructure."""

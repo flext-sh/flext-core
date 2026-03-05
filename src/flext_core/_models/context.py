@@ -159,6 +159,27 @@ class FlextModelsContext:
             self._key = key
             self._default: T | None = default
 
+        @staticmethod
+        def reset(token: FlextModelsContext.StructlogProxyToken) -> None:
+            """Reset to previous value using token.
+
+            Args:
+                token: Token from previous set() call
+
+            Note:
+                structlog.contextvars doesn't support token-based reset.
+                Use unbind_contextvars() or clear_contextvars() instead.
+
+            """
+            # Simplified implementation - structlog uses bind/unbind, not tokens
+            # In practice, context managers handle cleanup via bind/unbind
+            if token.previous_value is None:
+                structlog.contextvars.unbind_contextvars(token.key)
+            else:
+                _ = structlog.contextvars.bind_contextvars(**{
+                    token.key: token.previous_value,
+                })
+
         def get(self) -> t.Container | None:
             """Get current value from structlog context.
 
@@ -214,27 +235,6 @@ class FlextModelsContext:
                 key=self._key,
                 previous_value=prev_value,
             )
-
-        @staticmethod
-        def reset(token: FlextModelsContext.StructlogProxyToken) -> None:
-            """Reset to previous value using token.
-
-            Args:
-                token: Token from previous set() call
-
-            Note:
-                structlog.contextvars doesn't support token-based reset.
-                Use unbind_contextvars() or clear_contextvars() instead.
-
-            """
-            # Simplified implementation - structlog uses bind/unbind, not tokens
-            # In practice, context managers handle cleanup via bind/unbind
-            if token.previous_value is None:
-                structlog.contextvars.unbind_contextvars(token.key)
-            else:
-                _ = structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value,
-                })
 
     class Token(FlextModelsEntity.Value):
         """Token for context variable reset operations.
@@ -321,32 +321,6 @@ class FlextModelsContext:
             extra=c.ModelConfig.EXTRA_IGNORE,
         )
 
-        @staticmethod
-        def normalize_to_general_value(
-            val: t.Container,
-        ) -> t.Container:
-            """Normalize any value to t.Container recursively."""
-            return FlextRuntime.normalize_to_general_value(val)
-
-        @classmethod
-        def normalize_to_serializable_value(
-            cls,
-            val: t.Container,
-        ) -> t.Container:
-            normalized = cls.normalize_to_general_value(val)
-            if normalized is None or isinstance(normalized, (str, int, float, bool)):
-                return normalized
-            if isinstance(normalized, Mapping):
-                return {
-                    str(k): cls.normalize_to_serializable_value(v)
-                    for k, v in normalized.items()
-                }
-            if FlextRuntime.is_list_like(normalized):
-                return [
-                    cls.normalize_to_serializable_value(item) for item in normalized
-                ]
-            return str(normalized)
-
         @classmethod
         def check_json_serializable(
             cls,
@@ -375,6 +349,25 @@ class FlextModelsContext:
                 return  # All list items validated successfully
             msg = f"Non-JSON-serializable type {obj.__class__.__name__} at {path}"
             raise TypeError(msg)
+
+        @classmethod
+        def normalize_to_serializable_value(
+            cls,
+            val: t.Container,
+        ) -> t.Container:
+            normalized = cls.normalize_to_general_value(val)
+            if normalized is None or isinstance(normalized, (str, int, float, bool)):
+                return normalized
+            if isinstance(normalized, Mapping):
+                return {
+                    str(k): cls.normalize_to_serializable_value(v)
+                    for k, v in normalized.items()
+                }
+            if FlextRuntime.is_list_like(normalized):
+                return [
+                    cls.normalize_to_serializable_value(item) for item in normalized
+                ]
+            return str(normalized)
 
         @field_validator("data", mode="before")
         @classmethod
@@ -440,6 +433,13 @@ class FlextModelsContext:
 
             return dict(working_value)
 
+        @staticmethod
+        def normalize_to_general_value(
+            val: t.Container,
+        ) -> t.Container:
+            """Normalize any value to t.Container recursively."""
+            return FlextRuntime.normalize_to_general_value(val)
+
     class ContextExport(FlextModelsEntity.Value):
         """Typed snapshot returned by export_snapshot.
 
@@ -489,6 +489,16 @@ class FlextModelsContext:
             default_factory=dict,
             description="Usage statistics (operation counts, timing info)",
         )
+
+        @computed_field
+        def has_statistics(self) -> bool:
+            """Check if statistics are available."""
+            return bool(self.statistics)
+
+        @computed_field
+        def total_data_items(self) -> int:
+            """Compute total number of data items across all scopes."""
+            return len(self.data)
 
         @field_validator("data", mode="before")
         @classmethod
@@ -556,16 +566,6 @@ class FlextModelsContext:
             # working_value is always dict from comprehensions above;
             # explicit dict() satisfies return mapping[str, ContainerValue]
             return dict(working_value)
-
-        @computed_field
-        def total_data_items(self) -> int:
-            """Compute total number of data items across all scopes."""
-            return len(self.data)
-
-        @computed_field
-        def has_statistics(self) -> bool:
-            """Check if statistics are available."""
-            return bool(self.statistics)
 
     class ContextScopeData(BaseModel):
         """Scope-specific data container for context management.

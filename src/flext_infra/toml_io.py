@@ -46,6 +46,33 @@ class FlextInfraTomlService(FlextService[bool]):
         """Initialize the TOML service."""
         super().__init__()
 
+    @staticmethod
+    def build_table(data: TomlMap) -> Table:
+        """Build a tomlkit Table from a nested dict."""
+        table = tomlkit.table()
+        for key, value in data.items():
+            nested_mapping = _as_toml_mapping(value)
+            if nested_mapping is not None:
+                table[key] = FlextInfraTomlService.build_table(nested_mapping)
+            else:
+                table[key] = value
+        return table
+
+    @staticmethod
+    def value_differs(current: TomlValue, expected: TomlValue) -> bool:
+        """Return True if current and expected differ.
+
+        Compares as strings for lists.
+        """
+        if isinstance(current, list) and isinstance(expected, list):
+            return [str(x) for x in current] != [str(x) for x in expected]
+        return str(current) != str(expected)
+
+    @override
+    def execute(self) -> FlextResult[bool]:
+        """Execute the service (required by FlextService base class)."""
+        return r[bool].ok(True)
+
     def read(self, path: Path) -> FlextResult[TomlMap]:
         """Read and parse a TOML file as a plain dict.
 
@@ -90,6 +117,57 @@ class FlextInfraTomlService(FlextService[bool]):
             return r[tomlkit.TOMLDocument].fail(
                 f"TOML document read error: {exc}",
             )
+
+    def sync_mapping(
+        self,
+        target: TomlMutableMap,
+        canonical: TomlMap,
+        *,
+        prune_extras: bool,
+        prefix: str,
+        added: list[str],
+        updated: list[str],
+        removed: list[str],
+    ) -> None:
+        """Update target mapping to match canonical; record changes."""
+        for key, expected in canonical.items():
+            current = target.get(key)
+            path = f"{prefix}.{key}" if prefix else key
+            expected_mapping = _as_toml_mapping(expected)
+            if expected_mapping is not None:
+                current_mapping = (
+                    _as_toml_mapping(current) if current is not None else None
+                )
+                if current_mapping is None:
+                    target[key] = expected_mapping
+                    added.append(path)
+                    continue
+                self.sync_mapping(
+                    current_mapping,
+                    expected_mapping,
+                    prune_extras=prune_extras,
+                    prefix=path,
+                    added=added,
+                    updated=updated,
+                    removed=removed,
+                )
+                continue
+            if current is None:
+                target[key] = expected
+                added.append(path)
+                continue
+            if self.value_differs(current, expected):
+                target[key] = expected
+                updated.append(path)
+
+        if not prune_extras:
+            return
+        for key in list(target.keys()):
+            if key in canonical:
+                continue
+            path = f"{prefix}.{key}" if prefix else key
+            del target[key]
+            removed.append(path)
 
     def write(
         self,
@@ -149,84 +227,6 @@ class FlextInfraTomlService(FlextService[bool]):
             )
         except OSError as exc:
             return r[bool].fail(f"TOML write error: {exc}")
-        return r[bool].ok(True)
-
-    @staticmethod
-    def value_differs(current: TomlValue, expected: TomlValue) -> bool:
-        """Return True if current and expected differ.
-
-        Compares as strings for lists.
-        """
-        if isinstance(current, list) and isinstance(expected, list):
-            return [str(x) for x in current] != [str(x) for x in expected]
-        return str(current) != str(expected)
-
-    @staticmethod
-    def build_table(data: TomlMap) -> Table:
-        """Build a tomlkit Table from a nested dict."""
-        table = tomlkit.table()
-        for key, value in data.items():
-            nested_mapping = _as_toml_mapping(value)
-            if nested_mapping is not None:
-                table[key] = FlextInfraTomlService.build_table(nested_mapping)
-            else:
-                table[key] = value
-        return table
-
-    def sync_mapping(
-        self,
-        target: TomlMutableMap,
-        canonical: TomlMap,
-        *,
-        prune_extras: bool,
-        prefix: str,
-        added: list[str],
-        updated: list[str],
-        removed: list[str],
-    ) -> None:
-        """Update target mapping to match canonical; record changes."""
-        for key, expected in canonical.items():
-            current = target.get(key)
-            path = f"{prefix}.{key}" if prefix else key
-            expected_mapping = _as_toml_mapping(expected)
-            if expected_mapping is not None:
-                current_mapping = (
-                    _as_toml_mapping(current) if current is not None else None
-                )
-                if current_mapping is None:
-                    target[key] = expected_mapping
-                    added.append(path)
-                    continue
-                self.sync_mapping(
-                    current_mapping,
-                    expected_mapping,
-                    prune_extras=prune_extras,
-                    prefix=path,
-                    added=added,
-                    updated=updated,
-                    removed=removed,
-                )
-                continue
-            if current is None:
-                target[key] = expected
-                added.append(path)
-                continue
-            if self.value_differs(current, expected):
-                target[key] = expected
-                updated.append(path)
-
-        if not prune_extras:
-            return
-        for key in list(target.keys()):
-            if key in canonical:
-                continue
-            path = f"{prefix}.{key}" if prefix else key
-            del target[key]
-            removed.append(path)
-
-    @override
-    def execute(self) -> FlextResult[bool]:
-        """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
 

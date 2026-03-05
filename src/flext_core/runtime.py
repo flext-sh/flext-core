@@ -224,11 +224,6 @@ class FlextRuntime:
             return logger
 
         @property
-        def line_buffering(self) -> bool:
-            """Return whether line buffering is enabled."""
-            return getattr(self.stream, "line_buffering", False)
-
-        @property
         def buffer(self) -> typing.BinaryIO:
             """Return underlying binary buffer."""
             buf = getattr(self.stream, "buffer", None)
@@ -236,15 +231,10 @@ class FlextRuntime:
                 return buf
             return io.BytesIO()
 
-        @override
-        def write(self, s: str, /) -> int:
-            """Write message to queue (non-blocking)."""
-            with contextlib.suppress(queue.Full):
-                self.queue.put(
-                    s,
-                    block=c.Logging.ASYNC_BLOCK_ON_FULL,
-                )
-            return len(s)
+        @property
+        def line_buffering(self) -> bool:
+            """Return whether line buffering is enabled."""
+            return getattr(self.stream, "line_buffering", False)
 
         @override
         def flush(self) -> None:
@@ -263,6 +253,16 @@ class FlextRuntime:
             if self.thread.is_alive():
                 self.thread.join(timeout=2.0)
             self.flush()
+
+        @override
+        def write(self, s: str, /) -> int:
+            """Write message to queue (non-blocking)."""
+            with contextlib.suppress(queue.Full):
+                self.queue.put(
+                    s,
+                    block=c.Logging.ASYNC_BLOCK_ON_FULL,
+                )
+            return len(s)
 
         def _worker(self) -> None:
             """Worker thread processing log queue."""
@@ -290,16 +290,6 @@ class FlextRuntime:
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
     @classmethod
-    def is_structlog_configured(cls) -> bool:
-        """Check if structlog has been configured.
-
-        Returns:
-            bool: True if structlog is configured, False otherwise
-
-        """
-        return cls._structlog_configured
-
-    @classmethod
     def ensure_structlog_configured(cls) -> None:
         """Ensure structlog is configured (called automatically on first use).
 
@@ -317,6 +307,16 @@ class FlextRuntime:
         if not cls._structlog_configured:
             cls.configure_structlog()
             cls._structlog_configured = True
+
+    @classmethod
+    def is_structlog_configured(cls) -> bool:
+        """Check if structlog has been configured.
+
+        Returns:
+            bool: True if structlog is configured, False otherwise
+
+        """
+        return cls._structlog_configured
 
     # NOTE: Use c.Settings.LogLevel directly - no aliases per FLEXT standards
 
@@ -369,6 +369,137 @@ class FlextRuntime:
         def create_instance[T](class_type: type[T]) -> T:
             """Create instance using the runtime low-level constructor path."""
             return FlextRuntime.create_instance(class_type)
+
+    @staticmethod
+    def _is_scalar(
+        value: t.Container | t.MetadataValue,
+    ) -> TypeGuard[t.Scalar]:
+        """Check if value is a scalar type accepted by t.Scalar."""
+        match value:
+            case datetime() | None:
+                return True
+            case _:
+                return False
+
+    @staticmethod
+    def dependency_containers() -> ModuleType:
+        """Return the dependency-injector containers module."""
+        return containers
+
+    @staticmethod
+    def dependency_providers() -> ModuleType:
+        """Return the dependency-injector providers module."""
+        return providers
+
+    @staticmethod
+    def extract_generic_args(
+        type_hint: t.TypeHintSpecifier,
+    ) -> tuple[t.GenericTypeArgument | type[t.ConfigurationMapping], ...]:
+        """Extract generic type arguments from a type hint.
+
+        Business Rule: Extracts generic type arguments from type hints using
+        typing.get_args() for standard generics,         and mapping for type
+        aliases. Returns empty tuple if no arguments found or on error. Used for
+        type introspection and generic type analysis.
+
+        Audit Implication: Type argument extraction enables audit trail completeness
+        by providing type information for generic types. All type introspection is
+        safe and never raises exceptions.
+
+        Args:
+            type_hint: Type hint to extract args from
+
+        Returns:
+            Tuple of type arguments, empty tuple if no args
+
+        """
+        try:
+            # First try the standard typing.get_args
+            args = typing.get_args(type_hint)
+            if args:
+                return args
+
+            # Check if it's a known type alias
+            if hasattr(type_hint, "__name__"):
+                type_name = getattr(type_hint, "__name__", "")
+                # Handle common type aliases - use actual type objects
+                # GenericTypeArgument = str | type[t.Container]
+                # Type objects (str, int, float, bool) are valid GenericTypeArgument
+                # since they represent type[T] where T is a scalar t.Container
+                if type_name in {"StringList", "List"}:
+                    return (str,)
+                if type_name == "IntList":
+                    return (int,)
+                if type_name == "FloatList":
+                    return (float,)
+                if type_name == "BoolList":
+                    return (bool,)
+                if type_name in {"Dict", "StringDict"}:
+                    return (str, str)
+                if type_name == "NestedDict":
+                    return (str, dict)
+                if type_name == "IntDict":
+                    return (str, int)
+                if type_name == "FloatDict":
+                    return (str, float)
+                if type_name == "BoolDict":
+                    return (str, bool)
+
+            return ()
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ):
+            # Defensive: typing module failures are extremely rare
+            return ()
+
+    @staticmethod
+    def get_logger(
+        name: str | None = None,
+    ) -> p.Log.StructlogLogger:
+        """Get structlog logger instance - same structure/config used by FlextLogger.
+
+        Returns the exact same structlog logger instance that FlextLogger uses internally.
+        This ensures consistent logging structure across the entire FLEXT ecosystem.
+
+        Args:
+            name: Logger name (module name). Defaults to __name__ of caller.
+
+        Returns:
+            Logger: Typed structlog logger instance (same as FlextLogger.logger).
+
+        Note:
+            FlextLogger internally uses: FlextRuntime.get_logger(name).bind(**context)
+            This method returns the base logger before context binding.
+
+        """
+        if name is None:
+            frame = inspect.currentframe()
+            if frame and frame.f_back:
+                name = frame.f_back.f_globals.get("__name__", __name__)
+            else:
+                name = __name__
+        # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Log.StructlogLogger protocol
+        # All methods (debug, info, warning, error, etc.) are available directly from structlog logger
+        # p.Log.StructlogLogger protocol is compatible with structlog's return type via structural typing
+        logger: p.Log.StructlogLogger = structlog.get_logger(name)
+        return logger
+
+    @staticmethod
+    def is_base_model(obj: t.Container) -> TypeGuard[object]:
+        """Type guard to narrow object to BaseModel (part of ContainerValue).
+
+        This allows isinstance checks to narrow types for FlextRuntime methods
+        that accept ContainerValue (which includes BaseModel).
+        """
+        match obj:
+            case BaseModel():
+                return True
+            case _:
+                return False
 
     # =========================================================================
     # TYPE GUARD UTILITIES
@@ -432,15 +563,92 @@ class FlextRuntime:
         return isinstance(value, list)
 
     @staticmethod
-    def _is_scalar(
-        value: t.Container | t.MetadataValue,
-    ) -> TypeGuard[t.Scalar]:
-        """Check if value is a scalar type accepted by t.Scalar."""
-        match value:
-            case datetime() | None:
+    def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
+        """Check if type hint represents a sequence type (list, tuple, etc.).
+
+        Business Rule: Checks if type hint represents a sequence type using
+        typing.get_origin() and issubclass() checks. Supports both standard
+        generics and type aliases. Returns False on error for safe type checking.
+
+        Audit Implication: Sequence type checking enables audit trail completeness
+        by providing type information for sequence types. All type checking is
+        safe and never raises exceptions.
+
+        Args:
+            type_hint: Type hint to check
+
+        Returns:
+            True if type hint is a sequence type, False otherwise
+
+        """
+        try:
+            origin = typing.get_origin(type_hint)
+            if origin is not None and hasattr(origin, "__mro__"):
+                if origin in {list, tuple}:
+                    return True
+                return Sequence in origin.__mro__
+
+            if type_hint in {list, tuple, str}:
                 return True
-            case _:
-                return False
+
+            # Check if the type itself is a sequence subclass (for type aliases)
+            hint_mro = getattr(type_hint, "__mro__", None)
+            if hint_mro is not None and Sequence in hint_mro:
+                return True
+
+            # Check __name__ for type aliases like StringList
+            type_name = getattr(type_hint, "__name__", None)
+            return bool(
+                type_name is not None
+                and type_name
+                in {"StringList", "IntList", "FloatList", "BoolList", "List"},
+            )
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ):
+            # Defensive: typing/issubclass failures are extremely rare
+            return False
+
+    @staticmethod
+    def is_valid_identifier(
+        value: t.Container,
+    ) -> TypeGuard[str]:
+        """Type guard to check if value is a valid Python identifier."""
+        return isinstance(value, str) and value.isidentifier()
+
+    @staticmethod
+    def is_valid_json(
+        value: t.Container,
+    ) -> TypeGuard[str]:
+        """Type guard to check if value is valid JSON string.
+
+        Business Rule: Validates JSON strings using json.loads() for parsing.
+        Returns TypeGuard[str] for type narrowing in conditional blocks.
+        Catches JSONDecodeError and ValueError for safe validation. Used for
+        validating JSON payloads before deserialization.
+
+        Audit Implication: JSON validation ensures audit trail completeness by
+        validating JSON payloads before storage. All JSON strings are validated
+        before being used in audit systems.
+
+        Args:
+            value: Value to check
+
+        Returns:
+            True if value is a valid JSON string, False otherwise
+
+        """
+        if not isinstance(value, str):
+            return False
+        try:
+            json.loads(value)
+            return True
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return False
 
     @staticmethod
     def normalize_to_general_value(
@@ -547,56 +755,6 @@ class FlextRuntime:
         result_str: t.MetadataValue = str(val)
         return result_str
 
-    @staticmethod
-    def is_valid_json(
-        value: t.Container,
-    ) -> TypeGuard[str]:
-        """Type guard to check if value is valid JSON string.
-
-        Business Rule: Validates JSON strings using json.loads() for parsing.
-        Returns TypeGuard[str] for type narrowing in conditional blocks.
-        Catches JSONDecodeError and ValueError for safe validation. Used for
-        validating JSON payloads before deserialization.
-
-        Audit Implication: JSON validation ensures audit trail completeness by
-        validating JSON payloads before storage. All JSON strings are validated
-        before being used in audit systems.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid JSON string, False otherwise
-
-        """
-        if not isinstance(value, str):
-            return False
-        try:
-            json.loads(value)
-            return True
-        except (json.JSONDecodeError, TypeError, ValueError):
-            return False
-
-    @staticmethod
-    def is_valid_identifier(
-        value: t.Container,
-    ) -> TypeGuard[str]:
-        """Type guard to check if value is a valid Python identifier."""
-        return isinstance(value, str) and value.isidentifier()
-
-    @staticmethod
-    def is_base_model(obj: t.Container) -> TypeGuard[object]:
-        """Type guard to narrow object to BaseModel (part of ContainerValue).
-
-        This allows isinstance checks to narrow types for FlextRuntime methods
-        that accept ContainerValue (which includes BaseModel).
-        """
-        match obj:
-            case BaseModel():
-                return True
-            case _:
-                return False
-
     # =========================================================================
     # SERIALIZATION UTILITIES (No flext_core imports)
     # =========================================================================
@@ -630,167 +788,9 @@ class FlextRuntime:
         return getattr(obj, attr) if hasattr(obj, attr) else default
 
     @staticmethod
-    def extract_generic_args(
-        type_hint: t.TypeHintSpecifier,
-    ) -> tuple[t.GenericTypeArgument | type[t.ConfigurationMapping], ...]:
-        """Extract generic type arguments from a type hint.
-
-        Business Rule: Extracts generic type arguments from type hints using
-        typing.get_args() for standard generics,         and mapping for type
-        aliases. Returns empty tuple if no arguments found or on error. Used for
-        type introspection and generic type analysis.
-
-        Audit Implication: Type argument extraction enables audit trail completeness
-        by providing type information for generic types. All type introspection is
-        safe and never raises exceptions.
-
-        Args:
-            type_hint: Type hint to extract args from
-
-        Returns:
-            Tuple of type arguments, empty tuple if no args
-
-        """
-        try:
-            # First try the standard typing.get_args
-            args = typing.get_args(type_hint)
-            if args:
-                return args
-
-            # Check if it's a known type alias
-            if hasattr(type_hint, "__name__"):
-                type_name = getattr(type_hint, "__name__", "")
-                # Handle common type aliases - use actual type objects
-                # GenericTypeArgument = str | type[t.Container]
-                # Type objects (str, int, float, bool) are valid GenericTypeArgument
-                # since they represent type[T] where T is a scalar t.Container
-                if type_name in {"StringList", "List"}:
-                    return (str,)
-                if type_name == "IntList":
-                    return (int,)
-                if type_name == "FloatList":
-                    return (float,)
-                if type_name == "BoolList":
-                    return (bool,)
-                if type_name in {"Dict", "StringDict"}:
-                    return (str, str)
-                if type_name == "NestedDict":
-                    return (str, dict)
-                if type_name == "IntDict":
-                    return (str, int)
-                if type_name == "FloatDict":
-                    return (str, float)
-                if type_name == "BoolDict":
-                    return (str, bool)
-
-            return ()
-        except (
-            AttributeError,
-            TypeError,
-            ValueError,
-            RuntimeError,
-            KeyError,
-        ):
-            # Defensive: typing module failures are extremely rare
-            return ()
-
-    @staticmethod
-    def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
-        """Check if type hint represents a sequence type (list, tuple, etc.).
-
-        Business Rule: Checks if type hint represents a sequence type using
-        typing.get_origin() and issubclass() checks. Supports both standard
-        generics and type aliases. Returns False on error for safe type checking.
-
-        Audit Implication: Sequence type checking enables audit trail completeness
-        by providing type information for sequence types. All type checking is
-        safe and never raises exceptions.
-
-        Args:
-            type_hint: Type hint to check
-
-        Returns:
-            True if type hint is a sequence type, False otherwise
-
-        """
-        try:
-            origin = typing.get_origin(type_hint)
-            if origin is not None and hasattr(origin, "__mro__"):
-                if origin in {list, tuple}:
-                    return True
-                return Sequence in origin.__mro__
-
-            if type_hint in {list, tuple, str}:
-                return True
-
-            # Check if the type itself is a sequence subclass (for type aliases)
-            hint_mro = getattr(type_hint, "__mro__", None)
-            if hint_mro is not None and Sequence in hint_mro:
-                return True
-
-            # Check __name__ for type aliases like StringList
-            type_name = getattr(type_hint, "__name__", None)
-            return bool(
-                type_name is not None
-                and type_name
-                in {"StringList", "IntList", "FloatList", "BoolList", "List"},
-            )
-        except (
-            AttributeError,
-            TypeError,
-            ValueError,
-            RuntimeError,
-            KeyError,
-        ):
-            # Defensive: typing/issubclass failures are extremely rare
-            return False
-
-    @staticmethod
     def structlog() -> ModuleType:
         """Return the imported structlog module."""
         return structlog
-
-    @staticmethod
-    def get_logger(
-        name: str | None = None,
-    ) -> p.Log.StructlogLogger:
-        """Get structlog logger instance - same structure/config used by FlextLogger.
-
-        Returns the exact same structlog logger instance that FlextLogger uses internally.
-        This ensures consistent logging structure across the entire FLEXT ecosystem.
-
-        Args:
-            name: Logger name (module name). Defaults to __name__ of caller.
-
-        Returns:
-            Logger: Typed structlog logger instance (same as FlextLogger.logger).
-
-        Note:
-            FlextLogger internally uses: FlextRuntime.get_logger(name).bind(**context)
-            This method returns the base logger before context binding.
-
-        """
-        if name is None:
-            frame = inspect.currentframe()
-            if frame and frame.f_back:
-                name = frame.f_back.f_globals.get("__name__", __name__)
-            else:
-                name = __name__
-        # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Log.StructlogLogger protocol
-        # All methods (debug, info, warning, error, etc.) are available directly from structlog logger
-        # p.Log.StructlogLogger protocol is compatible with structlog's return type via structural typing
-        logger: p.Log.StructlogLogger = structlog.get_logger(name)
-        return logger
-
-    @staticmethod
-    def dependency_providers() -> ModuleType:
-        """Return the dependency-injector providers module."""
-        return providers
-
-    @staticmethod
-    def dependency_containers() -> ModuleType:
-        """Return the dependency-injector containers module."""
-        return containers
 
     class DependencyIntegration:
         """Centralize dependency-injector wiring with provider helpers.
@@ -817,42 +817,6 @@ class FlextRuntime:
 
         Provide = wiring.Provide
         inject = staticmethod(wiring.inject)
-
-        @classmethod
-        def create_layered_bridge(
-            cls,
-            config: FlextModelsContainers.ConfigMap | None = None,
-        ) -> tuple[
-            containers.DeclarativeContainer,
-            containers.DynamicContainer,
-            containers.DynamicContainer,
-        ]:
-            """Create a DeclarativeContainer bridged to dynamic modules.
-
-            Returns a tuple with the declarative bridge plus dynamic containers
-            for services and resources. The bridge isolates dependency-injector
-            usage to L1/L2 while allowing higher layers to work only with
-            FlextContainer's APIs. The declarative bridge exposes ``config``,
-            ``services``, and ``resources`` providers, plus ``Provide``/``inject``
-            helpers re-exported by the runtime. See
-            :class:`DependencyIntegration.BridgeContainer` for attributes
-            available to wire modules, classes, and functions.
-            """
-            bridge = cls.BridgeContainer()
-            service_module = containers.DynamicContainer()
-            resource_module = containers.DynamicContainer()
-            # override() returns None or provider instance - we don't need the return value
-            # Type narrowing: bridge.services and bridge.resources are DependenciesContainer instances
-            # override() accepts DynamicContainer - dependency-injector types are incomplete
-            # Use dynamic call to avoid type checker issues with incomplete stubs
-            # Both override() calls return context managers that we don't use
-            services_provider = bridge.services
-            resources_provider = bridge.resources
-            # Call override via getattr to work around incomplete type stubs
-            services_provider.override(service_module)
-            resources_provider.override(resource_module)
-            cls.bind_configuration_provider(bridge.config, config)
-            return bridge, service_module, resource_module
 
         @classmethod
         def create_container(
@@ -937,6 +901,42 @@ class FlextRuntime:
 
             return di_container
 
+        @classmethod
+        def create_layered_bridge(
+            cls,
+            config: FlextModelsContainers.ConfigMap | None = None,
+        ) -> tuple[
+            containers.DeclarativeContainer,
+            containers.DynamicContainer,
+            containers.DynamicContainer,
+        ]:
+            """Create a DeclarativeContainer bridged to dynamic modules.
+
+            Returns a tuple with the declarative bridge plus dynamic containers
+            for services and resources. The bridge isolates dependency-injector
+            usage to L1/L2 while allowing higher layers to work only with
+            FlextContainer's APIs. The declarative bridge exposes ``config``,
+            ``services``, and ``resources`` providers, plus ``Provide``/``inject``
+            helpers re-exported by the runtime. See
+            :class:`DependencyIntegration.BridgeContainer` for attributes
+            available to wire modules, classes, and functions.
+            """
+            bridge = cls.BridgeContainer()
+            service_module = containers.DynamicContainer()
+            resource_module = containers.DynamicContainer()
+            # override() returns None or provider instance - we don't need the return value
+            # Type narrowing: bridge.services and bridge.resources are DependenciesContainer instances
+            # override() accepts DynamicContainer - dependency-injector types are incomplete
+            # Use dynamic call to avoid type checker issues with incomplete stubs
+            # Both override() calls return context managers that we don't use
+            services_provider = bridge.services
+            resources_provider = bridge.resources
+            # Call override via getattr to work around incomplete type stubs
+            services_provider.override(service_module)
+            resources_provider.override(resource_module)
+            cls.bind_configuration_provider(bridge.config, config)
+            return bridge, service_module, resource_module
+
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
@@ -972,25 +972,6 @@ class FlextRuntime:
             return configuration_provider
 
         @staticmethod
-        def register_object(
-            di_container: containers.DynamicContainer,
-            name: str,
-            instance: T,
-        ) -> providers.Provider[T]:
-            """Register a concrete instance using ``providers.Object``.
-
-            Args:
-                di_container: DynamicContainer instance for provider registration.
-
-            """
-            if hasattr(di_container, name):
-                msg = f"Provider '{name}' is already registered"
-                raise ValueError(msg)
-            provider: providers.Provider[T] = providers.Object(instance)
-            setattr(di_container, name, provider)
-            return provider
-
-        @staticmethod
         def register_factory(
             di_container: containers.DynamicContainer,
             name: str,
@@ -1010,6 +991,25 @@ class FlextRuntime:
             provider: providers.Provider[T] = (
                 providers.Singleton(factory) if cache else providers.Factory(factory)
             )
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def register_object(
+            di_container: containers.DynamicContainer,
+            name: str,
+            instance: T,
+        ) -> providers.Provider[T]:
+            """Register a concrete instance using ``providers.Object``.
+
+            Args:
+                di_container: DynamicContainer instance for provider registration.
+
+            """
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T] = providers.Object(instance)
             setattr(di_container, name, provider)
             return provider
 
@@ -1072,96 +1072,6 @@ class FlextRuntime:
                 packages=None,  # packages parameter expects Iterable[Module], not Sequence[str]
                 container=container,
             )
-
-    @staticmethod
-    def level_based_context_filter(
-        _logger: t.Container,
-        method_name: str,
-        event_dict: Mapping[str, t.Container],
-    ) -> Mapping[str, t.Container]:
-        """Filter context variables based on log level.
-
-        Removes context variables that are restricted to specific log levels
-        when the current log level doesn't match.
-
-        This processor handles level-prefixed context variables created by
-        FlextLogger.bind_context_for_level() and removes them from logs that
-        don't meet the required log level.
-
-        Args:
-            _logger: Logger instance (unused, required by structlog protocol)
-            method_name: Log method name ('debug', 'info', 'warning', 'error', etc.)
-            event_dict: Event dictionary with context variables
-
-        Returns:
-            Filtered event dictionary
-
-        Example:
-            Context bound with:
-            >>> FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
-            >>> FlextLogger.bind_context_for_level("ERROR", stack_trace=trace)
-
-            Results in:
-            - DEBUG logs: include config
-            - INFO logs: exclude config
-            - ERROR logs: include stack_trace
-            - INFO logs: exclude stack_trace
-
-        Note:
-            Log level hierarchy: DEBUG < INFO < WARNING < ERROR < CRITICAL
-
-        """
-        # Log level hierarchy (lowest to highest)
-        level_hierarchy = {
-            "debug": 10,
-            "info": 20,
-            "warning": 30,
-            "error": 40,
-            "critical": 50,
-        }
-
-        # Get current log level from method name
-        current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
-
-        # Process all keys in event_dict
-        # Business Rule: Build mutable dict for construction, then return as dict
-        # dict is compatible with ConfigMap return type.
-        # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
-        #
-        # Audit Implication: This method filters log event data based on log level.
-        # Used for conditional inclusion of verbose fields in structured logging.
-        # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: dict[str, t.Container] = {}
-        for key, value in event_dict.items():
-            # Check if this is a level-prefixed variable
-            if key.startswith("_level_"):
-                # Extract the required level and actual key
-                # Format: _level_debug_config -> required_level='debug', actual_key='config'
-                parts = key.split(
-                    "_",
-                    c.Validation.LEVEL_PREFIX_PARTS_COUNT,
-                )  # Split into ['', 'level', 'debug', 'config']
-                if len(parts) >= c.Validation.LEVEL_PREFIX_PARTS_COUNT:
-                    required_level_name = parts[2]
-                    actual_key = parts[3]
-                    required_level = level_hierarchy.get(
-                        required_level_name.lower(),
-                        10,
-                    )
-
-                    # Only include if current level >= required level
-                    if current_level >= required_level:
-                        # Add with actual key (strip prefix)
-                        filtered_dict[actual_key] = value
-                    # Else: skip this variable (too verbose for current level)
-                else:
-                    # Malformed prefix, include as-is
-                    filtered_dict[key] = value
-            else:
-                # Not level-prefixed, include as-is
-                filtered_dict[key] = value
-
-        return filtered_dict
 
     @classmethod
     def configure_structlog(
@@ -1400,6 +1310,96 @@ class FlextRuntime:
         """Return whether runtime validation helpers are enabled."""
         return True
 
+    @staticmethod
+    def level_based_context_filter(
+        _logger: t.Container,
+        method_name: str,
+        event_dict: Mapping[str, t.Container],
+    ) -> Mapping[str, t.Container]:
+        """Filter context variables based on log level.
+
+        Removes context variables that are restricted to specific log levels
+        when the current log level doesn't match.
+
+        This processor handles level-prefixed context variables created by
+        FlextLogger.bind_context_for_level() and removes them from logs that
+        don't meet the required log level.
+
+        Args:
+            _logger: Logger instance (unused, required by structlog protocol)
+            method_name: Log method name ('debug', 'info', 'warning', 'error', etc.)
+            event_dict: Event dictionary with context variables
+
+        Returns:
+            Filtered event dictionary
+
+        Example:
+            Context bound with:
+            >>> FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
+            >>> FlextLogger.bind_context_for_level("ERROR", stack_trace=trace)
+
+            Results in:
+            - DEBUG logs: include config
+            - INFO logs: exclude config
+            - ERROR logs: include stack_trace
+            - INFO logs: exclude stack_trace
+
+        Note:
+            Log level hierarchy: DEBUG < INFO < WARNING < ERROR < CRITICAL
+
+        """
+        # Log level hierarchy (lowest to highest)
+        level_hierarchy = {
+            "debug": 10,
+            "info": 20,
+            "warning": 30,
+            "error": 40,
+            "critical": 50,
+        }
+
+        # Get current log level from method name
+        current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
+
+        # Process all keys in event_dict
+        # Business Rule: Build mutable dict for construction, then return as dict
+        # dict is compatible with ConfigMap return type.
+        # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
+        #
+        # Audit Implication: This method filters log event data based on log level.
+        # Used for conditional inclusion of verbose fields in structured logging.
+        # Returns dict that is compatible with Mapping interface for read-only access.
+        filtered_dict: dict[str, t.Container] = {}
+        for key, value in event_dict.items():
+            # Check if this is a level-prefixed variable
+            if key.startswith("_level_"):
+                # Extract the required level and actual key
+                # Format: _level_debug_config -> required_level='debug', actual_key='config'
+                parts = key.split(
+                    "_",
+                    c.Validation.LEVEL_PREFIX_PARTS_COUNT,
+                )  # Split into ['', 'level', 'debug', 'config']
+                if len(parts) >= c.Validation.LEVEL_PREFIX_PARTS_COUNT:
+                    required_level_name = parts[2]
+                    actual_key = parts[3]
+                    required_level = level_hierarchy.get(
+                        required_level_name.lower(),
+                        10,
+                    )
+
+                    # Only include if current level >= required level
+                    if current_level >= required_level:
+                        # Add with actual key (strip prefix)
+                        filtered_dict[actual_key] = value
+                    # Else: skip this variable (too verbose for current level)
+                else:
+                    # Malformed prefix, include as-is
+                    filtered_dict[key] = value
+            else:
+                # Not level-prefixed, include as-is
+                filtered_dict[key] = value
+
+        return filtered_dict
+
     # =========================================================================
     # RESULT FACTORY METHODS (Core implementation - NO FlextResult import)
     # =========================================================================
@@ -1464,6 +1464,68 @@ class FlextRuntime:
             self._exception: BaseException | None = None
             self._result_logger: p.Log.StructlogLogger | None = None
 
+        @override
+        def __repr__(self) -> str:
+            """String representation using short alias 'r' for brevity."""
+            if self.is_success:
+                return f"r.ok({self.value!r})"
+            return f"r.fail({self.error!r})"
+
+        def __bool__(self) -> bool:
+            """Boolean conversion based on success state."""
+            return self.is_success
+
+        def __enter__(self) -> Self:
+            """Context manager entry."""
+            return self
+
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: TracebackType | None,
+        ) -> None:
+            """Context manager exit."""
+
+        def __or__(self, default: T) -> T:
+            """Operator overload for default values."""
+            return self.unwrap_or(default)
+
+        @property
+        def data(self) -> T:
+            """Backward-compatible alias for value."""
+            return self.value
+
+        @property
+        def error(self) -> str | None:
+            """Get the error message."""
+            return self._error
+
+        @property
+        def error_code(self) -> str | None:
+            """Get the error code."""
+            return self._error_code
+
+        @property
+        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
+            """Get the error data."""
+            return self._error_data
+
+        @property
+        def exception(self) -> BaseException | None:
+            """Get the exception if one was captured."""
+            return self._exception
+
+        @property
+        def is_failure(self) -> bool:
+            """Check if result is a failure."""
+            return not self._is_success
+
+        @property
+        def is_success(self) -> bool:
+            """Check if result is successful."""
+            return self._is_success
+
         @property
         def logger(self) -> p.Log.StructlogLogger:
             """Logger for RuntimeResult."""
@@ -1472,6 +1534,15 @@ class FlextRuntime:
                 logger = structlog.get_logger(__name__)
                 self._result_logger = logger
             return logger
+
+        @property
+        def result(self) -> Self:
+            """Access internal result for protocol compatibility.
+
+            RuntimeResult doesn't use an internal Result wrapper like FlextResult,
+            so this returns self for protocol compatibility.
+            """
+            return self
 
         @property
         def value(self) -> T:
@@ -1495,95 +1566,70 @@ class FlextRuntime:
                 raise RuntimeError(msg)
             return self._value
 
-        @property
-        def data(self) -> T:
-            """Backward-compatible alias for value."""
-            return self.value
+        @classmethod
+        def fail[U](
+            cls: type[FlextRuntime.RuntimeResult[U]],
+            error: str | None,
+            error_code: str | None = None,
+            error_data: t.ConfigurationMapping | None = None,
+        ) -> FlextRuntime.RuntimeResult[U]:
+            """Create failed result with error message.
 
-        @property
-        def result(self) -> Self:
-            """Access internal result for protocol compatibility.
+            Business Rule: Creates failed RuntimeResult with error message, optional error
+            code, and optional error metadata. Converts None error to empty string for
+            consistency. This matches the API of FlextResult.fail() for compatibility.
 
-            RuntimeResult doesn't use an internal Result wrapper like FlextResult,
-            so this returns self for protocol compatibility.
+            Args:
+                error: Error message (None will be converted to empty string)
+                error_code: Optional error code for categorization
+                error_data: Optional error metadata
+
+            Returns:
+                Failed RuntimeResult instance
+
             """
-            return self
-
-        @property
-        def is_success(self) -> bool:
-            """Check if result is successful."""
-            return self._is_success
-
-        @property
-        def is_failure(self) -> bool:
-            """Check if result is a failure."""
-            return not self._is_success
-
-        @property
-        def error(self) -> str | None:
-            """Get the error message."""
-            return self._error
-
-        @property
-        def error_code(self) -> str | None:
-            """Get the error code."""
-            return self._error_code
-
-        @property
-        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
-            """Get the error data."""
-            return self._error_data
-
-        @property
-        def exception(self) -> BaseException | None:
-            """Get the exception if one was captured."""
-            return self._exception
-
-        def unwrap(self) -> T:
-            """Unwrap the success value or raise RuntimeError."""
-            if not self._is_success:
-                msg = f"Cannot unwrap failed result: {self._error}"
-                raise RuntimeError(msg)
-            return self.value
-
-        def unwrap_or(self, default: T) -> T:
-            """Return the success value or the default if failed."""
-            if self.is_success:
-                return self.value
-            return default
-
-        def unwrap_or_else(self, func: Callable[[], T]) -> T:
-            """Return the success value or call func if failed."""
-            if self.is_success:
-                return self.value
-            return func()
-
-        def map[U](self, func: Callable[[T], U]) -> FlextRuntime.RuntimeResult[U]:
-            """Transform success value using function."""
-            if self.is_success:
-                try:
-                    return FlextRuntime.RuntimeResult(
-                        value=func(self.value),
-                        is_success=True,
-                    )
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    RuntimeError,
-                ) as e:
-                    self.logger.debug(
-                        "RuntimeResult.map callable failed",
-                        exc_info=e,
-                    )
-                    return FlextRuntime.RuntimeResult(error=str(e), is_success=False)
-            return FlextRuntime.RuntimeResult(
-                error=self._error or "",
-                error_code=self._error_code,
-                error_data=self._error_data,  # type: ignore[arg-type]
+            error_msg = error if error is not None else ""
+            return cls(
+                error=error_msg,
+                error_code=error_code,
+                error_data=error_data,
                 is_success=False,
             )
+
+        @classmethod
+        def ok(cls, value: T) -> FlextRuntime.RuntimeResult[T]:
+            """Create successful result wrapping data.
+
+            Business Rule: Creates successful RuntimeResult wrapping value. Raises ValueError
+            if value is None (None values are not allowed in success results). This enforces
+            the same invariant as FlextResult.ok() at the base class level.
+
+            Args:
+                value: Value to wrap in success result (must not be None)
+
+            Returns:
+                Successful RuntimeResult instance
+
+            Raises:
+                ValueError: If value is None
+
+            """
+            if value is None:
+                msg = "Cannot create success result with None value"
+                raise ValueError(msg)
+            return cls(value=value, is_success=True)
+
+        def filter(
+            self,
+            predicate: Callable[[T], bool],
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Filter success value using predicate."""
+            if self.is_success and not predicate(self.value):
+                return FlextRuntime.RuntimeResult(
+                    error="Filter predicate failed",
+                    is_success=False,
+                )
+            return self
 
         def flat_map[U](
             self,
@@ -1637,20 +1683,41 @@ class FlextRuntime:
                 return on_success(self.value)
             return on_failure(self._error or "")
 
-        def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
-            """Apply side effect to success value, return unchanged."""
-            if self._is_success and self._value is not None:
-                func(self._value)
+        def lash(
+            self,
+            func: Callable[[str], FlextRuntime.RuntimeResult[T]],
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Apply recovery function on failure."""
+            if not self._is_success:
+                return func(self._error or "")
             return self
 
-        def tap_error(
-            self,
-            func: Callable[[str], None],
-        ) -> FlextRuntime.RuntimeResult[T]:
-            """Apply side effect to error, return unchanged."""
-            if not self._is_success:
-                func(self._error or "")
-            return self
+        def map[U](self, func: Callable[[T], U]) -> FlextRuntime.RuntimeResult[U]:
+            """Transform success value using function."""
+            if self.is_success:
+                try:
+                    return FlextRuntime.RuntimeResult(
+                        value=func(self.value),
+                        is_success=True,
+                    )
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    RuntimeError,
+                ) as e:
+                    self.logger.debug(
+                        "RuntimeResult.map callable failed",
+                        exc_info=e,
+                    )
+                    return FlextRuntime.RuntimeResult(error=str(e), is_success=False)
+            return FlextRuntime.RuntimeResult(
+                error=self._error or "",
+                error_code=self._error_code,
+                error_data=self._error_data,  # type: ignore[arg-type]
+                is_success=False,
+            )
 
         def map_error(
             self,
@@ -1666,27 +1733,6 @@ class FlextRuntime:
                 )
             return self
 
-        def filter(
-            self,
-            predicate: Callable[[T], bool],
-        ) -> FlextRuntime.RuntimeResult[T]:
-            """Filter success value using predicate."""
-            if self.is_success and not predicate(self.value):
-                return FlextRuntime.RuntimeResult(
-                    error="Filter predicate failed",
-                    is_success=False,
-                )
-            return self
-
-        def lash(
-            self,
-            func: Callable[[str], FlextRuntime.RuntimeResult[T]],
-        ) -> FlextRuntime.RuntimeResult[T]:
-            """Apply recovery function on failure."""
-            if not self._is_success:
-                return func(self._error or "")
-            return self
-
         def recover(self, func: Callable[[str], T]) -> FlextRuntime.RuntimeResult[T]:
             """Recover from failure with fallback value."""
             if not self._is_success:
@@ -1694,32 +1740,39 @@ class FlextRuntime:
                 return FlextRuntime.RuntimeResult(value=fallback_value, is_success=True)
             return self
 
-        def __or__(self, default: T) -> T:
-            """Operator overload for default values."""
-            return self.unwrap_or(default)
-
-        def __bool__(self) -> bool:
-            """Boolean conversion based on success state."""
-            return self.is_success
-
-        @override
-        def __repr__(self) -> str:
-            """String representation using short alias 'r' for brevity."""
-            if self.is_success:
-                return f"r.ok({self.value!r})"
-            return f"r.fail({self.error!r})"
-
-        def __enter__(self) -> Self:
-            """Context manager entry."""
+        def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
+            """Apply side effect to success value, return unchanged."""
+            if self._is_success and self._value is not None:
+                func(self._value)
             return self
 
-        def __exit__(
+        def tap_error(
             self,
-            exc_type: type[BaseException] | None,
-            exc_val: BaseException | None,
-            exc_tb: TracebackType | None,
-        ) -> None:
-            """Context manager exit."""
+            func: Callable[[str], None],
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Apply side effect to error, return unchanged."""
+            if not self._is_success:
+                func(self._error or "")
+            return self
+
+        def unwrap(self) -> T:
+            """Unwrap the success value or raise RuntimeError."""
+            if not self._is_success:
+                msg = f"Cannot unwrap failed result: {self._error}"
+                raise RuntimeError(msg)
+            return self.value
+
+        def unwrap_or(self, default: T) -> T:
+            """Return the success value or the default if failed."""
+            if self.is_success:
+                return self.value
+            return default
+
+        def unwrap_or_else(self, func: Callable[[], T]) -> T:
+            """Return the success value or call func if failed."""
+            if self.is_success:
+                return self.value
+            return func()
 
         def _protocol_name(self) -> str:
             """Return the protocol name for BaseProtocol compliance.
@@ -1728,59 +1781,6 @@ class FlextRuntime:
             and ensure FlextResult satisfies the ResultLike protocol.
             """
             return "RuntimeResult"
-
-        @classmethod
-        def ok(cls, value: T) -> FlextRuntime.RuntimeResult[T]:
-            """Create successful result wrapping data.
-
-            Business Rule: Creates successful RuntimeResult wrapping value. Raises ValueError
-            if value is None (None values are not allowed in success results). This enforces
-            the same invariant as FlextResult.ok() at the base class level.
-
-            Args:
-                value: Value to wrap in success result (must not be None)
-
-            Returns:
-                Successful RuntimeResult instance
-
-            Raises:
-                ValueError: If value is None
-
-            """
-            if value is None:
-                msg = "Cannot create success result with None value"
-                raise ValueError(msg)
-            return cls(value=value, is_success=True)
-
-        @classmethod
-        def fail[U](
-            cls: type[FlextRuntime.RuntimeResult[U]],
-            error: str | None,
-            error_code: str | None = None,
-            error_data: t.ConfigurationMapping | None = None,
-        ) -> FlextRuntime.RuntimeResult[U]:
-            """Create failed result with error message.
-
-            Business Rule: Creates failed RuntimeResult with error message, optional error
-            code, and optional error metadata. Converts None error to empty string for
-            consistency. This matches the API of FlextResult.fail() for compatibility.
-
-            Args:
-                error: Error message (None will be converted to empty string)
-                error_code: Optional error code for categorization
-                error_data: Optional error metadata
-
-            Returns:
-                Failed RuntimeResult instance
-
-            """
-            error_msg = error if error is not None else ""
-            return cls(
-                error=error_msg,
-                error_code=error_code,
-                error_data=error_data,
-                is_success=False,
-            )
 
     # =========================================================================
     # APPLICATION LAYER INTEGRATION (Using structlog directly - Layer 0.5)
@@ -1818,75 +1818,6 @@ class FlextRuntime:
             - No imports from Infrastructure layer (context.py, loggings.py)
             - Pure Layer 0.5 implementation
         """
-
-        @staticmethod
-        def track_service_resolution(
-            service_name: str,
-            *,
-            resolved: bool = True,
-            error_message: str | None = None,
-        ) -> None:
-            """Track service resolution with context correlation.
-
-            Uses structlog directly to avoid circular imports.
-
-            Args:
-                service_name: Name of the service being resolved
-                resolved: Whether resolution was successful
-                error_message: Error message if resolution failed
-
-            """
-            # Get correlation_id directly from structlog (single source of truth)
-            context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get("correlation_id")
-
-            # Use structlog directly (no FlextLogger wrapper needed)
-            logger = structlog.get_logger(__name__)
-
-            if resolved:
-                logger.info(
-                    "Service resolved",
-                    service_name=service_name,
-                    correlation_id=correlation_id,
-                )
-            else:
-                logger.error(
-                    "Service resolution failed",
-                    service_name=service_name,
-                    error=error_message,
-                    correlation_id=correlation_id,
-                )
-
-        @staticmethod
-        def track_domain_event(
-            event_name: str,
-            aggregate_id: str | None = None,
-            event_data: FlextModelsContainers.ConfigMap | None = None,
-        ) -> None:
-            """Track domain event with context correlation.
-
-            Uses structlog directly to avoid circular imports.
-
-            Args:
-                event_name: Name of the domain event
-                aggregate_id: ID of the aggregate root
-                event_data: Additional event data
-
-            """
-            # Get correlation_id directly from structlog
-            context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get("correlation_id")
-
-            # Use structlog directly
-            logger = structlog.get_logger(__name__)
-
-            logger.info(
-                "Domain event emitted",
-                event_name=event_name,
-                aggregate_id=aggregate_id,
-                event_data=event_data,
-                correlation_id=correlation_id,
-            )
 
         @staticmethod
         def setup_service_infrastructure(
@@ -1932,131 +1863,74 @@ class FlextRuntime:
                 correlation_enabled=enable_context_correlation,
             )
 
-    # =========================================================================
-    # MODEL SUPPORT METHODS (Tier 0.5 - used by _models to avoid circular imports)
-    # =========================================================================
+        @staticmethod
+        def track_domain_event(
+            event_name: str,
+            aggregate_id: str | None = None,
+            event_data: FlextModelsContainers.ConfigMap | None = None,
+        ) -> None:
+            """Track domain event with context correlation.
 
-    @staticmethod
-    def generate_datetime_utc() -> datetime:
-        """Generate current UTC datetime for _models/container.py timestamps."""
-        return datetime.now(UTC)
+            Uses structlog directly to avoid circular imports.
 
-    @staticmethod
-    def generate_id() -> str:
-        """Generate unique ID using UUID4 for _models."""
-        return str(uuid.uuid4())
+            Args:
+                event_name: Name of the domain event
+                aggregate_id: ID of the aggregate root
+                event_data: Additional event data
 
-    @staticmethod
-    def generate_prefixed_id(prefix: str, length: int | None = None) -> str:
-        """Generate prefixed ID for _models (e.g., 'query_abc123')."""
-        base_id = str(uuid.uuid4()).replace("-", "")
-        if length is not None:
-            base_id = base_id[:length]
-        return f"{prefix}_{base_id}" if prefix else base_id
+            """
+            # Get correlation_id directly from structlog
+            context_vars = structlog.contextvars.get_contextvars()
+            correlation_id = context_vars.get("correlation_id")
 
-    @staticmethod
-    def compare_entities_by_id(
-        entity_a: t.Container,
-        entity_b: t.Container,
-        id_attr: str = "unique_id",
-    ) -> bool:
-        """Compare two entities by unique ID attribute."""
-        if FlextRuntime._is_scalar(entity_a):
-            return False
-        match entity_a:
-            case Sequence() | Mapping():
-                return False
-            case _:
-                pass
-        if FlextRuntime._is_scalar(entity_b):
-            return False
-        match entity_b:
-            case Sequence() | Mapping():
-                return False
-            case _:
-                pass
-        if (
-            not isinstance(entity_b, type(entity_a))
-            and type(entity_a) not in type(entity_b).__mro__
-        ):
-            return False
-        id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
-        id_b = getattr(entity_b, id_attr) if hasattr(entity_b, id_attr) else None
-        return id_a is not None and id_a == id_b
+            # Use structlog directly
+            logger = structlog.get_logger(__name__)
 
-    @staticmethod
-    def hash_entity_by_id(
-        entity: t.Container,
-        id_attr: str = "unique_id",
-    ) -> int:
-        """Hash entity based on unique ID and type."""
-        if FlextRuntime._is_scalar(entity):
-            return hash(entity)
-        # Now entity is a complex object with potential id_attr
-        entity_id = getattr(entity, id_attr) if hasattr(entity, id_attr) else None
-        if entity_id is None:
-            return hash(id(entity))
-        # Complex objects always have __class__
-        return hash((entity.__class__.__name__, entity_id))
+            logger.info(
+                "Domain event emitted",
+                event_name=event_name,
+                aggregate_id=aggregate_id,
+                event_data=event_data,
+                correlation_id=correlation_id,
+            )
 
-    @staticmethod
-    def compare_value_objects_by_value(
-        obj_a: t.Container,
-        obj_b: t.Container,
-    ) -> bool:
-        """Compare value objects by their values (all attributes)."""
-        if FlextRuntime._is_scalar(obj_a):
-            return obj_a == obj_b
-        if FlextRuntime._is_scalar(obj_b):
-            return False
-        if hasattr(obj_a, "__iter__") and not hasattr(obj_a, "model_dump"):
-            return obj_a == obj_b
-        if hasattr(obj_b, "__iter__") and not hasattr(obj_b, "model_dump"):
-            return obj_a == obj_b
-        if (
-            not isinstance(obj_b, type(obj_a))
-            and type(obj_a) not in type(obj_b).__mro__
-        ):
-            return False
-        if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
-            dump_a = obj_a.model_dump()
-            dump_b = obj_b.model_dump()
-            return dump_a == dump_b
-        # datetime, Path, and other objects - compare by repr
-        return repr(obj_a) == repr(obj_b)
+        @staticmethod
+        def track_service_resolution(
+            service_name: str,
+            *,
+            resolved: bool = True,
+            error_message: str | None = None,
+        ) -> None:
+            """Track service resolution with context correlation.
 
-    @staticmethod
-    def hash_value_object_by_value(obj: t.Container) -> int:
-        """Hash value object based on all attribute values."""
-        if FlextRuntime._is_scalar(obj):
-            return hash(obj)
-        if isinstance(obj, BaseModel):
-            data = obj.model_dump()
-            # Ensure all values are hashable by converting to tuple
-            return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
-        if hasattr(obj, "__iter__"):
-            return hash(repr(obj))
-        # For other objects (datetime, Path, custom objects), use repr
-        return hash(repr(obj))
+            Uses structlog directly to avoid circular imports.
 
-    # =========================================================================
-    # Configuration Bridge Methods (for _models)
-    # =========================================================================
+            Args:
+                service_name: Name of the service being resolved
+                resolved: Whether resolution was successful
+                error_message: Error message if resolution failed
 
-    @staticmethod
-    def get_log_level_from_config() -> int:
-        """Get log level from default constant (bridge for _models).
+            """
+            # Get correlation_id directly from structlog (single source of truth)
+            context_vars = structlog.contextvars.get_contextvars()
+            correlation_id = context_vars.get("correlation_id")
 
-        Returns:
-            int: Numeric logging level (e.g., logging.INFO = 20)
+            # Use structlog directly (no FlextLogger wrapper needed)
+            logger = structlog.get_logger(__name__)
 
-        """
-        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
-        return int(
-            getattr(logging, default_log_level)
-            if hasattr(logging, default_log_level)
-            else logging.INFO,
-        )
+            if resolved:
+                logger.info(
+                    "Service resolved",
+                    service_name=service_name,
+                    correlation_id=correlation_id,
+                )
+            else:
+                logger.error(
+                    "Service resolution failed",
+                    service_name=service_name,
+                    error=error_message,
+                    correlation_id=correlation_id,
+                )
 
     @classmethod
     def ensure_trace_context(
@@ -2119,6 +1993,132 @@ class FlextRuntime:
             result["timestamp"] = FlextRuntime.generate_datetime_utc().isoformat()
 
         return result
+
+    @staticmethod
+    def compare_entities_by_id(
+        entity_a: t.Container,
+        entity_b: t.Container,
+        id_attr: str = "unique_id",
+    ) -> bool:
+        """Compare two entities by unique ID attribute."""
+        if FlextRuntime._is_scalar(entity_a):
+            return False
+        match entity_a:
+            case Sequence() | Mapping():
+                return False
+            case _:
+                pass
+        if FlextRuntime._is_scalar(entity_b):
+            return False
+        match entity_b:
+            case Sequence() | Mapping():
+                return False
+            case _:
+                pass
+        if (
+            not isinstance(entity_b, type(entity_a))
+            and type(entity_a) not in type(entity_b).__mro__
+        ):
+            return False
+        id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
+        id_b = getattr(entity_b, id_attr) if hasattr(entity_b, id_attr) else None
+        return id_a is not None and id_a == id_b
+
+    @staticmethod
+    def compare_value_objects_by_value(
+        obj_a: t.Container,
+        obj_b: t.Container,
+    ) -> bool:
+        """Compare value objects by their values (all attributes)."""
+        if FlextRuntime._is_scalar(obj_a):
+            return obj_a == obj_b
+        if FlextRuntime._is_scalar(obj_b):
+            return False
+        if hasattr(obj_a, "__iter__") and not hasattr(obj_a, "model_dump"):
+            return obj_a == obj_b
+        if hasattr(obj_b, "__iter__") and not hasattr(obj_b, "model_dump"):
+            return obj_a == obj_b
+        if (
+            not isinstance(obj_b, type(obj_a))
+            and type(obj_a) not in type(obj_b).__mro__
+        ):
+            return False
+        if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
+            dump_a = obj_a.model_dump()
+            dump_b = obj_b.model_dump()
+            return dump_a == dump_b
+        # datetime, Path, and other objects - compare by repr
+        return repr(obj_a) == repr(obj_b)
+
+    # =========================================================================
+    # MODEL SUPPORT METHODS (Tier 0.5 - used by _models to avoid circular imports)
+    # =========================================================================
+
+    @staticmethod
+    def generate_datetime_utc() -> datetime:
+        """Generate current UTC datetime for _models/container.py timestamps."""
+        return datetime.now(UTC)
+
+    @staticmethod
+    def generate_id() -> str:
+        """Generate unique ID using UUID4 for _models."""
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def generate_prefixed_id(prefix: str, length: int | None = None) -> str:
+        """Generate prefixed ID for _models (e.g., 'query_abc123')."""
+        base_id = str(uuid.uuid4()).replace("-", "")
+        if length is not None:
+            base_id = base_id[:length]
+        return f"{prefix}_{base_id}" if prefix else base_id
+
+    # =========================================================================
+    # Configuration Bridge Methods (for _models)
+    # =========================================================================
+
+    @staticmethod
+    def get_log_level_from_config() -> int:
+        """Get log level from default constant (bridge for _models).
+
+        Returns:
+            int: Numeric logging level (e.g., logging.INFO = 20)
+
+        """
+        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+        return int(
+            getattr(logging, default_log_level)
+            if hasattr(logging, default_log_level)
+            else logging.INFO,
+        )
+
+    @staticmethod
+    def hash_entity_by_id(
+        entity: t.Container,
+        id_attr: str = "unique_id",
+    ) -> int:
+        """Hash entity based on unique ID and type."""
+        if FlextRuntime._is_scalar(entity):
+            return hash(entity)
+        # Now entity is a complex object with potential id_attr
+        entity_id = getattr(entity, id_attr) if hasattr(entity, id_attr) else None
+        if entity_id is None:
+            return hash(id(entity))
+        # Complex objects always have __class__
+        return hash((entity.__class__.__name__, entity_id))
+
+    @staticmethod
+    def hash_value_object_by_value(obj: t.Container) -> int:
+        """Hash value object based on all attribute values."""
+        if FlextRuntime._is_scalar(obj):
+            return hash(obj)
+        if isinstance(obj, BaseModel):
+            data = obj.model_dump()
+            # Ensure all values are hashable by converting to tuple
+            return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
+        if hasattr(obj, "__iter__"):
+            return hash(repr(obj))
+        # For other objects (datetime, Path, custom objects), use repr
+        return hash(repr(obj))
 
     @staticmethod
     def validate_http_status_codes(

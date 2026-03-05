@@ -79,58 +79,6 @@ TEST_DATA: Mapping[str, t.Container] = {
 class AdvancedUtilitiesService(s[m.ConfigMap]):
     """Service demonstrating advanced u features."""
 
-    @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
-        """Execute advanced utilities demonstrations."""
-        print("Starting advanced utilities demonstration")
-
-        try:
-            self._demonstrate_args_validation()
-            self._demonstrate_enum_utilities()
-            self._demonstrate_model_utilities()
-            self._demonstrate_text_processing()
-            self._demonstrate_type_guards()
-            self._demonstrate_data_mapping()
-            self._demonstrate_domain_utilities()
-            self._demonstrate_pagination()
-            self._demonstrate_configuration()
-
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
-                    root={
-                        "utilities_demonstrated": [
-                            "args_validation",
-                            "enum_utilities",
-                            "model_utilities",
-                            "text_processing",
-                            "guards",
-                            "data_mapping",
-                            "domain_utilities",
-                            "pagination",
-                            "configuration",
-                        ],
-                        "utility_categories": 9,
-                        "advanced_features": [
-                            "decorator_validation",
-                            "strenum_parsing",
-                            "model_creation",
-                            "text_normalization",
-                            "type_narrowing",
-                            "data_transformation",
-                            "entity_comparison",
-                            "api_pagination",
-                            "parameter_access",
-                        ],
-                    },
-                ),
-            )
-
-        except Exception as e:
-            error_msg = f"Advanced utilities demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
-
     @staticmethod
     def _demonstrate_args_validation() -> None:
         """Show Args validation utilities."""
@@ -152,6 +100,88 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         status_enum_pending = StatusEnum.PENDING
         result_obj = r[str].ok(process_with_result(status_enum_pending))
         print(f"✅ Validated with result: {result_obj.value}")
+
+    @staticmethod
+    def _demonstrate_configuration() -> None:
+        """Show Configuration utilities."""
+        print("\n=== Configuration ===")
+
+        # Get parameter from model
+        user = UserModel(name="Test", status=StatusEnum.ACTIVE, age=30)
+        try:
+            name_param = u.get_parameter(user.model_dump(), "name")
+            print(f"✅ Get parameter: name={name_param}")
+        except Exception as e:
+            print(f"⚠️  Get parameter: {e}")
+
+        # Get parameter from dict
+        config_dict: m.ConfigMap = m.ConfigMap(
+            root={
+                "timeout": 30,
+                "retries": 3,
+            },
+        )
+        try:
+            timeout = u.get_parameter(config_dict.root, "timeout")
+            print(f"✅ Get from dict: timeout={timeout}")
+        except Exception as e:
+            print(f"⚠️  Get from dict: {e}")
+
+    @staticmethod
+    def _demonstrate_data_mapping() -> None:
+        """Show Mapper utilities."""
+        print("\n=== Data Mapping ===")
+
+        # Map dictionary keys
+        source_value = TEST_DATA["source_dict"]
+        mapping_value = TEST_DATA["key_mapping"]
+        map_result: r[Mapping[str, t.Container]] = r[t.ConfigurationMapping].fail(
+            "Invalid data types"
+        )
+        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
+            source_dict = {str(k): v for k, v in source_value.items()}
+            mapped_dict = u.transform_values(source_dict, str)
+            key_mapping_dict: dict[str, str] = {
+                str(k): str(v) for k, v in mapping_value.items()
+            }
+            map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
+        if map_result.is_success:
+            mapped = map_result.value
+            print(f"✅ Key mapping: {list(mapped.keys())}")
+
+        # Convert to int safe using parse()
+        int_result = u.parse("123", int, default=0)
+        print(
+            f"✅ Safe int conversion: '123' → {int_result.map_or(0)}",
+        )
+
+        # Build flags dict
+        flags: list[str] = ["read", "write"]
+        flag_mapping: dict[str, str] = {
+            "read": "can_read",
+            "write": "can_write",
+        }
+        flags_result = u.build_flags_dict(flags, flag_mapping)
+        if flags_result.is_success:
+            flags_dict = flags_result.value
+            print(f"✅ Flags dict: {list(flags_dict.keys())}")
+
+    @staticmethod
+    def _demonstrate_domain_utilities() -> None:
+        """Show Domain utilities."""
+        print("\n=== Domain Utilities ===")
+
+        # Create test entities for comparison demonstration
+        user1 = UserModel(name="Alice", status=StatusEnum.ACTIVE, age=25)
+        user2 = UserModel(name="Bob", status=StatusEnum.ACTIVE, age=30)
+
+        # Compare value objects by value
+        comparison = u.compare_value_objects_by_value(user1, user2)
+        print(f"✅ Value object comparison: {comparison}")
+
+        # Entity comparison utilities available
+        print("✅ Entity comparison utilities available")
+        print("✅ Entity hashing utilities available")
 
     @staticmethod
     def _demonstrate_enum_utilities() -> None:
@@ -229,6 +259,33 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print(f"✅ Merged defaults: {user.name} ({status_value})")
 
     @staticmethod
+    def _demonstrate_pagination() -> None:
+        """Show Pagination utilities."""
+        print("\n=== Pagination ===")
+
+        # Extract page params
+        query_params: dict[str, str] = {"page": "2", "page_size": "10"}
+        page_result = u.extract_page_params(
+            query_params,
+            default_page=1,
+            default_page_size=c.Pagination.DEFAULT_PAGE_SIZE,
+            max_page_size=c.Pagination.MAX_PAGE_SIZE,
+        )
+        if page_result.is_success:
+            page, page_size = page_result.value
+            print(f"✅ Page params: page={page}, size={page_size}")
+
+        # Validate pagination params
+        validate_result = u.validate_pagination_params(
+            page=1,
+            page_size=20,
+            max_page_size=c.Pagination.MAX_PAGE_SIZE,
+        )
+        if validate_result.is_success:
+            params = validate_result.value
+            print(f"✅ Validated params: {params}")
+
+    @staticmethod
     def _demonstrate_text_processing() -> None:
         """Show Text utilities."""
         print("\n=== Text Processing ===")
@@ -271,114 +328,57 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         if u.is_type(test_list, "list_non_empty"):
             print("✅ List non-empty guard: list is valid")
 
-    @staticmethod
-    def _demonstrate_data_mapping() -> None:
-        """Show Mapper utilities."""
-        print("\n=== Data Mapping ===")
+    @override
+    def execute(
+        self,
+    ) -> r[m.ConfigMap]:
+        """Execute advanced utilities demonstrations."""
+        print("Starting advanced utilities demonstration")
 
-        # Map dictionary keys
-        source_value = TEST_DATA["source_dict"]
-        mapping_value = TEST_DATA["key_mapping"]
-        map_result: r[Mapping[str, t.Container]] = r[t.ConfigurationMapping].fail(
-            "Invalid data types"
-        )
-        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
-            source_dict = {str(k): v for k, v in source_value.items()}
-            mapped_dict = u.transform_values(source_dict, str)
-            key_mapping_dict: dict[str, str] = {
-                str(k): str(v) for k, v in mapping_value.items()
-            }
-            map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
-        if map_result.is_success:
-            mapped = map_result.value
-            print(f"✅ Key mapping: {list(mapped.keys())}")
-
-        # Convert to int safe using parse()
-        int_result = u.parse("123", int, default=0)
-        print(
-            f"✅ Safe int conversion: '123' → {int_result.map_or(0)}",
-        )
-
-        # Build flags dict
-        flags: list[str] = ["read", "write"]
-        flag_mapping: dict[str, str] = {
-            "read": "can_read",
-            "write": "can_write",
-        }
-        flags_result = u.build_flags_dict(flags, flag_mapping)
-        if flags_result.is_success:
-            flags_dict = flags_result.value
-            print(f"✅ Flags dict: {list(flags_dict.keys())}")
-
-    @staticmethod
-    def _demonstrate_domain_utilities() -> None:
-        """Show Domain utilities."""
-        print("\n=== Domain Utilities ===")
-
-        # Create test entities for comparison demonstration
-        user1 = UserModel(name="Alice", status=StatusEnum.ACTIVE, age=25)
-        user2 = UserModel(name="Bob", status=StatusEnum.ACTIVE, age=30)
-
-        # Compare value objects by value
-        comparison = u.compare_value_objects_by_value(user1, user2)
-        print(f"✅ Value object comparison: {comparison}")
-
-        # Entity comparison utilities available
-        print("✅ Entity comparison utilities available")
-        print("✅ Entity hashing utilities available")
-
-    @staticmethod
-    def _demonstrate_pagination() -> None:
-        """Show Pagination utilities."""
-        print("\n=== Pagination ===")
-
-        # Extract page params
-        query_params: dict[str, str] = {"page": "2", "page_size": "10"}
-        page_result = u.extract_page_params(
-            query_params,
-            default_page=1,
-            default_page_size=c.Pagination.DEFAULT_PAGE_SIZE,
-            max_page_size=c.Pagination.MAX_PAGE_SIZE,
-        )
-        if page_result.is_success:
-            page, page_size = page_result.value
-            print(f"✅ Page params: page={page}, size={page_size}")
-
-        # Validate pagination params
-        validate_result = u.validate_pagination_params(
-            page=1,
-            page_size=20,
-            max_page_size=c.Pagination.MAX_PAGE_SIZE,
-        )
-        if validate_result.is_success:
-            params = validate_result.value
-            print(f"✅ Validated params: {params}")
-
-    @staticmethod
-    def _demonstrate_configuration() -> None:
-        """Show Configuration utilities."""
-        print("\n=== Configuration ===")
-
-        # Get parameter from model
-        user = UserModel(name="Test", status=StatusEnum.ACTIVE, age=30)
         try:
-            name_param = u.get_parameter(user.model_dump(), "name")
-            print(f"✅ Get parameter: name={name_param}")
-        except Exception as e:
-            print(f"⚠️  Get parameter: {e}")
+            self._demonstrate_args_validation()
+            self._demonstrate_enum_utilities()
+            self._demonstrate_model_utilities()
+            self._demonstrate_text_processing()
+            self._demonstrate_type_guards()
+            self._demonstrate_data_mapping()
+            self._demonstrate_domain_utilities()
+            self._demonstrate_pagination()
+            self._demonstrate_configuration()
 
-        # Get parameter from dict
-        config_dict: m.ConfigMap = m.ConfigMap(
-            root={
-                "timeout": 30,
-                "retries": 3,
-            },
-        )
-        try:
-            timeout = u.get_parameter(config_dict.root, "timeout")
-            print(f"✅ Get from dict: timeout={timeout}")
+            return r[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "utilities_demonstrated": [
+                            "args_validation",
+                            "enum_utilities",
+                            "model_utilities",
+                            "text_processing",
+                            "guards",
+                            "data_mapping",
+                            "domain_utilities",
+                            "pagination",
+                            "configuration",
+                        ],
+                        "utility_categories": 9,
+                        "advanced_features": [
+                            "decorator_validation",
+                            "strenum_parsing",
+                            "model_creation",
+                            "text_normalization",
+                            "type_narrowing",
+                            "data_transformation",
+                            "entity_comparison",
+                            "api_pagination",
+                            "parameter_access",
+                        ],
+                    },
+                ),
+            )
+
         except Exception as e:
-            print(f"⚠️  Get from dict: {e}")
+            error_msg = f"Advanced utilities demonstration failed: {e}"
+            return r[m.ConfigMap].fail(error_msg)
 
 
 def main() -> None:

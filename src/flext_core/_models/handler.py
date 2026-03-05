@@ -261,22 +261,6 @@ class FlextModelsHandler:
         _start_time: float | None = PrivateAttr(default=None)
         _metrics_state: FlextModelsContainers.Dict | None = PrivateAttr(default=None)
 
-        def start_execution(self) -> None:
-            """Start execution timing.
-
-            Records the current time as the start time for execution metrics.
-            Should be called at the beginning of handler execution.
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-
-            """
-            # Use PrivateAttr for proper Pydantic v2 pattern
-            self._start_time = time.time()
-
         @computed_field
         def execution_time_ms(self) -> float:
             """Get execution time in milliseconds."""
@@ -288,6 +272,18 @@ class FlextModelsHandler:
             start_time: float = self._start_time
             elapsed: float = time.time() - start_time
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
+
+        @computed_field
+        def has_metrics(self) -> bool:
+            """Check if metrics have been recorded."""
+            # Type narrowing: PrivateAttr type narrowing works directly
+            return self._metrics_state is not None and bool(self._metrics_state)
+
+        @computed_field
+        def is_running(self) -> bool:
+            """Check if execution is currently running."""
+            # Type narrowing: PrivateAttr type narrowing works directly
+            return self._start_time is not None
 
         @computed_field
         def metrics_state(self) -> FlextModelsContainers.Dict:
@@ -314,34 +310,6 @@ class FlextModelsHandler:
             # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
             # dict implements Mapping, so direct return works without cast
             return metrics_state_val
-
-        def set_metrics_state(
-            self,
-            state: FlextModelsContainers.Dict,
-        ) -> None:
-            """Set metrics state."""
-            # Use PrivateAttr for proper Pydantic v2 pattern
-            self._metrics_state = state
-
-        def reset(self) -> None:
-            """Reset execution context.
-
-            Clears all timing and metrics state, preparing the context
-            for reuse or cleanup.
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-                >>> context.reset()
-                >>> context.execution_time_ms
-                0.0
-
-            """
-            # Use PrivateAttr for proper Pydantic v2 pattern
-            self._start_time = None
-            self._metrics_state = None
 
         @classmethod
         def create_for_handler(
@@ -373,17 +341,49 @@ class FlextModelsHandler:
             """
             return cls(handler_name=handler_name, handler_mode=handler_mode)
 
-        @computed_field
-        def is_running(self) -> bool:
-            """Check if execution is currently running."""
-            # Type narrowing: PrivateAttr type narrowing works directly
-            return self._start_time is not None
+        def reset(self) -> None:
+            """Reset execution context.
 
-        @computed_field
-        def has_metrics(self) -> bool:
-            """Check if metrics have been recorded."""
-            # Type narrowing: PrivateAttr type narrowing works directly
-            return self._metrics_state is not None and bool(self._metrics_state)
+            Clears all timing and metrics state, preparing the context
+            for reuse or cleanup.
+
+            Examples:
+                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler", handler_mode="command"
+                ... )
+                >>> context.start_execution()
+                >>> context.reset()
+                >>> context.execution_time_ms
+                0.0
+
+            """
+            # Use PrivateAttr for proper Pydantic v2 pattern
+            self._start_time = None
+            self._metrics_state = None
+
+        def set_metrics_state(
+            self,
+            state: FlextModelsContainers.Dict,
+        ) -> None:
+            """Set metrics state."""
+            # Use PrivateAttr for proper Pydantic v2 pattern
+            self._metrics_state = state
+
+        def start_execution(self) -> None:
+            """Start execution timing.
+
+            Records the current time as the start time for execution metrics.
+            Should be called at the beginning of handler execution.
+
+            Examples:
+                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler", handler_mode="command"
+                ... )
+                >>> context.start_execution()
+
+            """
+            # Use PrivateAttr for proper Pydantic v2 pattern
+            self._start_time = time.time()
 
     class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator.

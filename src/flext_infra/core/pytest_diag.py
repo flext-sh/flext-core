@@ -48,54 +48,63 @@ class FlextInfraPytestDiagExtractor:
 
     _ENCODING: ClassVar[str] = c.Encoding.DEFAULT
 
-    def extract(
-        self,
-        junit_path: Path,
-        log_path: Path,
-    ) -> FlextResult[Mapping[str, t.Container]]:
-        """Extract diagnostics from JUnit XML and pytest log.
+    @staticmethod
+    def _extract_slow_from_log(lines: list[str], diag: _DiagResult) -> None:
+        """Extract slow test durations from log when XML unavailable."""
+        capture_slow = False
+        for line in lines:
+            if re.match(r"^=+ slowest durations =+", line):
+                capture_slow = True
+                continue
+            if capture_slow and re.match(r"^=+", line):
+                break
+            if capture_slow and line.strip():
+                diag.slow_entries.append(line)
 
-        Args:
-            junit_path: Path to JUnit XML result file.
-            log_path: Path to raw pytest log output.
+    @staticmethod
+    def _extract_warnings(lines: list[str], diag: _DiagResult) -> None:
+        """Extract warning lines from pytest log."""
+        capture_warn = False
+        for line in lines:
+            if re.match(r"^=+ warnings summary =+", line):
+                capture_warn = True
+            if capture_warn:
+                diag.warning_lines.append(line)
+                if re.match(r"^-- Docs: https://docs.pytest.org/", line):
+                    break
+        if not diag.warning_lines:
+            diag.warning_lines = [
+                line
+                for line in lines
+                if re.search(
+                    r"CoverageWarning|PytestCollectionWarning|DeprecationWarning|UserWarning|RuntimeWarning",
+                    line,
+                )
+            ]
 
-        Returns:
-            FlextResult with diagnostics dict containing counts and entries.
+    @staticmethod
+    def _parse_log_into_diag(lines: list[str], diag: _DiagResult) -> None:
+        """Parse pytest log output for failures/skips when XML unavailable."""
+        diag.failed_cases = [
+            line for line in lines if re.search(r"(^FAILED |::.* FAILED( |$))", line)
+        ]
+        diag.skip_cases = [
+            line for line in lines if re.search(r"(^SKIPPED |::.* SKIPPED( |$))", line)
+        ]
 
-        """
-        try:
-            log_text = (
-                log_path.read_text(encoding=self._ENCODING, errors="replace")
-                if log_path.exists()
-                else ""
-            )
-            lines = log_text.splitlines()
-            diag = _DiagResult()
-
-            xml_parsed = self._parse_xml(junit_path, diag)
-            if not xml_parsed:
-                self._parse_log_into_diag(lines, diag)
-
-            self._extract_warnings(lines, diag)
-            if not diag.slow_entries:
-                self._extract_slow_from_log(lines, diag)
-
-            result: MutableMapping[str, t.Container] = {
-                "failed_count": len(diag.failed_cases),
-                "error_count": len(diag.error_traces),
-                "warning_count": len(diag.warning_lines),
-                "skipped_count": len(diag.skip_cases),
-                "failed_cases": diag.failed_cases,
-                "error_traces": diag.error_traces,
-                "warning_lines": diag.warning_lines,
-                "skip_cases": diag.skip_cases,
-                "slow_entries": diag.slow_entries,
-            }
-            return r[t.ConfigurationMapping].ok(result)
-        except (OSError, TypeError, ValueError) as exc:
-            return r[t.ConfigurationMapping].fail(
-                f"pytest diagnostics extraction failed: {exc}",
-            )
+        capture = False
+        block: list[str] = []
+        for line in lines:
+            if re.match(r"^=+ (FAILURES|ERRORS) =+", line):
+                capture = True
+            if capture:
+                block.append(line)
+                if re.match(
+                    r"^=+ (short test summary info|warnings summary|.+ in [0-9.]+s) =+",
+                    line,
+                ):
+                    break
+        diag.error_traces = block
 
     @staticmethod
     def _parse_xml(junit_path: Path, diag: _DiagResult) -> bool:
@@ -159,63 +168,54 @@ class FlextInfraPytestDiagExtractor:
             ]
         return True
 
-    @staticmethod
-    def _parse_log_into_diag(lines: list[str], diag: _DiagResult) -> None:
-        """Parse pytest log output for failures/skips when XML unavailable."""
-        diag.failed_cases = [
-            line for line in lines if re.search(r"(^FAILED |::.* FAILED( |$))", line)
-        ]
-        diag.skip_cases = [
-            line for line in lines if re.search(r"(^SKIPPED |::.* SKIPPED( |$))", line)
-        ]
+    def extract(
+        self,
+        junit_path: Path,
+        log_path: Path,
+    ) -> FlextResult[Mapping[str, t.Container]]:
+        """Extract diagnostics from JUnit XML and pytest log.
 
-        capture = False
-        block: list[str] = []
-        for line in lines:
-            if re.match(r"^=+ (FAILURES|ERRORS) =+", line):
-                capture = True
-            if capture:
-                block.append(line)
-                if re.match(
-                    r"^=+ (short test summary info|warnings summary|.+ in [0-9.]+s) =+",
-                    line,
-                ):
-                    break
-        diag.error_traces = block
+        Args:
+            junit_path: Path to JUnit XML result file.
+            log_path: Path to raw pytest log output.
 
-    @staticmethod
-    def _extract_warnings(lines: list[str], diag: _DiagResult) -> None:
-        """Extract warning lines from pytest log."""
-        capture_warn = False
-        for line in lines:
-            if re.match(r"^=+ warnings summary =+", line):
-                capture_warn = True
-            if capture_warn:
-                diag.warning_lines.append(line)
-                if re.match(r"^-- Docs: https://docs.pytest.org/", line):
-                    break
-        if not diag.warning_lines:
-            diag.warning_lines = [
-                line
-                for line in lines
-                if re.search(
-                    r"CoverageWarning|PytestCollectionWarning|DeprecationWarning|UserWarning|RuntimeWarning",
-                    line,
-                )
-            ]
+        Returns:
+            FlextResult with diagnostics dict containing counts and entries.
 
-    @staticmethod
-    def _extract_slow_from_log(lines: list[str], diag: _DiagResult) -> None:
-        """Extract slow test durations from log when XML unavailable."""
-        capture_slow = False
-        for line in lines:
-            if re.match(r"^=+ slowest durations =+", line):
-                capture_slow = True
-                continue
-            if capture_slow and re.match(r"^=+", line):
-                break
-            if capture_slow and line.strip():
-                diag.slow_entries.append(line)
+        """
+        try:
+            log_text = (
+                log_path.read_text(encoding=self._ENCODING, errors="replace")
+                if log_path.exists()
+                else ""
+            )
+            lines = log_text.splitlines()
+            diag = _DiagResult()
+
+            xml_parsed = self._parse_xml(junit_path, diag)
+            if not xml_parsed:
+                self._parse_log_into_diag(lines, diag)
+
+            self._extract_warnings(lines, diag)
+            if not diag.slow_entries:
+                self._extract_slow_from_log(lines, diag)
+
+            result: MutableMapping[str, t.Container] = {
+                "failed_count": len(diag.failed_cases),
+                "error_count": len(diag.error_traces),
+                "warning_count": len(diag.warning_lines),
+                "skipped_count": len(diag.skip_cases),
+                "failed_cases": diag.failed_cases,
+                "error_traces": diag.error_traces,
+                "warning_lines": diag.warning_lines,
+                "skip_cases": diag.skip_cases,
+                "slow_entries": diag.slow_entries,
+            }
+            return r[t.ConfigurationMapping].ok(result)
+        except (OSError, TypeError, ValueError) as exc:
+            return r[t.ConfigurationMapping].fail(
+                f"pytest diagnostics extraction failed: {exc}",
+            )
 
 
 __all__ = ["FlextInfraPytestDiagExtractor"]

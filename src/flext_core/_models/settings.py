@@ -240,13 +240,6 @@ class FlextModelsConfig:
             ),
         ]
 
-        @model_validator(mode="after")
-        def validate_cross_fields(self) -> Self:
-            adjusted_workers = min(self.max_workers, self.batch_size)
-            self.max_workers = adjusted_workers
-
-            return self
-
         @classmethod
         def validate_batch(
             cls,
@@ -262,6 +255,13 @@ class FlextModelsConfig:
                 ]
                 msg = f"Batch validation failed: {'; '.join(item_errors)}"
                 raise ValueError(msg) from exc
+
+        @model_validator(mode="after")
+        def validate_cross_fields(self) -> Self:
+            adjusted_workers = min(self.max_workers, self.batch_size)
+            self.max_workers = adjusted_workers
+
+            return self
 
     class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""

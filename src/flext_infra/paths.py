@@ -27,6 +27,11 @@ class FlextInfraPathResolver(FlextService[Path]):
         """Initialize the path resolver."""
         super().__init__()
 
+    @override
+    def execute(self) -> FlextResult[Path]:
+        """Execute the service (required by FlextService base class)."""
+        return r[Path].ok(Path.cwd())
+
     def workspace_root(self, path: str | Path = ".") -> FlextResult[Path]:
         """Resolve and return the absolute path to the workspace root.
 
@@ -74,11 +79,6 @@ class FlextInfraPathResolver(FlextService[Path]):
             )
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
-
-    @override
-    def execute(self) -> FlextResult[Path]:
-        """Execute the service (required by FlextService base class)."""
-        return r[Path].ok(Path.cwd())
 
 
 __all__ = ["FlextInfraPathResolver"]

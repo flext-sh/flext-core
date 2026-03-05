@@ -54,6 +54,31 @@ class FlextInfraDocFixer:
     returning structured r reports.
     """
 
+    @staticmethod
+    def _anchorize(text: str) -> str:
+        """Convert a heading title to a GitHub-compatible anchor slug."""
+        value = text.strip().lower()
+        value = re.sub(r"[^a-z0-9\s-]", "", value)
+        value = re.sub(r"\s+", "-", value)
+        return re.sub(r"-+", "-", value).strip("-")
+
+    @staticmethod
+    def _maybe_fix_link(md_file: Path, raw_link: str) -> str | None:
+        """Return a corrected link target or None if no fix is needed."""
+        if raw_link.startswith(("http://", "https://", "mailto:", "tel:", "#")):
+            return None
+        base = raw_link.split("#", maxsplit=1)[0]
+        if not base:
+            return None
+        if (md_file.parent / base).exists():
+            return None
+        if not base.endswith(".md"):
+            md_candidate = md_file.parent / f"{base}.md"
+            if md_candidate.exists():
+                suffix = raw_link[len(base) :]
+                return f"{base}.md{suffix}"
+        return None
+
     def fix(
         self,
         root: Path,
@@ -91,6 +116,23 @@ class FlextInfraDocFixer:
             reports.append(report)
 
         return r[list[FixReport]].ok(reports)
+
+    def _build_toc(self, content: str) -> str:
+        """Generate a TOC block from ## and ### headings in content."""
+        items: list[str] = []
+        for level, title in FlextInfraPatterns.HEADING_H2_H3_RE.findall(content):
+            anchor = self._anchorize(title)
+            if not anchor:
+                continue
+            indent = "  " if level == "###" else ""
+            items.append(f"{indent}- [{title}](#{anchor})")
+        if not items:
+            items = ["- No sections found"]
+        return (
+            f"{FlextInfraTemplateEngine.TOC_START}\n"
+            + "\n".join(items)
+            + f"\n{FlextInfraTemplateEngine.TOC_END}"
+        )
 
     def _fix_scope(self, scope: FlextInfraDocScope, *, apply: bool) -> FixReport:
         """Run link and TOC fixes across all markdown files in scope."""
@@ -172,48 +214,6 @@ class FlextInfraDocFixer:
         if apply and (link_count > 0 or toc_changed > 0) and updated != original:
             _ = md_file.write_text(updated, encoding=c.Encoding.DEFAULT)
         return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
-
-    @staticmethod
-    def _maybe_fix_link(md_file: Path, raw_link: str) -> str | None:
-        """Return a corrected link target or None if no fix is needed."""
-        if raw_link.startswith(("http://", "https://", "mailto:", "tel:", "#")):
-            return None
-        base = raw_link.split("#", maxsplit=1)[0]
-        if not base:
-            return None
-        if (md_file.parent / base).exists():
-            return None
-        if not base.endswith(".md"):
-            md_candidate = md_file.parent / f"{base}.md"
-            if md_candidate.exists():
-                suffix = raw_link[len(base) :]
-                return f"{base}.md{suffix}"
-        return None
-
-    @staticmethod
-    def _anchorize(text: str) -> str:
-        """Convert a heading title to a GitHub-compatible anchor slug."""
-        value = text.strip().lower()
-        value = re.sub(r"[^a-z0-9\s-]", "", value)
-        value = re.sub(r"\s+", "-", value)
-        return re.sub(r"-+", "-", value).strip("-")
-
-    def _build_toc(self, content: str) -> str:
-        """Generate a TOC block from ## and ### headings in content."""
-        items: list[str] = []
-        for level, title in FlextInfraPatterns.HEADING_H2_H3_RE.findall(content):
-            anchor = self._anchorize(title)
-            if not anchor:
-                continue
-            indent = "  " if level == "###" else ""
-            items.append(f"{indent}- [{title}](#{anchor})")
-        if not items:
-            items = ["- No sections found"]
-        return (
-            f"{FlextInfraTemplateEngine.TOC_START}\n"
-            + "\n".join(items)
-            + f"\n{FlextInfraTemplateEngine.TOC_END}"
-        )
 
     def _update_toc(self, content: str) -> tuple[str, int]:
         """Insert or replace the TOC in content, returning (updated, changed)."""

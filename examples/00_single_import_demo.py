@@ -122,6 +122,33 @@ class UserService:
         self.logger = FlextLogger.create_module_logger(__name__)
         self.operation_count = 0
 
+    @staticmethod
+    def _activate_user(user: UserProfile) -> r[UserProfile]:
+        """Activate user using domain business logic - railway pattern."""
+
+        def return_user(_: object) -> UserProfile:
+            """Return the user after activation."""
+            return user
+
+        return user.activate().map(return_user)
+
+    @staticmethod
+    def _validate_data(
+        data: m.ConfigMap,
+    ) -> r[bool]:
+        """Validate input data using u (DRY) - no None types."""
+        required_fields: AbstractSet[str] = frozenset({
+            "name",
+            "email",
+        })  # Advanced collections.abc Set
+        present_fields: AbstractSet[str] = frozenset(data.keys())
+
+        if not required_fields <= present_fields:
+            missing = required_fields - present_fields
+            return r[bool].fail(f"Missing required fields: {missing}")
+
+        return r[bool].ok(value=True)
+
     def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
         """Create user with advanced context tracing and railway pattern - direct functional composition."""
         with FlextContext.Correlation.new_correlation():
@@ -145,46 +172,6 @@ class UserService:
                 .map(self._log_success)
             )
 
-    @staticmethod
-    def _validate_data(
-        data: m.ConfigMap,
-    ) -> r[bool]:
-        """Validate input data using u (DRY) - no None types."""
-        required_fields: AbstractSet[str] = frozenset({
-            "name",
-            "email",
-        })  # Advanced collections.abc Set
-        present_fields: AbstractSet[str] = frozenset(data.keys())
-
-        if not required_fields <= present_fields:
-            missing = required_fields - present_fields
-            return r[bool].fail(f"Missing required fields: {missing}")
-
-        return r[bool].ok(value=True)
-
-    @staticmethod
-    def _activate_user(user: UserProfile) -> r[UserProfile]:
-        """Activate user using domain business logic - railway pattern."""
-
-        def return_user(_: object) -> UserProfile:
-            """Return the user after activation."""
-            return user
-
-        return user.activate().map(return_user)
-
-    def _log_success(self, user: UserProfile) -> UserProfile:
-        """Log success and return user (railway pattern)."""
-        self.logger.debug(f"User {user.name} activated successfully")
-        return user
-
-    def _validate_and_transform(
-        self,
-        user_data: m.ConfigMap,
-        _: object,
-    ) -> r[UserProfile]:
-        """Validate and transform user data for flat_map."""
-        return validate_transform_user(user_data)
-
     def _log_final_result(
         self,
         correlation_id: str,
@@ -201,6 +188,19 @@ class UserService:
             return user
 
         return log_result
+
+    def _log_success(self, user: UserProfile) -> UserProfile:
+        """Log success and return user (railway pattern)."""
+        self.logger.debug(f"User {user.name} activated successfully")
+        return user
+
+    def _validate_and_transform(
+        self,
+        user_data: m.ConfigMap,
+        _: object,
+    ) -> r[UserProfile]:
+        """Validate and transform user data for flat_map."""
+        return validate_transform_user(user_data)
 
 
 # Comprehensive utilities demonstration (DRY + SRP with advanced flext-core integration)

@@ -56,6 +56,45 @@ class FlextInfraDocGenerator:
     returns structured r reports.
     """
 
+    @staticmethod
+    def _normalize_anchor(value: str) -> str:
+        """Convert a heading to a GitHub-compatible anchor slug."""
+        text = value.strip().lower()
+        text = re.sub(r"[^a-z0-9\s-]", "", text)
+        text = re.sub(r"\s+", "-", text)
+        text = re.sub(r"-+", "-", text)
+        return text.strip("-")
+
+    @staticmethod
+    def _sanitize_internal_anchor_links(content: str) -> str:
+        """Normalize generated guides by stripping non-external markdown links."""
+
+        def replace(match: re.Match[str]) -> str:
+            label, target = match.groups()
+            lower = target.lower().strip()
+            if lower.startswith(("http://", "https://", "mailto:", "tel:")):
+                return match.group(0)
+            return label
+
+        return FlextInfraPatterns.MARKDOWN_LINK_RE.sub(replace, content)
+
+    @staticmethod
+    def _write_if_needed(
+        path: Path,
+        content: str,
+        *,
+        apply: bool,
+    ) -> GeneratedFile:
+        """Write content to path only when changed and apply is True."""
+        exists = path.exists()
+        current = path.read_text(encoding=c.Encoding.DEFAULT) if exists else ""
+        if current == content:
+            return GeneratedFile(path=path.as_posix(), written=False)
+        if apply:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+        return GeneratedFile(path=path.as_posix(), written=apply)
+
     def generate(
         self,
         root: Path,
@@ -94,101 +133,22 @@ class FlextInfraDocGenerator:
 
         return r[list[GenerateReport]].ok(reports)
 
-    def _generate_scope(
-        self,
-        scope: FlextInfraDocScope,
-        *,
-        apply: bool,
-        workspace_root: Path,
-    ) -> GenerateReport:
-        """Generate docs for a single scope and write reports."""
-        if scope.name == "root":
-            files = self._generate_root_docs(scope=scope, apply=apply)
-            source = "root-generated-artifacts"
-        else:
-            files = self._generate_project_guides(
-                scope=scope,
-                workspace_root=workspace_root,
-                apply=apply,
-            )
-            files.extend(self._generate_project_mkdocs(scope=scope, apply=apply))
-            source = "workspace-docs-guides"
-
-        generated = sum(1 for item in files if item.written)
-        _ = FlextInfraDocsShared.write_json(
-            scope.report_dir / "generate-summary.json",
-            {
-                "summary": {
-                    "scope": scope.name,
-                    "generated": generated,
-                    "apply": apply,
-                    "source": source,
-                },
-                "files": [{"path": f.path, "written": f.written} for f in files],
-            },
+    def _build_toc(self, content: str) -> str:
+        """Build a markdown TOC from level-2 and level-3 headings."""
+        items: list[str] = []
+        for level, title in FlextInfraPatterns.HEADING_H2_H3_RE.findall(content):
+            anchor = self._normalize_anchor(title)
+            if not anchor:
+                continue
+            indent = "  " if level == "###" else ""
+            items.append(f"{indent}- [{title}](#{anchor})")
+        if not items:
+            items = ["- No sections found"]
+        return (
+            f"{FlextInfraTemplateEngine.TOC_START}\n"
+            + "\n".join(items)
+            + f"\n{FlextInfraTemplateEngine.TOC_END}"
         )
-        _ = FlextInfraDocsShared.write_markdown(
-            scope.report_dir / "generate-report.md",
-            [
-                "# Docs Generate Report",
-                "",
-                f"Scope: {scope.name}",
-                f"Apply: {int(apply)}",
-                f"Generated files: {generated}",
-                f"Source: {source}",
-            ],
-        )
-        result = c.Status.OK if apply else c.Status.WARN
-        reason = f"generated:{generated}" if apply else "dry-run"
-        logger.info(
-            "docs_generate_scope_completed",
-            project=scope.name,
-            phase="generate",
-            result=result,
-            reason=reason,
-        )
-
-        return GenerateReport(
-            scope=scope.name,
-            generated=generated,
-            applied=apply,
-            source=source,
-            files=files,
-        )
-
-    def _generate_root_docs(
-        self,
-        scope: FlextInfraDocScope,
-        *,
-        apply: bool,
-    ) -> list[GeneratedFile]:
-        """Generate placeholder docs at the workspace root."""
-        changelog = self._update_toc(
-            "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n",
-        )
-        release = self._update_toc(
-            "# Latest Release\n\nNo tagged release notes were generated yet.\n",
-        )
-        roadmap = self._update_toc(
-            "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n",
-        )
-        return [
-            self._write_if_needed(
-                scope.path / "docs/CHANGELOG.md",
-                changelog,
-                apply=apply,
-            ),
-            self._write_if_needed(
-                scope.path / "docs/releases/latest.md",
-                release,
-                apply=apply,
-            ),
-            self._write_if_needed(
-                scope.path / "docs/roadmap/index.md",
-                roadmap,
-                apply=apply,
-            ),
-        ]
 
     def _generate_project_guides(
         self,
@@ -258,6 +218,102 @@ class FlextInfraDocGenerator:
         )
         return [self._write_if_needed(mkdocs_path, content, apply=apply)]
 
+    def _generate_root_docs(
+        self,
+        scope: FlextInfraDocScope,
+        *,
+        apply: bool,
+    ) -> list[GeneratedFile]:
+        """Generate placeholder docs at the workspace root."""
+        changelog = self._update_toc(
+            "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n",
+        )
+        release = self._update_toc(
+            "# Latest Release\n\nNo tagged release notes were generated yet.\n",
+        )
+        roadmap = self._update_toc(
+            "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n",
+        )
+        return [
+            self._write_if_needed(
+                scope.path / "docs/CHANGELOG.md",
+                changelog,
+                apply=apply,
+            ),
+            self._write_if_needed(
+                scope.path / "docs/releases/latest.md",
+                release,
+                apply=apply,
+            ),
+            self._write_if_needed(
+                scope.path / "docs/roadmap/index.md",
+                roadmap,
+                apply=apply,
+            ),
+        ]
+
+    def _generate_scope(
+        self,
+        scope: FlextInfraDocScope,
+        *,
+        apply: bool,
+        workspace_root: Path,
+    ) -> GenerateReport:
+        """Generate docs for a single scope and write reports."""
+        if scope.name == "root":
+            files = self._generate_root_docs(scope=scope, apply=apply)
+            source = "root-generated-artifacts"
+        else:
+            files = self._generate_project_guides(
+                scope=scope,
+                workspace_root=workspace_root,
+                apply=apply,
+            )
+            files.extend(self._generate_project_mkdocs(scope=scope, apply=apply))
+            source = "workspace-docs-guides"
+
+        generated = sum(1 for item in files if item.written)
+        _ = FlextInfraDocsShared.write_json(
+            scope.report_dir / "generate-summary.json",
+            {
+                "summary": {
+                    "scope": scope.name,
+                    "generated": generated,
+                    "apply": apply,
+                    "source": source,
+                },
+                "files": [{"path": f.path, "written": f.written} for f in files],
+            },
+        )
+        _ = FlextInfraDocsShared.write_markdown(
+            scope.report_dir / "generate-report.md",
+            [
+                "# Docs Generate Report",
+                "",
+                f"Scope: {scope.name}",
+                f"Apply: {int(apply)}",
+                f"Generated files: {generated}",
+                f"Source: {source}",
+            ],
+        )
+        result = c.Status.OK if apply else c.Status.WARN
+        reason = f"generated:{generated}" if apply else "dry-run"
+        logger.info(
+            "docs_generate_scope_completed",
+            project=scope.name,
+            phase="generate",
+            result=result,
+            reason=reason,
+        )
+
+        return GenerateReport(
+            scope=scope.name,
+            generated=generated,
+            applied=apply,
+            source=source,
+            files=files,
+        )
+
     def _project_guide_content(
         self,
         content: str,
@@ -287,45 +343,6 @@ class FlextInfraDocGenerator:
         rendered = "\n".join(out).rstrip() + "\n"
         return self._update_toc(self._sanitize_internal_anchor_links(rendered))
 
-    @staticmethod
-    def _sanitize_internal_anchor_links(content: str) -> str:
-        """Normalize generated guides by stripping non-external markdown links."""
-
-        def replace(match: re.Match[str]) -> str:
-            label, target = match.groups()
-            lower = target.lower().strip()
-            if lower.startswith(("http://", "https://", "mailto:", "tel:")):
-                return match.group(0)
-            return label
-
-        return FlextInfraPatterns.MARKDOWN_LINK_RE.sub(replace, content)
-
-    @staticmethod
-    def _normalize_anchor(value: str) -> str:
-        """Convert a heading to a GitHub-compatible anchor slug."""
-        text = value.strip().lower()
-        text = re.sub(r"[^a-z0-9\s-]", "", text)
-        text = re.sub(r"\s+", "-", text)
-        text = re.sub(r"-+", "-", text)
-        return text.strip("-")
-
-    def _build_toc(self, content: str) -> str:
-        """Build a markdown TOC from level-2 and level-3 headings."""
-        items: list[str] = []
-        for level, title in FlextInfraPatterns.HEADING_H2_H3_RE.findall(content):
-            anchor = self._normalize_anchor(title)
-            if not anchor:
-                continue
-            indent = "  " if level == "###" else ""
-            items.append(f"{indent}- [{title}](#{anchor})")
-        if not items:
-            items = ["- No sections found"]
-        return (
-            f"{FlextInfraTemplateEngine.TOC_START}\n"
-            + "\n".join(items)
-            + f"\n{FlextInfraTemplateEngine.TOC_END}"
-        )
-
     def _update_toc(self, content: str) -> str:
         """Insert or replace TOC markers in markdown content."""
         toc = self._build_toc(content)
@@ -350,23 +367,6 @@ class FlextInfraDocGenerator:
             lines.insert(insert_at + 2, "")
             return "\n".join(lines).rstrip() + "\n"
         return toc + "\n\n" + content.rstrip() + "\n"
-
-    @staticmethod
-    def _write_if_needed(
-        path: Path,
-        content: str,
-        *,
-        apply: bool,
-    ) -> GeneratedFile:
-        """Write content to path only when changed and apply is True."""
-        exists = path.exists()
-        current = path.read_text(encoding=c.Encoding.DEFAULT) if exists else ""
-        if current == content:
-            return GeneratedFile(path=path.as_posix(), written=False)
-        if apply:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
-        return GeneratedFile(path=path.as_posix(), written=apply)
 
 
 __all__ = ["FlextInfraDocGenerator", "GenerateReport", "GeneratedFile"]

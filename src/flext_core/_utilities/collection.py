@@ -32,20 +32,6 @@ class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
     @staticmethod
-    def _to_batch_scalar(
-        value: t.Container,
-    ) -> t.Scalar | None:
-        if value is None or isinstance(value, t.Scalar):
-            return value
-        return str(value)
-
-    @staticmethod
-    def _to_batch_scalars(
-        values: Sequence[t.Container],
-    ) -> list[t.Scalar | None]:
-        return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
-
-    @staticmethod
     def _coerce_guard_value(value: t.Container) -> t.Container:
         guard_value_adapter: TypeAdapter[t.Container] = TypeAdapter(
             t.Container,
@@ -54,6 +40,47 @@ class FlextUtilitiesCollection:
             return guard_value_adapter.validate_python(value)
         except ValidationError:
             return str(value)
+
+    @staticmethod
+    def _coerce_value_to_bool(value: t.Container) -> bool:
+        """Coerce a value to bool."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in {"true", "1", "yes"}
+        return bool(value)
+
+    @staticmethod
+    def _coerce_value_to_float(value: t.Container) -> float:
+        """Coerce a value to float."""
+        if isinstance(value, float):
+            return value
+        return float(str(value))
+
+    @staticmethod
+    def _coerce_value_to_int(value: t.Container) -> int:
+        """Coerce a value to int."""
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        return int(str(value))
+
+    @staticmethod
+    def _coerce_value_to_str(value: t.Container) -> str:
+        """Coerce a value to string."""
+        return str(value)
+
+    @staticmethod
+    def _is_empty_value(value: t.Container) -> bool:
+        """Check if value is considered empty (empty string, empty list, etc.)."""
+        if value is None:
+            return True
+        if value.__class__ is str:
+            return not value
+        if FlextUtilitiesCollection._is_general_value_list(value):
+            return len(value) == 0
+        if FlextUtilitiesCollection._is_general_value_dict(value):
+            return len(value) == 0
+        return False
 
     # =========================================================================
     # Type Guards for Runtime Type Narrowing
@@ -72,174 +99,6 @@ class FlextUtilitiesCollection:
     ) -> TypeGuard[list[t.Container]]:
         """Type guard to narrow list to ContainerValue list."""
         return value.__class__ is list
-
-    # =========================================================================
-    # Public overloaded map function - inlined implementations
-    # =========================================================================
-
-    @overload
-    @staticmethod
-    def map(
-        items: list[T],
-        mapper: Callable[[T], U],
-    ) -> list[U]: ...
-
-    @overload
-    @staticmethod
-    def map(
-        items: tuple[T, ...],
-        mapper: Callable[[T], U],
-    ) -> tuple[U, ...]: ...
-
-    @overload
-    @staticmethod
-    def map(
-        items: dict[str, T],
-        mapper: Callable[[T], U],
-    ) -> dict[str, U]: ...
-
-    @overload
-    @staticmethod
-    def map(
-        items: set[T],
-        mapper: Callable[[T], U],
-    ) -> set[U]: ...
-
-    @overload
-    @staticmethod
-    def map(
-        items: frozenset[T],
-        mapper: Callable[[T], U],
-    ) -> frozenset[U]: ...
-
-    @staticmethod
-    def map(
-        items: list[T] | tuple[T, ...] | dict[str, T] | set[T] | frozenset[T],
-        mapper: Callable[[T], U],
-    ) -> list[U] | tuple[U, ...] | dict[str, U] | set[U] | frozenset[U]:
-        """Unified map function with generic type support.
-
-        Transforms elements using mapper function while preserving container type.
-        Supports lists, tuples, dicts, sets, and frozensets.
-        """
-        if isinstance(items, list):
-            return [mapper(item) for item in items]
-        if isinstance(items, tuple):
-            return tuple(mapper(item) for item in items)
-        if isinstance(items, dict):
-            return {k: mapper(v) for k, v in items.items()}
-        if isinstance(items, set):
-            return {mapper(item) for item in items}
-        return frozenset(mapper(item) for item in items)
-
-    # =========================================================================
-    # Public overloaded filter function - inlined implementations
-    # =========================================================================
-
-    @overload
-    @staticmethod
-    def filter(
-        items: list[T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: None = None,
-    ) -> list[T]: ...
-
-    @overload
-    @staticmethod
-    def filter(
-        items: list[T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: Callable[[T], U],
-    ) -> list[U]: ...
-
-    @overload
-    @staticmethod
-    def filter(
-        items: tuple[T, ...],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: None = None,
-    ) -> tuple[T, ...]: ...
-
-    @overload
-    @staticmethod
-    def filter(
-        items: tuple[T, ...],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: Callable[[T], U],
-    ) -> tuple[U, ...]: ...
-
-    @overload
-    @staticmethod
-    def filter(
-        items: dict[str, T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: None = None,
-    ) -> dict[str, T]: ...
-
-    @overload
-    @staticmethod
-    def filter(
-        items: dict[str, T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: Callable[[T], U],
-    ) -> dict[str, U]: ...
-
-    @staticmethod
-    def filter(
-        items: list[T] | tuple[T, ...] | dict[str, T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: Callable[[T], U] | None = None,
-    ) -> (
-        list[T] | list[U] | tuple[T, ...] | tuple[U, ...] | dict[str, T] | dict[str, U]
-    ):
-        """Unified filter function with generic type support.
-
-        Filters elements based on predicate while preserving container type.
-        Optionally maps filtered items with mapper function.
-        Supports lists, tuples, and dicts.
-        """
-        if isinstance(items, list):
-            if mapper is not None:
-                return [mapper(item) for item in items if predicate(item)]
-            return [item for item in items if predicate(item)]
-        if isinstance(items, tuple):
-            if mapper is not None:
-                mapped_items = [mapper(item) for item in items if predicate(item)]
-                return (*mapped_items,)
-            filtered_items = [item for item in items if predicate(item)]
-            return (*filtered_items,)
-        filtered: dict[str, T] = {k: v for k, v in items.items() if predicate(v)}
-        if mapper is not None:
-            return {k: mapper(v) for k, v in filtered.items()}
-        return filtered
-
-    @staticmethod
-    def find(
-        items: list[T] | tuple[T, ...] | dict[str, T],
-        predicate: _Predicate[T],
-    ) -> T | None:
-        """Find first item matching predicate with generic type support.
-
-        Returns first item where predicate returns True, or None.
-        """
-        if isinstance(items, (list, tuple)):
-            for item in items:
-                result: bool = predicate(item)  # Explicit type for result
-                if result:
-                    return item
-            return None
-        for v in items.values():
-            matched: bool = predicate(v)  # Explicit type for matched
-            if matched:
-                return v
-        return None
 
     @staticmethod
     def _merge_deep_single_key(
@@ -269,90 +128,18 @@ class FlextUtilitiesCollection:
         return r[bool].ok(value=True)
 
     @staticmethod
-    def _is_empty_value(value: t.Container) -> bool:
-        """Check if value is considered empty (empty string, empty list, etc.)."""
-        if value is None:
-            return True
-        if value.__class__ is str:
-            return not value
-        if FlextUtilitiesCollection._is_general_value_list(value):
-            return len(value) == 0
-        if FlextUtilitiesCollection._is_general_value_dict(value):
-            return len(value) == 0
-        return False
+    def _to_batch_scalar(
+        value: t.Container,
+    ) -> t.Scalar | None:
+        if value is None or isinstance(value, t.Scalar):
+            return value
+        return str(value)
 
     @staticmethod
-    def merge(
-        base: dict[str, t.Container],
-        other: dict[str, t.Container],
-        *,
-        strategy: str = "deep",
-    ) -> r[dict[str, t.Container]]:
-        """Merge two dictionaries with configurable strategy.
-
-        Strategies:
-        - "deep": Deep merge nested dicts (default)
-        - "replace": Replace all values from other
-        - "override": Same as replace (alias)
-        - "append": Append lists instead of replacing
-        - "filter_none": Skip None values from other
-        - "filter_empty": Skip empty values (None, "", [], {}) from other
-        - "filter_both": Same as filter_empty (alias)
-        """
-        try:
-            if strategy in {"replace", "override"}:
-                result: dict[str, t.Container] = dict(base)
-                result.update(other)
-                return r[dict[str, t.Container]].ok(result)
-
-            if strategy == "filter_none":
-                result = dict(base)
-                for key, value in other.items():
-                    if value is not None:
-                        result[key] = value
-                return r[dict[str, t.Container]].ok(result)
-
-            if strategy in {"filter_empty", "filter_both"}:
-                result = dict(base)
-                for key, value in other.items():
-                    if not FlextUtilitiesCollection._is_empty_value(value):
-                        result[key] = value
-                return r[dict[str, t.Container]].ok(result)
-
-            if strategy == "append":
-                result = dict(base)
-                for key, value in other.items():
-                    current_val = result.get(key)
-                    if (
-                        current_val is not None
-                        and isinstance(current_val, list)
-                        and isinstance(value, list)
-                    ):
-                        # Append lists - both are now properly typed as lists
-                        result[key] = current_val + value
-                    else:
-                        result[key] = value
-                return r[dict[str, t.Container]].ok(result)
-
-            if strategy == "deep":
-                result = base.copy()
-                for key, value in other.items():
-                    merge_result = FlextUtilitiesCollection._merge_deep_single_key(
-                        result,
-                        key,
-                        value,
-                    )
-                    if merge_result.is_failure:
-                        return r[dict[str, t.Container]].fail(
-                            merge_result.error or "Unknown error",
-                        )
-                return r[dict[str, t.Container]].ok(result)
-
-            return r[dict[str, t.Container]].fail(
-                f"Unknown merge strategy: {strategy}",
-            )
-        except (TypeError, ValueError, KeyError, AttributeError) as e:
-            return r[dict[str, t.Container]].fail(f"Merge failed: {e}")
+    def _to_batch_scalars(
+        values: Sequence[t.Container],
+    ) -> list[t.Scalar | None]:
+        return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
     def batch(
@@ -489,154 +276,24 @@ class FlextUtilitiesCollection:
         return r[FlextModelsContainers.BatchResultDict].ok(result_dict)
 
     @staticmethod
-    def process(
-        items: Sequence[T],
-        processor: Callable[[T], U],
-        *,
-        predicate: Callable[[T], bool] | None = None,
-        on_error: str = "fail",
-        filter_keys: set[str] | None = None,
-        exclude_keys: set[str] | None = None,
-    ) -> r[list[U]]:
-        """Process items with optional filtering and error handling.
-
-        Transforms items using processor, optionally filtering with predicate.
+    def chunk(items: Sequence[T], size: int) -> list[list[T]]:
+        """Split sequence into chunks of specified size.
 
         Args:
-            items: Items to process
-            processor: Function to transform each item
-            predicate: Optional filter function (applied before processor)
-            on_error: "fail" to abort on error, "skip" to skip failed items
-            filter_keys: Only include items with these keys (for dict items)
-            exclude_keys: Exclude items with these keys (for dict items)
+            items: Sequence to split
+            size: Maximum size of each chunk
 
         Returns:
-            FlextResult with list of processed results or error
+            List of chunks
+
+        Example:
+            batches = u.Collection.chunk(records, 100)
+            # [[record1, ..., record100], [record101, ...], ...]
 
         """
-        _ = filter_keys  # Documented for dict processing, applied in subclasses
-        _ = exclude_keys  # Documented for dict processing, applied in subclasses
-
-        try:
-            results: list[U] = []
-            for item in items:
-                # Type narrowing: item is T
-                item_typed: T = item
-                # Check predicate - item is T from Sequence[T]
-                if predicate is not None and not predicate(item_typed):
-                    continue
-
-                try:
-                    result = processor(item)
-                    results.append(result)
-                except (TypeError, ValueError, RuntimeError, AttributeError, KeyError):
-                    if on_error == "skip":
-                        continue
-                    return r[list[U]].fail(f"Processing failed for item: {item}")
-            return r[list[U]].ok(results)
-        except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            return r[list[U]].fail(f"Process failed: {e}")
-
-    @staticmethod
-    def parse_sequence(
-        enum_cls: type[StrEnum],
-        values: Sequence[str | StrEnum],
-    ) -> r[tuple[StrEnum, ...]]:
-        """Parse sequence of strings to tuple of StrEnum."""
-        try:
-            parsed: list[StrEnum] = []
-            errors: list[str] = []
-
-            for idx, val in enumerate(values):
-                if isinstance(val, enum_cls):
-                    parsed.append(val)
-                else:
-                    try:
-                        parsed.append(enum_cls(val))
-                    except ValueError:
-                        errors.append(f"[{idx}]: '{val}'")
-
-            if errors:
-                enum_name = getattr(enum_cls, "__name__", "Enum")
-                return r[tuple[StrEnum, ...]].fail(
-                    f"Invalid {enum_name} values: {', '.join(errors)}",
-                )
-            return r[tuple[StrEnum, ...]].ok(tuple(parsed))
-        except (TypeError, ValueError, AttributeError) as e:
-            return r[tuple[StrEnum, ...]].fail(f"Parse sequence failed: {e}")
-
-    @staticmethod
-    def _coerce_value_to_str(value: t.Container) -> str:
-        """Coerce a value to string."""
-        return str(value)
-
-    @staticmethod
-    def _coerce_value_to_int(value: t.Container) -> int:
-        """Coerce a value to int."""
-        if isinstance(value, int) and not isinstance(value, bool):
-            return value
-        return int(str(value))
-
-    @staticmethod
-    def _coerce_value_to_float(value: t.Container) -> float:
-        """Coerce a value to float."""
-        if isinstance(value, float):
-            return value
-        return float(str(value))
-
-    @staticmethod
-    def _coerce_value_to_bool(value: t.Container) -> bool:
-        """Coerce a value to bool."""
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            return value.lower() in {"true", "1", "yes"}
-        return bool(value)
-
-    @staticmethod
-    def coerce_dict_to_str() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, str],
-    ]:
-        """Create validator that coerces dict values to str."""
-
-        def validator(data: Mapping[str, t.Container]) -> Mapping[str, str]:
-            return {
-                k: FlextUtilitiesCollection._coerce_value_to_str(v)
-                for k, v in data.items()
-            }
-
-        return validator
-
-    @staticmethod
-    def coerce_dict_to_int() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, int],
-    ]:
-        """Create validator that coerces dict values to int."""
-
-        def validator(data: Mapping[str, t.Container]) -> Mapping[str, int]:
-            return {
-                k: FlextUtilitiesCollection._coerce_value_to_int(v)
-                for k, v in data.items()
-            }
-
-        return validator
-
-    @staticmethod
-    def coerce_dict_to_float() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, float],
-    ]:
-        """Create validator that coerces dict values to float."""
-
-        def validator(data: Mapping[str, t.Container]) -> Mapping[str, float]:
-            return {
-                k: FlextUtilitiesCollection._coerce_value_to_float(v)
-                for k, v in data.items()
-            }
-
-        return validator
+        if size <= 0:
+            return [list(items)]
+        return [list(items[i : i + size]) for i in range(0, len(items), size)]
 
     @staticmethod
     def coerce_dict_to_bool() -> Callable[
@@ -676,224 +333,49 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_list_to_str() -> Callable[[Sequence[t.Container]], list[str]]:
-        """Create validator that coerces sequence values to str."""
+    def coerce_dict_to_float() -> Callable[
+        [t.ConfigurationMapping],
+        Mapping[str, float],
+    ]:
+        """Create validator that coerces dict values to float."""
 
-        def validator(data: Sequence[t.Container]) -> list[str]:
-            return [FlextUtilitiesCollection._coerce_value_to_str(v) for v in data]
-
-        return validator
-
-    @staticmethod
-    def coerce_list_to_int() -> Callable[[Sequence[t.Container]], list[int]]:
-        """Create validator that coerces sequence values to int."""
-
-        def validator(data: Sequence[t.Container]) -> list[int]:
-            return [FlextUtilitiesCollection._coerce_value_to_int(v) for v in data]
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, float]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_float(v)
+                for k, v in data.items()
+            }
 
         return validator
 
     @staticmethod
-    def coerce_list_to_float() -> Callable[[Sequence[t.Container]], list[float]]:
-        """Create validator that coerces sequence values to float."""
+    def coerce_dict_to_int() -> Callable[
+        [t.ConfigurationMapping],
+        Mapping[str, int],
+    ]:
+        """Create validator that coerces dict values to int."""
 
-        def validator(data: Sequence[t.Container]) -> list[float]:
-            return [FlextUtilitiesCollection._coerce_value_to_float(v) for v in data]
-
-        return validator
-
-    @staticmethod
-    def coerce_list_to_bool() -> Callable[[Sequence[t.Container]], list[bool]]:
-        """Create validator that coerces sequence values to bool."""
-
-        def validator(data: Sequence[t.Container]) -> list[bool]:
-            return [FlextUtilitiesCollection._coerce_value_to_bool(v) for v in data]
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, int]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_int(v)
+                for k, v in data.items()
+            }
 
         return validator
 
     @staticmethod
-    def coerce_list_to_enum[E: StrEnum](
-        enum_type: type[E],
-    ) -> Callable[[Sequence[t.Container]], list[E]]:
-        """Create validator that coerces sequence values to a StrEnum type."""
+    def coerce_dict_to_str() -> Callable[
+        [t.ConfigurationMapping],
+        Mapping[str, str],
+    ]:
+        """Create validator that coerces dict values to str."""
 
-        def validator(data: Sequence[t.Container]) -> list[E]:
-            result: list[E] = []
-            for v in data:
-                if isinstance(v, enum_type):
-                    result.append(v)
-                elif isinstance(v, str):
-                    result.append(enum_type(v))
-                else:
-                    msg = (
-                        f"Expected str for enum conversion, got {v.__class__.__name__}"
-                    )
-                    raise TypeError(msg)
-            return result
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, str]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_str(v)
+                for k, v in data.items()
+            }
 
         return validator
-
-    # ========================================================================
-    # Additional Collection Convenience Methods
-    # ========================================================================
-
-    @staticmethod
-    def first(
-        items: Sequence[T],
-        predicate: _Predicate[T] | None = None,
-        default: T | None = None,
-    ) -> T | None:
-        """Get first item (optionally matching predicate).
-
-        Args:
-            items: Sequence to search
-            predicate: Optional filter function
-            default: Value to return if no match found
-
-        Returns:
-            First matching item or default
-
-        Example:
-            user = u.first(users, lambda u: u.is_active)
-
-        """
-        for item in items:
-            if predicate is None:
-                return item
-            result: bool = predicate(item)
-            if result:
-                return item
-        return default
-
-    @staticmethod
-    def last(
-        items: Sequence[T],
-        predicate: _Predicate[T] | None = None,
-        default: T | None = None,
-    ) -> T | None:
-        """Get last item (optionally matching predicate).
-
-        Args:
-            items: Sequence to search
-            predicate: Optional filter function
-            default: Value to return if no match found
-
-        Returns:
-            Last matching item or default
-
-        Example:
-            last_error = u.last(logs, lambda l: l.level == "error")
-
-        """
-        for item in reversed(items):
-            if predicate is None:
-                return item
-            result: bool = predicate(item)
-            if result:
-                return item
-        return default
-
-    @staticmethod
-    def group_by(
-        items: Sequence[T],
-        key_func: Callable[[T], U],
-    ) -> dict[U, list[T]]:
-        """Group items by key function.
-
-        Args:
-            items: Items to group
-            key_func: Function to extract group key
-
-        Returns:
-            Dict mapping keys to lists of items
-
-        Example:
-            by_status = u.group_by(users, lambda u: u.status)
-            # {"active": [User1, User2], "inactive": [User3]}
-
-        """
-        result: dict[U, list[T]] = {}
-        for item in items:
-            key = key_func(item)
-            if key not in result:
-                result[key] = []
-            result[key].append(item)
-        return result
-
-    @staticmethod
-    def unique(
-        items: Sequence[T],
-        key_func: Callable[[T], Hashable] | None = None,
-    ) -> list[T]:
-        """Get unique items preserving order.
-
-        Args:
-            items: Items to deduplicate
-            key_func: Optional function to extract uniqueness key
-
-        Returns:
-            List of unique items in order of first appearance
-
-        Example:
-            unique_emails = u.unique(users, lambda u: u.email.lower())
-
-        """
-        seen: set[Hashable] = set()
-        result: list[T] = []
-        for item in items:
-            key = key_func(item) if key_func else item
-            if key not in seen:
-                seen.add(key)
-                result.append(item)
-        return result
-
-    @staticmethod
-    def partition(
-        items: Sequence[T],
-        predicate: _Predicate[T],
-    ) -> tuple[list[T], list[T]]:
-        """Split items by predicate: (matches, non-matches).
-
-        Args:
-            items: Items to partition
-            predicate: Function to test each item
-
-        Returns:
-            Tuple of (matching_items, non_matching_items)
-
-        Example:
-            active, inactive = u.partition(users, lambda u: u.is_active)
-
-        """
-        matches: list[T] = []
-        non_matches: list[T] = []
-        for item in items:
-            result: bool = predicate(item)
-            if result:
-                matches.append(item)
-            else:
-                non_matches.append(item)
-        return matches, non_matches
-
-    @staticmethod
-    def flatten(items: Sequence[Sequence[T]]) -> list[T]:
-        """Flatten nested sequences into single list.
-
-        Args:
-            items: Nested sequences to flatten (one level)
-
-        Returns:
-            Flattened list
-
-        Example:
-            flat = u.flatten([[1, 2], [3, 4], [5]])
-            # [1, 2, 3, 4, 5]
-
-        """
-        result: list[T] = []
-        for seq in items:
-            result.extend(seq)
-        return result
 
     # ========================================================================
     # Generic Coercion Validators (used by tests)
@@ -944,6 +426,64 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
+    def coerce_list_to_bool() -> Callable[[Sequence[t.Container]], list[bool]]:
+        """Create validator that coerces sequence values to bool."""
+
+        def validator(data: Sequence[t.Container]) -> list[bool]:
+            return [FlextUtilitiesCollection._coerce_value_to_bool(v) for v in data]
+
+        return validator
+
+    @staticmethod
+    def coerce_list_to_enum[E: StrEnum](
+        enum_type: type[E],
+    ) -> Callable[[Sequence[t.Container]], list[E]]:
+        """Create validator that coerces sequence values to a StrEnum type."""
+
+        def validator(data: Sequence[t.Container]) -> list[E]:
+            result: list[E] = []
+            for v in data:
+                if isinstance(v, enum_type):
+                    result.append(v)
+                elif isinstance(v, str):
+                    result.append(enum_type(v))
+                else:
+                    msg = (
+                        f"Expected str for enum conversion, got {v.__class__.__name__}"
+                    )
+                    raise TypeError(msg)
+            return result
+
+        return validator
+
+    @staticmethod
+    def coerce_list_to_float() -> Callable[[Sequence[t.Container]], list[float]]:
+        """Create validator that coerces sequence values to float."""
+
+        def validator(data: Sequence[t.Container]) -> list[float]:
+            return [FlextUtilitiesCollection._coerce_value_to_float(v) for v in data]
+
+        return validator
+
+    @staticmethod
+    def coerce_list_to_int() -> Callable[[Sequence[t.Container]], list[int]]:
+        """Create validator that coerces sequence values to int."""
+
+        def validator(data: Sequence[t.Container]) -> list[int]:
+            return [FlextUtilitiesCollection._coerce_value_to_int(v) for v in data]
+
+        return validator
+
+    @staticmethod
+    def coerce_list_to_str() -> Callable[[Sequence[t.Container]], list[str]]:
+        """Create validator that coerces sequence values to str."""
+
+        def validator(data: Sequence[t.Container]) -> list[str]:
+            return [FlextUtilitiesCollection._coerce_value_to_str(v) for v in data]
+
+        return validator
+
+    @staticmethod
     def coerce_list_validator[E: StrEnum](
         enum_cls: type[E],
     ) -> Callable[[t.Container], list[E]]:
@@ -983,6 +523,456 @@ class FlextUtilitiesCollection:
             return result
 
         return validator
+
+    @staticmethod
+    def count(
+        items: Sequence[T],
+        predicate: Callable[[T], bool] | None = None,
+    ) -> int:
+        """Count items, optionally matching predicate.
+
+        Args:
+            items: Sequence to count
+            predicate: Optional filter function
+
+        Returns:
+            Count of matching items
+
+        Example:
+            active_count = u.Collection.count(users, lambda u: u.is_active)
+
+        """
+        if predicate is None:
+            return len(items)
+        return sum(1 for item in items if predicate(item))
+
+    @staticmethod
+    def extract_callable_mapping[K](
+        mapping: Mapping[K, Callable[[], t.Container]],
+    ) -> dict[str, Callable[[], t.Container]]:
+        """Extract mapping of callables for resources/factories.
+
+        Helper function to properly type narrow callable mappings for pyright.
+        Filters to only callable values and converts to proper signature.
+
+        Args:
+            mapping: Mapping containing callable values
+
+        Returns:
+            Dict mapping string keys to callable functions
+
+        """
+        result: dict[str, Callable[[], t.Container]] = {}
+        items_iter = mapping.items()
+        for item_tuple in items_iter:
+            key_obj = item_tuple[0]
+            value_raw = item_tuple[1]
+            key_str: str = str(key_obj)
+            result[key_str] = value_raw
+        return result
+
+    @staticmethod
+    def extract_mapping_items[K, V](
+        mapping: Mapping[K, t.Container],
+    ) -> list[tuple[str, t.Container]]:
+        """Extract mapping items as typed list for iteration.
+
+        Helper function to properly type narrow Mapping.items() for pyright.
+        Converts keys to strings and values to ContainerValue.
+
+        Args:
+            mapping: Mapping to extract items from
+
+        Returns:
+            List of (key, value) tuples with proper typing
+
+        """
+        result: list[tuple[str, t.Container]] = []
+        items_iter = mapping.items()
+        for item_tuple in items_iter:
+            key_obj = item_tuple[0]
+            value_raw = item_tuple[1]
+            key_str: str = str(key_obj)
+            result.append((key_str, value_raw))
+        return result
+
+    # =========================================================================
+    # Public overloaded filter function - inlined implementations
+    # =========================================================================
+
+    @overload
+    @staticmethod
+    def filter(
+        items: list[T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
+    ) -> list[T]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: list[T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
+    ) -> list[U]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: tuple[T, ...],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
+    ) -> tuple[T, ...]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: tuple[T, ...],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
+    ) -> tuple[U, ...]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: dict[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
+    ) -> dict[str, T]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: dict[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
+    ) -> dict[str, U]: ...
+
+    @staticmethod
+    def filter(
+        items: list[T] | tuple[T, ...] | dict[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U] | None = None,
+    ) -> (
+        list[T] | list[U] | tuple[T, ...] | tuple[U, ...] | dict[str, T] | dict[str, U]
+    ):
+        """Unified filter function with generic type support.
+
+        Filters elements based on predicate while preserving container type.
+        Optionally maps filtered items with mapper function.
+        Supports lists, tuples, and dicts.
+        """
+        if isinstance(items, list):
+            if mapper is not None:
+                return [mapper(item) for item in items if predicate(item)]
+            return [item for item in items if predicate(item)]
+        if isinstance(items, tuple):
+            if mapper is not None:
+                mapped_items = [mapper(item) for item in items if predicate(item)]
+                return (*mapped_items,)
+            filtered_items = [item for item in items if predicate(item)]
+            return (*filtered_items,)
+        filtered: dict[str, T] = {k: v for k, v in items.items() if predicate(v)}
+        if mapper is not None:
+            return {k: mapper(v) for k, v in filtered.items()}
+        return filtered
+
+    @staticmethod
+    def find(
+        items: list[T] | tuple[T, ...] | dict[str, T],
+        predicate: _Predicate[T],
+    ) -> T | None:
+        """Find first item matching predicate with generic type support.
+
+        Returns first item where predicate returns True, or None.
+        """
+        if isinstance(items, (list, tuple)):
+            for item in items:
+                result: bool = predicate(item)  # Explicit type for result
+                if result:
+                    return item
+            return None
+        for v in items.values():
+            matched: bool = predicate(v)  # Explicit type for matched
+            if matched:
+                return v
+        return None
+
+    # ========================================================================
+    # Additional Collection Convenience Methods
+    # ========================================================================
+
+    @staticmethod
+    def first(
+        items: Sequence[T],
+        predicate: _Predicate[T] | None = None,
+        default: T | None = None,
+    ) -> T | None:
+        """Get first item (optionally matching predicate).
+
+        Args:
+            items: Sequence to search
+            predicate: Optional filter function
+            default: Value to return if no match found
+
+        Returns:
+            First matching item or default
+
+        Example:
+            user = u.first(users, lambda u: u.is_active)
+
+        """
+        for item in items:
+            if predicate is None:
+                return item
+            result: bool = predicate(item)
+            if result:
+                return item
+        return default
+
+    @staticmethod
+    def flatten(items: Sequence[Sequence[T]]) -> list[T]:
+        """Flatten nested sequences into single list.
+
+        Args:
+            items: Nested sequences to flatten (one level)
+
+        Returns:
+            Flattened list
+
+        Example:
+            flat = u.flatten([[1, 2], [3, 4], [5]])
+            # [1, 2, 3, 4, 5]
+
+        """
+        result: list[T] = []
+        for seq in items:
+            result.extend(seq)
+        return result
+
+    @staticmethod
+    def group(
+        items: Sequence[T],
+        key_func: Callable[[T], U],
+    ) -> dict[U, list[T]]:
+        """Group items by key function.
+
+        This is an alias for group_by for convenience.
+        """
+        return FlextUtilitiesCollection.group_by(items, key_func)
+
+    @staticmethod
+    def group_by(
+        items: Sequence[T],
+        key_func: Callable[[T], U],
+    ) -> dict[U, list[T]]:
+        """Group items by key function.
+
+        Args:
+            items: Items to group
+            key_func: Function to extract group key
+
+        Returns:
+            Dict mapping keys to lists of items
+
+        Example:
+            by_status = u.group_by(users, lambda u: u.status)
+            # {"active": [User1, User2], "inactive": [User3]}
+
+        """
+        result: dict[U, list[T]] = {}
+        for item in items:
+            key = key_func(item)
+            if key not in result:
+                result[key] = []
+            result[key].append(item)
+        return result
+
+    @staticmethod
+    def last(
+        items: Sequence[T],
+        predicate: _Predicate[T] | None = None,
+        default: T | None = None,
+    ) -> T | None:
+        """Get last item (optionally matching predicate).
+
+        Args:
+            items: Sequence to search
+            predicate: Optional filter function
+            default: Value to return if no match found
+
+        Returns:
+            Last matching item or default
+
+        Example:
+            last_error = u.last(logs, lambda l: l.level == "error")
+
+        """
+        for item in reversed(items):
+            if predicate is None:
+                return item
+            result: bool = predicate(item)
+            if result:
+                return item
+        return default
+
+    # =========================================================================
+    # Public overloaded map function - inlined implementations
+    # =========================================================================
+
+    @overload
+    @staticmethod
+    def map(
+        items: list[T],
+        mapper: Callable[[T], U],
+    ) -> list[U]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: tuple[T, ...],
+        mapper: Callable[[T], U],
+    ) -> tuple[U, ...]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: dict[str, T],
+        mapper: Callable[[T], U],
+    ) -> dict[str, U]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: set[T],
+        mapper: Callable[[T], U],
+    ) -> set[U]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: frozenset[T],
+        mapper: Callable[[T], U],
+    ) -> frozenset[U]: ...
+
+    @staticmethod
+    def map(
+        items: list[T] | tuple[T, ...] | dict[str, T] | set[T] | frozenset[T],
+        mapper: Callable[[T], U],
+    ) -> list[U] | tuple[U, ...] | dict[str, U] | set[U] | frozenset[U]:
+        """Unified map function with generic type support.
+
+        Transforms elements using mapper function while preserving container type.
+        Supports lists, tuples, dicts, sets, and frozensets.
+        """
+        if isinstance(items, list):
+            return [mapper(item) for item in items]
+        if isinstance(items, tuple):
+            return tuple(mapper(item) for item in items)
+        if isinstance(items, dict):
+            return {k: mapper(v) for k, v in items.items()}
+        if isinstance(items, set):
+            return {mapper(item) for item in items}
+        return frozenset(mapper(item) for item in items)
+
+    @staticmethod
+    def merge(
+        base: dict[str, t.Container],
+        other: dict[str, t.Container],
+        *,
+        strategy: str = "deep",
+    ) -> r[dict[str, t.Container]]:
+        """Merge two dictionaries with configurable strategy.
+
+        Strategies:
+        - "deep": Deep merge nested dicts (default)
+        - "replace": Replace all values from other
+        - "override": Same as replace (alias)
+        - "append": Append lists instead of replacing
+        - "filter_none": Skip None values from other
+        - "filter_empty": Skip empty values (None, "", [], {}) from other
+        - "filter_both": Same as filter_empty (alias)
+        """
+        try:
+            if strategy in {"replace", "override"}:
+                result: dict[str, t.Container] = dict(base)
+                result.update(other)
+                return r[dict[str, t.Container]].ok(result)
+
+            if strategy == "filter_none":
+                result = dict(base)
+                for key, value in other.items():
+                    if value is not None:
+                        result[key] = value
+                return r[dict[str, t.Container]].ok(result)
+
+            if strategy in {"filter_empty", "filter_both"}:
+                result = dict(base)
+                for key, value in other.items():
+                    if not FlextUtilitiesCollection._is_empty_value(value):
+                        result[key] = value
+                return r[dict[str, t.Container]].ok(result)
+
+            if strategy == "append":
+                result = dict(base)
+                for key, value in other.items():
+                    current_val = result.get(key)
+                    if (
+                        current_val is not None
+                        and isinstance(current_val, list)
+                        and isinstance(value, list)
+                    ):
+                        # Append lists - both are now properly typed as lists
+                        result[key] = current_val + value
+                    else:
+                        result[key] = value
+                return r[dict[str, t.Container]].ok(result)
+
+            if strategy == "deep":
+                result = base.copy()
+                for key, value in other.items():
+                    merge_result = FlextUtilitiesCollection._merge_deep_single_key(
+                        result,
+                        key,
+                        value,
+                    )
+                    if merge_result.is_failure:
+                        return r[dict[str, t.Container]].fail(
+                            merge_result.error or "Unknown error",
+                        )
+                return r[dict[str, t.Container]].ok(result)
+
+            return r[dict[str, t.Container]].fail(
+                f"Unknown merge strategy: {strategy}",
+            )
+        except (TypeError, ValueError, KeyError, AttributeError) as e:
+            return r[dict[str, t.Container]].fail(f"Merge failed: {e}")
+
+    @staticmethod
+    def mul(*values: float) -> int | float:
+        """Multiply values.
+
+        Args:
+            *values: Values to multiply
+
+        Returns:
+            Product of all values
+
+        Example:
+            total = u.mul(price, quantity, tax_rate)
+
+        """
+        result: int | float = 1
+        for v in values:
+            result *= v
+        return result
 
     @staticmethod
     def parse_mapping[E: StrEnum](
@@ -1028,125 +1018,135 @@ class FlextUtilitiesCollection:
             return r[dict[str, E]].fail(f"Parse mapping failed: {e}")
 
     @staticmethod
-    def count(
+    def parse_sequence(
+        enum_cls: type[StrEnum],
+        values: Sequence[str | StrEnum],
+    ) -> r[tuple[StrEnum, ...]]:
+        """Parse sequence of strings to tuple of StrEnum."""
+        try:
+            parsed: list[StrEnum] = []
+            errors: list[str] = []
+
+            for idx, val in enumerate(values):
+                if isinstance(val, enum_cls):
+                    parsed.append(val)
+                else:
+                    try:
+                        parsed.append(enum_cls(val))
+                    except ValueError:
+                        errors.append(f"[{idx}]: '{val}'")
+
+            if errors:
+                enum_name = getattr(enum_cls, "__name__", "Enum")
+                return r[tuple[StrEnum, ...]].fail(
+                    f"Invalid {enum_name} values: {', '.join(errors)}",
+                )
+            return r[tuple[StrEnum, ...]].ok(tuple(parsed))
+        except (TypeError, ValueError, AttributeError) as e:
+            return r[tuple[StrEnum, ...]].fail(f"Parse sequence failed: {e}")
+
+    @staticmethod
+    def partition(
         items: Sequence[T],
+        predicate: _Predicate[T],
+    ) -> tuple[list[T], list[T]]:
+        """Split items by predicate: (matches, non-matches).
+
+        Args:
+            items: Items to partition
+            predicate: Function to test each item
+
+        Returns:
+            Tuple of (matching_items, non_matching_items)
+
+        Example:
+            active, inactive = u.partition(users, lambda u: u.is_active)
+
+        """
+        matches: list[T] = []
+        non_matches: list[T] = []
+        for item in items:
+            result: bool = predicate(item)
+            if result:
+                matches.append(item)
+            else:
+                non_matches.append(item)
+        return matches, non_matches
+
+    @staticmethod
+    def process(
+        items: Sequence[T],
+        processor: Callable[[T], U],
+        *,
         predicate: Callable[[T], bool] | None = None,
-    ) -> int:
-        """Count items, optionally matching predicate.
+        on_error: str = "fail",
+        filter_keys: set[str] | None = None,
+        exclude_keys: set[str] | None = None,
+    ) -> r[list[U]]:
+        """Process items with optional filtering and error handling.
+
+        Transforms items using processor, optionally filtering with predicate.
 
         Args:
-            items: Sequence to count
-            predicate: Optional filter function
+            items: Items to process
+            processor: Function to transform each item
+            predicate: Optional filter function (applied before processor)
+            on_error: "fail" to abort on error, "skip" to skip failed items
+            filter_keys: Only include items with these keys (for dict items)
+            exclude_keys: Exclude items with these keys (for dict items)
 
         Returns:
-            Count of matching items
-
-        Example:
-            active_count = u.Collection.count(users, lambda u: u.is_active)
+            FlextResult with list of processed results or error
 
         """
-        if predicate is None:
-            return len(items)
-        return sum(1 for item in items if predicate(item))
+        _ = filter_keys  # Documented for dict processing, applied in subclasses
+        _ = exclude_keys  # Documented for dict processing, applied in subclasses
+
+        try:
+            results: list[U] = []
+            for item in items:
+                # Type narrowing: item is T
+                item_typed: T = item
+                # Check predicate - item is T from Sequence[T]
+                if predicate is not None and not predicate(item_typed):
+                    continue
+
+                try:
+                    result = processor(item)
+                    results.append(result)
+                except (TypeError, ValueError, RuntimeError, AttributeError, KeyError):
+                    if on_error == "skip":
+                        continue
+                    return r[list[U]].fail(f"Processing failed for item: {item}")
+            return r[list[U]].ok(results)
+        except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+            return r[list[U]].fail(f"Process failed: {e}")
 
     @staticmethod
-    def group(
+    def unique(
         items: Sequence[T],
-        key_func: Callable[[T], U],
-    ) -> dict[U, list[T]]:
-        """Group items by key function.
-
-        This is an alias for group_by for convenience.
-        """
-        return FlextUtilitiesCollection.group_by(items, key_func)
-
-    @staticmethod
-    def chunk(items: Sequence[T], size: int) -> list[list[T]]:
-        """Split sequence into chunks of specified size.
+        key_func: Callable[[T], Hashable] | None = None,
+    ) -> list[T]:
+        """Get unique items preserving order.
 
         Args:
-            items: Sequence to split
-            size: Maximum size of each chunk
+            items: Items to deduplicate
+            key_func: Optional function to extract uniqueness key
 
         Returns:
-            List of chunks
+            List of unique items in order of first appearance
 
         Example:
-            batches = u.Collection.chunk(records, 100)
-            # [[record1, ..., record100], [record101, ...], ...]
+            unique_emails = u.unique(users, lambda u: u.email.lower())
 
         """
-        if size <= 0:
-            return [list(items)]
-        return [list(items[i : i + size]) for i in range(0, len(items), size)]
-
-    @staticmethod
-    def mul(*values: float) -> int | float:
-        """Multiply values.
-
-        Args:
-            *values: Values to multiply
-
-        Returns:
-            Product of all values
-
-        Example:
-            total = u.mul(price, quantity, tax_rate)
-
-        """
-        result: int | float = 1
-        for v in values:
-            result *= v
-        return result
-
-    @staticmethod
-    def extract_mapping_items[K, V](
-        mapping: Mapping[K, t.Container],
-    ) -> list[tuple[str, t.Container]]:
-        """Extract mapping items as typed list for iteration.
-
-        Helper function to properly type narrow Mapping.items() for pyright.
-        Converts keys to strings and values to ContainerValue.
-
-        Args:
-            mapping: Mapping to extract items from
-
-        Returns:
-            List of (key, value) tuples with proper typing
-
-        """
-        result: list[tuple[str, t.Container]] = []
-        items_iter = mapping.items()
-        for item_tuple in items_iter:
-            key_obj = item_tuple[0]
-            value_raw = item_tuple[1]
-            key_str: str = str(key_obj)
-            result.append((key_str, value_raw))
-        return result
-
-    @staticmethod
-    def extract_callable_mapping[K](
-        mapping: Mapping[K, Callable[[], t.Container]],
-    ) -> dict[str, Callable[[], t.Container]]:
-        """Extract mapping of callables for resources/factories.
-
-        Helper function to properly type narrow callable mappings for pyright.
-        Filters to only callable values and converts to proper signature.
-
-        Args:
-            mapping: Mapping containing callable values
-
-        Returns:
-            Dict mapping string keys to callable functions
-
-        """
-        result: dict[str, Callable[[], t.Container]] = {}
-        items_iter = mapping.items()
-        for item_tuple in items_iter:
-            key_obj = item_tuple[0]
-            value_raw = item_tuple[1]
-            key_str: str = str(key_obj)
-            result[key_str] = value_raw
+        seen: set[Hashable] = set()
+        result: list[T] = []
+        for item in items:
+            key = key_func(item) if key_func else item
+            if key not in seen:
+                seen.add(key)
+                result.append(item)
         return result
 
 

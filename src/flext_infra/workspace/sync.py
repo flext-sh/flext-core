@@ -43,6 +43,39 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
         self._generator = generator or FlextInfraBaseMkGenerator()
         self._canonical_root = canonical_root
 
+    @staticmethod
+    def _atomic_write(target: Path, content: str) -> r[bool]:
+        """Write content to target via atomic temp-file rename."""
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                dir=str(target.parent),
+                delete=False,
+                encoding=c.Encoding.DEFAULT,
+                suffix=".tmp",
+            ) as tmp:
+                _ = tmp.write(content)
+                tmp_path = Path(tmp.name)
+            _ = tmp_path.replace(target)
+            return r[bool].ok(True)
+        except OSError as exc:
+            return r[bool].fail(f"atomic write failed: {exc}")
+
+    @staticmethod
+    def _sha256_content(content: str) -> str:
+        """Compute SHA256 of string content."""
+        return hashlib.sha256(content.encode(c.Encoding.DEFAULT)).hexdigest()
+
+    @staticmethod
+    def _sha256_file(path: Path) -> str:
+        """Compute SHA256 of file on disk."""
+        hasher = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
     @override
     def execute(self) -> r[m.SyncResult]:
         """Not used; call sync() directly instead."""
@@ -126,46 +159,6 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
         except OSError as exc:
             return r[m.SyncResult].fail(f"sync lock acquisition failed: {exc}")
 
-    def _sync_basemk(
-        self,
-        project_root: Path,
-        config: m.BaseMkConfig | None,
-        *,
-        canonical_root: Path | None = None,
-    ) -> r[bool]:
-        """Sync base.mk from canonical root or generate from template.
-
-        When canonical_root is provided and contains base.mk, copies it
-        directly to ensure validator alignment. Falls back to generator.
-        """
-        # Prefer canonical root copy over template generation
-        canonical_basemk = (
-            canonical_root / "base.mk" if canonical_root is not None else None
-        )
-        if (
-            canonical_basemk is not None
-            and canonical_basemk.exists()
-            and canonical_basemk.resolve() != (project_root / "base.mk").resolve()
-        ):
-            content = canonical_basemk.read_text(encoding=c.Encoding.DEFAULT)
-        else:
-            gen_result = self._generator.generate(config)
-            if gen_result.is_failure:
-                return r[bool].fail(gen_result.error or "base.mk generation failed")
-            content = gen_result.value
-
-        target_path = project_root / "base.mk"
-
-        # Compare SHA256 hashes for idempotency
-        content_hash = self._sha256_content(content)
-        if target_path.exists():
-            existing_hash = self._sha256_file(target_path)
-            if content_hash == existing_hash:
-                return r[bool].ok(False)  # No change needed
-
-        # Atomic write via temp file + rename
-        return self._atomic_write(target_path, content)
-
     def _ensure_gitignore_entries(
         self,
         project_root: Path,
@@ -209,38 +202,45 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
         except OSError as exc:
             return r[bool].fail(f".gitignore update failed: {exc}")
 
-    @staticmethod
-    def _sha256_content(content: str) -> str:
-        """Compute SHA256 of string content."""
-        return hashlib.sha256(content.encode(c.Encoding.DEFAULT)).hexdigest()
+    def _sync_basemk(
+        self,
+        project_root: Path,
+        config: m.BaseMkConfig | None,
+        *,
+        canonical_root: Path | None = None,
+    ) -> r[bool]:
+        """Sync base.mk from canonical root or generate from template.
 
-    @staticmethod
-    def _sha256_file(path: Path) -> str:
-        """Compute SHA256 of file on disk."""
-        hasher = hashlib.sha256()
-        with path.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
+        When canonical_root is provided and contains base.mk, copies it
+        directly to ensure validator alignment. Falls back to generator.
+        """
+        # Prefer canonical root copy over template generation
+        canonical_basemk = (
+            canonical_root / "base.mk" if canonical_root is not None else None
+        )
+        if (
+            canonical_basemk is not None
+            and canonical_basemk.exists()
+            and canonical_basemk.resolve() != (project_root / "base.mk").resolve()
+        ):
+            content = canonical_basemk.read_text(encoding=c.Encoding.DEFAULT)
+        else:
+            gen_result = self._generator.generate(config)
+            if gen_result.is_failure:
+                return r[bool].fail(gen_result.error or "base.mk generation failed")
+            content = gen_result.value
 
-    @staticmethod
-    def _atomic_write(target: Path, content: str) -> r[bool]:
-        """Write content to target via atomic temp-file rename."""
-        try:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                dir=str(target.parent),
-                delete=False,
-                encoding=c.Encoding.DEFAULT,
-                suffix=".tmp",
-            ) as tmp:
-                _ = tmp.write(content)
-                tmp_path = Path(tmp.name)
-            _ = tmp_path.replace(target)
-            return r[bool].ok(True)
-        except OSError as exc:
-            return r[bool].fail(f"atomic write failed: {exc}")
+        target_path = project_root / "base.mk"
+
+        # Compare SHA256 hashes for idempotency
+        content_hash = self._sha256_content(content)
+        if target_path.exists():
+            existing_hash = self._sha256_file(target_path)
+            if content_hash == existing_hash:
+                return r[bool].ok(False)  # No change needed
+
+        # Atomic write via temp file + rename
+        return self._atomic_write(target_path, content)
 
 
 def main() -> int:

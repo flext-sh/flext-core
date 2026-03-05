@@ -734,14 +734,14 @@ class FlextTestsModels(FlextModels):
                 )
 
                 @computed_field
-                def success_count(self) -> int:
-                    """Alias for succeeded count."""
-                    return self.succeeded
-
-                @computed_field
                 def failure_count(self) -> int:
                     """Alias for failed count."""
                     return self.failed
+
+                @computed_field
+                def success_count(self) -> int:
+                    """Alias for succeeded count."""
+                    return self.succeeded
 
                 @computed_field
                 def success_rate(self) -> float:
@@ -954,6 +954,24 @@ class FlextTestsModels(FlextModels):
                 )
 
                 @computed_field
+                def effective_count(self) -> int:
+                    """Compute effective count value with defaults.
+
+                    Uses c.Tests.Factory.DEFAULT_BATCH_COUNT if count is None.
+
+                    """
+                    return self.count or c.Tests.Factory.DEFAULT_BATCH_COUNT
+
+                @computed_field
+                def effective_error_code(self) -> str:
+                    """Compute effective error code with defaults.
+
+                    Uses c.Errors.VALIDATION_ERROR if result_code is None.
+
+                    """
+                    return self.result_code or c.Errors.VALIDATION_ERROR
+
+                @computed_field
                 def resolution_priority(self) -> int:
                     """Compute resolution priority based on provided parameters.
 
@@ -995,46 +1013,6 @@ class FlextTestsModels(FlextModels):
                         return 16
                     return 0  # No valid parameter
 
-                @computed_field
-                def effective_count(self) -> int:
-                    """Compute effective count value with defaults.
-
-                    Uses c.Tests.Factory.DEFAULT_BATCH_COUNT if count is None.
-
-                    """
-                    return self.count or c.Tests.Factory.DEFAULT_BATCH_COUNT
-
-                @computed_field
-                def effective_error_code(self) -> str:
-                    """Compute effective error code with defaults.
-
-                    Uses c.Errors.VALIDATION_ERROR if result_code is None.
-
-                    """
-                    return self.result_code or c.Errors.VALIDATION_ERROR
-
-                @model_validator(mode="after")
-                def validate_count_positive(
-                    self,
-                ) -> FlextTestsModels.Tests.Builders.AddParams:
-                    """Validate count is positive when provided."""
-                    if self.count is not None and self.count < 1:
-                        msg = c.Tests.Builders.ERROR_INVALID_COUNT.format(
-                            count=self.count,
-                        )
-                        raise ValueError(msg)
-                    return self
-
-                @model_validator(mode="after")
-                def validate_result_code_with_fail(
-                    self,
-                ) -> FlextTestsModels.Tests.Builders.AddParams:
-                    """Validate result_code is only provided with result_fail."""
-                    if self.result_code is not None and self.result_fail is None:
-                        msg = "result_code can only be used with result_fail"
-                        raise ValueError(msg)
-                    return self
-
                 @model_validator(mode="after")
                 def validate_cls_with_args(
                     self,
@@ -1048,14 +1026,14 @@ class FlextTestsModels(FlextModels):
                     return self
 
                 @model_validator(mode="after")
-                def validate_items_transform(
+                def validate_count_positive(
                     self,
                 ) -> FlextTestsModels.Tests.Builders.AddParams:
-                    """Validate items_map/items_filter are only provided with items."""
-                    if (
-                        self.items_map is not None or self.items_filter is not None
-                    ) and self.items is None:
-                        msg = "items_map/items_filter can only be used with items"
+                    """Validate count is positive when provided."""
+                    if self.count is not None and self.count < 1:
+                        msg = c.Tests.Builders.ERROR_INVALID_COUNT.format(
+                            count=self.count,
+                        )
                         raise ValueError(msg)
                     return self
 
@@ -1072,12 +1050,34 @@ class FlextTestsModels(FlextModels):
                     return self
 
                 @model_validator(mode="after")
+                def validate_items_transform(
+                    self,
+                ) -> FlextTestsModels.Tests.Builders.AddParams:
+                    """Validate items_map/items_filter are only provided with items."""
+                    if (
+                        self.items_map is not None or self.items_filter is not None
+                    ) and self.items is None:
+                        msg = "items_map/items_filter can only be used with items"
+                        raise ValueError(msg)
+                    return self
+
+                @model_validator(mode="after")
                 def validate_model_data(
                     self,
                 ) -> FlextTestsModels.Tests.Builders.AddParams:
                     """Validate model_data is only provided with model."""
                     if self.model_data is not None and self.model is None:
                         msg = "model_data can only be used with model"
+                        raise ValueError(msg)
+                    return self
+
+                @model_validator(mode="after")
+                def validate_result_code_with_fail(
+                    self,
+                ) -> FlextTestsModels.Tests.Builders.AddParams:
+                    """Validate result_code is only provided with result_fail."""
+                    if self.result_code is not None and self.result_fail is None:
+                        msg = "result_code can only be used with result_fail"
                         raise ValueError(msg)
                     return self
 

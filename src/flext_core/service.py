@@ -80,22 +80,6 @@ class FlextService[TDomainResult](
 
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
-    @computed_field
-    def result(self) -> TDomainResult:
-        """Get the execution result, raising exception on failure."""
-        if self._execution_result is None:
-            # Lazy execution for services without auto_execute
-            self._execution_result = self.execute()
-
-        execution_result: r[TDomainResult] = self._execution_result
-        if execution_result.is_success:
-            result_value: TDomainResult = execution_result.unwrap()
-            return result_value
-        # On failure, raise exception
-        raise FlextExceptions.BaseError(
-            execution_result.error or "Service execution failed"
-        )
-
     @override
     def __init__(self) -> None:
         """Initialize service with configuration data.
@@ -139,6 +123,22 @@ class FlextService[TDomainResult](
             else []
         )
 
+    @computed_field
+    def result(self) -> TDomainResult:
+        """Get the execution result, raising exception on failure."""
+        if self._execution_result is None:
+            # Lazy execution for services without auto_execute
+            self._execution_result = self.execute()
+
+        execution_result: r[TDomainResult] = self._execution_result
+        if execution_result.is_success:
+            result_value: TDomainResult = execution_result.unwrap()
+            return result_value
+        # On failure, raise exception
+        raise FlextExceptions.BaseError(
+            execution_result.error or "Service execution failed"
+        )
+
     # Use PrivateAttr for private attributes (Pydantic v2 pattern)
     # PrivateAttr allows setting attributes without validation and bypasses __setattr__
     # Type annotations using PrivateAttr with explicit type hints
@@ -150,18 +150,78 @@ class FlextService[TDomainResult](
         default_factory=lambda: list[tuple[str, m.DecoratorConfig]](),
     )
 
+    @property
+    @override
+    def config(self) -> p.Config:
+        """Service-scoped configuration clone."""
+        return u.require_initialized(self._config, "Config")
+
+    @property
+    @override
+    def container(self) -> p.DI:
+        """Container bound to the service context/config."""
+        return u.require_initialized(self._container, "Container")
+
+    @property
+    @override
+    def context(self) -> p.Context:
+        """Service-scoped execution context."""
+        return u.require_initialized(self._context, "Context")
+
+    @computed_field
+    def runtime(
+        self,
+    ) -> m.ServiceRuntime:
+        """View of the runtime triple for this service instance."""
+        return u.require_initialized(self._runtime, "Runtime")
+
+    @property
+    def settings(self) -> FlextSettings:
+        """Return service config narrowed to FlextSettings."""
+        config = self.config
+        if isinstance(config, FlextSettings):
+            return config
+        msg = "Service config is not FlextSettings"
+        raise TypeError(msg)
+
     @classmethod
-    def _get_service_config_type(cls) -> type[FlextSettings]:
-        """Get the config type for this service class.
+    def _create_initial_runtime(cls) -> m.ServiceRuntime:
+        """Build the initial runtime triple for a new service instance."""
+        config_type = cls._get_service_config_type()
+        options = cls._normalize_runtime_bootstrap_options(
+            cls._runtime_bootstrap_options(),
+        )
 
-        Services can override this method to specify their specific config type.
-        Defaults to FlextSettings for generic services.
+        config_type_raw = options.config_type
+        config_type_val: type[FlextSettings] | None
+        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
+            config_type_val = config_type_raw
+        else:
+            config_type_val = config_type
+        context_val_raw = options.context
+        context_val: p.Context | None = (
+            context_val_raw
+            if context_val_raw is not None
+            and getattr(context_val_raw, "set", None) is not None
+            and getattr(context_val_raw, "get", None) is not None
+            else None
+        )
 
-        Returns:
-            type[FlextSettings]: The config class to use for this service
-
-        """
-        return FlextSettings  # Runtime return needs concrete class
+        return cls._create_runtime(
+            config_type=config_type_val,
+            config_overrides=options.config_overrides,
+            context=context_val,
+            subproject=options.subproject,
+            services=cls._normalize_scoped_services(
+                options.services,
+            ),
+            factories=options.factories,
+            resources=options.resources,
+            container_overrides=options.container_overrides,
+            wire_modules=options.wire_modules,
+            wire_packages=options.wire_packages,
+            wire_classes=options.wire_classes,
+        )
 
     @classmethod
     def _create_runtime(
@@ -242,43 +302,17 @@ class FlextService[TDomainResult](
         })
 
     @classmethod
-    def _create_initial_runtime(cls) -> m.ServiceRuntime:
-        """Build the initial runtime triple for a new service instance."""
-        config_type = cls._get_service_config_type()
-        options = cls._normalize_runtime_bootstrap_options(
-            cls._runtime_bootstrap_options(),
-        )
+    def _get_service_config_type(cls) -> type[FlextSettings]:
+        """Get the config type for this service class.
 
-        config_type_raw = options.config_type
-        config_type_val: type[FlextSettings] | None
-        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
-            config_type_val = config_type_raw
-        else:
-            config_type_val = config_type
-        context_val_raw = options.context
-        context_val: p.Context | None = (
-            context_val_raw
-            if context_val_raw is not None
-            and getattr(context_val_raw, "set", None) is not None
-            and getattr(context_val_raw, "get", None) is not None
-            else None
-        )
+        Services can override this method to specify their specific config type.
+        Defaults to FlextSettings for generic services.
 
-        return cls._create_runtime(
-            config_type=config_type_val,
-            config_overrides=options.config_overrides,
-            context=context_val,
-            subproject=options.subproject,
-            services=cls._normalize_scoped_services(
-                options.services,
-            ),
-            factories=options.factories,
-            resources=options.resources,
-            container_overrides=options.container_overrides,
-            wire_modules=options.wire_modules,
-            wire_packages=options.wire_packages,
-            wire_classes=options.wire_classes,
-        )
+        Returns:
+            type[FlextSettings]: The config class to use for this service
+
+        """
+        return FlextSettings  # Runtime return needs concrete class
 
     @classmethod
     def _normalize_runtime_bootstrap_options(
@@ -345,40 +379,6 @@ class FlextService[TDomainResult](
         """
         return FlextModelsService.RuntimeBootstrapOptions()
 
-    @computed_field
-    def runtime(
-        self,
-    ) -> m.ServiceRuntime:
-        """View of the runtime triple for this service instance."""
-        return u.require_initialized(self._runtime, "Runtime")
-
-    @property
-    @override
-    def context(self) -> p.Context:
-        """Service-scoped execution context."""
-        return u.require_initialized(self._context, "Context")
-
-    @property
-    @override
-    def config(self) -> p.Config:
-        """Service-scoped configuration clone."""
-        return u.require_initialized(self._config, "Config")
-
-    @property
-    def settings(self) -> FlextSettings:
-        """Return service config narrowed to FlextSettings."""
-        config = self.config
-        if isinstance(config, FlextSettings):
-            return config
-        msg = "Service config is not FlextSettings"
-        raise TypeError(msg)
-
-    @property
-    @override
-    def container(self) -> p.DI:
-        """Container bound to the service context/config."""
-        return u.require_initialized(self._container, "Container")
-
     @abstractmethod
     def execute(self) -> r[TDomainResult]:
         """Execute domain service logic.
@@ -422,6 +422,24 @@ class FlextService[TDomainResult](
         """
         ...
 
+    def get_service_info(self) -> Mapping[str, t.Scalar]:
+        """Get service metadata and configuration information."""
+        return {
+            "service_type": self.__class__.__name__,
+        }
+
+    def is_valid(self) -> bool:
+        """Check if service is in valid state for execution."""
+        try:
+            return self.validate_business_rules().is_success
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+            self.logger.debug(
+                "Service business rule validation failed",
+                exc_info=exc,
+            )
+            # Validation failed due to exception - consider invalid
+            return False
+
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules with extensible validation pipeline.
 
@@ -447,24 +465,6 @@ class FlextService[TDomainResult](
         # Base implementation - accept all (no validation)
         # Subclasses should override for specific business rules
         return r[bool].ok(value=True)
-
-    def is_valid(self) -> bool:
-        """Check if service is in valid state for execution."""
-        try:
-            return self.validate_business_rules().is_success
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
-            self.logger.debug(
-                "Service business rule validation failed",
-                exc_info=exc,
-            )
-            # Validation failed due to exception - consider invalid
-            return False
-
-    def get_service_info(self) -> Mapping[str, t.Scalar]:
-        """Get service metadata and configuration information."""
-        return {
-            "service_type": self.__class__.__name__,
-        }
 
 
 s = FlextService

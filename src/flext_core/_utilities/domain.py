@@ -55,34 +55,6 @@ class FlextUtilitiesDomain:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def hash_entity_by_id(
-        entity: p.HasModelDump,
-        id_attr: str = c.Mixins.FIELD_ID,
-    ) -> int:
-        """Generate hash for entity based on unique ID and type.
-
-        Generic hashing for DDD entities - uses identity (ID + type), not value.
-
-        Args:
-            entity: Entity to hash
-            id_attr: Attribute name for unique ID (default: "unique_id")
-
-        Returns:
-            Hash value based on entity ID and type
-
-        Example:
-            >>> user = User(unique_id="123", name="Alice")
-            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
-
-        """
-        entity_id = getattr(entity, id_attr, None)
-        if entity_id is None:
-            return hash(id(entity))  # Fallback to object ID if no unique_id
-
-        # Combine type and ID for hash
-        return hash((entity.__class__.__name__, entity_id))
-
-    @staticmethod
     def compare_value_objects_by_value(
         obj_a: t.Container,
         obj_b: t.Container,
@@ -114,6 +86,34 @@ class FlextUtilitiesDomain:
         except (AttributeError, TypeError):
             # Fallback to repr comparison
             return repr(obj_a) == repr(obj_b)
+
+    @staticmethod
+    def hash_entity_by_id(
+        entity: p.HasModelDump,
+        id_attr: str = c.Mixins.FIELD_ID,
+    ) -> int:
+        """Generate hash for entity based on unique ID and type.
+
+        Generic hashing for DDD entities - uses identity (ID + type), not value.
+
+        Args:
+            entity: Entity to hash
+            id_attr: Attribute name for unique ID (default: "unique_id")
+
+        Returns:
+            Hash value based on entity ID and type
+
+        Example:
+            >>> user = User(unique_id="123", name="Alice")
+            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
+
+        """
+        entity_id = getattr(entity, id_attr, None)
+        if entity_id is None:
+            return hash(id(entity))  # Fallback to object ID if no unique_id
+
+        # Combine type and ID for hash
+        return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
     def hash_value_object_by_value(obj: t.Container) -> int:

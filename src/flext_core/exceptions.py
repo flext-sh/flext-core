@@ -331,119 +331,6 @@ class FlextExceptions:
         )
 
     @staticmethod
-    def _safe_optional_str(
-        value: t.MetadataValue | type | None,
-    ) -> str | None:
-        """Extract optional strict string from dynamic values."""
-        if value is None:
-            return None
-        if isinstance(value, str):
-            return value
-        # After isinstance checks, remaining types cannot be str
-        # Strict validation would always reject, so return None
-        return None
-
-    @staticmethod
-    def _safe_bool(value: t.MetadataValue | None, *, default: bool) -> bool:
-        """Extract strict bool from dynamic values with default fallback."""
-        if value is None:
-            return default
-        if isinstance(value, bool):
-            return value
-        # After isinstance checks, remaining types cannot be bool
-        # Strict validation would always reject, so return default
-        return default
-
-    @staticmethod
-    def _safe_int(value: t.MetadataValue | None) -> int | None:
-        """Extract optional strict integer from dynamic values."""
-        if value is None:
-            return None
-        if isinstance(value, int) and not isinstance(value, bool):
-            return value
-        # After isinstance checks, remaining types cannot be int
-        # Strict validation would always reject, so return None
-        return None
-
-    @staticmethod
-    def _safe_number(value: t.MetadataValue | None) -> int | float | None:
-        """Extract optional strict numeric value from dynamic values."""
-        if value is None:
-            return None
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return value
-        # After isinstance checks, remaining types cannot be int|float
-        # Strict validation would always reject, so return None
-        return None
-
-    @staticmethod
-    def _safe_config_map(
-        value: MetadataProtocol
-        | m.Metadata
-        | t.ConfigurationMapping
-        | m.ConfigMap
-        | t.Container
-        | t.MetadataValue
-        | Mapping[str, t.MetadataValue]
-        | None,
-    ) -> Mapping[str, t.MetadataValue] | None:
-        """Extract ConfigMap when value is mapping-compatible."""
-        if value is None:
-            return None
-        try:
-            return e._metadata_map_adapter.validate_python(value)
-        except PydanticValidationError:
-            return None
-
-    @staticmethod
-    def _safe_metadata(
-        value: MetadataProtocol
-        | m.Metadata
-        | t.ConfigurationMapping
-        | m.ConfigMap
-        | t.Container
-        | t.MetadataValue
-        | Mapping[str, t.MetadataValue]
-        | None,
-    ) -> MetadataProtocol | None:
-        """Normalize supported metadata inputs to runtime metadata model."""
-        if value is None:
-            return None
-
-        try:
-            return m.Metadata.model_validate(value)
-        except PydanticValidationError:
-            pass
-
-        dumped_map: Mapping[str, t.MetadataValue] | None = None
-        if isinstance(value, BaseModel):
-            dumped_candidate = value.model_dump()
-            try:
-                dumped_map = e._metadata_map_adapter.validate_python(dumped_candidate)
-            except PydanticValidationError:
-                dumped_map = None
-
-        if dumped_map is not None:
-            attrs_raw = dumped_map.get("attributes")
-            attrs_map = e._safe_config_map(attrs_raw)
-            if attrs_map is not None:
-                attrs = {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in attrs_map.items()
-                }
-                return m.Metadata.model_validate({"attributes": attrs})
-
-        attrs_map = e._safe_config_map(value)
-        if attrs_map is not None:
-            attrs = {
-                k: FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in attrs_map.items()
-            }
-            return m.Metadata.model_validate({"attributes": attrs})
-
-        return None
-
-    @staticmethod
     def _build_context_map(
         context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
         extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
@@ -540,6 +427,119 @@ class FlextExceptions:
 
         return resolved, error_context or None, preserved_metadata, correlation_id_str
 
+    @staticmethod
+    def _safe_bool(value: t.MetadataValue | None, *, default: bool) -> bool:
+        """Extract strict bool from dynamic values with default fallback."""
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        # After isinstance checks, remaining types cannot be bool
+        # Strict validation would always reject, so return default
+        return default
+
+    @staticmethod
+    def _safe_config_map(
+        value: MetadataProtocol
+        | m.Metadata
+        | t.ConfigurationMapping
+        | m.ConfigMap
+        | t.Container
+        | t.MetadataValue
+        | Mapping[str, t.MetadataValue]
+        | None,
+    ) -> Mapping[str, t.MetadataValue] | None:
+        """Extract ConfigMap when value is mapping-compatible."""
+        if value is None:
+            return None
+        try:
+            return e._metadata_map_adapter.validate_python(value)
+        except PydanticValidationError:
+            return None
+
+    @staticmethod
+    def _safe_int(value: t.MetadataValue | None) -> int | None:
+        """Extract optional strict integer from dynamic values."""
+        if value is None:
+            return None
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        # After isinstance checks, remaining types cannot be int
+        # Strict validation would always reject, so return None
+        return None
+
+    @staticmethod
+    def _safe_metadata(
+        value: MetadataProtocol
+        | m.Metadata
+        | t.ConfigurationMapping
+        | m.ConfigMap
+        | t.Container
+        | t.MetadataValue
+        | Mapping[str, t.MetadataValue]
+        | None,
+    ) -> MetadataProtocol | None:
+        """Normalize supported metadata inputs to runtime metadata model."""
+        if value is None:
+            return None
+
+        try:
+            return m.Metadata.model_validate(value)
+        except PydanticValidationError:
+            pass
+
+        dumped_map: Mapping[str, t.MetadataValue] | None = None
+        if isinstance(value, BaseModel):
+            dumped_candidate = value.model_dump()
+            try:
+                dumped_map = e._metadata_map_adapter.validate_python(dumped_candidate)
+            except PydanticValidationError:
+                dumped_map = None
+
+        if dumped_map is not None:
+            attrs_raw = dumped_map.get("attributes")
+            attrs_map = e._safe_config_map(attrs_raw)
+            if attrs_map is not None:
+                attrs = {
+                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in attrs_map.items()
+                }
+                return m.Metadata.model_validate({"attributes": attrs})
+
+        attrs_map = e._safe_config_map(value)
+        if attrs_map is not None:
+            attrs = {
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in attrs_map.items()
+            }
+            return m.Metadata.model_validate({"attributes": attrs})
+
+        return None
+
+    @staticmethod
+    def _safe_number(value: t.MetadataValue | None) -> int | float | None:
+        """Extract optional strict numeric value from dynamic values."""
+        if value is None:
+            return None
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value
+        # After isinstance checks, remaining types cannot be int|float
+        # Strict validation would always reject, so return None
+        return None
+
+    @staticmethod
+    def _safe_optional_str(
+        value: t.MetadataValue | type | None,
+    ) -> str | None:
+        """Extract optional strict string from dynamic values."""
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
+        # After isinstance checks, remaining types cannot be str
+        # Strict validation would always reject, so return None
+        return None
+
     class BaseError(Exception):
         """Base exception with correlation metadata and error codes.
 
@@ -617,58 +617,6 @@ class FlextExceptions:
                 return f"[{self.error_code}] {self.message}"
             return self.message
 
-        def to_dict(
-            self,
-        ) -> Mapping[str, t.MetadataValue | None]:
-            """Convert exception to dictionary representation.
-
-            Returns:
-                Dictionary with error_type, message, error_code, and other fields.
-
-            """
-            result: dict[str, t.MetadataValue | None] = {
-                "error_type": type(self).__name__,
-                "message": self.message,
-                "error_code": self.error_code,
-                "correlation_id": self.correlation_id,
-                "timestamp": self.timestamp,
-            }
-
-            # Add metadata attributes (only keys not in result)
-            if self.metadata and self.metadata.attributes:
-                filtered_attrs = {
-                    k: v for k, v in self.metadata.attributes.items() if k not in result
-                }
-                result.update(filtered_attrs)
-            return result
-
-        @staticmethod
-        def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.MetadataValue] | m.ConfigMap,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
-        ) -> MetadataProtocol:
-            """Normalize metadata from dict-like object."""
-            # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
-            merged_attrs: dict[str, t.MetadataValue] = {}
-
-            # Normalize metadata_dict values
-            for k, v in metadata_dict.items():
-                merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
-
-            # Normalize merged_kwargs values
-            if merged_kwargs:
-                for k, v in merged_kwargs.items():
-                    merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
-
-            return m.Metadata.model_validate(
-                {
-                    "attributes": {
-                        k: FlextRuntime.normalize_to_metadata_value(v)
-                        for k, v in merged_attrs.items()
-                    },
-                },
-            )
-
         @staticmethod
         def _normalize_metadata(
             metadata: m.Metadata
@@ -719,6 +667,58 @@ class FlextExceptions:
 
             # Fallback: convert to m.Metadata with string value
             return m.Metadata(attributes={"value": str(metadata)})
+
+        @staticmethod
+        def _normalize_metadata_from_dict(
+            metadata_dict: Mapping[str, t.MetadataValue] | m.ConfigMap,
+            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+        ) -> MetadataProtocol:
+            """Normalize metadata from dict-like object."""
+            # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
+            merged_attrs: dict[str, t.MetadataValue] = {}
+
+            # Normalize metadata_dict values
+            for k, v in metadata_dict.items():
+                merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
+
+            # Normalize merged_kwargs values
+            if merged_kwargs:
+                for k, v in merged_kwargs.items():
+                    merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
+
+            return m.Metadata.model_validate(
+                {
+                    "attributes": {
+                        k: FlextRuntime.normalize_to_metadata_value(v)
+                        for k, v in merged_attrs.items()
+                    },
+                },
+            )
+
+        def to_dict(
+            self,
+        ) -> Mapping[str, t.MetadataValue | None]:
+            """Convert exception to dictionary representation.
+
+            Returns:
+                Dictionary with error_type, message, error_code, and other fields.
+
+            """
+            result: dict[str, t.MetadataValue | None] = {
+                "error_type": type(self).__name__,
+                "message": self.message,
+                "error_code": self.error_code,
+                "correlation_id": self.correlation_id,
+                "timestamp": self.timestamp,
+            }
+
+            # Add metadata attributes (only keys not in result)
+            if self.metadata and self.metadata.attributes:
+                filtered_attrs = {
+                    k: v for k, v in self.metadata.attributes.items() if k not in result
+                }
+                result.update(filtered_attrs)
+            return result
 
     # Specific exception classes with minimal code
     class ValidationError(BaseError):
@@ -1066,73 +1066,6 @@ class FlextExceptions:
     class TypeError(BaseError):
         """Exception raised for type mismatch errors."""
 
-        @staticmethod
-        def _get_type_map() -> Mapping[str, type]:
-            """Get mapping of type names to actual types."""
-            return {
-                "str": str,
-                "int": int,
-                "float": float,
-                "bool": bool,
-                "list": list,
-                "dict": dict,
-                "tuple": tuple,
-                "set": set,
-                "bytes": bytes,
-            }
-
-        @staticmethod
-        def _normalize_type(
-            type_value: type | str | None,
-            type_map: Mapping[str, type],
-            extra_kwargs: MutableMapping[str, t.MetadataValue],
-            key: str,
-        ) -> type | None:
-            """Normalize type value from various sources."""
-            source_value: type | str | t.MetadataValue | None = type_value
-            if source_value is None and key in extra_kwargs:
-                source_value = extra_kwargs.pop(key)
-
-            type_name = e.TypeError._resolve_type_name(source_value)
-            if type_name is None:
-                return None
-            return type_map.get(type_name)
-
-        @staticmethod
-        def _resolve_type_name(
-            type_value: type | str | t.MetadataValue | None,
-        ) -> str | None:
-            """Resolve type-like input to canonical string name."""
-            if type_value is None:
-                return None
-
-            string_value = e._safe_optional_str(type_value)
-            if string_value is not None:
-                return string_value
-
-            qualname_value = (
-                type_value.__qualname__ if hasattr(type_value, "__qualname__") else None
-            )
-            return e._safe_optional_str(qualname_value)
-
-        @staticmethod
-        def _build_type_context(
-            expected_type: type | str | None,
-            actual_type: type | str | None,
-            context: Mapping[str, t.MetadataValue] | None,
-            extra_kwargs: Mapping[str, t.MetadataValue],
-        ) -> m.ConfigMap:
-            """Build type context dictionary."""
-            type_context = e._build_context_map(context, extra_kwargs)
-            resolved_expected_type = e.TypeError._resolve_type_name(expected_type)
-            resolved_actual_type = e.TypeError._resolve_type_name(actual_type)
-            if resolved_expected_type is not None:
-                type_context["expected_type"] = resolved_expected_type
-            if resolved_actual_type is not None:
-                type_context["actual_type"] = resolved_actual_type
-
-            return type_context
-
         def __init__(
             self,
             message: str,
@@ -1203,6 +1136,73 @@ class FlextExceptions:
             )
             self.expected_type = normalized_expected_type
             self.actual_type = normalized_actual_type
+
+        @staticmethod
+        def _build_type_context(
+            expected_type: type | str | None,
+            actual_type: type | str | None,
+            context: Mapping[str, t.MetadataValue] | None,
+            extra_kwargs: Mapping[str, t.MetadataValue],
+        ) -> m.ConfigMap:
+            """Build type context dictionary."""
+            type_context = e._build_context_map(context, extra_kwargs)
+            resolved_expected_type = e.TypeError._resolve_type_name(expected_type)
+            resolved_actual_type = e.TypeError._resolve_type_name(actual_type)
+            if resolved_expected_type is not None:
+                type_context["expected_type"] = resolved_expected_type
+            if resolved_actual_type is not None:
+                type_context["actual_type"] = resolved_actual_type
+
+            return type_context
+
+        @staticmethod
+        def _get_type_map() -> Mapping[str, type]:
+            """Get mapping of type names to actual types."""
+            return {
+                "str": str,
+                "int": int,
+                "float": float,
+                "bool": bool,
+                "list": list,
+                "dict": dict,
+                "tuple": tuple,
+                "set": set,
+                "bytes": bytes,
+            }
+
+        @staticmethod
+        def _normalize_type(
+            type_value: type | str | None,
+            type_map: Mapping[str, type],
+            extra_kwargs: MutableMapping[str, t.MetadataValue],
+            key: str,
+        ) -> type | None:
+            """Normalize type value from various sources."""
+            source_value: type | str | t.MetadataValue | None = type_value
+            if source_value is None and key in extra_kwargs:
+                source_value = extra_kwargs.pop(key)
+
+            type_name = e.TypeError._resolve_type_name(source_value)
+            if type_name is None:
+                return None
+            return type_map.get(type_name)
+
+        @staticmethod
+        def _resolve_type_name(
+            type_value: type | str | t.MetadataValue | None,
+        ) -> str | None:
+            """Resolve type-like input to canonical string name."""
+            if type_value is None:
+                return None
+
+            string_value = e._safe_optional_str(type_value)
+            if string_value is not None:
+                return string_value
+
+            qualname_value = (
+                type_value.__qualname__ if hasattr(type_value, "__qualname__") else None
+            )
+            return e._safe_optional_str(qualname_value)
 
     class OperationError(BaseError):
         """Exception raised for general operation failures."""
@@ -1276,135 +1276,22 @@ class FlextExceptions:
             self.attribute_context = resolved.attribute_context
 
     @staticmethod
-    def _prepare_exception_kwargs(
-        kwargs: MutableMapping[str, t.MetadataValue],
-        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
-    ) -> tuple[
-        str | None,
-        t.MetadataValue | None,
-        bool,
-        bool,
-        t.MetadataValue | None,
-        Mapping[str, t.MetadataValue],
-    ]:
-        """Prepare exception kwargs by extracting common parameters."""
-        if specific_params:
-            filtered_params: dict[str, t.MetadataValue] = {}
-            for k, v in specific_params.items():
-                if v is None:
-                    continue
-                filtered_params[k] = v
-            kwargs.update(filtered_params)
-        extra_kwargs = {
-            k: v
-            for k, v in kwargs.items()
-            if k
-            not in {
-                "correlation_id",
-                "metadata",
-                "auto_log",
-                "auto_correlation",
-                "config",
-            }
-        }
-        correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id = e._safe_optional_str(correlation_id_raw)
-        return (
-            correlation_id,
-            kwargs.get("metadata"),
-            e._safe_bool(kwargs.get("auto_log"), default=False),
-            e._safe_bool(kwargs.get("auto_correlation"), default=False),
-            kwargs.get("config"),
-            extra_kwargs,
-        )
+    def _build_error_context(
+        correlation_id: str | None,
+        metadata_obj: (MetadataProtocol | Mapping[str, t.MetadataValue] | None),
+        kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+    ) -> m.ConfigMap:
+        """Build error context dictionary."""
+        error_context: m.ConfigMap = m.ConfigMap(root={})
+        if correlation_id is not None:
+            error_context["correlation_id"] = correlation_id
 
-    @staticmethod
-    def _extract_common_kwargs(
-        kwargs: Mapping[str, t.MetadataValue],
-    ) -> tuple[
-        str | None,
-        MetadataProtocol | Mapping[str, t.MetadataValue] | None,
-    ]:
-        """Extract correlation_id and metadata from kwargs.
+        e._merge_metadata_into_context(error_context, metadata_obj)
 
-        Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
-        """
-        correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id = e._safe_optional_str(correlation_id_raw)
-        metadata_raw = kwargs.get("metadata")
-        metadata: MetadataProtocol | Mapping[str, t.MetadataValue] | None = None
-        model_dump = getattr(metadata_raw, "model_dump", None)
-        if callable(model_dump):
-            metadata = e._safe_metadata(metadata_raw)
-        if metadata is None:
-            metadata = e._safe_config_map(metadata_raw)
-        if metadata is None:
-            attrs_raw = getattr(metadata_raw, "attributes", None)
-            attrs_map = e._safe_config_map(attrs_raw)
-            if attrs_map is not None:
-                metadata = m.Metadata.model_validate({
-                    "attributes": dict(attrs_map.items())
-                })
-        return (correlation_id, metadata)
-
-    @staticmethod
-    def prepare_exception_kwargs(
-        kwargs: MutableMapping[str, t.MetadataValue],
-        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
-    ) -> tuple[
-        str | None,
-        t.MetadataValue | None,
-        bool,
-        bool,
-        t.MetadataValue | None,
-        Mapping[str, t.MetadataValue],
-    ]:
-        """Prepare normalized kwargs payload for exception construction."""
-        return e._prepare_exception_kwargs(kwargs, specific_params)
-
-    @staticmethod
-    def extract_common_kwargs(
-        kwargs: Mapping[str, t.MetadataValue],
-    ) -> tuple[
-        str | None,
-        MetadataProtocol | Mapping[str, t.MetadataValue] | None,
-    ]:
-        """Extract common correlation and metadata fields from kwargs."""
-        return e._extract_common_kwargs(kwargs)
-
-    @staticmethod
-    def _determine_error_type(
-        kwargs: Mapping[str, t.MetadataValue],
-    ) -> str | None:
-        """Determine error type from kwargs using pattern matching.
-
-        Returns:
-            Error type string or None if no match
-
-        """
-        # Error type detection patterns - ordered by specificity
-        # Each pattern checks if any key in the set is present
-        error_patterns: list[tuple[list[str], str]] = [
-            (["field", "value"], "validation"),
-            (["config_key", "config_source"], "configuration"),
-            (["operation"], "operation"),
-            (["host", "port"], "connection"),
-            (["timeout_seconds"], "timeout"),
-            (["user_id", "permission"], "authorization"),  # Both required
-            (["auth_method"], "authentication"),
-            (["resource_id"], "not_found"),
-            (["attribute_name"], "attribute_access"),
-        ]
-
-        for keys, error_type in error_patterns:
-            # Special case: authorization requires both keys
-            if error_type == "authorization":
-                if "user_id" in kwargs and "permission" in kwargs:
-                    return error_type
-            elif any(key in kwargs for key in keys):
-                return error_type
-
-        return None
+        for k, v in kwargs.items():
+            if k not in {"correlation_id", "metadata"}:
+                error_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+        return error_context
 
     @staticmethod
     def _create_error_by_type(
@@ -1470,6 +1357,69 @@ class FlextExceptions:
         )
 
     @staticmethod
+    def _determine_error_type(
+        kwargs: Mapping[str, t.MetadataValue],
+    ) -> str | None:
+        """Determine error type from kwargs using pattern matching.
+
+        Returns:
+            Error type string or None if no match
+
+        """
+        # Error type detection patterns - ordered by specificity
+        # Each pattern checks if any key in the set is present
+        error_patterns: list[tuple[list[str], str]] = [
+            (["field", "value"], "validation"),
+            (["config_key", "config_source"], "configuration"),
+            (["operation"], "operation"),
+            (["host", "port"], "connection"),
+            (["timeout_seconds"], "timeout"),
+            (["user_id", "permission"], "authorization"),  # Both required
+            (["auth_method"], "authentication"),
+            (["resource_id"], "not_found"),
+            (["attribute_name"], "attribute_access"),
+        ]
+
+        for keys, error_type in error_patterns:
+            # Special case: authorization requires both keys
+            if error_type == "authorization":
+                if "user_id" in kwargs and "permission" in kwargs:
+                    return error_type
+            elif any(key in kwargs for key in keys):
+                return error_type
+
+        return None
+
+    @staticmethod
+    def _extract_common_kwargs(
+        kwargs: Mapping[str, t.MetadataValue],
+    ) -> tuple[
+        str | None,
+        MetadataProtocol | Mapping[str, t.MetadataValue] | None,
+    ]:
+        """Extract correlation_id and metadata from kwargs.
+
+        Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
+        """
+        correlation_id_raw = kwargs.get("correlation_id")
+        correlation_id = e._safe_optional_str(correlation_id_raw)
+        metadata_raw = kwargs.get("metadata")
+        metadata: MetadataProtocol | Mapping[str, t.MetadataValue] | None = None
+        model_dump = getattr(metadata_raw, "model_dump", None)
+        if callable(model_dump):
+            metadata = e._safe_metadata(metadata_raw)
+        if metadata is None:
+            metadata = e._safe_config_map(metadata_raw)
+        if metadata is None:
+            attrs_raw = getattr(metadata_raw, "attributes", None)
+            attrs_map = e._safe_config_map(attrs_raw)
+            if attrs_map is not None:
+                metadata = m.Metadata.model_validate({
+                    "attributes": dict(attrs_map.items())
+                })
+        return (correlation_id, metadata)
+
+    @staticmethod
     def _merge_metadata_into_context(
         context: m.ConfigMap,
         metadata_obj: (MetadataProtocol | Mapping[str, t.MetadataValue] | None),
@@ -1490,22 +1440,47 @@ class FlextExceptions:
                 context[k] = FlextRuntime.normalize_to_metadata_value(metadata_value)
 
     @staticmethod
-    def _build_error_context(
-        correlation_id: str | None,
-        metadata_obj: (MetadataProtocol | Mapping[str, t.MetadataValue] | None),
-        kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
-    ) -> m.ConfigMap:
-        """Build error context dictionary."""
-        error_context: m.ConfigMap = m.ConfigMap(root={})
-        if correlation_id is not None:
-            error_context["correlation_id"] = correlation_id
-
-        e._merge_metadata_into_context(error_context, metadata_obj)
-
-        for k, v in kwargs.items():
-            if k not in {"correlation_id", "metadata"}:
-                error_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-        return error_context
+    def _prepare_exception_kwargs(
+        kwargs: MutableMapping[str, t.MetadataValue],
+        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
+    ) -> tuple[
+        str | None,
+        t.MetadataValue | None,
+        bool,
+        bool,
+        t.MetadataValue | None,
+        Mapping[str, t.MetadataValue],
+    ]:
+        """Prepare exception kwargs by extracting common parameters."""
+        if specific_params:
+            filtered_params: dict[str, t.MetadataValue] = {}
+            for k, v in specific_params.items():
+                if v is None:
+                    continue
+                filtered_params[k] = v
+            kwargs.update(filtered_params)
+        extra_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k
+            not in {
+                "correlation_id",
+                "metadata",
+                "auto_log",
+                "auto_correlation",
+                "config",
+            }
+        }
+        correlation_id_raw = kwargs.get("correlation_id")
+        correlation_id = e._safe_optional_str(correlation_id_raw)
+        return (
+            correlation_id,
+            kwargs.get("metadata"),
+            e._safe_bool(kwargs.get("auto_log"), default=False),
+            e._safe_bool(kwargs.get("auto_correlation"), default=False),
+            kwargs.get("config"),
+            extra_kwargs,
+        )
 
     @staticmethod
     def create(
@@ -1560,15 +1535,59 @@ class FlextExceptions:
             context=error_context or None,
         )
 
+    @staticmethod
+    def extract_common_kwargs(
+        kwargs: Mapping[str, t.MetadataValue],
+    ) -> tuple[
+        str | None,
+        MetadataProtocol | Mapping[str, t.MetadataValue] | None,
+    ]:
+        """Extract common correlation and metadata fields from kwargs."""
+        return e._extract_common_kwargs(kwargs)
+
+    @staticmethod
+    def prepare_exception_kwargs(
+        kwargs: MutableMapping[str, t.MetadataValue],
+        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
+    ) -> tuple[
+        str | None,
+        t.MetadataValue | None,
+        bool,
+        bool,
+        t.MetadataValue | None,
+        Mapping[str, t.MetadataValue],
+    ]:
+        """Prepare normalized kwargs payload for exception construction."""
+        return e._prepare_exception_kwargs(kwargs, specific_params)
+
     # Mutable ClassVar for runtime metrics
     _exception_counts: ClassVar[MutableMapping[type, int]] = {}
 
+    def __call__(
+        self,
+        message: str,
+        error_code: str | None = None,
+        **kwargs: t.MetadataValue,
+    ) -> e.BaseError:
+        """Create exception by calling the class instance."""
+        # Normalize kwargs to t.MetadataAttributeValue
+        # normalize_to_metadata_value already returns t.MetadataAttributeValue
+        normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
+        for k, v in kwargs.items():
+            normalized_kwargs[k] = FlextRuntime.normalize_to_metadata_value(v)
+        return self.create(
+            message,
+            error_code,
+            **{
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in normalized_kwargs.items()
+            },
+        )
+
     @classmethod
-    def record_exception(cls, exception_type: type) -> None:
-        """Record an exception occurrence for metrics tracking."""
-        if exception_type not in cls._exception_counts:
-            cls._exception_counts[exception_type] = 0
-        cls._exception_counts[exception_type] += 1
+    def clear_metrics(cls) -> None:
+        """Clear all exception metrics."""
+        cls._exception_counts.clear()
 
     @classmethod
     def get_metrics(cls) -> m.ErrorMap:
@@ -1603,30 +1622,11 @@ class FlextExceptions:
         return result_dict
 
     @classmethod
-    def clear_metrics(cls) -> None:
-        """Clear all exception metrics."""
-        cls._exception_counts.clear()
-
-    def __call__(
-        self,
-        message: str,
-        error_code: str | None = None,
-        **kwargs: t.MetadataValue,
-    ) -> e.BaseError:
-        """Create exception by calling the class instance."""
-        # Normalize kwargs to t.MetadataAttributeValue
-        # normalize_to_metadata_value already returns t.MetadataAttributeValue
-        normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
-        for k, v in kwargs.items():
-            normalized_kwargs[k] = FlextRuntime.normalize_to_metadata_value(v)
-        return self.create(
-            message,
-            error_code,
-            **{
-                k: FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in normalized_kwargs.items()
-            },
-        )
+    def record_exception(cls, exception_type: type) -> None:
+        """Record an exception occurrence for metrics tracking."""
+        if exception_type not in cls._exception_counts:
+            cls._exception_counts[exception_type] = 0
+        cls._exception_counts[exception_type] += 1
 
 
 e = FlextExceptions

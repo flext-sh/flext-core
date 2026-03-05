@@ -27,6 +27,39 @@ class FlextInfraTextPatternScanner:
 
     _ENCODING = c.Encoding.DEFAULT
 
+    @staticmethod
+    def _collect_files(
+        root: Path,
+        includes: list[str],
+        excludes: list[str],
+    ) -> list[Path]:
+        """Collect files matching include/exclude globs."""
+        selected: list[Path] = []
+        for path in root.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(root).as_posix()
+            if any(fnmatch.fnmatch(rel, pat) for pat in includes):
+                if any(fnmatch.fnmatch(rel, pat) for pat in excludes):
+                    continue
+                selected.append(path)
+        return selected
+
+    @staticmethod
+    def _count_matches(files: list[Path], regex: re.Pattern[str]) -> int:
+        """Count regex matches across files."""
+        total = 0
+        for file_path in files:
+            try:
+                text = file_path.read_text(
+                    encoding=c.Encoding.DEFAULT,
+                    errors="ignore",
+                )
+            except OSError:
+                continue
+            total += sum(1 for _ in regex.finditer(text))
+        return total
+
     def scan(
         self,
         root: Path,
@@ -84,39 +117,6 @@ class FlextInfraTextPatternScanner:
             return r[Mapping[str, t.Scalar]].fail(
                 f"text pattern scan failed: {exc}",
             )
-
-    @staticmethod
-    def _collect_files(
-        root: Path,
-        includes: list[str],
-        excludes: list[str],
-    ) -> list[Path]:
-        """Collect files matching include/exclude globs."""
-        selected: list[Path] = []
-        for path in root.rglob("*"):
-            if not path.is_file():
-                continue
-            rel = path.relative_to(root).as_posix()
-            if any(fnmatch.fnmatch(rel, pat) for pat in includes):
-                if any(fnmatch.fnmatch(rel, pat) for pat in excludes):
-                    continue
-                selected.append(path)
-        return selected
-
-    @staticmethod
-    def _count_matches(files: list[Path], regex: re.Pattern[str]) -> int:
-        """Count regex matches across files."""
-        total = 0
-        for file_path in files:
-            try:
-                text = file_path.read_text(
-                    encoding=c.Encoding.DEFAULT,
-                    errors="ignore",
-                )
-            except OSError:
-                continue
-            total += sum(1 for _ in regex.finditer(text))
-        return total
 
 
 __all__ = ["FlextInfraTextPatternScanner"]

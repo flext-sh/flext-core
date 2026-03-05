@@ -42,8 +42,8 @@ class FlextInfraProtocols(FlextProtocols):
         """Minimal command execution output contract."""
 
         @property
-        def stdout(self) -> str:
-            """Return the command standard output."""
+        def returncode(self) -> int:
+            """Return the command exit code."""
             ...
 
         @property
@@ -52,8 +52,8 @@ class FlextInfraProtocols(FlextProtocols):
             ...
 
         @property
-        def returncode(self) -> int:
-            """Return the command exit code."""
+        def stdout(self) -> str:
+            """Return the command standard output."""
             ...
 
     @runtime_checkable

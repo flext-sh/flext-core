@@ -174,18 +174,18 @@ class FlextGenericModels:
         """Progress trackers - mutable, accumulate during operation."""
 
         @staticmethod
-        def safe_rate(numerator: int, denominator: int) -> float:
-            """Division with zero-safe fallback."""
-            if denominator == 0:
-                return 0.0
-            return numerator / denominator
-
-        @staticmethod
         def safe_percentage(processed: int, total: int | None) -> float:
             """Percentage with zero-safe fallback, capped at 100."""
             if not total or total == 0:
                 return 0.0
             return min((processed / total) * 100.0, 100.0)
+
+        @staticmethod
+        def safe_rate(numerator: int, denominator: int) -> float:
+            """Division with zero-safe fallback."""
+            if denominator == 0:
+                return 0.0
+            return numerator / denominator
 
         class Operation(FlextModelFoundation.ArbitraryTypesModel):
             """Progress tracking for ongoing operations.
@@ -216,14 +216,14 @@ class FlextGenericModels:
                 description="Operation metadata",
             )
 
-            def record_success(self) -> None:
-                """Record a successful operation."""
-                self.success_count += 1
-                self._update_timestamp()
-
             def record_failure(self) -> None:
                 """Record a failed operation."""
                 self.failure_count += 1
+                self._update_timestamp()
+
+            def record_retry(self) -> None:
+                """Record a retry attempt."""
+                self.retry_count += 1
                 self._update_timestamp()
 
             def record_skip(self) -> None:
@@ -231,14 +231,14 @@ class FlextGenericModels:
                 self.skipped_count += 1
                 self._update_timestamp()
 
+            def record_success(self) -> None:
+                """Record a successful operation."""
+                self.success_count += 1
+                self._update_timestamp()
+
             def record_warning(self) -> None:
                 """Record an operation with warnings."""
                 self.warning_count += 1
-                self._update_timestamp()
-
-            def record_retry(self) -> None:
-                """Record a retry attempt."""
-                self.retry_count += 1
                 self._update_timestamp()
 
             def start_operation(
@@ -290,6 +290,56 @@ class FlextGenericModels:
                 description="Conversion metadata",
             )
 
+            def add_converted(self, item: t.Container) -> None:
+                """Add a successfully converted item."""
+                self.converted.append(item)
+
+            def add_error(
+                self,
+                error: str,
+                item: t.Container | None = None,
+            ) -> None:
+                """Add an error with optional failed item."""
+                self.errors.append(error)
+                if item is not None:
+                    self._append_metadata_item("failed_items", item)
+
+            def add_skipped(
+                self,
+                item: t.Container,
+                reason: str | None = None,
+            ) -> None:
+                """Add a skipped item with optional reason."""
+                self.skipped.append(item)
+                if reason:
+                    self._upsert_skip_reason(item, reason)
+
+            def add_warning(
+                self,
+                warning: str,
+                item: t.Container | None = None,
+            ) -> None:
+                """Add a warning with optional item."""
+                self.warnings.append(warning)
+                if item is not None:
+                    self._append_metadata_item("warning_items", item)
+
+            def complete_conversion(self) -> None:
+                """Mark conversion as completed."""
+                self.end_time = datetime.now(UTC)
+
+            def start_conversion(
+                self,
+                source_format: str | None = None,
+                target_format: str | None = None,
+                total_input_count: int | None = None,
+            ) -> None:
+                """Start conversion tracking."""
+                self.source_format = source_format
+                self.target_format = target_format
+                self.total_input_count = total_input_count
+                self.start_time = datetime.now(UTC)
+
             def _append_metadata_item(
                 self,
                 key: Literal["failed_items", "warning_items"],
@@ -309,56 +359,6 @@ class FlextGenericModels:
                     reasons = {str(k): str(v) for k, v in raw_reasons.items()}
                 reasons[str(item)] = reason
                 self.metadata.root["skip_reasons"] = reasons
-
-            def add_converted(self, item: t.Container) -> None:
-                """Add a successfully converted item."""
-                self.converted.append(item)
-
-            def add_error(
-                self,
-                error: str,
-                item: t.Container | None = None,
-            ) -> None:
-                """Add an error with optional failed item."""
-                self.errors.append(error)
-                if item is not None:
-                    self._append_metadata_item("failed_items", item)
-
-            def add_warning(
-                self,
-                warning: str,
-                item: t.Container | None = None,
-            ) -> None:
-                """Add a warning with optional item."""
-                self.warnings.append(warning)
-                if item is not None:
-                    self._append_metadata_item("warning_items", item)
-
-            def add_skipped(
-                self,
-                item: t.Container,
-                reason: str | None = None,
-            ) -> None:
-                """Add a skipped item with optional reason."""
-                self.skipped.append(item)
-                if reason:
-                    self._upsert_skip_reason(item, reason)
-
-            def start_conversion(
-                self,
-                source_format: str | None = None,
-                target_format: str | None = None,
-                total_input_count: int | None = None,
-            ) -> None:
-                """Start conversion tracking."""
-                self.source_format = source_format
-                self.target_format = target_format
-                self.total_input_count = total_input_count
-                self.start_time = datetime.now(UTC)
-
-            def complete_conversion(self) -> None:
-                """Mark conversion as completed."""
-                self.end_time = datetime.now(UTC)
 
     BatchResultDict = FlextModelsContainers.BatchResultDict
 

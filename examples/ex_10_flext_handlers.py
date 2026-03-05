@@ -30,38 +30,42 @@ class _NoArgs:
 
 
 class _ProtocolHandler:
+
+    @staticmethod
+    def _protocol_name() -> str:
+        return "ProtocolHandler"
     def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         return r[t.ContainerValue].ok(message)
 
     def validate(self, data: t.ContainerValue) -> r[bool]:
         return r[bool].ok(data is not None)
 
-    @staticmethod
-    def _protocol_name() -> str:
-        return "ProtocolHandler"
-
 
 class _ServiceStub:
-    def execute(self) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
-
-    def validate_business_rules(self) -> r[bool]:
-        return r[bool].ok(True)
 
     @property
     def is_valid(self) -> bool:
         return True
 
-    def get_service_info(self) -> m.ConfigMap:
-        return m.ConfigMap(root={"service": "stub"})
-
     @staticmethod
     def _protocol_name() -> str:
         return "ServiceStub"
+    def execute(self) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
+
+    def get_service_info(self) -> m.ConfigMap:
+        return m.ConfigMap(root={"service": "stub"})
+
+    def validate_business_rules(self) -> r[bool]:
+        return r[bool].ok(True)
 
 
 class _ProcessorGood(m.Value):
     marker: str = "good"
+
+    @staticmethod
+    def _protocol_name() -> str:
+        return "ProcessorGood"
 
     def process(self) -> str:
         return "ok"
@@ -70,20 +74,16 @@ class _ProcessorGood(m.Value):
     def validate(self) -> bool:
         return True
 
-    @staticmethod
-    def _protocol_name() -> str:
-        return "ProcessorGood"
-
 
 class _ProcessorBad(m.Value):
     marker: str = "bad"
 
-    def process(self) -> str:
-        return "ok"
-
     @staticmethod
     def _protocol_name() -> str:
         return "ProcessorBad"
+
+    def process(self) -> str:
+        return "ok"
 
 
 class _NotImplementedPatternHandler(h[t.ContainerValue, t.ContainerValue]):
@@ -116,129 +116,6 @@ class _DemoHandler(h[t.ContainerValue, str]):
 
 class Ex10FlextHandlers(Examples):
     """Exercise FlextHandlers public API."""
-
-    @override
-    def exercise(self) -> None:
-        """Run all FlextHandlers example sections."""
-        self.demo_handler_core()
-        self.demo_create_from_callable()
-        self.demo_discovery()
-        self.demo_namespaces_and_mixins()
-        self.demo_runtime_result_and_utilities()
-
-    def demo_handler_core(self) -> None:
-        """Exercise base handler operations and validation paths."""
-        self.section("handler_core")
-
-        pattern_probe = self.rand_str(4)
-        handler_id = self.rand_str(8)
-        handler_name = self.rand_str(10)
-        message_ok = self.rand_str(6)
-        payload_text = self.rand_str(6)
-        dispatch_text = self.rand_str(6)
-        metric_key = self.rand_str(6)
-        metric_value = self.rand_int(1, 9)
-        context_name_1 = self.rand_str(6)
-        context_name_2 = self.rand_str(6)
-
-        pattern_handler = _NotImplementedPatternHandler()
-        try:
-            pattern_handler.handle(pattern_probe)
-            pattern_value: t.ContainerValue = "no-error"
-        except NotImplementedError as exc:
-            pattern_value = f"{type(exc).__name__}:{exc}"
-        self.check("handle.not_implemented_pattern", pattern_value)
-
-        handler = _DemoHandler(
-            config=m.Handler(handler_id=handler_id, handler_name=handler_name)
-        )
-        self.check("handler.handler_name", handler.handler_name)
-        self.check("handler.name_matches", handler.handler_name == handler_name)
-        self.check("handler.mode", handler.mode.value)
-
-        self.check("validate.none.failure", handler.validate(None).is_failure)
-        self.check("validate.ok.success", handler.validate(message_ok).is_success)
-        self.check("validate.blocked_cmd", handler.validate("bad").error)
-        self.check("validate.blocked_qry", handler.validate("bad").error)
-        self.check(
-            "validate.consistent",
-            handler.validate(message_ok).unwrap_or(False)
-            and handler.validate(message_ok).unwrap_or(False)
-            and handler.validate(message_ok).unwrap_or(False),
-        )
-
-        self.check("can_handle.expected", handler.can_handle(_Message))
-        self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
-        self.check("can_handle.other", handler.can_handle(str))
-
-        execute_value = handler.execute(
-            cast("t.ContainerValue", _Message(text=payload_text))
-        ).unwrap_or("-")
-        self.check(
-            "execute.success.value",
-            payload_text in str(execute_value),
-        )
-        self.check(
-            "execute.validation_failure",
-            handler.execute(cast("t.ContainerValue", "bad")).error,
-        )
-
-        dispatch_value = handler.dispatch_message(
-            cast("t.ContainerValue", _Message(text=dispatch_text))
-        ).unwrap_or("-")
-        self.check(
-            "dispatch.success",
-            dispatch_text in str(dispatch_value),
-        )
-        self.check(
-            "dispatch.mode_mismatch",
-            handler.dispatch_message(
-                cast("t.ContainerValue", _Message(text="go")),
-                operation=c.Dispatcher.HANDLER_MODE_QUERY,
-            ).error,
-        )
-        self.check(
-            "dispatch.pipeline_exception",
-            handler.dispatch_message(
-                cast("t.ContainerValue", "explode"),
-                operation=c.Dispatcher.HANDLER_MODE_COMMAND,
-            ).error,
-        )
-
-        self.check(
-            "record_metric.ok",
-            handler.record_metric(metric_key, metric_value).is_success,
-        )
-        context_payload_query: dict[str, t.Container] = {
-            "handler_name": context_name_1,
-            "handler_mode": "query",
-        }
-        self.check(
-            "push_context.mapping",
-            handler.push_context(context_payload_query).is_success,
-        )
-        context_payload_event: dict[str, t.Container] = {
-            "handler_name": context_name_2,
-            "handler_mode": "event",
-        }
-        self.check(
-            "push_context.execution",
-            handler.push_context(context_payload_event).is_success,
-        )
-        self.check(
-            "pop_context.1",
-            handler
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
-        )
-        self.check(
-            "pop_context.2",
-            handler
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
-        )
 
     def demo_create_from_callable(self) -> None:
         """Exercise FlextHandlers.create_from_callable variants."""
@@ -374,6 +251,120 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "has_handlers_module.false",
             h.Discovery.has_handlers_module(ModuleType("empty")),
+        )
+
+    def demo_handler_core(self) -> None:
+        """Exercise base handler operations and validation paths."""
+        self.section("handler_core")
+
+        pattern_probe = self.rand_str(4)
+        handler_id = self.rand_str(8)
+        handler_name = self.rand_str(10)
+        message_ok = self.rand_str(6)
+        payload_text = self.rand_str(6)
+        dispatch_text = self.rand_str(6)
+        metric_key = self.rand_str(6)
+        metric_value = self.rand_int(1, 9)
+        context_name_1 = self.rand_str(6)
+        context_name_2 = self.rand_str(6)
+
+        pattern_handler = _NotImplementedPatternHandler()
+        try:
+            pattern_handler.handle(pattern_probe)
+            pattern_value: t.ContainerValue = "no-error"
+        except NotImplementedError as exc:
+            pattern_value = f"{type(exc).__name__}:{exc}"
+        self.check("handle.not_implemented_pattern", pattern_value)
+
+        handler = _DemoHandler(
+            config=m.Handler(handler_id=handler_id, handler_name=handler_name)
+        )
+        self.check("handler.handler_name", handler.handler_name)
+        self.check("handler.name_matches", handler.handler_name == handler_name)
+        self.check("handler.mode", handler.mode.value)
+
+        self.check("validate.none.failure", handler.validate(None).is_failure)
+        self.check("validate.ok.success", handler.validate(message_ok).is_success)
+        self.check("validate.blocked_cmd", handler.validate("bad").error)
+        self.check("validate.blocked_qry", handler.validate("bad").error)
+        self.check(
+            "validate.consistent",
+            handler.validate(message_ok).unwrap_or(False)
+            and handler.validate(message_ok).unwrap_or(False)
+            and handler.validate(message_ok).unwrap_or(False),
+        )
+
+        self.check("can_handle.expected", handler.can_handle(_Message))
+        self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
+        self.check("can_handle.other", handler.can_handle(str))
+
+        execute_value = handler.execute(
+            cast("t.ContainerValue", _Message(text=payload_text))
+        ).unwrap_or("-")
+        self.check(
+            "execute.success.value",
+            payload_text in str(execute_value),
+        )
+        self.check(
+            "execute.validation_failure",
+            handler.execute(cast("t.ContainerValue", "bad")).error,
+        )
+
+        dispatch_value = handler.dispatch_message(
+            cast("t.ContainerValue", _Message(text=dispatch_text))
+        ).unwrap_or("-")
+        self.check(
+            "dispatch.success",
+            dispatch_text in str(dispatch_value),
+        )
+        self.check(
+            "dispatch.mode_mismatch",
+            handler.dispatch_message(
+                cast("t.ContainerValue", _Message(text="go")),
+                operation=c.Dispatcher.HANDLER_MODE_QUERY,
+            ).error,
+        )
+        self.check(
+            "dispatch.pipeline_exception",
+            handler.dispatch_message(
+                cast("t.ContainerValue", "explode"),
+                operation=c.Dispatcher.HANDLER_MODE_COMMAND,
+            ).error,
+        )
+
+        self.check(
+            "record_metric.ok",
+            handler.record_metric(metric_key, metric_value).is_success,
+        )
+        context_payload_query: dict[str, t.Container] = {
+            "handler_name": context_name_1,
+            "handler_mode": "query",
+        }
+        self.check(
+            "push_context.mapping",
+            handler.push_context(context_payload_query).is_success,
+        )
+        context_payload_event: dict[str, t.Container] = {
+            "handler_name": context_name_2,
+            "handler_mode": "event",
+        }
+        self.check(
+            "push_context.execution",
+            handler.push_context(context_payload_event).is_success,
+        )
+        self.check(
+            "pop_context.1",
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
+        )
+        self.check(
+            "pop_context.2",
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
         )
 
     def demo_namespaces_and_mixins(self) -> None:
@@ -751,6 +742,15 @@ class Ex10FlextHandlers(Examples):
             "runtime.normalize_metadata",
             h.normalize_to_metadata_value(cast("t.Container", {"k": [1, 2]})),
         )
+
+    @override
+    def exercise(self) -> None:
+        """Run all FlextHandlers example sections."""
+        self.demo_handler_core()
+        self.demo_create_from_callable()
+        self.demo_discovery()
+        self.demo_namespaces_and_mixins()
+        self.demo_runtime_result_and_utilities()
 
 
 if __name__ == "__main__":

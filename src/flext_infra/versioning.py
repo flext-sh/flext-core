@@ -26,24 +26,10 @@ class FlextInfraVersioningService(FlextService[str]):
     project version management.
     """
 
-    @override
-    def execute(self) -> FlextResult[str]:
-        """Execute versioning (default: empty string).
-
-        Returns:
-            FlextResult with empty string by default.
-
-        """
-        return r[str].ok("")
-
     def __init__(self, toml: FlextInfraTomlService | None = None) -> None:
         """Initialize the versioning service."""
         super().__init__()
         self._toml = toml or FlextInfraTomlService()
-
-    @staticmethod
-    def _has_project_table(content: str) -> bool:
-        return any(raw_line.strip() == "[project]" for raw_line in content.splitlines())
 
     @staticmethod
     def _extract_project_version_from_text(content: str) -> str | None:
@@ -59,6 +45,10 @@ class FlextInfraVersioningService(FlextService[str]):
             if match:
                 return match.group(1)
         return None
+
+    @staticmethod
+    def _has_project_table(content: str) -> bool:
+        return any(raw_line.strip() == "[project]" for raw_line in content.splitlines())
 
     @staticmethod
     def _replace_project_version_in_text(content: str, version: str) -> str | None:
@@ -81,28 +71,6 @@ class FlextInfraVersioningService(FlextService[str]):
         if not replaced:
             return None
         return "".join(updated_lines)
-
-    def parse_semver(
-        self,
-        version: str,
-    ) -> FlextResult[tuple[int, int, int]]:
-        """Parse a semantic version string into (major, minor, patch).
-
-        Args:
-            version: The version string to parse.
-
-        Returns:
-            FlextResult with version tuple.
-
-        """
-        match = c.Infra.Versioning.SEMVER_RE.match(version)
-        if not match:
-            return r[tuple[int, int, int]].fail(
-                f"invalid semver: {version}",
-            )
-        return r[tuple[int, int, int]].ok(
-            (int(match.group(1)), int(match.group(2)), int(match.group(3))),
-        )
 
     def bump_version(
         self,
@@ -139,29 +107,6 @@ class FlextInfraVersioningService(FlextService[str]):
 
         return r[str].ok(f"{major}.{minor}.{patch}")
 
-    def release_tag_from_branch(self, branch: str) -> FlextResult[str]:
-        """Extract a release tag name from a branch name.
-
-        Supports ``release/X.Y.Z`` and ``X.Y.Z-dev`` patterns.
-
-        Args:
-            branch: The branch name.
-
-        Returns:
-            FlextResult[str] with the tag name (e.g., "v1.2.3"),
-            or failure if no pattern matches.
-
-        """
-        if branch.startswith("release/"):
-            tag = f"v{branch.removeprefix('release/')}"
-            return r[str].ok(tag)
-        match = c.Infra.Versioning.DEV_BRANCH_RE.match(branch)
-        if match:
-            return r[str].ok(f"v{match.group(1)}")
-        return r[str].fail(
-            f"branch '{branch}' does not match release pattern",
-        )
-
     def current_workspace_version(
         self,
         workspace_root: Path,
@@ -185,6 +130,61 @@ class FlextInfraVersioningService(FlextService[str]):
         if version is None or not version.strip():
             return r[str].fail("version not found in pyproject.toml")
         return r[str].ok(version)
+
+    @override
+    def execute(self) -> FlextResult[str]:
+        """Execute versioning (default: empty string).
+
+        Returns:
+            FlextResult with empty string by default.
+
+        """
+        return r[str].ok("")
+
+    def parse_semver(
+        self,
+        version: str,
+    ) -> FlextResult[tuple[int, int, int]]:
+        """Parse a semantic version string into (major, minor, patch).
+
+        Args:
+            version: The version string to parse.
+
+        Returns:
+            FlextResult with version tuple.
+
+        """
+        match = c.Infra.Versioning.SEMVER_RE.match(version)
+        if not match:
+            return r[tuple[int, int, int]].fail(
+                f"invalid semver: {version}",
+            )
+        return r[tuple[int, int, int]].ok(
+            (int(match.group(1)), int(match.group(2)), int(match.group(3))),
+        )
+
+    def release_tag_from_branch(self, branch: str) -> FlextResult[str]:
+        """Extract a release tag name from a branch name.
+
+        Supports ``release/X.Y.Z`` and ``X.Y.Z-dev`` patterns.
+
+        Args:
+            branch: The branch name.
+
+        Returns:
+            FlextResult[str] with the tag name (e.g., "v1.2.3"),
+            or failure if no pattern matches.
+
+        """
+        if branch.startswith("release/"):
+            tag = f"v{branch.removeprefix('release/')}"
+            return r[str].ok(tag)
+        match = c.Infra.Versioning.DEV_BRANCH_RE.match(branch)
+        if match:
+            return r[str].ok(f"v{match.group(1)}")
+        return r[str].fail(
+            f"branch '{branch}' does not match release pattern",
+        )
 
     def replace_project_version(
         self,

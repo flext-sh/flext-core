@@ -117,6 +117,15 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
         )
         return cst.Name(rename_to)
 
+    def _module_expr_from_dotted(self, dotted_name: str) -> cst.BaseExpression:
+        parts = [part for part in dotted_name.split(".") if part]
+        if not parts:
+            return cst.Name("")
+        expr: cst.BaseExpression = cst.Name(parts[0])
+        for part in parts[1:]:
+            expr = cst.Attribute(value=expr, attr=cst.Name(part))
+        return expr
+
     def _module_name_from_expr(self, module: cst.BaseExpression | None) -> str:
         if module is None:
             return ""
@@ -132,15 +141,6 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
                 parts.append(current.value)
             return ".".join(reversed(parts))
         return ""
-
-    def _module_expr_from_dotted(self, dotted_name: str) -> cst.BaseExpression:
-        parts = [part for part in dotted_name.split(".") if part]
-        if not parts:
-            return cst.Name("")
-        expr: cst.BaseExpression = cst.Name(parts[0])
-        for part in parts[1:]:
-            expr = cst.Attribute(value=expr, attr=cst.Name(part))
-        return expr
 
     def _record_change(self, message: str) -> None:
         self.changes.append(message)

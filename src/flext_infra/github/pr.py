@@ -43,6 +43,177 @@ class FlextInfraPrManager:
         self._git = git or FlextInfraGitService(self._runner)
         self._versioning = versioning or FlextInfraVersioningService()
 
+    def checks(
+        self,
+        repo_root: Path,
+        selector: str,
+        *,
+        strict: bool = False,
+    ) -> FlextResult[Mapping[str, t.Scalar]]:
+        """Run PR checks.
+
+        Args:
+            repo_root: Repository root directory.
+            selector: PR number or head branch.
+            strict: If True, treat check failures as errors.
+
+        Returns:
+            FlextResult with check status info.
+
+        """
+        result = self._runner.run(
+            ["gh", "pr", "checks", selector],
+            cwd=repo_root,
+        )
+        if result.is_success:
+            return r[Mapping[str, t.Scalar]].ok({"status": "checks-passed"})
+        if not strict:
+            return r[Mapping[str, t.Scalar]].ok({"status": "checks-nonblocking"})
+        return r[Mapping[str, t.Scalar]].fail(result.error or "checks failed")
+
+    def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
+        """Close a PR.
+
+        Args:
+            repo_root: Repository root directory.
+            selector: PR number or head branch.
+
+        Returns:
+            FlextResult[bool] with True on success.
+
+        """
+        return self._runner.run_checked(
+            ["gh", "pr", "close", selector],
+            cwd=repo_root,
+        )
+
+    def create(
+        self,
+        repo_root: Path,
+        base: str,
+        head: str,
+        title: str,
+        body: str,
+        *,
+        draft: bool = False,
+    ) -> FlextResult[Mapping[str, t.Scalar]]:
+        """Create a new PR or report existing one.
+
+        Args:
+            repo_root: Repository root directory.
+            base: Base branch name.
+            head: Head branch name.
+            title: PR title.
+            body: PR body.
+            draft: Whether to create as draft.
+
+        Returns:
+            FlextResult with creation status info.
+
+        """
+        existing_result = self.open_pr_for_head(repo_root, head)
+        if existing_result.is_failure:
+            return r[Mapping[str, t.Scalar]].fail(
+                existing_result.error or "failed to check existing PRs",
+            )
+
+        existing = existing_result.value
+        if existing:
+            return r[Mapping[str, t.Scalar]].ok({
+                "status": "already-open",
+                "pr_url": existing.get("url"),
+            })
+
+        command = [
+            "gh",
+            "pr",
+            "create",
+            "--base",
+            base,
+            "--head",
+            head,
+            "--title",
+            title,
+            "--body",
+            body,
+        ]
+        if draft:
+            command.append("--draft")
+
+        result = self._runner.capture(command, cwd=repo_root)
+        if result.is_failure:
+            return r[Mapping[str, t.Scalar]].fail(
+                result.error or "PR creation failed",
+            )
+        return r[Mapping[str, t.Scalar]].ok({
+            "status": "created",
+            "pr_url": result.value,
+        })
+
+    def merge(
+        self,
+        repo_root: Path,
+        selector: str,
+        head: str,
+        *,
+        method: str = "squash",
+        auto: bool = False,
+        delete_branch: bool = False,
+        release_on_merge: bool = True,
+    ) -> FlextResult[Mapping[str, t.Container]]:
+        """Merge a PR with retry on rebase.
+
+        Args:
+            repo_root: Repository root directory.
+            selector: PR number or head branch.
+            head: Head branch name.
+            method: Merge method (merge, rebase, squash).
+            auto: Enable auto-merge.
+            delete_branch: Delete branch after merge.
+            release_on_merge: Trigger release workflow on merge.
+
+        Returns:
+            FlextResult with merge status info.
+
+        """
+        if selector == head:
+            pr_result = self.open_pr_for_head(repo_root, head)
+            if pr_result.is_success and not pr_result.value:
+                return r[Mapping[str, t.Scalar]].ok({"status": "no-open-pr"})
+
+        merge_flag = {
+            "merge": "--merge",
+            "rebase": "--rebase",
+            "squash": "--squash",
+        }.get(method, "--squash")
+
+        command = ["gh", "pr", "merge", selector, merge_flag]
+        if auto:
+            command.append("--auto")
+        if delete_branch:
+            command.append("--delete-branch")
+
+        result = self._runner.run(command, cwd=repo_root)
+        if result.is_failure:
+            stderr = result.error or ""
+            if "not mergeable" in stderr:
+                update_result = self._runner.run(
+                    ["gh", "pr", "update-branch", selector, "--rebase"],
+                    cwd=repo_root,
+                )
+                if update_result.is_success:
+                    result = self._runner.run(command, cwd=repo_root)
+
+        if result.is_failure:
+            return r[Mapping[str, t.Scalar]].fail(result.error or "merge failed")
+
+        info: MutableMapping[str, t.Container] = {"status": "merged"}
+        if release_on_merge:
+            release_result = self._trigger_release_if_needed(repo_root, head)
+            if release_result.is_success:
+                info["release"] = release_result.value
+        return r[t.ConfigurationMapping].ok(info)
+
     def open_pr_for_head(
         self,
         repo_root: Path,
@@ -130,69 +301,6 @@ class FlextInfraPrManager:
             info["pr_draft"] = pr.get("isDraft")
         return r[Mapping[str, t.Scalar]].ok(info)
 
-    def create(
-        self,
-        repo_root: Path,
-        base: str,
-        head: str,
-        title: str,
-        body: str,
-        *,
-        draft: bool = False,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
-        """Create a new PR or report existing one.
-
-        Args:
-            repo_root: Repository root directory.
-            base: Base branch name.
-            head: Head branch name.
-            title: PR title.
-            body: PR body.
-            draft: Whether to create as draft.
-
-        Returns:
-            FlextResult with creation status info.
-
-        """
-        existing_result = self.open_pr_for_head(repo_root, head)
-        if existing_result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(
-                existing_result.error or "failed to check existing PRs",
-            )
-
-        existing = existing_result.value
-        if existing:
-            return r[Mapping[str, t.Scalar]].ok({
-                "status": "already-open",
-                "pr_url": existing.get("url"),
-            })
-
-        command = [
-            "gh",
-            "pr",
-            "create",
-            "--base",
-            base,
-            "--head",
-            head,
-            "--title",
-            title,
-            "--body",
-            body,
-        ]
-        if draft:
-            command.append("--draft")
-
-        result = self._runner.capture(command, cwd=repo_root)
-        if result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(
-                result.error or "PR creation failed",
-            )
-        return r[Mapping[str, t.Scalar]].ok({
-            "status": "created",
-            "pr_url": result.value,
-        })
-
     def view(self, repo_root: Path, selector: str) -> FlextResult[str]:
         """View a PR by selector (number or branch name).
 
@@ -206,114 +314,6 @@ class FlextInfraPrManager:
         """
         return self._runner.capture(
             ["gh", "pr", "view", selector],
-            cwd=repo_root,
-        )
-
-    def checks(
-        self,
-        repo_root: Path,
-        selector: str,
-        *,
-        strict: bool = False,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
-        """Run PR checks.
-
-        Args:
-            repo_root: Repository root directory.
-            selector: PR number or head branch.
-            strict: If True, treat check failures as errors.
-
-        Returns:
-            FlextResult with check status info.
-
-        """
-        result = self._runner.run(
-            ["gh", "pr", "checks", selector],
-            cwd=repo_root,
-        )
-        if result.is_success:
-            return r[Mapping[str, t.Scalar]].ok({"status": "checks-passed"})
-        if not strict:
-            return r[Mapping[str, t.Scalar]].ok({"status": "checks-nonblocking"})
-        return r[Mapping[str, t.Scalar]].fail(result.error or "checks failed")
-
-    def merge(
-        self,
-        repo_root: Path,
-        selector: str,
-        head: str,
-        *,
-        method: str = "squash",
-        auto: bool = False,
-        delete_branch: bool = False,
-        release_on_merge: bool = True,
-    ) -> FlextResult[Mapping[str, t.Container]]:
-        """Merge a PR with retry on rebase.
-
-        Args:
-            repo_root: Repository root directory.
-            selector: PR number or head branch.
-            head: Head branch name.
-            method: Merge method (merge, rebase, squash).
-            auto: Enable auto-merge.
-            delete_branch: Delete branch after merge.
-            release_on_merge: Trigger release workflow on merge.
-
-        Returns:
-            FlextResult with merge status info.
-
-        """
-        if selector == head:
-            pr_result = self.open_pr_for_head(repo_root, head)
-            if pr_result.is_success and not pr_result.value:
-                return r[Mapping[str, t.Scalar]].ok({"status": "no-open-pr"})
-
-        merge_flag = {
-            "merge": "--merge",
-            "rebase": "--rebase",
-            "squash": "--squash",
-        }.get(method, "--squash")
-
-        command = ["gh", "pr", "merge", selector, merge_flag]
-        if auto:
-            command.append("--auto")
-        if delete_branch:
-            command.append("--delete-branch")
-
-        result = self._runner.run(command, cwd=repo_root)
-        if result.is_failure:
-            stderr = result.error or ""
-            if "not mergeable" in stderr:
-                update_result = self._runner.run(
-                    ["gh", "pr", "update-branch", selector, "--rebase"],
-                    cwd=repo_root,
-                )
-                if update_result.is_success:
-                    result = self._runner.run(command, cwd=repo_root)
-
-        if result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(result.error or "merge failed")
-
-        info: MutableMapping[str, t.Container] = {"status": "merged"}
-        if release_on_merge:
-            release_result = self._trigger_release_if_needed(repo_root, head)
-            if release_result.is_success:
-                info["release"] = release_result.value
-        return r[t.ConfigurationMapping].ok(info)
-
-    def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
-        """Close a PR.
-
-        Args:
-            repo_root: Repository root directory.
-            selector: PR number or head branch.
-
-        Returns:
-            FlextResult[bool] with True on success.
-
-        """
-        return self._runner.run_checked(
-            ["gh", "pr", "close", selector],
             cwd=repo_root,
         )
 

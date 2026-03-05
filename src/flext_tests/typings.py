@@ -657,6 +657,13 @@ class FlextTestsTypes(FlextTypes):
         """
 
         @staticmethod
+        def is_builder_dict(
+            value: FlextTestsTypes.Tests.TestContainerValue,
+        ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
+            """Check if value is a BuilderDict (dict with str keys)."""
+            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+
+        @staticmethod
         def is_builder_value(
             value: FlextTestsTypes.Tests.TestContainerValue | type,
         ) -> TypeGuard[FlextTestsTypes.Tests.TestContainerValue]:
@@ -668,6 +675,20 @@ class FlextTestsTypes(FlextTypes):
             if isinstance(value, BaseModel):
                 return True
             return isinstance(value, (list, dict))
+
+        @staticmethod
+        def is_configuration_dict(
+            value: FlextTestsTypes.Tests.TestContainerValue,
+        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]:
+            """Check if value is a ConfigurationDict."""
+            return isinstance(value, dict)
+
+        @staticmethod
+        def is_configuration_mapping(
+            value: FlextTestsTypes.Tests.TestContainerValue,
+        ) -> TypeGuard[m.ConfigMap]:
+            """Check if value is a ConfigurationMapping."""
+            return isinstance(value, Mapping)
 
         @staticmethod
         def is_flext_result(
@@ -690,6 +711,20 @@ class FlextTestsTypes(FlextTypes):
             return isinstance(value, (list, dict))
 
         @staticmethod
+        def is_mapping(
+            value: FlextTestsTypes.Tests.TestContainerValue,
+        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]:
+            """Check if value is a payload mapping."""
+            return isinstance(value, dict)
+
+        @staticmethod
+        def is_model_kind(
+            value: str,
+        ) -> TypeGuard[Literal["user", "config", "service", "entity", "value"]]:
+            """Check if value is a valid model kind literal."""
+            return value in {"user", "config", "service", "entity", "value"}
+
+        @staticmethod
         def is_sequence(
             value: FlextTestsTypes.Tests.TestContainerValue,
         ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.TestContainerValue]]:
@@ -698,20 +733,6 @@ class FlextTestsTypes(FlextTypes):
                 value,
                 str | bytes,
             )
-
-        @staticmethod
-        def is_mapping(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]:
-            """Check if value is a payload mapping."""
-            return isinstance(value, dict)
-
-        @staticmethod
-        def is_builder_dict(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
-            """Check if value is a BuilderDict (dict with str keys)."""
-            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
 
         @staticmethod
         def is_test_result_value(
@@ -725,27 +746,6 @@ class FlextTestsTypes(FlextTypes):
             if isinstance(value, (list, tuple)):
                 return True
             return isinstance(value, dict)
-
-        @staticmethod
-        def is_model_kind(
-            value: str,
-        ) -> TypeGuard[Literal["user", "config", "service", "entity", "value"]]:
-            """Check if value is a valid model kind literal."""
-            return value in {"user", "config", "service", "entity", "value"}
-
-        @staticmethod
-        def is_configuration_dict(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]:
-            """Check if value is a ConfigurationDict."""
-            return isinstance(value, dict)
-
-        @staticmethod
-        def is_configuration_mapping(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[m.ConfigMap]:
-            """Check if value is a ConfigurationMapping."""
-            return isinstance(value, Mapping)
 
 
 t = FlextTestsTypes

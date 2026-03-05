@@ -46,17 +46,17 @@ class FlextVersion:
     __url__ = _metadata.get("Home-Page", "")
 
     @classmethod
-    def get_version_string(cls) -> str:
-        """Get package version as human-readable string.
-
-        Returns the package version in string format suitable for display
-        and logging. Follows PEP 440 semantic versioning format.
-
-        Returns:
-            str: Version string (e.g., "1.0.0", "1.0.0rc1")
-
-        """
-        return cls.__version__
+    def get_package_info(cls) -> Mapping[str, str]:
+        """Get comprehensive package information dictionary."""
+        return {
+            "name": cls.__title__,
+            "version": cls.__version__,
+            "description": cls.__description__,
+            "author": cls.__author__,
+            "author_email": cls.__author_email__,
+            "license": cls.__license__,
+            "url": cls.__url__,
+        }
 
     @classmethod
     def get_version_info(cls) -> tuple[int | str, ...]:
@@ -73,22 +73,22 @@ class FlextVersion:
         return cls.__version_info__
 
     @classmethod
+    def get_version_string(cls) -> str:
+        """Get package version as human-readable string.
+
+        Returns the package version in string format suitable for display
+        and logging. Follows PEP 440 semantic versioning format.
+
+        Returns:
+            str: Version string (e.g., "1.0.0", "1.0.0rc1")
+
+        """
+        return cls.__version__
+
+    @classmethod
     def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
         """Check if current version meets minimum version requirement."""
         return cls.__version_info__ >= (major, minor, patch)
-
-    @classmethod
-    def get_package_info(cls) -> Mapping[str, str]:
-        """Get comprehensive package information dictionary."""
-        return {
-            "name": cls.__title__,
-            "version": cls.__version__,
-            "description": cls.__description__,
-            "author": cls.__author__,
-            "author_email": cls.__author_email__,
-            "license": cls.__license__,
-            "url": cls.__url__,
-        }
 
 
 __version__ = FlextVersion.__version__

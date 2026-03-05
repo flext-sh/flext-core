@@ -61,6 +61,14 @@ def _verify() -> None:
 
 
 class _DemoService(x):
+
+    def run_track_failure(self) -> str:
+        try:
+            with self.track("demo_failure"):
+                msg = "boom"
+                raise ValueError(msg)
+        except ValueError as exc:
+            return str(exc)
     def run_track_success(self) -> Mapping[str, t.Serializable]:
         with self.track("demo_success") as metrics:
             has_duration = "duration_ms" in metrics
@@ -70,23 +78,15 @@ class _DemoService(x):
             "operation_count": operation_count,
         }
 
-    def run_track_failure(self) -> str:
-        try:
-            with self.track("demo_failure"):
-                msg = "boom"
-                raise ValueError(msg)
-        except ValueError as exc:
-            return str(exc)
-
 
 class _HandlerLike(FlextSettings):
-    def handle(self, _data: object) -> object:
-        return _data
 
     @classmethod
     @override
     def validate(cls, value: object) -> _HandlerLike:
         return cls.model_validate(value)
+    def handle(self, _data: object) -> object:
+        return _data
 
 
 class _HandlerBad(FlextSettings):
@@ -94,20 +94,20 @@ class _HandlerBad(FlextSettings):
 
 
 class _ProtocolService:
-    def _protocol_name(self) -> str:
-        return "Service"
 
     def execute(self) -> r[dict[str, str]]:
         return r[dict[str, str]].ok({"ok": "yes"})
 
-    def validate_business_rules(self) -> r[bool]:
-        return r[bool].ok(True)
+    def get_service_info(self) -> Mapping[str, str]:
+        return {"name": "protocol-service"}
 
     def is_valid(self) -> bool:
         return True
 
-    def get_service_info(self) -> Mapping[str, str]:
-        return {"name": "protocol-service"}
+    def validate_business_rules(self) -> r[bool]:
+        return r[bool].ok(True)
+    def _protocol_name(self) -> str:
+        return "Service"
 
 
 class _GoodProcessor:

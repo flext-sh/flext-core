@@ -32,14 +32,16 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         """Initialize the command runner."""
         super().__init__()
 
-    def run_raw(
+    def capture(
         self,
         cmd: Sequence[str],
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[m.CommandOutput]:
-        """Run a command without enforcing zero exit code.
+    ) -> FlextResult[str]:
+        """Run a command and capture its stdout.
+
+        Equivalent to the legacy ``run_capture`` function.
 
         Args:
             cmd: Command line arguments as a sequence.
@@ -48,33 +50,19 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
             env: Optional environment override.
 
         Returns:
-            FlextResult containing raw command output and exit code.
+            FlextResult[str] with stripped stdout on success.
 
         """
-        try:
-            result = subprocess.run(
-                list(cmd),
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=timeout,
-                env=env,
-            )
-            output = m.CommandOutput(
-                stdout=result.stdout or "",
-                stderr=result.stderr or "",
-                exit_code=result.returncode,
-            )
-            return r[m.CommandOutput].ok(output)
-        except subprocess.TimeoutExpired as exc:
-            cmd_str = shlex.join(list(cmd))
-            timeout_text = str(exc.timeout)
-            return r[m.CommandOutput].fail(
-                f"command timeout after {timeout_text}s: {cmd_str}",
-            )
-        except (OSError, ValueError) as exc:
-            return r[m.CommandOutput].fail(f"command execution error: {exc}")
+        result = self.run(cmd, cwd=cwd, timeout=timeout, env=env)
+        if result.is_success:
+            value = result.value
+            return r[str].ok(value.stdout.strip())
+        return r[str].fail(result.error or "capture failed")
+
+    @override
+    def execute(self) -> FlextResult[m.CommandOutput]:
+        """Execute the service (required by FlextService base class)."""
+        return r[m.CommandOutput].ok(m.CommandOutput(stdout="", stderr="", exit_code=0))
 
     def run(
         self,
@@ -131,6 +119,50 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
             return r[bool].ok(True)
         return r[bool].fail(result.error or "command failed")
 
+    def run_raw(
+        self,
+        cmd: Sequence[str],
+        cwd: Path | None = None,
+        timeout: int | None = None,
+        env: Mapping[str, str] | None = None,
+    ) -> FlextResult[m.CommandOutput]:
+        """Run a command without enforcing zero exit code.
+
+        Args:
+            cmd: Command line arguments as a sequence.
+            cwd: Optional working directory for the command.
+            timeout: Optional timeout in seconds.
+            env: Optional environment override.
+
+        Returns:
+            FlextResult containing raw command output and exit code.
+
+        """
+        try:
+            result = subprocess.run(
+                list(cmd),
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=timeout,
+                env=env,
+            )
+            output = m.CommandOutput(
+                stdout=result.stdout or "",
+                stderr=result.stderr or "",
+                exit_code=result.returncode,
+            )
+            return r[m.CommandOutput].ok(output)
+        except subprocess.TimeoutExpired as exc:
+            cmd_str = shlex.join(list(cmd))
+            timeout_text = str(exc.timeout)
+            return r[m.CommandOutput].fail(
+                f"command timeout after {timeout_text}s: {cmd_str}",
+            )
+        except (OSError, ValueError) as exc:
+            return r[m.CommandOutput].fail(f"command execution error: {exc}")
+
     def run_to_file(
         self,
         cmd: Sequence[str],
@@ -173,38 +205,6 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
             return r[int].fail(f"command file output error: {exc}")
         except ValueError as exc:
             return r[int].fail(f"command execution error: {exc}")
-
-    def capture(
-        self,
-        cmd: Sequence[str],
-        cwd: Path | None = None,
-        timeout: int | None = None,
-        env: Mapping[str, str] | None = None,
-    ) -> FlextResult[str]:
-        """Run a command and capture its stdout.
-
-        Equivalent to the legacy ``run_capture`` function.
-
-        Args:
-            cmd: Command line arguments as a sequence.
-            cwd: Optional working directory for the command.
-            timeout: Optional timeout in seconds.
-            env: Optional environment override.
-
-        Returns:
-            FlextResult[str] with stripped stdout on success.
-
-        """
-        result = self.run(cmd, cwd=cwd, timeout=timeout, env=env)
-        if result.is_success:
-            value = result.value
-            return r[str].ok(value.stdout.strip())
-        return r[str].fail(result.error or "capture failed")
-
-    @override
-    def execute(self) -> FlextResult[m.CommandOutput]:
-        """Execute the service (required by FlextService base class)."""
-        return r[m.CommandOutput].ok(m.CommandOutput(stdout="", stderr="", exit_code=0))
 
 
 __all__ = ["FlextInfraCommandRunner"]

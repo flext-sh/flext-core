@@ -46,23 +46,73 @@ class FlextInfraPrWorkspaceManager:
         self._selector = selector or FlextInfraProjectSelector()
         self._reporting = reporting or FlextInfraReportingService()
 
-    def has_changes(self, repo_root: Path) -> r[bool]:
-        """Check if the repository has uncommitted changes.
+    @staticmethod
+    def _build_root_command(
+        repo_root: Path,
+        pr_args: Mapping[str, str],
+    ) -> list[str]:
+        command = [
+            "python",
+            "-m",
+            "flext_infra.github.pr",
+            "--repo-root",
+            str(repo_root),
+            "--action",
+            pr_args.get("action", "status"),
+            "--base",
+            pr_args.get("base", "main"),
+            "--draft",
+            pr_args.get("draft", "0"),
+            "--merge-method",
+            pr_args.get("merge_method", "squash"),
+            "--auto",
+            pr_args.get("auto", "0"),
+            "--delete-branch",
+            pr_args.get("delete_branch", "0"),
+            "--checks-strict",
+            pr_args.get("checks_strict", "0"),
+            "--release-on-merge",
+            pr_args.get("release_on_merge", "1"),
+        ]
+        for key in ("head", "number", "title", "body"):
+            value = pr_args.get(key, "")
+            if value:
+                command.extend([f"--{key}", value])
+        return command
 
-        Args:
-            repo_root: Repository root directory.
+    @staticmethod
+    def _build_subproject_command(
+        repo_root: Path,
+        pr_args: Mapping[str, str],
+    ) -> list[str]:
+        command = [
+            "make",
+            "-C",
+            str(repo_root),
+            "pr",
+            f"PR_ACTION={pr_args.get('action', 'status')}",
+            f"PR_BASE={pr_args.get('base', 'main')}",
+            f"PR_DRAFT={pr_args.get('draft', '0')}",
+            f"PR_MERGE_METHOD={pr_args.get('merge_method', 'squash')}",
+            f"PR_AUTO={pr_args.get('auto', '0')}",
+            f"PR_DELETE_BRANCH={pr_args.get('delete_branch', '0')}",
+            f"PR_CHECKS_STRICT={pr_args.get('checks_strict', '0')}",
+            f"PR_RELEASE_ON_MERGE={pr_args.get('release_on_merge', '1')}",
+        ]
+        for key, flag in (
+            ("head", "PR_HEAD"),
+            ("number", "PR_NUMBER"),
+            ("title", "PR_TITLE"),
+            ("body", "PR_BODY"),
+        ):
+            value = pr_args.get(key, "")
+            if value:
+                command.append(f"{flag}={value}")
+        return command
 
-        Returns:
-            r[bool] with True if changes exist.
-
-        """
-        result = self._runner.capture(
-            ["git", "status", "--porcelain"],
-            cwd=repo_root,
-        )
-        if result.is_failure:
-            return r[bool].fail(result.error or "git status failed")
-        return r[bool].ok(bool(result.value.strip()))
+    @staticmethod
+    def _repo_display_name(repo_root: Path, workspace_root: Path) -> str:
+        return workspace_root.name if repo_root == workspace_root else repo_root.name
 
     def checkout_branch(
         self,
@@ -176,61 +226,23 @@ class FlextInfraPrWorkspaceManager:
 
         return self._runner.run_checked(push_cmd, cwd=repo_root)
 
-    def run_pr(
-        self,
-        repo_root: Path,
-        workspace_root: Path,
-        pr_args: Mapping[str, str],
-    ) -> r[Mapping[str, t.Scalar]]:
-        """Execute a PR operation on a single repository.
+    def has_changes(self, repo_root: Path) -> r[bool]:
+        """Check if the repository has uncommitted changes.
 
         Args:
             repo_root: Repository root directory.
-            workspace_root: Workspace root directory.
-            pr_args: PR argument dictionary.
 
         Returns:
-            r with execution result info.
+            r[bool] with True if changes exist.
 
         """
-        display = self._repo_display_name(repo_root, workspace_root)
-        report_dir = self._reporting.get_report_dir(workspace_root, "workspace", "pr")
-        with contextlib.suppress(OSError):
-            report_dir.mkdir(parents=True, exist_ok=True)
-
-        log_path: Path | None = None
-        log_path = report_dir / f"{display}.log"
-
-        if repo_root == workspace_root:
-            command = self._build_root_command(repo_root, pr_args)
-        else:
-            command = self._build_subproject_command(repo_root, pr_args)
-
-        started = time.monotonic()
-        if log_path is not None:
-            to_file_result = self._runner.run_to_file(command, log_path)
-            if to_file_result.is_failure:
-                return r[Mapping[str, t.Scalar]].fail(
-                    to_file_result.error or "command execution error",
-                )
-            exit_code: int = to_file_result.value
-        else:
-            raw_result = self._runner.run_raw(command)
-            if raw_result.is_failure:
-                return r[Mapping[str, t.Scalar]].fail(
-                    raw_result.error or "command execution error",
-                )
-            exit_code = raw_result.value.exit_code
-
-        elapsed = int(time.monotonic() - started)
-        status = c.Status.OK if exit_code == 0 else c.Status.FAIL
-        return r[Mapping[str, t.Scalar]].ok({
-            "display": display,
-            "status": status,
-            "elapsed": elapsed,
-            "exit_code": exit_code,
-            "log_path": str(log_path) if log_path else None,
-        })
+        result = self._runner.capture(
+            ["git", "status", "--porcelain"],
+            cwd=repo_root,
+        )
+        if result.is_failure:
+            return r[bool].fail(result.error or "git status failed")
+        return r[bool].ok(bool(result.value.strip()))
 
     def orchestrate(
         self,
@@ -300,73 +312,61 @@ class FlextInfraPrWorkspaceManager:
             "results": results,
         })
 
-    @staticmethod
-    def _repo_display_name(repo_root: Path, workspace_root: Path) -> str:
-        return workspace_root.name if repo_root == workspace_root else repo_root.name
-
-    @staticmethod
-    def _build_root_command(
+    def run_pr(
+        self,
         repo_root: Path,
+        workspace_root: Path,
         pr_args: Mapping[str, str],
-    ) -> list[str]:
-        command = [
-            "python",
-            "-m",
-            "flext_infra.github.pr",
-            "--repo-root",
-            str(repo_root),
-            "--action",
-            pr_args.get("action", "status"),
-            "--base",
-            pr_args.get("base", "main"),
-            "--draft",
-            pr_args.get("draft", "0"),
-            "--merge-method",
-            pr_args.get("merge_method", "squash"),
-            "--auto",
-            pr_args.get("auto", "0"),
-            "--delete-branch",
-            pr_args.get("delete_branch", "0"),
-            "--checks-strict",
-            pr_args.get("checks_strict", "0"),
-            "--release-on-merge",
-            pr_args.get("release_on_merge", "1"),
-        ]
-        for key in ("head", "number", "title", "body"):
-            value = pr_args.get(key, "")
-            if value:
-                command.extend([f"--{key}", value])
-        return command
+    ) -> r[Mapping[str, t.Scalar]]:
+        """Execute a PR operation on a single repository.
 
-    @staticmethod
-    def _build_subproject_command(
-        repo_root: Path,
-        pr_args: Mapping[str, str],
-    ) -> list[str]:
-        command = [
-            "make",
-            "-C",
-            str(repo_root),
-            "pr",
-            f"PR_ACTION={pr_args.get('action', 'status')}",
-            f"PR_BASE={pr_args.get('base', 'main')}",
-            f"PR_DRAFT={pr_args.get('draft', '0')}",
-            f"PR_MERGE_METHOD={pr_args.get('merge_method', 'squash')}",
-            f"PR_AUTO={pr_args.get('auto', '0')}",
-            f"PR_DELETE_BRANCH={pr_args.get('delete_branch', '0')}",
-            f"PR_CHECKS_STRICT={pr_args.get('checks_strict', '0')}",
-            f"PR_RELEASE_ON_MERGE={pr_args.get('release_on_merge', '1')}",
-        ]
-        for key, flag in (
-            ("head", "PR_HEAD"),
-            ("number", "PR_NUMBER"),
-            ("title", "PR_TITLE"),
-            ("body", "PR_BODY"),
-        ):
-            value = pr_args.get(key, "")
-            if value:
-                command.append(f"{flag}={value}")
-        return command
+        Args:
+            repo_root: Repository root directory.
+            workspace_root: Workspace root directory.
+            pr_args: PR argument dictionary.
+
+        Returns:
+            r with execution result info.
+
+        """
+        display = self._repo_display_name(repo_root, workspace_root)
+        report_dir = self._reporting.get_report_dir(workspace_root, "workspace", "pr")
+        with contextlib.suppress(OSError):
+            report_dir.mkdir(parents=True, exist_ok=True)
+
+        log_path: Path | None = None
+        log_path = report_dir / f"{display}.log"
+
+        if repo_root == workspace_root:
+            command = self._build_root_command(repo_root, pr_args)
+        else:
+            command = self._build_subproject_command(repo_root, pr_args)
+
+        started = time.monotonic()
+        if log_path is not None:
+            to_file_result = self._runner.run_to_file(command, log_path)
+            if to_file_result.is_failure:
+                return r[Mapping[str, t.Scalar]].fail(
+                    to_file_result.error or "command execution error",
+                )
+            exit_code: int = to_file_result.value
+        else:
+            raw_result = self._runner.run_raw(command)
+            if raw_result.is_failure:
+                return r[Mapping[str, t.Scalar]].fail(
+                    raw_result.error or "command execution error",
+                )
+            exit_code = raw_result.value.exit_code
+
+        elapsed = int(time.monotonic() - started)
+        status = c.Status.OK if exit_code == 0 else c.Status.FAIL
+        return r[Mapping[str, t.Scalar]].ok({
+            "display": display,
+            "status": status,
+            "elapsed": elapsed,
+            "exit_code": exit_code,
+            "log_path": str(log_path) if log_path else None,
+        })
 
 
 __all__ = ["FlextInfraPrWorkspaceManager"]

@@ -68,21 +68,42 @@ class ContextManagementService(
     collections.abc advanced patterns, and Pydantic 2 StrEnum for type safety.
     """
 
-    @override
-    def execute(
-        self,
-    ) -> FlextResult[m.ConfigMap]:
-        """Execute comprehensive context demonstrations using railway pattern."""
-        self.logger.info("Starting context management demonstration")
+    @staticmethod
+    def _build_success_metadata(
+        _: m.ConfigMap,
+    ) -> m.ConfigMap:
+        """Build success metadata using centralized c (DRY)."""
+        # Iterate over enum members correctly
+        all_patterns = tuple(
+            member.value for member in c.Cqrs.HandlerType.__members__.values()
+        )
+        filtered_patterns = tuple(
+            pattern
+            for pattern in all_patterns
+            if pattern
+            in {
+                "factory_methods",
+                "railway_operations",
+                "validation_patterns",
+            }
+        )
 
-        return (
-            self
-            ._demonstrate_context_concepts()
-            .flat_map(lambda _: self._demonstrate_request_handling())
-            .flat_map(lambda _: self._demonstrate_threading_concepts())
-            .flat_map(lambda _: self._demonstrate_performance_tracking())
-            .flat_map(lambda _: self._demonstrate_correlation_tracking())
-            .map(self._build_success_metadata)
+        return m.ConfigMap(
+            root={
+                "patterns_demonstrated": filtered_patterns,
+                "context_features": (
+                    "thread_safety",
+                    "variable_isolation",
+                    "performance_tracking",
+                    "correlation_tracking",
+                ),
+                "architecture": "context_per_thread",
+                "scope_types": (
+                    c.Context.SCOPE_GLOBAL,
+                    c.Context.SCOPE_REQUEST,
+                    c.Context.SCOPE_SESSION,
+                ),
+            },
         )
 
     @staticmethod
@@ -117,6 +138,81 @@ class ContextManagementService(
 
             return r[m.ConfigMap].ok(
                 context_data,
+            )
+
+    @staticmethod
+    def _demonstrate_correlation_tracking() -> r[m.ConfigMap]:
+        """Demonstrate correlation ID tracking across service boundaries."""
+        print("\n=== Correlation Tracking ===")
+
+        correlation_id = u.generate("correlation")
+
+        with _request_scope(
+            operation_name="correlation_demo",
+            request_id=correlation_id,
+        ):
+            # Correlation ID should be available in context
+            context_correlation = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get()
+                or correlation_id
+            )
+
+            correlation_data: m.ConfigMap = m.ConfigMap(
+                root={
+                    "correlation_id": context_correlation,
+                    "prefix": c.Context.CORRELATION_ID_PREFIX,
+                    "length": c.Context.CORRELATION_ID_LENGTH,
+                },
+            )
+
+            print(f"✅ Correlation ID: {context_correlation}")
+            print("✅ Cross-service tracing support")
+            print("✅ Request-scoped variables")
+            print("✅ Distributed tracing ready")
+
+            return r[m.ConfigMap].ok(
+                correlation_data,
+            )
+
+    @staticmethod
+    def _demonstrate_performance_tracking() -> r[m.ConfigMap]:
+        """Demonstrate performance tracking with FlextContext.Performance."""
+        print("\n=== Performance Tracking ===")
+
+        operation_name = "performance_demo"
+
+        with FlextContext.Performance.timed_operation(
+            operation_name=operation_name,
+        ) as timing_metadata:
+            # Simulate work
+            start_time = FlextContext.Variables.OperationStartTime.get()
+            operation_metadata_raw = FlextContext.Variables.OperationMetadata.get()
+            operation_metadata: m.ConfigMap = (
+                operation_metadata_raw
+                if isinstance(operation_metadata_raw, m.ConfigMap)
+                else m.ConfigMap(root={})
+            )
+
+            performance_data: m.ConfigMap = m.ConfigMap(
+                root={
+                    "operation": operation_name,
+                    "start_time": (
+                        start_time.isoformat()
+                        if isinstance(start_time, datetime)
+                        else "unknown"
+                    ),
+                    "metadata": operation_metadata.root,
+                    "timing": timing_metadata,
+                },
+            )
+
+            print(f"✅ Operation: {operation_name}")
+            print(f"✅ Start time: {performance_data['start_time']}")
+            print("✅ Performance monitoring enabled")
+            print("✅ Timing metadata captured")
+
+            return r[m.ConfigMap].ok(
+                performance_data,
             )
 
     @staticmethod
@@ -220,117 +316,21 @@ class ContextManagementService(
             lambda _: threading_data,
         )
 
-    @staticmethod
-    def _demonstrate_performance_tracking() -> r[m.ConfigMap]:
-        """Demonstrate performance tracking with FlextContext.Performance."""
-        print("\n=== Performance Tracking ===")
+    @override
+    def execute(
+        self,
+    ) -> FlextResult[m.ConfigMap]:
+        """Execute comprehensive context demonstrations using railway pattern."""
+        self.logger.info("Starting context management demonstration")
 
-        operation_name = "performance_demo"
-
-        with FlextContext.Performance.timed_operation(
-            operation_name=operation_name,
-        ) as timing_metadata:
-            # Simulate work
-            start_time = FlextContext.Variables.OperationStartTime.get()
-            operation_metadata_raw = FlextContext.Variables.OperationMetadata.get()
-            operation_metadata: m.ConfigMap = (
-                operation_metadata_raw
-                if isinstance(operation_metadata_raw, m.ConfigMap)
-                else m.ConfigMap(root={})
-            )
-
-            performance_data: m.ConfigMap = m.ConfigMap(
-                root={
-                    "operation": operation_name,
-                    "start_time": (
-                        start_time.isoformat()
-                        if isinstance(start_time, datetime)
-                        else "unknown"
-                    ),
-                    "metadata": operation_metadata.root,
-                    "timing": timing_metadata,
-                },
-            )
-
-            print(f"✅ Operation: {operation_name}")
-            print(f"✅ Start time: {performance_data['start_time']}")
-            print("✅ Performance monitoring enabled")
-            print("✅ Timing metadata captured")
-
-            return r[m.ConfigMap].ok(
-                performance_data,
-            )
-
-    @staticmethod
-    def _demonstrate_correlation_tracking() -> r[m.ConfigMap]:
-        """Demonstrate correlation ID tracking across service boundaries."""
-        print("\n=== Correlation Tracking ===")
-
-        correlation_id = u.generate("correlation")
-
-        with _request_scope(
-            operation_name="correlation_demo",
-            request_id=correlation_id,
-        ):
-            # Correlation ID should be available in context
-            context_correlation = (
-                FlextContext.Variables.Correlation.CORRELATION_ID.get()
-                or correlation_id
-            )
-
-            correlation_data: m.ConfigMap = m.ConfigMap(
-                root={
-                    "correlation_id": context_correlation,
-                    "prefix": c.Context.CORRELATION_ID_PREFIX,
-                    "length": c.Context.CORRELATION_ID_LENGTH,
-                },
-            )
-
-            print(f"✅ Correlation ID: {context_correlation}")
-            print("✅ Cross-service tracing support")
-            print("✅ Request-scoped variables")
-            print("✅ Distributed tracing ready")
-
-            return r[m.ConfigMap].ok(
-                correlation_data,
-            )
-
-    @staticmethod
-    def _build_success_metadata(
-        _: m.ConfigMap,
-    ) -> m.ConfigMap:
-        """Build success metadata using centralized c (DRY)."""
-        # Iterate over enum members correctly
-        all_patterns = tuple(
-            member.value for member in c.Cqrs.HandlerType.__members__.values()
-        )
-        filtered_patterns = tuple(
-            pattern
-            for pattern in all_patterns
-            if pattern
-            in {
-                "factory_methods",
-                "railway_operations",
-                "validation_patterns",
-            }
-        )
-
-        return m.ConfigMap(
-            root={
-                "patterns_demonstrated": filtered_patterns,
-                "context_features": (
-                    "thread_safety",
-                    "variable_isolation",
-                    "performance_tracking",
-                    "correlation_tracking",
-                ),
-                "architecture": "context_per_thread",
-                "scope_types": (
-                    c.Context.SCOPE_GLOBAL,
-                    c.Context.SCOPE_REQUEST,
-                    c.Context.SCOPE_SESSION,
-                ),
-            },
+        return (
+            self
+            ._demonstrate_context_concepts()
+            .flat_map(lambda _: self._demonstrate_request_handling())
+            .flat_map(lambda _: self._demonstrate_threading_concepts())
+            .flat_map(lambda _: self._demonstrate_performance_tracking())
+            .flat_map(lambda _: self._demonstrate_correlation_tracking())
+            .map(self._build_success_metadata)
         )
 
 

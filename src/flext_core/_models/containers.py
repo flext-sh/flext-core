@@ -51,6 +51,9 @@ class FlextModelsContainers:
         def __contains__(self, key: str) -> bool:
             return key in self.root
 
+        def clear(self) -> None:
+            self.root.clear()
+
         def get(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
             return self.root.get(key, default)
 
@@ -60,15 +63,6 @@ class FlextModelsContainers:
         def keys(self) -> KeysView[str]:
             return self.root.keys()
 
-        def values(self) -> ValuesView[DictValueT]:
-            return self.root.values()
-
-        def update(self, other: Mapping[str, DictValueT]) -> None:
-            self.root.update(other)
-
-        def clear(self) -> None:
-            self.root.clear()
-
         def pop(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
             return self.root.pop(key, default)
 
@@ -77,6 +71,12 @@ class FlextModelsContainers:
 
         def setdefault(self, key: str, default: DictValueT) -> DictValueT:
             return self.root.setdefault(key, default)
+
+        def update(self, other: Mapping[str, DictValueT]) -> None:
+            self.root.update(other)
+
+        def values(self) -> ValuesView[DictValueT]:
+            return self.root.values()
 
     class Dict(_RootDictModel[t.ContainerValue]):
         """Generic dictionary container. Use ``m.Dict``."""

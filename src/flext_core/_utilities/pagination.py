@@ -28,6 +28,44 @@ class FlextUtilitiesPagination:
     """
 
     @staticmethod
+    def build_pagination_response(
+        pagination_data: Mapping[str, t.Container],
+        message: str | None = None,
+    ) -> r[Mapping[str, t.Container]]:
+        """Build paginated response dictionary.
+
+        Args:
+            pagination_data: Pagination data from prepare_pagination_data
+            message: Optional response message
+
+        Returns:
+            r with response dictionary or error
+
+        """
+        data = pagination_data.get("data")
+        pagination = pagination_data.get("pagination")
+
+        if data is None or pagination is None:
+            return r[t.ConfigurationMapping].fail(
+                "Invalid pagination data structure",
+            )
+
+        if not FlextRuntime.is_list_like(data):
+            data = str(data)
+        if not FlextRuntime.is_dict_like(pagination):
+            pagination = str(pagination)
+
+        response: Mapping[str, t.Container] = {
+            "data": data,
+            "pagination": pagination,
+        }
+
+        if message is not None:
+            response = {**response, "message": message}
+
+        return r[t.ConfigurationMapping].ok(response)
+
+    @staticmethod
     def extract_page_params(
         query_params: Mapping[str, str],
         *,
@@ -72,34 +110,44 @@ class FlextUtilitiesPagination:
             return r[tuple[int, int]].fail(f"Invalid page parameters: {e}")
 
     @staticmethod
-    def validate_pagination_params(
-        *,
-        page: int,
-        page_size: int | None,
-        max_page_size: int,
-    ) -> r[Mapping[str, int]]:
-        """Validate pagination parameters.
+    def extract_pagination_config(
+        config: BaseModel | t.ConfigurationMapping | None,
+    ) -> Mapping[str, int]:
+        """Extract pagination configuration values - no fallbacks.
 
         Args:
-            page: Page number
-            page_size: Page size or None for default
-            max_page_size: Maximum allowed page size
+            config: Configuration object or None
 
         Returns:
-            r with validated parameters or error
+            Dictionary with pagination config values
 
         """
-        if page < 1:
-            return r[Mapping[str, int]].fail("Page must be >= 1")
+        # Default values
+        default_page_size = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
+        max_page_size = c.Pagination.MAX_PAGE_SIZE_EXAMPLE
 
-        effective_page_size = page_size if page_size is not None else 20
+        if config is not None:
+            # Use getattr to safely access attributes without type narrowing issues
+            default_page_size_attr = getattr(config, "default_page_size", None)
+            if default_page_size_attr is not None:
+                match default_page_size_attr:
+                    case int() as page_size if page_size > 0:
+                        default_page_size = page_size
+                    case _:
+                        pass
 
-        if effective_page_size < 1:
-            return r[Mapping[str, int]].fail("Page size must be >= 1")
-        if effective_page_size > max_page_size:
-            return r[Mapping[str, int]].fail(f"Page size must be <= {max_page_size}")
+            max_page_size_attr = getattr(config, "max_page_size", None)
+            if max_page_size_attr is not None:
+                match max_page_size_attr:
+                    case int() as page_size if page_size > 0:
+                        max_page_size = page_size
+                    case _:
+                        pass
 
-        return r[Mapping[str, int]].ok({"page": page, "page_size": effective_page_size})
+        return {
+            "default_page_size": default_page_size,
+            "max_page_size": max_page_size,
+        }
 
     @staticmethod
     def prepare_pagination_data(
@@ -155,82 +203,34 @@ class FlextUtilitiesPagination:
         })
 
     @staticmethod
-    def build_pagination_response(
-        pagination_data: Mapping[str, t.Container],
-        message: str | None = None,
-    ) -> r[Mapping[str, t.Container]]:
-        """Build paginated response dictionary.
+    def validate_pagination_params(
+        *,
+        page: int,
+        page_size: int | None,
+        max_page_size: int,
+    ) -> r[Mapping[str, int]]:
+        """Validate pagination parameters.
 
         Args:
-            pagination_data: Pagination data from prepare_pagination_data
-            message: Optional response message
+            page: Page number
+            page_size: Page size or None for default
+            max_page_size: Maximum allowed page size
 
         Returns:
-            r with response dictionary or error
+            r with validated parameters or error
 
         """
-        data = pagination_data.get("data")
-        pagination = pagination_data.get("pagination")
+        if page < 1:
+            return r[Mapping[str, int]].fail("Page must be >= 1")
 
-        if data is None or pagination is None:
-            return r[t.ConfigurationMapping].fail(
-                "Invalid pagination data structure",
-            )
+        effective_page_size = page_size if page_size is not None else 20
 
-        if not FlextRuntime.is_list_like(data):
-            data = str(data)
-        if not FlextRuntime.is_dict_like(pagination):
-            pagination = str(pagination)
+        if effective_page_size < 1:
+            return r[Mapping[str, int]].fail("Page size must be >= 1")
+        if effective_page_size > max_page_size:
+            return r[Mapping[str, int]].fail(f"Page size must be <= {max_page_size}")
 
-        response: Mapping[str, t.Container] = {
-            "data": data,
-            "pagination": pagination,
-        }
-
-        if message is not None:
-            response = {**response, "message": message}
-
-        return r[t.ConfigurationMapping].ok(response)
-
-    @staticmethod
-    def extract_pagination_config(
-        config: BaseModel | t.ConfigurationMapping | None,
-    ) -> Mapping[str, int]:
-        """Extract pagination configuration values - no fallbacks.
-
-        Args:
-            config: Configuration object or None
-
-        Returns:
-            Dictionary with pagination config values
-
-        """
-        # Default values
-        default_page_size = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
-        max_page_size = c.Pagination.MAX_PAGE_SIZE_EXAMPLE
-
-        if config is not None:
-            # Use getattr to safely access attributes without type narrowing issues
-            default_page_size_attr = getattr(config, "default_page_size", None)
-            if default_page_size_attr is not None:
-                match default_page_size_attr:
-                    case int() as page_size if page_size > 0:
-                        default_page_size = page_size
-                    case _:
-                        pass
-
-            max_page_size_attr = getattr(config, "max_page_size", None)
-            if max_page_size_attr is not None:
-                match max_page_size_attr:
-                    case int() as page_size if page_size > 0:
-                        max_page_size = page_size
-                    case _:
-                        pass
-
-        return {
-            "default_page_size": default_page_size,
-            "max_page_size": max_page_size,
-        }
+        return r[Mapping[str, int]].ok({"page": page, "page_size": effective_page_size})
 
 
 __all__ = [

@@ -42,6 +42,47 @@ class FlextInfraReportingService(FlextService[Path]):
     Structurally satisfies ``InfraProtocols.ReporterProtocol``.
     """
 
+    def create_latest_symlink(self, report_dir: Path, run_id: str) -> FlextResult[Path]:
+        """Create or update a ``latest`` symlink pointing to *run_id*.
+
+        Args:
+            report_dir: Base report directory (e.g. ``.reports/tests``).
+            run_id: The run-specific subdirectory name.
+
+        Returns:
+            FlextResult[Path] with the symlink path.
+
+        """
+        link = report_dir / "latest"
+        try:
+            if link.is_symlink() or link.exists():
+                link.unlink()
+            link.symlink_to(run_id)
+            return r[Path].ok(link)
+        except OSError as exc:
+            return r[Path].fail(f"failed to create latest symlink: {exc}")
+
+    def ensure_report_dir(
+        self, root: Path | str, scope: str, verb: str
+    ) -> FlextResult[Path]:
+        """Ensure report directory exists, creating it if necessary.
+
+        Args:
+            root: Workspace or project root.
+            scope: ``"project"`` or ``"workspace"``.
+            verb: Action verb (check, test, validate, docs, …).
+
+        Returns:
+            FlextResult[Path] with the report directory path.
+
+        """
+        try:
+            report_dir = self.get_report_dir(root, scope, verb)
+            report_dir.mkdir(parents=True, exist_ok=True)
+            return r[Path].ok(report_dir)
+        except OSError as exc:
+            return r[Path].fail(f"failed to create report directory: {exc}")
+
     @override
     def execute(self) -> FlextResult[Path]:
         """Execute reporting (default: empty path).
@@ -86,47 +127,6 @@ class FlextInfraReportingService(FlextService[Path]):
 
         """
         return self.get_report_dir(root, scope, verb) / filename
-
-    def ensure_report_dir(
-        self, root: Path | str, scope: str, verb: str
-    ) -> FlextResult[Path]:
-        """Ensure report directory exists, creating it if necessary.
-
-        Args:
-            root: Workspace or project root.
-            scope: ``"project"`` or ``"workspace"``.
-            verb: Action verb (check, test, validate, docs, …).
-
-        Returns:
-            FlextResult[Path] with the report directory path.
-
-        """
-        try:
-            report_dir = self.get_report_dir(root, scope, verb)
-            report_dir.mkdir(parents=True, exist_ok=True)
-            return r[Path].ok(report_dir)
-        except OSError as exc:
-            return r[Path].fail(f"failed to create report directory: {exc}")
-
-    def create_latest_symlink(self, report_dir: Path, run_id: str) -> FlextResult[Path]:
-        """Create or update a ``latest`` symlink pointing to *run_id*.
-
-        Args:
-            report_dir: Base report directory (e.g. ``.reports/tests``).
-            run_id: The run-specific subdirectory name.
-
-        Returns:
-            FlextResult[Path] with the symlink path.
-
-        """
-        link = report_dir / "latest"
-        try:
-            if link.is_symlink() or link.exists():
-                link.unlink()
-            link.symlink_to(run_id)
-            return r[Path].ok(link)
-        except OSError as exc:
-            return r[Path].fail(f"failed to create latest symlink: {exc}")
 
 
 __all__ = ["KNOWN_VERBS", "FlextInfraReportingService"]

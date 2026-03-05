@@ -160,10 +160,58 @@ class FlextInfraOutput(BaseModel):
         else:
             super().__delattr__(name)
 
-    def _write(self, message: str) -> None:
-        """Write a line to the output stream with newline."""
-        self.stream.write(message + "\n")
-        self.stream.flush()
+    def error(self, message: str, detail: str | None = None) -> None:
+        """Write an error message in red.
+
+        Args:
+            message: Primary error message.
+            detail: Optional detail text shown on the next line.
+
+        """
+        self._write(f"{self._red}ERROR{self._reset}: {message}")
+        if detail:
+            self._write(f"  {detail}")
+
+    def header(self, title: str) -> None:
+        """Write a bold section header.
+
+        Args:
+            title: Section title text.
+
+        """
+        sep = "═" if self.use_unicode else "="
+        line = sep * 60
+        self._write("")
+        self._write(f"{self._bold}{line}{self._reset}")
+        self._write(f"{self._bold}  {title}{self._reset}")
+        self._write(f"{self._bold}{line}{self._reset}")
+
+    def info(self, message: str) -> None:
+        """Write an informational message in blue.
+
+        Args:
+            message: Information text.
+
+        """
+        self._write(f"{self._blue}INFO{self._reset}: {message}")
+
+    def progress(self, index: int, total: int, project: str, verb: str) -> None:
+        """Write a progress indicator line.
+
+        Example::
+
+            [01/33] flext-core check ...
+
+        Args:
+            index: Current 1-based index.
+            total: Total number of items.
+            project: Project identifier.
+            verb: Operation name.
+
+        """
+        width = len(str(total))
+        counter = f"[{index:0{width}d}/{total:0{width}d}]"
+        self._write(f"{self._bold}{counter}{self._reset} {project} {verb} ...")
 
     def status(
         self,
@@ -244,18 +292,6 @@ class FlextInfraOutput(BaseModel):
         line = "  ".join(parts) + f"  {elapsed_str}"
         self._write(line)
 
-    def error(self, message: str, detail: str | None = None) -> None:
-        """Write an error message in red.
-
-        Args:
-            message: Primary error message.
-            detail: Optional detail text shown on the next line.
-
-        """
-        self._write(f"{self._red}ERROR{self._reset}: {message}")
-        if detail:
-            self._write(f"  {detail}")
-
     def warning(self, message: str) -> None:
         """Write a warning message in yellow.
 
@@ -265,46 +301,10 @@ class FlextInfraOutput(BaseModel):
         """
         self._write(f"{self._yellow}WARN{self._reset}: {message}")
 
-    def info(self, message: str) -> None:
-        """Write an informational message in blue.
-
-        Args:
-            message: Information text.
-
-        """
-        self._write(f"{self._blue}INFO{self._reset}: {message}")
-
-    def header(self, title: str) -> None:
-        """Write a bold section header.
-
-        Args:
-            title: Section title text.
-
-        """
-        sep = "═" if self.use_unicode else "="
-        line = sep * 60
-        self._write("")
-        self._write(f"{self._bold}{line}{self._reset}")
-        self._write(f"{self._bold}  {title}{self._reset}")
-        self._write(f"{self._bold}{line}{self._reset}")
-
-    def progress(self, index: int, total: int, project: str, verb: str) -> None:
-        """Write a progress indicator line.
-
-        Example::
-
-            [01/33] flext-core check ...
-
-        Args:
-            index: Current 1-based index.
-            total: Total number of items.
-            project: Project identifier.
-            verb: Operation name.
-
-        """
-        width = len(str(total))
-        counter = f"[{index:0{width}d}/{total:0{width}d}]"
-        self._write(f"{self._bold}{counter}{self._reset} {project} {verb} ...")
+    def _write(self, message: str) -> None:
+        """Write a line to the output stream with newline."""
+        self.stream.write(message + "\n")
+        self.stream.flush()
 
 
 output: Final[FlextInfraOutput] = FlextInfraOutput()

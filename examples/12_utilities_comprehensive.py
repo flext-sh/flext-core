@@ -58,50 +58,144 @@ TEST_DATA: m.ConfigMap = m.ConfigMap(
 class UtilitiesService(FlextService[m.ConfigMap]):
     """Service demonstrating u comprehensive toolkit."""
 
-    @override
-    def execute(
-        self,
-    ) -> FlextResult[m.ConfigMap]:
-        """Execute comprehensive utilities demonstrations."""
-        print("Starting utilities demonstration")
+    @staticmethod
+    def _demonstrate_caching() -> None:
+        """Show caching utilities."""
+        print("\n=== Caching Utilities ===")
 
-        try:
-            self._demonstrate_validation()
-            self._demonstrate_id_generation()
-            self._demonstrate_conversions()
-            self._demonstrate_caching()
-            self._demonstrate_reliability()
-            self._demonstrate_string_parsing()
-            self._demonstrate_collection_operations()
-            self._demonstrate_type_checking()
+        # Cache key generation using normalization
+        test_data_normalized = u.normalize_component(TEST_DATA)
+        print(f"✅ Data normalization: {type(test_data_normalized).__name__}")
 
-            return FlextResult[m.ConfigMap].ok(
-                m.ConfigMap(
-                    root={
-                        "utilities_demonstrated": [
-                            "validation",
-                            "id_generation",
-                            "conversions",
-                            "caching",
-                            "reliability",
-                            "string_parsing",
-                            "collection",
-                            "type_checking",
-                        ],
-                        "utility_categories": 8,
-                        "flext_utilities_features": [
-                            "type_safety",
-                            "error_handling",
-                            "performance",
-                            "reliability",
-                        ],
-                    },
-                ),
-            )
+        # Sort dictionary keys for consistent cache keys (DRY)
+        sorted_data = u.sort_dict_keys(TEST_DATA)
+        if isinstance(sorted_data, Mapping):
+            print(f"✅ Sorted keys: {list(sorted_data.keys())}")
 
-        except Exception as e:
-            error_msg = f"Utilities demonstration failed: {e}"
-            return FlextResult[m.ConfigMap].fail(error_msg)
+        # Clear object cache
+        clear_result = u.clear_object_cache(TEST_DATA)
+        print(f"✅ Cache clearing: {clear_result.is_success}")
+
+    @staticmethod
+    def _demonstrate_collection_operations() -> None:
+        """Show collection operation utilities."""
+        print("\n=== Collection Operations ===")
+
+        # Parse sequence of StrEnum values using railway pattern (DRY)
+        u.parse_sequence(
+            c.Cqrs.HandlerType,
+            ["validation", "id_generation"],
+        ).map(
+            lambda parsed_enums: print(
+                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}",
+            ),
+        )
+
+    @staticmethod
+    def _demonstrate_conversions() -> None:
+        """Show type conversion utilities."""
+        print("\n=== Type Conversions ===")
+
+        # String parsing utilities
+        number_str = str(TEST_DATA["number_str"])
+        float_str = str(TEST_DATA["float_str"])
+
+        # Parse delimited strings using railway pattern (DRY)
+        parser = u.Parser()
+        parser.parse_delimited("a,b,c", ",").map(
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
+        )
+
+        # String to number conversion concepts
+        print(f"✅ String to int concept: '{number_str}' → int")
+        print(f"✅ String to float concept: '{float_str}' → float")
+        print("✅ Safe conversion with error handling available")
+
+    @staticmethod
+    def _demonstrate_id_generation() -> None:
+        """Show ID generation utilities using u."""
+        print("\n=== ID Generation ===")
+
+        # Correlation ID using u
+        correlation_id = u.generate("correlation")
+        print(
+            f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
+        )
+
+        # Short ID using u
+        short_id = u.generate_short_id()
+        print(
+            f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
+        )
+
+        # Entity ID
+        entity_id = u.generate("entity")
+        print(f"✅ Entity ID: {entity_id[:16]}...")
+
+        # Batch ID
+        batch_id = u.generate("batch", parts=(100,))
+        print(f"✅ Batch ID: {batch_id[:20]}...")
+
+        # Transaction ID
+        transaction_id = u.generate("transaction")
+        print(f"✅ Transaction ID: {transaction_id[:20]}...")
+
+    @staticmethod
+    def _demonstrate_reliability() -> None:
+        """Show reliability utilities."""
+        print("\n=== Reliability Patterns ===")
+
+        # Retry logic
+        def operation() -> FlextResult[str]:
+            return FlextResult[str].ok("success")
+
+        retry_result: FlextResult[str] = u.retry(
+            operation,
+            max_attempts=3,
+            delay_seconds=0.1,
+        )
+        print(f"✅ Retry logic: {retry_result.is_success}")
+
+        # Timeout handling
+        timeout_result = u.with_timeout(
+            operation,
+            timeout_seconds=1.0,
+        )
+        print(f"✅ Timeout handling: {timeout_result.is_success}")
+
+        print("✅ Circuit breaker patterns available")
+        print("✅ Retry logic available")
+
+    @staticmethod
+    def _demonstrate_string_parsing() -> None:
+        """Show string parsing utilities."""
+        print("\n=== String Parsing ===")
+
+        # Parse delimited strings using railway pattern (DRY)
+        parser = u.Parser()
+        # Use m.CollectionsParseOptions instead of private import
+        options = m.CollectionsParseOptions(strip=True, remove_empty=True)
+        parser.parse_delimited("a, b, c", ",", options=options).map(
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
+        )
+
+        # Split with escape handling using railway pattern (DRY)
+        parser.split_on_char_with_escape(
+            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com",
+            ",",
+            "\\",
+        ).map(
+            lambda split: print(f"✅ Escaped split: {split}"),
+        )
+
+    @staticmethod
+    def _demonstrate_type_checking() -> None:
+        """Show type checking utilities."""
+        print("\n=== Type Checking ===")
+
+        # Compute accepted message types for a handler class
+        message_types = u.compute_accepted_message_types(UtilitiesService)
+        print(f"✅ Message types computed: {len(message_types)} types")
 
     @staticmethod
     def _demonstrate_validation() -> None:
@@ -154,144 +248,50 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         )
         print(f"✅ Hostname validation: {hostname} -> {hostname_result.is_success}")
 
-    @staticmethod
-    def _demonstrate_id_generation() -> None:
-        """Show ID generation utilities using u."""
-        print("\n=== ID Generation ===")
+    @override
+    def execute(
+        self,
+    ) -> FlextResult[m.ConfigMap]:
+        """Execute comprehensive utilities demonstrations."""
+        print("Starting utilities demonstration")
 
-        # Correlation ID using u
-        correlation_id = u.generate("correlation")
-        print(
-            f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
-        )
+        try:
+            self._demonstrate_validation()
+            self._demonstrate_id_generation()
+            self._demonstrate_conversions()
+            self._demonstrate_caching()
+            self._demonstrate_reliability()
+            self._demonstrate_string_parsing()
+            self._demonstrate_collection_operations()
+            self._demonstrate_type_checking()
 
-        # Short ID using u
-        short_id = u.generate_short_id()
-        print(
-            f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
-        )
+            return FlextResult[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "utilities_demonstrated": [
+                            "validation",
+                            "id_generation",
+                            "conversions",
+                            "caching",
+                            "reliability",
+                            "string_parsing",
+                            "collection",
+                            "type_checking",
+                        ],
+                        "utility_categories": 8,
+                        "flext_utilities_features": [
+                            "type_safety",
+                            "error_handling",
+                            "performance",
+                            "reliability",
+                        ],
+                    },
+                ),
+            )
 
-        # Entity ID
-        entity_id = u.generate("entity")
-        print(f"✅ Entity ID: {entity_id[:16]}...")
-
-        # Batch ID
-        batch_id = u.generate("batch", parts=(100,))
-        print(f"✅ Batch ID: {batch_id[:20]}...")
-
-        # Transaction ID
-        transaction_id = u.generate("transaction")
-        print(f"✅ Transaction ID: {transaction_id[:20]}...")
-
-    @staticmethod
-    def _demonstrate_conversions() -> None:
-        """Show type conversion utilities."""
-        print("\n=== Type Conversions ===")
-
-        # String parsing utilities
-        number_str = str(TEST_DATA["number_str"])
-        float_str = str(TEST_DATA["float_str"])
-
-        # Parse delimited strings using railway pattern (DRY)
-        parser = u.Parser()
-        parser.parse_delimited("a,b,c", ",").map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
-        )
-
-        # String to number conversion concepts
-        print(f"✅ String to int concept: '{number_str}' → int")
-        print(f"✅ String to float concept: '{float_str}' → float")
-        print("✅ Safe conversion with error handling available")
-
-    @staticmethod
-    def _demonstrate_caching() -> None:
-        """Show caching utilities."""
-        print("\n=== Caching Utilities ===")
-
-        # Cache key generation using normalization
-        test_data_normalized = u.normalize_component(TEST_DATA)
-        print(f"✅ Data normalization: {type(test_data_normalized).__name__}")
-
-        # Sort dictionary keys for consistent cache keys (DRY)
-        sorted_data = u.sort_dict_keys(TEST_DATA)
-        if isinstance(sorted_data, Mapping):
-            print(f"✅ Sorted keys: {list(sorted_data.keys())}")
-
-        # Clear object cache
-        clear_result = u.clear_object_cache(TEST_DATA)
-        print(f"✅ Cache clearing: {clear_result.is_success}")
-
-    @staticmethod
-    def _demonstrate_reliability() -> None:
-        """Show reliability utilities."""
-        print("\n=== Reliability Patterns ===")
-
-        # Retry logic
-        def operation() -> FlextResult[str]:
-            return FlextResult[str].ok("success")
-
-        retry_result: FlextResult[str] = u.retry(
-            operation,
-            max_attempts=3,
-            delay_seconds=0.1,
-        )
-        print(f"✅ Retry logic: {retry_result.is_success}")
-
-        # Timeout handling
-        timeout_result = u.with_timeout(
-            operation,
-            timeout_seconds=1.0,
-        )
-        print(f"✅ Timeout handling: {timeout_result.is_success}")
-
-        print("✅ Circuit breaker patterns available")
-        print("✅ Retry logic available")
-
-    @staticmethod
-    def _demonstrate_string_parsing() -> None:
-        """Show string parsing utilities."""
-        print("\n=== String Parsing ===")
-
-        # Parse delimited strings using railway pattern (DRY)
-        parser = u.Parser()
-        # Use m.CollectionsParseOptions instead of private import
-        options = m.CollectionsParseOptions(strip=True, remove_empty=True)
-        parser.parse_delimited("a, b, c", ",", options=options).map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
-        )
-
-        # Split with escape handling using railway pattern (DRY)
-        parser.split_on_char_with_escape(
-            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com",
-            ",",
-            "\\",
-        ).map(
-            lambda split: print(f"✅ Escaped split: {split}"),
-        )
-
-    @staticmethod
-    def _demonstrate_collection_operations() -> None:
-        """Show collection operation utilities."""
-        print("\n=== Collection Operations ===")
-
-        # Parse sequence of StrEnum values using railway pattern (DRY)
-        u.parse_sequence(
-            c.Cqrs.HandlerType,
-            ["validation", "id_generation"],
-        ).map(
-            lambda parsed_enums: print(
-                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}",
-            ),
-        )
-
-    @staticmethod
-    def _demonstrate_type_checking() -> None:
-        """Show type checking utilities."""
-        print("\n=== Type Checking ===")
-
-        # Compute accepted message types for a handler class
-        message_types = u.compute_accepted_message_types(UtilitiesService)
-        print(f"✅ Message types computed: {len(message_types)} types")
+        except Exception as e:
+            error_msg = f"Utilities demonstration failed: {e}"
+            return FlextResult[m.ConfigMap].fail(error_msg)
 
 
 def demonstrate_utility_composition() -> None:

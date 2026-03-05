@@ -23,107 +23,6 @@ class FlextValidatorSettings:
     """
 
     @classmethod
-    def scan(
-        cls,
-        files: list[Path],
-        approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
-        """Scan pyproject.toml files for config violations.
-
-        Args:
-            files: List of pyproject.toml files to scan
-            approved_exceptions: Dict mapping rule IDs to list of approved file patterns
-
-        Returns:
-            FlextResult with ScanResult containing all violations found
-
-        """
-        violations: list[m.Tests.Validator.Violation] = []
-        approved = approved_exceptions or {}
-
-        for file_path in files:
-            # Only scan pyproject.toml files
-            if file_path.name != "pyproject.toml":
-                continue
-            file_violations = cls._scan_file(file_path, approved)
-            violations.extend(file_violations)
-
-        return r[m.Tests.Validator.ScanResult].ok(
-            m.Tests.Validator.ScanResult.create(
-                validator_name=c.Tests.Validator.Defaults.VALIDATOR_CONFIG,
-                files_scanned=len(files),
-                violations=violations,
-            ),
-        )
-
-    @classmethod
-    def validate(
-        cls,
-        pyproject_path: Path,
-        approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
-        """Validate a single pyproject.toml file.
-
-        Args:
-            pyproject_path: Path to pyproject.toml file
-            approved_exceptions: Dict mapping rule IDs to list of approved file patterns
-
-        Returns:
-            FlextResult with ScanResult containing all violations found
-
-        """
-        return cls.scan([pyproject_path], approved_exceptions)
-
-    @classmethod
-    def _scan_file(
-        cls,
-        file_path: Path,
-        approved: Mapping[str, list[str]],
-    ) -> list[m.Tests.Validator.Violation]:
-        """Scan a single pyproject.toml for config violations."""
-        violations: list[m.Tests.Validator.Violation] = []
-
-        try:
-            content = file_path.read_text(encoding="utf-8")
-            data = tomllib.loads(content)
-        except (OSError, tomllib.TOMLDecodeError):
-            return violations
-
-        lines = content.splitlines()
-
-        # Check mypy settings
-        violations.extend(cls._check_mypy_settings(file_path, data, lines, approved))
-
-        # Check ruff settings
-        violations.extend(cls._check_ruff_settings(file_path, data, lines, approved))
-
-        # Check pyright settings
-        violations.extend(cls._check_pyright_settings(file_path, data, lines, approved))
-
-        return violations
-
-    @classmethod
-    def _create_config_violation(
-        cls,
-        file_path: Path,
-        line_number: int,
-        rule_id: str,
-        code_snippet: str,
-        extra_desc: str = "",
-    ) -> m.Tests.Validator.Violation:
-        """Create a config violation (config files have no lines list)."""
-        severity, desc = c.Tests.Validator.Rules.get(rule_id)
-        description = f"{desc}: {extra_desc}" if extra_desc else desc
-        return m.Tests.Validator.Violation(
-            file_path=file_path,
-            line_number=line_number,
-            rule_id=rule_id,
-            severity=severity,
-            description=description,
-            code_snippet=code_snippet,
-        )
-
-    @classmethod
     def _check_mypy_settings(
         cls,
         file_path: Path,
@@ -230,6 +129,42 @@ class FlextValidatorSettings:
         return violations
 
     @classmethod
+    def _check_pyright_settings(
+        cls,
+        file_path: Path,
+        data: Mapping[str, t.Tests.ContainerValue],
+        lines: list[str],
+        approved: Mapping[str, list[str]],
+    ) -> list[m.Tests.Validator.Violation]:
+        """Check pyright configuration for violations."""
+        violations: list[m.Tests.Validator.Violation] = []
+
+        tool_data = data.get("tool", {})
+        if not isinstance(tool_data, dict):
+            return violations
+        pyright_config_raw = tool_data.get("pyright", {})
+        if not isinstance(pyright_config_raw, dict):
+            return violations
+        pyright_config = pyright_config_raw
+
+        # Check reportPrivateUsage
+        if (
+            not u.Tests.Validator.is_approved("CONFIG-005", file_path, approved)
+            and pyright_config.get("reportPrivateUsage") is False
+        ):
+            line_num = u.Tests.Validator.find_line_number(lines, "reportPrivateUsage")
+            violations.append(
+                cls._create_config_violation(
+                    file_path,
+                    line_num,
+                    "CONFIG-005",
+                    "reportPrivateUsage = false",
+                ),
+            )
+
+        return violations
+
+    @classmethod
     def _check_ruff_settings(
         cls,
         file_path: Path,
@@ -280,40 +215,105 @@ class FlextValidatorSettings:
         return violations
 
     @classmethod
-    def _check_pyright_settings(
+    def _create_config_violation(
         cls,
         file_path: Path,
-        data: Mapping[str, t.Tests.ContainerValue],
-        lines: list[str],
+        line_number: int,
+        rule_id: str,
+        code_snippet: str,
+        extra_desc: str = "",
+    ) -> m.Tests.Validator.Violation:
+        """Create a config violation (config files have no lines list)."""
+        severity, desc = c.Tests.Validator.Rules.get(rule_id)
+        description = f"{desc}: {extra_desc}" if extra_desc else desc
+        return m.Tests.Validator.Violation(
+            file_path=file_path,
+            line_number=line_number,
+            rule_id=rule_id,
+            severity=severity,
+            description=description,
+            code_snippet=code_snippet,
+        )
+
+    @classmethod
+    def _scan_file(
+        cls,
+        file_path: Path,
         approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
-        """Check pyright configuration for violations."""
+        """Scan a single pyproject.toml for config violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
-        tool_data = data.get("tool", {})
-        if not isinstance(tool_data, dict):
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            data = tomllib.loads(content)
+        except (OSError, tomllib.TOMLDecodeError):
             return violations
-        pyright_config_raw = tool_data.get("pyright", {})
-        if not isinstance(pyright_config_raw, dict):
-            return violations
-        pyright_config = pyright_config_raw
 
-        # Check reportPrivateUsage
-        if (
-            not u.Tests.Validator.is_approved("CONFIG-005", file_path, approved)
-            and pyright_config.get("reportPrivateUsage") is False
-        ):
-            line_num = u.Tests.Validator.find_line_number(lines, "reportPrivateUsage")
-            violations.append(
-                cls._create_config_violation(
-                    file_path,
-                    line_num,
-                    "CONFIG-005",
-                    "reportPrivateUsage = false",
-                ),
-            )
+        lines = content.splitlines()
+
+        # Check mypy settings
+        violations.extend(cls._check_mypy_settings(file_path, data, lines, approved))
+
+        # Check ruff settings
+        violations.extend(cls._check_ruff_settings(file_path, data, lines, approved))
+
+        # Check pyright settings
+        violations.extend(cls._check_pyright_settings(file_path, data, lines, approved))
 
         return violations
+
+    @classmethod
+    def scan(
+        cls,
+        files: list[Path],
+        approved_exceptions: Mapping[str, list[str]] | None = None,
+    ) -> r[m.Tests.Validator.ScanResult]:
+        """Scan pyproject.toml files for config violations.
+
+        Args:
+            files: List of pyproject.toml files to scan
+            approved_exceptions: Dict mapping rule IDs to list of approved file patterns
+
+        Returns:
+            FlextResult with ScanResult containing all violations found
+
+        """
+        violations: list[m.Tests.Validator.Violation] = []
+        approved = approved_exceptions or {}
+
+        for file_path in files:
+            # Only scan pyproject.toml files
+            if file_path.name != "pyproject.toml":
+                continue
+            file_violations = cls._scan_file(file_path, approved)
+            violations.extend(file_violations)
+
+        return r[m.Tests.Validator.ScanResult].ok(
+            m.Tests.Validator.ScanResult.create(
+                validator_name=c.Tests.Validator.Defaults.VALIDATOR_CONFIG,
+                files_scanned=len(files),
+                violations=violations,
+            ),
+        )
+
+    @classmethod
+    def validate(
+        cls,
+        pyproject_path: Path,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
+    ) -> r[m.Tests.Validator.ScanResult]:
+        """Validate a single pyproject.toml file.
+
+        Args:
+            pyproject_path: Path to pyproject.toml file
+            approved_exceptions: Dict mapping rule IDs to list of approved file patterns
+
+        Returns:
+            FlextResult with ScanResult containing all violations found
+
+        """
+        return cls.scan([pyproject_path], approved_exceptions)
 
 
 __all__ = ["FlextValidatorSettings"]

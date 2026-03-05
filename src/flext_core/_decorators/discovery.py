@@ -26,6 +26,15 @@ class FactoryDecoratorsDiscovery:
     """
 
     @staticmethod
+    def has_factories(module: ModuleType) -> bool:
+        """Check if module has any factory-decorated functions."""
+        return any(
+            hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
+            for name in dir(module)
+            if not name.startswith("_") and callable(getattr(module, name, None))
+        )
+
+    @staticmethod
     def scan_module(
         module: ModuleType,
     ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
@@ -61,12 +70,3 @@ class FactoryDecoratorsDiscovery:
 
         # Sort by name for consistent ordering
         return sorted(factories, key=operator.itemgetter(0))
-
-    @staticmethod
-    def has_factories(module: ModuleType) -> bool:
-        """Check if module has any factory-decorated functions."""
-        return any(
-            hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
-            for name in dir(module)
-            if not name.startswith("_") and callable(getattr(module, name, None))
-        )

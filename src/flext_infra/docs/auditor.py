@@ -63,6 +63,75 @@ class FlextInfraDocAuditor:
     forbidden terms, returning structured FlextResult reports.
     """
 
+    @staticmethod
+    def _is_external(target: str) -> bool:
+        """Return True when target points outside the repository."""
+        lower = target.strip().lower().lstrip("<")
+        return lower.startswith(("http://", "https://", "mailto:", "tel:", "data:"))
+
+    @staticmethod
+    def _load_audit_budgets(root: Path) -> tuple[int | None, Mapping[str, int]]:
+        """Load audit issue budgets from architecture config."""
+        config_path: Path | None = None
+        for candidate in [root, *root.parents]:
+            path = candidate / "docs/architecture/architecture_config.json"
+            if path.exists():
+                config_path = path
+                break
+        if config_path is None:
+            return None, {}
+
+        payload = json.loads(
+            config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
+        )
+        docs_validation = payload.get("docs_validation", {})
+        audit_gate = docs_validation.get("audit_gate", {})
+        default_budget = audit_gate.get("max_issues_default")
+        by_scope_raw = audit_gate.get("max_issues_by_scope", {})
+        by_scope = {
+            str(name): int(value)
+            for name, value in by_scope_raw.items()
+            if isinstance(value, (int, float))
+        }
+        if isinstance(default_budget, (int, float)):
+            return int(default_budget), by_scope
+        return None, by_scope
+
+    @staticmethod
+    def _normalize_link(target: str) -> str:
+        """Strip fragment and query-string from a markdown link target."""
+        value = target.strip()
+        if value.startswith("<") and value.endswith(">"):
+            value = value[1:-1].strip()
+        return value.split("#", maxsplit=1)[0].split("?", maxsplit=1)[0]
+
+    @staticmethod
+    def _should_skip_target(raw: str, target: str) -> bool:
+        """Return whether link text should be ignored as a non-path target."""
+        if target.startswith("http"):
+            return False
+        if "," in raw and ".md" not in raw and "/" not in raw:
+            return True
+        return bool(" " in raw and ".md" not in raw and "/" not in raw)
+
+    @staticmethod
+    def _to_markdown(scope: FlextInfraDocScope, issues: list[AuditIssue]) -> list[str]:
+        """Format audit issues as a markdown report."""
+        return [
+            "# Docs Audit Report",
+            "",
+            f"Scope: {scope.name}",
+            f"Files scanned: {len(FlextInfraDocsShared.iter_markdown_files(scope.path))}",
+            f"Issues: {len(issues)}",
+            "",
+            "| file | type | severity | message |",
+            "|---|---|---|---|",
+            *[
+                f"| {issue.file} | {issue.issue_type} | {issue.severity} | {issue.message} |"
+                for issue in issues
+            ],
+        ]
+
     def audit(
         self,
         root: Path,
@@ -250,75 +319,6 @@ class FlextInfraDocAuditor:
                 if term in content
             )
         return issues
-
-    @staticmethod
-    def _normalize_link(target: str) -> str:
-        """Strip fragment and query-string from a markdown link target."""
-        value = target.strip()
-        if value.startswith("<") and value.endswith(">"):
-            value = value[1:-1].strip()
-        return value.split("#", maxsplit=1)[0].split("?", maxsplit=1)[0]
-
-    @staticmethod
-    def _should_skip_target(raw: str, target: str) -> bool:
-        """Return whether link text should be ignored as a non-path target."""
-        if target.startswith("http"):
-            return False
-        if "," in raw and ".md" not in raw and "/" not in raw:
-            return True
-        return bool(" " in raw and ".md" not in raw and "/" not in raw)
-
-    @staticmethod
-    def _is_external(target: str) -> bool:
-        """Return True when target points outside the repository."""
-        lower = target.strip().lower().lstrip("<")
-        return lower.startswith(("http://", "https://", "mailto:", "tel:", "data:"))
-
-    @staticmethod
-    def _to_markdown(scope: FlextInfraDocScope, issues: list[AuditIssue]) -> list[str]:
-        """Format audit issues as a markdown report."""
-        return [
-            "# Docs Audit Report",
-            "",
-            f"Scope: {scope.name}",
-            f"Files scanned: {len(FlextInfraDocsShared.iter_markdown_files(scope.path))}",
-            f"Issues: {len(issues)}",
-            "",
-            "| file | type | severity | message |",
-            "|---|---|---|---|",
-            *[
-                f"| {issue.file} | {issue.issue_type} | {issue.severity} | {issue.message} |"
-                for issue in issues
-            ],
-        ]
-
-    @staticmethod
-    def _load_audit_budgets(root: Path) -> tuple[int | None, Mapping[str, int]]:
-        """Load audit issue budgets from architecture config."""
-        config_path: Path | None = None
-        for candidate in [root, *root.parents]:
-            path = candidate / "docs/architecture/architecture_config.json"
-            if path.exists():
-                config_path = path
-                break
-        if config_path is None:
-            return None, {}
-
-        payload = json.loads(
-            config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
-        )
-        docs_validation = payload.get("docs_validation", {})
-        audit_gate = docs_validation.get("audit_gate", {})
-        default_budget = audit_gate.get("max_issues_default")
-        by_scope_raw = audit_gate.get("max_issues_by_scope", {})
-        by_scope = {
-            str(name): int(value)
-            for name, value in by_scope_raw.items()
-            if isinstance(value, (int, float))
-        }
-        if isinstance(default_budget, (int, float)):
-            return int(default_budget), by_scope
-        return None, by_scope
 
 
 def main() -> int:

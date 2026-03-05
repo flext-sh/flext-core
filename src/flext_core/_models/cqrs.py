@@ -62,13 +62,13 @@ class FlextModelsCqrs:
         issuer_id: str | None = None
 
         @property
-        def query_type(self) -> str | None:
-            """Query type identifier (always None for commands)."""
+        def event_type(self) -> str | None:
+            """Event type identifier (always None for commands)."""
             return None
 
         @property
-        def event_type(self) -> str | None:
-            """Event type identifier (always None for commands)."""
+        def query_type(self) -> str | None:
+            """Query type identifier (always None for commands)."""
             return None
 
     class Pagination(BaseModel):
@@ -104,14 +104,14 @@ class FlextModelsCqrs:
         ] = c.Pagination.DEFAULT_PAGE_SIZE
 
         @computed_field
-        def offset(self) -> int:
-            """Calculate offset from page and size."""
-            return (self.page - 1) * self.size
-
-        @computed_field
         def limit(self) -> int:
             """Get limit (same as size)."""
             return self.size
+
+        @computed_field
+        def offset(self) -> int:
+            """Calculate offset from page and size."""
+            return (self.page - 1) * self.size
 
     class Query(BaseModel):
         """Query model for CQRS query operations."""
@@ -343,30 +343,9 @@ class FlextModelsCqrs:
                     },
                 )
 
-            def with_id(self, handler_id: str) -> Self:
-                """Set handler ID (fluent API)."""
-                self._data.root["handler_id"] = handler_id
-                return self
-
-            def with_name(self, handler_name: str) -> Self:
-                """Set handler name (fluent API)."""
-                self._data.root["handler_name"] = handler_name
-                return self
-
-            def with_timeout(self, timeout: int) -> Self:
-                """Set command timeout (fluent API)."""
-                self._data.root["command_timeout"] = timeout
-                return self
-
-            def with_retries(self, max_retries: int) -> Self:
-                """Set max retries (fluent API)."""
-                self._data.root["max_command_retries"] = max_retries
-                return self
-
-            def with_metadata(self, metadata: FlextModelFoundation.Metadata) -> Self:
-                """Set metadata (fluent API - Pydantic model)."""
-                self._data.root["metadata"] = metadata
-                return self
+            def build(self) -> FlextModelsCqrs.Handler:
+                """Build and validate Handler instance."""
+                return FlextModelsCqrs.Handler.model_validate(self._data.root)
 
             def merge_config(
                 self,
@@ -376,9 +355,30 @@ class FlextModelsCqrs:
                 self._data.root.update(config.root)
                 return self
 
-            def build(self) -> FlextModelsCqrs.Handler:
-                """Build and validate Handler instance."""
-                return FlextModelsCqrs.Handler.model_validate(self._data.root)
+            def with_id(self, handler_id: str) -> Self:
+                """Set handler ID (fluent API)."""
+                self._data.root["handler_id"] = handler_id
+                return self
+
+            def with_metadata(self, metadata: FlextModelFoundation.Metadata) -> Self:
+                """Set metadata (fluent API - Pydantic model)."""
+                self._data.root["metadata"] = metadata
+                return self
+
+            def with_name(self, handler_name: str) -> Self:
+                """Set handler name (fluent API)."""
+                self._data.root["handler_name"] = handler_name
+                return self
+
+            def with_retries(self, max_retries: int) -> Self:
+                """Set max retries (fluent API)."""
+                self._data.root["max_command_retries"] = max_retries
+                return self
+
+            def with_timeout(self, timeout: int) -> Self:
+                """Set command timeout (fluent API)."""
+                self._data.root["command_timeout"] = timeout
+                return self
 
     class Event(BaseModel):
         """Event model for CQRS event operations.

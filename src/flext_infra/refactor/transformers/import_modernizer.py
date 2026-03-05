@@ -104,38 +104,6 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
         return updated_node
 
     @override
-    def leave_Name(
-        self,
-        original_node: cst.Name,
-        updated_node: cst.Name,
-    ) -> cst.BaseExpression:
-        """Replace imported symbol usages with configured runtime alias paths."""
-        if original_node.value not in self.active_symbol_replacements:
-            return updated_node
-
-        qualified_names = self.get_metadata(
-            QualifiedNameProvider,
-            original_node,
-            default=set(),
-        )
-        if not qualified_names:
-            return updated_node
-        if any(
-            qualified_name.source != QualifiedNameSource.IMPORT
-            for qualified_name in qualified_names
-        ):
-            return updated_node
-
-        alias_path = self.active_symbol_replacements[original_node.value]
-        parts = alias_path.split(".")
-        result: cst.BaseExpression = cst.Name(parts[0])
-        for part in parts[1:]:
-            result = cst.Attribute(value=result, attr=cst.Name(part))
-
-        self._record_change(f"Replaced: {original_node.value} -> {alias_path}")
-        return result
-
-    @override
     def leave_Module(
         self,
         original_node: cst.Module,
@@ -188,6 +156,38 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
         )
         new_body = body[:insert_idx] + [new_import] + body[insert_idx:]
         return updated_node.with_changes(body=new_body)
+
+    @override
+    def leave_Name(
+        self,
+        original_node: cst.Name,
+        updated_node: cst.Name,
+    ) -> cst.BaseExpression:
+        """Replace imported symbol usages with configured runtime alias paths."""
+        if original_node.value not in self.active_symbol_replacements:
+            return updated_node
+
+        qualified_names = self.get_metadata(
+            QualifiedNameProvider,
+            original_node,
+            default=set(),
+        )
+        if not qualified_names:
+            return updated_node
+        if any(
+            qualified_name.source != QualifiedNameSource.IMPORT
+            for qualified_name in qualified_names
+        ):
+            return updated_node
+
+        alias_path = self.active_symbol_replacements[original_node.value]
+        parts = alias_path.split(".")
+        result: cst.BaseExpression = cst.Name(parts[0])
+        for part in parts[1:]:
+            result = cst.Attribute(value=result, attr=cst.Name(part))
+
+        self._record_change(f"Replaced: {original_node.value} -> {alias_path}")
+        return result
 
     def _extract_import_aliases(
         self,

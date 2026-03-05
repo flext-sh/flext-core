@@ -42,24 +42,10 @@ class FlextInfraGitService(FlextService[str]):
             cwd=repo_root,
         )
 
-    def tag_exists(self, repo_root: Path, tag: str) -> FlextResult[bool]:
-        """Check if a specific tag exists in the repository.
-
-        Args:
-            repo_root: The root directory of the Git repository.
-            tag: The tag name to check.
-
-        Returns:
-            FlextResult[bool] with True if the tag exists.
-
-        """
-        result = self._runner.capture(
-            ["git", "tag", "-l", tag],
-            cwd=repo_root,
-        )
-        if result.is_success:
-            return r[bool].ok(result.value.strip() == tag)
-        return r[bool].fail(result.error or "tag check failed")
+    @override
+    def execute(self) -> FlextResult[str]:
+        """Execute the service (required by FlextService base class)."""
+        return r[str].ok("")
 
     def run(
         self,
@@ -78,10 +64,24 @@ class FlextInfraGitService(FlextService[str]):
         """
         return self._runner.capture(["git", *cmd], cwd=cwd)
 
-    @override
-    def execute(self) -> FlextResult[str]:
-        """Execute the service (required by FlextService base class)."""
-        return r[str].ok("")
+    def tag_exists(self, repo_root: Path, tag: str) -> FlextResult[bool]:
+        """Check if a specific tag exists in the repository.
+
+        Args:
+            repo_root: The root directory of the Git repository.
+            tag: The tag name to check.
+
+        Returns:
+            FlextResult[bool] with True if the tag exists.
+
+        """
+        result = self._runner.capture(
+            ["git", "tag", "-l", tag],
+            cwd=repo_root,
+        )
+        if result.is_success:
+            return r[bool].ok(result.value.strip() == tag)
+        return r[bool].fail(result.error or "tag check failed")
 
 
 __all__ = ["FlextInfraGitService"]

@@ -11,11 +11,73 @@ T = TypeVar("T")
 
 
 class ResultHelpers:
+
+    @staticmethod
+    def any_(*values: t.Container) -> bool:
+        return any(bool(v) for v in values)
+
+    @staticmethod
+    def count(
+        items: Sequence[t.Container] | Mapping[str, t.Container],
+        predicate: Callable[[t.Container], bool] | None = None,
+    ) -> int:
+        if predicate is None:
+            return len(items)
+        if isinstance(items, Mapping):
+            return FlextUtilitiesCollection.count(list(items.values()), predicate)
+        return FlextUtilitiesCollection.count(items, predicate)
+
+    @staticmethod
+    def empty(
+        items: Sequence[t.Container] | Mapping[str, t.Container] | str | None,
+    ) -> bool:
+        if isinstance(items, r):
+            if items.is_failure:
+                return True
+            return FlextUtilitiesGuards.empty(items.value)
+        if items is None:
+            return True
+        if not FlextUtilitiesGuards.is_general_value_type(items):
+            return True
+        return FlextUtilitiesGuards.empty(items)
+
+    @staticmethod
+    def ends(value: str, suffix: str, *suffixes: str) -> bool:
+        return any(value.endswith(s) for s in (suffix, *suffixes))
     @staticmethod
     def err(result: p.Result[T], *, default: str = "Unknown error") -> str:
         if result.is_failure and result.error:
             return str(result.error)
         return default
+
+    @staticmethod
+    def not_(value: t.Container) -> bool:
+        return not bool(value)
+
+    @staticmethod
+    def or_(*values: T | None, default: T | None = None) -> T | None:
+        for value in values:
+            if value is not None:
+                return value
+        return default
+
+    @staticmethod
+    def starts(value: str, prefix: str, *prefixes: str) -> bool:
+        return any(value.startswith(p) for p in (prefix, *prefixes))
+
+    @staticmethod
+    def try_(
+        func: Callable[[], T],
+        *,
+        default: T | None = None,
+        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
+    ) -> T | None:
+        try:
+            return func()
+        except Exception as exc:
+            if isinstance(exc, catch):
+                return default
+            raise
 
     @staticmethod
     def val(result: p.Result[T], *, default: T | None = None) -> T | None:
@@ -36,68 +98,6 @@ class ResultHelpers:
     @staticmethod
     def vals_sequence(results: Sequence[p.Result[T]]) -> list[T]:
         return [result.value for result in results if result.is_success]
-
-    @staticmethod
-    def or_(*values: T | None, default: T | None = None) -> T | None:
-        for value in values:
-            if value is not None:
-                return value
-        return default
-
-    @staticmethod
-    def try_(
-        func: Callable[[], T],
-        *,
-        default: T | None = None,
-        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
-    ) -> T | None:
-        try:
-            return func()
-        except Exception as exc:
-            if isinstance(exc, catch):
-                return default
-            raise
-
-    @staticmethod
-    def starts(value: str, prefix: str, *prefixes: str) -> bool:
-        return any(value.startswith(p) for p in (prefix, *prefixes))
-
-    @staticmethod
-    def not_(value: t.Container) -> bool:
-        return not bool(value)
-
-    @staticmethod
-    def any_(*values: t.Container) -> bool:
-        return any(bool(v) for v in values)
-
-    @staticmethod
-    def empty(
-        items: Sequence[t.Container] | Mapping[str, t.Container] | str | None,
-    ) -> bool:
-        if isinstance(items, r):
-            if items.is_failure:
-                return True
-            return FlextUtilitiesGuards.empty(items.value)
-        if items is None:
-            return True
-        if not FlextUtilitiesGuards.is_general_value_type(items):
-            return True
-        return FlextUtilitiesGuards.empty(items)
-
-    @staticmethod
-    def count(
-        items: Sequence[t.Container] | Mapping[str, t.Container],
-        predicate: Callable[[t.Container], bool] | None = None,
-    ) -> int:
-        if predicate is None:
-            return len(items)
-        if isinstance(items, Mapping):
-            return FlextUtilitiesCollection.count(list(items.values()), predicate)
-        return FlextUtilitiesCollection.count(items, predicate)
-
-    @staticmethod
-    def ends(value: str, suffix: str, *suffixes: str) -> bool:
-        return any(value.endswith(s) for s in (suffix, *suffixes))
 
 
 __all__ = ["ResultHelpers"]

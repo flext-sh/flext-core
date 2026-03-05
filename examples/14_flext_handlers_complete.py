@@ -105,6 +105,84 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
 class HandlersService(s[m.ConfigMap]):
     """Service demonstrating CQRS handlers with flext-core."""
 
+    @staticmethod
+    def _demonstrate_command_handlers() -> None:
+        """Show command handler patterns."""
+        print("\n=== Command Handlers ===")
+
+        handler = CommandHandler()
+
+        command = CreateUserCommand.model_validate({
+            "user_id": "user-123",
+            "name": "Alice",
+            "email": "alice@example.com",
+        })
+        result = handler.handle(command)
+        if result.is_success:
+            print(f"✅ Command executed: {result.value}")
+
+        invalid_command = CreateUserCommand.model_validate({
+            "user_id": "user-456",
+            "name": "",
+            "email": "bob@example.com",
+        })
+        invalid_result = handler.handle(invalid_command)
+        if invalid_result.is_failure:
+            print(f"❌ Command failed: {invalid_result.error}")
+
+    @staticmethod
+    def _demonstrate_error_handling() -> None:
+        """Show error handling in handlers."""
+        print("\n=== Error Handling ===")
+
+        command_handler = CommandHandler()
+
+        error_command = CreateUserCommand.model_validate({
+            "user_id": "error-user",
+            "name": "",
+            "email": "",
+        })
+
+        error_result = command_handler.handle(error_command)
+        if error_result.is_failure:
+            print(f"✅ Error handled: {error_result.error}")
+            print(f"   Error code: {error_result.error_code or 'N/A'}")
+
+    @staticmethod
+    def _demonstrate_pipeline_execution() -> None:
+        """Show handler pipeline execution."""
+        print("\n=== Pipeline Execution ===")
+
+        phases = [
+            c.Cqrs.ProcessingPhase.PREPARE,
+            c.Cqrs.ProcessingPhase.EXECUTE,
+            c.Cqrs.ProcessingPhase.VALIDATE,
+            c.Cqrs.ProcessingPhase.COMPLETE,
+        ]
+
+        for phase in phases:
+            print(f"✅ {phase.value.capitalize()} phase")
+
+        print("✅ Pipeline executed successfully")
+
+    @staticmethod
+    def _demonstrate_query_handlers() -> None:
+        """Show query handler patterns."""
+        print("\n=== Query Handlers ===")
+
+        handler = QueryHandler()
+
+        query = GetUserQuery.model_validate({"user_id": "user-123"})
+        result = handler.handle(query)
+        if result.is_success:
+            user = result.value
+            print(f"✅ Query result: {user.name} ({user.email})")
+
+        not_found_query = GetUserQuery.model_validate({"user_id": "not-found"})
+        not_found_result = handler.handle(not_found_query)
+        if not_found_result.is_failure:
+            print(f"❌ Query failed: {not_found_result.error}")
+
     @override
     def execute(
         self,
@@ -135,84 +213,6 @@ class HandlersService(s[m.ConfigMap]):
                 },
             ),
         )
-
-    @staticmethod
-    def _demonstrate_command_handlers() -> None:
-        """Show command handler patterns."""
-        print("\n=== Command Handlers ===")
-
-        handler = CommandHandler()
-
-        command = CreateUserCommand.model_validate({
-            "user_id": "user-123",
-            "name": "Alice",
-            "email": "alice@example.com",
-        })
-        result = handler.handle(command)
-        if result.is_success:
-            print(f"✅ Command executed: {result.value}")
-
-        invalid_command = CreateUserCommand.model_validate({
-            "user_id": "user-456",
-            "name": "",
-            "email": "bob@example.com",
-        })
-        invalid_result = handler.handle(invalid_command)
-        if invalid_result.is_failure:
-            print(f"❌ Command failed: {invalid_result.error}")
-
-    @staticmethod
-    def _demonstrate_query_handlers() -> None:
-        """Show query handler patterns."""
-        print("\n=== Query Handlers ===")
-
-        handler = QueryHandler()
-
-        query = GetUserQuery.model_validate({"user_id": "user-123"})
-        result = handler.handle(query)
-        if result.is_success:
-            user = result.value
-            print(f"✅ Query result: {user.name} ({user.email})")
-
-        not_found_query = GetUserQuery.model_validate({"user_id": "not-found"})
-        not_found_result = handler.handle(not_found_query)
-        if not_found_result.is_failure:
-            print(f"❌ Query failed: {not_found_result.error}")
-
-    @staticmethod
-    def _demonstrate_pipeline_execution() -> None:
-        """Show handler pipeline execution."""
-        print("\n=== Pipeline Execution ===")
-
-        phases = [
-            c.Cqrs.ProcessingPhase.PREPARE,
-            c.Cqrs.ProcessingPhase.EXECUTE,
-            c.Cqrs.ProcessingPhase.VALIDATE,
-            c.Cqrs.ProcessingPhase.COMPLETE,
-        ]
-
-        for phase in phases:
-            print(f"✅ {phase.value.capitalize()} phase")
-
-        print("✅ Pipeline executed successfully")
-
-    @staticmethod
-    def _demonstrate_error_handling() -> None:
-        """Show error handling in handlers."""
-        print("\n=== Error Handling ===")
-
-        command_handler = CommandHandler()
-
-        error_command = CreateUserCommand.model_validate({
-            "user_id": "error-user",
-            "name": "",
-            "email": "",
-        })
-
-        error_result = command_handler.handle(error_command)
-        if error_result.is_failure:
-            print(f"✅ Error handled: {error_result.error}")
-            print(f"   Error code: {error_result.error_code or 'N/A'}")
 
 
 def demonstrate_cqrs_architecture() -> None:

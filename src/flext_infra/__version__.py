@@ -47,51 +47,6 @@ class FlextInfraVersion:
     __url__ = _metadata.get("Home-Page", "")
 
     @classmethod
-    def get_version_string(cls) -> str:
-        """Get package version as human-readable string.
-
-        Returns the package version in string format suitable for display
-        and logging. Follows PEP 440 semantic versioning format.
-
-        Returns:
-            str: Version string (e.g., "1.0.0", "1.0.0rc1")
-
-        """
-        return cls.__version__
-
-    @classmethod
-    def get_version_info(cls) -> tuple[int | str, ...]:
-        """Get package version as comparison-friendly tuple.
-
-        Returns version information as a tuple for easy numeric comparison.
-        Each element is either an integer (for numeric version parts) or
-        string (for pre-release identifiers).
-
-        Returns:
-            tuple[int | str, ...]: Version tuple for comparison (e.g., (1, 0, 0))
-
-        """
-        return cls.__version_info__
-
-    @classmethod
-    def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
-        """Check if current version meets minimum version requirement.
-
-        Performs version comparison to determine if the current package version
-        is at least the specified minimum version.
-
-        Args:
-            major: Minimum major version number
-            minor: Minimum minor version number (default: 0)
-            patch: Minimum patch version number (default: 0)
-
-        Returns:
-            bool: True if current version >= specified version
-
-        """
-        return cls.__version_info__ >= (major, minor, patch)
-
-    @classmethod
     def get_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary.
 
@@ -118,6 +73,51 @@ class FlextInfraVersion:
             "license": cls.__license__,
             "url": cls.__url__,
         }
+
+    @classmethod
+    def get_version_info(cls) -> tuple[int | str, ...]:
+        """Get package version as comparison-friendly tuple.
+
+        Returns version information as a tuple for easy numeric comparison.
+        Each element is either an integer (for numeric version parts) or
+        string (for pre-release identifiers).
+
+        Returns:
+            tuple[int | str, ...]: Version tuple for comparison (e.g., (1, 0, 0))
+
+        """
+        return cls.__version_info__
+
+    @classmethod
+    def get_version_string(cls) -> str:
+        """Get package version as human-readable string.
+
+        Returns the package version in string format suitable for display
+        and logging. Follows PEP 440 semantic versioning format.
+
+        Returns:
+            str: Version string (e.g., "1.0.0", "1.0.0rc1")
+
+        """
+        return cls.__version__
+
+    @classmethod
+    def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
+        """Check if current version meets minimum version requirement.
+
+        Performs version comparison to determine if the current package version
+        is at least the specified minimum version.
+
+        Args:
+            major: Minimum major version number
+            minor: Minimum minor version number (default: 0)
+            patch: Minimum patch version number (default: 0)
+
+        Returns:
+            bool: True if current version >= specified version
+
+        """
+        return cls.__version_info__ >= (major, minor, patch)
 
 
 __version__ = FlextInfraVersion.__version__

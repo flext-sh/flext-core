@@ -41,6 +41,102 @@ class FlextUtilitiesModel:
     )
 
     @staticmethod
+    def _normalize_to_pydantic_value(
+        value: t.Container,
+    ) -> t.Scalar:
+        """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
+
+        Converts complex types to strings, preserves primitives.
+
+        Args:
+            value: ContainerValue value to normalize
+
+        Returns:
+            t.PydanticConfigValue: Pydantic-safe value
+
+        """
+        match value:
+            case None:
+                return None
+            case bool() | int() | float() | str():
+                return value
+            case list() as items:
+                normalized_items: list[t.Primitives | None] = []
+                for item in items:
+                    try:
+                        normalized_items.append(
+                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                                item,
+                            ),
+                        )
+                    except ValidationError:
+                        normalized_items.append(str(item))
+                return normalized_items
+            case tuple() as items:
+                normalized_tuple_items: list[t.Primitives | None] = []
+                for item in items:
+                    try:
+                        normalized_tuple_items.append(
+                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                                item,
+                            ),
+                        )
+                    except ValidationError:
+                        normalized_tuple_items.append(str(item))
+                return normalized_tuple_items
+            case _:
+                # Convert any other type to string representation
+                return str(value)
+
+    @staticmethod
+    def dump(
+        model: BaseModel,
+        *,
+        by_alias: bool = False,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        include: set[str] | None = None,
+        exclude: set[str] | None = None,
+    ) -> Mapping[str, t.Scalar]:
+        """Unified Pydantic serialization with options.
+
+        Generic replacement for: model.model_dump() with consistent return type.
+
+        Common usage patterns from codebase:
+        - dump(model) - no arguments
+        - dump(model, exclude_none=True) - bool flag
+        - dump(model, exclude={"key"}) - set[str] for exclude/include
+        - dump(model, exclude_unset=True) - bool flag
+
+        Args:
+            model: Pydantic model instance to serialize.
+            by_alias: Whether to use field aliases.
+            exclude_none: Whether to exclude None values.
+            exclude_unset: Whether to exclude unset values.
+            exclude_defaults: Whether to exclude default values.
+            include: Set of field names to include.
+            exclude: Set of field names to exclude.
+
+        Returns:
+            Dictionary representation of the model.
+
+        Example:
+            >>> user = UserModel(status=Status.ACTIVE, name="John")
+            >>> data = u.Model.dump(user, exclude_none=True)
+            >>> # {"status": "active", "name": "John"}
+
+        """
+        return model.model_dump(
+            by_alias=by_alias,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            include=include,
+            exclude=exclude,
+        )
+
+    @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
         **kwargs: t.Scalar,
@@ -75,6 +171,34 @@ class FlextUtilitiesModel:
             return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
+    def load[T_Model: BaseModel](
+        model_cls: type[T_Model],
+        data: m.ConfigMap,
+    ) -> r[T_Model]:
+        """Load Pydantic model from mapping with FlextResult.
+
+        Generic replacement for: Model.model_validate(data) with error handling.
+
+        Args:
+            model_cls: Pydantic model class to instantiate.
+            data: Dictionary or mapping to validate.
+
+        Returns:
+            FlextResult containing model instance or error message.
+
+        Example:
+            >>> result = u.Model.load(UserModel, {"status": "active", "name": "John"})
+            >>> if result.is_success:
+            ...     user: UserModel = result.value
+
+        """
+        try:
+            instance = model_cls.model_validate(data)
+            return r[T_Model].ok(instance)
+        except ValidationError as e:
+            return r[T_Model].fail(f"Model validation failed: {e}")
+
+    @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
         defaults: Mapping[str, t.JsonValue],
@@ -100,29 +224,6 @@ class FlextUtilitiesModel:
             return r[M].ok(instance)
         except (ValidationError, TypeError, ValueError) as e:
             return r[M].fail(f"Model validation failed: {e}")
-
-    @staticmethod
-    def update[M: BaseModel](
-        instance: M,
-        **updates: t.JsonValue,
-    ) -> r[M]:
-        """Update existing model with new values.
-
-        Example:
-             user = UserModel(status=Status.ACTIVE, name="John")
-             result = u.Model.update(user, status="inactive")
-             # result.value = UserModel with status=Status.INACTIVE
-
-        """
-        try:
-            # Use model_copy with update - modern Pydantic approach
-            # This preserves the type M without needing casts or recreating
-            # model_copy returns M (same type as instance)
-            updated_instance = instance.model_copy(update=updates)
-            # Type narrowing: updated_instance is M from model_copy return type
-            return r[M].ok(updated_instance)
-        except (AttributeError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model update failed: {e}")
 
     @staticmethod
     def normalize_to_metadata(
@@ -183,82 +284,6 @@ class FlextUtilitiesModel:
         raise TypeError(msg)
 
     @staticmethod
-    def dump(
-        model: BaseModel,
-        *,
-        by_alias: bool = False,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        include: set[str] | None = None,
-        exclude: set[str] | None = None,
-    ) -> Mapping[str, t.Scalar]:
-        """Unified Pydantic serialization with options.
-
-        Generic replacement for: model.model_dump() with consistent return type.
-
-        Common usage patterns from codebase:
-        - dump(model) - no arguments
-        - dump(model, exclude_none=True) - bool flag
-        - dump(model, exclude={"key"}) - set[str] for exclude/include
-        - dump(model, exclude_unset=True) - bool flag
-
-        Args:
-            model: Pydantic model instance to serialize.
-            by_alias: Whether to use field aliases.
-            exclude_none: Whether to exclude None values.
-            exclude_unset: Whether to exclude unset values.
-            exclude_defaults: Whether to exclude default values.
-            include: Set of field names to include.
-            exclude: Set of field names to exclude.
-
-        Returns:
-            Dictionary representation of the model.
-
-        Example:
-            >>> user = UserModel(status=Status.ACTIVE, name="John")
-            >>> data = u.Model.dump(user, exclude_none=True)
-            >>> # {"status": "active", "name": "John"}
-
-        """
-        return model.model_dump(
-            by_alias=by_alias,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            include=include,
-            exclude=exclude,
-        )
-
-    @staticmethod
-    def load[T_Model: BaseModel](
-        model_cls: type[T_Model],
-        data: m.ConfigMap,
-    ) -> r[T_Model]:
-        """Load Pydantic model from mapping with FlextResult.
-
-        Generic replacement for: Model.model_validate(data) with error handling.
-
-        Args:
-            model_cls: Pydantic model class to instantiate.
-            data: Dictionary or mapping to validate.
-
-        Returns:
-            FlextResult containing model instance or error message.
-
-        Example:
-            >>> result = u.Model.load(UserModel, {"status": "active", "name": "John"})
-            >>> if result.is_success:
-            ...     user: UserModel = result.value
-
-        """
-        try:
-            instance = model_cls.model_validate(data)
-            return r[T_Model].ok(instance)
-        except ValidationError as e:
-            return r[T_Model].fail(f"Model validation failed: {e}")
-
-    @staticmethod
     def normalize_to_pydantic_dict(
         data: m.ConfigMap | None,
     ) -> Mapping[str, t.Scalar]:
@@ -290,52 +315,27 @@ class FlextUtilitiesModel:
         return result
 
     @staticmethod
-    def _normalize_to_pydantic_value(
-        value: t.Container,
-    ) -> t.Scalar:
-        """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
+    def update[M: BaseModel](
+        instance: M,
+        **updates: t.JsonValue,
+    ) -> r[M]:
+        """Update existing model with new values.
 
-        Converts complex types to strings, preserves primitives.
-
-        Args:
-            value: ContainerValue value to normalize
-
-        Returns:
-            t.PydanticConfigValue: Pydantic-safe value
+        Example:
+             user = UserModel(status=Status.ACTIVE, name="John")
+             result = u.Model.update(user, status="inactive")
+             # result.value = UserModel with status=Status.INACTIVE
 
         """
-        match value:
-            case None:
-                return None
-            case bool() | int() | float() | str():
-                return value
-            case list() as items:
-                normalized_items: list[t.Primitives | None] = []
-                for item in items:
-                    try:
-                        normalized_items.append(
-                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item,
-                            ),
-                        )
-                    except ValidationError:
-                        normalized_items.append(str(item))
-                return normalized_items
-            case tuple() as items:
-                normalized_tuple_items: list[t.Primitives | None] = []
-                for item in items:
-                    try:
-                        normalized_tuple_items.append(
-                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item,
-                            ),
-                        )
-                    except ValidationError:
-                        normalized_tuple_items.append(str(item))
-                return normalized_tuple_items
-            case _:
-                # Convert any other type to string representation
-                return str(value)
+        try:
+            # Use model_copy with update - modern Pydantic approach
+            # This preserves the type M without needing casts or recreating
+            # model_copy returns M (same type as instance)
+            updated_instance = instance.model_copy(update=updates)
+            # Type narrowing: updated_instance is M from model_copy return type
+            return r[M].ok(updated_instance)
+        except (AttributeError, TypeError, ValueError) as e:
+            return r[M].fail(f"Model update failed: {e}")
 
 
 __all__ = [

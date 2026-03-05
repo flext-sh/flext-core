@@ -42,6 +42,27 @@ class FlextInfraDocsShared:
     """Single class for shared documentation helpers (scope, markdown, json)."""
 
     @staticmethod
+    def _selected_project_names(
+        root: Path,
+        project: str | None,
+        projects: str | None,
+    ) -> list[str]:
+        """Resolve CLI project flags to a concrete name list."""
+        if project:
+            return [project]
+        if projects:
+            requested = [part.strip() for part in projects.split(",") if part.strip()]
+            if len(requested) == 1 and " " in requested[0]:
+                requested = [
+                    part.strip() for part in requested[0].split(" ") if part.strip()
+                ]
+            return requested
+        result = _discovery.discover_projects(root)
+        if result.is_success:
+            return [p.name for p in result.value]
+        return []
+
+    @staticmethod
     def build_scopes(
         root: Path,
         project: str | None,
@@ -79,27 +100,6 @@ class FlextInfraDocsShared:
             return r[list[FlextInfraDocScope]].ok(scopes)
         except (OSError, TypeError, ValueError) as exc:
             return r[list[FlextInfraDocScope]].fail(f"scope resolution failed: {exc}")
-
-    @staticmethod
-    def _selected_project_names(
-        root: Path,
-        project: str | None,
-        projects: str | None,
-    ) -> list[str]:
-        """Resolve CLI project flags to a concrete name list."""
-        if project:
-            return [project]
-        if projects:
-            requested = [part.strip() for part in projects.split(",") if part.strip()]
-            if len(requested) == 1 and " " in requested[0]:
-                requested = [
-                    part.strip() for part in requested[0].split(" ") if part.strip()
-                ]
-            return requested
-        result = _discovery.discover_projects(root)
-        if result.is_success:
-            return [p.name for p in result.value]
-        return []
 
     @staticmethod
     def iter_markdown_files(root: Path) -> list[Path]:

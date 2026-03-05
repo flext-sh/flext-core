@@ -14,14 +14,6 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
         self._on_change = on_change
         self.changes: list[str] = []
 
-    def _attribute_root_name(self, expr: cst.BaseExpression) -> str:
-        current = expr
-        while isinstance(current, cst.Attribute):
-            current = current.value
-        if isinstance(current, cst.Name):
-            return current.value
-        return ""
-
     @override
     def leave_ClassDef(
         self,
@@ -53,3 +45,11 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
         return updated_node.with_changes(
             body=updated_node.body.with_changes(body=new_body)
         )
+
+    def _attribute_root_name(self, expr: cst.BaseExpression) -> str:
+        current = expr
+        while isinstance(current, cst.Attribute):
+            current = current.value
+        if isinstance(current, cst.Name):
+            return current.value
+        return ""

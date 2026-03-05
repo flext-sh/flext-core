@@ -116,103 +116,6 @@ class FlextInfraDependencyDetectionService:
         self._toml = FlextInfraTomlService()
         self._runner = FlextInfraCommandRunner()
 
-    def discover_projects(
-        self,
-        workspace_root: Path,
-        projects_filter: list[str] | None = None,
-    ) -> FlextResult[list[Path]]:
-        """Discover projects with pyproject.toml in workspace."""
-        names = projects_filter or []
-        result = self._selector.resolve_projects(workspace_root, names)
-        if result.is_failure:
-            return r[list[Path]].fail(result.error or "project resolution failed")
-
-        projects = [
-            project.path
-            for project in result.value
-            if (project.path / c.Files.PYPROJECT_FILENAME).exists()
-        ]
-        return r[list[Path]].ok(sorted(projects))
-
-    def run_deptry(
-        self,
-        project_path: Path,
-        venv_bin: Path,
-        *,
-        config_path: Path | None = None,
-        json_output_path: Path | None = None,
-        extend_exclude: list[str] | None = None,
-    ) -> FlextResult[tuple[list[IssueMap], int]]:
-        """Run deptry analysis on a project and parse JSON output."""
-        config = config_path or (project_path / c.Files.PYPROJECT_FILENAME)
-        if not config.exists():
-            return r[tuple[list[IssueMap], int]].ok(([], 0))
-
-        out_file = json_output_path or (project_path / ".deptry-report.json")
-        cmd: list[str] = [
-            str(venv_bin / "deptry"),
-            ".",
-            "--config",
-            str(config),
-            "--json-output",
-            str(out_file),
-            "--no-ansi",
-        ]
-        if extend_exclude:
-            for excluded in extend_exclude:
-                cmd.extend(["--extend-exclude", excluded])
-
-        result = self._runner.run_raw(cmd, cwd=project_path, timeout=120)
-        if result.is_failure:
-            return r[tuple[list[IssueMap], int]].fail(
-                result.error or "deptry execution failed",
-            )
-
-        issues: list[IssueMap] = []
-        if out_file.exists():
-            try:
-                raw = out_file.read_text(encoding=c.Encoding.DEFAULT)
-                loaded: list[InfraValue] | dict[str, InfraValue] = (
-                    json.loads(raw) if raw.strip() else []
-                )
-                if isinstance(loaded, list):
-                    issues = [
-                        {str(key): value for key, value in item.items()}
-                        for item in loaded
-                        if isinstance(item, dict)
-                    ]
-            except (json.JSONDecodeError, OSError):
-                issues = []
-            if json_output_path is None:
-                with contextlib.suppress(OSError):
-                    out_file.unlink()
-
-        return r[tuple[list[IssueMap], int]].ok((issues, result.value.exit_code))
-
-    def run_pip_check(
-        self,
-        workspace_root: Path,
-        venv_bin: Path,
-    ) -> FlextResult[tuple[list[str], int]]:
-        """Run pip check to detect dependency conflicts in workspace."""
-        pip = venv_bin / "pip"
-        if not pip.exists():
-            return r[tuple[list[str], int]].ok(([], 0))
-
-        env = {**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)}
-        result = self._runner.run_raw(
-            [str(pip), "check"],
-            cwd=workspace_root,
-            timeout=60,
-            env=env,
-        )
-        if result.is_failure:
-            return r[tuple[list[str], int]].fail(result.error or "pip check failed")
-
-        output = result.value.stdout
-        lines = output.strip().splitlines() if output else []
-        return r[tuple[list[str], int]].ok((lines, result.value.exit_code))
-
     @staticmethod
     def classify_issues(
         issues: list[IssueMap],
@@ -252,94 +155,23 @@ class FlextInfraDependencyDetectionService:
             ),
         )
 
-    def load_dependency_limits(
+    def discover_projects(
         self,
-        limits_path: Path | None = None,
-    ) -> Mapping[str, InfraValue]:
-        """Load dependency limits configuration from TOML file."""
-        path = limits_path or (
-            Path(__file__).resolve().parent / "dependency_limits.toml"
-        )
-        result = self._toml.read(path)
+        workspace_root: Path,
+        projects_filter: list[str] | None = None,
+    ) -> FlextResult[list[Path]]:
+        """Discover projects with pyproject.toml in workspace."""
+        names = projects_filter or []
+        result = self._selector.resolve_projects(workspace_root, names)
         if result.is_failure:
-            return {}
-        limits: MutableMapping[str, InfraValue] = {}
-        for key, value in result.value.items():
-            converted = _to_infra_value(value)
-            if converted is not None or value is None:
-                limits[str(key)] = converted
-        return limits
+            return r[list[Path]].fail(result.error or "project resolution failed")
 
-    def run_mypy_stub_hints(
-        self,
-        project_path: Path,
-        venv_bin: Path,
-        *,
-        timeout: int = 300,
-    ) -> FlextResult[tuple[list[str], list[str]]]:
-        """Run mypy to detect missing type stubs and hinted packages."""
-        mypy_bin = venv_bin / "mypy"
-        if not mypy_bin.exists():
-            return r[tuple[list[str], list[str]]].ok(([], []))
-
-        cmd: list[str] = [
-            str(mypy_bin),
-            "src",
-            "--config-file",
-            "pyproject.toml",
-            "--no-error-summary",
+        projects = [
+            project.path
+            for project in result.value
+            if (project.path / c.Files.PYPROJECT_FILENAME).exists()
         ]
-        env = {
-            **os.environ,
-            "VIRTUAL_ENV": str(venv_bin.parent),
-            "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
-        }
-        result = self._runner.run_raw(
-            cmd,
-            cwd=project_path,
-            timeout=timeout,
-            env=env,
-        )
-        if result.is_failure:
-            return r[tuple[list[str], list[str]]].fail(
-                result.error or "mypy execution failed",
-            )
-
-        output = f"{result.value.stdout}\n{result.value.stderr}"
-        hinted = {
-            match.group(1).strip()
-            for match in FlextInfraPatterns.MYPY_HINT_RE.finditer(output)
-            if match.group(1).strip()
-        }
-        missing = {
-            match.group(1).strip()
-            for match in FlextInfraPatterns.MYPY_STUB_RE.finditer(output)
-            if match.group(1).strip()
-        }
-        return r[tuple[list[str], list[str]]].ok((sorted(hinted), sorted(missing)))
-
-    def module_to_types_package(
-        self,
-        module_name: str,
-        limits: Mapping[str, InfraValue],
-    ) -> str | None:
-        """Map a module name to its corresponding types-* package."""
-        root = module_name.split(".", 1)[0]
-        if root.startswith(FlextInfraPatterns.INTERNAL_PREFIXES):
-            return None
-
-        typing_libraries = limits.get("typing_libraries")
-        if typing_libraries is not None and isinstance(typing_libraries, Mapping):
-            module_to_package = typing_libraries.get("module_to_package")
-            if (
-                module_to_package is not None
-                and isinstance(module_to_package, Mapping)
-                and root in module_to_package
-            ):
-                value = module_to_package[root]
-                return str(value)
-
-        return self.DEFAULT_MODULE_TO_TYPES_PACKAGE.get(root.lower())
+        return r[list[Path]].ok(sorted(projects))
 
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
         """Extract currently declared typing packages from project pyproject.toml."""
@@ -442,6 +274,174 @@ class FlextInfraDependencyDetectionService:
             python_version=python_version,
         )
         return r[dm.TypingsReport].ok(report)
+
+    def load_dependency_limits(
+        self,
+        limits_path: Path | None = None,
+    ) -> Mapping[str, InfraValue]:
+        """Load dependency limits configuration from TOML file."""
+        path = limits_path or (
+            Path(__file__).resolve().parent / "dependency_limits.toml"
+        )
+        result = self._toml.read(path)
+        if result.is_failure:
+            return {}
+        limits: MutableMapping[str, InfraValue] = {}
+        for key, value in result.value.items():
+            converted = _to_infra_value(value)
+            if converted is not None or value is None:
+                limits[str(key)] = converted
+        return limits
+
+    def module_to_types_package(
+        self,
+        module_name: str,
+        limits: Mapping[str, InfraValue],
+    ) -> str | None:
+        """Map a module name to its corresponding types-* package."""
+        root = module_name.split(".", 1)[0]
+        if root.startswith(FlextInfraPatterns.INTERNAL_PREFIXES):
+            return None
+
+        typing_libraries = limits.get("typing_libraries")
+        if typing_libraries is not None and isinstance(typing_libraries, Mapping):
+            module_to_package = typing_libraries.get("module_to_package")
+            if (
+                module_to_package is not None
+                and isinstance(module_to_package, Mapping)
+                and root in module_to_package
+            ):
+                value = module_to_package[root]
+                return str(value)
+
+        return self.DEFAULT_MODULE_TO_TYPES_PACKAGE.get(root.lower())
+
+    def run_deptry(
+        self,
+        project_path: Path,
+        venv_bin: Path,
+        *,
+        config_path: Path | None = None,
+        json_output_path: Path | None = None,
+        extend_exclude: list[str] | None = None,
+    ) -> FlextResult[tuple[list[IssueMap], int]]:
+        """Run deptry analysis on a project and parse JSON output."""
+        config = config_path or (project_path / c.Files.PYPROJECT_FILENAME)
+        if not config.exists():
+            return r[tuple[list[IssueMap], int]].ok(([], 0))
+
+        out_file = json_output_path or (project_path / ".deptry-report.json")
+        cmd: list[str] = [
+            str(venv_bin / "deptry"),
+            ".",
+            "--config",
+            str(config),
+            "--json-output",
+            str(out_file),
+            "--no-ansi",
+        ]
+        if extend_exclude:
+            for excluded in extend_exclude:
+                cmd.extend(["--extend-exclude", excluded])
+
+        result = self._runner.run_raw(cmd, cwd=project_path, timeout=120)
+        if result.is_failure:
+            return r[tuple[list[IssueMap], int]].fail(
+                result.error or "deptry execution failed",
+            )
+
+        issues: list[IssueMap] = []
+        if out_file.exists():
+            try:
+                raw = out_file.read_text(encoding=c.Encoding.DEFAULT)
+                loaded: list[InfraValue] | dict[str, InfraValue] = (
+                    json.loads(raw) if raw.strip() else []
+                )
+                if isinstance(loaded, list):
+                    issues = [
+                        {str(key): value for key, value in item.items()}
+                        for item in loaded
+                        if isinstance(item, dict)
+                    ]
+            except (json.JSONDecodeError, OSError):
+                issues = []
+            if json_output_path is None:
+                with contextlib.suppress(OSError):
+                    out_file.unlink()
+
+        return r[tuple[list[IssueMap], int]].ok((issues, result.value.exit_code))
+
+    def run_mypy_stub_hints(
+        self,
+        project_path: Path,
+        venv_bin: Path,
+        *,
+        timeout: int = 300,
+    ) -> FlextResult[tuple[list[str], list[str]]]:
+        """Run mypy to detect missing type stubs and hinted packages."""
+        mypy_bin = venv_bin / "mypy"
+        if not mypy_bin.exists():
+            return r[tuple[list[str], list[str]]].ok(([], []))
+
+        cmd: list[str] = [
+            str(mypy_bin),
+            "src",
+            "--config-file",
+            "pyproject.toml",
+            "--no-error-summary",
+        ]
+        env = {
+            **os.environ,
+            "VIRTUAL_ENV": str(venv_bin.parent),
+            "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
+        }
+        result = self._runner.run_raw(
+            cmd,
+            cwd=project_path,
+            timeout=timeout,
+            env=env,
+        )
+        if result.is_failure:
+            return r[tuple[list[str], list[str]]].fail(
+                result.error or "mypy execution failed",
+            )
+
+        output = f"{result.value.stdout}\n{result.value.stderr}"
+        hinted = {
+            match.group(1).strip()
+            for match in FlextInfraPatterns.MYPY_HINT_RE.finditer(output)
+            if match.group(1).strip()
+        }
+        missing = {
+            match.group(1).strip()
+            for match in FlextInfraPatterns.MYPY_STUB_RE.finditer(output)
+            if match.group(1).strip()
+        }
+        return r[tuple[list[str], list[str]]].ok((sorted(hinted), sorted(missing)))
+
+    def run_pip_check(
+        self,
+        workspace_root: Path,
+        venv_bin: Path,
+    ) -> FlextResult[tuple[list[str], int]]:
+        """Run pip check to detect dependency conflicts in workspace."""
+        pip = venv_bin / "pip"
+        if not pip.exists():
+            return r[tuple[list[str], int]].ok(([], 0))
+
+        env = {**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)}
+        result = self._runner.run_raw(
+            [str(pip), "check"],
+            cwd=workspace_root,
+            timeout=60,
+            env=env,
+        )
+        if result.is_failure:
+            return r[tuple[list[str], int]].fail(result.error or "pip check failed")
+
+        output = result.value.stdout
+        lines = output.strip().splitlines() if output else []
+        return r[tuple[list[str], int]].ok((lines, result.value.exit_code))
 
 
 _service = FlextInfraDependencyDetectionService()

@@ -16,39 +16,6 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         self._has_mapping_import = False
         self._include_return_annotations = include_return_annotations
 
-    @override
-    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
-        module = node.module
-        if not isinstance(module, cst.Attribute) and not isinstance(module, cst.Name):
-            return
-        module_name = cst.Module(body=[]).code_for_node(module)
-        if module_name != "collections.abc":
-            return
-        names = node.names
-        if isinstance(names, cst.ImportStar):
-            self._has_mapping_import = True
-            return
-        for alias in names:
-            if isinstance(alias.name, cst.Name) and alias.name.value == "Mapping":
-                self._has_mapping_import = True
-
-    def _rewrite_annotation_expr(
-        self,
-        annotation: cst.BaseExpression,
-    ) -> cst.BaseExpression:
-        if not isinstance(annotation, cst.Subscript):
-            return annotation
-        if not isinstance(annotation.value, cst.Name):
-            return annotation
-        if annotation.value.value != "dict":
-            return annotation
-
-        replacement: cst.BaseExpression = annotation.with_changes(
-            value=cst.Name("Mapping")
-        )
-        self.changes.append("Converted annotation dict[...] to Mapping[...]")
-        return replacement
-
     @staticmethod
     def _collect_mutated_params(function_node: cst.FunctionDef) -> set[str]:
         param_names: set[str] = set()
@@ -105,23 +72,6 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         visitor = _MutableParamVisitor()
         function_node.visit(visitor)
         return visitor.mutated
-
-    def _rewrite_param_if_safe(
-        self,
-        param: cst.Param,
-        mutated_names: set[str],
-    ) -> cst.Param:
-        if param.name.value in mutated_names:
-            return param
-        annotation = param.annotation
-        if annotation is None:
-            return param
-        rewritten = self._rewrite_annotation_expr(annotation.annotation)
-        if rewritten is annotation.annotation:
-            return param
-        return param.with_changes(
-            annotation=annotation.with_changes(annotation=rewritten)
-        )
 
     @staticmethod
     def _is_overload_function(function_node: cst.FunctionDef) -> bool:
@@ -236,6 +186,56 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         body.insert(insert_at, import_line)
         return updated_node.with_changes(body=body)
 
+    @override
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
+        module = node.module
+        if not isinstance(module, cst.Attribute) and not isinstance(module, cst.Name):
+            return
+        module_name = cst.Module(body=[]).code_for_node(module)
+        if module_name != "collections.abc":
+            return
+        names = node.names
+        if isinstance(names, cst.ImportStar):
+            self._has_mapping_import = True
+            return
+        for alias in names:
+            if isinstance(alias.name, cst.Name) and alias.name.value == "Mapping":
+                self._has_mapping_import = True
+
+    def _rewrite_annotation_expr(
+        self,
+        annotation: cst.BaseExpression,
+    ) -> cst.BaseExpression:
+        if not isinstance(annotation, cst.Subscript):
+            return annotation
+        if not isinstance(annotation.value, cst.Name):
+            return annotation
+        if annotation.value.value != "dict":
+            return annotation
+
+        replacement: cst.BaseExpression = annotation.with_changes(
+            value=cst.Name("Mapping")
+        )
+        self.changes.append("Converted annotation dict[...] to Mapping[...]")
+        return replacement
+
+    def _rewrite_param_if_safe(
+        self,
+        param: cst.Param,
+        mutated_names: set[str],
+    ) -> cst.Param:
+        if param.name.value in mutated_names:
+            return param
+        annotation = param.annotation
+        if annotation is None:
+            return param
+        rewritten = self._rewrite_annotation_expr(annotation.annotation)
+        if rewritten is annotation.annotation:
+            return param
+        return param.with_changes(
+            annotation=annotation.with_changes(annotation=rewritten)
+        )
+
 
 class _RedundantCastRemover(cst.CSTTransformer):
     _CAST_ARITY = 2
@@ -243,32 +243,6 @@ class _RedundantCastRemover(cst.CSTTransformer):
     def __init__(self, removable_types: set[str]) -> None:
         self.removable_types = removable_types
         self.changes: list[str] = []
-
-    def _extract_target_string(self, node: cst.Arg) -> str | None:
-        value = node.value
-        if not isinstance(value, cst.SimpleString):
-            return None
-        evaluated = value.evaluated_value
-        if not isinstance(evaluated, str):
-            return None
-        return evaluated
-
-    def _unwrap_nested_object_cast(
-        self, node: cst.BaseExpression
-    ) -> cst.BaseExpression | None:
-        if not isinstance(node, cst.Call):
-            return None
-        if not isinstance(node.func, cst.Name) or node.func.value != "cast":
-            return None
-        if len(node.args) != self._CAST_ARITY:
-            return None
-        type_arg, value_arg = node.args
-        if type_arg.keyword is not None or value_arg.keyword is not None:
-            return None
-        target = self._extract_target_string(type_arg)
-        if target != "object":
-            return None
-        return value_arg.value
 
     @override
     def leave_Call(
@@ -299,6 +273,32 @@ class _RedundantCastRemover(cst.CSTTransformer):
             return unwrapped
 
         self.changes.append(f"Removed redundant cast for {target}")
+        return value_arg.value
+
+    def _extract_target_string(self, node: cst.Arg) -> str | None:
+        value = node.value
+        if not isinstance(value, cst.SimpleString):
+            return None
+        evaluated = value.evaluated_value
+        if not isinstance(evaluated, str):
+            return None
+        return evaluated
+
+    def _unwrap_nested_object_cast(
+        self, node: cst.BaseExpression
+    ) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call):
+            return None
+        if not isinstance(node.func, cst.Name) or node.func.value != "cast":
+            return None
+        if len(node.args) != self._CAST_ARITY:
+            return None
+        type_arg, value_arg = node.args
+        if type_arg.keyword is not None or value_arg.keyword is not None:
+            return None
+        target = self._extract_target_string(type_arg)
+        if target != "object":
+            return None
         return value_arg.value
 
 

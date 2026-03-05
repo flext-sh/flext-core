@@ -38,10 +38,21 @@ class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
         super().__init__()
         self._runner = FlextInfraCommandRunner()
 
-    @override
-    def execute(self) -> r[WorkspaceMode]:
-        """Not used; call detect() directly instead."""
-        return r[WorkspaceMode].fail("Use detect() method directly")
+    @staticmethod
+    def _repo_name_from_url(url: str) -> str:
+        """Extract repository name from Git URL.
+
+        Args:
+            url: Git repository URL (SSH or HTTPS).
+
+        Returns:
+            Repository name without .git suffix.
+
+        """
+        parsed = urlparse(url)
+        path = parsed.path or url
+        name = path.rsplit("/", 1)[-1]
+        return name.removesuffix(".git")
 
     def detect(self, project_root: Path) -> r[WorkspaceMode]:
         """Detect workspace mode by inspecting parent repository origin URL.
@@ -93,21 +104,10 @@ class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
             output.info(f"Running in standalone mode (detection error: {exc})")
             return r[WorkspaceMode].fail(f"Detection failed: {exc}")
 
-    @staticmethod
-    def _repo_name_from_url(url: str) -> str:
-        """Extract repository name from Git URL.
-
-        Args:
-            url: Git repository URL (SSH or HTTPS).
-
-        Returns:
-            Repository name without .git suffix.
-
-        """
-        parsed = urlparse(url)
-        path = parsed.path or url
-        name = path.rsplit("/", 1)[-1]
-        return name.removesuffix(".git")
+    @override
+    def execute(self) -> r[WorkspaceMode]:
+        """Not used; call detect() directly instead."""
+        return r[WorkspaceMode].fail("Use detect() method directly")
 
 
 __all__ = [

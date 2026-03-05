@@ -18,11 +18,6 @@ class FlextInfraRefactorDeprecatedRemover(cst.CSTTransformer):
         self.changes: list[str] = changes if changes is not None else []
         self._on_change = on_change
 
-    def _record_change(self, message: str) -> None:
-        self.changes.append(message)
-        if self._on_change is not None:
-            self._on_change(message)
-
     @override
     def leave_ClassDef(
         self,
@@ -55,3 +50,8 @@ class FlextInfraRefactorDeprecatedRemover(cst.CSTTransformer):
                                     return cst.RemovalSentinel.REMOVE
 
         return updated_node
+
+    def _record_change(self, message: str) -> None:
+        self.changes.append(message)
+        if self._on_change is not None:
+            self._on_change(message)

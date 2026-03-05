@@ -30,17 +30,76 @@ class Ex09FlextDecorators(Examples):
     _flaky_service_name: str
     _flaky_service_value: str
 
-    def _setup_container(self) -> FlextContainer:
-        """Register services used by decorator examples."""
-        container = FlextContainer.create()
-        FlextContext.Utilities.clear_context()
-        self._token_service_name = f"svc.{self.rand_str(6)}"
-        self._token_service_value = self.rand_str(12)
-        self._flaky_service_name = f"svc.{self.rand_str(6)}"
-        self._flaky_service_value = self.rand_str(12)
-        _ = container.register(self._token_service_name, self._token_service_value)
-        _ = container.register(self._flaky_service_name, self._flaky_service_value)
-        return container
+    @override
+    def exercise(self) -> None:
+        """Run all decorator demonstrations and record golden output."""
+        _ = self._setup_container()
+        self._demo_deprecated()
+        self._demo_inject()
+        self._demo_factory()
+        self._demo_railway()
+        self._demo_retry()
+        self._demo_timeout()
+        self._demo_log_operation()
+        self._demo_track_operation()
+        self._demo_track_performance()
+        self._demo_with_context()
+        self._demo_with_correlation()
+        self._demo_combined()
+
+    def _demo_combined(self) -> None:
+        """Exercise combined decorator in non-railway and railway modes."""
+        self.section("combined")
+
+        combined_standard_operation = self.rand_str(12)
+        combined_railway_operation = self.rand_str(12)
+
+        @d.combined(
+            inject_deps={"service": self._token_service_name},
+            operation_name=combined_standard_operation,
+            track_perf=False,
+            use_railway=False,
+        )
+        def combined_standard(*, service: str | None = None) -> str:
+            """Use combined decorator without railway wrapping."""
+            op_name = FlextContext.Request.get_operation_name()
+            service_value = service if isinstance(service, str) else "none"
+            return f"{service_value}|{op_name}"
+
+        @d.combined(
+            inject_deps={"service": self._flaky_service_name},
+            operation_name=combined_railway_operation,
+            track_perf=True,
+            use_railway=True,
+            error_code="E_COMBINED",
+        )
+        def combined_railway(ok: bool, *, service: str | None = None) -> str:
+            """Use combined decorator with railway wrapping and failure mapping."""
+            if not ok:
+                msg = self.rand_str(12)
+                raise ValueError(msg)
+            service_value = service if isinstance(service, str) else "none"
+            return f"{service_value}|{FlextContext.Request.get_operation_name()}"
+
+        std_result = combined_standard()
+        rail_ok = combined_railway(True)
+        rail_fail = combined_railway(False)
+
+        self.check(
+            "combined.standard_matches",
+            std_result == f"{self._token_service_value}|{combined_standard_operation}",
+        )
+        self.check("combined.railway.ok.is_success", rail_ok.is_success)
+        self.check(
+            "combined.railway.ok.value_matches",
+            rail_ok.unwrap_or("none")
+            == f"{self._flaky_service_value}|{combined_railway_operation}",
+        )
+        self.check("combined.railway.fail.is_failure", rail_fail.is_failure)
+        self.check("combined.railway.fail.error_nonempty", bool(rail_fail.error))
+        self.check(
+            "combined.railway.fail.error_code", rail_fail.error_code == "E_COMBINED"
+        )
 
     def _demo_deprecated(self) -> None:
         """Exercise deprecated decorator warning behavior."""
@@ -73,38 +132,6 @@ class Ex09FlextDecorators(Examples):
         self.check(
             "deprecated.warning_message",
             deprecated_note in (str(caught[0].message) if caught else "none"),
-        )
-
-    def _demo_inject(self) -> None:
-        """Exercise inject decorator with container and override variations."""
-        self.section("inject")
-
-        @d.inject(service=self._token_service_name)
-        def token_value(*, service: str | None = None) -> str:
-            """Resolve token service from container."""
-            return service if isinstance(service, str) else "none"
-
-        override_service = self.rand_str(12)
-        self.check(
-            "inject.container_resolution_matches",
-            token_value() == self._token_service_value,
-        )
-        self.check(
-            "inject.kwarg_override_matches",
-            token_value(service=override_service) == override_service,
-        )
-
-        missing_default_value = self.rand_str(8)
-        missing_provided_value = self.rand_str(8)
-
-        @d.inject(missing=f"svc.{self.rand_str(6)}")
-        def missing_with_default(*, missing: t.ContainerValue | None = None) -> str:
-            """Keep running when dependency is not registered."""
-            return missing_default_value if missing is None else missing_provided_value
-
-        self.check(
-            "inject.missing_dependency_default_matches",
-            missing_with_default() == missing_default_value,
         )
 
     def _demo_factory(self) -> None:
@@ -149,6 +176,62 @@ class Ex09FlextDecorators(Examples):
         self.check(
             "factory.custom.call_matches",
             factory_custom(self.rand_str(4)) == custom_value,
+        )
+
+    def _demo_inject(self) -> None:
+        """Exercise inject decorator with container and override variations."""
+        self.section("inject")
+
+        @d.inject(service=self._token_service_name)
+        def token_value(*, service: str | None = None) -> str:
+            """Resolve token service from container."""
+            return service if isinstance(service, str) else "none"
+
+        override_service = self.rand_str(12)
+        self.check(
+            "inject.container_resolution_matches",
+            token_value() == self._token_service_value,
+        )
+        self.check(
+            "inject.kwarg_override_matches",
+            token_value(service=override_service) == override_service,
+        )
+
+        missing_default_value = self.rand_str(8)
+        missing_provided_value = self.rand_str(8)
+
+        @d.inject(missing=f"svc.{self.rand_str(6)}")
+        def missing_with_default(*, missing: t.ContainerValue | None = None) -> str:
+            """Keep running when dependency is not registered."""
+            return missing_default_value if missing is None else missing_provided_value
+
+        self.check(
+            "inject.missing_dependency_default_matches",
+            missing_with_default() == missing_default_value,
+        )
+
+    def _demo_log_operation(self) -> None:
+        """Exercise log_operation with named/default operation and perf toggle."""
+        self.section("log_operation")
+
+        named_operation = self.rand_str(12)
+
+        @d.log_operation(named_operation)
+        def log_named() -> str:
+            """Return operation name from context when explicitly set."""
+            op_name = FlextContext.Request.get_operation_name()
+            return op_name if op_name is not None else "none"
+
+        @d.log_operation(track_perf=True)
+        def log_default_perf() -> str:
+            """Return operation name from context using default function name."""
+            op_name = FlextContext.Request.get_operation_name()
+            return op_name if op_name is not None else "none"
+
+        self.check("log_operation.named_matches", log_named() == named_operation)
+        self.check(
+            "log_operation.default_track_perf",
+            log_default_perf() == "log_default_perf",
         )
 
     def _demo_railway(self) -> None:
@@ -260,30 +343,6 @@ class Ex09FlextDecorators(Examples):
             self.check("timeout.failure.raised", True)
             self.check("timeout.failure.type", type(exc).__name__ == "TimeoutError")
             self.check("timeout.failure.error_code", exc.error_code == "E_TIMEOUT")
-
-    def _demo_log_operation(self) -> None:
-        """Exercise log_operation with named/default operation and perf toggle."""
-        self.section("log_operation")
-
-        named_operation = self.rand_str(12)
-
-        @d.log_operation(named_operation)
-        def log_named() -> str:
-            """Return operation name from context when explicitly set."""
-            op_name = FlextContext.Request.get_operation_name()
-            return op_name if op_name is not None else "none"
-
-        @d.log_operation(track_perf=True)
-        def log_default_perf() -> str:
-            """Return operation name from context using default function name."""
-            op_name = FlextContext.Request.get_operation_name()
-            return op_name if op_name is not None else "none"
-
-        self.check("log_operation.named_matches", log_named() == named_operation)
-        self.check(
-            "log_operation.default_track_perf",
-            log_default_perf() == "log_default_perf",
-        )
 
     def _demo_track_operation(self) -> None:
         """Exercise track_operation with correlation on and off."""
@@ -412,76 +471,17 @@ class Ex09FlextDecorators(Examples):
             isinstance(corr_id, str) and corr_id.startswith("corr_"),
         )
 
-    def _demo_combined(self) -> None:
-        """Exercise combined decorator in non-railway and railway modes."""
-        self.section("combined")
-
-        combined_standard_operation = self.rand_str(12)
-        combined_railway_operation = self.rand_str(12)
-
-        @d.combined(
-            inject_deps={"service": self._token_service_name},
-            operation_name=combined_standard_operation,
-            track_perf=False,
-            use_railway=False,
-        )
-        def combined_standard(*, service: str | None = None) -> str:
-            """Use combined decorator without railway wrapping."""
-            op_name = FlextContext.Request.get_operation_name()
-            service_value = service if isinstance(service, str) else "none"
-            return f"{service_value}|{op_name}"
-
-        @d.combined(
-            inject_deps={"service": self._flaky_service_name},
-            operation_name=combined_railway_operation,
-            track_perf=True,
-            use_railway=True,
-            error_code="E_COMBINED",
-        )
-        def combined_railway(ok: bool, *, service: str | None = None) -> str:
-            """Use combined decorator with railway wrapping and failure mapping."""
-            if not ok:
-                msg = self.rand_str(12)
-                raise ValueError(msg)
-            service_value = service if isinstance(service, str) else "none"
-            return f"{service_value}|{FlextContext.Request.get_operation_name()}"
-
-        std_result = combined_standard()
-        rail_ok = combined_railway(True)
-        rail_fail = combined_railway(False)
-
-        self.check(
-            "combined.standard_matches",
-            std_result == f"{self._token_service_value}|{combined_standard_operation}",
-        )
-        self.check("combined.railway.ok.is_success", rail_ok.is_success)
-        self.check(
-            "combined.railway.ok.value_matches",
-            rail_ok.unwrap_or("none")
-            == f"{self._flaky_service_value}|{combined_railway_operation}",
-        )
-        self.check("combined.railway.fail.is_failure", rail_fail.is_failure)
-        self.check("combined.railway.fail.error_nonempty", bool(rail_fail.error))
-        self.check(
-            "combined.railway.fail.error_code", rail_fail.error_code == "E_COMBINED"
-        )
-
-    @override
-    def exercise(self) -> None:
-        """Run all decorator demonstrations and record golden output."""
-        _ = self._setup_container()
-        self._demo_deprecated()
-        self._demo_inject()
-        self._demo_factory()
-        self._demo_railway()
-        self._demo_retry()
-        self._demo_timeout()
-        self._demo_log_operation()
-        self._demo_track_operation()
-        self._demo_track_performance()
-        self._demo_with_context()
-        self._demo_with_correlation()
-        self._demo_combined()
+    def _setup_container(self) -> FlextContainer:
+        """Register services used by decorator examples."""
+        container = FlextContainer.create()
+        FlextContext.Utilities.clear_context()
+        self._token_service_name = f"svc.{self.rand_str(6)}"
+        self._token_service_value = self.rand_str(12)
+        self._flaky_service_name = f"svc.{self.rand_str(6)}"
+        self._flaky_service_value = self.rand_str(12)
+        _ = container.register(self._token_service_name, self._token_service_value)
+        _ = container.register(self._flaky_service_name, self._flaky_service_value)
+        return container
 
 
 if __name__ == "__main__":

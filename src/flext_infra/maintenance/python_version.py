@@ -103,55 +103,6 @@ class FlextInfraPythonVersionEnforcer(FlextService[int]):
         )
         return r[int].ok(0)
 
-    def _workspace_root_from_file(self, file: str | Path) -> Path:
-        """Resolve workspace root by walking up from file location.
-
-        Finds the first directory containing .git, Makefile, and pyproject.toml.
-
-        Args:
-            file: Path to a file (usually __file__).
-
-        Returns:
-            Absolute Path to the workspace root.
-
-        Raises:
-            RuntimeError: If workspace root cannot be found.
-
-        """
-        current = Path(file).resolve()
-        if current.is_file():
-            current = current.parent
-
-        # Walk up the directory tree
-        for parent in [current] + list(current.parents):
-            markers = {".git", c.Files.MAKEFILE_FILENAME, c.Files.PYPROJECT_FILENAME}
-            if all((parent / marker).exists() for marker in markers):
-                return parent
-
-        msg = f"workspace root not found from {file}"
-        raise RuntimeError(msg)
-
-    def _read_required_minor(self, workspace_root: Path) -> int:
-        """Read the required Python minor version from workspace pyproject.toml.
-
-        Falls back to 13 if the field cannot be parsed.
-
-        Args:
-            workspace_root: Path to workspace root.
-
-        Returns:
-            int: Required Python minor version.
-
-        """
-        pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
-        if not pyproject.is_file():
-            return 13
-        content = pyproject.read_text(encoding="utf-8")
-        match = re.search(r'requires-python\s*=\s*"[>!=]*(\d+)\.(\d+)', content)
-        if match is None:
-            return 13
-        return int(match.group(2))
-
     def _discover_projects(self, workspace_root: Path) -> list[Path]:
         """Discover all Python projects in workspace.
 
@@ -226,3 +177,52 @@ class FlextInfraPythonVersionEnforcer(FlextService[int]):
             )
 
         return True
+
+    def _read_required_minor(self, workspace_root: Path) -> int:
+        """Read the required Python minor version from workspace pyproject.toml.
+
+        Falls back to 13 if the field cannot be parsed.
+
+        Args:
+            workspace_root: Path to workspace root.
+
+        Returns:
+            int: Required Python minor version.
+
+        """
+        pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
+        if not pyproject.is_file():
+            return 13
+        content = pyproject.read_text(encoding="utf-8")
+        match = re.search(r'requires-python\s*=\s*"[>!=]*(\d+)\.(\d+)', content)
+        if match is None:
+            return 13
+        return int(match.group(2))
+
+    def _workspace_root_from_file(self, file: str | Path) -> Path:
+        """Resolve workspace root by walking up from file location.
+
+        Finds the first directory containing .git, Makefile, and pyproject.toml.
+
+        Args:
+            file: Path to a file (usually __file__).
+
+        Returns:
+            Absolute Path to the workspace root.
+
+        Raises:
+            RuntimeError: If workspace root cannot be found.
+
+        """
+        current = Path(file).resolve()
+        if current.is_file():
+            current = current.parent
+
+        # Walk up the directory tree
+        for parent in [current] + list(current.parents):
+            markers = {".git", c.Files.MAKEFILE_FILENAME, c.Files.PYPROJECT_FILENAME}
+            if all((parent / marker).exists() for marker in markers):
+                return parent
+
+        msg = f"workspace root not found from {file}"
+        raise RuntimeError(msg)

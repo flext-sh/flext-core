@@ -41,10 +41,6 @@ class FlextContext(FlextRuntime):
 
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
-    def _protocol_name(self) -> str:
-        """Return the protocol name for introspection."""
-        return "FlextContext"
-
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
         ctx_value: m.ConfigMap | t.ConfigurationMapping | None,
@@ -68,6 +64,10 @@ class FlextContext(FlextRuntime):
                 exc_info=exc,
             )
             return {}
+
+    def _protocol_name(self) -> str:
+        """Return the protocol name for introspection."""
+        return "FlextContext"
 
     # =========================================================================
     # HELPER METHODS (moved from module level for SRP compliance)
@@ -250,135 +250,6 @@ class FlextContext(FlextRuntime):
             )
         return cls(initial_data=m.ContextData(data=m.Dict(root=data_map.root)))
 
-    # =========================================================================
-    # PRIVATE HELPERS - Context variable management and FlextLogger delegation
-    # =========================================================================
-
-    def _get_or_create_scope_var(
-        self,
-        scope: str,
-    ) -> contextvars.ContextVar[m.ConfigMap | None]:
-        """Get or create contextvar for scope.
-
-        Args:
-            scope: Scope name (global, user, session, or custom)
-
-        Returns:
-            ContextVar for the scope
-
-        """
-        if scope not in self._scope_vars:
-            # Create new contextvar for dynamic scope
-            # Note: Using None default per B039 - mutable defaults cause issues
-            self._scope_vars[scope] = contextvars.ContextVar(
-                f"flext_{scope}_context",
-                default=None,
-            )
-        return self._scope_vars[scope]
-
-    def iter_scope_vars(
-        self,
-    ) -> Mapping[
-        str,
-        contextvars.ContextVar[m.ConfigMap | None],
-    ]:
-        """Get scope context variables for iteration.
-
-        This method provides read-only access to scope variables for merge/clone
-        operations, avoiding SLF001 violations when accessing from other instances.
-
-        Returns:
-            Dictionary of scope names to their context variables.
-
-        """
-        return self._scope_vars
-
-    def _set_in_contextvar(
-        self,
-        scope: str,
-        data: m.ConfigMap,
-    ) -> None:
-        """Set multiple values in contextvar scope."""
-        ctx_var = self._get_or_create_scope_var(scope)
-        # Use helper for type narrowing to ConfigurationDict
-        current = m.ConfigMap.model_validate(
-            self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
-        )
-        updated = current.model_copy()
-        updated.update(data.root)
-        _ = ctx_var.set(updated)
-        if scope == c.Context.SCOPE_GLOBAL:
-            normalized_context: dict[str, t.MetadataValue] = {
-                key: FlextRuntime.normalize_to_metadata_value(value)
-                for key, value in data.items()
-            }
-            _ = FlextLogger.bind_global_context(**normalized_context)
-
-    def _get_from_contextvar(
-        self,
-        scope: str,
-    ) -> m.ConfigMap:
-        """Get all values from contextvar scope."""
-        ctx_var = self._get_or_create_scope_var(scope)
-        value = ctx_var.get()
-        return m.ConfigMap.model_validate(
-            FlextContext._narrow_contextvar_to_configuration_dict(value),
-        )
-
-    def _update_statistics(self, operation: str) -> None:
-        """Update statistics counter for an operation (DRY helper).
-
-        Args:
-            operation: Operation name ('set', 'get', 'remove', etc')
-
-        """
-        # Update primary counter using attribute name
-        counter_attr: str = f"{operation}s"
-        if hasattr(self._statistics, counter_attr):
-            current_value: int = getattr(self._statistics, counter_attr, 0)
-            # Direct increment (statistics fields are always int)
-            setattr(self._statistics, counter_attr, current_value + 1)
-
-        # Update operations dict if exists
-        operations = dict(self._statistics.operations.items())
-        value = operations.get(operation)
-        if isinstance(value, int):
-            operations[operation] = value + 1
-            self._statistics = self._statistics.model_copy(
-                update={"operations": operations},
-            )
-
-    def _execute_hooks(
-        self,
-        event: str,
-        event_data: t.Container | m.ConfigMap,
-    ) -> None:
-        """Execute hooks for an event (DRY helper).
-
-        Args:
-            event: Event name ('set', 'get', 'remove', etc.)
-            event_data: Data to pass to hooks
-
-        """
-        if event not in self._hooks:
-            return
-
-        hooks = self._hooks[event]
-        # Type narrowing: hooks is list[HandlerCallable], which is Sequence[Callable]
-        for hook in hooks:
-            if callable(hook):
-                # Note: Hooks should not raise exceptions
-                # All exceptions indicate a programming error in hook implementation
-                hook_data: t.Scalar
-                if event_data is None or isinstance(
-                    event_data,
-                    (str, int, float, bool, datetime),
-                ):
-                    hook_data = event_data
-                else:
-                    hook_data = str(event_data)
-                _ = hook(hook_data)
-
     @staticmethod
     def _propagate_to_logger(
         key: str,
@@ -431,243 +302,6 @@ class FlextContext(FlextRuntime):
             return r[bool].fail("Value must be serializable")
         return r[bool].ok(value=True)
 
-    @overload
-    def set(
-        self,
-        key_or_data: str,
-        value: t.Container,
-        *,
-        scope: str = ...,
-    ) -> r[bool]: ...
-
-    @overload
-    def set(
-        self,
-        key_or_data: m.ConfigMap,
-        value: None = ...,
-        *,
-        scope: str = ...,
-    ) -> r[bool]: ...
-
-    def set(
-        self,
-        key_or_data: str | m.ConfigMap,
-        value: t.Container | None = _SENTINEL,
-        *,
-        scope: str = c.Context.SCOPE_GLOBAL,
-    ) -> r[bool]:
-        """Set one or many values in the context.
-
-        Supports two calling conventions:
-        - Single key-value: ``ctx.set("key", value)``
-        - Bulk: ``ctx.set(config_map)``
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        Args:
-            key_or_data: A string key for single-value mode, or a ConfigMap for bulk mode
-            value: The value to set (required for single-key mode, omit for bulk mode)
-            scope: The scope for the value (global, user, session)
-
-        Returns:
-            r[bool]: Success with True if set, failure with error message
-
-        """
-        if not self._active:
-            return r[bool].fail("Context is not active")
-
-        if isinstance(key_or_data, m.ConfigMap):
-            return self._set_bulk(key_or_data, scope)
-        return self._set_single(key_or_data, value, scope)
-
-    def _set_single(
-        self,
-        key: str,
-        value: t.Container | None,
-        scope: str,
-    ) -> r[bool]:
-        """Set a single key-value pair in the context."""
-        if value is _SENTINEL or value is None:
-            return r[bool].fail("Value is required for single-key set")
-
-        validation_result = FlextContext._validate_set_inputs(key, value)
-        if validation_result.is_failure:
-            return r[bool].fail(validation_result.error or "Validation failed")
-
-        try:
-            ctx_var = self._get_or_create_scope_var(scope)
-            current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = m.ConfigMap.model_validate(current)
-            updated[key] = value
-            _ = ctx_var.set(updated)
-            FlextContext._propagate_to_logger(key, value, scope)
-            self._update_statistics(c.Context.OPERATION_SET)
-            self._execute_hooks(
-                c.Context.OPERATION_SET,
-                m.ConfigMap(root={"key": key, "value": value}),
-            )
-            return r[bool].ok(value=True)
-        except (TypeError, Exception) as e:
-            error_msg = (
-                str(e)
-                if isinstance(e, TypeError)
-                else f"Failed to set context value: {e}"
-            )
-            return r[bool].fail(error_msg)
-
-    def _set_bulk(
-        self,
-        data: m.ConfigMap,
-        scope: str,
-    ) -> r[bool]:
-        """Set multiple values in the context from a ConfigMap."""
-        if not data:
-            return r[bool].ok(value=True)
-
-        try:
-            ctx_var = self._get_or_create_scope_var(scope)
-            current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = m.ConfigMap.model_validate(current)
-            updated.update(data.root)
-            _ = ctx_var.set(updated)
-            self._update_statistics(c.Context.OPERATION_SET)
-            self._execute_hooks(
-                c.Context.OPERATION_SET,
-                m.ConfigMap(root={"data": m.ConfigMap(root=data.root)}),
-            )
-            return r[bool].ok(value=True)
-        except (TypeError, Exception) as e:
-            error_msg = (
-                str(e)
-                if isinstance(e, TypeError)
-                else f"Failed to set context values: {e}"
-            )
-            return r[bool].fail(error_msg)
-
-    def get(
-        self,
-        key: str,
-        scope: str = c.Context.SCOPE_GLOBAL,
-    ) -> r[t.Container]:
-        """Get a value from the context.
-
-        Fast fail: Returns r[t.Container] - fails if key not found.
-        No fallback behavior - use FlextResult monadic operations for defaults.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
-        No longer checks structlog - FlextLogger is independent.
-
-        Args:
-            key: The key to get
-            scope: The scope to get from (global, user, session)
-
-        Returns:
-            r[t.Container]: Success with value, or failure if key not found
-
-        Example:
-            >>> context = FlextContext()
-            >>> context.set("key", "value")
-            >>> result = context.get("key")
-            >>> if result.is_success:
-            ...     value = result.value  # "value"
-            >>>
-            >>> # Key not found - fast fail
-            >>> result = context.get("nonexistent")
-            >>> assert result.is_failure
-            >>>
-            >>> # Use monadic operations for defaults
-            >>> value = context.get("key").unwrap_or("default")
-
-        """
-        if not self._active:
-            return r[t.Container].fail("Context is not active")
-
-        # Get from contextvar (single source of truth)
-        scope_data = self._get_from_contextvar(scope)
-
-        if key not in scope_data:
-            return r[t.Container].fail(
-                f"Context key '{key}' not found in scope '{scope}'",
-            )
-
-        value = scope_data[key]
-
-        # Update statistics
-        self._update_statistics(c.Context.OPERATION_GET)
-
-        # Handle None values - return failure since FlextResult.ok() cannot accept None
-        if value is None:
-            return r[t.Container].fail(
-                f"Context key '{key}' has None value in scope '{scope}'",
-            )
-
-        def normalize_plain(raw_value: t.Container) -> t.Container:
-            mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
-            try:
-                normalized_map = m.ConfigMap.model_validate(mapped_value)
-            except (TypeError, ValueError, AttributeError) as exc:
-                FlextContext._logger.debug(
-                    "Context value is not a valid ConfigMap on first validation pass",
-                    exc_info=exc,
-                )
-                root_value = getattr(mapped_value, "root", None)
-                try:
-                    normalized_map = m.ConfigMap.model_validate(root_value)
-                except (TypeError, ValueError, AttributeError) as root_exc:
-                    FlextContext._logger.debug(
-                        "Context value root payload is not a valid ConfigMap",
-                        exc_info=root_exc,
-                    )
-                    return mapped_value
-            return {
-                str(item_key): normalize_plain(item_value)
-                for item_key, item_value in normalized_map.items()
-            }
-
-        return r[t.Container].ok(normalize_plain(value))
-
-    def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:
-        """Check if a key exists in the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
-
-        Args:
-            key: The key to check
-            scope: The scope to check (global, user, session)
-
-        Returns:
-            True if key exists, False otherwise
-
-        """
-        if not self._active:
-            return False
-
-        # Check in contextvar (single source of truth)
-        scope_data = self._get_from_contextvar(scope)
-        return key in scope_data
-
-    def remove(
-        self,
-        key: str,
-        scope: str = c.Context.SCOPE_GLOBAL,
-    ) -> None:
-        """Remove a key from the context."""
-        if not self._active:
-            return
-        ctx_var = self._get_or_create_scope_var(scope)
-        current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-        if key in current:
-            # Use filter_dict for concise key removal
-            filtered = u.filter_dict(
-                current,
-                lambda k, _v: k != key,
-            )
-            _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
-            # Note: ContextVar.set() already cleared the key, no need to unbind from logger
-            # FlextLogger doesn't have unbind_global_context method
-            self._update_statistics(c.Context.OPERATION_REMOVE)
-
     def clear(self) -> None:
         """Clear all data from the context including metadata.
 
@@ -702,81 +336,6 @@ class FlextContext(FlextRuntime):
                 update={"operations": operations},
             )
 
-    def keys(self) -> list[str]:
-        """Get all keys in the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
-
-        Returns:
-            List of all keys across all scopes
-
-        """
-        if not self._active:
-            return []
-
-        # Get keys from all contextvar scopes
-        all_keys: set[str] = set()
-        for ctx_var in self._scope_vars.values():
-            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            all_keys.update(scope_dict.keys())
-        return list(all_keys)
-
-    def merge(
-        self,
-        other: FlextContext | t.ConfigurationMapping,
-    ) -> Self:
-        """Merge another context or dictionary into this context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        Args:
-            other: Another FlextContext or dictionary to merge
-
-        Returns:
-            Self for chaining
-
-        """
-        if not self._active:
-            return self
-
-        export_callable = getattr(other, "export", None)
-        if callable(export_callable):
-            exported = export_callable(as_dict=True)
-            try:
-                exported_map = m.ConfigMap.model_validate(exported)
-            except (TypeError, ValueError, AttributeError) as exc:
-                FlextContext._logger.debug(
-                    "Context export payload validation failed",
-                    exc_info=exc,
-                )
-                exported_map = m.ConfigMap(root={})
-
-            for scope_name, scope_payload in exported_map.items():
-                if scope_name not in {
-                    c.Context.SCOPE_GLOBAL,
-                    c.Context.SCOPE_USER,
-                    c.Context.SCOPE_SESSION,
-                }:
-                    continue
-                try:
-                    scope_data = m.ConfigMap.model_validate(scope_payload)
-                except (TypeError, ValueError, AttributeError) as exc:
-                    FlextContext._logger.debug(
-                        "Context scope payload validation failed",
-                        exc_info=exc,
-                    )
-                    scope_data = None
-                if scope_data is not None:
-                    self._set_in_contextvar(scope_name, scope_data)
-        else:
-            self._set_in_contextvar(
-                c.Context.SCOPE_GLOBAL,
-                m.ConfigMap.model_validate(other),
-            )
-
-        return self
-
     def clone(self) -> Self:
         """Create a clone of this context.
 
@@ -806,47 +365,6 @@ class FlextContext(FlextRuntime):
         # Type narrowing: cloned is FlextContext which implements p.Context protocol
         # FlextContext structurally implements p.Context, so no cast needed
         return cloned
-
-    def validate(self) -> r[bool]:
-        """Validate the context data.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        Returns:
-            r[bool]: Success with True if valid, failure with error details
-
-        """
-        if not self._active:
-            return r[bool].fail("Context is not active")
-        for ctx_var in self._scope_vars.values():
-            try:
-                scope_dict = self._narrow_contextvar_to_configuration_dict(
-                    ctx_var.get(),
-                )
-            except TypeError as e:
-                return r[bool].fail(str(e))
-            for key in scope_dict:
-                if not key:
-                    return r[bool].fail("Invalid key found in context")
-        return r[bool].ok(value=True)
-
-    def items(self) -> list[tuple[str, t.Container]]:
-        """Get all items (key-value pairs) in the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        Returns:
-            List of (key, value) tuples across all scopes
-
-        """
-        if not self._active:
-            return []
-        all_items: list[tuple[str, t.Container]] = []
-        for ctx_var in self._scope_vars.values():
-            # Use helper for type narrowing to ConfigurationDict
-            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            all_items.extend(scope_dict.items())
-        return all_items
 
     def export(
         self,
@@ -938,43 +456,87 @@ class FlextContext(FlextRuntime):
             statistics=dict(statistics_mapping.items()),
         )
 
-    def values(self) -> list[t.Container]:
-        """Get all values in the context.
+    def get(
+        self,
+        key: str,
+        scope: str = c.Context.SCOPE_GLOBAL,
+    ) -> r[t.Container]:
+        """Get a value from the context.
 
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
+        Fast fail: Returns r[t.Container] - fails if key not found.
+        No fallback behavior - use FlextResult monadic operations for defaults.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
+        No longer checks structlog - FlextLogger is independent.
+
+        Args:
+            key: The key to get
+            scope: The scope to get from (global, user, session)
 
         Returns:
-            List of all values across all scopes
+            r[t.Container]: Success with value, or failure if key not found
+
+        Example:
+            >>> context = FlextContext()
+            >>> context.set("key", "value")
+            >>> result = context.get("key")
+            >>> if result.is_success:
+            ...     value = result.value  # "value"
+            >>>
+            >>> # Key not found - fast fail
+            >>> result = context.get("nonexistent")
+            >>> assert result.is_failure
+            >>>
+            >>> # Use monadic operations for defaults
+            >>> value = context.get("key").unwrap_or("default")
 
         """
         if not self._active:
-            return []
-        all_values: list[t.Container] = []
-        for ctx_var in self._scope_vars.values():
-            # Use helper for type narrowing to ConfigurationDict
-            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            all_values.extend(scope_dict.values())
-        return all_values
+            return r[t.Container].fail("Context is not active")
 
-    def set_metadata(self, key: str, value: t.Container) -> None:
-        """Set metadata for the context.
+        # Get from contextvar (single source of truth)
+        scope_data = self._get_from_contextvar(scope)
 
-        Args:
-            key: The metadata key
-            value: The metadata value
+        if key not in scope_data:
+            return r[t.Container].fail(
+                f"Context key '{key}' not found in scope '{scope}'",
+            )
 
-        """
-        # Normalize value to MetadataAttributeValue before setting
-        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata_value(
-            value
-        )
-        # Directly update attributes dict to avoid deprecation warning
-        # and object recreation
-        updated_attributes = dict(self._metadata.attributes.items())
-        updated_attributes[key] = normalized_value
-        self._metadata = self._metadata.model_copy(
-            update={"attributes": updated_attributes},
-        )
+        value = scope_data[key]
+
+        # Update statistics
+        self._update_statistics(c.Context.OPERATION_GET)
+
+        # Handle None values - return failure since FlextResult.ok() cannot accept None
+        if value is None:
+            return r[t.Container].fail(
+                f"Context key '{key}' has None value in scope '{scope}'",
+            )
+
+        def normalize_plain(raw_value: t.Container) -> t.Container:
+            mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
+            try:
+                normalized_map = m.ConfigMap.model_validate(mapped_value)
+            except (TypeError, ValueError, AttributeError) as exc:
+                FlextContext._logger.debug(
+                    "Context value is not a valid ConfigMap on first validation pass",
+                    exc_info=exc,
+                )
+                root_value = getattr(mapped_value, "root", None)
+                try:
+                    normalized_map = m.ConfigMap.model_validate(root_value)
+                except (TypeError, ValueError, AttributeError) as root_exc:
+                    FlextContext._logger.debug(
+                        "Context value root payload is not a valid ConfigMap",
+                        exc_info=root_exc,
+                    )
+                    return mapped_value
+            return {
+                str(item_key): normalize_plain(item_value)
+                for item_key, item_value in normalized_map.items()
+            }
+
+        return r[t.Container].ok(normalize_plain(value))
 
     def get_metadata(self, key: str) -> r[t.Container]:
         """Get metadata from the context.
@@ -1013,6 +575,231 @@ class FlextContext(FlextRuntime):
         )
         return r[t.Container].ok(normalized_value)
 
+    def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:
+        """Check if a key exists in the context.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
+
+        Args:
+            key: The key to check
+            scope: The scope to check (global, user, session)
+
+        Returns:
+            True if key exists, False otherwise
+
+        """
+        if not self._active:
+            return False
+
+        # Check in contextvar (single source of truth)
+        scope_data = self._get_from_contextvar(scope)
+        return key in scope_data
+
+    def items(self) -> list[tuple[str, t.Container]]:
+        """Get all items (key-value pairs) in the context.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
+
+        Returns:
+            List of (key, value) tuples across all scopes
+
+        """
+        if not self._active:
+            return []
+        all_items: list[tuple[str, t.Container]] = []
+        for ctx_var in self._scope_vars.values():
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+            all_items.extend(scope_dict.items())
+        return all_items
+
+    def iter_scope_vars(
+        self,
+    ) -> Mapping[
+        str,
+        contextvars.ContextVar[m.ConfigMap | None],
+    ]:
+        """Get scope context variables for iteration.
+
+        This method provides read-only access to scope variables for merge/clone
+        operations, avoiding SLF001 violations when accessing from other instances.
+
+        Returns:
+            Dictionary of scope names to their context variables.
+
+        """
+        return self._scope_vars
+
+    def keys(self) -> list[str]:
+        """Get all keys in the context.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
+
+        Returns:
+            List of all keys across all scopes
+
+        """
+        if not self._active:
+            return []
+
+        # Get keys from all contextvar scopes
+        all_keys: set[str] = set()
+        for ctx_var in self._scope_vars.values():
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+            all_keys.update(scope_dict.keys())
+        return list(all_keys)
+
+    def merge(
+        self,
+        other: FlextContext | t.ConfigurationMapping,
+    ) -> Self:
+        """Merge another context or dictionary into this context.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
+        FlextLogger for logging integration (global scope only).
+
+        Args:
+            other: Another FlextContext or dictionary to merge
+
+        Returns:
+            Self for chaining
+
+        """
+        if not self._active:
+            return self
+
+        export_callable = getattr(other, "export", None)
+        if callable(export_callable):
+            exported = export_callable(as_dict=True)
+            try:
+                exported_map = m.ConfigMap.model_validate(exported)
+            except (TypeError, ValueError, AttributeError) as exc:
+                FlextContext._logger.debug(
+                    "Context export payload validation failed",
+                    exc_info=exc,
+                )
+                exported_map = m.ConfigMap(root={})
+
+            for scope_name, scope_payload in exported_map.items():
+                if scope_name not in {
+                    c.Context.SCOPE_GLOBAL,
+                    c.Context.SCOPE_USER,
+                    c.Context.SCOPE_SESSION,
+                }:
+                    continue
+                try:
+                    scope_data = m.ConfigMap.model_validate(scope_payload)
+                except (TypeError, ValueError, AttributeError) as exc:
+                    FlextContext._logger.debug(
+                        "Context scope payload validation failed",
+                        exc_info=exc,
+                    )
+                    scope_data = None
+                if scope_data is not None:
+                    self._set_in_contextvar(scope_name, scope_data)
+        else:
+            self._set_in_contextvar(
+                c.Context.SCOPE_GLOBAL,
+                m.ConfigMap.model_validate(other),
+            )
+
+        return self
+
+    def remove(
+        self,
+        key: str,
+        scope: str = c.Context.SCOPE_GLOBAL,
+    ) -> None:
+        """Remove a key from the context."""
+        if not self._active:
+            return
+        ctx_var = self._get_or_create_scope_var(scope)
+        current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+        if key in current:
+            # Use filter_dict for concise key removal
+            filtered = u.filter_dict(
+                current,
+                lambda k, _v: k != key,
+            )
+            _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
+            # Note: ContextVar.set() already cleared the key, no need to unbind from logger
+            # FlextLogger doesn't have unbind_global_context method
+            self._update_statistics(c.Context.OPERATION_REMOVE)
+
+    @overload
+    def set(
+        self,
+        key_or_data: str,
+        value: t.Container,
+        *,
+        scope: str = ...,
+    ) -> r[bool]: ...
+
+    @overload
+    def set(
+        self,
+        key_or_data: m.ConfigMap,
+        value: None = ...,
+        *,
+        scope: str = ...,
+    ) -> r[bool]: ...
+
+    def set(
+        self,
+        key_or_data: str | m.ConfigMap,
+        value: t.Container | None = _SENTINEL,
+        *,
+        scope: str = c.Context.SCOPE_GLOBAL,
+    ) -> r[bool]:
+        """Set one or many values in the context.
+
+        Supports two calling conventions:
+        - Single key-value: ``ctx.set("key", value)``
+        - Bulk: ``ctx.set(config_map)``
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
+        FlextLogger for logging integration (global scope only).
+
+        Args:
+            key_or_data: A string key for single-value mode, or a ConfigMap for bulk mode
+            value: The value to set (required for single-key mode, omit for bulk mode)
+            scope: The scope for the value (global, user, session)
+
+        Returns:
+            r[bool]: Success with True if set, failure with error message
+
+        """
+        if not self._active:
+            return r[bool].fail("Context is not active")
+
+        if isinstance(key_or_data, m.ConfigMap):
+            return self._set_bulk(key_or_data, scope)
+        return self._set_single(key_or_data, value, scope)
+
+    def set_all_metadata_for_clone(self, metadata: m.Metadata) -> None:
+        """Set all metadata for the context (used internally for cloning)."""
+        self._metadata = metadata
+
+    def set_metadata(self, key: str, value: t.Container) -> None:
+        """Set metadata for the context.
+
+        Args:
+            key: The metadata key
+            value: The metadata value
+
+        """
+        # Normalize value to MetadataAttributeValue before setting
+        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata_value(
+            value
+        )
+        # Directly update attributes dict to avoid deprecation warning
+        # and object recreation
+        updated_attributes = dict(self._metadata.attributes.items())
+        updated_attributes[key] = normalized_value
+        self._metadata = self._metadata.model_copy(
+            update={"attributes": updated_attributes},
+        )
+
     def set_statistics_for_clone(
         self,
         statistics: m.ContextStatistics,
@@ -1020,9 +807,77 @@ class FlextContext(FlextRuntime):
         """Set context statistics (used internally for cloning)."""
         self._statistics = statistics
 
-    def set_all_metadata_for_clone(self, metadata: m.Metadata) -> None:
-        """Set all metadata for the context (used internally for cloning)."""
-        self._metadata = metadata
+    def validate(self) -> r[bool]:
+        """Validate the context data.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
+
+        Returns:
+            r[bool]: Success with True if valid, failure with error details
+
+        """
+        if not self._active:
+            return r[bool].fail("Context is not active")
+        for ctx_var in self._scope_vars.values():
+            try:
+                scope_dict = self._narrow_contextvar_to_configuration_dict(
+                    ctx_var.get(),
+                )
+            except TypeError as e:
+                return r[bool].fail(str(e))
+            for key in scope_dict:
+                if not key:
+                    return r[bool].fail("Invalid key found in context")
+        return r[bool].ok(value=True)
+
+    def values(self) -> list[t.Container]:
+        """Get all values in the context.
+
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
+
+        Returns:
+            List of all values across all scopes
+
+        """
+        if not self._active:
+            return []
+        all_values: list[t.Container] = []
+        for ctx_var in self._scope_vars.values():
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+            all_values.extend(scope_dict.values())
+        return all_values
+
+    def _execute_hooks(
+        self,
+        event: str,
+        event_data: t.Container | m.ConfigMap,
+    ) -> None:
+        """Execute hooks for an event (DRY helper).
+
+        Args:
+            event: Event name ('set', 'get', 'remove', etc.)
+            event_data: Data to pass to hooks
+
+        """
+        if event not in self._hooks:
+            return
+
+        hooks = self._hooks[event]
+        # Type narrowing: hooks is list[HandlerCallable], which is Sequence[Callable]
+        for hook in hooks:
+            if callable(hook):
+                # Note: Hooks should not raise exceptions
+                # All exceptions indicate a programming error in hook implementation
+                hook_data: t.Scalar
+                if event_data is None or isinstance(
+                    event_data,
+                    (str, int, float, bool, datetime),
+                ):
+                    hook_data = event_data
+                else:
+                    hook_data = str(event_data)
+                _ = hook(hook_data)
 
     def _get_all_metadata(self) -> dict[str, t.Container]:
         """Get all metadata from the context.
@@ -1076,6 +931,151 @@ class FlextContext(FlextRuntime):
             if scope_dict:
                 scopes[scope_name] = dict(scope_dict.items())
         return scopes
+
+    def _get_from_contextvar(
+        self,
+        scope: str,
+    ) -> m.ConfigMap:
+        """Get all values from contextvar scope."""
+        ctx_var = self._get_or_create_scope_var(scope)
+        value = ctx_var.get()
+        return m.ConfigMap.model_validate(
+            FlextContext._narrow_contextvar_to_configuration_dict(value),
+        )
+
+    # =========================================================================
+    # PRIVATE HELPERS - Context variable management and FlextLogger delegation
+    # =========================================================================
+
+    def _get_or_create_scope_var(
+        self,
+        scope: str,
+    ) -> contextvars.ContextVar[m.ConfigMap | None]:
+        """Get or create contextvar for scope.
+
+        Args:
+            scope: Scope name (global, user, session, or custom)
+
+        Returns:
+            ContextVar for the scope
+
+        """
+        if scope not in self._scope_vars:
+            # Create new contextvar for dynamic scope
+            # Note: Using None default per B039 - mutable defaults cause issues
+            self._scope_vars[scope] = contextvars.ContextVar(
+                f"flext_{scope}_context",
+                default=None,
+            )
+        return self._scope_vars[scope]
+
+    def _set_bulk(
+        self,
+        data: m.ConfigMap,
+        scope: str,
+    ) -> r[bool]:
+        """Set multiple values in the context from a ConfigMap."""
+        if not data:
+            return r[bool].ok(value=True)
+
+        try:
+            ctx_var = self._get_or_create_scope_var(scope)
+            current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+            updated = m.ConfigMap.model_validate(current)
+            updated.update(data.root)
+            _ = ctx_var.set(updated)
+            self._update_statistics(c.Context.OPERATION_SET)
+            self._execute_hooks(
+                c.Context.OPERATION_SET,
+                m.ConfigMap(root={"data": m.ConfigMap(root=data.root)}),
+            )
+            return r[bool].ok(value=True)
+        except (TypeError, Exception) as e:
+            error_msg = (
+                str(e)
+                if isinstance(e, TypeError)
+                else f"Failed to set context values: {e}"
+            )
+            return r[bool].fail(error_msg)
+
+    def _set_in_contextvar(
+        self,
+        scope: str,
+        data: m.ConfigMap,
+    ) -> None:
+        """Set multiple values in contextvar scope."""
+        ctx_var = self._get_or_create_scope_var(scope)
+        # Use helper for type narrowing to ConfigurationDict
+        current = m.ConfigMap.model_validate(
+            self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
+        )
+        updated = current.model_copy()
+        updated.update(data.root)
+        _ = ctx_var.set(updated)
+        if scope == c.Context.SCOPE_GLOBAL:
+            normalized_context: dict[str, t.MetadataValue] = {
+                key: FlextRuntime.normalize_to_metadata_value(value)
+                for key, value in data.items()
+            }
+            _ = FlextLogger.bind_global_context(**normalized_context)
+
+    def _set_single(
+        self,
+        key: str,
+        value: t.Container | None,
+        scope: str,
+    ) -> r[bool]:
+        """Set a single key-value pair in the context."""
+        if value is _SENTINEL or value is None:
+            return r[bool].fail("Value is required for single-key set")
+
+        validation_result = FlextContext._validate_set_inputs(key, value)
+        if validation_result.is_failure:
+            return r[bool].fail(validation_result.error or "Validation failed")
+
+        try:
+            ctx_var = self._get_or_create_scope_var(scope)
+            current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+            updated = m.ConfigMap.model_validate(current)
+            updated[key] = value
+            _ = ctx_var.set(updated)
+            FlextContext._propagate_to_logger(key, value, scope)
+            self._update_statistics(c.Context.OPERATION_SET)
+            self._execute_hooks(
+                c.Context.OPERATION_SET,
+                m.ConfigMap(root={"key": key, "value": value}),
+            )
+            return r[bool].ok(value=True)
+        except (TypeError, Exception) as e:
+            error_msg = (
+                str(e)
+                if isinstance(e, TypeError)
+                else f"Failed to set context value: {e}"
+            )
+            return r[bool].fail(error_msg)
+
+    def _update_statistics(self, operation: str) -> None:
+        """Update statistics counter for an operation (DRY helper).
+
+        Args:
+            operation: Operation name ('set', 'get', 'remove', etc')
+
+        """
+        # Update primary counter using attribute name
+        counter_attr: str = f"{operation}s"
+        if hasattr(self._statistics, counter_attr):
+            current_value: int = getattr(self._statistics, counter_attr, 0)
+            # Direct increment (statistics fields are always int)
+            setattr(self._statistics, counter_attr, current_value + 1)
+
+        # Update operations dict if exists
+        operations = dict(self._statistics.operations.items())
+        value = operations.get(operation)
+        if isinstance(value, int):
+            operations[operation] = value + 1
+            self._statistics = self._statistics.model_copy(
+                update={"operations": operations},
+            )
 
     # =========================================================================
     # Container integration for dependency injection
@@ -1230,15 +1230,6 @@ class FlextContext(FlextRuntime):
             return correlation_id if isinstance(correlation_id, str) else None
 
         @staticmethod
-        def set_correlation_id(correlation_id: str | None) -> None:
-            """Set correlation ID.
-
-            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
-            Accepts ``None`` to explicitly clear the active correlation when needed.
-            """
-            _ = FlextContext.Variables.CorrelationId.set(correlation_id)
-
-        @staticmethod
         @contextmanager
         def new_correlation(
             correlation_id: str | None = None,
@@ -1283,6 +1274,15 @@ class FlextContext(FlextRuntime):
                     FlextContext.Variables.ParentCorrelationId.reset(
                         parent_token,
                     )
+
+        @staticmethod
+        def set_correlation_id(correlation_id: str | None) -> None:
+            """Set correlation ID.
+
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
+            Accepts ``None`` to explicitly clear the active correlation when needed.
+            """
+            _ = FlextContext.Variables.CorrelationId.set(correlation_id)
 
     # =========================================================================
     # Service Domain - Service identification and lifecycle context

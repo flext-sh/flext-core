@@ -33,32 +33,229 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
         super().__init__()
         self._workspace_root = workspace_root
 
+    @classmethod
+    def _all_deps_resolvable(cls, node: ast.stmt, target_tree: ast.Module) -> bool:
+        """Check if all names used in node are available in the target module.
+
+        Called AFTER _copy_required_imports to verify the copy succeeded.
+        A name is available if it's imported or defined in the target module.
+        """
+        names_used = cls._get_top_level_names_in_node(node)
+        node_name = cls._get_node_name(node)
+        names_used = frozenset(n for n in names_used if n != node_name)
+
+        if not names_used:
+            return True
+
+        available: set[str] = set(dir(_builtins_module))
+        for stmt in target_tree.body:
+            if isinstance(stmt, ast.Import):
+                for alias in stmt.names:
+                    imported_name = alias.asname or alias.name
+                    available.add(imported_name.split(".")[0])
+            elif isinstance(stmt, ast.ImportFrom):
+                for alias in stmt.names:
+                    imported_name = alias.asname or alias.name
+                    if imported_name != "*":
+                        available.add(imported_name)
+            else:
+                name = cls._get_node_name(stmt)
+                if name:
+                    available.add(name)
+
+        return all(n in available for n in names_used)
+
+    @classmethod
+    def _copy_required_imports(
+        cls,
+        node: ast.stmt,
+        source_tree: ast.Module,
+        target_tree: ast.Module,
+    ) -> None:
+        """Copy imports needed by node from source_tree to target_tree."""
+        names_used = cls._get_top_level_names_in_node(node)
+        node_name = cls._get_node_name(node)
+        names_used = frozenset(n for n in names_used if n != node_name)
+
+        if not names_used:
+            return
+
+        # Build map of name -> import stmt from source
+        source_imports: dict[str, ast.stmt] = {}
+        for stmt in source_tree.body:
+            if isinstance(stmt, ast.Import):
+                for alias in stmt.names:
+                    imported_name = alias.asname or alias.name
+                    top_name = imported_name.split(".")[0]
+                    source_imports[top_name] = stmt
+            elif isinstance(stmt, ast.ImportFrom):
+                for alias in stmt.names:
+                    imported_name = alias.asname or alias.name
+                    if imported_name != "*":
+                        source_imports[imported_name] = stmt
+
+        # Get names already available in target
+        target_available: set[str] = set()
+        for stmt in target_tree.body:
+            if isinstance(stmt, ast.Import):
+                for alias in stmt.names:
+                    imported_name = alias.asname or alias.name
+                    target_available.add(imported_name.split(".")[0])
+            elif isinstance(stmt, ast.ImportFrom):
+                for alias in stmt.names:
+                    imported_name = alias.asname or alias.name
+                    if imported_name != "*":
+                        target_available.add(imported_name)
+
+        # Copy missing imports from source to target
+        seen_modules: set[str] = set()
+        imports_to_add: list[ast.stmt] = []
+        for name in sorted(names_used):
+            if name in target_available:
+                continue
+            if name not in source_imports:
+                continue
+            import_stmt = source_imports[name]
+            import_key = ast.unparse(import_stmt)
+            if import_key in seen_modules:
+                continue
+            seen_modules.add(import_key)
+            imports_to_add.append(import_stmt)
+
+        if not imports_to_add:
+            return
+
+        # Insert after last import in target
+        last_import_idx = 0
+        for i, stmt in enumerate(target_tree.body):
+            if isinstance(stmt, (ast.Import, ast.ImportFrom)) or (
+                isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant)
+            ):
+                last_import_idx = i + 1
+
+        for i, imp in enumerate(imports_to_add):
+            target_tree.body.insert(last_import_idx + i, imp)
+
+    @staticmethod
+    def _add_import_to_tree(
+        tree: ast.Module,
+        pkg_name: str,
+        module_name: str,
+        name: str,
+    ) -> None:
+        """Add a from-import to the tree if not already present."""
+        full_module = f"{pkg_name}.{module_name}"
+
+        # Check if import already exists
+        for stmt in tree.body:
+            if isinstance(stmt, ast.ImportFrom) and stmt.module == full_module:
+                # Check if name already imported
+                for alias in stmt.names:
+                    if alias.name == name:
+                        return
+                # Add name to existing import
+                stmt.names.append(ast.alias(name=name))
+                return
+
+        # Create new import statement
+        new_import = ast.ImportFrom(
+            module=full_module,
+            names=[ast.alias(name=name)],
+            level=0,
+        )
+        _ = ast.fix_missing_locations(new_import)
+
+        # Insert after last import
+        last_import_idx = 0
+        for i, stmt in enumerate(tree.body):
+            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+                last_import_idx = i + 1
+        tree.body.insert(last_import_idx, new_import)
+
+    @staticmethod
+    def _find_insert_position(tree: ast.Module) -> int:
+        """Find the position after the last import statement in the module."""
+        last_import_idx = 0
+        for i, stmt in enumerate(tree.body):
+            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+                last_import_idx = i + 1
+            elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+                # Module docstring
+                last_import_idx = i + 1
+        return last_import_idx
+
+    @staticmethod
+    def _find_package_dir(project_root: Path) -> Path | None:
+        """Find the first Python package under src/."""
+        src_dir = project_root / "src"
+        if not src_dir.is_dir():
+            return None
+        for child in sorted(src_dir.iterdir()):
+            if child.is_dir() and (child / "__init__.py").exists():
+                return child
+        return None
+
+    @staticmethod
+    def _get_node_name(node: ast.stmt) -> str:
+        """Extract the name from an assignment node."""
+        if isinstance(node, ast.Assign) and node.targets:
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                return target.id
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            return node.target.id
+        return ""
+
+    @staticmethod
+    def _get_top_level_names_in_node(node: ast.stmt) -> frozenset[str]:
+        """Collect all Name references used in a node."""
+        names: set[str] = set()
+        for child in ast.walk(node):
+            if isinstance(child, ast.Name):
+                names.add(child.id)
+        return frozenset(names)
+
+    @staticmethod
+    def _is_name_referenced_in_file(
+        name: str, definition_node: ast.stmt, tree: ast.Module
+    ) -> bool:
+        """Check if a name is referenced anywhere in the file besides its definition."""
+        for stmt in tree.body:
+            if stmt is definition_node:
+                continue
+            for node in ast.walk(stmt):
+                if isinstance(node, ast.Name) and node.id == name:
+                    return True
+        return False
+
+    @staticmethod
+    def _name_exists_in_module(name: str, tree: ast.Module) -> bool:
+        """Check if a name is already defined in the module."""
+        for stmt in tree.body:
+            if isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name) and target.id == name:
+                        return True
+            if (
+                isinstance(stmt, ast.AnnAssign)
+                and isinstance(stmt.target, ast.Name)
+                and stmt.target.id == name
+            ):
+                return True
+        return False
+
+    @staticmethod
+    def _write_tree(path: Path, tree: ast.Module) -> None:
+        """Write an AST module back to disk and run ruff fix."""
+        _ = ast.fix_missing_locations(tree)
+        source = ast.unparse(tree)
+        _ = path.write_text(source, encoding="utf-8")
+        FlextInfraCodegenTransforms.run_ruff_fix(path)
+
     @override
     def execute(self) -> r[list[FlextInfraModels.AutoFixResult]]:
         """Execute auto-fix across all workspace projects."""
         return r[list[FlextInfraModels.AutoFixResult]].ok(self.run())
-
-    def run(self) -> list[FlextInfraModels.AutoFixResult]:
-        """Run auto-fix on all projects in workspace.
-
-        Returns:
-            List of AutoFixResult models, one per project.
-
-        """
-        discovery = FlextInfraDiscoveryService()
-        projects_result = discovery.discover_projects(self._workspace_root)
-        if not projects_result.is_success:
-            return []
-
-        results: list[FlextInfraModels.AutoFixResult] = []
-        for project in projects_result.unwrap():
-            if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
-                continue
-            if project.stack.startswith("go"):
-                continue
-            result = self.fix_project(project.path)
-            results.append(result)
-        return results
 
     def fix_project(self, project_path: Path) -> FlextInfraModels.AutoFixResult:
         """Auto-fix namespace violations in a single project.
@@ -137,6 +334,28 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
             violations_skipped=violations_skipped,
             files_modified=sorted(files_modified),
         )
+
+    def run(self) -> list[FlextInfraModels.AutoFixResult]:
+        """Run auto-fix on all projects in workspace.
+
+        Returns:
+            List of AutoFixResult models, one per project.
+
+        """
+        discovery = FlextInfraDiscoveryService()
+        projects_result = discovery.discover_projects(self._workspace_root)
+        if not projects_result.is_success:
+            return []
+
+        results: list[FlextInfraModels.AutoFixResult] = []
+        for project in projects_result.unwrap():
+            if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
+                continue
+            if project.stack.startswith("go"):
+                continue
+            result = self.fix_project(project.path)
+            results.append(result)
+        return results
 
     def _fix_rule1(
         self,
@@ -422,222 +641,3 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
             # Write both files
             self._write_tree(source_file, tree)
             self._write_tree(target_path, target_tree)
-
-    @staticmethod
-    def _get_node_name(node: ast.stmt) -> str:
-        """Extract the name from an assignment node."""
-        if isinstance(node, ast.Assign) and node.targets:
-            target = node.targets[0]
-            if isinstance(target, ast.Name):
-                return target.id
-        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            return node.target.id
-        return ""
-
-    @staticmethod
-    def _is_name_referenced_in_file(
-        name: str, definition_node: ast.stmt, tree: ast.Module
-    ) -> bool:
-        """Check if a name is referenced anywhere in the file besides its definition."""
-        for stmt in tree.body:
-            if stmt is definition_node:
-                continue
-            for node in ast.walk(stmt):
-                if isinstance(node, ast.Name) and node.id == name:
-                    return True
-        return False
-
-    @staticmethod
-    def _name_exists_in_module(name: str, tree: ast.Module) -> bool:
-        """Check if a name is already defined in the module."""
-        for stmt in tree.body:
-            if isinstance(stmt, ast.Assign):
-                for target in stmt.targets:
-                    if isinstance(target, ast.Name) and target.id == name:
-                        return True
-            if (
-                isinstance(stmt, ast.AnnAssign)
-                and isinstance(stmt.target, ast.Name)
-                and stmt.target.id == name
-            ):
-                return True
-        return False
-
-    @classmethod
-    def _copy_required_imports(
-        cls,
-        node: ast.stmt,
-        source_tree: ast.Module,
-        target_tree: ast.Module,
-    ) -> None:
-        """Copy imports needed by node from source_tree to target_tree."""
-        names_used = cls._get_top_level_names_in_node(node)
-        node_name = cls._get_node_name(node)
-        names_used = frozenset(n for n in names_used if n != node_name)
-
-        if not names_used:
-            return
-
-        # Build map of name -> import stmt from source
-        source_imports: dict[str, ast.stmt] = {}
-        for stmt in source_tree.body:
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    top_name = imported_name.split(".")[0]
-                    source_imports[top_name] = stmt
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    if imported_name != "*":
-                        source_imports[imported_name] = stmt
-
-        # Get names already available in target
-        target_available: set[str] = set()
-        for stmt in target_tree.body:
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    target_available.add(imported_name.split(".")[0])
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    if imported_name != "*":
-                        target_available.add(imported_name)
-
-        # Copy missing imports from source to target
-        seen_modules: set[str] = set()
-        imports_to_add: list[ast.stmt] = []
-        for name in sorted(names_used):
-            if name in target_available:
-                continue
-            if name not in source_imports:
-                continue
-            import_stmt = source_imports[name]
-            import_key = ast.unparse(import_stmt)
-            if import_key in seen_modules:
-                continue
-            seen_modules.add(import_key)
-            imports_to_add.append(import_stmt)
-
-        if not imports_to_add:
-            return
-
-        # Insert after last import in target
-        last_import_idx = 0
-        for i, stmt in enumerate(target_tree.body):
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)) or (
-                isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant)
-            ):
-                last_import_idx = i + 1
-
-        for i, imp in enumerate(imports_to_add):
-            target_tree.body.insert(last_import_idx + i, imp)
-
-    @staticmethod
-    def _get_top_level_names_in_node(node: ast.stmt) -> frozenset[str]:
-        """Collect all Name references used in a node."""
-        names: set[str] = set()
-        for child in ast.walk(node):
-            if isinstance(child, ast.Name):
-                names.add(child.id)
-        return frozenset(names)
-
-    @classmethod
-    def _all_deps_resolvable(cls, node: ast.stmt, target_tree: ast.Module) -> bool:
-        """Check if all names used in node are available in the target module.
-
-        Called AFTER _copy_required_imports to verify the copy succeeded.
-        A name is available if it's imported or defined in the target module.
-        """
-        names_used = cls._get_top_level_names_in_node(node)
-        node_name = cls._get_node_name(node)
-        names_used = frozenset(n for n in names_used if n != node_name)
-
-        if not names_used:
-            return True
-
-        available: set[str] = set(dir(_builtins_module))
-        for stmt in target_tree.body:
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    available.add(imported_name.split(".")[0])
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    if imported_name != "*":
-                        available.add(imported_name)
-            else:
-                name = cls._get_node_name(stmt)
-                if name:
-                    available.add(name)
-
-        return all(n in available for n in names_used)
-
-    @staticmethod
-    def _find_insert_position(tree: ast.Module) -> int:
-        """Find the position after the last import statement in the module."""
-        last_import_idx = 0
-        for i, stmt in enumerate(tree.body):
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
-                last_import_idx = i + 1
-            elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
-                # Module docstring
-                last_import_idx = i + 1
-        return last_import_idx
-
-    @staticmethod
-    def _add_import_to_tree(
-        tree: ast.Module,
-        pkg_name: str,
-        module_name: str,
-        name: str,
-    ) -> None:
-        """Add a from-import to the tree if not already present."""
-        full_module = f"{pkg_name}.{module_name}"
-
-        # Check if import already exists
-        for stmt in tree.body:
-            if isinstance(stmt, ast.ImportFrom) and stmt.module == full_module:
-                # Check if name already imported
-                for alias in stmt.names:
-                    if alias.name == name:
-                        return
-                # Add name to existing import
-                stmt.names.append(ast.alias(name=name))
-                return
-
-        # Create new import statement
-        new_import = ast.ImportFrom(
-            module=full_module,
-            names=[ast.alias(name=name)],
-            level=0,
-        )
-        _ = ast.fix_missing_locations(new_import)
-
-        # Insert after last import
-        last_import_idx = 0
-        for i, stmt in enumerate(tree.body):
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
-                last_import_idx = i + 1
-        tree.body.insert(last_import_idx, new_import)
-
-    @staticmethod
-    def _write_tree(path: Path, tree: ast.Module) -> None:
-        """Write an AST module back to disk and run ruff fix."""
-        _ = ast.fix_missing_locations(tree)
-        source = ast.unparse(tree)
-        _ = path.write_text(source, encoding="utf-8")
-        FlextInfraCodegenTransforms.run_ruff_fix(path)
-
-    @staticmethod
-    def _find_package_dir(project_root: Path) -> Path | None:
-        """Find the first Python package under src/."""
-        src_dir = project_root / "src"
-        if not src_dir.is_dir():
-            return None
-        for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / "__init__.py").exists():
-                return child
-        return None

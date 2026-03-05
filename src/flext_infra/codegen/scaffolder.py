@@ -29,6 +29,17 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
         super().__init__()
         self._workspace_root = workspace_root
 
+    @staticmethod
+    def _find_package_dir(project_root: Path) -> Path | None:
+        """Find the first Python package under src/."""
+        src_dir = project_root / "src"
+        if not src_dir.is_dir():
+            return None
+        for child in sorted(src_dir.iterdir()):
+            if child.is_dir() and (child / "__init__.py").exists():
+                return child
+        return None
+
     @override
     def execute(self) -> r[list[FlextInfraModels.ScaffoldResult]]:
         """Execute scaffolding across all workspace projects."""
@@ -136,14 +147,3 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
             filepath.write_text(content, encoding="utf-8")
             FlextInfraCodegenTransforms.run_ruff_fix(filepath)
             files_created.append(str(filepath))
-
-    @staticmethod
-    def _find_package_dir(project_root: Path) -> Path | None:
-        """Find the first Python package under src/."""
-        src_dir = project_root / "src"
-        if not src_dir.is_dir():
-            return None
-        for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / "__init__.py").exists():
-                return child
-        return None

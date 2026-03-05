@@ -39,50 +39,32 @@ from flext_core import (
 class DecoratorsService(s[m.ConfigMap]):
     """Service demonstrating FlextDecorators comprehensive features."""
 
-    @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
-        """Execute decorators demonstrations."""
-        print("Starting decorators demonstration")
+    @staticmethod
+    def _demonstrate_combined() -> None:
+        """Show combined decorator."""
+        print("\n=== Combined Decorator ===")
 
-        try:
-            self._demonstrate_inject()
-            self._demonstrate_log_operation()
-            self._demonstrate_railway()
-            self._demonstrate_with_context()
-            self._demonstrate_retry_timeout()
-            self._demonstrate_combined()
+        # Setup container for combined decorator
+        container = FlextContainer()
+        logger = FlextLogger.create_module_logger(__name__)
+        container.register("logger", logger)
 
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
-                    root={
-                        "decorators_demonstrated": [
-                            "inject",
-                            "log_operation",
-                            "railway",
-                            "with_context",
-                            "retry",
-                            "timeout",
-                            "combined",
-                        ],
-                        "decorator_categories": 7,
-                        "features": [
-                            "dependency_injection",
-                            "structured_logging",
-                            "railway_pattern",
-                            "context_management",
-                            "retry_logic",
-                            "timeout_enforcement",
-                            "composition",
-                        ],
-                    },
-                ),
-            )
+        @FlextDecorators.combined(
+            inject_deps={"logger": "logger"},
+            operation_name="combined_demo",
+            track_perf=True,
+            use_railway=True,
+        )
+        def combined_operation(value: int) -> r[int]:
+            """Operation with all decorators combined."""
+            # Logger is injected automatically
+            if value < 0:
+                return r[int].fail("Value must be positive")
+            return r[int].ok(value * 2)
 
-        except Exception as e:
-            error_msg = f"Decorators demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
+        result = combined_operation(6)
+        if result.is_success:
+            print(f"✅ Combined decorator: {result.value}")
 
     @staticmethod
     def _demonstrate_inject() -> None:
@@ -145,19 +127,6 @@ class DecoratorsService(s[m.ConfigMap]):
             print(f"✅ Railway failure: {failure_result.error}")
 
     @staticmethod
-    def _demonstrate_with_context() -> None:
-        """Show with context decorator."""
-        print("\n=== With Context Decorator ===")
-
-        @FlextDecorators.with_context(operation="demo", user_id="test_user")
-        def context_operation(value: str) -> str:
-            """Operation with context variables."""
-            return f"Context operation: {value}"
-
-        result = context_operation("test")
-        print(f"✅ Context operation: {result}")
-
-    @staticmethod
     def _demonstrate_retry_timeout() -> None:
         """Show retry and timeout decorators with composition."""
         print("\n=== Retry and Timeout Decorators ===")
@@ -208,31 +177,62 @@ class DecoratorsService(s[m.ConfigMap]):
             print(f"✅ Retry + Timeout composition: {robust_result.value}")
 
     @staticmethod
-    def _demonstrate_combined() -> None:
-        """Show combined decorator."""
-        print("\n=== Combined Decorator ===")
+    def _demonstrate_with_context() -> None:
+        """Show with context decorator."""
+        print("\n=== With Context Decorator ===")
 
-        # Setup container for combined decorator
-        container = FlextContainer()
-        logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        @FlextDecorators.with_context(operation="demo", user_id="test_user")
+        def context_operation(value: str) -> str:
+            """Operation with context variables."""
+            return f"Context operation: {value}"
 
-        @FlextDecorators.combined(
-            inject_deps={"logger": "logger"},
-            operation_name="combined_demo",
-            track_perf=True,
-            use_railway=True,
-        )
-        def combined_operation(value: int) -> r[int]:
-            """Operation with all decorators combined."""
-            # Logger is injected automatically
-            if value < 0:
-                return r[int].fail("Value must be positive")
-            return r[int].ok(value * 2)
+        result = context_operation("test")
+        print(f"✅ Context operation: {result}")
 
-        result = combined_operation(6)
-        if result.is_success:
-            print(f"✅ Combined decorator: {result.value}")
+    @override
+    def execute(
+        self,
+    ) -> r[m.ConfigMap]:
+        """Execute decorators demonstrations."""
+        print("Starting decorators demonstration")
+
+        try:
+            self._demonstrate_inject()
+            self._demonstrate_log_operation()
+            self._demonstrate_railway()
+            self._demonstrate_with_context()
+            self._demonstrate_retry_timeout()
+            self._demonstrate_combined()
+
+            return r[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "decorators_demonstrated": [
+                            "inject",
+                            "log_operation",
+                            "railway",
+                            "with_context",
+                            "retry",
+                            "timeout",
+                            "combined",
+                        ],
+                        "decorator_categories": 7,
+                        "features": [
+                            "dependency_injection",
+                            "structured_logging",
+                            "railway_pattern",
+                            "context_management",
+                            "retry_logic",
+                            "timeout_enforcement",
+                            "composition",
+                        ],
+                    },
+                ),
+            )
+
+        except Exception as e:
+            error_msg = f"Decorators demonstration failed: {e}"
+            return r[m.ConfigMap].fail(error_msg)
 
 
 def main() -> None:

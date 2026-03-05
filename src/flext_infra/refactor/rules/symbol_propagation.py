@@ -148,6 +148,47 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
 
         return result_call
 
+    def _add_keywords(self, migration: Mapping[str, object]) -> Mapping[str, str]:
+        raw = migration.get("add_keywords", {})
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(k): str(v)
+            for k, v in cast("dict[object, object]", raw).items()
+            if isinstance(k, str) and isinstance(v, str)
+        }
+
+    def _keyword_name(self, arg: cst.Arg) -> str | None:
+        if arg.keyword is None:
+            return None
+        return arg.keyword.value
+
+    def _keyword_renames(self, migration: Mapping[str, object]) -> Mapping[str, str]:
+        raw = migration.get("keyword_renames", {})
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(k): str(v)
+            for k, v in cast("dict[object, object]", raw).items()
+            if isinstance(k, str) and isinstance(v, str)
+        }
+
+    def _literal_expr(self, value: str) -> cst.BaseExpression:
+        lowered = value.strip().lower()
+        if lowered == "true":
+            return cst.Name("True")
+        if lowered == "false":
+            return cst.Name("False")
+        if lowered == "none":
+            return cst.Name("None")
+        if value.isdigit():
+            return cst.Integer(value)
+        if value.startswith('"') and value.endswith('"'):
+            return cst.SimpleString(value)
+        if value.startswith("'") and value.endswith("'"):
+            return cst.SimpleString(value)
+        return cst.Name(value)
+
     def _matches_migration(
         self,
         migration: Mapping[str, object],
@@ -174,15 +215,10 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
             simple_name is not None and target_simple and simple_name in target_simple
         )
 
-    def _keyword_renames(self, migration: Mapping[str, object]) -> Mapping[str, str]:
-        raw = migration.get("keyword_renames", {})
-        if not isinstance(raw, dict):
-            return {}
-        return {
-            str(k): str(v)
-            for k, v in cast("dict[object, object]", raw).items()
-            if isinstance(k, str) and isinstance(v, str)
-        }
+    def _record_change(self, message: str) -> None:
+        self.changes.append(message)
+        if self._on_change is not None:
+            self._on_change(message)
 
     def _remove_keywords(self, migration: Mapping[str, object]) -> set[str]:
         raw = migration.get("remove_keywords", [])
@@ -190,48 +226,12 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
             return set()
         return {item for item in cast("list[object]", raw) if isinstance(item, str)}
 
-    def _add_keywords(self, migration: Mapping[str, object]) -> Mapping[str, str]:
-        raw = migration.get("add_keywords", {})
-        if not isinstance(raw, dict):
-            return {}
-        return {
-            str(k): str(v)
-            for k, v in cast("dict[object, object]", raw).items()
-            if isinstance(k, str) and isinstance(v, str)
-        }
-
-    def _keyword_name(self, arg: cst.Arg) -> str | None:
-        if arg.keyword is None:
-            return None
-        return arg.keyword.value
-
     def _simple_callable_name(self, expr: cst.BaseExpression) -> str | None:
         if isinstance(expr, cst.Name):
             return expr.value
         if isinstance(expr, cst.Attribute):
             return expr.attr.value
         return None
-
-    def _literal_expr(self, value: str) -> cst.BaseExpression:
-        lowered = value.strip().lower()
-        if lowered == "true":
-            return cst.Name("True")
-        if lowered == "false":
-            return cst.Name("False")
-        if lowered == "none":
-            return cst.Name("None")
-        if value.isdigit():
-            return cst.Integer(value)
-        if value.startswith('"') and value.endswith('"'):
-            return cst.SimpleString(value)
-        if value.startswith("'") and value.endswith("'"):
-            return cst.SimpleString(value)
-        return cst.Name(value)
-
-    def _record_change(self, message: str) -> None:
-        self.changes.append(message)
-        if self._on_change is not None:
-            self._on_change(message)
 
 
 class FlextInfraRefactorSignaturePropagationRule(FlextInfraRefactorRule):

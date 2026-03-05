@@ -26,22 +26,6 @@ class DatabaseService(s[m.ConfigMap]):
     db_config: m.ConfigMap
 
     @override
-    def model_post_init(self, /, __context: object) -> None:
-        """Post-initialization hook.
-
-        Args:
-            __context: Pydantic context (unused)
-
-        """
-        super().model_post_init(__context)
-
-        # ✅ CORRECT: Log config ONCE, doesn't appear in all subsequent logs
-        self._log_config_once(self.db_config, message="Database configuration loaded")
-
-        # ❌ WRONG: DO NOT pass config to _with_operation_context
-        # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
-
-    @override
     def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
         """Execute database operations.
 
@@ -63,6 +47,22 @@ class DatabaseService(s[m.ConfigMap]):
         results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
 
         return r[m.ConfigMap].ok(results)
+
+    @override
+    def model_post_init(self, /, __context: object) -> None:
+        """Post-initialization hook.
+
+        Args:
+            __context: Pydantic context (unused)
+
+        """
+        super().model_post_init(__context)
+
+        # ✅ CORRECT: Log config ONCE, doesn't appear in all subsequent logs
+        self._log_config_once(self.db_config, message="Database configuration loaded")
+
+        # ❌ WRONG: DO NOT pass config to _with_operation_context
+        # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
 
 class MigrationService(s[m.ConfigMap]):

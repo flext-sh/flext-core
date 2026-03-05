@@ -89,17 +89,31 @@ class _ContainerStub:
     def context(self) -> FlextContext:
         return self._context
 
-    def scoped(self, **_kwargs: object) -> _ContainerStub:
-        return self
+    def clear_all(self) -> None:
+        self._services.clear()
 
-    def wire_modules(self, **_kwargs: object) -> None:
-        return None
+    def get(self, name: str) -> r[t.Container]:
+        if name in self._services:
+            return r[t.Container].ok(self._services[name])
+        return r[t.Container].fail("missing")
 
     def get_config(self) -> Mapping[str, t.Container]:
         return self._config
 
+    def get_typed(self, name: str, type_cls: type[object]) -> r[t.Container]:
+        result = self.get(name)
+        if result.is_failure:
+            return r[t.Container].fail(result.error or "missing")
+        value = result.value
+        if isinstance(value, type_cls):
+            return r[t.Container].ok(value)
+        return r[t.Container].fail("wrong-type")
+
     def has_service(self, name: str) -> bool:
         return name in self._services
+
+    def list_services(self) -> list[str]:
+        return list(self._services.keys())
 
     def register(self, name: str, service: t.Container) -> r[bool]:
         self._services[name] = service
@@ -113,9 +127,11 @@ class _ContainerStub:
         self._services[name] = factory()
         return r[bool].ok(True)
 
-    def with_service(self, name: str, service: t.Container) -> _ContainerStub:
-        self._services[name] = service
+    def scoped(self, **_kwargs: object) -> _ContainerStub:
         return self
+
+    def wire_modules(self, **_kwargs: object) -> None:
+        return None
 
     def with_factory(
         self,
@@ -125,25 +141,9 @@ class _ContainerStub:
         self._services[name] = factory()
         return self
 
-    def get(self, name: str) -> r[t.Container]:
-        if name in self._services:
-            return r[t.Container].ok(self._services[name])
-        return r[t.Container].fail("missing")
-
-    def get_typed(self, name: str, type_cls: type[object]) -> r[t.Container]:
-        result = self.get(name)
-        if result.is_failure:
-            return r[t.Container].fail(result.error or "missing")
-        value = result.value
-        if isinstance(value, type_cls):
-            return r[t.Container].ok(value)
-        return r[t.Container].fail("wrong-type")
-
-    def list_services(self) -> list[str]:
-        return list(self._services.keys())
-
-    def clear_all(self) -> None:
-        self._services.clear()
+    def with_service(self, name: str, service: t.Container) -> _ContainerStub:
+        self._services[name] = service
+        return self
 
 
 def demo_core_context_methods() -> None:

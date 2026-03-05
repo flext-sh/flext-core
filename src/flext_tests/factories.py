@@ -78,29 +78,415 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         failure = FlextTestsFactories.Result.fail("error")
     """
 
-    @staticmethod
-    def _extract_model_instance(
-        model_result: BaseModel
-        | builtins.list[BaseModel]
-        | Mapping[str, BaseModel]
-        | r[BaseModel]
-        | r[builtins.list[BaseModel]]
-        | r[Mapping[str, BaseModel]],
-    ) -> BaseModel | None:
-        if isinstance(model_result, BaseModel):
-            return model_result
-        if isinstance(model_result, list):
-            return model_result[0] if model_result else None
-        if isinstance(model_result, Mapping):
-            return next(iter(model_result.values()), None)
-        if model_result.is_failure:
-            return None
-        result_value = model_result.value
-        if isinstance(result_value, BaseModel):
-            return result_value
-        if isinstance(result_value, list):
-            return result_value[0] if result_value else None
-        return next(iter(result_value.values()), None)
+    @classmethod
+    def batch[TModel](
+        cls,
+        kind: t.Tests.Factory.ModelKind = "user",
+        count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
+        *,
+        names: Sequence[str] | None = None,
+        environments: Sequence[str] | None = None,
+        service_types: Sequence[str] | None = None,
+        **common_overrides: t.Tests.TestResultValue,
+    ) -> (
+        list[m.Tests.Factory.User]
+        | builtins.list[m.Tests.Factory.Config]
+        | builtins.list[m.Tests.Factory.Service]
+    ):
+        """Unified batch factory - creates multiple model instances.
+
+        This is the preferred way to create batches of test models.
+        Use tt.batch() instead of batch_users(), Batch.configs(), etc.
+
+        Args:
+            kind: Model type to create ('user', 'config', 'service')
+            count: Number of instances to create
+            names: Optional list of names to cycle through
+            environments: Optional list of environments (for configs)
+            service_types: Optional list of service types (for services)
+            **common_overrides: Fields applied to all instances
+
+        Returns:
+            List of model instances
+
+        Examples:
+            # Batch of users
+            users = tt.batch("user", count=10)
+
+            # Batch of configs with environments
+            configs = tt.batch("config", count=3, environments=["dev", "prod"])
+
+            # Batch of services with common override
+            services = tt.batch("service", count=5, status="pending")
+
+        """
+        _ = common_overrides
+        if kind == "user":
+            result_users: builtins.list[m.Tests.Factory.User] = []
+            for i in range(count):
+                name = names[i % len(names)] if names else f"User {i}"
+                user_model = cls.model("user", name=name, email=f"user{i}@example.com")
+                result_users.append(m.Tests.Factory.User.model_validate(user_model))
+            return result_users
+        if kind == "config":
+            envs = (
+                list(environments)
+                if environments
+                else list(c.Tests.Factory.DEFAULT_BATCH_ENVIRONMENTS)
+            )
+            configs: builtins.list[m.Tests.Factory.Config] = []
+            for i in range(count):
+                config_model = cls.model("config", environment=envs[i % len(envs)])
+                configs.append(m.Tests.Factory.Config.model_validate(config_model))
+            return configs
+        types = (
+            list(service_types)
+            if service_types
+            else list(c.Tests.Factory.DEFAULT_BATCH_SERVICE_TYPES)
+        )
+        services: builtins.list[m.Tests.Factory.Service] = []
+        for i in range(count):
+            service_model = cls.model("service", service_type=types[i % len(types)])
+            services.append(m.Tests.Factory.Service.model_validate(service_model))
+        return services
+
+    @classmethod
+    def dict_factory(
+        cls,
+        source: Mapping[str, t.Tests.ContainerValue]
+        | Callable[[], tuple[str, t.Tests.ContainerValue]]
+        | t.Tests.Factory.ModelKind = "user",
+        **kwargs: t.Tests.TestResultValue,
+    ) -> Mapping[str, t.Tests.ContainerValue] | r[Mapping[str, t.Tests.ContainerValue]]:
+        """Create typed dict from source.
+
+        This is the preferred way to create dicts of test data.
+        Use tt.dict_factory() instead of manual dict comprehensions.
+
+        Args:
+            source: Source for dict items:
+                - Mapping[K, V]: Use mapping directly
+                - Callable[[], tuple[K, V]]: Factory function returning (key, value)
+                - ModelKind: Create models as values with auto-generated keys
+            count: Number of items to create (if source is callable or ModelKind)
+            key_factory: Factory function for keys (takes index, returns K)
+            value_factory: Factory function for values (takes key, returns V)
+            as_result: Wrap result in r
+            merge_with: Additional mapping to merge into result
+
+        Returns:
+            Dict of items or r wrapping dict
+
+        Examples:
+            # Dict from model kind
+            users = tt.dict_factory("user", count=3)
+            assert len(users) == 3
+            assert all(m.Tests.Factory.User in type(u).__mro__ for u in users.values())
+
+            # Dict from callable
+            pairs = tt.dict_factory(lambda: (f"key_{i}", i), count=3)
+            # Note: callable doesn't receive index, use key_factory instead
+
+            # Dict with key/value factories
+            data = tt.dict_factory(
+                "user",
+                count=3,
+                key_factory=lambda i: f"user_{i}",
+                value_factory=lambda k: cls.model("user", name=k),
+            )
+
+            # Dict from mapping
+            existing = {"a": 1, "b": 2}
+            merged = tt.dict_factory(existing, merge_with={"c": 3})
+            assert merged == {"a": 1, "b": 2, "c": 3}
+
+            # Dict wrapped in result
+            result = tt.dict_factory("user", count=3, as_result=True)
+            assert result.is_success
+            assert len(result.value) == 3
+
+        """
+        try:
+            params = m.Tests.Factory.DictFactoryParams.model_validate({
+                "source": source,
+                **kwargs,
+            })
+        except (TypeError, ValueError, AttributeError) as exc:
+            return r[Mapping[str, t.Tests.ContainerValue]].fail(
+                f"Invalid parameters: {exc}"
+            )
+        result_dict: MutableMapping[str, t.Tests.ContainerValue] = {}
+        if isinstance(params.source, str):
+            model_kind: t.Tests.Factory.ModelKind = "user"
+            match params.source:
+                case "user":
+                    model_kind = "user"
+                case "config":
+                    model_kind = "config"
+                case "service":
+                    model_kind = "service"
+                case "entity":
+                    model_kind = "entity"
+                case "value":
+                    model_kind = "value"
+                case "command":
+                    model_kind = "command"
+                case "query":
+                    model_kind = "query"
+                case "event":
+                    model_kind = "event"
+                case _:
+                    pass
+            for i in range(params.count):
+                key: str = params.key_factory(i) if params.key_factory else f"item_{i}"
+                model_result = cls.model(model_kind, count=1)
+                model_instance = cls._extract_model_instance(model_result)
+                if model_instance is None:
+                    continue
+                value: t.Tests.ContainerValue = model_instance
+                if params.value_factory:
+                    value = params.value_factory(key)
+                result_dict[key] = value
+        elif callable(params.source):
+            source_callable = params.source
+            for i in range(params.count):
+                key_val, value_val = source_callable()
+                call_key = key_val
+                call_value = value_val
+                if params.key_factory:
+                    call_key = params.key_factory(i)
+                if params.value_factory:
+                    call_value = params.value_factory(call_key)
+                result_dict[call_key] = call_value
+        else:
+            source_mapping = params.source
+            for k, v in source_mapping.items():
+                result_dict[str(k)] = v
+        if params.merge_with:
+            merge_mapping = params.merge_with
+            for k, v in merge_mapping.items():
+                result_dict[str(k)] = v
+        if params.as_result:
+            return r[Mapping[str, t.Tests.ContainerValue]].ok(result_dict)
+        return result_dict
+
+    @classmethod
+    def generic[T](
+        cls, type_: type[T], **kwargs: t.Tests.TestResultValue
+    ) -> T | builtins.list[T] | r[T] | r[builtins.list[T]]:
+        """Create instance(s) of any type with full type safety.
+
+        This is the preferred way to instantiate generic types.
+        Use tt.generic() instead of manual instantiation.
+
+        Args:
+            type_: Type class to instantiate
+            args: Positional arguments for constructor
+            kwargs: Keyword arguments for constructor
+            count: Number of instances to create (returns list if count > 1)
+            as_result: Wrap result in r
+            validate: Validation predicate (must return True for success)
+
+        Returns:
+            Instance, list of instances, or r wrapping any of these
+
+        Examples:
+            # Simple instantiation
+            obj = tt.generic(SomeClass, kwargs={"name": "test"})
+            assert isinstance(obj, SomeClass)
+
+            # With positional args
+            obj = tt.generic(SomeClass, args=[1, 2, 3], kwargs={"name": "test"})
+
+            # Batch creation
+            objs = tt.generic(SomeClass, kwargs={"name": "test"}, count=5)
+            assert len(objs) == 5
+
+            # With validation
+            obj = tt.generic(
+                SomeClass,
+                kwargs={"age": 25},
+                validate=lambda o: o.age >= 18,
+            )
+
+            # Wrapped in result
+            result = tt.generic(SomeClass, kwargs={"name": "test"}, as_result=True)
+            assert result.is_success
+            assert isinstance(result.value, SomeClass)
+
+        """
+        try:
+            validate_data: dict[str, object] = {"type_": type_, **kwargs}
+            if "kwargs" in validate_data:
+                validate_data["call_kwargs"] = validate_data.pop("kwargs")
+            params = m.Tests.Factory.GenericFactoryParams.model_validate(
+                validate_data,
+            )
+        except (TypeError, ValueError, AttributeError) as exc:
+            return r[T].fail(f"Invalid parameters: {exc}")
+        args = params.args or ()
+        kwargs_dict = params.call_kwargs or {}
+
+        def _create_instance() -> T:
+            type_cls: type[T] = params.type_
+            instance = type_cls(*args, **kwargs_dict)
+            if params.validate_fn and (not params.validate_fn(instance)):
+                type_name = type_cls.__name__
+                raise ValueError(f"Validation failed for {type_name}")
+            return instance
+
+        if params.count > 1:
+            instances: builtins.list[T] = []
+            for _ in range(params.count):
+                try:
+                    instance = _create_instance()
+                    instances.append(instance)
+                except (TypeError, ValueError, AttributeError) as e:
+                    if params.as_result:
+                        return r[builtins.list[T]].fail(
+                            f"Failed to create instance: {e}"
+                        )
+                    raise
+            if params.as_result:
+                return r[builtins.list[T]].ok(instances)
+            return instances
+        try:
+            instance = _create_instance()
+            if params.as_result:
+                result_instance: r[T] = r.ok(instance)
+                return result_instance
+            return instance
+        except (TypeError, ValueError, AttributeError) as e:
+            if params.as_result:
+                return r[T].fail(f"Failed to create instance: {e}")
+            raise
+
+    @classmethod
+    def list(
+        cls,
+        source: Sequence[t.Tests.ContainerValue]
+        | Callable[[], t.Tests.ContainerValue]
+        | t.Tests.Factory.ModelKind = "user",
+        **kwargs: t.Tests.TestResultValue,
+    ) -> (
+        builtins.list[t.Tests.ContainerValue] | r[builtins.list[t.Tests.ContainerValue]]
+    ):
+        """Create typed list from source.
+
+        This is the preferred way to create lists of test data.
+        Use tt.list() instead of manual list comprehensions.
+
+        Args:
+            source: Source for list items:
+                - Sequence[T]: Use items directly
+                - Callable[[], T]: Factory function to call repeatedly
+                - ModelKind: Create models of this kind (delegates to tt.model())
+            count: Number of items to create (if source is callable or ModelKind)
+            as_result: Wrap result in r
+            unique: Ensure all items are unique (if applicable)
+            transform: Transform function applied to each item
+            filter_: Filter predicate to exclude items
+
+        Returns:
+            List of items or r wrapping list
+
+        Examples:
+            # List from model kind
+            users = tt.list("user", count=3)
+            assert len(users) == 3
+            assert all(m.Tests.Factory.User in type(u).__mro__ for u in users)
+
+            # List from callable
+            numbers = tt.list(lambda: 42, count=5)
+            assert numbers == [42, 42, 42, 42, 42]
+
+            # List from sequence with transform
+            doubled = tt.list([1, 2, 3], transform=lambda x: x * 2)
+            assert doubled == [2, 4, 6]
+
+            # List with filter
+            evens = tt.list([1, 2, 3, 4, 5], filter_=lambda x: x % 2 == 0)
+            assert evens == [2, 4]
+
+            # List wrapped in result
+            result = tt.list("user", count=3, as_result=True)
+            assert result.is_success
+            assert len(result.value) == 3
+
+        """
+        try:
+            params = m.Tests.Factory.ListFactoryParams.model_validate({
+                "source": source,
+                **kwargs,
+            })
+        except (TypeError, ValueError, AttributeError) as exc:
+            return r[builtins.list[t.Tests.ContainerValue]].fail(
+                f"Invalid parameters: {exc}"
+            )
+        items: builtins.list[t.Tests.ContainerValue] = []
+        raw_items: builtins.list[t.Tests.ContainerValue] = []
+        if isinstance(params.source, str):
+            model_kind_str = params.source
+            kind_map: Mapping[str, t.Tests.Factory.ModelKind] = {
+                "user": "user",
+                "config": "config",
+                "service": "service",
+                "entity": "entity",
+                "value": "value",
+                "command": "command",
+                "query": "query",
+                "event": "event",
+            }
+            if model_kind_str not in kind_map:
+                return r[builtins.list[t.Tests.ContainerValue]].fail(
+                    f"Invalid model kind: {model_kind_str}"
+                )
+            model_kind = kind_map[model_kind_str]
+            for _ in range(params.count):
+                model_result = cls.model(model_kind)
+                model_instance = cls._extract_model_instance(model_result)
+                if model_instance is None:
+                    continue
+                raw_item: t.Tests.ContainerValue = model_instance
+                if params.transform:
+                    raw_item = params.transform(raw_item)
+                if params.filter_ is None or params.filter_(raw_item):
+                    raw_items.append(raw_item)
+        elif callable(params.source):
+            source_callable: Callable[[], t.Tests.ContainerValue] = params.source
+            for _ in range(params.count):
+                raw_item = source_callable()
+                if params.transform:
+                    raw_item = params.transform(raw_item)
+                if params.filter_ is None or params.filter_(raw_item):
+                    raw_items.append(raw_item)
+        else:
+            source_seq: Sequence[t.Tests.ContainerValue] = params.source
+            for source_item in source_seq:
+                final_item: t.Tests.ContainerValue
+                if params.transform:
+                    final_item = params.transform(source_item)
+                else:
+                    final_item = source_item
+                if params.filter_ is None or params.filter_(final_item):
+                    raw_items.append(final_item)
+        items.extend(raw_items)
+        if params.unique and items:
+            seen: set[object] = set()
+            unique_items: builtins.list[t.Tests.ContainerValue] = []
+            for item in items:
+                item_hash = (
+                    hash(item)
+                    if hasattr(item, "__hash__") and item.__hash__ is not None
+                    else id(item)
+                )
+                if item_hash not in seen:
+                    seen.add(item_hash)
+                    unique_items.append(item)
+            items = unique_items
+        if params.as_result:
+            return r[builtins.list[t.Tests.ContainerValue]].ok(items)
+        return items
 
     @classmethod
     def model(
@@ -374,6 +760,94 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         return typed_instance
 
     @classmethod
+    def op(
+        cls,
+        kind: t.Tests.Factory.OpKind = "simple",
+        *,
+        error_message: str = c.Tests.Factory.ERROR_DEFAULT,
+        result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
+    ) -> Callable[..., object]:
+        """Unified operation factory - creates callable test operations.
+
+        This is the preferred way to create test operations. Use tt.op() instead of
+        Operations.simple(), Operations.error(), etc.
+
+        Args:
+            kind: Operation type
+                - 'simple': Returns "success" string
+                - 'add': Adds two values (numeric or string concat)
+                - 'format': Formats "name: value" string
+                - 'error': Raises ValueError
+                - 'type_error': Raises TypeError
+                - 'result_ok': Returns r.ok()
+                - 'result_fail': Returns r.fail()
+            error_message: Error message for error operations
+            result_value: Value for result_ok operation
+
+        Returns:
+            Callable operation
+
+        Examples:
+            # Simple operation
+            simple = tt.op("simple")
+            assert simple() == "success"
+
+            # Error operation
+            error_op = tt.op("error", error_message="Custom error")
+            # error_op() raises ValueError("Custom error")
+
+            # Result operations
+            ok_op = tt.op("result_ok", result_value=42)
+            fail_op = tt.op("result_fail", error_message="Failed!")
+
+        """
+        if kind == "simple":
+
+            def simple_op() -> str:
+                return c.Tests.Factory.SUCCESS_MESSAGE
+
+            return simple_op
+        if kind == "add":
+
+            def add_op(
+                a: t.Tests.TestResultValue, b: t.Tests.TestResultValue
+            ) -> t.Tests.TestResultValue:
+                if isinstance(a, int | float) and isinstance(b, int | float):
+                    return a + b
+                return str(a) + str(b)
+
+            return add_op
+        if kind == "format":
+
+            def format_op(name: str, value: int = 10) -> str:
+                return f"{name}: {value}"
+
+            return format_op
+        if kind == "error":
+
+            def error_op() -> Never:
+                raise ValueError(error_message)
+
+            return error_op
+        if kind == "type_error":
+
+            def type_error_op() -> Never:
+                raise TypeError(error_message)
+
+            return type_error_op
+        if kind == "result_ok":
+
+            def result_ok_op() -> r[t.Tests.TestResultValue]:
+                return r[t.Tests.TestResultValue].ok(result_value)
+
+            return result_ok_op
+
+        def result_fail_op() -> r[t.Tests.TestResultValue]:
+            return r[t.Tests.TestResultValue].fail(error_message)
+
+        return result_fail_op
+
+    @classmethod
     def res(
         cls,
         kind: t.Tests.Factory.ResultKind = "ok",
@@ -516,166 +990,6 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         return r[t.Tests.ContainerValue].ok(from_val_transformed)
 
     @classmethod
-    def op(
-        cls,
-        kind: t.Tests.Factory.OpKind = "simple",
-        *,
-        error_message: str = c.Tests.Factory.ERROR_DEFAULT,
-        result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
-    ) -> Callable[..., object]:
-        """Unified operation factory - creates callable test operations.
-
-        This is the preferred way to create test operations. Use tt.op() instead of
-        Operations.simple(), Operations.error(), etc.
-
-        Args:
-            kind: Operation type
-                - 'simple': Returns "success" string
-                - 'add': Adds two values (numeric or string concat)
-                - 'format': Formats "name: value" string
-                - 'error': Raises ValueError
-                - 'type_error': Raises TypeError
-                - 'result_ok': Returns r.ok()
-                - 'result_fail': Returns r.fail()
-            error_message: Error message for error operations
-            result_value: Value for result_ok operation
-
-        Returns:
-            Callable operation
-
-        Examples:
-            # Simple operation
-            simple = tt.op("simple")
-            assert simple() == "success"
-
-            # Error operation
-            error_op = tt.op("error", error_message="Custom error")
-            # error_op() raises ValueError("Custom error")
-
-            # Result operations
-            ok_op = tt.op("result_ok", result_value=42)
-            fail_op = tt.op("result_fail", error_message="Failed!")
-
-        """
-        if kind == "simple":
-
-            def simple_op() -> str:
-                return c.Tests.Factory.SUCCESS_MESSAGE
-
-            return simple_op
-        if kind == "add":
-
-            def add_op(
-                a: t.Tests.TestResultValue, b: t.Tests.TestResultValue
-            ) -> t.Tests.TestResultValue:
-                if isinstance(a, int | float) and isinstance(b, int | float):
-                    return a + b
-                return str(a) + str(b)
-
-            return add_op
-        if kind == "format":
-
-            def format_op(name: str, value: int = 10) -> str:
-                return f"{name}: {value}"
-
-            return format_op
-        if kind == "error":
-
-            def error_op() -> Never:
-                raise ValueError(error_message)
-
-            return error_op
-        if kind == "type_error":
-
-            def type_error_op() -> Never:
-                raise TypeError(error_message)
-
-            return type_error_op
-        if kind == "result_ok":
-
-            def result_ok_op() -> r[t.Tests.TestResultValue]:
-                return r[t.Tests.TestResultValue].ok(result_value)
-
-            return result_ok_op
-
-        def result_fail_op() -> r[t.Tests.TestResultValue]:
-            return r[t.Tests.TestResultValue].fail(error_message)
-
-        return result_fail_op
-
-    @classmethod
-    def batch[TModel](
-        cls,
-        kind: t.Tests.Factory.ModelKind = "user",
-        count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
-        *,
-        names: Sequence[str] | None = None,
-        environments: Sequence[str] | None = None,
-        service_types: Sequence[str] | None = None,
-        **common_overrides: t.Tests.TestResultValue,
-    ) -> (
-        list[m.Tests.Factory.User]
-        | builtins.list[m.Tests.Factory.Config]
-        | builtins.list[m.Tests.Factory.Service]
-    ):
-        """Unified batch factory - creates multiple model instances.
-
-        This is the preferred way to create batches of test models.
-        Use tt.batch() instead of batch_users(), Batch.configs(), etc.
-
-        Args:
-            kind: Model type to create ('user', 'config', 'service')
-            count: Number of instances to create
-            names: Optional list of names to cycle through
-            environments: Optional list of environments (for configs)
-            service_types: Optional list of service types (for services)
-            **common_overrides: Fields applied to all instances
-
-        Returns:
-            List of model instances
-
-        Examples:
-            # Batch of users
-            users = tt.batch("user", count=10)
-
-            # Batch of configs with environments
-            configs = tt.batch("config", count=3, environments=["dev", "prod"])
-
-            # Batch of services with common override
-            services = tt.batch("service", count=5, status="pending")
-
-        """
-        _ = common_overrides
-        if kind == "user":
-            result_users: builtins.list[m.Tests.Factory.User] = []
-            for i in range(count):
-                name = names[i % len(names)] if names else f"User {i}"
-                user_model = cls.model("user", name=name, email=f"user{i}@example.com")
-                result_users.append(m.Tests.Factory.User.model_validate(user_model))
-            return result_users
-        if kind == "config":
-            envs = (
-                list(environments)
-                if environments
-                else list(c.Tests.Factory.DEFAULT_BATCH_ENVIRONMENTS)
-            )
-            configs: builtins.list[m.Tests.Factory.Config] = []
-            for i in range(count):
-                config_model = cls.model("config", environment=envs[i % len(envs)])
-                configs.append(m.Tests.Factory.Config.model_validate(config_model))
-            return configs
-        types = (
-            list(service_types)
-            if service_types
-            else list(c.Tests.Factory.DEFAULT_BATCH_SERVICE_TYPES)
-        )
-        services: builtins.list[m.Tests.Factory.Service] = []
-        for i in range(count):
-            service_model = cls.model("service", service_type=types[i % len(types)])
-            services.append(m.Tests.Factory.Service.model_validate(service_model))
-        return services
-
-    @classmethod
     def results[TValue](
         cls,
         values: Sequence[TValue],
@@ -724,344 +1038,6 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         return result_list
 
     @classmethod
-    def list(
-        cls,
-        source: Sequence[t.Tests.ContainerValue]
-        | Callable[[], t.Tests.ContainerValue]
-        | t.Tests.Factory.ModelKind = "user",
-        **kwargs: t.Tests.TestResultValue,
-    ) -> (
-        builtins.list[t.Tests.ContainerValue] | r[builtins.list[t.Tests.ContainerValue]]
-    ):
-        """Create typed list from source.
-
-        This is the preferred way to create lists of test data.
-        Use tt.list() instead of manual list comprehensions.
-
-        Args:
-            source: Source for list items:
-                - Sequence[T]: Use items directly
-                - Callable[[], T]: Factory function to call repeatedly
-                - ModelKind: Create models of this kind (delegates to tt.model())
-            count: Number of items to create (if source is callable or ModelKind)
-            as_result: Wrap result in r
-            unique: Ensure all items are unique (if applicable)
-            transform: Transform function applied to each item
-            filter_: Filter predicate to exclude items
-
-        Returns:
-            List of items or r wrapping list
-
-        Examples:
-            # List from model kind
-            users = tt.list("user", count=3)
-            assert len(users) == 3
-            assert all(m.Tests.Factory.User in type(u).__mro__ for u in users)
-
-            # List from callable
-            numbers = tt.list(lambda: 42, count=5)
-            assert numbers == [42, 42, 42, 42, 42]
-
-            # List from sequence with transform
-            doubled = tt.list([1, 2, 3], transform=lambda x: x * 2)
-            assert doubled == [2, 4, 6]
-
-            # List with filter
-            evens = tt.list([1, 2, 3, 4, 5], filter_=lambda x: x % 2 == 0)
-            assert evens == [2, 4]
-
-            # List wrapped in result
-            result = tt.list("user", count=3, as_result=True)
-            assert result.is_success
-            assert len(result.value) == 3
-
-        """
-        try:
-            params = m.Tests.Factory.ListFactoryParams.model_validate({
-                "source": source,
-                **kwargs,
-            })
-        except (TypeError, ValueError, AttributeError) as exc:
-            return r[builtins.list[t.Tests.ContainerValue]].fail(
-                f"Invalid parameters: {exc}"
-            )
-        items: builtins.list[t.Tests.ContainerValue] = []
-        raw_items: builtins.list[t.Tests.ContainerValue] = []
-        if isinstance(params.source, str):
-            model_kind_str = params.source
-            kind_map: Mapping[str, t.Tests.Factory.ModelKind] = {
-                "user": "user",
-                "config": "config",
-                "service": "service",
-                "entity": "entity",
-                "value": "value",
-                "command": "command",
-                "query": "query",
-                "event": "event",
-            }
-            if model_kind_str not in kind_map:
-                return r[builtins.list[t.Tests.ContainerValue]].fail(
-                    f"Invalid model kind: {model_kind_str}"
-                )
-            model_kind = kind_map[model_kind_str]
-            for _ in range(params.count):
-                model_result = cls.model(model_kind)
-                model_instance = cls._extract_model_instance(model_result)
-                if model_instance is None:
-                    continue
-                raw_item: t.Tests.ContainerValue = model_instance
-                if params.transform:
-                    raw_item = params.transform(raw_item)
-                if params.filter_ is None or params.filter_(raw_item):
-                    raw_items.append(raw_item)
-        elif callable(params.source):
-            source_callable: Callable[[], t.Tests.ContainerValue] = params.source
-            for _ in range(params.count):
-                raw_item = source_callable()
-                if params.transform:
-                    raw_item = params.transform(raw_item)
-                if params.filter_ is None or params.filter_(raw_item):
-                    raw_items.append(raw_item)
-        else:
-            source_seq: Sequence[t.Tests.ContainerValue] = params.source
-            for source_item in source_seq:
-                final_item: t.Tests.ContainerValue
-                if params.transform:
-                    final_item = params.transform(source_item)
-                else:
-                    final_item = source_item
-                if params.filter_ is None or params.filter_(final_item):
-                    raw_items.append(final_item)
-        items.extend(raw_items)
-        if params.unique and items:
-            seen: set[object] = set()
-            unique_items: builtins.list[t.Tests.ContainerValue] = []
-            for item in items:
-                item_hash = (
-                    hash(item)
-                    if hasattr(item, "__hash__") and item.__hash__ is not None
-                    else id(item)
-                )
-                if item_hash not in seen:
-                    seen.add(item_hash)
-                    unique_items.append(item)
-            items = unique_items
-        if params.as_result:
-            return r[builtins.list[t.Tests.ContainerValue]].ok(items)
-        return items
-
-    @classmethod
-    def dict_factory(
-        cls,
-        source: Mapping[str, t.Tests.ContainerValue]
-        | Callable[[], tuple[str, t.Tests.ContainerValue]]
-        | t.Tests.Factory.ModelKind = "user",
-        **kwargs: t.Tests.TestResultValue,
-    ) -> Mapping[str, t.Tests.ContainerValue] | r[Mapping[str, t.Tests.ContainerValue]]:
-        """Create typed dict from source.
-
-        This is the preferred way to create dicts of test data.
-        Use tt.dict_factory() instead of manual dict comprehensions.
-
-        Args:
-            source: Source for dict items:
-                - Mapping[K, V]: Use mapping directly
-                - Callable[[], tuple[K, V]]: Factory function returning (key, value)
-                - ModelKind: Create models as values with auto-generated keys
-            count: Number of items to create (if source is callable or ModelKind)
-            key_factory: Factory function for keys (takes index, returns K)
-            value_factory: Factory function for values (takes key, returns V)
-            as_result: Wrap result in r
-            merge_with: Additional mapping to merge into result
-
-        Returns:
-            Dict of items or r wrapping dict
-
-        Examples:
-            # Dict from model kind
-            users = tt.dict_factory("user", count=3)
-            assert len(users) == 3
-            assert all(m.Tests.Factory.User in type(u).__mro__ for u in users.values())
-
-            # Dict from callable
-            pairs = tt.dict_factory(lambda: (f"key_{i}", i), count=3)
-            # Note: callable doesn't receive index, use key_factory instead
-
-            # Dict with key/value factories
-            data = tt.dict_factory(
-                "user",
-                count=3,
-                key_factory=lambda i: f"user_{i}",
-                value_factory=lambda k: cls.model("user", name=k),
-            )
-
-            # Dict from mapping
-            existing = {"a": 1, "b": 2}
-            merged = tt.dict_factory(existing, merge_with={"c": 3})
-            assert merged == {"a": 1, "b": 2, "c": 3}
-
-            # Dict wrapped in result
-            result = tt.dict_factory("user", count=3, as_result=True)
-            assert result.is_success
-            assert len(result.value) == 3
-
-        """
-        try:
-            params = m.Tests.Factory.DictFactoryParams.model_validate({
-                "source": source,
-                **kwargs,
-            })
-        except (TypeError, ValueError, AttributeError) as exc:
-            return r[Mapping[str, t.Tests.ContainerValue]].fail(
-                f"Invalid parameters: {exc}"
-            )
-        result_dict: MutableMapping[str, t.Tests.ContainerValue] = {}
-        if isinstance(params.source, str):
-            model_kind: t.Tests.Factory.ModelKind = "user"
-            match params.source:
-                case "user":
-                    model_kind = "user"
-                case "config":
-                    model_kind = "config"
-                case "service":
-                    model_kind = "service"
-                case "entity":
-                    model_kind = "entity"
-                case "value":
-                    model_kind = "value"
-                case "command":
-                    model_kind = "command"
-                case "query":
-                    model_kind = "query"
-                case "event":
-                    model_kind = "event"
-                case _:
-                    pass
-            for i in range(params.count):
-                key: str = params.key_factory(i) if params.key_factory else f"item_{i}"
-                model_result = cls.model(model_kind, count=1)
-                model_instance = cls._extract_model_instance(model_result)
-                if model_instance is None:
-                    continue
-                value: t.Tests.ContainerValue = model_instance
-                if params.value_factory:
-                    value = params.value_factory(key)
-                result_dict[key] = value
-        elif callable(params.source):
-            source_callable = params.source
-            for i in range(params.count):
-                key_val, value_val = source_callable()
-                call_key = key_val
-                call_value = value_val
-                if params.key_factory:
-                    call_key = params.key_factory(i)
-                if params.value_factory:
-                    call_value = params.value_factory(call_key)
-                result_dict[call_key] = call_value
-        else:
-            source_mapping = params.source
-            for k, v in source_mapping.items():
-                result_dict[str(k)] = v
-        if params.merge_with:
-            merge_mapping = params.merge_with
-            for k, v in merge_mapping.items():
-                result_dict[str(k)] = v
-        if params.as_result:
-            return r[Mapping[str, t.Tests.ContainerValue]].ok(result_dict)
-        return result_dict
-
-    @classmethod
-    def generic[T](
-        cls, type_: type[T], **kwargs: t.Tests.TestResultValue
-    ) -> T | builtins.list[T] | r[T] | r[builtins.list[T]]:
-        """Create instance(s) of any type with full type safety.
-
-        This is the preferred way to instantiate generic types.
-        Use tt.generic() instead of manual instantiation.
-
-        Args:
-            type_: Type class to instantiate
-            args: Positional arguments for constructor
-            kwargs: Keyword arguments for constructor
-            count: Number of instances to create (returns list if count > 1)
-            as_result: Wrap result in r
-            validate: Validation predicate (must return True for success)
-
-        Returns:
-            Instance, list of instances, or r wrapping any of these
-
-        Examples:
-            # Simple instantiation
-            obj = tt.generic(SomeClass, kwargs={"name": "test"})
-            assert isinstance(obj, SomeClass)
-
-            # With positional args
-            obj = tt.generic(SomeClass, args=[1, 2, 3], kwargs={"name": "test"})
-
-            # Batch creation
-            objs = tt.generic(SomeClass, kwargs={"name": "test"}, count=5)
-            assert len(objs) == 5
-
-            # With validation
-            obj = tt.generic(
-                SomeClass,
-                kwargs={"age": 25},
-                validate=lambda o: o.age >= 18,
-            )
-
-            # Wrapped in result
-            result = tt.generic(SomeClass, kwargs={"name": "test"}, as_result=True)
-            assert result.is_success
-            assert isinstance(result.value, SomeClass)
-
-        """
-        try:
-            validate_data: dict[str, object] = {"type_": type_, **kwargs}
-            if "kwargs" in validate_data:
-                validate_data["call_kwargs"] = validate_data.pop("kwargs")
-            params = m.Tests.Factory.GenericFactoryParams.model_validate(
-                validate_data,
-            )
-        except (TypeError, ValueError, AttributeError) as exc:
-            return r[T].fail(f"Invalid parameters: {exc}")
-        args = params.args or ()
-        kwargs_dict = params.call_kwargs or {}
-
-        def _create_instance() -> T:
-            type_cls: type[T] = params.type_
-            instance = type_cls(*args, **kwargs_dict)
-            if params.validate_fn and (not params.validate_fn(instance)):
-                type_name = type_cls.__name__
-                raise ValueError(f"Validation failed for {type_name}")
-            return instance
-
-        if params.count > 1:
-            instances: builtins.list[T] = []
-            for _ in range(params.count):
-                try:
-                    instance = _create_instance()
-                    instances.append(instance)
-                except (TypeError, ValueError, AttributeError) as e:
-                    if params.as_result:
-                        return r[builtins.list[T]].fail(
-                            f"Failed to create instance: {e}"
-                        )
-                    raise
-            if params.as_result:
-                return r[builtins.list[T]].ok(instances)
-            return instances
-        try:
-            instance = _create_instance()
-            if params.as_result:
-                result_instance: r[T] = r.ok(instance)
-                return result_instance
-            return instance
-        except (TypeError, ValueError, AttributeError) as e:
-            if params.as_result:
-                return r[T].fail(f"Failed to create instance: {e}")
-            raise
-
-    @classmethod
     def svc(
         cls,
         kind: str = "test",
@@ -1094,44 +1070,6 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
 
         """
         return cls._create_test_service_impl(kind, **overrides)
-
-    @staticmethod
-    def create_user(
-        user_id: str | None = None,
-        name: str | None = None,
-        email: str | None = None,
-        **overrides: t.Tests.TestResultValue,
-    ) -> m.Tests.Factory.User:
-        """Create a test user.
-
-        Args:
-            user_id: Optional user ID
-            name: Optional user name
-            email: Optional user email
-            **overrides: Additional field overrides
-
-        Returns:
-            User model instance
-
-        """
-        user_data: MutableMapping[str, t.Tests.ContainerValue] = {
-            "id": user_id or u.Tests.Factory.generate_id(),
-            "name": name or c.Tests.Factory.DEFAULT_USER_NAME,
-            "email": email
-            or c.Tests.Factory.user_email(u.Tests.Factory.generate_short_id(8)),
-            "active": c.Tests.Factory.DEFAULT_USER_ACTIVE,
-        }
-        overrides_dict: MutableMapping[str, t.Tests.ContainerValue] = dict(overrides)
-        merge_result = u.merge(
-            {k: _to_guard_input(v) for k, v in user_data.items()},
-            {k: _to_guard_input(v) for k, v in overrides_dict.items()},
-            strategy="deep",
-        )
-        if merge_result.is_success:
-            user_data = {
-                str(k): _to_payload_value(v) for k, v in merge_result.value.items()
-            }
-        return m.Tests.Factory.User.model_validate(user_data)
 
     @staticmethod
     def _create_test_service_impl(
@@ -1185,39 +1123,6 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                     self.enabled = enabled_value
                 self._overrides = override_fields
 
-            def _validate_name_not_empty(self) -> r[bool]:
-                """Validate name is not empty (only if name is provided)."""
-                if self.name is not None and (not self.name):
-                    return r[bool].fail("Name is required")
-                return r[bool].ok(value=True)
-
-            def _validate_amount_non_negative(self) -> r[bool]:
-                """Validate amount is non-negative."""
-                if self.amount is not None and self.amount < 0:
-                    return r[bool].fail("Amount must be non-negative")
-                return r[bool].ok(value=True)
-
-            def _validate_disabled_without_amount(self) -> r[bool]:
-                """Validate disabled service doesn't have amount."""
-                has_amount = self.amount is not None and self.amount > 0
-                is_disabled = self.enabled is not None and (not self.enabled)
-                if is_disabled and has_amount:
-                    return r[bool].fail("Cannot have amount when disabled")
-                return r[bool].ok(value=True)
-
-            def _validate_business_rules_complex(self) -> r[bool]:
-                """Validate business rules for complex service."""
-                validators = [
-                    self._validate_name_not_empty,
-                    self._validate_amount_non_negative,
-                    self._validate_disabled_without_amount,
-                ]
-                for validator in validators:
-                    result = validator()
-                    if result.is_failure:
-                        return result
-                return r[bool].ok(value=True)
-
             @override
             def execute(self) -> r[t.Tests.ContainerValue]:
                 """Execute test operation."""
@@ -1254,7 +1159,102 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                     return r[bool].fail("Value too large")
                 return r[bool].ok(value=True)
 
+            def _validate_amount_non_negative(self) -> r[bool]:
+                """Validate amount is non-negative."""
+                if self.amount is not None and self.amount < 0:
+                    return r[bool].fail("Amount must be non-negative")
+                return r[bool].ok(value=True)
+
+            def _validate_business_rules_complex(self) -> r[bool]:
+                """Validate business rules for complex service."""
+                validators = [
+                    self._validate_name_not_empty,
+                    self._validate_amount_non_negative,
+                    self._validate_disabled_without_amount,
+                ]
+                for validator in validators:
+                    result = validator()
+                    if result.is_failure:
+                        return result
+                return r[bool].ok(value=True)
+
+            def _validate_disabled_without_amount(self) -> r[bool]:
+                """Validate disabled service doesn't have amount."""
+                has_amount = self.amount is not None and self.amount > 0
+                is_disabled = self.enabled is not None and (not self.enabled)
+                if is_disabled and has_amount:
+                    return r[bool].fail("Cannot have amount when disabled")
+                return r[bool].ok(value=True)
+
+            def _validate_name_not_empty(self) -> r[bool]:
+                """Validate name is not empty (only if name is provided)."""
+                if self.name is not None and (not self.name):
+                    return r[bool].fail("Name is required")
+                return r[bool].ok(value=True)
+
         return TestService
+
+    @staticmethod
+    def _extract_model_instance(
+        model_result: BaseModel
+        | builtins.list[BaseModel]
+        | Mapping[str, BaseModel]
+        | r[BaseModel]
+        | r[builtins.list[BaseModel]]
+        | r[Mapping[str, BaseModel]],
+    ) -> BaseModel | None:
+        if isinstance(model_result, BaseModel):
+            return model_result
+        if isinstance(model_result, list):
+            return model_result[0] if model_result else None
+        if isinstance(model_result, Mapping):
+            return next(iter(model_result.values()), None)
+        if model_result.is_failure:
+            return None
+        result_value = model_result.value
+        if isinstance(result_value, BaseModel):
+            return result_value
+        if isinstance(result_value, list):
+            return result_value[0] if result_value else None
+        return next(iter(result_value.values()), None)
+
+    @staticmethod
+    def create_user(
+        user_id: str | None = None,
+        name: str | None = None,
+        email: str | None = None,
+        **overrides: t.Tests.TestResultValue,
+    ) -> m.Tests.Factory.User:
+        """Create a test user.
+
+        Args:
+            user_id: Optional user ID
+            name: Optional user name
+            email: Optional user email
+            **overrides: Additional field overrides
+
+        Returns:
+            User model instance
+
+        """
+        user_data: MutableMapping[str, t.Tests.ContainerValue] = {
+            "id": user_id or u.Tests.Factory.generate_id(),
+            "name": name or c.Tests.Factory.DEFAULT_USER_NAME,
+            "email": email
+            or c.Tests.Factory.user_email(u.Tests.Factory.generate_short_id(8)),
+            "active": c.Tests.Factory.DEFAULT_USER_ACTIVE,
+        }
+        overrides_dict: MutableMapping[str, t.Tests.ContainerValue] = dict(overrides)
+        merge_result = u.merge(
+            {k: _to_guard_input(v) for k, v in user_data.items()},
+            {k: _to_guard_input(v) for k, v in overrides_dict.items()},
+            strategy="deep",
+        )
+        if merge_result.is_success:
+            user_data = {
+                str(k): _to_payload_value(v) for k, v in merge_result.value.items()
+            }
+        return m.Tests.Factory.User.model_validate(user_data)
 
     @override
     def execute(self) -> r[t.Tests.ContainerValue]:

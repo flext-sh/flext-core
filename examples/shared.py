@@ -62,15 +62,30 @@ class Examples:
         self._caller = Path(caller_file)
         self._rng = random.Random(self.SEED)  # noqa: S311
 
+    # ------------------------------------------------------------------
+    # Recording helpers
+    # ------------------------------------------------------------------
+
+    def check(self, label: str, value: t.ContainerValue | None) -> None:
+        """Append ``label: <serialised value>`` to the results buffer."""
+        self._results.append(f"{label}: {self.ser(value)}")
+
     def exercise(self) -> None:
         """Override in subclasses to exercise the target class."""
         msg = "Subclasses must implement exercise()"
         raise NotImplementedError(msg)
 
-    def run(self) -> None:
-        """Execute exercise → verify lifecycle."""
-        self.exercise()
-        self.verify()
+    def rand_bool(self) -> bool:
+        """Return a deterministic pseudo-random boolean."""
+        return bool(self._rng.randint(0, 1))
+
+    def rand_dict(self, n: int = 3) -> dict[str, int]:
+        """Return a dict with ``n`` random string keys → int values."""
+        return {self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+
+    def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
+        """Return a deterministic pseudo-random float rounded to 4 decimals."""
+        return round(self._rng.uniform(lo, hi), 4)
 
     # ------------------------------------------------------------------
     # Random value generators (deterministic via fixed seed)
@@ -80,33 +95,18 @@ class Examples:
         """Return a deterministic pseudo-random integer in ``[lo, hi]``."""
         return self._rng.randint(lo, hi)
 
-    def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
-        """Return a deterministic pseudo-random float rounded to 4 decimals."""
-        return round(self._rng.uniform(lo, hi), 4)
+    def rand_person(self) -> Examples.Person:
+        """Return a ``Person`` with random name (6 chars) and age (1–99)."""
+        return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
 
     def rand_str(self, length: int = 8) -> str:
         """Return a deterministic pseudo-random lowercase ASCII string."""
         return "".join(self._rng.choices(string.ascii_lowercase, k=length))
 
-    def rand_bool(self) -> bool:
-        """Return a deterministic pseudo-random boolean."""
-        return bool(self._rng.randint(0, 1))
-
-    def rand_person(self) -> Examples.Person:
-        """Return a ``Person`` with random name (6 chars) and age (1–99)."""
-        return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
-
-    def rand_dict(self, n: int = 3) -> dict[str, int]:
-        """Return a dict with ``n`` random string keys → int values."""
-        return {self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
-
-    # ------------------------------------------------------------------
-    # Recording helpers
-    # ------------------------------------------------------------------
-
-    def check(self, label: str, value: t.ContainerValue | None) -> None:
-        """Append ``label: <serialised value>`` to the results buffer."""
-        self._results.append(f"{label}: {self.ser(value)}")
+    def run(self) -> None:
+        """Execute exercise → verify lifecycle."""
+        self.exercise()
+        self.verify()
 
     def section(self, name: str) -> None:
         """Start a new named section (blank-line separated in the output)."""

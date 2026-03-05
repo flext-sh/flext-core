@@ -34,6 +34,25 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
             autoescape=select_autoescape(),
         )
 
+    @classmethod
+    def default_config(cls) -> m.BaseMkConfig:
+        """Return the default base.mk configuration."""
+        return cls._default_config()
+
+    @staticmethod
+    def _default_config() -> m.BaseMkConfig:
+        """Return the default base.mk configuration."""
+        return m.BaseMkConfig(
+            project_name="unnamed",
+            python_version="3.13",
+            core_stack="python",
+            package_manager="poetry",
+            source_dir="src",
+            tests_dir="tests",
+            lint_gates=["lint", "format", "pyrefly", "mypy", "pyright"],
+            test_command="pytest",
+        )
+
     @override
     def execute(self) -> r[str]:
         return self.render_all()
@@ -56,25 +75,6 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
             return r[str].ok(content)
         except (TemplateError, ValueError, TypeError) as exc:
             return r[str].fail(f"base.mk template render failed: {exc}")
-
-    @staticmethod
-    def _default_config() -> m.BaseMkConfig:
-        """Return the default base.mk configuration."""
-        return m.BaseMkConfig(
-            project_name="unnamed",
-            python_version="3.13",
-            core_stack="python",
-            package_manager="poetry",
-            source_dir="src",
-            tests_dir="tests",
-            lint_gates=["lint", "format", "pyrefly", "mypy", "pyright"],
-            test_command="pytest",
-        )
-
-    @classmethod
-    def default_config(cls) -> m.BaseMkConfig:
-        """Return the default base.mk configuration."""
-        return cls._default_config()
 
 
 __all__ = ["FlextInfraBaseMkTemplateEngine"]

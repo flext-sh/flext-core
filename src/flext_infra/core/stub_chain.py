@@ -28,6 +28,41 @@ class FlextInfraStubSupplyChain:
         """Initialize the stub supply chain."""
         self._runner = FlextInfraCommandRunner()
 
+    @staticmethod
+    def _discover_stub_projects(root: Path) -> list[Path]:
+        """Discover projects that should participate in stub checks."""
+        projects: list[Path] = []
+        for entry in sorted(root.iterdir(), key=lambda v: v.name):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            if (entry / c.Files.PYPROJECT_FILENAME).exists() and (
+                entry / "src"
+            ).is_dir():
+                projects.append(entry)
+        return projects
+
+    @staticmethod
+    def _is_internal(module_name: str, project_name: str) -> bool:
+        """Check if a module is an internal project module."""
+        root_mod = module_name.split(".", 1)[0]
+        project_root = project_name.replace("-", "_")
+        if root_mod.startswith(c.Infra.Core.INTERNAL_PREFIXES):
+            return True
+        return root_mod == project_root
+
+    @staticmethod
+    def _stub_exists(module_name: str, root: Path) -> bool:
+        """Check if a stub file exists for a module."""
+        rel = module_name.replace(".", "/")
+        for base in (root / "typings", root / "typings" / "generated"):
+            candidates = [
+                base / f"{rel}.pyi",
+                base / rel / "__init__.pyi",
+            ]
+            if any(c.exists() for c in candidates):
+                return True
+        return False
+
     def analyze(
         self,
         project_dir: Path,
@@ -163,41 +198,6 @@ class FlextInfraStubSupplyChain:
                 seen.add(name)
                 ordered.append(name)
         return ordered
-
-    @staticmethod
-    def _is_internal(module_name: str, project_name: str) -> bool:
-        """Check if a module is an internal project module."""
-        root_mod = module_name.split(".", 1)[0]
-        project_root = project_name.replace("-", "_")
-        if root_mod.startswith(c.Infra.Core.INTERNAL_PREFIXES):
-            return True
-        return root_mod == project_root
-
-    @staticmethod
-    def _stub_exists(module_name: str, root: Path) -> bool:
-        """Check if a stub file exists for a module."""
-        rel = module_name.replace(".", "/")
-        for base in (root / "typings", root / "typings" / "generated"):
-            candidates = [
-                base / f"{rel}.pyi",
-                base / rel / "__init__.pyi",
-            ]
-            if any(c.exists() for c in candidates):
-                return True
-        return False
-
-    @staticmethod
-    def _discover_stub_projects(root: Path) -> list[Path]:
-        """Discover projects that should participate in stub checks."""
-        projects: list[Path] = []
-        for entry in sorted(root.iterdir(), key=lambda v: v.name):
-            if not entry.is_dir() or entry.name.startswith("."):
-                continue
-            if (entry / c.Files.PYPROJECT_FILENAME).exists() and (
-                entry / "src"
-            ).is_dir():
-                projects.append(entry)
-        return projects
 
 
 __all__ = ["FlextInfraStubSupplyChain"]

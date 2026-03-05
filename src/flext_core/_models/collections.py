@@ -52,15 +52,6 @@ class FlextModelsCollections:
             description="Map of category name to list of items",
         )
 
-        @classmethod
-        @override
-        def __class_getitem__(
-            cls,
-            typevar_values: type | tuple[type, ...],
-        ) -> type[FlextModelsCollections.Categories]:
-            _ = typevar_values
-            return cls
-
         def __len__(self) -> int:
             """Return total number of entries across all categories.
 
@@ -70,9 +61,56 @@ class FlextModelsCollections:
             """
             return sum(len(entries) for entries in self.categories.values())
 
-        def has_category(self, category: str) -> bool:
-            """Check if a category exists."""
-            return category in self.categories
+        @classmethod
+        @override
+        def __class_getitem__(
+            cls,
+            typevar_values: type | tuple[type, ...],
+        ) -> type[FlextModelsCollections.Categories]:
+            _ = typevar_values
+            return cls
+
+        @computed_field
+        @property
+        def category_names(self) -> list[str]:
+            """Get list of all category names.
+
+            Returns:
+                list[str]: List of category names
+
+            """
+            return list(self.categories.keys())
+
+        @computed_field
+        @property
+        def total_entries(self) -> int:
+            """Get total number of entries across all categories.
+
+            Returns:
+                int: Total count of entries
+
+            """
+            return sum(len(entries) for entries in self.categories.values())
+
+        def add_entries(
+            self,
+            category: str,
+            entries: Sequence[t.Container],
+        ) -> None:
+            """Add entries to a category.
+
+            Args:
+                category: Category name
+                entries: Sequence of entries (accepts subtypes due to covariance)
+
+            """
+            if category not in self.categories:
+                self.categories[category] = []
+            self.categories[category].extend(entries)
+
+        def clear(self) -> None:
+            """Clear all categories and entries."""
+            self.categories.clear()
 
         def get(
             self,
@@ -94,21 +132,9 @@ class FlextModelsCollections:
                 return self.categories.get(category, [])
             return self.categories.get(category, default)
 
-        def add_entries(
-            self,
-            category: str,
-            entries: Sequence[t.Container],
-        ) -> None:
-            """Add entries to a category.
-
-            Args:
-                category: Category name
-                entries: Sequence of entries (accepts subtypes due to covariance)
-
-            """
-            if category not in self.categories:
-                self.categories[category] = []
-            self.categories[category].extend(entries)
+        def has_category(self, category: str) -> bool:
+            """Check if a category exists."""
+            return category in self.categories
 
         def remove_category(self, category: str) -> None:
             """Remove a category and all its entries.
@@ -118,32 +144,6 @@ class FlextModelsCollections:
 
             """
             _ = self.categories.pop(category, None)
-
-        def clear(self) -> None:
-            """Clear all categories and entries."""
-            self.categories.clear()
-
-        @computed_field
-        @property
-        def total_entries(self) -> int:
-            """Get total number of entries across all categories.
-
-            Returns:
-                int: Total count of entries
-
-            """
-            return sum(len(entries) for entries in self.categories.values())
-
-        @computed_field
-        @property
-        def category_names(self) -> list[str]:
-            """Get list of all category names.
-
-            Returns:
-                list[str]: List of category names
-
-            """
-            return list(self.categories.keys())
 
         def to_mapping(self) -> Mapping[str, Sequence[t.Container]]:
             """Convert categories to dictionary representation.
@@ -221,13 +221,6 @@ class FlextModelsCollections:
             return non_none[-1]
 
         @classmethod
-        def from_mapping(
-            cls,
-            data: Mapping[str, t.Container],
-        ) -> Self:
-            return cls.model_validate(dict(data))
-
-        @classmethod
         def aggregate(
             cls,
             stats_list: list[Self],
@@ -292,6 +285,13 @@ class FlextModelsCollections:
                     normalized_result[key] = filtered
             return normalized_result
 
+        @classmethod
+        def from_mapping(
+            cls,
+            data: Mapping[str, t.Container],
+        ) -> Self:
+            return cls.model_validate(dict(data))
+
     class Rules(FlextModelFoundation.ArbitraryTypesModel):
         """Base for rules models (mutable)."""
 
@@ -316,27 +316,6 @@ class FlextModelsCollections:
 
     class Results(FlextModelFoundation.ArbitraryTypesModel):
         """Base for results models (mutable)."""
-
-        @classmethod
-        def _sum_numeric_values(
-            cls,
-            non_none: list[t.Container],
-        ) -> int | float | None:
-            """Sum numeric values excluding booleans.
-
-            Args:
-                non_none: List of non-None values
-
-            Returns:
-                Sum of numeric values, or None if no numeric values found
-
-            """
-            numeric_values: list[int | float] = [
-                v
-                for v in non_none
-                if isinstance(v, (int, float)) and not isinstance(v, bool)
-            ]
-            return sum(numeric_values) if numeric_values else None
 
         @classmethod
         def _concatenate_lists(
@@ -453,23 +432,25 @@ class FlextModelsCollections:
             return non_none[-1]
 
         @classmethod
-        def combine(
+        def _sum_numeric_values(
             cls,
-            *results: Self,
-        ) -> Self:
-            """Combine multiple results instances.
+            non_none: list[t.Container],
+        ) -> int | float | None:
+            """Sum numeric values excluding booleans.
 
             Args:
-                *results: Results instances to combine
+                non_none: List of non-None values
 
             Returns:
-                Combined results instance
+                Sum of numeric values, or None if no numeric values found
 
             """
-            combined_data: MutableMapping[str, t.Container] = {}
-            for result in results:
-                combined_data.update(result.model_dump())
-            return cls(**combined_data)
+            numeric_values: list[int | float] = [
+                v
+                for v in non_none
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            ]
+            return sum(numeric_values) if numeric_values else None
 
         @classmethod
         def aggregate(cls, results_list: list[Self]) -> Mapping[str, t.Container]:
@@ -510,6 +491,25 @@ class FlextModelsCollections:
 
             # Return result directly - ContainerValue allows Mapping[str, ContainerValue]
             return result
+
+        @classmethod
+        def combine(
+            cls,
+            *results: Self,
+        ) -> Self:
+            """Combine multiple results instances.
+
+            Args:
+                *results: Results instances to combine
+
+            Returns:
+                Combined results instance
+
+            """
+            combined_data: MutableMapping[str, t.Container] = {}
+            for result in results:
+                combined_data.update(result.model_dump())
+            return cls(**combined_data)
 
     class Options(FlextModelFoundation.ArbitraryTypesModel):
         """Base for options models (mutable)."""
@@ -563,20 +563,6 @@ class FlextModelsCollections:
             # Keep last for other types
             return non_none[-1]
 
-        def merge(self, *options: Self) -> Self:
-            """Merge this instance with other options instances (instance method).
-
-            Convenience method that delegates to merge_options classmethod.
-
-            Args:
-                *options: Options instances to merge with self
-
-            Returns:
-                Merged options instance
-
-            """
-            return self.__class__.merge_options(self, *options)
-
         @classmethod
         def merge_options(
             cls,
@@ -616,6 +602,20 @@ class FlextModelsCollections:
             # Create new instance from normalized dict
             return cls(**normalized_result)
 
+        def merge(self, *options: Self) -> Self:
+            """Merge this instance with other options instances (instance method).
+
+            Convenience method that delegates to merge_options classmethod.
+
+            Args:
+                *options: Options instances to merge with self
+
+            Returns:
+                Merged options instance
+
+            """
+            return self.__class__.merge_options(self, *options)
+
     class Config(FlextModelFoundation.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
 
@@ -630,6 +630,21 @@ class FlextModelsCollections:
             extra="forbid",
             validate_assignment=True,
         )
+
+        @override
+        def __eq__(self, other: object) -> bool:
+            """Compare configs by value.
+
+            Args:
+                other: Object to compare with
+
+            Returns:
+                True if configs are equal by value, False otherwise
+
+            """
+            if not isinstance(other, self.__class__):
+                return NotImplemented
+            return self.model_dump() == other.model_dump()
 
         def __hash__(self) -> int:
             """Raise TypeError to indicate this class is not hashable.
@@ -657,33 +672,6 @@ class FlextModelsCollections:
             # Convert Mapping to dict for model_validate
             mapping_dict = dict(mapping)
             return cls.model_validate(mapping_dict)
-
-        def to_mapping(self) -> FlextModelsContainers.ConfigMap:
-            """Convert Config to mapping.
-
-            Returns:
-                ConfigurationMapping: Mapping representation
-
-            """
-            normalized: dict[str, t.Container] = {}
-            for key, value in self.model_dump().items():
-                normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
-            return FlextModelsContainers.ConfigMap(root=normalized)
-
-        def merge(self, other: Self) -> Self:
-            """Merge this config with another config.
-
-            Args:
-                other: Another config instance to merge with
-
-            Returns:
-                Merged config instance (other values override self)
-
-            """
-            self_dict = self.model_dump()
-            other_dict = other.model_dump()
-            merged_dict = {**self_dict, **other_dict}
-            return self.__class__(**merged_dict)
 
         def diff(
             self,
@@ -713,6 +701,33 @@ class FlextModelsCollections:
                     differences[key] = (self_val, other_val)
             return differences
 
+        def merge(self, other: Self) -> Self:
+            """Merge this config with another config.
+
+            Args:
+                other: Another config instance to merge with
+
+            Returns:
+                Merged config instance (other values override self)
+
+            """
+            self_dict = self.model_dump()
+            other_dict = other.model_dump()
+            merged_dict = {**self_dict, **other_dict}
+            return self.__class__(**merged_dict)
+
+        def to_mapping(self) -> FlextModelsContainers.ConfigMap:
+            """Convert Config to mapping.
+
+            Returns:
+                ConfigurationMapping: Mapping representation
+
+            """
+            normalized: dict[str, t.Container] = {}
+            for key, value in self.model_dump().items():
+                normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
+            return FlextModelsContainers.ConfigMap(root=normalized)
+
         def with_updates(self, **updates: t.Container) -> Self:
             """Create a new config instance with updated values.
 
@@ -726,21 +741,6 @@ class FlextModelsCollections:
             current_dict = self.model_dump()
             updated_dict = {**current_dict, **updates}
             return self.__class__(**updated_dict)
-
-        @override
-        def __eq__(self, other: object) -> bool:
-            """Compare configs by value.
-
-            Args:
-                other: Object to compare with
-
-            Returns:
-                True if configs are equal by value, False otherwise
-
-            """
-            if not isinstance(other, self.__class__):
-                return NotImplemented
-            return self.model_dump() == other.model_dump()
 
     class ParseOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for string parsing operations."""

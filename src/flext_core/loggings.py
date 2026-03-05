@@ -57,6 +57,70 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # Structlog logger instance (set directly via _structlog_instance)
     _structlog_instance: p.Log.StructlogLogger | None = None
 
+    # =========================================================================
+    # FACTORY PATTERNS - DI-ready logger creation
+    # =========================================================================
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        config: p.Config | None = None,
+        _bound_logger: p.Log.StructlogLogger | None = None,
+        _level: c.Settings.LogLevel | str | None = None,
+        _service_name: str | None = None,
+        _service_version: str | None = None,
+        _correlation_id: str | None = None,
+        _force_new: bool = False,
+    ) -> None:
+        """Initialize FlextLogger with name and optional context."""
+        super().__init__()
+
+        # Store logger name as public attribute (immutable after initialization)
+        self.name = name
+
+        # Short-circuit for pre-bound logger (used by create_bound_logger/bind/unbind)
+        if _bound_logger is not None:
+            self._structlog_instance = _bound_logger
+            return
+
+        # Extract config values (config takes priority over individual params)
+        if config is not None:
+            _level = getattr(config, "level", _level)
+            _service_name = getattr(config, "service_name", _service_name)
+            _service_version = getattr(config, "service_version", _service_version)
+            _correlation_id = getattr(config, "correlation_id", _correlation_id)
+            _force_new = getattr(config, "force_new", _force_new)
+
+        # DO NOT configure structlog here - should be done at application startup
+        # Application must call FlextRuntime.configure_structlog() explicitly before creating loggers
+
+        # Build initial context
+        context = {}
+        if _service_name:
+            context["service_name"] = _service_name
+        if _service_version:
+            context["service_version"] = _service_version
+        if _correlation_id:
+            context["correlation_id"] = _correlation_id
+
+        # Initialize structlog instance with context binding
+        base_logger = FlextRuntime.get_logger(name)
+        self._structlog_instance = (
+            base_logger.bind(**context) if context else base_logger
+        )
+
+    def __call__(self) -> FlextLogger:
+        """Return self to support factory-style DI registration."""
+        return self
+
+    # Protocol compliance: BindableLogger._context property
+    @property
+    @override
+    def _context(self) -> Context:
+        """Context mapping for BindableLogger protocol compliance."""
+        return {}
+
     @property
     @override
     def logger(self) -> p.Log.StructlogLogger:
@@ -68,116 +132,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
             self._structlog_instance = instance
         return instance
-
-    # Protocol compliance: BindableLogger._context property
-    @property
-    @override
-    def _context(self) -> Context:
-        """Context mapping for BindableLogger protocol compliance."""
-        return {}
-
-    def __call__(self) -> FlextLogger:
-        """Return self to support factory-style DI registration."""
-        return self
-
-    # NOTE: _configure_structlog_if_needed() wrapper method REMOVED
-    # Applications must call FlextRuntime.configure_structlog() explicitly at startup
-    # This eliminates wrapper indirection and makes configuration responsibility clear
-
-    # =========================================================================
-    # ADVANCED FEATURES - Global context management via contextvars
-    # =========================================================================
-
-    @classmethod
-    def bind_global_context(
-        cls,
-        **context: t.MetadataValue,
-    ) -> r[bool]:
-        """Bind context globally using FlextRuntime.structlog() contextvars.
-
-        Business Rule: Binds context variables globally using structlog contextvars,
-        ensuring all subsequent log messages include these context variables automatically.
-        Uses FlextRuntime for centralized logging management. Global context persists
-        across all loggers until explicitly cleared or unbound.
-
-        Audit Implication: Global context binding ensures audit trail completeness by
-        attaching context variables to all log messages. All context variables are bound
-        through this method, ensuring consistent context propagation across FLEXT.
-        Critical for maintaining correlation IDs, user IDs, and other audit-relevant
-        context throughout application execution.
-
-        Args:
-            **context: Context variables to bind globally
-
-        Returns:
-            r[bool]: Success with True if context bound, failure with error message otherwise.
-
-        Example:
-            >>> FlextLogger.bind_global_context(
-            ...     correlation_id="flext-abc123",
-            ...     user_id="REDACTED_LDAP_BIND_PASSWORD",
-            ...     environment="production",
-            ... )
-
-        """
-        try:
-            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to bind global context: {exc}")
-
-    @classmethod
-    def clear_global_context(cls) -> r[bool]:
-        """Clear all globally bound context.
-
-        Business Rule: Clears all globally bound context variables, removing them from
-        all subsequent log messages. Uses FlextRuntime for centralized logging management.
-        This operation is irreversible - all context must be rebound if needed.
-
-        Audit Implication: Clearing global context removes audit trail context from
-        log messages. Use with caution in production environments. Typically used
-        during application shutdown or context reset scenarios. All context variables
-        are cleared through this method, ensuring consistent context management.
-
-        Example:
-            >>> FlextLogger.clear_global_context()
-            >>> # All global context cleared
-
-        """
-        try:
-            FlextRuntime.structlog().contextvars.clear_contextvars()
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to clear global context: {exc}")
-
-    @classmethod
-    def unbind_global_context(cls, *keys: str) -> r[bool]:
-        """Unbind specific keys from global context.
-
-        Business Rule: Unbinds specific context keys from global context, removing them
-        from all subsequent log messages. Uses FlextRuntime for centralized logging management.
-        Only specified keys are removed; other global context remains intact.
-
-        Audit Implication: Unbinding global context removes specific audit trail context
-        from log messages. Use with caution in production environments. Typically used
-        when specific context variables are no longer relevant or need to be updated.
-        All context variables are unbound through this method, ensuring consistent
-        context management.
-
-        Args:
-            *keys: Context keys to unbind
-
-        Example:
-            >>> FlextLogger.unbind_global_context("user_id", "session_id")
-            >>> # Only 'user_id' and 'session_id' removed from global context
-
-        """
-        try:
-            unbind_keys: list[str] = [str(key) for key in keys]
-            FlextRuntime.structlog().contextvars.unbind_contextvars(*unbind_keys)
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to unbind global context: {exc}")
 
     @classmethod
     def _get_global_context(cls) -> m.ConfigMap:
@@ -285,89 +239,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
-    @classmethod
-    def clear_scope(cls, scope: str) -> r[bool]:
-        """Clear all context variables for a specific scope.
-
-        Business Rule: Clears all context variables bound to a specific scope (APPLICATION,
-        REQUEST, or OPERATION). Unbinds context from structlog and clears internal tracking.
-        This operation is irreversible - all context must be rebound if needed.
-
-        Audit Implication: Clearing scope context removes audit trail context from
-        log messages for that scope. Use with caution in production environments.
-        Typically used during scope transitions (e.g., request completion) or context
-        reset scenarios. All context variables are cleared through this method, ensuring
-        consistent context management across FLEXT.
-
-        Args:
-            scope: Scope to clear (use c.Context.SCOPE_* constants)
-
-        Returns:
-            r[bool]: Success with True if scope cleared, failure with error message otherwise.
-
-        Example:
-            >>> FlextLogger.clear_scope(c.Context.SCOPE_REQUEST)
-            >>> # Clears all request-level context
-
-        """
-        try:
-            if scope in cls._scoped_contexts:
-                # Get keys to unbind
-                keys = list(cls._scoped_contexts[scope].keys())
-
-                # Unbind from structlog
-                if keys:
-                    FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
-
-                # Clear from tracking
-                cls._scoped_contexts[scope] = {}
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
-
-    @classmethod
-    @contextmanager
-    def scoped_context(
-        cls,
-        scope: str,
-        **context: t.MetadataValue,
-    ) -> Iterator[None]:
-        """Context manager for automatic scoped context cleanup.
-
-        Business Rule: Context manager that binds context variables to a specific scope
-        and automatically clears them when exiting the context. Uses bind_context for
-        binding and clear_scope for cleanup. Ensures context is always cleaned up even
-        if exceptions occur, maintaining consistent context state.
-
-        Audit Implication: Scoped context ensures audit trail completeness by attaching
-        context variables to log messages within the scope. Automatic cleanup ensures
-        context doesn't leak between scopes, maintaining audit trail integrity. All
-        context variables are bound and cleared through this method, ensuring consistent
-        context management across FLEXT.
-
-        Args:
-            scope: Scope name (use c.Context.SCOPE_* constants)
-            **context: Context variables to bind
-
-        Yields:
-            None: Context manager yields control to caller
-
-        Example:
-            >>> with FlextLogger.scoped_context(
-            ...     c.Context.SCOPE_OPERATION, operation="sync_users"
-            ... ):
-            ...     # Context automatically bound and cleared
-            ...     logger.info("Operation started")
-
-        """
-        # Use bind_context for all scopes (handles known + generic scopes)
-        _ = cls.bind_context(scope, **context)
-
-        try:
-            yield
-        finally:
-            _ = cls.clear_scope(scope)
-
     # =========================================================================
     # LEVEL-BASED CONTEXT MANAGEMENT - Log level filtering
     # =========================================================================
@@ -436,6 +307,244 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
+    # NOTE: _configure_structlog_if_needed() wrapper method REMOVED
+    # Applications must call FlextRuntime.configure_structlog() explicitly at startup
+    # This eliminates wrapper indirection and makes configuration responsibility clear
+
+    # =========================================================================
+    # ADVANCED FEATURES - Global context management via contextvars
+    # =========================================================================
+
+    @classmethod
+    def bind_global_context(
+        cls,
+        **context: t.MetadataValue,
+    ) -> r[bool]:
+        """Bind context globally using FlextRuntime.structlog() contextvars.
+
+        Business Rule: Binds context variables globally using structlog contextvars,
+        ensuring all subsequent log messages include these context variables automatically.
+        Uses FlextRuntime for centralized logging management. Global context persists
+        across all loggers until explicitly cleared or unbound.
+
+        Audit Implication: Global context binding ensures audit trail completeness by
+        attaching context variables to all log messages. All context variables are bound
+        through this method, ensuring consistent context propagation across FLEXT.
+        Critical for maintaining correlation IDs, user IDs, and other audit-relevant
+        context throughout application execution.
+
+        Args:
+            **context: Context variables to bind globally
+
+        Returns:
+            r[bool]: Success with True if context bound, failure with error message otherwise.
+
+        Example:
+            >>> FlextLogger.bind_global_context(
+            ...     correlation_id="flext-abc123",
+            ...     user_id="REDACTED_LDAP_BIND_PASSWORD",
+            ...     environment="production",
+            ... )
+
+        """
+        try:
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to bind global context: {exc}")
+
+    @classmethod
+    def clear_global_context(cls) -> r[bool]:
+        """Clear all globally bound context.
+
+        Business Rule: Clears all globally bound context variables, removing them from
+        all subsequent log messages. Uses FlextRuntime for centralized logging management.
+        This operation is irreversible - all context must be rebound if needed.
+
+        Audit Implication: Clearing global context removes audit trail context from
+        log messages. Use with caution in production environments. Typically used
+        during application shutdown or context reset scenarios. All context variables
+        are cleared through this method, ensuring consistent context management.
+
+        Example:
+            >>> FlextLogger.clear_global_context()
+            >>> # All global context cleared
+
+        """
+        try:
+            FlextRuntime.structlog().contextvars.clear_contextvars()
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to clear global context: {exc}")
+
+    @classmethod
+    def clear_scope(cls, scope: str) -> r[bool]:
+        """Clear all context variables for a specific scope.
+
+        Business Rule: Clears all context variables bound to a specific scope (APPLICATION,
+        REQUEST, or OPERATION). Unbinds context from structlog and clears internal tracking.
+        This operation is irreversible - all context must be rebound if needed.
+
+        Audit Implication: Clearing scope context removes audit trail context from
+        log messages for that scope. Use with caution in production environments.
+        Typically used during scope transitions (e.g., request completion) or context
+        reset scenarios. All context variables are cleared through this method, ensuring
+        consistent context management across FLEXT.
+
+        Args:
+            scope: Scope to clear (use c.Context.SCOPE_* constants)
+
+        Returns:
+            r[bool]: Success with True if scope cleared, failure with error message otherwise.
+
+        Example:
+            >>> FlextLogger.clear_scope(c.Context.SCOPE_REQUEST)
+            >>> # Clears all request-level context
+
+        """
+        try:
+            if scope in cls._scoped_contexts:
+                # Get keys to unbind
+                keys = list(cls._scoped_contexts[scope].keys())
+
+                # Unbind from structlog
+                if keys:
+                    FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
+
+                # Clear from tracking
+                cls._scoped_contexts[scope] = {}
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
+
+    @classmethod
+    def create_bound_logger(
+        cls,
+        name: str,
+        bound_logger: p.Log.StructlogLogger,
+    ) -> Self:
+        """Internal factory for creating logger with pre-bound structlog instance."""
+        return cls(name, _bound_logger=bound_logger)
+
+    @classmethod
+    def create_module_logger(cls, name: str = "flext") -> FlextLogger:
+        """Create a logger instance for a module.
+
+        Business Rule: Creates a FlextLogger instance for a specific module, using
+        the module name for logger identification. Logger inherits global and scoped
+        context automatically. Uses FlextRuntime for centralized logging management.
+        Logger name is immutable after creation, ensuring consistent logger identity.
+
+        Audit Implication: Module logger creation ensures audit trail completeness by
+        attaching module name to log messages. All loggers are created through this
+        method, ensuring consistent logger configuration across FLEXT. Module name
+        is critical for tracing log messages to their source in audit trails.
+
+        Args:
+            name: Module name (typically __name__). Defaults to "flext".
+
+        Returns:
+            FlextLogger: Logger instance for the module
+
+        Example:
+            >>> logger = FlextLogger.create_module_logger(__name__)
+            >>> logger.info("Module initialized")
+
+        Note:
+            `get_logger()` calls are replaced by `create_module_logger()` with default name.
+            structlog is automatically configured on first logger creation.
+
+        """
+        # Auto-configure structlog if not already configured
+        FlextRuntime.ensure_structlog_configured()
+        return cls(name)
+
+    @classmethod
+    def for_container(
+        cls,
+        container: p.DI,
+        level: str | None = None,
+        **context: t.MetadataValue,
+    ) -> FlextLogger:
+        """Create logger configured for a specific container.
+
+        Creates a logger instance bound to a container's configuration and context.
+        The logger inherits the container's configuration for log level and other
+        settings, and can have additional context bound.
+
+        Args:
+            container: Container instance to bind logger to.
+            level: Optional log level override. If not provided, uses container's
+                config log_level.
+            **context: Additional context variables to bind.
+
+        Returns:
+            FlextLogger: Logger instance configured for the container.
+
+        Example:
+            >>> logger = FlextLogger.for_container(
+            ...     container, level="DEBUG", container_id="worker_1"
+            ... )
+
+        """
+        # Get log level from container config or use provided level
+        if level is None:
+            config = (
+                container.config
+                if hasattr(container, "config")
+                else FlextSettings.get_global()
+            )
+            level = getattr(config, "log_level", "INFO")
+        # Create logger with container context
+        logger = cls.create_module_logger(f"container_{id(container)}")
+        # Bind container context
+        if context:
+            _ = logger.bind_global_context(**context)
+        return logger
+
+    @classmethod
+    @contextmanager
+    def scoped_context(
+        cls,
+        scope: str,
+        **context: t.MetadataValue,
+    ) -> Iterator[None]:
+        """Context manager for automatic scoped context cleanup.
+
+        Business Rule: Context manager that binds context variables to a specific scope
+        and automatically clears them when exiting the context. Uses bind_context for
+        binding and clear_scope for cleanup. Ensures context is always cleaned up even
+        if exceptions occur, maintaining consistent context state.
+
+        Audit Implication: Scoped context ensures audit trail completeness by attaching
+        context variables to log messages within the scope. Automatic cleanup ensures
+        context doesn't leak between scopes, maintaining audit trail integrity. All
+        context variables are bound and cleared through this method, ensuring consistent
+        context management across FLEXT.
+
+        Args:
+            scope: Scope name (use c.Context.SCOPE_* constants)
+            **context: Context variables to bind
+
+        Yields:
+            None: Context manager yields control to caller
+
+        Example:
+            >>> with FlextLogger.scoped_context(
+            ...     c.Context.SCOPE_OPERATION, operation="sync_users"
+            ... ):
+            ...     # Context automatically bound and cleared
+            ...     logger.info("Operation started")
+
+        """
+        # Use bind_context for all scopes (handles known + generic scopes)
+        _ = cls.bind_context(scope, **context)
+
+        try:
+            yield
+        finally:
+            _ = cls.clear_scope(scope)
+
     @classmethod
     def unbind_context_for_level(
         cls,
@@ -497,47 +606,33 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return r[bool].fail(f"Failed to unbind context for level {level}: {e}")
 
     @classmethod
-    def for_container(
-        cls,
-        container: p.DI,
-        level: str | None = None,
-        **context: t.MetadataValue,
-    ) -> FlextLogger:
-        """Create logger configured for a specific container.
+    def unbind_global_context(cls, *keys: str) -> r[bool]:
+        """Unbind specific keys from global context.
 
-        Creates a logger instance bound to a container's configuration and context.
-        The logger inherits the container's configuration for log level and other
-        settings, and can have additional context bound.
+        Business Rule: Unbinds specific context keys from global context, removing them
+        from all subsequent log messages. Uses FlextRuntime for centralized logging management.
+        Only specified keys are removed; other global context remains intact.
+
+        Audit Implication: Unbinding global context removes specific audit trail context
+        from log messages. Use with caution in production environments. Typically used
+        when specific context variables are no longer relevant or need to be updated.
+        All context variables are unbound through this method, ensuring consistent
+        context management.
 
         Args:
-            container: Container instance to bind logger to.
-            level: Optional log level override. If not provided, uses container's
-                config log_level.
-            **context: Additional context variables to bind.
-
-        Returns:
-            FlextLogger: Logger instance configured for the container.
+            *keys: Context keys to unbind
 
         Example:
-            >>> logger = FlextLogger.for_container(
-            ...     container, level="DEBUG", container_id="worker_1"
-            ... )
+            >>> FlextLogger.unbind_global_context("user_id", "session_id")
+            >>> # Only 'user_id' and 'session_id' removed from global context
 
         """
-        # Get log level from container config or use provided level
-        if level is None:
-            config = (
-                container.config
-                if hasattr(container, "config")
-                else FlextSettings.get_global()
-            )
-            level = getattr(config, "log_level", "INFO")
-        # Create logger with container context
-        logger = cls.create_module_logger(f"container_{id(container)}")
-        # Bind container context
-        if context:
-            _ = logger.bind_global_context(**context)
-        return logger
+        try:
+            unbind_keys: list[str] = [str(key) for key in keys]
+            FlextRuntime.structlog().contextvars.unbind_contextvars(*unbind_keys)
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to unbind global context: {exc}")
 
     @classmethod
     @contextmanager
@@ -584,195 +679,26 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             # Cleanup is handled by context manager exit
             pass
 
-    @classmethod
-    def create_module_logger(cls, name: str = "flext") -> FlextLogger:
-        """Create a logger instance for a module.
-
-        Business Rule: Creates a FlextLogger instance for a specific module, using
-        the module name for logger identification. Logger inherits global and scoped
-        context automatically. Uses FlextRuntime for centralized logging management.
-        Logger name is immutable after creation, ensuring consistent logger identity.
-
-        Audit Implication: Module logger creation ensures audit trail completeness by
-        attaching module name to log messages. All loggers are created through this
-        method, ensuring consistent logger configuration across FLEXT. Module name
-        is critical for tracing log messages to their source in audit trails.
-
-        Args:
-            name: Module name (typically __name__). Defaults to "flext".
-
-        Returns:
-            FlextLogger: Logger instance for the module
-
-        Example:
-            >>> logger = FlextLogger.create_module_logger(__name__)
-            >>> logger.info("Module initialized")
-
-        Note:
-            `get_logger()` calls are replaced by `create_module_logger()` with default name.
-            structlog is automatically configured on first logger creation.
-
-        """
-        # Auto-configure structlog if not already configured
-        FlextRuntime.ensure_structlog_configured()
-        return cls(name)
-
-    @override
     @staticmethod
-    def get_logger(
-        name: str | None = None,
-    ) -> p.Log.StructlogLogger:
-        """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
-        return FlextRuntime.get_logger(name)
-
-    # =========================================================================
-    # FACTORY PATTERNS - DI-ready logger creation
-    # =========================================================================
-
-    def __init__(
-        self,
-        name: str,
-        *,
-        config: p.Config | None = None,
-        _bound_logger: p.Log.StructlogLogger | None = None,
-        _level: c.Settings.LogLevel | str | None = None,
-        _service_name: str | None = None,
-        _service_version: str | None = None,
-        _correlation_id: str | None = None,
-        _force_new: bool = False,
-    ) -> None:
-        """Initialize FlextLogger with name and optional context."""
-        super().__init__()
-
-        # Store logger name as public attribute (immutable after initialization)
-        self.name = name
-
-        # Short-circuit for pre-bound logger (used by create_bound_logger/bind/unbind)
-        if _bound_logger is not None:
-            self._structlog_instance = _bound_logger
-            return
-
-        # Extract config values (config takes priority over individual params)
-        if config is not None:
-            _level = getattr(config, "level", _level)
-            _service_name = getattr(config, "service_name", _service_name)
-            _service_version = getattr(config, "service_version", _service_version)
-            _correlation_id = getattr(config, "correlation_id", _correlation_id)
-            _force_new = getattr(config, "force_new", _force_new)
-
-        # DO NOT configure structlog here - should be done at application startup
-        # Application must call FlextRuntime.configure_structlog() explicitly before creating loggers
-
-        # Build initial context
-        context = {}
-        if _service_name:
-            context["service_name"] = _service_name
-        if _service_version:
-            context["service_version"] = _service_version
-        if _correlation_id:
-            context["correlation_id"] = _correlation_id
-
-        # Initialize structlog instance with context binding
-        base_logger = FlextRuntime.get_logger(name)
-        self._structlog_instance = (
-            base_logger.bind(**context) if context else base_logger
-        )
-
-    @classmethod
-    def create_bound_logger(
-        cls,
-        name: str,
-        bound_logger: p.Log.StructlogLogger,
-    ) -> Self:
-        """Internal factory for creating logger with pre-bound structlog instance."""
-        return cls(name, _bound_logger=bound_logger)
-
-    @override
-    def bind(self, **context: t.MetadataValue) -> Self:
-        """Bind additional context, returning new logger (original unchanged)."""
-        bound_logger = self.logger.bind(**context)
-        return self.__class__.create_bound_logger(self.name, bound_logger)
-
-    @override
-    def new(self, **context: t.MetadataValue) -> Self:
-        """Create new logger with context - implements BindableLogger protocol."""
-        return self.bind(**context)
-
-    @override
-    def unbind(self, *keys: str, safe: bool = False) -> Self:
-        """Unbind keys from logger - implements BindableLogger protocol."""
-        bound_logger = (
-            self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
-        )
-        return self.__class__.create_bound_logger(self.name, bound_logger)
-
-    @override
-    def try_unbind(self, *keys: str) -> Self:
-        """Unbind keys if present, ignoring missing keys - implements BindableLogger protocol."""
-        bound_logger = self.logger.try_unbind(*keys)
-        return self.__class__.create_bound_logger(self.name, bound_logger)
-
-    def with_result(self) -> FlextLogger.ResultAdapter:
-        """Get a result-returning logger adapter.
-
-        Returns a ResultAdapter that wraps all logging methods
-        to return r[bool] indicating success/failure.
-
-        Returns:
-            ResultAdapter wrapping this logger
-
-        """
-        return FlextLogger.ResultAdapter(self)
-
-    # =============================================================================
-    # LOGGING METHODS - DELEGATE TO FlextRuntime.structlog()
-    # =============================================================================
-
-    def trace(
-        self,
-        message: str,
-        *args: t.Container,
-        **kwargs: t.Container | Exception,
-    ) -> r[bool]:
-        """Log trace message - Logger.Log implementation."""
+    def _convert_to_relative_path(filename: str) -> str:
+        """Convert absolute path to relative path from workspace root."""
         try:
-            try:
-                formatted_message = message % args if args else message
-            except (TypeError, ValueError):
-                formatted_message = f"{message} | args={args!r}"
+            abs_path = Path(filename).resolve()
+            workspace_root = FlextLogger._find_workspace_root(abs_path)
 
-            self.logger.debug(
-                formatted_message,
-                **kwargs,
+            if workspace_root:
+                try:
+                    return str(abs_path.relative_to(workspace_root))
+                except ValueError:
+                    return Path(filename).name
+            return Path(filename).name
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            # Path normalization is best-effort and must not block logging.
+            FlextLogger._report_internal_logging_failure(
+                "convert_to_relative_path",
+                exc,
             )
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            # Logger internals must never raise into application flows.
-            FlextLogger._report_internal_logging_failure("trace", exc)
-            return r[bool].fail(f"Trace logging failed: {exc}")
-
-    @staticmethod
-    def _format_log_message(
-        message: str,
-        *args: t.Container,
-    ) -> str:
-        """Format log message with % arguments."""
-        try:
-            return message % args if args else message
-        except (TypeError, ValueError):
-            return f"{message} | args={args!r}"
-
-    @staticmethod
-    def _get_calling_frame() -> types.FrameType | None:
-        """Get the calling frame 4 levels up the stack."""
-        frame = inspect.currentframe()
-        if not frame:
-            return None
-        for _ in range(4):
-            frame = frame.f_back
-            if not frame:
-                return None
-        return frame
+            return Path(filename).name
 
     @staticmethod
     def _extract_class_name(frame: types.FrameType) -> str | None:
@@ -794,6 +720,31 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     if potential_class and potential_class[0].isupper():
                         return potential_class
         return None
+
+    @staticmethod
+    def _find_workspace_root(abs_path: Path) -> Path | None:
+        """Find workspace root by looking for common markers."""
+        current = abs_path.parent
+        markers = ["pyproject.toml", ".git", "poetry.lock"]
+
+        for _ in range(10):  # Max depth
+            if any((current / marker).exists() for marker in markers):
+                return current
+            if current == current.parent:
+                break
+            current = current.parent
+        return None
+
+    @staticmethod
+    def _format_log_message(
+        message: str,
+        *args: t.Container,
+    ) -> str:
+        """Format log message with % arguments."""
+        try:
+            return message % args if args else message
+        except (TypeError, ValueError):
+            return f"{message} | args={args!r}"
 
     @staticmethod
     def _get_caller_source_path() -> str | None:
@@ -824,39 +775,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return None
 
     @staticmethod
-    def _convert_to_relative_path(filename: str) -> str:
-        """Convert absolute path to relative path from workspace root."""
-        try:
-            abs_path = Path(filename).resolve()
-            workspace_root = FlextLogger._find_workspace_root(abs_path)
-
-            if workspace_root:
-                try:
-                    return str(abs_path.relative_to(workspace_root))
-                except ValueError:
-                    return Path(filename).name
-            return Path(filename).name
-        except (OSError, RuntimeError, TypeError, ValueError) as exc:
-            # Path normalization is best-effort and must not block logging.
-            FlextLogger._report_internal_logging_failure(
-                "convert_to_relative_path",
-                exc,
-            )
-            return Path(filename).name
-
-    @staticmethod
-    def _find_workspace_root(abs_path: Path) -> Path | None:
-        """Find workspace root by looking for common markers."""
-        current = abs_path.parent
-        markers = ["pyproject.toml", ".git", "poetry.lock"]
-
-        for _ in range(10):  # Max depth
-            if any((current / marker).exists() for marker in markers):
-                return current
-            if current == current.parent:
-                break
-            current = current.parent
-        return None
+    def _get_calling_frame() -> types.FrameType | None:
+        """Get the calling frame 4 levels up the stack."""
+        frame = inspect.currentframe()
+        if not frame:
+            return None
+        for _ in range(4):
+            frame = frame.f_back
+            if not frame:
+                return None
+        return frame
 
     @staticmethod
     def _report_internal_logging_failure(
@@ -872,204 +800,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 exception_message=str(exc),
             )
 
-    def _log(
-        self,
-        _level: c.Settings.LogLevel | str,
-        message: str,
-        *args: t.Container,
-        **context: t.Container | Exception,
-    ) -> r[bool]:
-        """Internal logging method - consolidates all log level methods.
-
-        Business Rule: Internal method that consolidates all log level methods (debug,
-        info, warning, error, critical) into a single implementation. Formats message
-        with % arguments, auto-adds source path if not provided, and delegates to
-        structlog logger. Uses FlextRuntime for centralized logging management.
-        Returns r[bool] indicating success or failure.
-
-        Audit Implication: Internal logging ensures audit trail completeness by
-        formatting messages and adding source context. All log messages go through
-        this method, ensuring consistent log formatting and context inclusion across
-        FLEXT. Source path is critical for tracing log messages to their source in
-        audit trails.
-        """
-        try:
-            formatted_message = FlextLogger._format_log_message(message, *args)
-
-            # Auto-add source if not provided
-            if "source" not in context and (
-                source_path := FlextLogger._get_caller_source_path()
-            ):
-                context["source"] = source_path
-
-            # Use StrEnum directly - structlog accepts StrEnum values
-            # Convert to lowercase string for method name lookup
-            match _level:
-                case c.Settings.LogLevel() as enum_level:
-                    level_raw: str = enum_level.value
-                case _:
-                    level_raw = str(_level)
-            level_str = level_raw.lower()
-
-            # Dynamic method call using getattr mapping
-            getattr(self.logger, level_str)(formatted_message, **context)
-            # Return success result directly
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            # Return failure result directly
-            return r[bool].fail(f"Logging failed: {e}")
-
-    def log(
-        self,
-        level: str,
-        message: str,
-        *args: t.Container,
-        **context: t.Container | Exception,
-    ) -> r[bool]:
-        """Log message with specified level - Logger.Log implementation.
-
-        Business Rule: Logs a message with specified level, converting level string
-        to LogLevel enum if possible. Uses _log method for actual logging. Context
-        mapping is merged with logger's bound context. Uses FlextRuntime for centralized
-        logging management.
-
-        Audit Implication: Logging ensures audit trail completeness by recording
-        messages with context. All log messages go through this method or specific
-        level methods (debug, info, warning, error, critical), ensuring consistent
-        log formatting and context inclusion across FLEXT. Log level is critical for
-        filtering and prioritizing audit trail messages.
-
-        Args:
-            level: Log level (debug, info, warning, error, critical)
-            message: Log message
-            *args: Positional args for printf-style message formatting
-            **context: Keyword context to include in structured log
-
-        """
-        # Convert level string to LogLevel enum if possible
-        level_enum: c.Settings.LogLevel | str = level
-        with suppress(ValueError, AttributeError):
-            level_enum = c.Settings.LogLevel(level.upper())
-
-        # Use _log to handle the actual logging
-        return self._log(level_enum, message, *args, **context)
-
-    @override
-    def debug(
-        self,
-        msg: str | t.Container,
-        *args: t.Container | Exception,
-        **kw: t.Container | Exception,
-    ) -> r[bool]:
-        """Log debug message - Logger.Log implementation.
-
-        Business Rule: Logs a debug-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Debug logging ensures audit trail completeness by recording
-        detailed diagnostic information. Debug messages are typically filtered in
-        production but critical for troubleshooting and audit trail reconstruction.
-        All debug messages go through this method, ensuring consistent log formatting
-        and context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
-
-    @override
-    def info(
-        self,
-        msg: str | t.Container,
-        *args: t.Container,
-        **kw: t.Container | Exception,
-    ) -> r[bool]:
-        """Log info message - Logger.Log implementation.
-
-        Business Rule: Logs an info-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Info logging ensures audit trail completeness by recording
-        informational messages about application flow. Info messages are typically
-        included in production logs and critical for audit trail reconstruction.
-        All info messages go through this method, ensuring consistent log formatting
-        and context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
-
-    @override
-    def warning(
-        self,
-        msg: str | t.Container,
-        *args: t.Container,
-        **kw: t.Container | Exception,
-    ) -> r[bool]:
-        """Log warning message - Logger.Log implementation.
-
-        Business Rule: Logs a warning-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Warning logging ensures audit trail completeness by recording
-        warning messages about potential issues. Warning messages are typically included
-        in production logs and critical for audit trail reconstruction and issue
-        identification. All warning messages go through this method, ensuring consistent
-        log formatting and context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
-
-    @override
-    def error(
-        self,
-        msg: str | t.Container,
-        *args: t.Container,
-        **kw: t.Container | Exception,
-    ) -> r[bool]:
-        """Log error message - Logger.Log implementation.
-
-        Business Rule: Logs an error-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Error logging ensures audit trail completeness by recording
-        error messages about failures. Error messages are always included in production
-        logs and critical for audit trail reconstruction and failure analysis. All
-        error messages go through this method, ensuring consistent log formatting and
-        context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
-
-    @override
-    def critical(
-        self,
-        msg: str | t.Container,
-        *args: t.Container,
-        **kw: t.Container | Exception,
-    ) -> r[bool]:
-        """Log critical message - Logger.Log implementation.
-
-        Business Rule: Logs a critical-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Critical logging ensures audit trail completeness by recording
-        critical messages about severe failures. Critical messages are always included
-        in production logs and critical for audit trail reconstruction and emergency
-        response. All critical messages go through this method, ensuring consistent
-        log formatting and context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
-
-    def _log_standard_level(
-        self,
-        level: c.Settings.LogLevel,
-        msg: str | t.Container,
-        *args: t.Container | Exception,
-        **kw: t.Container | Exception,
-    ) -> r[bool]:
-        message = str(msg)
-        filtered_args: tuple[t.Container, ...] = tuple(
-            arg
-            for arg in args
-            # boundary: logging accepts arbitrary user args
-            if not isinstance(arg, BaseException)
-        )
-        return self._log(level, message, *filtered_args, **kw)
-
     @staticmethod
     def _should_include_stack_trace() -> bool:
         try:
@@ -1082,6 +812,20 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 exc,
             )
             return True
+
+    @override
+    @staticmethod
+    def get_logger(
+        name: str | None = None,
+    ) -> p.Log.StructlogLogger:
+        """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
+        return FlextRuntime.get_logger(name)
+
+    @override
+    def bind(self, **context: t.MetadataValue) -> Self:
+        """Bind additional context, returning new logger (original unchanged)."""
+        bound_logger = self.logger.bind(**context)
+        return self.__class__.create_bound_logger(self.name, bound_logger)
 
     def build_exception_context(
         self,
@@ -1128,6 +872,66 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context_dict[key] = FlextRuntime.normalize_to_general_value(value)
 
         return context_dict
+
+    @override
+    def critical(
+        self,
+        msg: str | t.Container,
+        *args: t.Container,
+        **kw: t.Container | Exception,
+    ) -> r[bool]:
+        """Log critical message - Logger.Log implementation.
+
+        Business Rule: Logs a critical-level message with optional context. Uses _log
+        method for actual logging. Uses FlextRuntime for centralized logging management.
+
+        Audit Implication: Critical logging ensures audit trail completeness by recording
+        critical messages about severe failures. Critical messages are always included
+        in production logs and critical for audit trail reconstruction and emergency
+        response. All critical messages go through this method, ensuring consistent
+        log formatting and context inclusion across FLEXT.
+        """
+        return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
+
+    @override
+    def debug(
+        self,
+        msg: str | t.Container,
+        *args: t.Container | Exception,
+        **kw: t.Container | Exception,
+    ) -> r[bool]:
+        """Log debug message - Logger.Log implementation.
+
+        Business Rule: Logs a debug-level message with optional context. Uses _log
+        method for actual logging. Uses FlextRuntime for centralized logging management.
+
+        Audit Implication: Debug logging ensures audit trail completeness by recording
+        detailed diagnostic information. Debug messages are typically filtered in
+        production but critical for troubleshooting and audit trail reconstruction.
+        All debug messages go through this method, ensuring consistent log formatting
+        and context inclusion across FLEXT.
+        """
+        return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
+
+    @override
+    def error(
+        self,
+        msg: str | t.Container,
+        *args: t.Container,
+        **kw: t.Container | Exception,
+    ) -> r[bool]:
+        """Log error message - Logger.Log implementation.
+
+        Business Rule: Logs an error-level message with optional context. Uses _log
+        method for actual logging. Uses FlextRuntime for centralized logging management.
+
+        Audit Implication: Error logging ensures audit trail completeness by recording
+        error messages about failures. Error messages are always included in production
+        logs and critical for audit trail reconstruction and failure analysis. All
+        error messages go through this method, ensuring consistent log formatting and
+        context inclusion across FLEXT.
+        """
+        return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
 
     @override
     def exception(
@@ -1195,6 +999,202 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             FlextLogger._report_internal_logging_failure("exception", exc)
             return r[bool].fail(f"Exception logging failed: {exc}")
 
+    @override
+    def info(
+        self,
+        msg: str | t.Container,
+        *args: t.Container,
+        **kw: t.Container | Exception,
+    ) -> r[bool]:
+        """Log info message - Logger.Log implementation.
+
+        Business Rule: Logs an info-level message with optional context. Uses _log
+        method for actual logging. Uses FlextRuntime for centralized logging management.
+
+        Audit Implication: Info logging ensures audit trail completeness by recording
+        informational messages about application flow. Info messages are typically
+        included in production logs and critical for audit trail reconstruction.
+        All info messages go through this method, ensuring consistent log formatting
+        and context inclusion across FLEXT.
+        """
+        return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
+
+    def log(
+        self,
+        level: str,
+        message: str,
+        *args: t.Container,
+        **context: t.Container | Exception,
+    ) -> r[bool]:
+        """Log message with specified level - Logger.Log implementation.
+
+        Business Rule: Logs a message with specified level, converting level string
+        to LogLevel enum if possible. Uses _log method for actual logging. Context
+        mapping is merged with logger's bound context. Uses FlextRuntime for centralized
+        logging management.
+
+        Audit Implication: Logging ensures audit trail completeness by recording
+        messages with context. All log messages go through this method or specific
+        level methods (debug, info, warning, error, critical), ensuring consistent
+        log formatting and context inclusion across FLEXT. Log level is critical for
+        filtering and prioritizing audit trail messages.
+
+        Args:
+            level: Log level (debug, info, warning, error, critical)
+            message: Log message
+            *args: Positional args for printf-style message formatting
+            **context: Keyword context to include in structured log
+
+        """
+        # Convert level string to LogLevel enum if possible
+        level_enum: c.Settings.LogLevel | str = level
+        with suppress(ValueError, AttributeError):
+            level_enum = c.Settings.LogLevel(level.upper())
+
+        # Use _log to handle the actual logging
+        return self._log(level_enum, message, *args, **context)
+
+    @override
+    def new(self, **context: t.MetadataValue) -> Self:
+        """Create new logger with context - implements BindableLogger protocol."""
+        return self.bind(**context)
+
+    # =============================================================================
+    # LOGGING METHODS - DELEGATE TO FlextRuntime.structlog()
+    # =============================================================================
+
+    def trace(
+        self,
+        message: str,
+        *args: t.Container,
+        **kwargs: t.Container | Exception,
+    ) -> r[bool]:
+        """Log trace message - Logger.Log implementation."""
+        try:
+            try:
+                formatted_message = message % args if args else message
+            except (TypeError, ValueError):
+                formatted_message = f"{message} | args={args!r}"
+
+            self.logger.debug(
+                formatted_message,
+                **kwargs,
+            )
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            # Logger internals must never raise into application flows.
+            FlextLogger._report_internal_logging_failure("trace", exc)
+            return r[bool].fail(f"Trace logging failed: {exc}")
+
+    @override
+    def try_unbind(self, *keys: str) -> Self:
+        """Unbind keys if present, ignoring missing keys - implements BindableLogger protocol."""
+        bound_logger = self.logger.try_unbind(*keys)
+        return self.__class__.create_bound_logger(self.name, bound_logger)
+
+    @override
+    def unbind(self, *keys: str, safe: bool = False) -> Self:
+        """Unbind keys from logger - implements BindableLogger protocol."""
+        bound_logger = (
+            self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
+        )
+        return self.__class__.create_bound_logger(self.name, bound_logger)
+
+    @override
+    def warning(
+        self,
+        msg: str | t.Container,
+        *args: t.Container,
+        **kw: t.Container | Exception,
+    ) -> r[bool]:
+        """Log warning message - Logger.Log implementation.
+
+        Business Rule: Logs a warning-level message with optional context. Uses _log
+        method for actual logging. Uses FlextRuntime for centralized logging management.
+
+        Audit Implication: Warning logging ensures audit trail completeness by recording
+        warning messages about potential issues. Warning messages are typically included
+        in production logs and critical for audit trail reconstruction and issue
+        identification. All warning messages go through this method, ensuring consistent
+        log formatting and context inclusion across FLEXT.
+        """
+        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
+
+    def with_result(self) -> FlextLogger.ResultAdapter:
+        """Get a result-returning logger adapter.
+
+        Returns a ResultAdapter that wraps all logging methods
+        to return r[bool] indicating success/failure.
+
+        Returns:
+            ResultAdapter wrapping this logger
+
+        """
+        return FlextLogger.ResultAdapter(self)
+
+    def _log(
+        self,
+        _level: c.Settings.LogLevel | str,
+        message: str,
+        *args: t.Container,
+        **context: t.Container | Exception,
+    ) -> r[bool]:
+        """Internal logging method - consolidates all log level methods.
+
+        Business Rule: Internal method that consolidates all log level methods (debug,
+        info, warning, error, critical) into a single implementation. Formats message
+        with % arguments, auto-adds source path if not provided, and delegates to
+        structlog logger. Uses FlextRuntime for centralized logging management.
+        Returns r[bool] indicating success or failure.
+
+        Audit Implication: Internal logging ensures audit trail completeness by
+        formatting messages and adding source context. All log messages go through
+        this method, ensuring consistent log formatting and context inclusion across
+        FLEXT. Source path is critical for tracing log messages to their source in
+        audit trails.
+        """
+        try:
+            formatted_message = FlextLogger._format_log_message(message, *args)
+
+            # Auto-add source if not provided
+            if "source" not in context and (
+                source_path := FlextLogger._get_caller_source_path()
+            ):
+                context["source"] = source_path
+
+            # Use StrEnum directly - structlog accepts StrEnum values
+            # Convert to lowercase string for method name lookup
+            match _level:
+                case c.Settings.LogLevel() as enum_level:
+                    level_raw: str = enum_level.value
+                case _:
+                    level_raw = str(_level)
+            level_str = level_raw.lower()
+
+            # Dynamic method call using getattr mapping
+            getattr(self.logger, level_str)(formatted_message, **context)
+            # Return success result directly
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+            # Return failure result directly
+            return r[bool].fail(f"Logging failed: {e}")
+
+    def _log_standard_level(
+        self,
+        level: c.Settings.LogLevel,
+        msg: str | t.Container,
+        *args: t.Container | Exception,
+        **kw: t.Container | Exception,
+    ) -> r[bool]:
+        message = str(msg)
+        filtered_args: tuple[t.Container, ...] = tuple(
+            arg
+            for arg in args
+            # boundary: logging accepts arbitrary user args
+            if not isinstance(arg, BaseException)
+        )
+        return self._log(level, message, *filtered_args, **kw)
+
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration
     # =========================================================================
@@ -1261,25 +1261,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             super().__init__()
             self._base_logger = base_logger
 
-        def _log_and_wrap(
-            self,
-            method_name: str,
-            message: str,
-            *args: t.MetadataValue,
-            **kwargs: t.MetadataValue,
-        ) -> r[bool]:
-            log_method = getattr(self._base_logger, method_name)
-            log_method(message, *args, **kwargs)
-            return r[bool].ok(value=True)
-
         @property
         def name(self) -> str:
             """Get logger name - delegate to base logger."""
             return self._base_logger.name
-
-        def with_result(self) -> FlextLogger.ResultAdapter:
-            """Return self (idempotent)."""
-            return self
 
         def bind(
             self,
@@ -1288,14 +1273,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
 
-        def trace(
+        def critical(
             self,
             message: str,
             *args: t.MetadataValue,
             **kwargs: t.MetadataValue,
         ) -> r[bool]:
-            """Log trace message returning FlextResult."""
-            return self._log_and_wrap("trace", message, *args, **kwargs)
+            """Log critical message returning FlextResult."""
+            return self._log_and_wrap("critical", message, *args, **kwargs)
 
         def debug(
             self,
@@ -1306,24 +1291,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             """Log debug message returning FlextResult."""
             return self._log_and_wrap("debug", message, *args, **kwargs)
 
-        def info(
-            self,
-            message: str,
-            *args: t.MetadataValue,
-            **kwargs: t.MetadataValue,
-        ) -> r[bool]:
-            """Log info message returning FlextResult."""
-            return self._log_and_wrap("info", message, *args, **kwargs)
-
-        def warning(
-            self,
-            message: str,
-            *args: t.MetadataValue,
-            **kwargs: t.MetadataValue,
-        ) -> r[bool]:
-            """Log warning message returning FlextResult."""
-            return self._log_and_wrap("warning", message, *args, **kwargs)
-
         def error(
             self,
             message: str,
@@ -1332,15 +1299,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         ) -> r[bool]:
             """Log error message returning FlextResult."""
             return self._log_and_wrap("error", message, *args, **kwargs)
-
-        def critical(
-            self,
-            message: str,
-            *args: t.MetadataValue,
-            **kwargs: t.MetadataValue,
-        ) -> r[bool]:
-            """Log critical message returning FlextResult."""
-            return self._log_and_wrap("critical", message, *args, **kwargs)
 
         def exception(
             self,
@@ -1379,6 +1337,48 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context=context_kwargs,  # type: ignore[arg-type]
             )
             self._base_logger.error(message, **context.root)
+            return r[bool].ok(value=True)
+
+        def info(
+            self,
+            message: str,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
+        ) -> r[bool]:
+            """Log info message returning FlextResult."""
+            return self._log_and_wrap("info", message, *args, **kwargs)
+
+        def trace(
+            self,
+            message: str,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
+        ) -> r[bool]:
+            """Log trace message returning FlextResult."""
+            return self._log_and_wrap("trace", message, *args, **kwargs)
+
+        def warning(
+            self,
+            message: str,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
+        ) -> r[bool]:
+            """Log warning message returning FlextResult."""
+            return self._log_and_wrap("warning", message, *args, **kwargs)
+
+        def with_result(self) -> FlextLogger.ResultAdapter:
+            """Return self (idempotent)."""
+            return self
+
+        def _log_and_wrap(
+            self,
+            method_name: str,
+            message: str,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
+        ) -> r[bool]:
+            log_method = getattr(self._base_logger, method_name)
+            log_method(message, *args, **kwargs)
             return r[bool].ok(value=True)
 
 

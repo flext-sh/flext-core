@@ -40,6 +40,72 @@ class FlextUtilitiesGenerators:
             alphabet = string.ascii_letters + string.digits
             return "".join(secrets.choice(alphabet) for _ in range(length))
 
+    @staticmethod
+    def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:
+        """Determine actual prefix from kind or custom prefix.
+
+        Args:
+            kind: ID kind string.
+            prefix: Custom prefix (overrides kind).
+
+        Returns:
+            Actual prefix string or None.
+
+        """
+        if prefix is not None:
+            return prefix
+
+        if kind is None:
+            return None
+
+        kind_prefix_map: Mapping[str, str] = {
+            "correlation": "corr",
+            "entity": "ent",
+            "batch": c.Cqrs.ProcessingMode.BATCH,
+            "transaction": "txn",
+            "saga": "saga",
+            "event": "evt",
+            "command": "cmd",
+            "query": "qry",
+            # "aggregate": None,  # Requires prefix parameter - removed to avoid dict type error
+        }
+        return kind_prefix_map.get(kind)
+
+    @staticmethod
+    def _enrich_context_fields(
+        context_dict: MutableMapping[str, str],
+        *,
+        include_correlation_id: bool = False,
+        include_timestamp: bool = False,
+    ) -> None:
+        """Enrich context dict with tracing fields.
+
+        Args:
+            context_dict: Context dict to enrich (modified in place, all values must be strings)
+            include_correlation_id: If True, ensure correlation_id exists
+            include_timestamp: If True, ensure timestamp exists
+
+        """
+        if "trace_id" not in context_dict:
+            context_dict["trace_id"] = FlextUtilitiesGenerators._generate_id()
+        if "span_id" not in context_dict:
+            context_dict["span_id"] = FlextUtilitiesGenerators._generate_id()
+
+        # Optionally ensure correlation_id
+        if include_correlation_id and "correlation_id" not in context_dict:
+            context_dict["correlation_id"] = FlextUtilitiesGenerators._generate_id()
+
+        # Optionally ensure timestamp (ISO 8601 format)
+        if include_timestamp and "timestamp" not in context_dict:
+            context_dict["timestamp"] = (
+                FlextUtilitiesGenerators.generate_iso_timestamp()
+            )
+
+    @staticmethod
+    def _generate_id() -> str:
+        """Generate a unique ID using UUID4 (private helper)."""
+        return str(uuid.uuid4())
+
     # NOTE: create_dynamic_type_subclass is available as static method - no nested Type class needed
 
     @staticmethod
@@ -74,39 +140,6 @@ class FlextUtilitiesGenerators:
             middle = "_".join(str(p) for p in parts)
             return f"{prefix}_{middle}_{uuid_part}"
         return f"{prefix}_{uuid_part}"
-
-    @staticmethod
-    def _generate_id() -> str:
-        """Generate a unique ID using UUID4 (private helper)."""
-        return str(uuid.uuid4())
-
-    @staticmethod
-    def generate_iso_timestamp() -> str:
-        """Generate ISO format timestamp without microseconds.
-
-        Note: For precise duration calculations, use generate_datetime_utc() instead
-        as this method removes microseconds which affects timing precision.
-        """
-        return datetime.now(UTC).replace(microsecond=0).isoformat()
-
-    @staticmethod
-    def generate_datetime_utc() -> datetime:
-        """Generate current UTC datetime with full precision (preserves microseconds).
-
-        Use this method when you need precise datetime objects for duration calculations.
-        Unlike generate_iso_timestamp(), this preserves microseconds for accurate timing.
-
-        Returns:
-            datetime: Current UTC datetime with full microsecond precision
-
-        Example:
-            >>> start = FlextUtilitiesGenerators.generate_datetime_utc()
-            >>> # ... operation ...
-            >>> end = FlextUtilitiesGenerators.generate_datetime_utc()
-            >>> duration = (end - start).total_seconds()  # Precise duration
-
-        """
-        return datetime.now(UTC)
 
     @staticmethod
     def _is_config_mapping(
@@ -159,90 +192,48 @@ class FlextUtilitiesGenerators:
         raise TypeError(msg)
 
     @staticmethod
-    def _enrich_context_fields(
-        context_dict: MutableMapping[str, str],
-        *,
-        include_correlation_id: bool = False,
-        include_timestamp: bool = False,
-    ) -> None:
-        """Enrich context dict with tracing fields.
+    def _should_generate_uuid(kind: str | None, actual_prefix: str | None) -> bool:
+        """Check if UUID generation should be used.
 
         Args:
-            context_dict: Context dict to enrich (modified in place, all values must be strings)
-            include_correlation_id: If True, ensure correlation_id exists
-            include_timestamp: If True, ensure timestamp exists
-
-        """
-        if "trace_id" not in context_dict:
-            context_dict["trace_id"] = FlextUtilitiesGenerators._generate_id()
-        if "span_id" not in context_dict:
-            context_dict["span_id"] = FlextUtilitiesGenerators._generate_id()
-
-        # Optionally ensure correlation_id
-        if include_correlation_id and "correlation_id" not in context_dict:
-            context_dict["correlation_id"] = FlextUtilitiesGenerators._generate_id()
-
-        # Optionally ensure timestamp (ISO 8601 format)
-        if include_timestamp and "timestamp" not in context_dict:
-            context_dict["timestamp"] = (
-                FlextUtilitiesGenerators.generate_iso_timestamp()
-            )
-
-    @staticmethod
-    def ensure_trace_context(
-        context: Mapping[str, t.Container] | BaseModel | None,
-        *,
-        include_correlation_id: bool = False,
-        include_timestamp: bool = False,
-    ) -> Mapping[str, str]:
-        """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
-
-        This generic helper consolidates duplicate context enrichment logic
-        across multiple Pydantic models (service.py, config.py).
-
-        If context is not dict-like, creates new empty dict. Generates UUIDs
-        for missing trace_id and span_id fields. Optionally adds correlation_id
-        and ISO timestamp.
-
-        Args:
-            context: Context dictionary or object to enrich (can be any type)
-            include_correlation_id: If True, ensure correlation_id exists
-            include_timestamp: If True, ensure timestamp exists (ISO 8601)
+            kind: ID kind string.
+            actual_prefix: Determined prefix or None.
 
         Returns:
-            Mapping[str, str]: Enriched context with requested fields (all string values)
-
-        Example:
-            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
-            >>> # Basic: trace_id + span_id
-            >>> ctx = u.Generators.ensure_trace_context({})
-            >>> "trace_id" in ctx and "span_id" in ctx
-            True
-            >>> # With correlation_id
-            >>> ctx = u.Generators.ensure_trace_context({}, include_correlation_id=True)
-            >>> "correlation_id" in ctx
-            True
-            >>> # With timestamp
-            >>> ctx = u.Generators.ensure_trace_context({}, include_timestamp=True)
-            >>> "timestamp" in ctx
-            True
-            >>> # Existing values preserved
-            >>> ctx = u.Generators.ensure_trace_context({"trace_id": "abc"})
-            >>> ctx["trace_id"]
-            'abc'
+            True if UUID should be generated.
 
         """
-        normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
-        # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
-        context_dict: MutableMapping[str, str] = {
-            k: str(v) for k, v in normalized_dict.items()
-        }
-        FlextUtilitiesGenerators._enrich_context_fields(
-            context_dict,
-            include_correlation_id=include_correlation_id,
-            include_timestamp=include_timestamp,
-        )
-        return context_dict
+        return kind == "uuid" or (kind is None and actual_prefix is None)
+
+    @staticmethod
+    def create_dynamic_type_subclass(
+        name: str,
+        base_class: type,  # Base class for dynamic subclass
+        attributes: m.ConfigMap | t.ConfigurationMapping,
+    ) -> type:
+        """Create a dynamic subclass using type() for metaprogramming.
+
+        This helper function encapsulates the creation of dynamic classes
+        to isolate type checker issues with metaprogramming.
+
+        Args:
+            name: Name of the subclass
+            base_class: Base class to inherit from
+            attributes: Dictionary of attributes to add to the subclass
+
+        Returns:
+            The dynamically created subclass
+
+        """
+        # pyrefly doesn't understand type() for dynamic class creation
+        # This is valid Python metaprogramming
+        # Runtime validation: base_class parameter is typed as type
+        # Type system ensures base_class is a type, so no runtime check needed
+        # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
+        # Convert to dict for type() call
+        attributes_dict = dict(attributes)
+        base_type: type = base_class
+        return type(name, (base_type,), attributes_dict)
 
     @staticmethod
     def ensure_dict(
@@ -313,49 +304,60 @@ class FlextUtilitiesGenerators:
         raise TypeError(msg)
 
     @staticmethod
-    def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:
-        """Determine actual prefix from kind or custom prefix.
+    def ensure_trace_context(
+        context: Mapping[str, t.Container] | BaseModel | None,
+        *,
+        include_correlation_id: bool = False,
+        include_timestamp: bool = False,
+    ) -> Mapping[str, str]:
+        """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
+
+        This generic helper consolidates duplicate context enrichment logic
+        across multiple Pydantic models (service.py, config.py).
+
+        If context is not dict-like, creates new empty dict. Generates UUIDs
+        for missing trace_id and span_id fields. Optionally adds correlation_id
+        and ISO timestamp.
 
         Args:
-            kind: ID kind string.
-            prefix: Custom prefix (overrides kind).
+            context: Context dictionary or object to enrich (can be any type)
+            include_correlation_id: If True, ensure correlation_id exists
+            include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            Actual prefix string or None.
+            Mapping[str, str]: Enriched context with requested fields (all string values)
+
+        Example:
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
+            >>> # Basic: trace_id + span_id
+            >>> ctx = u.Generators.ensure_trace_context({})
+            >>> "trace_id" in ctx and "span_id" in ctx
+            True
+            >>> # With correlation_id
+            >>> ctx = u.Generators.ensure_trace_context({}, include_correlation_id=True)
+            >>> "correlation_id" in ctx
+            True
+            >>> # With timestamp
+            >>> ctx = u.Generators.ensure_trace_context({}, include_timestamp=True)
+            >>> "timestamp" in ctx
+            True
+            >>> # Existing values preserved
+            >>> ctx = u.Generators.ensure_trace_context({"trace_id": "abc"})
+            >>> ctx["trace_id"]
+            'abc'
 
         """
-        if prefix is not None:
-            return prefix
-
-        if kind is None:
-            return None
-
-        kind_prefix_map: Mapping[str, str] = {
-            "correlation": "corr",
-            "entity": "ent",
-            "batch": c.Cqrs.ProcessingMode.BATCH,
-            "transaction": "txn",
-            "saga": "saga",
-            "event": "evt",
-            "command": "cmd",
-            "query": "qry",
-            # "aggregate": None,  # Requires prefix parameter - removed to avoid dict type error
+        normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
+        # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
+        context_dict: MutableMapping[str, str] = {
+            k: str(v) for k, v in normalized_dict.items()
         }
-        return kind_prefix_map.get(kind)
-
-    @staticmethod
-    def _should_generate_uuid(kind: str | None, actual_prefix: str | None) -> bool:
-        """Check if UUID generation should be used.
-
-        Args:
-            kind: ID kind string.
-            actual_prefix: Determined prefix or None.
-
-        Returns:
-            True if UUID should be generated.
-
-        """
-        return kind == "uuid" or (kind is None and actual_prefix is None)
+        FlextUtilitiesGenerators._enrich_context_fields(
+            context_dict,
+            include_correlation_id=include_correlation_id,
+            include_timestamp=include_timestamp,
+        )
+        return context_dict
 
     @staticmethod
     def generate(
@@ -437,6 +439,34 @@ class FlextUtilitiesGenerators:
         return FlextUtilitiesGenerators._generate_id()
 
     @staticmethod
+    def generate_datetime_utc() -> datetime:
+        """Generate current UTC datetime with full precision (preserves microseconds).
+
+        Use this method when you need precise datetime objects for duration calculations.
+        Unlike generate_iso_timestamp(), this preserves microseconds for accurate timing.
+
+        Returns:
+            datetime: Current UTC datetime with full microsecond precision
+
+        Example:
+            >>> start = FlextUtilitiesGenerators.generate_datetime_utc()
+            >>> # ... operation ...
+            >>> end = FlextUtilitiesGenerators.generate_datetime_utc()
+            >>> duration = (end - start).total_seconds()  # Precise duration
+
+        """
+        return datetime.now(UTC)
+
+    @staticmethod
+    def generate_iso_timestamp() -> str:
+        """Generate ISO format timestamp without microseconds.
+
+        Note: For precise duration calculations, use generate_datetime_utc() instead
+        as this method removes microseconds which affects timing precision.
+        """
+        return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+    @staticmethod
     def generate_operation_id(message_type: str, message: t.Container) -> str:
         """Generate unique operation ID for dispatch operations.
 
@@ -451,36 +481,6 @@ class FlextUtilitiesGenerators:
         timestamp = int(time.time() * c.MICROSECONDS_MULTIPLIER)
         message_id = id(message)
         return f"{message_type}_{message_id}_{timestamp}"
-
-    @staticmethod
-    def create_dynamic_type_subclass(
-        name: str,
-        base_class: type,  # Base class for dynamic subclass
-        attributes: m.ConfigMap | t.ConfigurationMapping,
-    ) -> type:
-        """Create a dynamic subclass using type() for metaprogramming.
-
-        This helper function encapsulates the creation of dynamic classes
-        to isolate type checker issues with metaprogramming.
-
-        Args:
-            name: Name of the subclass
-            base_class: Base class to inherit from
-            attributes: Dictionary of attributes to add to the subclass
-
-        Returns:
-            The dynamically created subclass
-
-        """
-        # pyrefly doesn't understand type() for dynamic class creation
-        # This is valid Python metaprogramming
-        # Runtime validation: base_class parameter is typed as type
-        # Type system ensures base_class is a type, so no runtime check needed
-        # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
-        # Convert to dict for type() call
-        attributes_dict = dict(attributes)
-        base_type: type = base_class
-        return type(name, (base_type,), attributes_dict)
 
 
 __all__ = [

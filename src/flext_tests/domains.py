@@ -37,9 +37,9 @@ class FlextTestsDomains:
             self.value = value
 
         @property
-        def is_success(self) -> bool:
-            """Check if success."""
-            return True
+        def error(self) -> str | None:
+            """Get error."""
+            return None
 
         @property
         def is_failure(self) -> bool:
@@ -47,13 +47,72 @@ class FlextTestsDomains:
             return False
 
         @property
-        def error(self) -> str | None:
-            """Get error."""
-            return None
+        def is_success(self) -> bool:
+            """Check if success."""
+            return True
 
         def unwrap(self) -> FlextTestsDomains.TestDomainResult:
             """Unwrap the result value."""
             return self
+
+    @staticmethod
+    def api_response_data(
+        status: str = "success",
+        *,
+        include_data: bool | None = None,
+        **custom_fields: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
+        """Create API response test data.
+
+        Args:
+            status: Response status
+            include_data: Whether to include data field
+            **custom_fields: Custom response fields
+
+        Returns:
+            API response dictionary
+
+        """
+        response: MutableMapping[str, t.Tests.ContainerValue] = {
+            "status": status,
+            "timestamp": "2025-01-01T00:00:00Z",
+            "request_id": str(uuid.uuid4()),
+        }
+
+        if include_data:
+            response["data"] = {"test": "data"}
+
+        if status == "error":
+            response["error"] = {
+                "code": "TEST_ERROR",
+                "message": "Test error message",
+            }
+
+        response.update(custom_fields)
+        return response
+
+    @staticmethod
+    def batch_users(
+        count: int = 5,
+        **user_overrides: str | bool,
+    ) -> list[MutableMapping[str, str | bool]]:
+        """Create a batch of test users.
+
+        Args:
+            count: Number of users to create
+            **user_overrides: Common overrides for all users
+
+        Returns:
+            List of user dictionaries
+
+        """
+        users = []
+        for i in range(count):
+            user_overrides_copy = user_overrides.copy()
+            user_overrides_copy["username"] = f"testuser{i}"
+            user_overrides_copy["email"] = f"testuser{i}@example.com"
+            users.append(FlextTestsDomains.create_user(**user_overrides_copy))
+        return users
 
     @staticmethod
     def create_configuration(
@@ -135,60 +194,6 @@ class FlextTestsDomains:
         return payload
 
     @staticmethod
-    def api_response_data(
-        status: str = "success",
-        *,
-        include_data: bool | None = None,
-        **custom_fields: t.Tests.ContainerValue,
-    ) -> MutableMapping[str, t.Tests.ContainerValue]:
-        """Create API response test data.
-
-        Args:
-            status: Response status
-            include_data: Whether to include data field
-            **custom_fields: Custom response fields
-
-        Returns:
-            API response dictionary
-
-        """
-        response: MutableMapping[str, t.Tests.ContainerValue] = {
-            "status": status,
-            "timestamp": "2025-01-01T00:00:00Z",
-            "request_id": str(uuid.uuid4()),
-        }
-
-        if include_data:
-            response["data"] = {"test": "data"}
-
-        if status == "error":
-            response["error"] = {
-                "code": "TEST_ERROR",
-                "message": "Test error message",
-            }
-
-        response.update(custom_fields)
-        return response
-
-    @staticmethod
-    def valid_email_cases() -> list[tuple[str, bool]]:
-        """Get valid email test cases.
-
-        Returns:
-            List of (email, is_valid) tuples
-
-        """
-        return [
-            ("test@example.com", True),
-            ("user.name@domain.co.uk", True),
-            ("test+tag@example.com", True),
-            ("invalid-email", False),
-            ("@example.com", False),
-            ("test@", False),
-            ("", False),
-        ]
-
-    @staticmethod
     def create_service(
         service_type: str = "api",
         **config: t.Tests.ContainerValue,
@@ -248,27 +253,14 @@ class FlextTestsDomains:
         return user
 
     @staticmethod
-    def batch_users(
-        count: int = 5,
-        **user_overrides: str | bool,
-    ) -> list[MutableMapping[str, str | bool]]:
-        """Create a batch of test users.
-
-        Args:
-            count: Number of users to create
-            **user_overrides: Common overrides for all users
+    def invalid_ages() -> list[int]:
+        """Get invalid age test cases.
 
         Returns:
-            List of user dictionaries
+            List of invalid ages
 
         """
-        users = []
-        for i in range(count):
-            user_overrides_copy = user_overrides.copy()
-            user_overrides_copy["username"] = f"testuser{i}"
-            user_overrides_copy["email"] = f"testuser{i}@example.com"
-            users.append(FlextTestsDomains.create_user(**user_overrides_copy))
-        return users
+        return [-5, 0, 17, 151, 200]
 
     @staticmethod
     def invalid_email_cases() -> list[tuple[str, bool]]:
@@ -299,14 +291,22 @@ class FlextTestsDomains:
         return [18, 25, 30, 45, 65, 80, 99]
 
     @staticmethod
-    def invalid_ages() -> list[int]:
-        """Get invalid age test cases.
+    def valid_email_cases() -> list[tuple[str, bool]]:
+        """Get valid email test cases.
 
         Returns:
-            List of invalid ages
+            List of (email, is_valid) tuples
 
         """
-        return [-5, 0, 17, 151, 200]
+        return [
+            ("test@example.com", True),
+            ("user.name@domain.co.uk", True),
+            ("test+tag@example.com", True),
+            ("invalid-email", False),
+            ("@example.com", False),
+            ("test@", False),
+            ("", False),
+        ]
 
 
 __all__ = ["FlextTestsDomains"]

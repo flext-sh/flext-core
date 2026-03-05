@@ -24,16 +24,28 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
     Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
     """
 
-    @override
-    def execute(self) -> FlextResult[list[m.ProjectInfo]]:
-        """Execute discovery of all projects in workspace.
+    @staticmethod
+    def _is_git_project(path: Path) -> bool:
+        """Check if a directory is a Git repository."""
+        return (path / ".git").exists()
 
-        Returns:
-            FlextResult with list of discovered ProjectInfo models.
-
-        """
-        # Default implementation - subclasses can override
-        return r[list[m.ProjectInfo]].ok([])
+    @staticmethod
+    def _submodule_names(workspace_root: Path) -> set[str]:
+        """Retrieve submodule names from .gitmodules."""
+        gitmodules = workspace_root / ".gitmodules"
+        if not gitmodules.exists():
+            return set()
+        try:
+            content = gitmodules.read_text(encoding=c.Encoding.DEFAULT)
+        except OSError:
+            return set()
+        return set(
+            re.findall(
+                r"^\s*path\s*=\s*(.+?)\s*$",
+                content,
+                re.MULTILINE,
+            ),
+        )
 
     def discover_projects(
         self,
@@ -94,6 +106,17 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
                 f"project discovery failed: {exc}",
             )
 
+    @override
+    def execute(self) -> FlextResult[list[m.ProjectInfo]]:
+        """Execute discovery of all projects in workspace.
+
+        Returns:
+            FlextResult with list of discovered ProjectInfo models.
+
+        """
+        # Default implementation - subclasses can override
+        return r[list[m.ProjectInfo]].ok([])
+
     def find_all_pyproject_files(
         self,
         workspace_root: Path,
@@ -140,29 +163,6 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
             return r[list[Path]].fail(
                 f"pyproject file scan failed: {exc}",
             )
-
-    @staticmethod
-    def _is_git_project(path: Path) -> bool:
-        """Check if a directory is a Git repository."""
-        return (path / ".git").exists()
-
-    @staticmethod
-    def _submodule_names(workspace_root: Path) -> set[str]:
-        """Retrieve submodule names from .gitmodules."""
-        gitmodules = workspace_root / ".gitmodules"
-        if not gitmodules.exists():
-            return set()
-        try:
-            content = gitmodules.read_text(encoding=c.Encoding.DEFAULT)
-        except OSError:
-            return set()
-        return set(
-            re.findall(
-                r"^\s*path\s*=\s*(.+?)\s*$",
-                content,
-                re.MULTILINE,
-            ),
-        )
 
 
 __all__ = ["FlextInfraDiscoveryService"]

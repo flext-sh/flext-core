@@ -20,33 +20,71 @@ class FlextUtilitiesContext:
     """Context utility helpers for creating and managing context variables."""
 
     @staticmethod
-    def create_str_proxy(
-        key: str,
-        default: str | None = None,
-    ) -> m.StructlogProxyContextVar[str]:
-        """Create StructlogProxyContextVar[str] instance.
+    def clone_container(
+        container: p.DI,
+        *,
+        scope_id: str | None = None,
+        overrides: Mapping[str, t.Container] | None = None,
+    ) -> p.DI:
+        """Clone container with scoping.
 
-        Helper factory for creating string-typed context variables with structlog
-        as the single source of truth.
+        Creates a scoped container instance with optional service overrides.
 
         Args:
-            key: Context variable key name
-            default: Optional default value
+            container: Container instance to clone (must implement DI protocol).
+            scope_id: Optional scope identifier.
+            overrides: Optional service overrides.
 
         Returns:
-            StructlogProxyContextVar[str] instance
-
-        Example:
-            >>> var = u.create_str_proxy("correlation_id")
-            >>> var.set("abc-123")
-            >>> var.get()  # Returns "abc-123"
+            p.DI: Scoped container instance.
 
         """
-        # Explicit instantiation with full type
-        proxy: m.StructlogProxyContextVar[str] = m.StructlogProxyContextVar[str](
-            key, default=default
+        return container.scoped(
+            subproject=scope_id,
+            services=overrides,
         )
-        return proxy
+
+    @staticmethod
+    def clone_runtime[T](
+        runtime: T,
+        *,
+        context: p.Context | None = None,
+        config_overrides: m.ConfigMap | None = None,
+    ) -> T:
+        """Clone runtime with optional overrides.
+
+        Creates a new runtime instance with the same dispatcher and registry,
+        but with optional context and config overrides.
+
+        Args:
+            runtime: Runtime instance to clone (must implement Runtime protocol).
+            context: Optional new context. If not provided, uses runtime's context.
+            config_overrides: Optional config field overrides.
+
+        Returns:
+            T: Cloned runtime instance.
+
+        """
+        cloned: T = runtime.__class__.__new__(runtime.__class__)
+        if hasattr(runtime, "_dispatcher"):
+            dispatcher_attr = "_dispatcher"
+            setattr(cloned, dispatcher_attr, getattr(runtime, dispatcher_attr))
+        if hasattr(runtime, "_registry"):
+            registry_attr = "_registry"
+            setattr(cloned, registry_attr, getattr(runtime, registry_attr))
+        if hasattr(runtime, "_context"):
+            context_attr = "_context"
+            cloned_context = context or getattr(runtime, context_attr)
+            setattr(cloned, context_attr, cloned_context)
+        if hasattr(runtime, "_config"):
+            config_attr = "_config"
+            runtime_config = getattr(runtime, config_attr)
+            if config_overrides:
+                cloned_config = runtime_config.model_copy(update=config_overrides)
+                setattr(cloned, config_attr, cloned_config)
+            else:
+                setattr(cloned, config_attr, runtime_config)
+        return cloned
 
     @staticmethod
     def create_datetime_proxy(
@@ -114,71 +152,33 @@ class FlextUtilitiesContext:
         return proxy
 
     @staticmethod
-    def clone_runtime[T](
-        runtime: T,
-        *,
-        context: p.Context | None = None,
-        config_overrides: m.ConfigMap | None = None,
-    ) -> T:
-        """Clone runtime with optional overrides.
+    def create_str_proxy(
+        key: str,
+        default: str | None = None,
+    ) -> m.StructlogProxyContextVar[str]:
+        """Create StructlogProxyContextVar[str] instance.
 
-        Creates a new runtime instance with the same dispatcher and registry,
-        but with optional context and config overrides.
+        Helper factory for creating string-typed context variables with structlog
+        as the single source of truth.
 
         Args:
-            runtime: Runtime instance to clone (must implement Runtime protocol).
-            context: Optional new context. If not provided, uses runtime's context.
-            config_overrides: Optional config field overrides.
+            key: Context variable key name
+            default: Optional default value
 
         Returns:
-            T: Cloned runtime instance.
+            StructlogProxyContextVar[str] instance
+
+        Example:
+            >>> var = u.create_str_proxy("correlation_id")
+            >>> var.set("abc-123")
+            >>> var.get()  # Returns "abc-123"
 
         """
-        cloned: T = runtime.__class__.__new__(runtime.__class__)
-        if hasattr(runtime, "_dispatcher"):
-            dispatcher_attr = "_dispatcher"
-            setattr(cloned, dispatcher_attr, getattr(runtime, dispatcher_attr))
-        if hasattr(runtime, "_registry"):
-            registry_attr = "_registry"
-            setattr(cloned, registry_attr, getattr(runtime, registry_attr))
-        if hasattr(runtime, "_context"):
-            context_attr = "_context"
-            cloned_context = context or getattr(runtime, context_attr)
-            setattr(cloned, context_attr, cloned_context)
-        if hasattr(runtime, "_config"):
-            config_attr = "_config"
-            runtime_config = getattr(runtime, config_attr)
-            if config_overrides:
-                cloned_config = runtime_config.model_copy(update=config_overrides)
-                setattr(cloned, config_attr, cloned_config)
-            else:
-                setattr(cloned, config_attr, runtime_config)
-        return cloned
-
-    @staticmethod
-    def clone_container(
-        container: p.DI,
-        *,
-        scope_id: str | None = None,
-        overrides: Mapping[str, t.Container] | None = None,
-    ) -> p.DI:
-        """Clone container with scoping.
-
-        Creates a scoped container instance with optional service overrides.
-
-        Args:
-            container: Container instance to clone (must implement DI protocol).
-            scope_id: Optional scope identifier.
-            overrides: Optional service overrides.
-
-        Returns:
-            p.DI: Scoped container instance.
-
-        """
-        return container.scoped(
-            subproject=scope_id,
-            services=overrides,
+        # Explicit instantiation with full type
+        proxy: m.StructlogProxyContextVar[str] = m.StructlogProxyContextVar[str](
+            key, default=default
         )
+        return proxy
 
 
 __all__ = [

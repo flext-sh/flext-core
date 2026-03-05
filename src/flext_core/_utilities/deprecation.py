@@ -24,6 +24,24 @@ class FlextUtilitiesDeprecation:
     # Class-level set to track warnings that have already been issued
     _warned_once: ClassVar[set[str]] = set()
 
+    @classmethod
+    def warn_once(cls, identifier: str, message: str) -> None:
+        """Emit a deprecation warning only once per unique identifier.
+
+        Args:
+            identifier: Unique identifier for this warning (used to prevent duplicates).
+            message: Warning message to display.
+
+        Example:
+            >>> FlextUtilitiesDeprecation.warn_once(
+            ...     "old_api_v1", "This API is deprecated. Use v2 instead."
+            ... )
+
+        """
+        if identifier not in cls._warned_once:
+            cls._warned_once.add(identifier)
+            warnings.warn(message, DeprecationWarning, stacklevel=2)
+
     @staticmethod
     def deprecated(
         replacement: str | None = None,
@@ -65,52 +83,6 @@ class FlextUtilitiesDeprecation:
                     DeprecationWarning,
                     stacklevel=2,
                 )
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
-
-    @staticmethod
-    def deprecated_parameter(
-        param_name: str,
-        replacement: str | None = None,
-        version: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Mark function parameter as deprecated.
-
-        Args:
-            param_name: Name of deprecated parameter.
-            replacement: Name of replacement parameter.
-            version: Version when deprecation was introduced.
-
-        Returns:
-            Decorator that warns when deprecated parameter is used.
-
-        Example:
-            >>> @FlextUtilitiesDeprecation.deprecated_parameter(
-            ...     "old_param",
-            ...     replacement="new_param",
-            ...     version="2.0.0"
-            ... )
-            >>> def my_function(new_param: str, old_param: str | None = None): ...
-
-        """
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @functools.wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                if param_name in kwargs:
-                    message_parts = [f"Parameter '{param_name}' is deprecated"]
-                    if version:
-                        message_parts.append(f"since version {version}")
-                    if replacement:
-                        message_parts.append(f"Use '{replacement}' instead")
-                    warnings.warn(
-                        ". ".join(message_parts),
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
                 return func(*args, **kwargs)
 
             return wrapper
@@ -187,23 +159,51 @@ class FlextUtilitiesDeprecation:
 
         return decorator
 
-    @classmethod
-    def warn_once(cls, identifier: str, message: str) -> None:
-        """Emit a deprecation warning only once per unique identifier.
+    @staticmethod
+    def deprecated_parameter(
+        param_name: str,
+        replacement: str | None = None,
+        version: str | None = None,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Mark function parameter as deprecated.
 
         Args:
-            identifier: Unique identifier for this warning (used to prevent duplicates).
-            message: Warning message to display.
+            param_name: Name of deprecated parameter.
+            replacement: Name of replacement parameter.
+            version: Version when deprecation was introduced.
+
+        Returns:
+            Decorator that warns when deprecated parameter is used.
 
         Example:
-            >>> FlextUtilitiesDeprecation.warn_once(
-            ...     "old_api_v1", "This API is deprecated. Use v2 instead."
+            >>> @FlextUtilitiesDeprecation.deprecated_parameter(
+            ...     "old_param",
+            ...     replacement="new_param",
+            ...     version="2.0.0"
             ... )
+            >>> def my_function(new_param: str, old_param: str | None = None): ...
 
         """
-        if identifier not in cls._warned_once:
-            cls._warned_once.add(identifier)
-            warnings.warn(message, DeprecationWarning, stacklevel=2)
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @functools.wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                if param_name in kwargs:
+                    message_parts = [f"Parameter '{param_name}' is deprecated"]
+                    if version:
+                        message_parts.append(f"since version {version}")
+                    if replacement:
+                        message_parts.append(f"Use '{replacement}' instead")
+                    warnings.warn(
+                        ". ".join(message_parts),
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
 
 
 __all__ = [

@@ -23,32 +23,6 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
         self.changes: list[str] = []
 
     @override
-    def visit_ClassDef(self, node: cst.ClassDef) -> None:
-        del node
-        self._scope_depth += 1
-
-    @override
-    def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.ClassDef:
-        del original_node
-        self._scope_depth -= 1
-        return updated_node
-
-    @override
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
-        del node
-        self._scope_depth += 1
-
-    @override
-    def leave_FunctionDef(
-        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
-    ) -> cst.FunctionDef:
-        del original_node
-        self._scope_depth -= 1
-        return updated_node
-
-    @override
     def leave_Assign(
         self,
         original_node: cst.Assign,
@@ -78,3 +52,29 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
                 return cst.RemovalSentinel.REMOVE
 
         return updated_node
+
+    @override
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:
+        del original_node
+        self._scope_depth -= 1
+        return updated_node
+
+    @override
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:
+        del original_node
+        self._scope_depth -= 1
+        return updated_node
+
+    @override
+    def visit_ClassDef(self, node: cst.ClassDef) -> None:
+        del node
+        self._scope_depth += 1
+
+    @override
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
+        del node
+        self._scope_depth += 1

@@ -43,17 +43,24 @@ class FlextUtilitiesText:
         ).strip()
 
     @staticmethod
-    def truncate_text(
-        text: str,
-        max_length: int = c.Performance.BatchProcessing.DEFAULT_SIZE,
-        suffix: str = "...",
-    ) -> r[str]:
-        """Truncate text to maximum length with suffix."""
-        if len(text) <= max_length:
-            return r[str].ok(text)
+    def format_app_id(name: str) -> str:
+        """Format application ID.
 
-        truncated = text[: max_length - len(suffix)] + suffix
-        return r[str].ok(truncated)
+        Converts a name to a valid application ID by lowercasing
+        and replacing spaces and underscores with hyphens.
+
+        Args:
+            name: Application name to format
+
+        Returns:
+            Formatted application ID (lowercase, hyphens)
+
+        Example:
+            app_id = u.format_app_id("My Application_Name")
+            # → "my-application-name"
+
+        """
+        return name.lower().replace(" ", "-").replace("_", "-")
 
     @staticmethod
     def safe_string(text: str | None) -> str:
@@ -81,24 +88,17 @@ class FlextUtilitiesText:
         return stripped
 
     @staticmethod
-    def format_app_id(name: str) -> str:
-        """Format application ID.
+    def truncate_text(
+        text: str,
+        max_length: int = c.Performance.BatchProcessing.DEFAULT_SIZE,
+        suffix: str = "...",
+    ) -> r[str]:
+        """Truncate text to maximum length with suffix."""
+        if len(text) <= max_length:
+            return r[str].ok(text)
 
-        Converts a name to a valid application ID by lowercasing
-        and replacing spaces and underscores with hyphens.
-
-        Args:
-            name: Application name to format
-
-        Returns:
-            Formatted application ID (lowercase, hyphens)
-
-        Example:
-            app_id = u.format_app_id("My Application_Name")
-            # → "my-application-name"
-
-        """
-        return name.lower().replace(" ", "-").replace("_", "-")
+        truncated = text[: max_length - len(suffix)] + suffix
+        return r[str].ok(truncated)
 
 
 __all__ = [

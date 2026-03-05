@@ -88,6 +88,30 @@ class FlextUtilitiesConfiguration:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
+    def get_log_level_from_config() -> int:
+        """Get log level from default constant (avoids circular import with config.py).
+
+        Business Rule: Log Level Resolution
+        ===================================
+        This method resolves the default log level from constants to avoid circular
+        imports between configuration and logging modules. It provides a safe way
+        to get the default log level without importing the full settings hierarchy.
+
+        Process:
+        1. Get default log level name from constants (e.g., "INFO")
+        2. Convert string to actual logging level constant
+        3. Return numeric logging level or fallback to INFO
+
+        Returns:
+            int: Numeric logging level (e.g., logging.INFO = 20)
+
+        """
+        # Use default log level from constants to avoid circular import
+        # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
+        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+        return getattr(logging, default_log_level, logging.INFO)
+
+    @staticmethod
     def resolve_env_file() -> str | None:
         """Resolve .env file path from FLEXT_ENV_FILE environment variable.
 
@@ -141,30 +165,6 @@ class FlextUtilitiesConfiguration:
         # Return default string if no .env file exists (Pydantic handles gracefully)
         return c.Platform.ENV_FILE_DEFAULT
 
-    @staticmethod
-    def get_log_level_from_config() -> int:
-        """Get log level from default constant (avoids circular import with config.py).
-
-        Business Rule: Log Level Resolution
-        ===================================
-        This method resolves the default log level from constants to avoid circular
-        imports between configuration and logging modules. It provides a safe way
-        to get the default log level without importing the full settings hierarchy.
-
-        Process:
-        1. Get default log level name from constants (e.g., "INFO")
-        2. Convert string to actual logging level constant
-        3. Return numeric logging level or fallback to INFO
-
-        Returns:
-            int: Numeric logging level (e.g., logging.INFO = 20)
-
-        """
-        # Use default log level from constants to avoid circular import
-        # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
-        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
-        return getattr(logging, default_log_level, logging.INFO)
-
     # =========================================================================
     # Sentinel Pattern for Parameter Access
     # =========================================================================
@@ -216,6 +216,63 @@ class FlextUtilitiesConfiguration:
         return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
+    def _try_get_from_dict_like(
+        obj: Mapping[str, t.Container],
+        parameter: str,
+    ) -> tuple[bool, t.Container | None]:
+        """Try to get parameter from dict-like object.
+
+        Business Rule: Dict-Like Access (Secondary Strategy)
+        ===================================================
+        This strategy handles objects implementing Mapping protocol:
+        - dict instances
+        - MappingProxyType (frozen dicts)
+        - Custom Mapping implementations
+
+        FlextRuntime.is_dict_like() Check:
+        - Uses collections.abc.Mapping for type check
+        - Ensures 'in' operator and __getitem__ are available
+        - Returns False for sequences (list/tuple) even though they support []
+
+        Type Safety:
+        - obj[parameter] returns the exact stored type
+        - No type coercion (preserves None vs missing distinction)
+
+        Args:
+            obj: Potentially dict-like object
+            parameter: Key to retrieve
+
+        Returns:
+            (True, value) if key exists, (False, None) if not dict-like or missing
+
+        """
+        # Type narrowing: is_dict_like ensures obj is Mapping-like
+        if FlextRuntime.is_dict_like(obj) and parameter in obj:
+            return (True, obj[parameter])
+        return FlextUtilitiesConfiguration._NOT_FOUND
+
+    @staticmethod
+    def _try_get_from_duck_model_dump(
+        obj: object,
+        parameter: str,
+    ) -> tuple[bool, t.Container | None]:
+        try:
+            model_dump_attr = getattr(obj, "model_dump", None)
+            if model_dump_attr is None or not callable(model_dump_attr):
+                return FlextUtilitiesConfiguration._NOT_FOUND
+            obj_dict = model_dump_attr()
+            if isinstance(obj_dict, Mapping) and parameter in obj_dict:
+                raw_value = obj_dict[parameter]
+                if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
+                    return (True, raw_value)
+                if isinstance(raw_value, BaseModel):
+                    return (True, raw_value)
+                return (True, str(raw_value))
+        except (AttributeError, TypeError, ValueError, RuntimeError):
+            pass
+        return FlextUtilitiesConfiguration._NOT_FOUND
+
+    @staticmethod
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
@@ -253,460 +310,6 @@ class FlextUtilitiesConfiguration:
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND
-
-    @staticmethod
-    def _try_get_from_duck_model_dump(
-        obj: object,
-        parameter: str,
-    ) -> tuple[bool, t.Container | None]:
-        try:
-            model_dump_attr = getattr(obj, "model_dump", None)
-            if model_dump_attr is None or not callable(model_dump_attr):
-                return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict = model_dump_attr()
-            if isinstance(obj_dict, Mapping) and parameter in obj_dict:
-                raw_value = obj_dict[parameter]
-                if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
-                    return (True, raw_value)
-                if isinstance(raw_value, BaseModel):
-                    return (True, raw_value)
-                return (True, str(raw_value))
-        except (AttributeError, TypeError, ValueError, RuntimeError):
-            pass
-        return FlextUtilitiesConfiguration._NOT_FOUND
-
-    @staticmethod
-    def _try_get_from_dict_like(
-        obj: Mapping[str, t.Container],
-        parameter: str,
-    ) -> tuple[bool, t.Container | None]:
-        """Try to get parameter from dict-like object.
-
-        Business Rule: Dict-Like Access (Secondary Strategy)
-        ===================================================
-        This strategy handles objects implementing Mapping protocol:
-        - dict instances
-        - MappingProxyType (frozen dicts)
-        - Custom Mapping implementations
-
-        FlextRuntime.is_dict_like() Check:
-        - Uses collections.abc.Mapping for type check
-        - Ensures 'in' operator and __getitem__ are available
-        - Returns False for sequences (list/tuple) even though they support []
-
-        Type Safety:
-        - obj[parameter] returns the exact stored type
-        - No type coercion (preserves None vs missing distinction)
-
-        Args:
-            obj: Potentially dict-like object
-            parameter: Key to retrieve
-
-        Returns:
-            (True, value) if key exists, (False, None) if not dict-like or missing
-
-        """
-        # Type narrowing: is_dict_like ensures obj is Mapping-like
-        if FlextRuntime.is_dict_like(obj) and parameter in obj:
-            return (True, obj[parameter])
-        return FlextUtilitiesConfiguration._NOT_FOUND
-
-    @staticmethod
-    def get_parameter(
-        obj: p.HasModelDump | t.ConfigurationMapping,
-        parameter: str,
-    ) -> t.Container:
-        """Get parameter value from a configuration object.
-
-        Business Rule: Parameter Access Precedence Chain
-        ================================================
-        This method implements a deterministic precedence chain for parameter
-        retrieval that handles diverse object types consistently:
-
-        1. HasModelDump protocol → model_dump() dict access
-           - Highest priority for Pydantic models
-           - Ensures computed fields and validation are included
-
-        2. Dict-like objects → direct key access
-           - For Mapping implementations (dict, MappingProxyType)
-           - Efficient O(1) key lookup
-
-        3. Objects with model_dump method → duck-typed call
-           - Compatibility for third-party Pydantic-like objects
-           - Fallback when protocol check fails
-
-        4. Direct attribute access → final fallback
-           - Plain Python objects with attributes
-           - Uses hasattr/getattr pattern
-
-        Fail-Fast vs Graceful Handling:
-        - This method uses FAIL-FAST semantics (raises NotFoundError)
-        - Rationale: Missing configuration is a programming error
-        - Callers should ensure parameters exist or catch the exception
-
-        None Value Handling:
-        - None is a VALID configuration value and is returned correctly
-        - Only raises when parameter doesn't exist at all
-        - Sentinel tuple pattern in helpers distinguishes "None value" from "not found"
-
-        Args:
-            obj: Configuration object (HasModelDump, dict-like, or with attributes)
-            parameter: Parameter name to retrieve
-
-        Returns:
-            The parameter value (can be None if that's the stored value)
-
-        Raises:
-            e.NotFoundError: If parameter is not defined
-
-        """
-        # Strategy 1: HasModelDump protocol
-        if isinstance(obj, p.HasModelDump):
-            found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
-                obj,
-                parameter,
-            )
-            if found:
-                return value
-
-        # Strategy 2: Dict-like (Mapping / m.ConfigMap)
-        if isinstance(obj, Mapping):
-            found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                obj,
-                parameter,
-            )
-            if found:
-                return value
-
-        found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            obj,
-            parameter,
-        )
-        if found:
-            return duck_value
-
-        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
-        if found:
-            return attr_val
-
-        class_name = obj.__class__.__name__
-        msg = f"Parameter '{parameter}' is not defined in {class_name}"
-        raise e.NotFoundError(msg)
-
-    @staticmethod
-    def set_parameter(
-        obj: p.HasModelDump | object,
-        parameter: str,
-        value: t.Scalar | m.ConfigMap,
-    ) -> bool:
-        """Set parameter value on a configuration object with validation.
-
-        Business Rule: Graceful Write with Pydantic Validation
-        =====================================================
-        This method uses GRACEFUL semantics (returns bool) unlike get_parameter
-        which uses fail-fast. Rationale:
-
-        - Write failures are often recoverable (use default, retry, etc.)
-        - Pydantic validation errors should not crash the application
-        - Callers can check return value and handle appropriately
-
-        Pydantic v2.11+ Compatibility:
-        - model_fields is a CLASS attribute, not instance attribute
-        - Uses getattr(obj.__class__, "model_fields", {}) for correct access
-        - This avoids deprecation warnings in newer Pydantic versions
-
-        Validation Flow:
-        1. Check if object implements HasModelFields protocol
-        2. Verify parameter exists in model_fields (prevents adding new fields)
-        3. Use setattr which triggers Pydantic's validate_assignment
-        4. Pydantic validates the value against field type
-
-        Error Handling:
-        - AttributeError: Object doesn't support attribute assignment
-        - TypeError: Value type incompatible with field type
-        - ValueError: Pydantic validation failure
-        - RuntimeError: Model frozen/immutable
-        - KeyError: Field not found (shouldn't happen after model_fields check)
-
-        Args:
-            obj: The configuration object (Pydantic BaseSettings instance)
-            parameter: The parameter name to set
-            value: The new value to set (will be validated by Pydantic)
-
-        Returns:
-            True if successful, False if validation failed or parameter doesn't exist
-
-        """
-        try:
-            # Check if parameter exists in model fields for Pydantic objects
-            # Access model_fields from class directly (Pydantic 2.11+ compatibility)
-            obj_class = obj.__class__
-            if hasattr(obj_class, "model_fields"):
-                model_fields_dict = getattr(obj_class, "model_fields", {})
-                if not FlextRuntime.is_dict_like(model_fields_dict):
-                    return False
-                if parameter not in model_fields_dict:
-                    return False
-
-            # Use setattr which triggers Pydantic validation if applicable
-            setattr(obj, parameter, value)
-            return True
-
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # Validation error or attribute error returns False
-            return False
-
-    @staticmethod
-    def get_singleton(
-        singleton_class: type,
-        parameter: str,
-    ) -> t.Container:
-        """Get parameter from a singleton configuration instance.
-
-        Business Rule: Singleton Configuration Access (FLEXT Pattern)
-        ============================================================
-        The FLEXT ecosystem uses a singleton pattern for global configuration
-        via `get_global()` class method. This enables:
-
-        - Consistent configuration across all services
-        - Lazy initialization (instance created on first access)
-        - Thread-safe singleton access (handled by FlextSettings implementation)
-
-        Expected Interface:
-        - singleton_class.get_global() → Returns singleton instance
-        - Instance must implement HasModelDump protocol
-        - Parameters accessed via get_parameter (precedence chain applies)
-
-        Fail-Fast Semantics:
-        - Raises ValidationError if class lacks get_global
-        - Raises NotFoundError if parameter not found (from get_parameter)
-        - This is intentional: missing config is a programming error
-
-        Type Safety:
-        - Type narrowing ensures HasModelDump protocol before access
-        - Explicit local variable for type checker compatibility
-
-        Args:
-            singleton_class: The singleton class (e.g., FlextSettings)
-            parameter: The parameter name to retrieve
-
-        Returns:
-            The parameter value
-
-        Raises:
-            e.ValidationError: If class doesn't have get_global
-            e.NotFoundError: If parameter is not defined
-
-        """
-        # Use getattr to help pyright infer types correctly
-        if hasattr(singleton_class, "get_global"):
-            get_global_attr = getattr(
-                singleton_class,
-                "get_global",
-                None,
-            )
-            if get_global_attr is not None and callable(
-                get_global_attr,
-            ):
-                # callable() check ensures this is callable - call directly
-                instance = get_global_attr()
-                found, value = (
-                    FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-                        instance,
-                        parameter,
-                    )
-                )
-                if found:
-                    return value
-                found, value = FlextUtilitiesConfiguration._try_get_attr(
-                    instance,
-                    parameter,
-                )
-                if found:
-                    return value
-                msg = f"Parameter '{parameter}' is not defined"
-                raise e.NotFoundError(msg)
-
-        msg = f"Class {singleton_class.__name__} does not have get_global method"
-
-        raise e.ValidationError(msg)
-
-    @staticmethod
-    def set_singleton(
-        singleton_class: type,
-        parameter: str,
-        value: t.Scalar | m.ConfigMap,
-    ) -> FlextRuntime.RuntimeResult[bool]:
-        """Set parameter on a singleton configuration instance with validation.
-
-        Business Rule: Railway-Oriented Singleton Mutation
-        =================================================
-        Unlike get_singleton (fail-fast), this method uses FlextResult for
-        graceful error handling. Rationale:
-
-        - Configuration mutation is often optional (fallback to defaults)
-        - Runtime errors shouldn't crash the application
-        - Callers can decide how to handle failures
-
-        Validation Chain:
-        1. Check get_global method exists (FlextResult.fail if not)
-        2. Check method is callable (FlextResult.fail if not)
-        3. Check instance implements HasModelDump (FlextResult.fail if not)
-        4. Delegate to set_parameter for actual mutation
-        5. set_parameter returns bool, converted to FlextResult
-
-        Thread Safety:
-        - Singleton access is thread-safe (FlextSettings guarantees this)
-        - Individual parameter mutation is NOT atomic
-        - External synchronization needed for concurrent writes
-
-        Args:
-            singleton_class: The singleton class (e.g., FlextSettings)
-            parameter: The parameter name to set
-            value: The new value to set (will be validated by Pydantic)
-
-        Returns:
-            r[bool] - ok(True) on success, fail(error_msg) on failure
-
-        """
-        if not hasattr(singleton_class, "get_global"):
-            return r[bool].fail(
-                f"Class {singleton_class.__name__} does not have get_global method",
-            )
-
-        # Use getattr to help pyright infer types correctly
-        get_global_attr = getattr(
-            singleton_class,
-            "get_global",
-            None,
-        )
-        if get_global_attr is None or not callable(get_global_attr):
-            return r[bool].fail(
-                f"get_global is not callable on {singleton_class.__name__}",
-            )
-
-        # callable() check above ensures this is callable - call directly
-        instance = get_global_attr()
-        model_dump_attr = getattr(instance, "model_dump", None)
-        if model_dump_attr is None or not callable(model_dump_attr):
-            return r[bool].fail(
-                "Instance does not implement model_dump() method",
-            )
-
-        success = FlextUtilitiesConfiguration.set_parameter(
-            instance,
-            parameter,
-            value,
-        )
-        if success:
-            return r[bool].ok(value=True)
-        return r[bool].fail(
-            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}",
-        )
-
-    @staticmethod
-    def validate_config_class(config_class: type) -> tuple[bool, str | None]:
-        """Validate that a configuration class is properly configured.
-
-        Business Rule: Pydantic v2 Configuration Class Validation
-        =========================================================
-        This method validates that a class follows FLEXT ecosystem patterns
-        for Pydantic v2 BaseSettings configuration classes.
-
-        Required Attributes:
-        - model_config: Dict or SettingsConfigDict with env binding configuration
-          This is MANDATORY for all FLEXT configuration classes
-
-        Validation Steps:
-        1. Type check implicit (config_class: type in signature)
-        2. Check model_config attribute exists
-        3. Attempt instantiation to verify default values work
-
-        Why Instantiation Test?
-        - Catches missing required fields
-        - Catches invalid default values
-        - Catches Pydantic validation errors early
-        - Prevents runtime failures in production
-
-        Return Pattern:
-        - Returns tuple (bool, str | None) instead of FlextResult
-        - This is intentional for simple yes/no validation
-        - Error message provides context for debugging
-
-        Args:
-            config_class: Configuration class to validate (Pydantic BaseSettings)
-
-        Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-                - (True, None) if valid
-                - (False, error_message) if invalid
-
-        """
-        try:
-            # config_class annotation already guarantees class input
-
-            # Check model_config existence
-            class_name = getattr(config_class, "__name__", "UnknownClass")
-            if not hasattr(config_class, "model_config"):
-                return (False, f"{class_name} must define model_config")
-
-            # Try to instantiate to ensure it's valid
-            _ = config_class()
-
-            return (True, None)
-
-        except (TypeError, ValueError, AttributeError) as e:
-            return (False, f"Configuration class validation failed: {e!s}")
-
-    @staticmethod
-    def create_settings_config(
-        env_prefix: str,
-        env_file: str | None = None,
-        env_nested_delimiter: str = "__",
-    ) -> Mapping[str, t.Scalar]:
-        """Create a SettingsConfigDict for environment binding.
-
-        Business Rule: Pydantic v2 Environment Binding Configuration
-        ============================================================
-        This method creates a standardized configuration dictionary for
-        Pydantic v2 BaseSettings classes in the FLEXT ecosystem.
-
-        Configuration Options Explained:
-        - env_prefix: Namespace isolation (FLEXT_LDAP_, FLEXT_API_, etc.)
-          Prevents conflicts between different FLEXT libraries
-        - env_file: Path to .env file (use resolve_env_file() for standard resolution)
-        - env_nested_delimiter: "__" enables FLEXT_DB__HOST → config.db.host mapping
-        - case_sensitive: False (ENV_VAR, env_var, Env_Var all work)
-        - extra: "ignore" (unknown env vars don't cause ValidationError)
-        - validate_default: True (validates default values at class definition)
-
-        FLEXT Ecosystem Convention:
-        - All FLEXT libraries use env_prefix pattern: "FLEXT_{LIBRARY}_"
-        - Example: FLEXT_LDAP_, FLEXT_API_, FLEXT_CLI_
-        - This ensures namespace isolation and consistent configuration
-
-        Why dict instead of SettingsConfigDict?
-        - Returns dict for flexibility and type compatibility
-        - Caller can cast to SettingsConfigDict if needed
-        - Avoids importing pydantic_settings in this module
-
-        Args:
-            env_prefix: Environment variable prefix (e.g., "FLEXT_LDAP_")
-            env_file: Optional path to .env file
-            env_nested_delimiter: Delimiter for nested configs (default: "__")
-
-        Returns:
-            dict: Configuration compatible with Pydantic v2 SettingsConfigDict
-
-        """
-        return {
-            "env_prefix": env_prefix,
-            "env_file": env_file,
-            "env_nested_delimiter": env_nested_delimiter,
-            "case_sensitive": False,
-            "extra": c.ModelConfig.EXTRA_IGNORE,
-            "validate_default": True,
-        }
 
     @staticmethod
     def build_options_from_kwargs(
@@ -869,31 +472,241 @@ class FlextUtilitiesConfiguration:
             )
 
     @staticmethod
-    def register_singleton(
+    def bulk_register(
         container: p.DI,
-        name: str,
-        instance: t.Scalar | m.ConfigMap | m.Dict,
-    ) -> r[bool]:
-        """Register singleton with standard error handling.
+        registrations: Mapping[str, t.Scalar | m.ConfigMap | m.Dict],
+    ) -> r[int]:
+        """Register multiple services at once.
 
         Args:
             container: Container to register in (must implement DI protocol).
-            name: Service name.
-            instance: Service instance to register.
+            registrations: Mapping of name to service instance or factory.
 
         Returns:
-            r[bool]: Success(true) if registration succeeds, failure otherwise.
+            r[int]: Success with count of registered services, or failure.
 
         """
-        try:
-            register_result = container.register(name, instance)
-            if register_result.is_failure:
-                return r[bool].fail(
-                    register_result.error or "Registration failed",
+        count = 0
+        for name, value in registrations.items():
+            try:
+                register_result = container.register(name, value)
+                if register_result.is_failure:
+                    return r[int].fail(
+                        f"Bulk registration failed at {name}: {register_result.error}",
+                    )
+                count += 1
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+                return r[int].fail(
+                    f"Bulk registration failed at {name}: {e}",
                 )
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Registration failed for {name}: {e}")
+        return r[int].ok(count)
+
+    @staticmethod
+    def create_settings_config(
+        env_prefix: str,
+        env_file: str | None = None,
+        env_nested_delimiter: str = "__",
+    ) -> Mapping[str, t.Scalar]:
+        """Create a SettingsConfigDict for environment binding.
+
+        Business Rule: Pydantic v2 Environment Binding Configuration
+        ============================================================
+        This method creates a standardized configuration dictionary for
+        Pydantic v2 BaseSettings classes in the FLEXT ecosystem.
+
+        Configuration Options Explained:
+        - env_prefix: Namespace isolation (FLEXT_LDAP_, FLEXT_API_, etc.)
+          Prevents conflicts between different FLEXT libraries
+        - env_file: Path to .env file (use resolve_env_file() for standard resolution)
+        - env_nested_delimiter: "__" enables FLEXT_DB__HOST → config.db.host mapping
+        - case_sensitive: False (ENV_VAR, env_var, Env_Var all work)
+        - extra: "ignore" (unknown env vars don't cause ValidationError)
+        - validate_default: True (validates default values at class definition)
+
+        FLEXT Ecosystem Convention:
+        - All FLEXT libraries use env_prefix pattern: "FLEXT_{LIBRARY}_"
+        - Example: FLEXT_LDAP_, FLEXT_API_, FLEXT_CLI_
+        - This ensures namespace isolation and consistent configuration
+
+        Why dict instead of SettingsConfigDict?
+        - Returns dict for flexibility and type compatibility
+        - Caller can cast to SettingsConfigDict if needed
+        - Avoids importing pydantic_settings in this module
+
+        Args:
+            env_prefix: Environment variable prefix (e.g., "FLEXT_LDAP_")
+            env_file: Optional path to .env file
+            env_nested_delimiter: Delimiter for nested configs (default: "__")
+
+        Returns:
+            dict: Configuration compatible with Pydantic v2 SettingsConfigDict
+
+        """
+        return {
+            "env_prefix": env_prefix,
+            "env_file": env_file,
+            "env_nested_delimiter": env_nested_delimiter,
+            "case_sensitive": False,
+            "extra": c.ModelConfig.EXTRA_IGNORE,
+            "validate_default": True,
+        }
+
+    @staticmethod
+    def get_parameter(
+        obj: p.HasModelDump | t.ConfigurationMapping,
+        parameter: str,
+    ) -> t.Container:
+        """Get parameter value from a configuration object.
+
+        Business Rule: Parameter Access Precedence Chain
+        ================================================
+        This method implements a deterministic precedence chain for parameter
+        retrieval that handles diverse object types consistently:
+
+        1. HasModelDump protocol → model_dump() dict access
+           - Highest priority for Pydantic models
+           - Ensures computed fields and validation are included
+
+        2. Dict-like objects → direct key access
+           - For Mapping implementations (dict, MappingProxyType)
+           - Efficient O(1) key lookup
+
+        3. Objects with model_dump method → duck-typed call
+           - Compatibility for third-party Pydantic-like objects
+           - Fallback when protocol check fails
+
+        4. Direct attribute access → final fallback
+           - Plain Python objects with attributes
+           - Uses hasattr/getattr pattern
+
+        Fail-Fast vs Graceful Handling:
+        - This method uses FAIL-FAST semantics (raises NotFoundError)
+        - Rationale: Missing configuration is a programming error
+        - Callers should ensure parameters exist or catch the exception
+
+        None Value Handling:
+        - None is a VALID configuration value and is returned correctly
+        - Only raises when parameter doesn't exist at all
+        - Sentinel tuple pattern in helpers distinguishes "None value" from "not found"
+
+        Args:
+            obj: Configuration object (HasModelDump, dict-like, or with attributes)
+            parameter: Parameter name to retrieve
+
+        Returns:
+            The parameter value (can be None if that's the stored value)
+
+        Raises:
+            e.NotFoundError: If parameter is not defined
+
+        """
+        # Strategy 1: HasModelDump protocol
+        if isinstance(obj, p.HasModelDump):
+            found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
+                obj,
+                parameter,
+            )
+            if found:
+                return value
+
+        # Strategy 2: Dict-like (Mapping / m.ConfigMap)
+        if isinstance(obj, Mapping):
+            found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
+                obj,
+                parameter,
+            )
+            if found:
+                return value
+
+        found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            obj,
+            parameter,
+        )
+        if found:
+            return duck_value
+
+        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
+        if found:
+            return attr_val
+
+        class_name = obj.__class__.__name__
+        msg = f"Parameter '{parameter}' is not defined in {class_name}"
+        raise e.NotFoundError(msg)
+
+    @staticmethod
+    def get_singleton(
+        singleton_class: type,
+        parameter: str,
+    ) -> t.Container:
+        """Get parameter from a singleton configuration instance.
+
+        Business Rule: Singleton Configuration Access (FLEXT Pattern)
+        ============================================================
+        The FLEXT ecosystem uses a singleton pattern for global configuration
+        via `get_global()` class method. This enables:
+
+        - Consistent configuration across all services
+        - Lazy initialization (instance created on first access)
+        - Thread-safe singleton access (handled by FlextSettings implementation)
+
+        Expected Interface:
+        - singleton_class.get_global() → Returns singleton instance
+        - Instance must implement HasModelDump protocol
+        - Parameters accessed via get_parameter (precedence chain applies)
+
+        Fail-Fast Semantics:
+        - Raises ValidationError if class lacks get_global
+        - Raises NotFoundError if parameter not found (from get_parameter)
+        - This is intentional: missing config is a programming error
+
+        Type Safety:
+        - Type narrowing ensures HasModelDump protocol before access
+        - Explicit local variable for type checker compatibility
+
+        Args:
+            singleton_class: The singleton class (e.g., FlextSettings)
+            parameter: The parameter name to retrieve
+
+        Returns:
+            The parameter value
+
+        Raises:
+            e.ValidationError: If class doesn't have get_global
+            e.NotFoundError: If parameter is not defined
+
+        """
+        # Use getattr to help pyright infer types correctly
+        if hasattr(singleton_class, "get_global"):
+            get_global_attr = getattr(
+                singleton_class,
+                "get_global",
+                None,
+            )
+            if get_global_attr is not None and callable(
+                get_global_attr,
+            ):
+                # callable() check ensures this is callable - call directly
+                instance = get_global_attr()
+                found, value = (
+                    FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+                        instance,
+                        parameter,
+                    )
+                )
+                if found:
+                    return value
+                found, value = FlextUtilitiesConfiguration._try_get_attr(
+                    instance,
+                    parameter,
+                )
+                if found:
+                    return value
+                msg = f"Parameter '{parameter}' is not defined"
+                raise e.NotFoundError(msg)
+
+        msg = f"Class {singleton_class.__name__} does not have get_global method"
+
+        raise e.ValidationError(msg)
 
     @staticmethod
     def register_factory(
@@ -929,34 +742,221 @@ class FlextUtilitiesConfiguration:
             )
 
     @staticmethod
-    def bulk_register(
+    def register_singleton(
         container: p.DI,
-        registrations: Mapping[str, t.Scalar | m.ConfigMap | m.Dict],
-    ) -> r[int]:
-        """Register multiple services at once.
+        name: str,
+        instance: t.Scalar | m.ConfigMap | m.Dict,
+    ) -> r[bool]:
+        """Register singleton with standard error handling.
 
         Args:
             container: Container to register in (must implement DI protocol).
-            registrations: Mapping of name to service instance or factory.
+            name: Service name.
+            instance: Service instance to register.
 
         Returns:
-            r[int]: Success with count of registered services, or failure.
+            r[bool]: Success(true) if registration succeeds, failure otherwise.
 
         """
-        count = 0
-        for name, value in registrations.items():
-            try:
-                register_result = container.register(name, value)
-                if register_result.is_failure:
-                    return r[int].fail(
-                        f"Bulk registration failed at {name}: {register_result.error}",
-                    )
-                count += 1
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                return r[int].fail(
-                    f"Bulk registration failed at {name}: {e}",
+        try:
+            register_result = container.register(name, instance)
+            if register_result.is_failure:
+                return r[bool].fail(
+                    register_result.error or "Registration failed",
                 )
-        return r[int].ok(count)
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+            return r[bool].fail(f"Registration failed for {name}: {e}")
+
+    @staticmethod
+    def set_parameter(
+        obj: p.HasModelDump | object,
+        parameter: str,
+        value: t.Scalar | m.ConfigMap,
+    ) -> bool:
+        """Set parameter value on a configuration object with validation.
+
+        Business Rule: Graceful Write with Pydantic Validation
+        =====================================================
+        This method uses GRACEFUL semantics (returns bool) unlike get_parameter
+        which uses fail-fast. Rationale:
+
+        - Write failures are often recoverable (use default, retry, etc.)
+        - Pydantic validation errors should not crash the application
+        - Callers can check return value and handle appropriately
+
+        Pydantic v2.11+ Compatibility:
+        - model_fields is a CLASS attribute, not instance attribute
+        - Uses getattr(obj.__class__, "model_fields", {}) for correct access
+        - This avoids deprecation warnings in newer Pydantic versions
+
+        Validation Flow:
+        1. Check if object implements HasModelFields protocol
+        2. Verify parameter exists in model_fields (prevents adding new fields)
+        3. Use setattr which triggers Pydantic's validate_assignment
+        4. Pydantic validates the value against field type
+
+        Error Handling:
+        - AttributeError: Object doesn't support attribute assignment
+        - TypeError: Value type incompatible with field type
+        - ValueError: Pydantic validation failure
+        - RuntimeError: Model frozen/immutable
+        - KeyError: Field not found (shouldn't happen after model_fields check)
+
+        Args:
+            obj: The configuration object (Pydantic BaseSettings instance)
+            parameter: The parameter name to set
+            value: The new value to set (will be validated by Pydantic)
+
+        Returns:
+            True if successful, False if validation failed or parameter doesn't exist
+
+        """
+        try:
+            # Check if parameter exists in model fields for Pydantic objects
+            # Access model_fields from class directly (Pydantic 2.11+ compatibility)
+            obj_class = obj.__class__
+            if hasattr(obj_class, "model_fields"):
+                model_fields_dict = getattr(obj_class, "model_fields", {})
+                if not FlextRuntime.is_dict_like(model_fields_dict):
+                    return False
+                if parameter not in model_fields_dict:
+                    return False
+
+            # Use setattr which triggers Pydantic validation if applicable
+            setattr(obj, parameter, value)
+            return True
+
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            # Validation error or attribute error returns False
+            return False
+
+    @staticmethod
+    def set_singleton(
+        singleton_class: type,
+        parameter: str,
+        value: t.Scalar | m.ConfigMap,
+    ) -> FlextRuntime.RuntimeResult[bool]:
+        """Set parameter on a singleton configuration instance with validation.
+
+        Business Rule: Railway-Oriented Singleton Mutation
+        =================================================
+        Unlike get_singleton (fail-fast), this method uses FlextResult for
+        graceful error handling. Rationale:
+
+        - Configuration mutation is often optional (fallback to defaults)
+        - Runtime errors shouldn't crash the application
+        - Callers can decide how to handle failures
+
+        Validation Chain:
+        1. Check get_global method exists (FlextResult.fail if not)
+        2. Check method is callable (FlextResult.fail if not)
+        3. Check instance implements HasModelDump (FlextResult.fail if not)
+        4. Delegate to set_parameter for actual mutation
+        5. set_parameter returns bool, converted to FlextResult
+
+        Thread Safety:
+        - Singleton access is thread-safe (FlextSettings guarantees this)
+        - Individual parameter mutation is NOT atomic
+        - External synchronization needed for concurrent writes
+
+        Args:
+            singleton_class: The singleton class (e.g., FlextSettings)
+            parameter: The parameter name to set
+            value: The new value to set (will be validated by Pydantic)
+
+        Returns:
+            r[bool] - ok(True) on success, fail(error_msg) on failure
+
+        """
+        if not hasattr(singleton_class, "get_global"):
+            return r[bool].fail(
+                f"Class {singleton_class.__name__} does not have get_global method",
+            )
+
+        # Use getattr to help pyright infer types correctly
+        get_global_attr = getattr(
+            singleton_class,
+            "get_global",
+            None,
+        )
+        if get_global_attr is None or not callable(get_global_attr):
+            return r[bool].fail(
+                f"get_global is not callable on {singleton_class.__name__}",
+            )
+
+        # callable() check above ensures this is callable - call directly
+        instance = get_global_attr()
+        model_dump_attr = getattr(instance, "model_dump", None)
+        if model_dump_attr is None or not callable(model_dump_attr):
+            return r[bool].fail(
+                "Instance does not implement model_dump() method",
+            )
+
+        success = FlextUtilitiesConfiguration.set_parameter(
+            instance,
+            parameter,
+            value,
+        )
+        if success:
+            return r[bool].ok(value=True)
+        return r[bool].fail(
+            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}",
+        )
+
+    @staticmethod
+    def validate_config_class(config_class: type) -> tuple[bool, str | None]:
+        """Validate that a configuration class is properly configured.
+
+        Business Rule: Pydantic v2 Configuration Class Validation
+        =========================================================
+        This method validates that a class follows FLEXT ecosystem patterns
+        for Pydantic v2 BaseSettings configuration classes.
+
+        Required Attributes:
+        - model_config: Dict or SettingsConfigDict with env binding configuration
+          This is MANDATORY for all FLEXT configuration classes
+
+        Validation Steps:
+        1. Type check implicit (config_class: type in signature)
+        2. Check model_config attribute exists
+        3. Attempt instantiation to verify default values work
+
+        Why Instantiation Test?
+        - Catches missing required fields
+        - Catches invalid default values
+        - Catches Pydantic validation errors early
+        - Prevents runtime failures in production
+
+        Return Pattern:
+        - Returns tuple (bool, str | None) instead of FlextResult
+        - This is intentional for simple yes/no validation
+        - Error message provides context for debugging
+
+        Args:
+            config_class: Configuration class to validate (Pydantic BaseSettings)
+
+        Returns:
+            tuple[bool, str | None]: (is_valid, error_message)
+                - (True, None) if valid
+                - (False, error_message) if invalid
+
+        """
+        try:
+            # config_class annotation already guarantees class input
+
+            # Check model_config existence
+            class_name = getattr(config_class, "__name__", "UnknownClass")
+            if not hasattr(config_class, "model_config"):
+                return (False, f"{class_name} must define model_config")
+
+            # Try to instantiate to ensure it's valid
+            _ = config_class()
+
+            return (True, None)
+
+        except (TypeError, ValueError, AttributeError) as e:
+            return (False, f"Configuration class validation failed: {e!s}")
 
 
 __all__ = [

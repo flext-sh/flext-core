@@ -56,23 +56,6 @@ class FlextModelsEntity:
             description="List of uncommitted domain events for event sourcing",
         )
 
-        @computed_field
-        @property
-        def entity_id(self) -> str:
-            """Entity identifier property - alias for unique_id."""
-            return self.unique_id
-
-        @property
-        def logger(self) -> p.Log.StructlogLogger:
-            """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-            return FlextRuntime.get_logger(__name__)
-
-        @override
-        def model_post_init(self, __context: t.Container, /) -> None:
-            """Post-initialization hook to set updated_at timestamp."""
-            if self.updated_at is None:
-                self.updated_at = FlextRuntime.generate_datetime_utc()
-
         @override
         def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
@@ -86,15 +69,20 @@ class FlextModelsEntity:
 
         @computed_field
         @property
+        def entity_id(self) -> str:
+            """Entity identifier property - alias for unique_id."""
+            return self.unique_id
+
+        @property
+        def logger(self) -> p.Log.StructlogLogger:
+            """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
+            return FlextRuntime.get_logger(__name__)
+
+        @computed_field
+        @property
         def uncommitted_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
             """Get uncommitted domain events without clearing them."""
             return list(self.domain_events)
-
-        def clear_domain_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
-            """Clear and return domain events."""
-            events = list(self.domain_events)
-            self.domain_events.clear()
-            return events
 
         def add_domain_event(
             self: Self,
@@ -195,6 +183,12 @@ class FlextModelsEntity:
 
             return r[list[FlextModelsDomainEvent.Entry]].ok(created_events)
 
+        def clear_domain_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
+            """Clear and return domain events."""
+            events = list(self.domain_events)
+            self.domain_events.clear()
+            return events
+
         def mark_events_as_committed(
             self: Self,
         ) -> r[list[FlextModelsDomainEvent.Entry]]:
@@ -207,6 +201,12 @@ class FlextModelsEntity:
             events = list(self.domain_events)
             self.domain_events.clear()
             return r[list[FlextModelsDomainEvent.Entry]].ok(events)
+
+        @override
+        def model_post_init(self, __context: t.Container, /) -> None:
+            """Post-initialization hook to set updated_at timestamp."""
+            if self.updated_at is None:
+                self.updated_at = FlextRuntime.generate_datetime_utc()
 
     class Value(FlextModelFoundation.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""

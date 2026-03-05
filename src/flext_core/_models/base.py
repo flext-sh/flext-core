@@ -61,11 +61,11 @@ class FlextModelFoundation:
         _config_adapter: ClassVar[TypeAdapter[dict[str, t.Container]] | None] = None
 
         @classmethod
-        def tags_adapter(cls) -> TypeAdapter[list[str]]:
-            """Lazy-load tags TypeAdapter on first access."""
-            if cls._tags_adapter is None:
-                cls._tags_adapter = TypeAdapter(list[str])
-            return cls._tags_adapter
+        def config_adapter(cls) -> TypeAdapter[dict[str, t.Container]]:
+            """Lazy-load config TypeAdapter on first access."""
+            if cls._config_adapter is None:
+                cls._config_adapter = TypeAdapter(dict[str, t.Container])
+            return cls._config_adapter
 
         @classmethod
         def list_adapter(cls) -> TypeAdapter[list[t.Container]]:
@@ -73,17 +73,6 @@ class FlextModelFoundation:
             if cls._list_adapter is None:
                 cls._list_adapter = TypeAdapter(list[t.Container])
             return cls._list_adapter
-
-        @classmethod
-        def strict_string_adapter(
-            cls,
-        ) -> TypeAdapter[Annotated[str, Field(strict=True)]]:
-            """Lazy-load strict string TypeAdapter on first access."""
-            if cls._strict_string_adapter is None:
-                cls._strict_string_adapter = TypeAdapter(
-                    Annotated[str, Field(strict=True)],
-                )
-            return cls._strict_string_adapter
 
         @classmethod
         def metadata_map_adapter(
@@ -97,21 +86,27 @@ class FlextModelFoundation:
             return cls._metadata_map_adapter
 
         @classmethod
-        def config_adapter(cls) -> TypeAdapter[dict[str, t.Container]]:
-            """Lazy-load config TypeAdapter on first access."""
-            if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(dict[str, t.Container])
-            return cls._config_adapter
+        def strict_string_adapter(
+            cls,
+        ) -> TypeAdapter[Annotated[str, Field(strict=True)]]:
+            """Lazy-load strict string TypeAdapter on first access."""
+            if cls._strict_string_adapter is None:
+                cls._strict_string_adapter = TypeAdapter(
+                    Annotated[str, Field(strict=True)],
+                )
+            return cls._strict_string_adapter
+
+        @classmethod
+        def tags_adapter(cls) -> TypeAdapter[list[str]]:
+            """Lazy-load tags TypeAdapter on first access."""
+            if cls._tags_adapter is None:
+                cls._tags_adapter = TypeAdapter(list[str])
+            return cls._tags_adapter
 
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:
             """Ensure datetime is UTC timezone."""
             return _ensure_utc_datetime(v)
-
-        @staticmethod
-        def strip_whitespace(v: str) -> str:
-            """Strip leading and trailing whitespace from string."""
-            return v.strip()
 
         @staticmethod
         def normalize_to_list(v: t.Container) -> list[t.Container]:
@@ -120,6 +115,11 @@ class FlextModelFoundation:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
             except ValidationError:
                 return [v]
+
+        @staticmethod
+        def strip_whitespace(v: str) -> str:
+            """Strip leading and trailing whitespace from string."""
+            return v.strip()
 
         @staticmethod
         def validate_config_dict(
