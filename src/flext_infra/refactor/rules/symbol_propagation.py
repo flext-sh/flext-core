@@ -67,6 +67,7 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
         migrations: list[dict[str, object]],
         on_change: Callable[[str], None] | None = None,
     ) -> None:
+        """Initialize transformer state for declarative signature migrations."""
         self._migrations = migrations
         self._on_change = on_change
         self.changes: list[str] = []

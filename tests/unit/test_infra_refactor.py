@@ -1,3 +1,5 @@
+"""Unit tests for flext_infra.refactor rules and engine behavior."""
+
 from __future__ import annotations
 
 from pathlib import Path

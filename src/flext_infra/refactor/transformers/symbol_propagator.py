@@ -22,6 +22,7 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
         import_symbol_renames: dict[str, str],
         on_change: Callable[[str], None] | None = None,
     ) -> None:
+        """Initialize symbol propagation configuration and change collector."""
         self._target_modules = target_modules
         self._module_renames = module_renames
         self._import_symbol_renames = import_symbol_renames
