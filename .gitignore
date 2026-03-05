@@ -27,8 +27,6 @@
 !pyproject.toml
 !poetry.lock
 !Makefile
-!ruff-shared.toml
-!base.mk
 !README.md
 !CLAUDE.md
 !LICENSE
@@ -37,6 +35,7 @@
 !.gitignore
 !.gitattributes
 !.pre-commit-config.yaml
+!sonar-project.properties
 
 # Environment templates (NOT .env - keep secrets out!)
 !.env.example
