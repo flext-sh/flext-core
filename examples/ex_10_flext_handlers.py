@@ -228,15 +228,17 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "pop_context.1",
-            cast(
-                "m.ConfigMap", handler.pop_context().unwrap_or(m.ConfigMap(root={}))
-            ).get("handler_name", "-"),
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
         )
         self.check(
             "pop_context.2",
-            cast(
-                "m.ConfigMap", handler.pop_context().unwrap_or(m.ConfigMap(root={}))
-            ).get("handler_name", "-"),
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
         )
 
     def demo_create_from_callable(self) -> None:

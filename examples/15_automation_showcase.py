@@ -401,7 +401,7 @@ class AutomationService(s[m.ConfigMap]):
         cached = get_cached()
         config_result = get_default() if cached.is_failure else cached
         if config_result.is_success:
-            config = cast("m.ConfigMap", config_result.value)
+            config = config_result.value
             mode = config.get("automation_mode", "unknown")
             batch_size = config.get("batch_size", 0)
             print(f"✅ Config acquired: {mode}")
@@ -428,8 +428,8 @@ class AutomationService(s[m.ConfigMap]):
             "No existing engine",
         )
         engine = create_engine() if fail_result.is_failure else fail_result.value
-        engine_id = str(cast("m.ConfigMap", engine).get("engine_id", "unknown"))
-        worker_count_val = cast("m.ConfigMap", engine).get("worker_count", 0)
+        engine_id = str(engine.get("engine_id", "unknown"))
+        worker_count_val = engine.get("worker_count", 0)
         if isinstance(worker_count_val, int):
             worker_count = worker_count_val
         elif isinstance(worker_count_val, float) or (
@@ -551,7 +551,7 @@ class AutomationService(s[m.ConfigMap]):
             "No cached config",
         )
         config = load_config() if fail_attempt.is_failure else fail_attempt.value
-        config_count = len(cast("m.ConfigMap", config).root)
+        config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
 
         _ = load_config()

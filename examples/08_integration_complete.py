@@ -168,7 +168,7 @@ class IntegrationService(s[m.ConfigMap]):
         print("\n=== FlextLogger Integration ===")
 
         logger = FlextLogger.create_module_logger(__name__)
-        logger.info("Integration demonstration", extra={"component": "logger"})
+        logger.info("Integration demonstration", component="logger")
         print("✅ Structured logging")
 
     @staticmethod

@@ -132,11 +132,9 @@ class UserService:
 
             self.logger.info(  # Using mixin logger
                 "Creating user",
-                extra={
-                    "correlation_id": correlation_id,
-                    "operation_count": self.operation_count,
-                    "user_data_keys": tuple(user_data.keys()),
-                },
+                correlation_id=correlation_id,
+                operation_count=self.operation_count,
+                user_data_keys=str(tuple(user_data.keys())),
             )
 
             # Railway pattern with advanced functional composition (DRY)
@@ -196,11 +194,9 @@ class UserService:
         def log_result(user: UserProfile) -> UserProfile:
             self.logger.info(
                 "User created successfully",
-                extra={
-                    "user_id": user.unique_id,
-                    "correlation_id": correlation_id,
-                    "user_status": user.status.value,
-                },
+                user_id=user.unique_id,
+                correlation_id=correlation_id,
+                user_status=user.status.value,
             )
             return user
 
@@ -377,7 +373,7 @@ def main() -> None:
 
     with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        logger.info("Starting demonstration", extra={"correlation_id": correlation_id})
+        logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
         user_data: m.ConfigMap = m.ConfigMap(

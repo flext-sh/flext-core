@@ -390,17 +390,15 @@ def main() -> None:
 
         logger.info(
             "Context demonstration completed",
-            extra={
-                "patterns": patterns_count,
-                "features": features_count,
-            },
+            patterns=patterns_count,
+            features=features_count,
         )
         print(f"\n✅ Demonstrated {patterns_count} context patterns")
         print(f"✅ Used {features_count} context features")
 
     def handle_error(error: str) -> r[None]:
         """Handle error result."""
-        logger.error("Context demonstration failed", extra={"error": error})
+        logger.error("Context demonstration failed", error=error)
         print(f"\n❌ Failed: {error}")
         return r[None].ok(None)
 

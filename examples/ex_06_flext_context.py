@@ -169,7 +169,7 @@ def demo_core_context_methods() -> None:
     if payload is not None:
         set_all_ok = ctx.set(payload).is_success
     _check("set_all.success", set_all_ok)
-    _check("get.k1", cast("t.Container", ctx.get("k1").unwrap_or("missing")))
+    _check("get.k1", ctx.get("k1").unwrap_or("missing"))
     _check("has.k2", ctx.has("k2"))
     ctx.remove("k2")
     _check("remove.k2", ctx.has("k2"))
@@ -179,17 +179,17 @@ def demo_core_context_methods() -> None:
     _check("items.count", len(ctx.items()))
 
     merged = ctx.clone().merge({"k4": "merged"})
-    _check("merge.get", cast("t.Container", merged.get("k4").unwrap_or("missing")))
+    _check("merge.get", merged.get("k4").unwrap_or("missing"))
 
     cloned = ctx.clone()
-    _check("clone.get", cast("t.Container", cloned.get("k1").unwrap_or("missing")))
+    _check("clone.get", cloned.get("k1").unwrap_or("missing"))
 
     _check("validate.success", ctx.validate().is_success)
 
     ctx.set_metadata("meta_key", "meta_value")
     _check(
         "get_metadata",
-        cast("t.Container", ctx.get_metadata("meta_key").unwrap_or("missing")),
+        ctx.get_metadata("meta_key").unwrap_or("missing"),
     )
 
     exported_min = ctx.export(as_dict=True)
