@@ -60,7 +60,7 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         if not self.changes or self._has_mapping_import:
             return updated_node
 
-        import_stmt = cst.SimpleStatementLine(
+        import_line: cst.SimpleStatementLine = cst.SimpleStatementLine(
             body=[
                 cst.ImportFrom(
                     module=cst.Attribute(
@@ -84,7 +84,19 @@ class _DictToMappingTransformer(cst.CSTTransformer):
                 insert_at = 1
                 if len(body) > 1 and isinstance(body[1], cst.EmptyLine):
                     insert_at = 2
-        body.insert(insert_at, import_stmt)
+
+        while insert_at < len(body):
+            stmt = body[insert_at]
+            if not isinstance(stmt, cst.SimpleStatementLine):
+                break
+            if not stmt.body or not isinstance(stmt.body[0], cst.ImportFrom):
+                break
+            future_import = stmt.body[0]
+            module = future_import.module
+            if not isinstance(module, cst.Name) or module.value != "__future__":
+                break
+            insert_at += 1
+        body.insert(insert_at, import_line)
         return updated_node.with_changes(body=body)
 
 
