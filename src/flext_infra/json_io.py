@@ -105,4 +105,54 @@ class FlextInfraJsonService(FlextService[bool]):
         return r[bool].ok(True)
 
 
-__all__ = ["FlextInfraJsonService"]
+# Module-level convenience functions for direct usage without instantiation
+
+
+def read_json(path: Path) -> FlextResult[Mapping[str, t.Container]]:
+    """Read and parse a JSON file (convenience function).
+
+    Args:
+        path: Source file path.
+
+    Returns:
+        FlextResult with parsed JSON data. Returns empty mapping
+        if the file does not exist.
+
+    Example:
+        >>> result = read_json(Path("config.json"))
+        >>> if result.is_success:
+        ...     data = result.value
+    """
+    return FlextInfraJsonService().read(path)
+
+
+def write_json(
+    path: Path,
+    payload: BaseModel | t.ConfigurationMapping,
+    *,
+    sort_keys: bool = False,
+    ensure_ascii: bool = False,
+) -> FlextResult[bool]:
+    """Write a JSON payload to a file (convenience function).
+
+    Creates parent directories as needed.
+
+    Args:
+        path: Destination file path.
+        payload: Data to serialize as JSON.
+        sort_keys: If True, sort dictionary keys alphabetically.
+        ensure_ascii: If True, escape non-ASCII characters.
+
+    Returns:
+        FlextResult[bool] with True on success.
+
+    Example:
+        >>> result = write_json(Path("output.json"), {"key": "value"})
+        >>> assert result.is_success
+    """
+    return FlextInfraJsonService().write(
+        path, payload, sort_keys=sort_keys, ensure_ascii=ensure_ascii
+    )
+
+
+__all__ = ["FlextInfraJsonService", "read_json", "write_json"]
