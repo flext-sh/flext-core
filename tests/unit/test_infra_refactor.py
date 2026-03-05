@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import libcst as cst
 
@@ -794,3 +795,64 @@ def test_build_impact_map_extracts_signature_entries() -> None:
     kinds = {entry["kind"] for entry in impact_map}
     assert "signature_remove" in kinds
     assert "signature_add" in kinds
+
+
+def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: ensure-future-annotations
+    enabled: true
+    fix_action: ensure_future_annotations
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8"
+    )
+
+    project_root = tmp_path / "project"
+    src_dir = project_root / "src"
+    src_dir.mkdir(parents=True)
+    target_file = src_dir / "sample.py"
+    target_file.write_text(
+        "from typing import Mapping, cast\n"
+        "from flext_core.models import User\n"
+        "\n"
+        "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n"
+        '    value = cast("m.ConfigMap", data)\n'
+        "    return value\n",
+        encoding="utf-8",
+    )
+
+    engine = FlextInfraRefactorEngine(config_path=config_path)
+    _ = engine.load_config()
+    files = engine.collect_project_files(project_root)
+    from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
+
+    result = FlextInfraRefactorViolationAnalyzer.analyze_files(files)
+
+    totals_obj = result.get("totals", {})
+    assert isinstance(totals_obj, dict)
+    totals: dict[str, int] = {}
+    typed_totals_obj = cast(dict[object, object], totals_obj)
+    for raw_key in typed_totals_obj:
+        raw_value = typed_totals_obj[raw_key]
+        if not isinstance(raw_key, str):
+            continue
+        if isinstance(raw_value, int):
+            totals[raw_key] = raw_value
+            continue
+        if isinstance(raw_value, str) and raw_value.isdigit():
+            totals[raw_key] = int(raw_value)
+    assert "container_invariance" in totals
+    assert "redundant_cast" in totals
+    assert "direct_submodule_import" in totals
+    assert totals["container_invariance"] >= 2
+    assert totals["redundant_cast"] >= 1
+    assert totals["direct_submodule_import"] >= 1

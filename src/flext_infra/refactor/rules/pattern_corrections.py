@@ -28,16 +28,17 @@ class _DictToMappingTransformer(cst.CSTTransformer):
             self._has_mapping_import = True
             return
         for alias in names:
-            if isinstance(alias, cst.ImportAlias) and isinstance(alias.name, cst.Name):
+            if isinstance(alias.name, cst.Name):
                 if alias.name.value == "Mapping":
                     self._has_mapping_import = True
 
     @override
     def leave_Annotation(
         self,
-        _original_node: cst.Annotation,
+        original_node: cst.Annotation,
         updated_node: cst.Annotation,
     ) -> cst.Annotation:
+        del original_node
         annotation = updated_node.annotation
         if not isinstance(annotation, cst.Subscript):
             return updated_node
@@ -53,9 +54,10 @@ class _DictToMappingTransformer(cst.CSTTransformer):
     @override
     def leave_Module(
         self,
-        _original_node: cst.Module,
+        original_node: cst.Module,
         updated_node: cst.Module,
     ) -> cst.Module:
+        del original_node
         if not self.changes or self._has_mapping_import:
             return updated_node
 
@@ -91,9 +93,10 @@ class _RedundantCastRemover(cst.CSTTransformer):
     @override
     def leave_Call(
         self,
-        _original_node: cst.Call,
+        original_node: cst.Call,
         updated_node: cst.Call,
     ) -> cst.BaseExpression:
+        del original_node
         func = updated_node.func
         if not isinstance(func, cst.Name) or func.value != "cast":
             return updated_node

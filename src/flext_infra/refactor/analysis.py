@@ -49,23 +49,24 @@ class FlextInfraRefactorViolationAnalyzer:
             if file_counts:
                 per_file[str(file_path)] = file_counts
 
-        hottest_files = sorted(
-            (
-                {
-                    "file": file_name,
-                    "total": sum(counts.values()),
-                    "counts": counts,
-                }
-                for file_name, counts in per_file.items()
-            ),
-            key=lambda item: int(item["total"]),
-            reverse=True,
-        )
+        ranked_files: list[tuple[str, int, dict[str, int]]] = []
+        for file_name, counts in per_file.items():
+            ranked_files.append((file_name, sum(counts.values()), counts))
+        ranked_files.sort(key=lambda item: item[1], reverse=True)
+
+        hottest_files = [
+            {
+                "file": file_name,
+                "total": total,
+                "counts": counts,
+            }
+            for file_name, total, counts in ranked_files[:25]
+        ]
 
         return {
             "totals": dict(totals),
             "files": per_file,
-            "top_files": hottest_files[:25],
+            "top_files": hottest_files,
             "files_scanned": len(files),
         }
 

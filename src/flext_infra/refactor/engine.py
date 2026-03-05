@@ -379,30 +379,45 @@ class FlextInfraRefactorEngine:
     @staticmethod
     def print_violation_summary(analysis: dict[str, object]) -> None:
         """Print aggregate violation counts and hottest files."""
+
+        def _to_int(value: object) -> int:
+            if isinstance(value, int):
+                return value
+            if isinstance(value, str) and value.isdigit():
+                return int(value)
+            return 0
+
         output.header("Violation Analysis")
         totals_obj = analysis.get("totals", {})
         top_files_obj = analysis.get("top_files", [])
-        files_scanned = int(analysis.get("files_scanned", 0))
+        files_scanned = _to_int(analysis.get("files_scanned", 0))
 
         output.info(f"Files scanned: {files_scanned}")
         if not isinstance(totals_obj, dict) or not totals_obj:
             output.info("No tracked violations found.")
             return
 
+        typed_totals = cast("dict[object, object]", totals_obj)
+        totals_ranked: list[tuple[str, int]] = []
+        for raw_name, raw_count in typed_totals.items():
+            if not isinstance(raw_name, str):
+                continue
+            totals_ranked.append((raw_name, _to_int(raw_count)))
+        totals_ranked.sort(key=lambda item: item[1], reverse=True)
+
         output.info("Top pattern counts:")
-        for name, count in sorted(
-            totals_obj.items(), key=lambda item: int(item[1]), reverse=True
-        ):
+        for name, count in totals_ranked:
             output.info(f"  - {name}: {count}")
 
         if not isinstance(top_files_obj, list) or not top_files_obj:
             return
         output.info("Hottest files:")
-        for entry in top_files_obj[:10]:
+        for entry in cast("list[object]", top_files_obj)[:10]:
             if not isinstance(entry, dict):
                 continue
-            file_name = str(entry.get("file", ""))
-            total_count = int(entry.get("total", 0))
+            typed_entry = cast("dict[object, object]", entry)
+            file_name = str(typed_entry.get("file", ""))
+            total_count = _to_int(typed_entry.get("total", 0))
             output.info(f"  - {file_name}: {total_count}")
 
     @staticmethod
