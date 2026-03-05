@@ -56,5 +56,6 @@ rules:
     severity: error
     pattern: 'def\s+\w+\([^)]*\):[^}]*(?:^|\n)\s+(?:import|from)\s+'
     flags: [multiline]
-    auto_fix: false
-    message: "Lazy imports are forbidden. Move imports to top of file."
+    auto_fix: true
+    fix_action: hoist_to_module_top
+    message: "Lazy imports are forbidden. Automatically hoisted to module top when safe."

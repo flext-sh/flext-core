@@ -9,6 +9,7 @@ rules:
     enabled: true
     severity: error
     auto_fix: true
+    fix_action: ensure_future_annotations
     check: missing_future_import
 
   - id: reorder-class-methods
@@ -17,6 +18,7 @@ rules:
     enabled: true
     severity: warning
     auto_fix: true
+    fix_action: reorder_methods
     
     # Ordem hierárquica dos métodos (de cima para baixo)
     method_order:
@@ -126,5 +128,6 @@ rules:
     enabled: true
     severity: error
     auto_fix: true
+    fix_action: remove_inheritance_keep_class
     pattern: 'class.*\\(.*Constants.*\\)'
     action: remove_inheritance_keep_class

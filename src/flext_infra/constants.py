@@ -24,6 +24,7 @@ from flext_infra.core._constants import FlextInfraCoreConstants
 from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.docs._constants import FlextInfraDocsConstants
 from flext_infra.github._constants import FlextInfraGithubConstants
+from flext_infra.refactor.constants import FlextInfraRefactorConstants
 from flext_infra.release._constants import FlextInfraReleaseConstants
 from flext_infra.workspace._constants import FlextInfraWorkspaceConstants
 
@@ -198,6 +199,9 @@ class FlextInfraConstants(FlextConstants):
 
         class Reporting(FlextInfraReportingConstants):
             """Reporting module constants via MRO."""
+
+        class Refactor(FlextInfraRefactorConstants):
+            """Refactor module constants via MRO."""
 
 
 c = FlextInfraConstants

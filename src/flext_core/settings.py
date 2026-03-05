@@ -483,10 +483,28 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         cls._namespace_registry[namespace] = config_class
         return None
 
+    @staticmethod
+    def auto_register(
+        namespace: str,
+    ) -> Callable[[type[T_Settings]], type[T_Settings]]:
+        def decorator(cls: type[T_Settings]) -> type[T_Settings]:
+            FlextSettings._namespace_registry[namespace] = cls
+            return cls
+
+        return decorator
+
     @classmethod
     def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
         """Backward-compatible namespace registry lookup."""
         return cls._namespace_registry.get(namespace)
+
+    @classmethod
+    def get_global_instance(cls) -> Self:
+        return cls.get_global()
+
+    @classmethod
+    def get_instance(cls) -> Self:
+        return cls.get_global()
 
     def get_namespace(
         self,
@@ -528,8 +546,28 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         config_class: type[T_Namespace] = config_class_raw
         return config_class()
 
-    # __getattr__ removed - use get_namespace() method explicitly
-    # Example: config.get_namespace("ldif", FlextLdifSettings) instead of config.ldif
+    def __getattr__(self, name: str) -> BaseSettings:
+        namespace = name.lower()
+        if namespace in {"core", "root", "settings"}:
+            return FlextSettings.get_instance()
+        namespace_key = namespace
+        config_class = self._namespace_registry.get(namespace_key)
+        if config_class is None:
+            normalized = "".join(ch for ch in namespace if ch.isalnum())
+            if normalized:
+                for key, value in self._namespace_registry.items():
+                    key_normalized = "".join(ch for ch in key.lower() if ch.isalnum())
+                    if normalized == key_normalized or normalized.startswith(
+                        key_normalized
+                    ):
+                        namespace_key = key
+                        config_class = value
+                        break
+        if config_class is None:
+            msg = f"Namespace '{name}' not registered"
+            raise AttributeError(msg)
+        result = self.get_namespace(namespace_key, config_class)
+        return result
 
     @classmethod
     def for_context(
@@ -595,6 +633,10 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         """Reset the global singleton instance for testing."""
         cls._instances.clear()
         cls._context_overrides.clear()
+
+    @classmethod
+    def reset_global_instance(cls) -> None:
+        cls.reset_for_testing()
 
 
 __all__ = ["FlextSettings"]

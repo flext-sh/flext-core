@@ -493,7 +493,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata_value(
-        val: t.Container | t.MetadataValue,
+        val: t.ContainerValue | t.MetadataValue,
     ) -> t.MetadataValue:
         """Normalize any value to t.MetadataAttributeValue.
 

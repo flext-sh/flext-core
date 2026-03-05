@@ -365,6 +365,14 @@ class FlextService[TDomainResult](
         return u.require_initialized(self._config, "Config")
 
     @property
+    def settings(self) -> FlextSettings:
+        config = self.config
+        if isinstance(config, FlextSettings):
+            return config
+        msg = "Service config is not FlextSettings"
+        raise TypeError(msg)
+
+    @property
     @override
     def container(self) -> p.DI:
         """Container bound to the service context/config."""
