@@ -13,7 +13,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import Self, TypeIs, cast, overload, override
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
@@ -234,6 +234,41 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return IOSuccess(self.value)
         return IOFailure(self.error or "")
 
+    @staticmethod
+    def _model_error_message(error: BaseException) -> str:
+        if isinstance(error, ValidationError):
+            return str(error.errors())
+        errors_fn = getattr(error, "errors", None)
+        if callable(errors_fn):
+            return str(errors_fn())
+        return str(error)
+
+    @classmethod
+    def _validate_model[UModel: BaseModel](
+        cls,
+        data: object,
+        model: type[UModel],
+        *,
+        failure_prefix: str,
+    ) -> FlextResult[UModel]:
+        try:
+            return cls.ok(model.model_validate(data))
+        except (
+            ValidationError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+        ) as e:
+            logging.getLogger(__name__).debug(
+                f"{failure_prefix} during model validation",
+                exc_info=e,
+            )
+            return FlextResult[UModel].fail(
+                f"{failure_prefix}: {cls._model_error_message(e)}",
+                exception=e,
+            )
+
     @classmethod
     def from_io_result[U](
         cls,
@@ -391,24 +426,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 validation errors.
 
         """
-        # Use model directly - validated result is guaranteed to be T_Model
-        # since model_validate returns an instance of the model class
-        # Note: T_Model is bound to BaseModel, so no runtime check needed
-        try:
-            validated = model.model_validate(data)
-            return cls.ok(validated)
-        except (ValueError, TypeError, AttributeError, RuntimeError) as e:
-            logging.getLogger(__name__).debug("Model validation failed", exc_info=e)
-            errors_fn = getattr(e, "errors", None)
-            if callable(errors_fn):
-                raw = errors_fn()
-                error_msg = str(raw)
-            else:
-                error_msg = str(e)
-            return FlextResult[T_Model].fail(
-                f"Validation failed: {error_msg}",
-                exception=e,
-            )
+        return cls._validate_model(
+            data,
+            model,
+            failure_prefix="Validation failed",
+        )
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.
@@ -427,12 +449,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_failure:
             return cast("FlextResult[U]", FlextResult._fail_like(self))
-        try:
-            converted = model.model_validate(self.value)
-            return FlextResult.ok(converted)
-        except (ValueError, TypeError, AttributeError, RuntimeError) as e:
-            self.logger.debug("Model conversion failed", exc_info=e)
-            return FlextResult[U].fail(f"Model conversion failed: {e!s}", exception=e)
+        return FlextResult._validate_model(
+            self.value,
+            model,
+            failure_prefix="Model conversion failed",
+        )
 
     # lash is inherited from RuntimeResult
     # But we override to return FlextResult for type consistency

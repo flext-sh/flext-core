@@ -41,7 +41,7 @@ _GROUPS: Mapping[str, str] = MappingProxyType({
     "docs": "flext_infra.docs.__main__",
     "github": "flext_infra.github.__main__",
     "maintenance": "flext_infra.maintenance.__main__",
-    "refactor": "flext_infra.refactor",
+    "refactor": "flext_infra.refactor.__main__",
     "release": "flext_infra.release.__main__",
     "workspace": "flext_infra.workspace.__main__",
 })
