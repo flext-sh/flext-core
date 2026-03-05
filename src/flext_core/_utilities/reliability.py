@@ -365,7 +365,7 @@ class FlextUtilitiesReliability:
             t.Container | Callable[[t.Container], t.Container],
         ],
         default: t.Container | Callable[[t.Container], t.Container] | None = None,
-    ) -> t.Container:
+    ) -> t.Container | None:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:

@@ -536,8 +536,8 @@ class FlextRuntime:
                 if not (callable(keys) and callable(items) and callable(get)):
                     return False
                 try:
-                    keys_values: Sequence[object] = keys()
-                    item_values: Sequence[object] = items()
+                    keys_values: object = keys()
+                    item_values: object = items()
                     tuple_entry_size = 2
                     if not isinstance(keys_values, Sequence):
                         return False
@@ -652,9 +652,9 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: t.Container | t.MetadataValue,
-    ) -> t.Container:
-        """Normalize any value to t.Container recursively.
+        val: t.ContainerValue | t.MetadataValue,
+    ) -> t.ContainerValue:
+        """Normalize any value to t.ContainerValue recursively.
 
         Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.Container], and other types
         to FlextModelsContainers.ConfigMap, Sequence[t.Container], etc.
@@ -664,7 +664,7 @@ class FlextRuntime:
             val: Value to normalize (accepts object for flexibility with generics)
 
         Returns:
-            Normalized value compatible with t.Container
+            Normalized value compatible with t.ContainerValue
 
         Examples:
             >>> FlextRuntime.normalize_to_general_value({"key": "value"})
@@ -682,22 +682,21 @@ class FlextRuntime:
             return str(val)
 
         if isinstance(val, BaseModel):
-            model_dump_result: t.Container = val.model_dump()
-            return FlextRuntime.normalize_to_general_value(model_dump_result)
+            return FlextRuntime.normalize_to_general_value(val.model_dump())
 
         if FlextRuntime.is_dict_like(val):
             dict_v = getattr(val, "root", val)
-            result: dict[str, t.Container] = {}
+            result: dict[str, t.ContainerValue] = {}
             for k, v in dict_v.items():
                 result[str(k)] = FlextRuntime.normalize_to_general_value(v)
-            return result  # type: ignore[return-value]
+            return result
 
         if FlextRuntime.is_list_like(val):
-            list_result: t.Container = [
+            list_result: t.ContainerValue = [
                 FlextRuntime.normalize_to_general_value(item) for item in val
             ]
             return list_result
-        return val  # type: ignore[return-value]
+        return val
 
     @staticmethod
     def normalize_to_metadata_value(
@@ -729,7 +728,7 @@ class FlextRuntime:
             return result_scalar
 
         if isinstance(val, BaseModel):
-            model_dump_result: t.Container = val.model_dump()
+            model_dump_result: t.ContainerValue = val.model_dump()
             return FlextRuntime.normalize_to_metadata_value(model_dump_result)
 
         if FlextRuntime.is_dict_like(val):
@@ -1442,7 +1441,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping | None = None,
+            error_data: t.ConfigurationMapping | BaseModel | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1571,7 +1570,7 @@ class FlextRuntime:
             cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping | None = None,
+            error_data: t.ConfigurationMapping | BaseModel | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 

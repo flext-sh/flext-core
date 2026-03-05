@@ -829,7 +829,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     message: t.Container,
                     captured_callable: Callable[..., object] = callable_func,
                     **kwargs: t.Container,
-                ) -> t.Container:
+                ) -> t.Container | None:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""

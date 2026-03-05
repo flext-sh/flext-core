@@ -36,7 +36,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_data: t.ConfigurationMapping | BaseModel | None = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
@@ -87,6 +87,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self._result
 
     @property
+    @override
     def data(self) -> T_co:
         """Compatibility alias returning successful payload value."""
         return self.value
@@ -187,7 +188,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_data: t.ConfigurationMapping | BaseModel | None = None,
         *,
         exception: BaseException | None = None,
     ) -> FlextResult[T_co]:
@@ -503,7 +504,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 result_value = current.value
                 if result_value is not None:
                     inner = func(result_value)
-                    current = FlextResult[U]._from_runtime_result(inner)
+                    current = FlextResult[U]._from_runtime_result(inner)  # type: ignore[arg-type]
                 else:
                     break
             else:

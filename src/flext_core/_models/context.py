@@ -324,7 +324,7 @@ class FlextModelsContext:
         @classmethod
         def check_json_serializable(
             cls,
-            obj: t.Container,
+            obj: t.ContainerValue,
             path: str = "",
         ) -> None:
             """Recursively check if object is JSON-serializable."""
@@ -353,8 +353,8 @@ class FlextModelsContext:
         @classmethod
         def normalize_to_serializable_value(
             cls,
-            val: t.Container,
-        ) -> t.Container:
+            val: t.ContainerValue,
+        ) -> t.ContainerValue:
             normalized = cls.normalize_to_general_value(val)
             if normalized is None or isinstance(normalized, (str, int, float, bool)):
                 return normalized
@@ -435,8 +435,8 @@ class FlextModelsContext:
 
         @staticmethod
         def normalize_to_general_value(
-            val: t.Container,
-        ) -> t.Container:
+            val: t.ContainerValue,
+        ) -> t.ContainerValue:
             """Normalize any value to t.Container recursively."""
             return FlextRuntime.normalize_to_general_value(val)
 

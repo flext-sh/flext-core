@@ -6,9 +6,8 @@ import sys
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import cast
 
-from flext_core import FlextContext, FlextRuntime, c, p, r, t, u
+from flext_core import FlextContext, FlextRuntime, c, r, t, u
 
 _RESULTS: list[str] = []
 
@@ -209,7 +208,7 @@ def demo_core_context_methods() -> None:
     _check("export.full.has_metadata", "metadata" in exported_full_dict)
 
     scope_names = sorted(ctx.iter_scope_vars().keys())
-    _check("iter_scope_vars", str(scope_names))
+    _check("iter_scope_vars", scope_names)
 
     ctx.clear()
     _check("clear.keys", len(ctx.keys()))
@@ -221,7 +220,7 @@ def demo_container_and_service_methods() -> None:
     _check("runtime.class", FlextRuntime.__name__)
 
     container = _ContainerStub()
-    FlextContext.set_container(cast("p.DI", container))
+    FlextContext.set_container(container)
     fetched_container = FlextContext.get_container()
     _check("set_get_container.same", fetched_container is container)
 
@@ -359,7 +358,7 @@ def demo_variables_and_domains() -> None:
     cleared_context = FlextContext.Serialization.get_full_context()
     _check(
         "utilities.clear_context.correlation",
-        cleared_context.get(c.Context.KEY_CORRELATION_ID) or "",
+        cleared_context.get(c.Context.KEY_CORRELATION_ID),
     )
     ensured = FlextContext.Utilities.ensure_correlation_id()
     _check("utilities.ensure_correlation_id.non_empty", len(ensured) > 0)

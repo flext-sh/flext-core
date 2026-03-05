@@ -9,6 +9,7 @@ from typing import cast
 import libcst as cst
 import pytest
 
+from flext_core import r
 from flext_infra.refactor import (
     FlextInfraRefactorClassReconstructorRule,
     FlextInfraRefactorEngine,
@@ -1070,3 +1071,84 @@ def test_violation_analyzer_skips_non_utf8_files(tmp_path: Path) -> None:
     totals = result.get("totals")
     assert isinstance(totals, dict)
     assert totals == {}
+
+
+class _EngineSafetyStub:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def create_pre_transformation_stash(self, workspace_root: Path) -> r[str]:
+        _ = workspace_root
+        self.calls.append("stash")
+        return r[str].ok("stash@{0}")
+
+    def save_checkpoint_state(
+        self,
+        workspace_root: Path,
+        *,
+        status: str,
+        stash_ref: str,
+        processed_targets: list[str],
+    ) -> r[bool]:
+        _ = workspace_root
+        _ = status
+        _ = stash_ref
+        _ = processed_targets
+        self.calls.append("checkpoint")
+        return r[bool].ok(True)
+
+    def run_semantic_validation(self, workspace_root: Path) -> r[bool]:
+        _ = workspace_root
+        self.calls.append("validate")
+        return r[bool].ok(True)
+
+    def clear_checkpoint(self) -> r[bool]:
+        self.calls.append("clear")
+        return r[bool].ok(True)
+
+    def request_emergency_stop(self, reason: str) -> None:
+        _ = reason
+        self.calls.append("stop")
+
+    def rollback(self, workspace_root: Path, stash_ref: str) -> r[bool]:
+        _ = workspace_root
+        _ = stash_ref
+        self.calls.append("rollback")
+        return r[bool].ok(True)
+
+    def is_emergency_stop_requested(self) -> bool:
+        self.calls.append("is_stop")
+        return False
+
+
+def test_refactor_project_integrates_safety_manager(tmp_path: Path) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: ensure-future-annotations
+    enabled: true
+    fix_action: ensure_future_annotations
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text('refactor_engine:\n  project_scan_dirs: ["src"]\n')
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir(parents=True)
+    (src_dir / "sample.py").write_text("import os\n", encoding="utf-8")
+
+    engine = FlextInfraRefactorEngine(config_path=config_path)
+    engine.safety_manager = _EngineSafetyStub()
+    loaded = engine.load_rules()
+    assert loaded.is_success
+
+    results = engine.refactor_project(tmp_path, dry_run=False, apply_safety=True)
+
+    assert results
+    assert all(item.success for item in results)
+    assert engine.safety_manager.calls == ["stash", "checkpoint", "validate", "clear"]

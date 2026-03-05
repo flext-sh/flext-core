@@ -5,9 +5,9 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, p, r, t
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, r
 
 from .shared import Examples
 
@@ -117,7 +117,7 @@ class Ex08FlextContainer(Examples):
 
         container.initialize_registrations(
             config=root.config.model_copy(deep=True),
-            context=cast("p.Context", FlextContext()),
+            context=FlextContext(),
         )
         self.check(
             "initialize_registrations.list_services_empty",
@@ -157,9 +157,7 @@ class Ex08FlextContainer(Examples):
 
         before_reset = root
         FlextContainer.reset_for_testing()
-        after_reset = FlextContainer.get_global(
-            context=cast("p.Context", FlextContext())
-        )
+        after_reset = FlextContainer.get_global(context=FlextContext())
         self.check("reset_singleton.new_instance", before_reset is not after_reset)
         self.check(
             "reset_singleton.get_global.same_after_reset",
@@ -252,10 +250,10 @@ class Ex08FlextContainer(Examples):
             return {self.rand_str(4): int(resource_calls["count"])}
 
         register_resource_ok = container.register(
-            resource_name, cast("t.ResourceCallable", _resource_data), kind="resource"
+            resource_name, _resource_data, kind="resource"
         )
         register_resource_dup = container.register(
-            resource_name, cast("t.ResourceCallable", _resource_data), kind="resource"
+            resource_name, _resource_data, kind="resource"
         )
 
         self.check("register.resource.returns_self", register_resource_ok is container)
@@ -323,7 +321,7 @@ class Ex08FlextContainer(Examples):
 
         FlextContainer.reset_for_testing()
         root_context = FlextContext()
-        root = FlextContainer.get_global(context=cast("p.Context", root_context))
+        root = FlextContainer.get_global(context=root_context)
 
         self.check("get_global.type", type(root).__name__)
         self.check("get_global.context.type", type(root.context).__name__)
@@ -376,13 +374,13 @@ class Ex08FlextContainer(Examples):
         scoped_resource_value = self.rand_str(8)
         scoped_full = container.scoped(
             config=explicit_config,
-            context=cast("p.Context", explicit_context),
+            context=explicit_context,
             subproject=subproject_beta,
             services={scoped_service_name: scoped_service_value},
             factories={scoped_factory_name: lambda: scoped_factory_value},
             resources={
-                scoped_resource_name: cast(
-                    "t.ResourceCallable", lambda: {"res": scoped_resource_value}
+                scoped_resource_name: lambda: m.ConfigMap(
+                    root={"res": scoped_resource_value}
                 )
             },
         )

@@ -247,7 +247,7 @@ class FlextUtilitiesConfiguration:
 
         """
         # Type narrowing: is_dict_like ensures obj is Mapping-like
-        if FlextRuntime.is_dict_like(obj) and parameter in obj:
+        if isinstance(obj, Mapping) and parameter in obj:
             return (True, obj[parameter])
         return FlextUtilitiesConfiguration._NOT_FOUND
 
@@ -435,8 +435,8 @@ class FlextUtilitiesConfiguration:
                 FlextUtilitiesConfiguration._get_logger().warning(
                     "Ignored invalid kwargs for %s: %s. Valid fields: %s",
                     class_name,
-                    invalid_kwargs,
-                    sorted(valid_field_names),
+                    str(invalid_kwargs),
+                    str(sorted(valid_field_names)),
                 )
 
             # Step 6: If no valid overrides, return base options
@@ -506,7 +506,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> Mapping[str, t.Scalar]:
+    ) -> Mapping[str, t.Scalar | None]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -555,7 +555,7 @@ class FlextUtilitiesConfiguration:
     def get_parameter(
         obj: p.HasModelDump | t.ConfigurationMapping,
         parameter: str,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -637,7 +637,7 @@ class FlextUtilitiesConfiguration:
     def get_singleton(
         singleton_class: type,
         parameter: str,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)

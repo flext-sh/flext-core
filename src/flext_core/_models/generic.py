@@ -68,7 +68,7 @@ class FlextGenericModels:
                 default_factory=FlextModelsContainers.Dict,
                 description="Additional metadata",
             )
-            message: t.Container = Field(
+            message: t.Container | None = Field(
                 default=None,
                 description="Message payload",
             )

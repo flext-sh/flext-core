@@ -203,7 +203,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_configuration_mapping(
-        value: t.Container,
+        value: t.ContainerValue,
     ) -> TypeGuard[m.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
@@ -322,7 +322,7 @@ class FlextUtilitiesGuards:
         return hasattr(value, "model_dump") or isinstance(value, Path)
 
     @staticmethod
-    def is_handler_callable(value: t.Container) -> TypeGuard[t.HandlerCallable]:
+    def is_handler_callable(value: object) -> TypeGuard[t.HandlerCallable]:
         """Check if value is a valid t.HandlerCallable."""
         return callable(value)
 

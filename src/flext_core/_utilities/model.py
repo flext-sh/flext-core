@@ -43,7 +43,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def _normalize_to_pydantic_value(
         value: t.Container,
-    ) -> t.Scalar:
+    ) -> t.Scalar | list[t.Primitives | None] | None:
         """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
@@ -286,7 +286,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_pydantic_dict(
         data: m.ConfigMap | None,
-    ) -> Mapping[str, t.Scalar]:
+    ) -> Mapping[str, t.Scalar | list[t.Primitives | None] | None]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
         Normalizes ContainerValue values to the restricted PydanticConfigValue type

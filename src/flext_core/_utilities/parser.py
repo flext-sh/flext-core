@@ -294,8 +294,8 @@ class FlextUtilitiesParser:
     def _parse_get_attr(
         obj: BaseModel | t.ConfigurationMapping,
         attr: str,
-        default: t.Container = None,
-    ) -> t.Container:
+        default: t.ContainerValue = None,
+    ) -> t.ContainerValue:
         """Get attribute safely (avoids circular import with u.get)."""
         if hasattr(obj, attr):
             attr_value = getattr(obj, attr)
@@ -697,6 +697,8 @@ class FlextUtilitiesParser:
             list[str]: Converted and filtered list
 
         """
+        if value is None:
+            return list(default) if default is not None else []
         result = FlextUtilitiesParser.conv_str_list(value, default=default)
         return [item for item in result if item]
 
@@ -1064,13 +1066,7 @@ class FlextUtilitiesParser:
 
         """
         # Safely get text length for logging
-        text_len = (
-            r[str | int]
-            .create_from_callable(
-                lambda: self._safe_text_length(text),
-            )
-            .unwrap_or(-1)
-        )
+        text_len = self._get_safe_text_length(text)
 
         self.logger.debug(
             "Starting regex pipeline application",
@@ -1120,13 +1116,7 @@ class FlextUtilitiesParser:
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Safely get text length (may fail for non-string objects in tests)
-            text_len = (
-                r[str | int]
-                .create_from_callable(
-                    lambda: self._safe_text_length(text),
-                )
-                .unwrap_or(-1)
-            )
+            text_len = self._get_safe_text_length(text)
 
             self.logger.exception(
                 "FATAL ERROR during regex pipeline application - PIPELINE ABORTED",
@@ -1239,13 +1229,7 @@ class FlextUtilitiesParser:
 
         """
         # Safely get text length for logging
-        text_len = (
-            r[str | int]
-            .create_from_callable(
-                lambda: self._safe_text_length(text),
-            )
-            .unwrap_or(-1)
-        )
+        text_len = self._get_safe_text_length(text)
 
         self.logger.debug(
             "Starting whitespace normalization",
@@ -1336,13 +1320,7 @@ class FlextUtilitiesParser:
 
         """
         # Safely get text length for logging
-        text_len = (
-            r[str | int]
-            .create_from_callable(
-                lambda: self._safe_text_length(text),
-            )
-            .unwrap_or(-1)
-        )
+        text_len = self._get_safe_text_length(text)
 
         # Use provided ParseOptions or create default
         parse_opts = (
@@ -1421,13 +1399,7 @@ class FlextUtilitiesParser:
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Safely get text length (may fail for non-string objects in tests)
-            text_len = (
-                r[str | int]
-                .create_from_callable(
-                    lambda: self._safe_text_length(text),
-                )
-                .unwrap_or(-1)
-            )
+            text_len = self._get_safe_text_length(text)
 
             self.logger.exception(
                 "FATAL ERROR during delimited parsing - PARSING ABORTED",
@@ -1640,7 +1612,7 @@ class FlextUtilitiesParser:
             f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
         )
 
-    def _get_safe_text_length(self, text: str) -> int:
+    def _get_safe_text_length(self, text: str | None) -> int:
         """Get text length safely, handling non-string objects in tests.
 
         Args:
@@ -1650,15 +1622,11 @@ class FlextUtilitiesParser:
             Text length or -1 if measurement fails
 
         """
-        length = (
-            r[str | int]
-            .create_from_callable(
-                lambda: self._safe_text_length(text),
-            )
-            .unwrap_or(-1)
-        )
-        if isinstance(length, int):
-            return length
+        if text is None:
+            return -1
+        result = self._safe_text_length(text)
+        if isinstance(result, int):
+            return result
         return -1
 
     def _handle_pipeline_edge_cases(

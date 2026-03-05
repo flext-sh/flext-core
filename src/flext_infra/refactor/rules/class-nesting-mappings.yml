@@ -1,0 +1,24 @@
+class_nesting:
+  - loose_name: TimeoutEnforcer
+    current_file: flext-core/src/flext_core/_dispatcher/timeout.py
+    target_namespace: FlextDispatcher
+    target_name: TimeoutEnforcer
+    confidence: high
+    
+  - loose_name: CircuitBreakerManager
+    current_file: flext-core/src/flext_core/_dispatcher/reliability.py
+    target_namespace: FlextDispatcher
+    target_name: CircuitBreakerManager
+    confidence: high
+    
+  - loose_name: RateLimiterManager
+    current_file: flext-core/src/flext_core/_dispatcher/reliability.py
+    target_namespace: FlextDispatcher
+    target_name: RateLimiterManager
+    confidence: high
+    
+  - loose_name: RetryPolicy
+    current_file: flext-core/src/flext_core/_dispatcher/reliability.py
+    target_namespace: FlextDispatcher
+    target_name: RetryPolicy
+    confidence: medium

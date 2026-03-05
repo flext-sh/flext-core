@@ -29,9 +29,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: Mapping[str, t.Container],
+        pagination_data: Mapping[str, t.ContainerValue],
         message: str | None = None,
-    ) -> r[Mapping[str, t.Container]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Build paginated response dictionary.
 
         Args:
@@ -55,7 +55,7 @@ class FlextUtilitiesPagination:
         if not FlextRuntime.is_dict_like(pagination):
             pagination = str(pagination)
 
-        response: Mapping[str, t.Container] = {
+        response: Mapping[str, t.ContainerValue] = {
             "data": data,
             "pagination": pagination,
         }
@@ -156,7 +156,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[Mapping[str, t.Container]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Prepare pagination data structure.
 
         Args:
@@ -185,7 +185,7 @@ class FlextUtilitiesPagination:
         has_next = page < total_pages
         has_prev = page > 1
 
-        data_list: list[t.Container] = []
+        data_list: list[t.ContainerValue] = []
         for item in data:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)

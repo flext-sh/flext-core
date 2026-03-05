@@ -104,7 +104,7 @@ class FlextUtilitiesMapper:
     def convert_to_json_value(
         cls,
         value: t.Container,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Convert any value to JSON-compatible type.
 
         **Generic replacement for**: Manual type conversion to JSON values
@@ -129,7 +129,7 @@ class FlextUtilitiesMapper:
 
         """
         # Type narrowing: ensure value is ContainerValue (not plain object)
-        narrowed_value: t.Container
+        narrowed_value: t.ContainerValue
         if isinstance(value, t.Primitives):
             narrowed_value = value
         elif value is None:
@@ -314,7 +314,7 @@ class FlextUtilitiesMapper:
     def _build_apply_chunk(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
             return current
@@ -338,7 +338,7 @@ class FlextUtilitiesMapper:
     def _build_apply_convert(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
             return current
@@ -350,7 +350,7 @@ class FlextUtilitiesMapper:
         convert_default = ops.get("convert_default")
         fallback = convert_default
 
-        def convert_callable(value: t.Container) -> t.Container:
+        def convert_callable(value: t.Container) -> t.ContainerValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
                 convert_callable_raw(value),
             )
@@ -361,7 +361,7 @@ class FlextUtilitiesMapper:
             else ""
         )
         if fallback is None:
-            converter_defaults: Mapping[str, t.Container] = {
+            converter_defaults: Mapping[str, t.ContainerValue] = {
                 "int": 0,
                 "float": 0.0,
                 "str": "",
@@ -373,7 +373,7 @@ class FlextUtilitiesMapper:
             }
             fallback = converter_defaults.get(converter_name, current)
 
-        def _convert(value: t.Container) -> t.Container:
+        def _convert(value: t.Container) -> t.ContainerValue:
             converted_result = r[t.Container].create_from_callable(
                 lambda: FlextUtilitiesMapper.narrow_to_general_value_type(
                     convert_callable(value),
@@ -405,14 +405,14 @@ class FlextUtilitiesMapper:
     def _build_apply_ensure(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
             return current
         ensure_type = FlextUtilitiesMapper._get_str_from_dict(ops, "ensure", "")
         ensure_default_val = ops.get("ensure_default")
         # Default values by type
-        default_map: Mapping[str, t.Container] = {
+        default_map: Mapping[str, t.ContainerValue] = {
             "str_list": [],
             "dict": {},
             "list": [],
@@ -470,7 +470,7 @@ class FlextUtilitiesMapper:
         current: t.Container,
         ops: Mapping[str, t.Container],
         default: t.Container,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply filter operation."""
         if "filter" not in ops:
             return current
@@ -509,7 +509,7 @@ class FlextUtilitiesMapper:
     def _build_apply_group(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply group operation."""
         if "group" not in ops:
             return current
@@ -556,7 +556,7 @@ class FlextUtilitiesMapper:
     def _build_apply_map(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply map operation."""
         if "map" not in ops:
             return current
@@ -565,7 +565,7 @@ class FlextUtilitiesMapper:
             return current
         map_callable = map_func_raw
 
-        def map_func(value: t.Container) -> t.Container:
+        def map_func(value: t.Container) -> t.ContainerValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
                 map_callable(value),
             )
@@ -592,7 +592,7 @@ class FlextUtilitiesMapper:
     def _build_apply_normalize(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
             return current
@@ -622,7 +622,7 @@ class FlextUtilitiesMapper:
         ops: Mapping[str, t.Container],
         default: t.Container,
         on_error: str,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply process operation."""
         if "process" not in ops:
             return current
@@ -631,12 +631,12 @@ class FlextUtilitiesMapper:
             return current
         process_callable = process_func_raw
 
-        def process_func(value: t.Container) -> t.Container:
+        def process_func(value: t.Container) -> t.ContainerValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
                 process_callable(value),
             )
 
-        def _process_current() -> t.Container:
+        def _process_current() -> t.ContainerValue:
             if isinstance(current, (list, tuple)):
                 # Type narrowing: current is Sequence, items are t.Container
                 seq_current: Sequence[t.Container] = current
@@ -666,7 +666,7 @@ class FlextUtilitiesMapper:
     def _build_apply_slice(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
             return current
@@ -700,7 +700,7 @@ class FlextUtilitiesMapper:
     def _build_apply_sort(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
             return current
@@ -779,7 +779,7 @@ class FlextUtilitiesMapper:
         ops: Mapping[str, t.Container],
         default: t.Container,
         on_error: str,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply transform operation."""
         if "transform" not in ops or not FlextUtilitiesGuards.is_type(
             current,
@@ -829,7 +829,7 @@ class FlextUtilitiesMapper:
     def _build_apply_unique(
         current: t.Container,
         ops: Mapping[str, t.Container],
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
             return current
@@ -927,7 +927,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_handle_array_index(
-        current: t.Container,
+        current: t.ContainerValue,
         array_match: str,
     ) -> tuple[t.Container | None, str | None]:
         """Helper: Handle array indexing with support for negative indices."""
@@ -1029,7 +1029,7 @@ class FlextUtilitiesMapper:
         key: str,
         *,
         default: t.Container | None = None,
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
@@ -1061,7 +1061,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_configuration_dict(
-        value: t.Container,
+        value: t.ContainerValue,
     ) -> dict[str, t.Container]:
         """Safely narrow object to ConfigurationDict with runtime validation."""
         # Use TypeGuard for proper type narrowing without cast
@@ -1136,7 +1136,7 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _to_general_value_from_object(value: t.Container) -> t.Container:
+    def _to_general_value_from_object(value: t.Container) -> t.ContainerValue:
         if FlextUtilitiesGuards.is_general_value_type(value):
             return value
         return str(value)
@@ -1359,7 +1359,7 @@ class FlextUtilitiesMapper:
         ops: Mapping[str, t.Container] | None = None,
         default: t.Container | None = None,
         on_error: str = "stop",
-    ) -> t.Container:
+    ) -> t.ContainerValue:
         """Builder pattern for fluent operation composition using DSL.
 
         Uses DSL dict to compose operations:
@@ -1594,7 +1594,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        constructed: dict[str, t.Container] = {}
+        constructed: dict[str, t.ContainerValue] = {}
 
         for target_key, target_spec in spec.items():
             try:
@@ -2118,9 +2118,9 @@ class FlextUtilitiesMapper:
             )
 
         """
-        result: dict[str, t.Container] = {}
+        result: dict[str, t.ContainerValue] = {}
         for field_name, field_default in spec.items():
-            value: t.Container = FlextUtilitiesMapper.get(
+            value: t.ContainerValue = FlextUtilitiesMapper.get(
                 source,
                 field_name,
                 default=field_default,
@@ -2349,7 +2349,7 @@ class FlextUtilitiesMapper:
         return {v: k for k, v in source.items()}
 
     @staticmethod
-    def is_json_primitive(value: t.Container) -> bool:
+    def is_json_primitive(value: t.ContainerValue) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return bool(
             FlextUtilitiesGuards.is_type(
@@ -2434,7 +2434,7 @@ class FlextUtilitiesMapper:
         return mapped_result
 
     @staticmethod
-    def narrow_to_general_value_type(value: t.Container) -> t.Container:
+    def narrow_to_general_value_type(value: t.ContainerValue) -> t.ContainerValue:
         """Safely narrow object to t.Container.
 
         Uses TypeGuard-based validation to ensure type safety.
@@ -2467,7 +2467,7 @@ class FlextUtilitiesMapper:
 
         """
         # Convert specific_fields to ConfigurationDict for process_context_data
-        field_overrides_config: Mapping[str, t.Container] = dict(specific_fields)
+        field_overrides_config: Mapping[str, t.ContainerValue] = dict(specific_fields)
         raw_result: Mapping[str, t.Container] = (
             FlextUtilitiesMapper.process_context_data(
                 primary_data=context,
@@ -2539,7 +2539,7 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         *keys: str,
         as_dict: bool = True,
-    ) -> Mapping[str, t.Container] | list[t.Container | None]:
+    ) -> Mapping[str, t.ContainerValue] | list[t.ContainerValue]:
         """Pick multiple fields at once (mnemonic: pick = select fields).
 
         Generic replacement for: Multiple get() calls
@@ -2605,7 +2605,7 @@ class FlextUtilitiesMapper:
         primary_data: m.ConfigMap | t.Container | None = None,
         secondary_data: m.ConfigMap | t.Container | None = None,
         *,
-        transformer: Callable[[t.Container], t.Container] | None = None,
+        transformer: Callable[[t.ContainerValue], t.ContainerValue] | None = None,
         field_overrides: Mapping[str, t.Container] | None = None,
         merge_strategy: str = "merge",
         filter_keys: set[str] | None = None,
@@ -2658,7 +2658,7 @@ class FlextUtilitiesMapper:
         # Default transformer (identity function)
         if transformer is None:
 
-            def identity_transformer(x: t.Container) -> t.Container:
+            def identity_transformer(x: t.Container) -> t.ContainerValue:
                 return x
 
             transformer = identity_transformer
@@ -2768,7 +2768,7 @@ class FlextUtilitiesMapper:
 
         def accessor(
             obj: m.ConfigMap | BaseModel,
-        ) -> t.Container:
+        ) -> t.ContainerValue:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
             return result if result is not None else ""

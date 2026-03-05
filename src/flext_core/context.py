@@ -422,7 +422,7 @@ class FlextContext(FlextRuntime):
 
         # Return as dict if requested
         if as_dict:
-            result_dict: dict[str, t.Container] = dict(all_scopes.items())
+            result_dict: dict[str, t.ContainerValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
@@ -513,7 +513,7 @@ class FlextContext(FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
-        def normalize_plain(raw_value: t.Container) -> t.Container:
+        def normalize_plain(raw_value: t.Container) -> t.ContainerValue:
             mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
             try:
                 normalized_map = m.ConfigMap.model_validate(mapped_value)
@@ -747,7 +747,7 @@ class FlextContext(FlextRuntime):
     def set(
         self,
         key_or_data: str | m.ConfigMap,
-        value: t.Container | None = _SENTINEL,
+        value: t.Container | None = _SENTINEL,  # type: ignore[assignment]
         *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:

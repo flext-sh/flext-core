@@ -32,7 +32,7 @@ class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
     @staticmethod
-    def _coerce_guard_value(value: t.Container) -> t.Container:
+    def _coerce_guard_value(value: t.ContainerValue) -> t.ContainerValue:
         guard_value_adapter: TypeAdapter[t.Container] = TypeAdapter(
             t.Container,
         )
@@ -102,9 +102,9 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: MutableMapping[str, t.Container],
+        result: MutableMapping[str, t.ContainerValue],
         key: str,
-        value: t.Container,
+        value: t.ContainerValue,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -118,7 +118,7 @@ class FlextUtilitiesCollection:
                 value,
                 strategy="deep",
             )
-            if merged.is_success:
+            if merged.is_success and merged.value is not None:
                 result[key] = merged.value
                 return r[bool].ok(value=True)
             return r[bool].fail(
@@ -173,7 +173,7 @@ class FlextUtilitiesCollection:
         _ = progress_interval
         do_flatten = flatten
         error_mode = on_error or "fail"
-        results: list[t.Container] = []
+        results: list[t.ContainerValue] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
 

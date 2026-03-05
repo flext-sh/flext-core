@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import fnmatch
+import importlib
 import json
 import re
 import sys
@@ -55,6 +56,13 @@ class FlextInfraRefactorEngine:
         self.config: dict[str, Any] = {}
         self.rules: list[FlextInfraRefactorRule] = []
         self.rule_filters: list[str] = []
+        self.safety_manager = self._build_safety_manager()
+
+    @staticmethod
+    def _build_safety_manager() -> Any:
+        module = importlib.import_module("flext_infra.refactor.safety")
+        manager_type = getattr(module, "FlextInfraRefactorSafetyManager")
+        return manager_type()
 
     @staticmethod
     def _discover_workspace_projects(workspace_root: Path) -> list[Path]:
@@ -668,11 +676,69 @@ class FlextInfraRefactorEngine:
         *,
         dry_run: bool = False,
         pattern: str = "*.py",
+        apply_safety: bool = True,
     ) -> list[FlextInfraRefactorResult]:
         """Refactor files under configured project directories matching the pattern."""
+        stash_ref = ""
+        if apply_safety and not dry_run:
+            stash_result = self.safety_manager.create_pre_transformation_stash(
+                project_path
+            )
+            if stash_result.is_failure:
+                error_msg = stash_result.error or "pre-transformation stash failed"
+                output.error(error_msg)
+                return [
+                    FlextInfraRefactorResult(
+                        file_path=project_path,
+                        success=False,
+                        modified=False,
+                        error=error_msg,
+                        changes=[],
+                        refactored_code=None,
+                    )
+                ]
+            stash_ref = stash_result.value
+
         files = self.collect_project_files(project_path, pattern=pattern)
         output.info(f"Found {len(files)} files to process")
-        return self.refactor_files(files, dry_run=dry_run)
+        results = self.refactor_files(files, dry_run=dry_run)
+
+        if apply_safety and not dry_run:
+            checkpoint_result = self.safety_manager.save_checkpoint_state(
+                project_path,
+                status="transformed",
+                stash_ref=stash_ref,
+                processed_targets=[str(file_path) for file_path in files],
+            )
+            if checkpoint_result.is_failure:
+                output.error(checkpoint_result.error or "checkpoint save failed")
+
+            validation_result = self.safety_manager.run_semantic_validation(
+                project_path
+            )
+            if validation_result.is_failure:
+                error_msg = validation_result.error or "semantic validation failed"
+                self.safety_manager.request_emergency_stop(error_msg)
+                output.error(error_msg)
+                rollback_result = self.safety_manager.rollback(project_path, stash_ref)
+                if rollback_result.is_failure:
+                    output.error(rollback_result.error or "rollback failed")
+                results.append(
+                    FlextInfraRefactorResult(
+                        file_path=project_path,
+                        success=False,
+                        modified=False,
+                        error=error_msg,
+                        changes=[],
+                        refactored_code=None,
+                    )
+                )
+            else:
+                clear_result = self.safety_manager.clear_checkpoint()
+                if clear_result.is_failure:
+                    output.error(clear_result.error or "checkpoint clear failed")
+
+        return results
 
     def refactor_workspace(
         self,
@@ -680,6 +746,7 @@ class FlextInfraRefactorEngine:
         *,
         dry_run: bool = False,
         pattern: str = "*.py",
+        apply_safety: bool = True,
     ) -> list[FlextInfraRefactorResult]:
         """Refactor all discoverable workspace projects with one command."""
         root = workspace_root.resolve()
@@ -696,11 +763,73 @@ class FlextInfraRefactorEngine:
 
         output.info(f"Discovered {len(project_paths)} projects in workspace")
         results: list[FlextInfraRefactorResult] = []
+        processed_targets: list[str] = []
+        stash_ref = ""
+
+        if apply_safety and not dry_run:
+            stash_result = self.safety_manager.create_pre_transformation_stash(root)
+            if stash_result.is_failure:
+                error_msg = stash_result.error or "pre-transformation stash failed"
+                output.error(error_msg)
+                return [
+                    FlextInfraRefactorResult(
+                        file_path=root,
+                        success=False,
+                        modified=False,
+                        error=error_msg,
+                        changes=[],
+                        refactored_code=None,
+                    )
+                ]
+            stash_ref = stash_result.value
+
         for project in project_paths:
+            if apply_safety and self.safety_manager.is_emergency_stop_requested():
+                break
             output.header(f"Project: {project}")
-            results.extend(
-                self.refactor_project(project, dry_run=dry_run, pattern=pattern)
+            project_results = self.refactor_project(
+                project,
+                dry_run=dry_run,
+                pattern=pattern,
+                apply_safety=False,
             )
+            results.extend(project_results)
+
+            if apply_safety and not dry_run:
+                processed_targets.append(str(project))
+                checkpoint_result = self.safety_manager.save_checkpoint_state(
+                    root,
+                    status="running",
+                    stash_ref=stash_ref,
+                    processed_targets=list(processed_targets),
+                )
+                if checkpoint_result.is_failure:
+                    output.error(checkpoint_result.error or "checkpoint save failed")
+
+        if apply_safety and not dry_run:
+            validation_result = self.safety_manager.run_semantic_validation(root)
+            if validation_result.is_failure:
+                error_msg = validation_result.error or "semantic validation failed"
+                self.safety_manager.request_emergency_stop(error_msg)
+                output.error(error_msg)
+                rollback_result = self.safety_manager.rollback(root, stash_ref)
+                if rollback_result.is_failure:
+                    output.error(rollback_result.error or "rollback failed")
+                results.append(
+                    FlextInfraRefactorResult(
+                        file_path=root,
+                        success=False,
+                        modified=False,
+                        error=error_msg,
+                        changes=[],
+                        refactored_code=None,
+                    )
+                )
+            else:
+                clear_result = self.safety_manager.clear_checkpoint()
+                if clear_result.is_failure:
+                    output.error(clear_result.error or "checkpoint clear failed")
+
         return results
 
     def set_rule_filters(self, filters: list[str]) -> None:

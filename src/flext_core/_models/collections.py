@@ -173,9 +173,9 @@ class FlextModelsCollections:
         @classmethod
         def _resolve_aggregate_conflict(
             cls,
-            existing: t.Container,
-            value: t.Container,
-        ) -> t.Container:
+            existing: t.ContainerValue,
+            value: t.ContainerValue,
+        ) -> t.ContainerValue:
             """Resolve conflict when aggregating two statistic values.
 
             Args:
@@ -247,7 +247,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first stats as base
-            result: MutableMapping[str, t.Container] = {}
+            result: MutableMapping[str, t.ContainerValue] = {}
             for stats in stats_list:
                 stats_dict = stats.model_dump()
                 for key, value in stats_dict.items():
@@ -261,7 +261,7 @@ class FlextModelsCollections:
                         )
 
             # Normalize result dict to ContainerValue's dict type
-            normalized_result: MutableMapping[str, t.Container] = {}
+            normalized_result: MutableMapping[str, t.ContainerValue] = {}
             for key, value in result.items():
                 # Filter to types matching ContainerValue
                 if value is None or value.__class__ in {
@@ -309,7 +309,7 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: MutableMapping[str, t.Container] = {}
+            merged_data: MutableMapping[str, t.ContainerValue] = {}
             for rule in rules:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
@@ -348,8 +348,8 @@ class FlextModelsCollections:
         @classmethod
         def _merge_dicts(
             cls,
-            non_none: list[t.Container],
-        ) -> Mapping[str, t.Container]:
+            non_none: list[t.ContainerValue],
+        ) -> Mapping[str, t.ContainerValue]:
             """Merge dict-like values.
 
             Args:
@@ -359,7 +359,7 @@ class FlextModelsCollections:
                 Merged dictionary matching ContainerValue's dict type
 
             """
-            merged: MutableMapping[str, t.Container] = {}
+            merged: MutableMapping[str, t.ContainerValue] = {}
             for v in non_none:
                 if FlextRuntime.is_dict_like(v):
                     # Explicit check for Mapping - normalize each value
@@ -390,9 +390,9 @@ class FlextModelsCollections:
         @classmethod
         def _resolve_aggregate_conflict(
             cls,
-            existing: t.Container,
-            value: t.Container,
-        ) -> t.Container:
+            existing: t.ContainerValue,
+            value: t.ContainerValue,
+        ) -> t.ContainerValue:
             """Resolve conflict when aggregating two result values.
 
             Args:
@@ -406,7 +406,7 @@ class FlextModelsCollections:
             """
             # Filter out None values for comparison
             # Explicitly type as list to match helper method signatures
-            non_none: list[t.Container] = [
+            non_none: list[t.ContainerValue] = [
                 v for v in [existing, value] if v is not None
             ]
             if not non_none:
@@ -434,7 +434,7 @@ class FlextModelsCollections:
         @classmethod
         def _sum_numeric_values(
             cls,
-            non_none: list[t.Container],
+            non_none: list[t.ContainerValue],
         ) -> int | float | None:
             """Sum numeric values excluding booleans.
 
@@ -476,7 +476,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first result as base
-            result: MutableMapping[str, t.Container] = {}
+            result: MutableMapping[str, t.ContainerValue] = {}
             for res in results_list:
                 res_dict = res.model_dump()
                 for key, value in res_dict.items():
@@ -517,9 +517,9 @@ class FlextModelsCollections:
         @classmethod
         def _resolve_merge_conflict(
             cls,
-            existing: t.Container,
-            value: t.Container,
-        ) -> t.Container:
+            existing: t.ContainerValue,
+            value: t.ContainerValue,
+        ) -> t.ContainerValue:
             """Resolve conflict when merging two option values.
 
             Args:
@@ -552,7 +552,7 @@ class FlextModelsCollections:
                     return sum(numeric_values)
             # Concatenate lists
             if FlextRuntime.is_list_like(first_val):
-                combined: list[t.Container] = []
+                combined: list[t.ContainerValue] = []
                 for v in non_none:
                     if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
                         # Explicit check for Sequence (excluding str)
@@ -585,7 +585,7 @@ class FlextModelsCollections:
                 return cls()
 
             # Start with first options as base
-            result: MutableMapping[str, t.Container] = {}
+            result: MutableMapping[str, t.ContainerValue] = {}
             for opt in options:
                 opt_dict = opt.model_dump()
                 for key, value in opt_dict.items():
@@ -596,7 +596,7 @@ class FlextModelsCollections:
                         result[key] = cls._resolve_merge_conflict(result[key], value)
 
             # Normalize result dict to t.Container and create instance
-            normalized_result: MutableMapping[str, t.Container] = {}
+            normalized_result: MutableMapping[str, t.ContainerValue] = {}
             for key, value in result.items():
                 normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             # Create new instance from normalized dict
@@ -676,7 +676,7 @@ class FlextModelsCollections:
         def diff(
             self,
             other: Self,
-        ) -> Mapping[str, tuple[t.Container, t.Container]]:
+        ) -> Mapping[str, tuple[t.ContainerValue, t.ContainerValue]]:
             """Compute differences between this config and another.
 
             Args:
@@ -691,7 +691,7 @@ class FlextModelsCollections:
             other_dict = other.model_dump()
             differences: MutableMapping[
                 str,
-                tuple[t.Container, t.Container],
+                tuple[t.ContainerValue, t.ContainerValue],
             ] = {}
             all_keys = set(self_dict.keys()) | set(other_dict.keys())
             for key in all_keys:
