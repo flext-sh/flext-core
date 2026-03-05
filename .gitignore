@@ -27,6 +27,8 @@
 !pyproject.toml
 !poetry.lock
 !Makefile
+!ruff-shared.toml
+!base.mk
 !README.md
 !CLAUDE.md
 !LICENSE
