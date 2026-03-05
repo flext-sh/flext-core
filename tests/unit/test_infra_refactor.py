@@ -548,9 +548,18 @@ rules:
   - id: custom-rule-f
     enabled: true
     fix_action: propagate_symbol_renames
+    import_symbol_renames:
+      Old: New
   - id: custom-rule-g
     enabled: true
     fix_action: propagate_signature_migrations
+    signature_migrations:
+      - id: migrate-keyword
+        enabled: true
+        target_simple_names:
+          - run
+        keyword_renames:
+          old: new
   - id: custom-rule-h
     enabled: true
     fix_action: convert_dict_to_mapping_annotations

@@ -182,7 +182,7 @@ class FlextInfraRefactorEngine:
         rule_id = str(rule_def.get("id", "unknown"))
         fix_action = str(rule_def.get("fix_action", "")).strip().lower()
         if not fix_action:
-            return f"{rule_id}: missing fix_action"
+            return None
 
         if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
             if fix_action == "propagate_symbol_renames" and not isinstance(
