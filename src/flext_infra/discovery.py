@@ -13,11 +13,11 @@ import re
 from pathlib import Path
 from typing import override
 
-from flext_core import r, FlextService, r
+from flext_core import r, s
 from flext_infra import c, m
 
 
-class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
+class FlextInfraDiscoveryService(s[list[m.Infra.ProjectInfo]]):
     """Infrastructure service for discovering workspace projects.
 
     Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.

@@ -12,11 +12,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r
+from flext_core import s, r
 from flext_infra import FlextInfraDiscoveryService, m
 
 
-class FlextInfraProjectSelector(FlextService[list[m.Infra.ProjectInfo]]):
+class FlextInfraProjectSelector(s[list[m.Infra.ProjectInfo]]):
     """Infrastructure service for project selection and filtering.
 
     Combines project discovery with filtering and resolution capabilities.

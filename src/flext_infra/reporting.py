@@ -21,12 +21,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r
+from flext_core import r, s
 from flext_core.constants import KNOWN_VERBS
 from flext_infra.constants import c
 
 
-class FlextInfraReportingService(FlextService[Path]):
+class FlextInfraReportingService(s[Path]):
     """Infrastructure service for standardized report path management.
 
     Convention::

@@ -16,11 +16,11 @@ from typing import override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import r, FlextService, r, t
+from flext_core import r, s, t
 from flext_infra import c
 
 
-class FlextInfraJsonService(FlextService[bool]):
+class FlextInfraJsonService(s[bool]):
     """Infrastructure service for JSON file I/O.
 
     Provides r-wrapped JSON read/write operations, replacing
@@ -33,7 +33,7 @@ class FlextInfraJsonService(FlextService[bool]):
 
     @override
     def execute(self) -> r[bool]:
-        """Execute the service (required by FlextService base class)."""
+        """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
     def read(self, path: Path) -> r[Mapping[str, t.ContainerValue]]:

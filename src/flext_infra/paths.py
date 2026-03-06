@@ -12,11 +12,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import r, FlextService, r
+from flext_core import r, s
 from flext_infra.constants import c
 
 
-class FlextInfraPathResolver(FlextService[Path]):
+class FlextInfraPathResolver(s[Path]):
     """Infrastructure service for workspace path resolution.
 
     Provides r-wrapped path resolution, replacing the bare
@@ -29,7 +29,7 @@ class FlextInfraPathResolver(FlextService[Path]):
 
     @override
     def execute(self) -> r[Path]:
-        """Execute the service (required by FlextService base class)."""
+        """Execute the service (required by s base class)."""
         return r[Path].ok(Path.cwd())
 
     def workspace_root(self, path: str | Path = ".") -> r[Path]:
