@@ -241,9 +241,9 @@ def test_orchestrate_run_project_failure_with_fail_fast(
     ) -> object:
         call_count[0] += 1
         if call_count[0] == 1:
-            return r[m.CommandOutput].fail("project execution failed")
-        return r[m.CommandOutput].ok(
-            m.CommandOutput(
+            return r[m.Infra.CommandOutput].fail("project execution failed")
+        return r[m.Infra.CommandOutput].ok(
+            m.Infra.CommandOutput(
                 stdout="",
                 stderr="",
                 exit_code=0,

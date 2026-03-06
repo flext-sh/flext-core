@@ -61,8 +61,8 @@ class TestProjectResultProperties:
 
     def test_total_errors_multiple_gates(self) -> None:
         """Test total_errors sums across gates."""
-        gate1 = m.GateResult(gate="lint", project="p", passed=False)
-        gate2 = m.GateResult(gate="format", project="p", passed=False)
+        gate1 = m.Infra.GateResult(gate="lint", project="p", passed=False)
+        gate2 = m.Infra.GateResult(gate="format", project="p", passed=False)
         issue1 = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="m1")
         issue2 = _CheckIssue(file="b.py", line=2, column=1, code="E2", message="m2")
         issue3 = _CheckIssue(file="c.py", line=3, column=1, code="E3", message="m3")
@@ -75,8 +75,8 @@ class TestProjectResultProperties:
 
     def test_passed_all_gates_pass(self) -> None:
         """Test passed when all gates pass."""
-        gate1 = m.GateResult(gate="lint", project="p", passed=True)
-        gate2 = m.GateResult(gate="format", project="p", passed=True)
+        gate1 = m.Infra.GateResult(gate="lint", project="p", passed=True)
+        gate2 = m.Infra.GateResult(gate="format", project="p", passed=True)
         exec1 = _GateExecution(result=gate1, issues=[])
         exec2 = _GateExecution(result=gate2, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
@@ -85,8 +85,8 @@ class TestProjectResultProperties:
 
     def test_passed_one_gate_fails(self) -> None:
         """Test passed is False when any gate fails."""
-        gate1 = m.GateResult(gate="lint", project="p", passed=True)
-        gate2 = m.GateResult(gate="format", project="p", passed=False)
+        gate1 = m.Infra.GateResult(gate="lint", project="p", passed=True)
+        gate2 = m.Infra.GateResult(gate="format", project="p", passed=False)
         exec1 = _GateExecution(result=gate1, issues=[])
         exec2 = _GateExecution(result=gate2, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
@@ -170,7 +170,7 @@ class TestWorkspaceCheckerMarkdownReport:
     def test_markdown_report_with_errors(self) -> None:
         """Test markdown report includes errors."""
         checker = FlextInfraWorkspaceChecker()
-        gate = m.GateResult(gate="lint", project="p", passed=False)
+        gate = m.Infra.GateResult(gate="lint", project="p", passed=False)
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         gate_exec = _GateExecution(result=gate, issues=[issue])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
@@ -186,7 +186,7 @@ class TestWorkspaceCheckerMarkdownReport:
     def test_markdown_report_no_errors(self) -> None:
         """Test markdown report with no errors."""
         checker = FlextInfraWorkspaceChecker()
-        gate = m.GateResult(gate="lint", project="p", passed=True)
+        gate = m.Infra.GateResult(gate="lint", project="p", passed=True)
         gate_exec = _GateExecution(result=gate, issues=[])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
 
@@ -200,8 +200,8 @@ class TestWorkspaceCheckerMarkdownReport:
     def test_markdown_report_multiple_projects(self) -> None:
         """Test markdown report with multiple projects."""
         checker = FlextInfraWorkspaceChecker()
-        gate1 = m.GateResult(gate="lint", project="p1", passed=True)
-        gate2 = m.GateResult(gate="lint", project="p2", passed=False)
+        gate1 = m.Infra.GateResult(gate="lint", project="p1", passed=True)
+        gate2 = m.Infra.GateResult(gate="lint", project="p2", passed=False)
         exec1 = _GateExecution(result=gate1, issues=[])
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         exec2 = _GateExecution(result=gate2, issues=[issue])
@@ -225,7 +225,7 @@ class TestWorkspaceCheckerSARIFReport:
     def test_sarif_report_structure(self) -> None:
         """Test SARIF report has correct structure."""
         checker = FlextInfraWorkspaceChecker()
-        gate = m.GateResult(gate="lint", project="p", passed=True)
+        gate = m.Infra.GateResult(gate="lint", project="p", passed=True)
         gate_exec = _GateExecution(result=gate, issues=[])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
 
@@ -236,7 +236,7 @@ class TestWorkspaceCheckerSARIFReport:
     def test_sarif_report_with_issues(self) -> None:
         """Test SARIF report includes issues."""
         checker = FlextInfraWorkspaceChecker()
-        gate = m.GateResult(gate="lint", project="p", passed=False)
+        gate = m.Infra.GateResult(gate="lint", project="p", passed=False)
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         gate_exec = _GateExecution(result=gate, issues=[issue])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
@@ -493,7 +493,7 @@ class TestWorkspaceCheckerRunProjects:
         reports_dir = tmp_path / "reports"
 
         with patch.object(checker, "_check_project") as mock_check:
-            gate = m.GateResult(gate="lint", project="p1", passed=True)
+            gate = m.Infra.GateResult(gate="lint", project="p1", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
@@ -518,7 +518,7 @@ class TestWorkspaceCheckerRunProjects:
         reports_dir = tmp_path / "reports"
 
         with patch.object(checker, "_check_project") as mock_check:
-            gate = m.GateResult(gate="lint", project="p1", passed=True)
+            gate = m.Infra.GateResult(gate="lint", project="p1", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
@@ -543,7 +543,7 @@ class TestWorkspaceCheckerRunProjects:
         reports_dir = tmp_path / "reports"
 
         with patch.object(checker, "_check_project") as mock_check:
-            gate = m.GateResult(gate="lint", project="p", passed=False)
+            gate = m.Infra.GateResult(gate="lint", project="p", passed=False)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock_check.return_value = project
@@ -621,7 +621,7 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
-            gate = m.GateResult(gate="lint", project="p", passed=True)
+            gate = m.Infra.GateResult(gate="lint", project="p", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
@@ -635,7 +635,7 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
-            gate = m.GateResult(gate="lint", project="p", passed=False)
+            gate = m.Infra.GateResult(gate="lint", project="p", passed=False)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
@@ -687,7 +687,7 @@ class TestRunCLI:
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 mock = mock_cls.return_value
                 mock.parse_gate_csv.return_value = ["lint"]
-                gate = m.GateResult(gate="lint", project="p", passed=True)
+                gate = m.Infra.GateResult(gate="lint", project="p", passed=True)
                 gate_exec = _GateExecution(result=gate, issues=[])
                 project = _ProjectResult(project="p", gates={"lint": gate_exec})
                 mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
@@ -711,7 +711,7 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
-            gate = m.GateResult(gate="lint", project="p", passed=True)
+            gate = m.Infra.GateResult(gate="lint", project="p", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
@@ -765,7 +765,7 @@ class TestWorkspaceCheckerRun:
         (proj_dir / "pyproject.toml").write_text("[tool]\n")
 
         with patch.object(checker, "_check_project") as mock_check:
-            gate = m.GateResult(gate="lint", project="p1", passed=True)
+            gate = m.Infra.GateResult(gate="lint", project="p1", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
@@ -1405,8 +1405,8 @@ class TestWorkspaceCheckerRunCommand:
         with patch(
             "flext_infra.check.services.FlextInfraCommandRunner.run_raw"
         ) as mock_run:
-            mock_run.return_value = r[m.CommandOutput].ok(
-                m.CommandOutput(stdout="output", stderr="", exit_code=0)
+            mock_run.return_value = r[m.Infra.CommandOutput].ok(
+                m.Infra.CommandOutput(stdout="output", stderr="", exit_code=0)
             )
 
             result = checker._run(["echo", "test"], tmp_path)
@@ -1421,7 +1421,7 @@ class TestWorkspaceCheckerRunCommand:
         with patch(
             "flext_infra.check.services.FlextInfraCommandRunner.run_raw"
         ) as mock_run:
-            mock_run.return_value = r[m.CommandOutput].fail("execution failed")
+            mock_run.return_value = r[m.Infra.CommandOutput].fail("execution failed")
 
             result = checker._run(["false"], tmp_path)
 
@@ -1669,7 +1669,7 @@ class TestWorkspaceCheckerSARIFReportEdgeCases:
     def test_sarif_report_with_missing_gate_result(self) -> None:
         """Test SARIF report when gate_result is None (line 638-639)."""
         checker = FlextInfraWorkspaceChecker()
-        gate = m.GateResult(gate="lint", project="p", passed=True)
+        gate = m.Infra.GateResult(gate="lint", project="p", passed=True)
         exec1 = _GateExecution(result=gate, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1})
 
@@ -1682,7 +1682,7 @@ class TestWorkspaceCheckerSARIFReportEdgeCases:
     def test_markdown_report_with_max_display_issues(self) -> None:
         """Test markdown report truncates issues beyond max display (line 598-599)."""
         checker = FlextInfraWorkspaceChecker()
-        gate = m.GateResult(gate="lint", project="p", passed=False)
+        gate = m.Infra.GateResult(gate="lint", project="p", passed=False)
         # Create more issues than _MAX_DISPLAY_ISSUES
         issues = [
             _CheckIssue(
@@ -1718,15 +1718,19 @@ class TestWorkspaceCheckerCheckProjectMethods:
             with patch.object(checker, "_run_ruff_format") as mock_format:
                 with patch.object(checker, "_run_pyrefly") as mock_pyrefly:
                     mock_lint.return_value = _GateExecution(
-                        result=m.GateResult(gate="lint", project="test", passed=True),
+                        result=m.Infra.GateResult(
+                            gate="lint", project="test", passed=True
+                        ),
                         issues=[],
                     )
                     mock_format.return_value = _GateExecution(
-                        result=m.GateResult(gate="format", project="test", passed=True),
+                        result=m.Infra.GateResult(
+                            gate="format", project="test", passed=True
+                        ),
                         issues=[],
                     )
                     mock_pyrefly.return_value = _GateExecution(
-                        result=m.GateResult(
+                        result=m.Infra.GateResult(
                             gate="pyrefly", project="test", passed=True
                         ),
                         issues=[],
@@ -2054,7 +2058,7 @@ class TestJsonWriteFailure:
             mock_json.write.return_value = r[Path].fail("write error")
             with patch.object(checker, "_run_ruff_lint") as mock_lint:
                 mock_lint.return_value = _GateExecution(
-                    result=m.GateResult(
+                    result=m.Infra.GateResult(
                         gate="lint", project="test-project", passed=True
                     ),
                     issues=[],
@@ -2081,7 +2085,7 @@ class TestLintAndFormatPublicMethods:
 
         with patch.object(checker, "_run_ruff_lint") as mock_lint:
             mock_lint.return_value = _GateExecution(
-                result=m.GateResult(gate="lint", project="test", passed=True),
+                result=m.Infra.GateResult(gate="lint", project="test", passed=True),
                 issues=[],
             )
             result = checker.lint(tmp_path)
@@ -2098,7 +2102,7 @@ class TestLintAndFormatPublicMethods:
 
         with patch.object(checker, "_run_ruff_format") as mock_format:
             mock_format.return_value = _GateExecution(
-                result=m.GateResult(gate="format", project="test", passed=True),
+                result=m.Infra.GateResult(gate="format", project="test", passed=True),
                 issues=[],
             )
             result = checker.format(tmp_path)
@@ -2118,8 +2122,8 @@ class TestMarkdownReportSkipsEmptyGates:
         When a gate has no issues, it should be skipped in the report.
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        gate1 = m.GateResult(gate="lint", project="p", passed=True)
-        gate2 = m.GateResult(gate="format", project="p", passed=False)
+        gate1 = m.Infra.GateResult(gate="lint", project="p", passed=True)
+        gate2 = m.Infra.GateResult(gate="format", project="p", passed=False)
         exec1 = _GateExecution(result=gate1, issues=[])
         exec2 = _GateExecution(result=gate2, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
@@ -2227,7 +2231,7 @@ class TestMarkdownReportWithErrors:
         issue = _CheckIssue(
             file="test.py", line=1, column=1, code="E1", message="error"
         )
-        gate1 = m.GateResult(gate="lint", project="p", passed=False)
+        gate1 = m.Infra.GateResult(gate="lint", project="p", passed=False)
         exec1 = _GateExecution(result=gate1, issues=[issue])
         project = _ProjectResult(project="p", gates={"lint": exec1})
 
@@ -2310,8 +2314,8 @@ class TestWorkspaceCheckerErrorSummary:
         issue1 = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="m1")
         issue2 = _CheckIssue(file="b.py", line=2, column=1, code="E2", message="m2")
         issue3 = _CheckIssue(file="c.py", line=3, column=1, code="E3", message="m3")
-        gate1 = m.GateResult(gate="lint", project="proj1", passed=False)
-        gate2 = m.GateResult(gate="format", project="proj2", passed=False)
+        gate1 = m.Infra.GateResult(gate="lint", project="proj1", passed=False)
+        gate2 = m.Infra.GateResult(gate="format", project="proj2", passed=False)
         exec1 = _GateExecution(result=gate1, issues=[issue1, issue2])
         exec2 = _GateExecution(result=gate2, issues=[issue3])
         proj1 = _ProjectResult(project="proj1", gates={"lint": exec1})
@@ -2328,8 +2332,8 @@ class TestWorkspaceCheckerMarkdownReportEdgeCases:
 
     def test_markdown_report_skips_gates_with_no_issues(self, tmp_path: Path) -> None:
         """Test that gates with no issues are skipped in markdown (line 588)."""
-        gate_with_issues = m.GateResult(gate="lint", project="p", passed=False)
-        gate_no_issues = m.GateResult(gate="format", project="p", passed=True)
+        gate_with_issues = m.Infra.GateResult(gate="lint", project="p", passed=False)
+        gate_no_issues = m.Infra.GateResult(gate="format", project="p", passed=True)
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="m1")
         exec1 = _GateExecution(result=gate_with_issues, issues=[issue])
         exec2 = _GateExecution(result=gate_no_issues, issues=[])
@@ -2483,7 +2487,7 @@ class TestWorkspaceCheckerErrorReporting:
             issue = _CheckIssue(
                 file="test.py", line=1, column=1, code="E1", message="error"
             )
-            gate = m.GateResult(gate="lint", project="p1", passed=False)
+            gate = m.Infra.GateResult(gate="lint", project="p1", passed=False)
             gate_exec = _GateExecution(result=gate, issues=[issue])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
@@ -2524,8 +2528,12 @@ class TestWorkspaceCheckerMarkdownReportEmptyGates:
             issue = _CheckIssue(
                 file="test.py", line=1, column=1, code="E1", message="error"
             )
-            gate_with_issues = m.GateResult(gate="lint", project="p1", passed=False)
-            gate_no_issues = m.GateResult(gate="format", project="p1", passed=True)
+            gate_with_issues = m.Infra.GateResult(
+                gate="lint", project="p1", passed=False
+            )
+            gate_no_issues = m.Infra.GateResult(
+                gate="format", project="p1", passed=True
+            )
             exec_with = _GateExecution(result=gate_with_issues, issues=[issue])
             exec_without = _GateExecution(result=gate_no_issues, issues=[])
             project = _ProjectResult(
@@ -2678,8 +2686,10 @@ class TestWorkspaceCheckerErrorReportingMultipleProjects:
             issue = _CheckIssue(
                 file="test.py", line=1, column=1, code="E1", message="error"
             )
-            gate_with_errors = m.GateResult(gate="lint", project="p1", passed=False)
-            gate_no_errors = m.GateResult(gate="lint", project="p2", passed=True)
+            gate_with_errors = m.Infra.GateResult(
+                gate="lint", project="p1", passed=False
+            )
+            gate_no_errors = m.Infra.GateResult(gate="lint", project="p2", passed=True)
             exec_with = _GateExecution(result=gate_with_errors, issues=[issue])
             exec_without = _GateExecution(result=gate_no_errors, issues=[])
             project1 = _ProjectResult(project="p1", gates={"lint": exec_with})
