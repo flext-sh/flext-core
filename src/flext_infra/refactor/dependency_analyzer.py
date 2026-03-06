@@ -150,7 +150,7 @@ class DependencyAnalyzer:
             if not candidate.is_dir() or candidate.name.startswith("."):
                 continue
 
-            src_path = candidate / "src"
+            src_path = candidate / c.Infra.Paths.DEFAULT_SRC_DIR
             if not src_path.is_dir():
                 continue
 

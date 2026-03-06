@@ -16,14 +16,15 @@ from pathlib import Path
 
 from yaml import safe_load
 
-from flext_core import FlextResult, r, t
+from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraJsonService,
     FlextInfraTomlService,
+    c,
     m,
+    t,
 )
-from flext_infra.constants import c
 
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
@@ -84,7 +85,7 @@ class FlextInfraSkillValidator:
         *,
         mode: str = "baseline",
         _project_filter: list[str] | None = None,
-    ) -> FlextResult[m.Infra.ValidationReport]:
+    ) -> r[m.Infra.ValidationReport]:
         """Validate a single skill across workspace projects.
 
         Args:
@@ -93,7 +94,7 @@ class FlextInfraSkillValidator:
             mode: Validation mode ("baseline" or "strict").
 
         Returns:
-            FlextResult with ValidationReport.
+            r with ValidationReport.
 
         """
         try:

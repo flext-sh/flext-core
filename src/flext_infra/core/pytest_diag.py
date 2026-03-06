@@ -16,8 +16,8 @@ from typing import ClassVar
 
 from defusedxml import ElementTree as DefusedET
 
-from flext_core import FlextResult, r, t
-from flext_infra import c
+from flext_core import r
+from flext_infra import c, t
 
 
 class _DiagResult:
@@ -172,7 +172,7 @@ class FlextInfraPytestDiagExtractor:
         self,
         junit_path: Path,
         log_path: Path,
-    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Extract diagnostics from JUnit XML and pytest log.
 
         Args:
@@ -180,7 +180,7 @@ class FlextInfraPytestDiagExtractor:
             log_path: Path to raw pytest log output.
 
         Returns:
-            FlextResult with diagnostics dict containing counts and entries.
+            r with diagnostics dict containing counts and entries.
 
         """
         try:

@@ -13,8 +13,7 @@ import ast
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import m
-from flext_infra.constants import c
+from flext_infra import c, m
 
 __all__ = ["FlextInfraNamespaceValidator"]
 
@@ -57,7 +56,7 @@ class FlextInfraNamespaceValidator:
         Finds the first package under ``src/`` and converts its name to
         PascalCase: ``flext_infra`` → ``FlextInfra``.
         """
-        src_dir = project_root / "src"
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return ""
         for child in sorted(src_dir.iterdir()):
@@ -352,7 +351,7 @@ class FlextInfraNamespaceValidator:
     def _discover_files(self, root: Path, *, scan_tests: bool) -> list[Path]:
         """Walk ``src/`` (and optionally ``tests/``) for non-exempt .py files."""
         result: list[Path] = []
-        dirs_to_scan = [root / "src"]
+        dirs_to_scan = [root / c.Infra.Paths.DEFAULT_SRC_DIR]
         if scan_tests:
             dirs_to_scan.append(root / "tests")
 

@@ -17,110 +17,110 @@ class TestFlextInfraProtocolsImport:
         assert FlextInfraProtocols is not None
 
     def test_flext_infra_protocols_has_project_info_protocol(self) -> None:
-        """Test that ProjectInfoProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "ProjectInfoProtocol")
+        """Test that ProjectInfo is defined."""
+        assert hasattr(FlextInfraProtocols, "ProjectInfo")
 
     def test_flext_infra_protocols_has_command_output_protocol(self) -> None:
-        """Test that CommandOutputProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "CommandOutputProtocol")
+        """Test that CommandOutput is defined."""
+        assert hasattr(FlextInfraProtocols, "CommandOutput")
 
     def test_flext_infra_protocols_has_checker_protocol(self) -> None:
-        """Test that CheckerProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "CheckerProtocol")
+        """Test that Checker is defined."""
+        assert hasattr(FlextInfraProtocols, "Checker")
 
     def test_flext_infra_protocols_has_syncer_protocol(self) -> None:
-        """Test that SyncerProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "SyncerProtocol")
+        """Test that Syncer is defined."""
+        assert hasattr(FlextInfraProtocols, "Syncer")
 
     def test_flext_infra_protocols_has_generator_protocol(self) -> None:
-        """Test that GeneratorProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "GeneratorProtocol")
+        """Test that Generator is defined."""
+        assert hasattr(FlextInfraProtocols, "Generator")
 
     def test_flext_infra_protocols_has_reporter_protocol(self) -> None:
-        """Test that ReporterProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "ReporterProtocol")
+        """Test that Reporter is defined."""
+        assert hasattr(FlextInfraProtocols, "Reporter")
 
     def test_flext_infra_protocols_has_validator_protocol(self) -> None:
-        """Test that ValidatorProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "ValidatorProtocol")
+        """Test that Validator is defined."""
+        assert hasattr(FlextInfraProtocols, "Validator")
 
     def test_flext_infra_protocols_has_orchestrator_protocol(self) -> None:
-        """Test that OrchestratorProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "OrchestratorProtocol")
+        """Test that Orchestrator is defined."""
+        assert hasattr(FlextInfraProtocols, "Orchestrator")
 
     def test_flext_infra_protocols_has_discovery_protocol(self) -> None:
-        """Test that DiscoveryProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "DiscoveryProtocol")
+        """Test that Discovery is defined."""
+        assert hasattr(FlextInfraProtocols, "Discovery")
 
     def test_flext_infra_protocols_has_command_runner_protocol(self) -> None:
-        """Test that CommandRunnerProtocol is defined."""
-        assert hasattr(FlextInfraProtocols, "CommandRunnerProtocol")
+        """Test that CommandRunner is defined."""
+        assert hasattr(FlextInfraProtocols, "CommandRunner")
 
     def test_runtime_alias_p_is_flext_infra_protocols(self) -> None:
         """Test that p is an alias for FlextInfraProtocols."""
         assert p is FlextInfraProtocols
 
     def test_project_info_protocol_has_name_property(self) -> None:
-        """Test that ProjectInfoProtocol defines name property."""
-        proto = FlextInfraProtocols.ProjectInfoProtocol
+        """Test that ProjectInfo defines name property."""
+        proto = FlextInfraProtocols.ProjectInfo
         assert hasattr(proto, "name")
 
     def test_project_info_protocol_has_root_property(self) -> None:
-        """Test that ProjectInfoProtocol defines root property."""
-        proto = FlextInfraProtocols.ProjectInfoProtocol
+        """Test that ProjectInfo defines root property."""
+        proto = FlextInfraProtocols.ProjectInfo
         assert hasattr(proto, "root")
 
     def test_command_output_protocol_has_stdout_property(self) -> None:
-        """Test that CommandOutputProtocol defines stdout property."""
-        proto = FlextInfraProtocols.CommandOutputProtocol
+        """Test that CommandOutput defines stdout property."""
+        proto = FlextInfraProtocols.CommandOutput
         assert hasattr(proto, "stdout")
 
     def test_command_output_protocol_has_stderr_property(self) -> None:
-        """Test that CommandOutputProtocol defines stderr property."""
-        proto = FlextInfraProtocols.CommandOutputProtocol
+        """Test that CommandOutput defines stderr property."""
+        proto = FlextInfraProtocols.CommandOutput
         assert hasattr(proto, "stderr")
 
     def test_command_output_protocol_has_returncode_property(self) -> None:
-        """Test that CommandOutputProtocol defines returncode property."""
-        proto = FlextInfraProtocols.CommandOutputProtocol
+        """Test that CommandOutput defines returncode property."""
+        proto = FlextInfraProtocols.CommandOutput
         assert hasattr(proto, "returncode")
 
     def test_checker_protocol_has_run_method(self) -> None:
-        """Test that CheckerProtocol defines run method."""
-        proto = FlextInfraProtocols.CheckerProtocol
+        """Test that Checker defines run method."""
+        proto = FlextInfraProtocols.Checker
         assert hasattr(proto, "run")
 
     def test_syncer_protocol_has_sync_method(self) -> None:
-        """Test that SyncerProtocol defines sync method."""
-        proto = FlextInfraProtocols.SyncerProtocol
+        """Test that Syncer defines sync method."""
+        proto = FlextInfraProtocols.Syncer
         assert hasattr(proto, "sync")
 
     def test_generator_protocol_has_generate_method(self) -> None:
-        """Test that GeneratorProtocol defines generate method."""
-        proto = FlextInfraProtocols.GeneratorProtocol
+        """Test that Generator defines generate method."""
+        proto = FlextInfraProtocols.Generator
         assert hasattr(proto, "generate")
 
     def test_reporter_protocol_has_report_method(self) -> None:
-        """Test that ReporterProtocol defines report method."""
-        proto = FlextInfraProtocols.ReporterProtocol
+        """Test that Reporter defines report method."""
+        proto = FlextInfraProtocols.Reporter
         assert hasattr(proto, "report")
 
     def test_validator_protocol_has_validate_method(self) -> None:
-        """Test that ValidatorProtocol defines validate method."""
-        proto = FlextInfraProtocols.ValidatorProtocol
+        """Test that Validator defines validate method."""
+        proto = FlextInfraProtocols.Validator
         assert hasattr(proto, "validate")
 
     def test_orchestrator_protocol_has_orchestrate_method(self) -> None:
-        """Test that OrchestratorProtocol defines orchestrate method."""
-        proto = FlextInfraProtocols.OrchestratorProtocol
+        """Test that Orchestrator defines orchestrate method."""
+        proto = FlextInfraProtocols.Orchestrator
         assert hasattr(proto, "orchestrate")
 
     def test_discovery_protocol_has_discover_method(self) -> None:
-        """Test that DiscoveryProtocol defines discover method."""
-        proto = FlextInfraProtocols.DiscoveryProtocol
+        """Test that Discovery defines discover method."""
+        proto = FlextInfraProtocols.Discovery
         assert hasattr(proto, "discover")
 
     def test_command_runner_protocol_has_run_method(self) -> None:
-        """Test that CommandRunnerProtocol defines run method."""
-        proto = FlextInfraProtocols.CommandRunnerProtocol
+        """Test that CommandRunner defines run method."""
+        proto = FlextInfraProtocols.CommandRunner
         assert hasattr(proto, "run")

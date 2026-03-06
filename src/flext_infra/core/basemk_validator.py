@@ -13,7 +13,7 @@ import hashlib
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import m
+from flext_infra import c, m
 
 
 class FlextInfraBaseMkValidator:
@@ -39,7 +39,7 @@ class FlextInfraBaseMkValidator:
 
         """
         try:
-            source = workspace_root / "base.mk"
+            source = workspace_root / c.Infra.Files.BASE_MK
             if not source.exists():
                 return r[m.Infra.ValidationReport].ok(
                     m.Infra.ValidationReport(
@@ -52,8 +52,10 @@ class FlextInfraBaseMkValidator:
             mismatched: list[str] = []
             checked = 0
 
-            for pyproject in sorted(workspace_root.glob("*/pyproject.toml")):
-                local_base = pyproject.parent / "base.mk"
+            for pyproject in sorted(
+                workspace_root.glob(f"*/{c.Infra.Files.PYPROJECT_FILENAME}")
+            ):
+                local_base = pyproject.parent / c.Infra.Files.BASE_MK
                 if not local_base.exists():
                     continue
                 checked += 1

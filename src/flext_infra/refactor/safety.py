@@ -5,32 +5,10 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, overload
+from typing import overload
 
 from flext_core import r
-from flext_infra import FlextInfraCommandRunner, c, m
-
-
-class FlextInfraRefactorSafetyRunnerProtocol(Protocol):
-    """Protocol for command execution backends used by the safety manager."""
-
-    def capture(
-        self,
-        cmd: list[str],
-        cwd: Path | None = None,
-        timeout: int | None = None,
-    ) -> r[str]:
-        """Run a command and capture its stdout."""
-        ...
-
-    def run_checked(
-        self,
-        cmd: list[str],
-        cwd: Path | None = None,
-        timeout: int | None = None,
-    ) -> r[bool]:
-        """Run a command and return success/failure."""
-        ...
+from flext_infra import FlextInfraCommandRunner, c, m, p
 
 
 def _now_iso() -> str:
@@ -42,7 +20,7 @@ class FlextInfraRefactorSafetyManager:
 
     def __init__(
         self,
-        runner: FlextInfraRefactorSafetyRunnerProtocol | None = None,
+        runner: p.Infra.SafetyRunner | None = None,
         checkpoint_path: Path | None = None,
         test_command: list[str] | None = None,
     ) -> None:
@@ -278,5 +256,4 @@ class FlextInfraRefactorSafetyManager:
 
 __all__ = [
     "FlextInfraRefactorSafetyManager",
-    "FlextInfraRefactorSafetyRunnerProtocol",
 ]

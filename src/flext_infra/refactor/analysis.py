@@ -222,7 +222,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
     def _find_project_root(cls, file_path: Path) -> Path | None:
         resolved = file_path.resolve()
         for parent in (resolved.parent, *resolved.parents):
-            src_dir = parent / "src"
+            src_dir = parent / c.Infra.Paths.DEFAULT_SRC_DIR
             if not src_dir.is_dir():
                 continue
             try:
@@ -234,7 +234,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
 
     @classmethod
     def _module_path_for_file(cls, file_path: Path, project_root: Path) -> str | None:
-        src_dir = (project_root / "src").resolve()
+        src_dir = (project_root / c.Infra.Paths.DEFAULT_SRC_DIR).resolve()
         resolved = file_path.resolve()
         try:
             relative = resolved.relative_to(src_dir)

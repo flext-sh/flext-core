@@ -93,23 +93,9 @@ dm = FlextInfraDependencyDetectionModels
 class FlextInfraDependencyDetectionService:
     """Runtime vs dev dependency detector using deptry, pip-check, and mypy stub analysis."""
 
-    DEFAULT_MODULE_TO_TYPES_PACKAGE: Mapping[str, str] = {
-        "yaml": "types-pyyaml",
-        "ldap3": "types-ldap3",
-        "redis": "types-redis",
-        "requests": "types-requests",
-        "setuptools": "types-setuptools",
-        "toml": "types-toml",
-        "dateutil": "types-python-dateutil",
-        "psutil": "types-psutil",
-        "psycopg2": "types-psycopg2",
-        "protobuf": "types-protobuf",
-        "pyyaml": "types-pyyaml",
-        "decorator": "types-decorator",
-        "jsonschema": "types-jsonschema",
-        "openpyxl": "types-openpyxl",
-        "xlrd": "types-xlrd",
-    }
+    DEFAULT_MODULE_TO_TYPES_PACKAGE: Mapping[str, str] = (
+        c.Infra.Deps.DEFAULT_MODULE_TO_TYPES_PACKAGE
+    )
 
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
@@ -392,7 +378,7 @@ class FlextInfraDependencyDetectionService:
             str(mypy_bin),
             "src",
             "--config-file",
-            "pyproject.toml",
+            c.Infra.Files.PYPROJECT_FILENAME,
             "--no-error-summary",
         ]
         env = {

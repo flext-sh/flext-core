@@ -22,8 +22,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_core.constants import KNOWN_VERBS
-from flext_infra.constants import c
+from flext_infra import c
 
 
 class FlextInfraReportingService(s[Path]):
@@ -38,8 +37,8 @@ class FlextInfraReportingService(s[Path]):
             └── {verb}/
                 └── {project}.log
 
-    Structurally satisfies ``InfraProtocols.ReporterProtocol``.
-    Structurally satisfies ``InfraProtocols.ReporterProtocol``.
+    Structurally satisfies ``InfraProtocols.Reporter``.
+    Structurally satisfies ``InfraProtocols.Reporter``.
     """
 
     def create_latest_symlink(self, report_dir: Path, run_id: str) -> r[Path]:
@@ -127,4 +126,4 @@ class FlextInfraReportingService(s[Path]):
         return self.get_report_dir(root, scope, verb) / filename
 
 
-__all__ = ["KNOWN_VERBS", "FlextInfraReportingService"]
+__all__ = ["FlextInfraReportingService"]

@@ -36,7 +36,7 @@ class FlextInfraStubSupplyChain:
             if not entry.is_dir() or entry.name.startswith("."):
                 continue
             if (entry / c.Infra.Files.PYPROJECT_FILENAME).exists() and (
-                entry / "src"
+                entry / c.Infra.Paths.DEFAULT_SRC_DIR
             ).is_dir():
                 projects.append(entry)
         return projects
@@ -167,7 +167,7 @@ class FlextInfraStubSupplyChain:
                 "mypy",
                 "src",
                 "--config-file",
-                "pyproject.toml",
+                c.Infra.Files.PYPROJECT_FILENAME,
                 "--no-error-summary",
             ],
             cwd=project_dir,
@@ -185,7 +185,7 @@ class FlextInfraStubSupplyChain:
     def _run_pyrefly_missing(self, project_dir: Path) -> list[str]:
         """Run pyrefly check and extract missing imports."""
         result = self._runner.run(
-            ["poetry", "run", "pyrefly", "check", "src", "--config", "pyproject.toml"],
+            ["poetry", "run", "pyrefly", "check", "src", "--config", c.Infra.Files.PYPROJECT_FILENAME],
             cwd=project_dir,
         )
         output = ""

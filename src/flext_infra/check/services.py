@@ -828,7 +828,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
 
     def _run_go(self, project_dir: Path) -> _GateExecution:
         started = time.monotonic()
-        if not (project_dir / "go.mod").exists():
+        if not (project_dir / c.Infra.Files.GO_MOD).exists():
             return self._build_gate_result(
                 gate="go",
                 project=project_dir.name,

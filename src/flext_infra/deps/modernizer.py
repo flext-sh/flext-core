@@ -20,10 +20,10 @@ def _workspace_root(start: Path) -> Path:
     """Detect workspace root by searching for .gitmodules or .git with pyproject.toml."""
     current = start.resolve()
     for parent in (current, *current.parents):
-        if (parent / ".gitmodules").exists() and (parent / "pyproject.toml").exists():
+        if (parent / ".gitmodules").exists() and (parent / c.Infra.Files.PYPROJECT_FILENAME).exists():
             return parent
     for parent in (current, *current.parents):
-        if (parent / ".git").exists() and (parent / "pyproject.toml").exists():
+        if (parent / ".git").exists() and (parent / c.Infra.Files.PYPROJECT_FILENAME).exists():
             return parent
     return start.resolve().parents[4]
 
@@ -142,7 +142,7 @@ def _read_doc(path: Path) -> tomlkit.TOMLDocument | None:
 
 def _discover_first_party_namespaces(project_dir: Path) -> list[str]:
     """Discover first-party namespace packages from src/ for tool configuration."""
-    src_dir = project_dir / "src"
+    src_dir = project_dir / c.Infra.Paths.DEFAULT_SRC_DIR
     if not src_dir.is_dir():
         return []
 
@@ -653,7 +653,7 @@ class FlextInfraPyprojectModernizer:
     def find_pyproject_files(self) -> list[Path]:
         """Find all pyproject.toml files in workspace."""
         files: list[Path] = []
-        for path in self.root.rglob("pyproject.toml"):
+        for path in self.root.rglob(c.Infra.Files.PYPROJECT_FILENAME):
             if any(part in c.Infra.Deps.SKIP_DIRS for part in path.parts):
                 continue
             files.append(path)
@@ -726,7 +726,7 @@ class FlextInfraPyprojectModernizer:
         dry_run = bool(args.dry_run or args.audit)
         files = self.find_pyproject_files()
 
-        root_doc = _read_doc(self.root / "pyproject.toml")
+        root_doc = _read_doc(self.root / c.Infra.Files.PYPROJECT_FILENAME)
         if root_doc is None:
             return 2
         canonical_dev = _canonical_dev_dependencies(root_doc)

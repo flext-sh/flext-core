@@ -19,8 +19,8 @@ class ProjectClassifier:
     def __init__(self, project_root: Path) -> None:
         """Initialize classifier for the given project root."""
         self._project_root = project_root.resolve()
-        self._pyproject_path = self._project_root / "pyproject.toml"
-        self._src_path = self._project_root / "src"
+        self._pyproject_path = self._project_root / c.Infra.Files.PYPROJECT_FILENAME
+        self._src_path = self._project_root / c.Infra.Paths.DEFAULT_SRC_DIR
 
     def classify(self) -> m.Infra.Refactor.ProjectClassification:
         """Return classification and family chains for this project."""

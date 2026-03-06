@@ -13,8 +13,8 @@ from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
-from flext_infra import FlextInfraJsonService, c
+from flext_core import r
+from flext_infra import FlextInfraJsonService, c, t
 
 
 class FlextInfraInventoryService:
@@ -33,7 +33,7 @@ class FlextInfraInventoryService:
         workspace_root: Path,
         *,
         output_dir: Path | None = None,
-    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Build and write scripts inventory reports.
 
         Args:
@@ -42,7 +42,7 @@ class FlextInfraInventoryService:
                 ``workspace_root / ".reports"``.
 
         Returns:
-            FlextResult with combined inventory metadata.
+            r with combined inventory metadata.
 
         """
         try:

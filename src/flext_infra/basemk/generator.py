@@ -105,7 +105,7 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
         try:
             with tempfile.TemporaryDirectory(prefix="flext-basemk-") as temp_dir_name:
                 temp_dir = Path(temp_dir_name)
-                base_mk_path = temp_dir / "base.mk"
+                base_mk_path = temp_dir / c.Infra.Files.BASE_MK
                 makefile_path = temp_dir / c.Infra.Files.MAKEFILE_FILENAME
 
                 _ = base_mk_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)

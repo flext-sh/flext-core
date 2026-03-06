@@ -14,17 +14,6 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Literal
 
-KNOWN_VERBS: Final[frozenset[str]] = frozenset({
-    "build",
-    "check",
-    "dependencies",
-    "docs",
-    "preflight",
-    "release",
-    "tests",
-    "validate",
-    "workspace",
-})
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
 _MAX_TIMEOUT_SECONDS: Final[int] = 3600
 _MIN_TIMEOUT_SECONDS: Final[int] = 1

@@ -20,6 +20,7 @@ from flext_core import r
 from flext_infra import c, m, output
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.rule import FlextInfraRefactorRule
+from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.rules.class_reconstructor import (
     FlextInfraRefactorClassReconstructorRule,
 )
@@ -53,6 +54,7 @@ class FlextInfraRefactorEngine:
         self.config_path = config_path or self._default_config_path()
         self.config: dict[str, Any] = {}
         self.rules: list[FlextInfraRefactorRule] = []
+        self.file_rules: list[ClassNestingRefactorRule] = []
         self.rule_filters: list[str] = []
         self.safety_manager = self._build_safety_manager()
 
@@ -64,17 +66,19 @@ class FlextInfraRefactorEngine:
     def _discover_workspace_projects(workspace_root: Path) -> list[Path]:
         projects: list[Path] = []
 
-        root_has_pyproject = (workspace_root / "pyproject.toml").exists()
-        root_has_makefile = (workspace_root / "Makefile").exists()
+        root_has_pyproject = (
+            workspace_root / c.Infra.Files.PYPROJECT_FILENAME
+        ).exists()
+        root_has_makefile = (workspace_root / c.Infra.Files.MAKEFILE_FILENAME).exists()
         if root_has_pyproject and root_has_makefile:
             projects.append(workspace_root)
 
         for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
             if not entry.is_dir() or entry.name.startswith("."):
                 continue
-            if not (entry / "pyproject.toml").exists():
+            if not (entry / c.Infra.Files.PYPROJECT_FILENAME).exists():
                 continue
-            if not (entry / "Makefile").exists():
+            if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
                 continue
             projects.append(entry)
 
@@ -129,7 +133,9 @@ class FlextInfraRefactorEngine:
     def _project_name_from_path(file_path: Path) -> str:
         """Infer project name from path using nearest pyproject marker."""
         for parent in file_path.parents:
-            if (parent / "pyproject.toml").exists() and (parent / "Makefile").exists():
+            if (parent / c.Infra.Files.PYPROJECT_FILENAME).exists() and (
+                parent / c.Infra.Files.MAKEFILE_FILENAME
+            ).exists():
                 return parent.name
         return "unknown"
 
@@ -540,6 +546,7 @@ class FlextInfraRefactorEngine:
         try:
             rules_dir = self.config_path.parent / "rules"
             loaded_rules: list[FlextInfraRefactorRule] = []
+            loaded_file_rules: list[ClassNestingRefactorRule] = []
             unknown_rules: list[str] = []
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
@@ -549,20 +556,42 @@ class FlextInfraRefactorEngine:
                 )
                 if rule_config is None:
                     continue
-                rules = rule_config.get("rules", [])
+                rules_raw = rule_config.get("rules", [])
+                if not isinstance(rules_raw, list):
+                    continue
+                typed_rules = [
+                    cast("dict[str, Any]", item)
+                    for item in cast("list[object]", rules_raw)
+                    if isinstance(item, dict)
+                ]
 
-                for rule_def in rules:
-                    if not rule_def.get("enabled", True):
+                for typed_rule_def in typed_rules:
+                    if "id" not in typed_rule_def:
+                        continue
+                    if not typed_rule_def.get("enabled", True):
                         continue
 
-                    rule_validation = self._validate_rule_definition(rule_def)
+                    fix_action = (
+                        str(
+                            typed_rule_def.get(
+                                "fix_action", typed_rule_def.get("action", "")
+                            )
+                        )
+                        .strip()
+                        .lower()
+                    )
+                    if fix_action == "nest_classes":
+                        loaded_file_rules.append(ClassNestingRefactorRule())
+                        continue
+
+                    rule_validation = self._validate_rule_definition(typed_rule_def)
                     if rule_validation is not None:
                         unknown_rules.append(rule_validation)
                         continue
 
-                    rule = self._build_rule(rule_def)
+                    rule = self._build_rule(typed_rule_def)
                     if rule is None:
-                        unknown_rules.append(str(rule_def.get("id", "unknown")))
+                        unknown_rules.append(str(typed_rule_def.get("id", "unknown")))
                         continue
 
                     if self.rule_filters:
@@ -578,7 +607,10 @@ class FlextInfraRefactorEngine:
                 )
 
             self.rules = loaded_rules
+            self.file_rules = loaded_file_rules
             output.info(f"Loaded {len(self.rules)} rules")
+            if self.file_rules:
+                output.info(f"Loaded {len(self.file_rules)} file rules")
             if self.rule_filters:
                 output.info(f"Active filters: {', '.join(self.rule_filters)}")
             return r[list[FlextInfraRefactorRule]].ok(loaded_rules)
@@ -602,8 +634,24 @@ class FlextInfraRefactorEngine:
                     refactored_code=None,
                 )
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = cst.parse_module(source)
             all_changes: list[str] = []
+
+            for file_rule in self.file_rules:
+                file_rule_result = file_rule.apply(file_path, dry_run=True)
+                if not file_rule_result.success:
+                    return m.Infra.Refactor.Result(
+                        file_path=file_path,
+                        success=False,
+                        modified=False,
+                        error=file_rule_result.error,
+                        changes=file_rule_result.changes,
+                        refactored_code=None,
+                    )
+                if file_rule_result.modified and file_rule_result.refactored_code:
+                    source = file_rule_result.refactored_code
+                all_changes.extend(file_rule_result.changes)
+
+            tree = cst.parse_module(source)
 
             for rule in self.rules:
                 if rule.enabled:

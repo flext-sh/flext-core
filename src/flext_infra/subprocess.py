@@ -25,7 +25,7 @@ class FlextInfraCommandRunner(s[m.Infra.CommandOutput]):
     Provides r-wrapped command execution, replacing the bare
     ``run_checked`` and ``run_capture`` functions from ``scripts/libs/subprocess.py``.
 
-    Structurally satisfies ``InfraProtocols.CommandRunnerProtocol``.
+    Structurally satisfies ``InfraProtocols.CommandRunner``.
     """
 
     def __init__(self) -> None:

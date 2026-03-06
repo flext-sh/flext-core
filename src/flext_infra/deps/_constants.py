@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from typing import Final
 
 
@@ -188,6 +189,26 @@ split-on-trailing-comma = true
 
     # From __main__.py
     MIN_ARGV: int = 2
+
+    # From detection.py – module-to-types-package mapping
+    DEFAULT_MODULE_TO_TYPES_PACKAGE: Mapping[str, str] = {
+        "yaml": "types-pyyaml",
+        "ldap3": "types-ldap3",
+        "redis": "types-redis",
+        "requests": "types-requests",
+        "setuptools": "types-setuptools",
+        "toml": "types-toml",
+        "dateutil": "types-python-dateutil",
+        "psutil": "types-psutil",
+        "psycopg2": "types-psycopg2",
+        "protobuf": "types-protobuf",
+        "pyyaml": "types-pyyaml",
+        "decorator": "types-decorator",
+        "jsonschema": "types-jsonschema",
+        "openpyxl": "types-openpyxl",
+        "xlrd": "types-xlrd",
+    }
+    """Default mapping from module name to ``types-*`` stub package."""
 
 
 __all__ = ["FlextInfraDepsConstants"]

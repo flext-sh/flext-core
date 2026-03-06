@@ -30,7 +30,7 @@ class FlextInfraProtocols(FlextProtocols):
         """Infrastructure-domain protocols."""
 
         @runtime_checkable
-        class ProjectInfoProtocol(Protocol):
+        class ProjectInfo(Protocol):
             """Minimal project descriptor used by orchestration services."""
 
             @property
@@ -44,7 +44,7 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class CommandOutputProtocol(Protocol):
+        class CommandOutput(Protocol):
             """Minimal command execution output contract."""
 
             @property
@@ -63,7 +63,7 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class CheckerProtocol(Protocol):
+        class Checker(Protocol):
             """Contract for project quality gate runners."""
 
             def run(
@@ -75,7 +75,7 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class SyncerProtocol(Protocol):
+        class Syncer(Protocol):
             """Contract for workspace synchronization services."""
 
             def sync(
@@ -87,7 +87,7 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class GeneratorProtocol(Protocol):
+        class Generator(Protocol):
             """Contract for text/artifact generators."""
 
             def generate(
@@ -98,7 +98,7 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class ReporterProtocol(Protocol):
+        class Reporter(Protocol):
             """Contract for report writers that persist validation outputs."""
 
             def report(
@@ -109,7 +109,7 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class ValidatorProtocol(Protocol):
+        class Validator(Protocol):
             """Contract for validation services."""
 
             def validate(self, target: Path) -> r[bool]:
@@ -117,38 +117,60 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class OrchestratorProtocol(Protocol):
+        class Orchestrator(Protocol):
             """Contract for project orchestration services."""
 
             def orchestrate(
                 self,
-                projects: Sequence[FlextInfraProtocols.Infra.ProjectInfoProtocol],
+                projects: Sequence[FlextInfraProtocols.Infra.ProjectInfo],
                 verb: str,
             ) -> r[t.Infra.PayloadMap]:
                 """Orchestrate operations across multiple projects."""
                 ...
 
         @runtime_checkable
-        class DiscoveryProtocol(Protocol):
+        class Discovery(Protocol):
             """Contract for project discovery services."""
 
             def discover(
                 self,
                 root: Path,
-            ) -> r[list[FlextInfraProtocols.Infra.ProjectInfoProtocol]]:
+            ) -> r[list[FlextInfraProtocols.Infra.ProjectInfo]]:
                 """Discover projects in a workspace root."""
                 ...
 
         @runtime_checkable
-        class CommandRunnerProtocol(Protocol):
+        class CommandRunner(Protocol):
             """Contract for command execution services."""
 
             def run(
                 self,
                 cmd: Sequence[str],
                 cwd: Path | None = None,
-            ) -> r[FlextInfraProtocols.Infra.CommandOutputProtocol]:
+            ) -> r[FlextInfraProtocols.Infra.CommandOutput]:
                 """Execute a command and return output."""
+                ...
+
+        @runtime_checkable
+        class SafetyRunner(Protocol):
+            """Protocol for command execution backends used by the safety manager."""
+
+            def capture(
+                self,
+                cmd: list[str],
+                cwd: Path | None = None,
+                timeout: int | None = None,
+            ) -> r[str]:
+                """Run a command and capture its stdout."""
+                ...
+
+            def run_checked(
+                self,
+                cmd: list[str],
+                cwd: Path | None = None,
+                timeout: int | None = None,
+            ) -> r[bool]:
+                """Run a command and return success/failure."""
                 ...
 
 

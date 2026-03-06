@@ -14,8 +14,8 @@ import re
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
-from flext_infra import c
+from flext_core import r
+from flext_infra import c, t
 
 
 class FlextInfraTextPatternScanner:
@@ -68,7 +68,7 @@ class FlextInfraTextPatternScanner:
         includes: list[str],
         excludes: list[str] | None = None,
         match_mode: str = "present",
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Scan files under root for regex matches.
 
         Args:
@@ -80,7 +80,7 @@ class FlextInfraTextPatternScanner:
                 ``"absent"`` (no matches = violation).
 
         Returns:
-            FlextResult with violation count and match details.
+            r with violation count and match details.
 
         """
         try:

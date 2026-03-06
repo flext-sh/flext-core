@@ -41,6 +41,18 @@ class FlextInfraConstants(FlextConstants):
     class Infra:
         """Infrastructure domain constants."""
 
+        KNOWN_VERBS: Final[frozenset[str]] = frozenset({
+            "build",
+            "check",
+            "dependencies",
+            "docs",
+            "preflight",
+            "release",
+            "tests",
+            "validate",
+            "workspace",
+        })
+
         MIN_ARGV: Final[int] = 2
         """Minimum argv length for CLI dispatch."""
 

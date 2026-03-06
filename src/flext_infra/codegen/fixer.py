@@ -187,7 +187,7 @@ class FlextInfraCodegenFixer(FlextService[list[m.Infra.AutoFixResult]]):
     @staticmethod
     def _find_package_dir(project_root: Path) -> Path | None:
         """Find the first Python package under src/."""
-        src_dir = project_root / "src"
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return None
         for child in sorted(src_dir.iterdir()):
@@ -290,7 +290,7 @@ class FlextInfraCodegenFixer(FlextService[list[m.Infra.AutoFixResult]]):
         files_modified: set[str] = set()
 
         # Scan all non-exempt files in src/
-        src_dir = project_path / "src"
+        src_dir = project_path / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return m.Infra.AutoFixResult(
                 project=project_path.name,

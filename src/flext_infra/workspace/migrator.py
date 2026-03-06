@@ -141,7 +141,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
                 generated.error or "base.mk generation failed",
             )
 
-        target = project_root / "base.mk"
+        target = project_root / c.Infra.Files.BASE_MK
         current = (
             target.read_text(encoding=c.Infra.Encoding.DEFAULT)
             if target.exists()

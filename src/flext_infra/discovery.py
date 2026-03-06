@@ -20,8 +20,8 @@ from flext_infra import c, m
 class FlextInfraDiscoveryService(s[list[m.Infra.ProjectInfo]]):
     """Infrastructure service for discovering workspace projects.
 
-    Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
-    Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
+    Structurally satisfies ``InfraProtocols.Discovery``.
+    Structurally satisfies ``InfraProtocols.Discovery``.
     """
 
     @staticmethod

@@ -123,7 +123,7 @@ class FlextInfraRefactorLooseClassScanner:
         return "low"
 
     def _discover_python_files(self, project_root: Path) -> list[Path]:
-        src_dir = project_root / "src"
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return []
 
@@ -155,7 +155,7 @@ class FlextInfraRefactorLooseClassScanner:
         return "".join(word.capitalize() for word in normalized.split())
 
     def _relative_module_path(self, project_root: Path, file_path: Path) -> Path | None:
-        src_dir = project_root / "src"
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         try:
             return file_path.relative_to(src_dir)
         except ValueError:
@@ -184,7 +184,7 @@ class FlextInfraRefactorLooseClassScanner:
             "--lang",
             "python",
             "--json",
-            str(project_root / "src"),
+            str(project_root / c.Infra.Paths.DEFAULT_SRC_DIR),
         ]
         runner = FlextInfraCommandRunner()
         result = runner.capture(cmd)

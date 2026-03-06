@@ -32,7 +32,7 @@ class FlextInfraCodegenScaffolder(FlextService[list[m.Infra.ScaffoldResult]]):
     @staticmethod
     def _find_package_dir(project_root: Path) -> Path | None:
         """Find the first Python package under src/."""
-        src_dir = project_root / "src"
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return None
         for child in sorted(src_dir.iterdir()):
