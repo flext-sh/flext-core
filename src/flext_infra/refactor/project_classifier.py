@@ -50,7 +50,7 @@ class ProjectClassifier:
             self._pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         )
 
-        raw_project = parsed.get("project")
+        raw_project = parsed.get(c.Infra.Toml.PROJECT)
         if not isinstance(raw_project, dict):
             return "", []
 

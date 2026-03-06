@@ -191,11 +191,13 @@ class FlextInfraInternalDependencySyncService:
             )
         data = data_result.value
 
-        tool = data.get("tool")
-        poetry = tool.get("poetry") if isinstance(tool, dict) else None
+        tool = data.get(c.Infra.Toml.TOOL)
+        poetry = tool.get(c.Infra.Toml.POETRY) if isinstance(tool, dict) else None
         empty_deps: dict[str, t.ContainerValue] = {}
         deps_raw = (
-            poetry.get("dependencies") if isinstance(poetry, dict) else empty_deps
+            poetry.get(c.Infra.Toml.DEPENDENCIES)
+            if isinstance(poetry, dict)
+            else empty_deps
         )
         deps: dict[str, t.ContainerValue] = (
             deps_raw if isinstance(deps_raw, dict) else {}
@@ -215,9 +217,11 @@ class FlextInfraInternalDependencySyncService:
                 continue
             result[dep_name] = project_root / ".flext-deps" / repo_name
 
-        project_obj = data.get("project")
+        project_obj = data.get(c.Infra.Toml.PROJECT)
         project_deps_raw = (
-            project_obj.get("dependencies") if isinstance(project_obj, dict) else None
+            project_obj.get(c.Infra.Toml.DEPENDENCIES)
+            if isinstance(project_obj, dict)
+            else None
         )
         project_deps: list[t.ContainerValue] = (
             project_deps_raw if isinstance(project_deps_raw, list) else []

@@ -19,6 +19,7 @@ from flext_core import FlextConstants, m
 class FlextTestsConstants(FlextConstants):
     """Constants for FLEXT tests - extends FlextConstants.
 
+    Architecture layer: Layer 0 foundation constants with test extensions.
     Architecture: Extends FlextConstants with test-specific constants.
     All base constants from FlextConstants are available through inheritance.
     Uses StrEnum and Literals for type-safe constants following Python 3.13+ patterns.

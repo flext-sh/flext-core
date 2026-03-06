@@ -620,7 +620,7 @@ class FlextInfraCodegenFixer(FlextService[list[m.Infra.AutoFixResult]]):
             self._add_import_to_tree(
                 tree=tree,
                 pkg_name=pkg_name,
-                module_name="typings",
+                module_name=c.Infra.Directories.TYPINGS,
                 name=target_name,
             )
 

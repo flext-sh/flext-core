@@ -228,7 +228,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                     )
                 typings_report = typings_result.value
                 typing_dict = typings_report.model_dump()
-                projects_report[project_name]["typings"] = typing_dict
+                projects_report[project_name][c.Infra.Directories.TYPINGS] = typing_dict
 
                 to_add_obj = typing_dict.get("to_add")
                 to_add: list[t.ContainerValue] = (
@@ -244,7 +244,13 @@ class FlextInfraRuntimeDevDependencyDetector:
                         if not isinstance(package, str):
                             continue
                         run = self._runner.run_raw(
-                            ["poetry", "add", "--group", c.Infra.Directories.TYPINGS, package],
+                            [
+                                "poetry",
+                                "add",
+                                "--group",
+                                c.Infra.Directories.TYPINGS,
+                                package,
+                            ],
                             cwd=project_path,
                             timeout=c.Infra.Timeouts.MEDIUM,
                             env=env,

@@ -54,7 +54,10 @@ class FlextInfraStubSupplyChain:
     def _stub_exists(module_name: str, root: Path) -> bool:
         """Check if a stub file exists for a module."""
         rel = module_name.replace(".", "/")
-        for base in (root / c.Infra.Directories.TYPINGS, root / c.Infra.Directories.TYPINGS / "generated"):
+        for base in (
+            root / c.Infra.Directories.TYPINGS,
+            root / c.Infra.Directories.TYPINGS / "generated",
+        ):
             candidates = [
                 base / f"{rel}.pyi",
                 base / rel / "__init__.pyi",
@@ -185,7 +188,15 @@ class FlextInfraStubSupplyChain:
     def _run_pyrefly_missing(self, project_dir: Path) -> list[str]:
         """Run pyrefly check and extract missing imports."""
         result = self._runner.run(
-            ["poetry", "run", "pyrefly", "check", "src", "--config", c.Infra.Files.PYPROJECT_FILENAME],
+            [
+                "poetry",
+                "run",
+                "pyrefly",
+                "check",
+                "src",
+                "--config",
+                c.Infra.Files.PYPROJECT_FILENAME,
+            ],
             cwd=project_dir,
         )
         output = ""

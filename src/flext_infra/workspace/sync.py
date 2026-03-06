@@ -216,12 +216,15 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
         """
         # Prefer canonical root copy over template generation
         canonical_basemk = (
-            canonical_root / c.Infra.Files.BASE_MK if canonical_root is not None else None
+            canonical_root / c.Infra.Files.BASE_MK
+            if canonical_root is not None
+            else None
         )
         if (
             canonical_basemk is not None
             and canonical_basemk.exists()
-            and canonical_basemk.resolve() != (project_root / c.Infra.Files.BASE_MK).resolve()
+            and canonical_basemk.resolve()
+            != (project_root / c.Infra.Files.BASE_MK).resolve()
         ):
             content = canonical_basemk.read_text(encoding=c.Infra.Encoding.DEFAULT)
         else:

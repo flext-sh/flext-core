@@ -46,7 +46,7 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
             project_name="unnamed",
             python_version="3.13",
             core_stack="python",
-            package_manager="poetry",
+            package_manager=c.Infra.Toml.POETRY,
             source_dir="src",
             tests_dir="tests",
             lint_gates=["lint", "format", "pyrefly", "mypy", "pyright"],

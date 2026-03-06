@@ -13,7 +13,7 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import FlextDispatcher, s, r
+from flext_core import FlextDispatcher, r, s
 from flext_infra import m, t
 
 

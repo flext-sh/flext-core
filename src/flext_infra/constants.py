@@ -128,6 +128,39 @@ class FlextInfraConstants(FlextConstants):
             CI: Final[int] = 900
             """Extended timeout for CI operations (go vet, etc.)."""
 
+        class Toml:
+            """TOML section/key names for pyproject.toml parsing."""
+
+            TOOL: Final[str] = "tool"
+            """Top-level [tool] section key."""
+
+            POETRY: Final[str] = "poetry"
+            """Poetry tool subsection key."""
+
+            PROJECT: Final[str] = "project"
+            """Top-level [project] section key."""
+
+            DEPENDENCIES: Final[str] = "dependencies"
+            """Dependencies key within project or poetry sections."""
+
+            DEV_DEPENDENCIES: Final[str] = "dev-dependencies"
+            """Poetry dev-dependencies key."""
+
+            DEPENDENCY_GROUPS: Final[str] = "dependency-groups"
+            """PEP 735 dependency-groups section key."""
+
+            BUILD_SYSTEM: Final[str] = "build-system"
+            """Build system section key."""
+
+            OPTIONAL_DEPENDENCIES: Final[str] = "optional-dependencies"
+            """Optional dependencies key within [project]."""
+
+            EXTRAS: Final[str] = "extras"
+            """Poetry extras key."""
+
+            GROUP: Final[str] = "group"
+            """Poetry group key for dependency groups."""
+
         class Gates:
             """Quality gate identifiers."""
 

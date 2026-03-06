@@ -173,23 +173,23 @@ class FlextInfraDependencyDetectionService:
 
         names: set[str] = set()
 
-        tool = data.get("tool")
+        tool = data.get(c.Infra.Toml.TOOL)
         if tool is not None and isinstance(tool, Mapping):
-            poetry = tool.get("poetry")
+            poetry = tool.get(c.Infra.Toml.POETRY)
             if poetry is not None and isinstance(poetry, Mapping):
-                group = poetry.get("group")
+                group = poetry.get(c.Infra.Toml.GROUP)
                 if group is not None and isinstance(group, Mapping):
-                    typings_group = group.get("typings")
+                    typings_group = group.get(c.Infra.Directories.TYPINGS)
                     if typings_group is not None and isinstance(typings_group, Mapping):
-                        deps = typings_group.get("dependencies")
+                        deps = typings_group.get(c.Infra.Toml.DEPENDENCIES)
                         if deps is not None and isinstance(deps, Mapping):
                             names.update(str(key) for key in deps)
 
-        project = data.get("project")
+        project = data.get(c.Infra.Toml.PROJECT)
         if project is not None and isinstance(project, Mapping):
-            optional = project.get("optional-dependencies")
+            optional = project.get(c.Infra.Toml.OPTIONAL_DEPENDENCIES)
             if optional is not None and isinstance(optional, Mapping):
-                typings = optional.get("typings")
+                typings = optional.get(c.Infra.Directories.TYPINGS)
                 if isinstance(typings, list):
                     for spec in typings:
                         if isinstance(spec, str):
@@ -334,7 +334,9 @@ class FlextInfraDependencyDetectionService:
             for excluded in extend_exclude:
                 cmd.extend(["--extend-exclude", excluded])
 
-        result = self._runner.run_raw(cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM)
+        result = self._runner.run_raw(
+            cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM
+        )
         if result.is_failure:
             return r[tuple[list[IssueMap], int]].fail(
                 result.error or "deptry execution failed",
@@ -367,7 +369,7 @@ class FlextInfraDependencyDetectionService:
         project_path: Path,
         venv_bin: Path,
         *,
-        timeout: int = 300,
+        timeout: int = c.Infra.Timeouts.DEFAULT,
     ) -> FlextResult[tuple[list[str], list[str]]]:
         """Run mypy to detect missing type stubs and hinted packages."""
         mypy_bin = venv_bin / "mypy"
@@ -498,7 +500,7 @@ def run_mypy_stub_hints(
     project_path: Path,
     venv_bin: Path,
     *,
-    timeout: int = 300,
+    timeout: int = c.Infra.Timeouts.DEFAULT,
 ) -> FlextResult[tuple[list[str], list[str]]]:
     """Run mypy to detect missing type stubs and hinted packages."""
     return _service.run_mypy_stub_hints(project_path, venv_bin, timeout=timeout)

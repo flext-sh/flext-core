@@ -57,21 +57,21 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
 
     @staticmethod
     def _has_flext_core_dependency(document: tomlkit.TOMLDocument) -> bool:
-        project = document.get("project")
+        project = document.get(c.Infra.Toml.PROJECT)
         if isinstance(project, Table):
-            deps = project.get("dependencies")
+            deps = project.get(c.Infra.Toml.DEPENDENCIES)
             if isinstance(deps, list):
                 for dep in deps:
                     if str(dep).strip().startswith("flext-core"):
                         return True
 
-        tool = document.get("tool")
+        tool = document.get(c.Infra.Toml.TOOL)
         if not isinstance(tool, Table):
             return False
-        poetry = tool.get("poetry")
+        poetry = tool.get(c.Infra.Toml.POETRY)
         if not isinstance(poetry, Table):
             return False
-        poetry_deps = poetry.get("dependencies")
+        poetry_deps = poetry.get(c.Infra.Toml.DEPENDENCIES)
         if not isinstance(poetry_deps, Table):
             return False
         return "flext-core" in poetry_deps
@@ -340,12 +340,12 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
                 )
             return r[str].ok("")
 
-        project_table = self._ensure_table(document, "project")
-        dependencies = project_table.get("dependencies")
+        project_table = self._ensure_table(document, c.Infra.Toml.PROJECT)
+        dependencies = project_table.get(c.Infra.Toml.DEPENDENCIES)
         if not isinstance(dependencies, list):
             dependencies = tomlkit.array()
             _ = dependencies.multiline(True)
-            project_table["dependencies"] = dependencies
+            project_table[c.Infra.Toml.DEPENDENCIES] = dependencies
 
         dependencies.append("flext-core @ ../flext-core")
 

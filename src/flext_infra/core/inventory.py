@@ -47,14 +47,15 @@ class FlextInfraInventoryService:
         """
         try:
             root = workspace_root.resolve()
-            scripts_dir = root / "scripts"
+            scripts_dir = root / c.Infra.Directories.SCRIPTS
 
             scripts: list[str] = []
             if scripts_dir.exists():
                 scripts = sorted(
                     path.relative_to(root).as_posix()
                     for path in scripts_dir.rglob("*")
-                    if path.is_file() and path.suffix in {c.Infra.Extensions.PYTHON, ".sh"}
+                    if path.is_file()
+                    and path.suffix in {c.Infra.Extensions.PYTHON, ".sh"}
                 )
 
             now = datetime.now(UTC).isoformat()
@@ -74,7 +75,7 @@ class FlextInfraInventoryService:
                 "candidates": [],
             }
 
-            reports_dir = output_dir or (root / ".reports")
+            reports_dir = output_dir or (root / c.Infra.Reporting.REPORTS_DIR_NAME)
             outputs: Mapping[Path, Mapping[str, t.ContainerValue]] = {
                 reports_dir / "scripts-infra--json--scripts-inventory.json": inventory,
                 reports_dir / "scripts-infra--json--scripts-wiring.json": wiring,

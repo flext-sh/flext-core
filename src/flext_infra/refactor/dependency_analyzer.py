@@ -174,7 +174,11 @@ class DependencyAnalyzer:
                 continue
             if path.is_dir() and (path / c.Infra.Files.INIT_PY).is_file():
                 package_roots.add(path.name)
-            elif path.is_file() and path.suffix == c.Infra.Extensions.PYTHON and path.stem != "__init__":
+            elif (
+                path.is_file()
+                and path.suffix == c.Infra.Extensions.PYTHON
+                and path.stem != "__init__"
+            ):
                 package_roots.add(path.stem)
 
         return package_roots

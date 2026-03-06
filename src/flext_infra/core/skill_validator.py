@@ -276,7 +276,9 @@ class FlextInfraSkillValidator:
             return 0
 
         cmd: list[str] = (
-            [sys.executable, str(script)] if script.suffix == c.Infra.Extensions.PYTHON else [str(script)]
+            [sys.executable, str(script)]
+            if script.suffix == c.Infra.Extensions.PYTHON
+            else [str(script)]
         )
         cmd.extend(["--root", str(project_path)])
         if bool(rule.get("pass_mode")):

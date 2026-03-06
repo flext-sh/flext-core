@@ -34,11 +34,11 @@ class FlextInfraExtraPathsManager:
 
 def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
     """Extract path dependency paths from PEP 621 project.dependencies."""
-    project = doc.get("project")
+    project = doc.get(c.Infra.Toml.PROJECT)
     if not project or not isinstance(project, dict):
         return []
     project_dict = project
-    deps = project_dict.get("dependencies")
+    deps = project_dict.get(c.Infra.Toml.DEPENDENCIES)
     if not isinstance(deps, list):
         return []
     deps_list = deps
@@ -59,15 +59,15 @@ def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
 
 def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
     """Extract path dependency paths from Poetry tool.poetry.dependencies."""
-    tool = doc.get("tool")
+    tool = doc.get(c.Infra.Toml.TOOL)
     if not isinstance(tool, dict):
         return []
     tool_dict = tool
-    poetry = tool_dict.get("poetry")
+    poetry = tool_dict.get(c.Infra.Toml.POETRY)
     if not isinstance(poetry, dict):
         return []
     poetry_dict = poetry
-    deps = poetry_dict.get("dependencies")
+    deps = poetry_dict.get(c.Infra.Toml.DEPENDENCIES)
     if not isinstance(deps, dict):
         return []
     deps_dict = deps
@@ -133,7 +133,7 @@ def sync_one(
         else c.Infra.Deps.MYPY_BASE_PROJECT + dep_paths
     )
 
-    tool = doc.get("tool")
+    tool = doc.get(c.Infra.Toml.TOOL)
     if not isinstance(tool, dict):
         return r[bool].ok(False)
     tool_dict = tool

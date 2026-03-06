@@ -374,7 +374,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             path = project_dir / directory
             if not path.is_dir():
                 continue
-            if next(path.rglob(c.Infra.Extensions.PYTHON_GLOB), None) or next(path.rglob("*.pyi"), None):
+            if next(path.rglob(c.Infra.Extensions.PYTHON_GLOB), None) or next(
+                path.rglob("*.pyi"), None
+            ):
                 out.append(directory)
         return out
 
@@ -752,7 +754,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         self,
         cmd: list[str],
         cwd: Path,
-        timeout: int = 300,
+        timeout: int = c.Infra.Timeouts.DEFAULT,
         env: Mapping[str, str] | None = None,
     ) -> _RunCommandResult:
         result = self._runner.run_raw(
@@ -840,7 +842,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         issues: list[_CheckIssue] = []
         raw_output = ""
 
-        vet_result = self._run(["go", "vet", "./..."], project_dir, timeout=c.Infra.Timeouts.CI)
+        vet_result = self._run(
+            ["go", "vet", "./..."], project_dir, timeout=c.Infra.Timeouts.CI
+        )
         raw_output = "\n".join(
             part for part in (vet_result.stdout, vet_result.stderr) if part
         )
@@ -988,7 +992,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             and "[tool.mypy]" in proj_py.read_text(encoding=c.Infra.Encoding.DEFAULT)
             else self._workspace_root / c.Infra.Files.PYPROJECT_FILENAME
         )
-        typings_generated = self._workspace_root / c.Infra.Directories.TYPINGS / "generated"
+        typings_generated = (
+            self._workspace_root / c.Infra.Directories.TYPINGS / "generated"
+        )
         mypy_env = os.environ.copy()
         if typings_generated.is_dir():
             existing = mypy_env.get("MYPYPATH", "")
@@ -1185,7 +1191,11 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                             message="Would be reformatted",
                         ),
                     )
-                elif path.endswith(c.Infra.Extensions.PYTHON) and " " not in path and path not in seen:
+                elif (
+                    path.endswith(c.Infra.Extensions.PYTHON)
+                    and " " not in path
+                    and path not in seen
+                ):
                     seen.add(path)
                     issues.append(
                         _CheckIssue(
@@ -1291,7 +1301,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         except Exception as exc:
             return r[list[str]].fail(f"failed to parse {path}: {exc}")
 
-        tool = doc.get("tool")
+        tool = doc.get(c.Infra.Toml.TOOL)
         if not isinstance(tool, Mapping) or "pyrefly" not in tool:
             return r[list[str]].ok([])
 
@@ -1415,7 +1425,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
                         "search-path ../typings/generated -> typings/generated",
                     )
                 elif p == "../typings":
-                    new_paths.append("typings")
+                    new_paths.append(c.Infra.Directories.TYPINGS)
                     fixes.append("search-path ../typings -> typings")
                 else:
                     new_paths.append(p)

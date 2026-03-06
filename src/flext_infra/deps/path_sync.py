@@ -76,10 +76,10 @@ def _rewrite_pep621(
     mode: str,
     internal_names: set[str],
 ) -> list[str]:
-    project = doc.get("project")
+    project = doc.get(c.Infra.Toml.PROJECT)
     if not project or not isinstance(project, dict):
         return []
-    deps = project.get("dependencies")
+    deps = project.get(c.Infra.Toml.DEPENDENCIES)
     if not isinstance(deps, list):
         return []
 
@@ -115,13 +115,13 @@ def _rewrite_pep621(
 
 
 def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
-    tool = doc.get("tool")
+    tool = doc.get(c.Infra.Toml.TOOL)
     if not isinstance(tool, dict):
         return []
-    poetry = tool.get("poetry")
+    poetry = tool.get(c.Infra.Toml.POETRY)
     if not isinstance(poetry, dict):
         return []
-    deps = poetry.get("dependencies")
+    deps = poetry.get(c.Infra.Toml.DEPENDENCIES)
     if not isinstance(deps, dict):
         return []
 
@@ -209,7 +209,7 @@ def main() -> int:
     if root_pyproject.exists():
         root_data_result = toml_service.read(root_pyproject)
         if root_data_result.is_success:
-            root_project = root_data_result.unwrap().get("project")
+            root_project = root_data_result.unwrap().get(c.Infra.Toml.PROJECT)
             if isinstance(root_project, dict):
                 root_name = root_project.get("name")
                 if isinstance(root_name, str) and root_name:
@@ -260,7 +260,7 @@ def main() -> int:
         data_result = toml_service.read(pyproject)
         if data_result.is_failure:
             continue
-        project_obj = data_result.unwrap().get("project")
+        project_obj = data_result.unwrap().get(c.Infra.Toml.PROJECT)
         if not isinstance(project_obj, dict):
             continue
         project_name = project_obj.get("name")
@@ -274,7 +274,7 @@ def main() -> int:
         data_result = toml_service.read(pyproject)
         if data_result.is_failure:
             continue
-        project_obj = data_result.unwrap().get("project")
+        project_obj = data_result.unwrap().get(c.Infra.Toml.PROJECT)
         if not isinstance(project_obj, dict):
             continue
         project_name = project_obj.get("name")
