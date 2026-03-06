@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
@@ -38,12 +39,8 @@ ROOT = _workspace_root(Path(__file__))
 def _find_ruff_shared_path(project_dir: Path, workspace_root: Path) -> tuple[Path, str]:
     """Return target ruff-shared file path and relative extend value."""
     workspace_candidate = workspace_root / "ruff-shared.toml"
-    if workspace_candidate.exists() or workspace_root == project_dir:
-        return workspace_candidate, workspace_candidate.relative_to(
-            project_dir
-        ).as_posix()
-
-    return workspace_candidate, workspace_candidate.relative_to(project_dir).as_posix()
+    relative = os.path.relpath(workspace_candidate, start=project_dir)
+    return workspace_candidate, Path(relative).as_posix()
 
 
 def _ensure_ruff_shared_template(
