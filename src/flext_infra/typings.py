@@ -19,7 +19,7 @@ from typing import TypeAlias
 from flext_core.typings import FlextTypes
 
 
-class FlextInfraTypings(FlextTypes):
+class FlextInfraTypes(FlextTypes):
     """Type namespace for flext-infra; extends FlextTypes via MRO.
 
     Infra-specific types are nested under the ``Infra`` inner class to
@@ -47,6 +47,6 @@ class FlextInfraTypings(FlextTypes):
         """Infrastructure payload map: string-keyed mapping of payloads."""
 
 
-t = FlextInfraTypings
+t = FlextInfraTypes
 
-__all__ = ["FlextInfraTypings", "t"]
+__all__ = ["FlextInfraTypes", "t"]

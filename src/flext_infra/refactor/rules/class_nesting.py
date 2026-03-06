@@ -86,27 +86,29 @@ class PreCheckGate:
         self, entry: _MappingEntry
     ) -> tuple[bool, _PreCheckViolation | None]:
         source_symbol = entry.get("loose_name", "")
+        helper_symbol = entry.get("helper_name", "")
+        symbol = source_symbol or helper_symbol
         target_namespace = entry.get("target_namespace", "")
         current_file = entry.get("current_file", "")
-        if not source_symbol or not target_namespace or not current_file:
+        if not symbol or not target_namespace or not current_file:
             return True, None
 
         module_family = self._module_family_from_path(current_file)
         policy = self._policy_by_family.get(module_family)
         if policy is None:
             return False, {
-                "rule_id": f"precheck:{source_symbol}",
-                "source_symbol": source_symbol,
+                "rule_id": f"precheck:{symbol}",
+                "source_symbol": symbol,
                 "violation_type": "unknown_module_family",
                 "suggested_fix": f"declare explicit policy for {module_family}",
             }
 
-        operation = "class_nesting"
+        operation = "helper_consolidation" if helper_symbol else "class_nesting"
         allowed_operations = policy.get("allowed_operations", [])
         if operation not in allowed_operations:
             return False, {
-                "rule_id": f"precheck:{source_symbol}",
-                "source_symbol": source_symbol,
+                "rule_id": f"precheck:{symbol}",
+                "source_symbol": symbol,
                 "violation_type": "operation_not_allowed",
                 "suggested_fix": f"allow {operation} in policy for {module_family}",
             }
@@ -114,8 +116,8 @@ class PreCheckGate:
         forbidden_operations = policy.get("forbidden_operations", [])
         if operation in forbidden_operations:
             return False, {
-                "rule_id": f"precheck:{source_symbol}",
-                "source_symbol": source_symbol,
+                "rule_id": f"precheck:{symbol}",
+                "source_symbol": symbol,
                 "violation_type": "operation_forbidden",
                 "suggested_fix": f"remove {operation} from forbidden_operations for {module_family}",
             }
@@ -126,8 +128,8 @@ class PreCheckGate:
             for pattern in forbidden_targets
         ):
             return False, {
-                "rule_id": f"precheck:{source_symbol}",
-                "source_symbol": source_symbol,
+                "rule_id": f"precheck:{symbol}",
+                "source_symbol": symbol,
                 "violation_type": "forbidden_target",
                 "suggested_fix": f"choose allowed target for family {module_family}",
             }
@@ -412,6 +414,12 @@ class ClassNestingRefactorRule:
             file_path,
             confidence_threshold,
         )
+        helper_entries = self._entries_for_source_file(
+            config.get("helper_consolidation", []),
+            file_path,
+            confidence_threshold,
+        )
+        entries.extend(helper_entries)
         for entry in entries:
             ok, violation = self._pre_check_gate.validate_entry(entry)
             if not ok and violation is not None:

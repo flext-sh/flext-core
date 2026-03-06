@@ -73,3 +73,15 @@ def test_decorators_family_blocks_dispatcher_target() -> None:
     assert not ok
     assert violation is not None
     assert violation["violation_type"] == "forbidden_target"
+
+
+def test_helper_consolidation_is_prechecked() -> None:
+    gate = PreCheckGate(policy_path=_policy_path())
+    ok, violation = gate.validate_entry({
+        "helper_name": "ResultHelpers",
+        "current_file": "flext-core/src/flext_core/_utilities/result_helpers.py",
+        "target_namespace": "FlextModels",
+    })
+    assert not ok
+    assert violation is not None
+    assert violation["violation_type"] == "forbidden_target"
