@@ -52,7 +52,8 @@ def _ensure_ruff_shared_template(
 
     target.parent.mkdir(parents=True, exist_ok=True)
     _ = target.write_text(
-        c.Infra.Deps.RUFF_SHARED_TEMPLATE.rstrip() + "\n", encoding=c.Infra.Encoding.DEFAULT
+        c.Infra.Deps.RUFF_SHARED_TEMPLATE.rstrip() + "\n",
+        encoding=c.Infra.Encoding.DEFAULT,
     )
     return target, True
 

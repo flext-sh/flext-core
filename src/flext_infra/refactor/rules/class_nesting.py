@@ -143,7 +143,9 @@ class PreCheckGate:
         try:
             loaded = cast(
                 "_PolicyDocument",
-                yaml.safe_load(self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)),
+                yaml.safe_load(
+                    self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                ),
             )
         except (OSError, yaml.YAMLError):
             return {}
@@ -608,7 +610,9 @@ class ClassNestingRefactorRule:
         try:
             loaded = cast(
                 "_PolicyDocument",
-                yaml.safe_load(self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)),
+                yaml.safe_load(
+                    self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                ),
             )
         except (OSError, yaml.YAMLError):
             return {}
@@ -619,7 +623,9 @@ class ClassNestingRefactorRule:
     def _policy_document_schema_valid(self, loaded: _PolicyDocument) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
         try:
-            schema = json.loads(schema_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
+            schema = json.loads(
+                schema_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            )
         except (OSError, json.JSONDecodeError):
             return False
 

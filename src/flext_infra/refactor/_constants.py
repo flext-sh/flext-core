@@ -213,6 +213,10 @@ class FlextInfraRefactorConstants:
     CAST_ARITY: int = 2
     """Expected number of arguments for typing.cast calls."""
 
+    # From scanner.py
+    MIN_PATH_DEPTH: int = 2
+    """Minimum relative path depth for module prefix detection."""
+
     # -- Enums ---------------------------------------------------------------
 
     class MethodCategory(StrEnum):

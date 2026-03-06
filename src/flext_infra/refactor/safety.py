@@ -8,9 +8,7 @@ from pathlib import Path
 from typing import Protocol, overload
 
 from flext_core import r
-from flext_infra.constants import c
-from flext_infra.models import m
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra import FlextInfraCommandRunner, c, m
 
 
 class FlextInfraRefactorSafetyRunnerProtocol(Protocol):

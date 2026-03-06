@@ -11,8 +11,7 @@ from typing import cast, override
 
 import libcst as cst
 
-from flext_infra import c
-from flext_infra import FlextInfraCommandRunner
+from flext_infra import FlextInfraCommandRunner, c
 
 
 @dataclass(frozen=True)

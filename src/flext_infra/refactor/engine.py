@@ -18,7 +18,7 @@ import yaml
 
 from flext_core import r
 from flext_infra import c, m
-from flext_infra.output import output
+from flext_infra import output
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_reconstructor import (
@@ -545,7 +545,9 @@ class FlextInfraRefactorEngine:
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 output.info(f"Loading rules from {rule_file.name}")
-                rule_config = yaml.safe_load(rule_file.read_text(encoding=c.Infra.Encoding.DEFAULT))
+                rule_config = yaml.safe_load(
+                    rule_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                )
                 if rule_config is None:
                     continue
                 rules = rule_config.get("rules", [])
