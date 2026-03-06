@@ -1,8 +1,10 @@
+"""CST transformer for nesting top-level classes into namespace classes."""
+
 from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Mapping
-from typing import TypedDict, cast, override
+from typing import TypedDict, override
 
 import libcst as cst
 
@@ -19,12 +21,15 @@ type PolicyContext = Mapping[str, _FamilyPolicy]
 
 
 class ClassNestingTransformer(cst.CSTTransformer):
+    """Transform top-level classes into nested classes under namespace parents."""
+
     def __init__(
         self,
         mappings: dict[str, str],
         policy_context: PolicyContext | None = None,
         class_families: Mapping[str, str] | None = None,
     ) -> None:
+        """Initialize with class-to-namespace mappings and optional policy context."""
         self._mappings = mappings
         self._policy_context = policy_context
         self._class_families = class_families or {}
@@ -158,9 +163,7 @@ class ClassNestingTransformer(cst.CSTTransformer):
             return True
         if not self._bool_from_policy(policy, "enable_class_nesting", default=False):
             return False
-        if not self._target_allowed(policy, target_namespace):
-            return False
-        return True
+        return self._target_allowed(policy, target_namespace)
 
     def _can_operate_for_namespace(
         self,
@@ -213,19 +216,18 @@ class ClassNestingTransformer(cst.CSTTransformer):
             return False
 
         forbidden = self._string_collection(policy.get("forbidden_targets"))
-        if target_namespace in forbidden:
-            return False
-        return True
+        return target_namespace not in forbidden
 
-    def _string_collection(self, value: object) -> tuple[str, ...]:
-        if not isinstance(value, list | tuple):
+    def _string_collection(
+        self,
+        value: str | list[str] | tuple[str, ...] | None,
+    ) -> tuple[str, ...]:
+        """Extract a tuple of strings from a policy value."""
+        if value is None:
             return ()
-        typed_value = cast("tuple[object, ...] | list[object]", value)
-        result: list[str] = []
-        for entry in typed_value:
-            if isinstance(entry, str):
-                result.append(entry)
-        return tuple(result)
+        if isinstance(value, str):
+            return (value,)
+        return tuple(entry for entry in value if isinstance(entry, str))
 
 
 __all__ = ["ClassNestingTransformer"]

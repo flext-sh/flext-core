@@ -7,6 +7,7 @@ import json
 import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import cast
 
 from pydantic import Field
 
@@ -19,6 +20,7 @@ from flext_infra import (
     c,
     m,
 )
+from flext_infra.toml_io import TomlMap
 
 type InfraValue = t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | None
 
@@ -166,9 +168,13 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return r[list[Path]].fail(result.error or "project resolution failed")
 
+        projects_info: list[m.ProjectInfo] = cast(
+            "list[m.ProjectInfo]",
+            result.value,
+        )
         projects = [
             project.path
-            for project in result.value
+            for project in projects_info
             if (project.path / c.Files.PYPROJECT_FILENAME).exists()
         ]
         return r[list[Path]].ok(sorted(projects))
@@ -179,7 +185,7 @@ class FlextInfraDependencyDetectionService:
         read_result = self._toml.read(pyproject)
         if read_result.is_failure:
             return []
-        data = read_result.value
+        data: TomlMap = cast("TomlMap", read_result.value)
         if not data:
             return []
 
@@ -243,7 +249,11 @@ class FlextInfraDependencyDetectionService:
                 return r[dm.TypingsReport].fail(
                     hints_result.error or "typing hint detection failed",
                 )
-            hinted, missing_modules = hints_result.value
+            typed_hints: tuple[list[str], list[str]] = cast(
+                "tuple[list[str], list[str]]",
+                hints_result.value,
+            )
+            hinted, missing_modules = typed_hints
 
         required_set: set[str] = set(hinted)
         for module_name in missing_modules:
@@ -287,7 +297,8 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return {}
         limits: MutableMapping[str, InfraValue] = {}
-        for key, value in result.value.items():
+        toml_data: TomlMap = cast("TomlMap", result.value)
+        for key, value in toml_data.items():
             converted = _to_infra_value(value)
             if converted is not None or value is None:
                 limits[str(key)] = converted
@@ -369,7 +380,8 @@ class FlextInfraDependencyDetectionService:
                 with contextlib.suppress(OSError):
                     out_file.unlink()
 
-        return r[tuple[list[IssueMap], int]].ok((issues, result.value.exit_code))
+        cmd_result: m.CommandOutput = cast("m.CommandOutput", result.value)
+        return r[tuple[list[IssueMap], int]].ok((issues, cmd_result.exit_code))
 
     def run_mypy_stub_hints(
         self,
@@ -406,7 +418,8 @@ class FlextInfraDependencyDetectionService:
                 result.error or "mypy execution failed",
             )
 
-        output = f"{result.value.stdout}\n{result.value.stderr}"
+        cmd_result: m.CommandOutput = cast("m.CommandOutput", result.value)
+        output = f"{cmd_result.stdout}\n{cmd_result.stderr}"
         hinted = {
             match.group(1).strip()
             for match in FlextInfraPatterns.MYPY_HINT_RE.finditer(output)
@@ -439,9 +452,10 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return r[tuple[list[str], int]].fail(result.error or "pip check failed")
 
-        output = result.value.stdout
+        cmd_result: m.CommandOutput = cast("m.CommandOutput", result.value)
+        output = cmd_result.stdout
         lines = output.strip().splitlines() if output else []
-        return r[tuple[list[str], int]].ok((lines, result.value.exit_code))
+        return r[tuple[list[str], int]].ok((lines, cmd_result.exit_code))
 
 
 _service = FlextInfraDependencyDetectionService()

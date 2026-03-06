@@ -37,12 +37,30 @@ class _PolicyFamily(TypedDict, total=False):
 
 class _PolicyDocument(TypedDict, total=False):
     policy_matrix: list[_PolicyFamily]
+    rules: list["_PolicyRule"]
+
+
+class _PolicyCheck(TypedDict, total=False):
+    type: str
+
+
+class _PolicyRule(TypedDict, total=False):
+    source_symbol: str
+    expected_base_chain: list[str]
+    post_checks: list[_PolicyCheck]
 
 
 class _RuleConfig(TypedDict, total=False):
     confidence_threshold: str
     class_nesting: list[_MappingEntry]
     helper_consolidation: list[_MappingEntry]
+
+
+class _PostCheckPayload(TypedDict, total=False):
+    source_symbol: str
+    expected_base_chain: list[str]
+    post_checks: list[str]
+    quality_gates: list[str]
 
 
 class _PreCheckViolation(TypedDict):
@@ -71,8 +89,6 @@ class PreCheckGate:
         module_family = self._module_family_from_path(current_file)
         policy = self._policy_by_family.get(module_family)
         if policy is None:
-            if module_family == "other_private":
-                return True, None
             return False, {
                 "rule_id": f"precheck:{source_symbol}",
                 "source_symbol": source_symbol,
@@ -147,6 +163,7 @@ class ClassNestingRefactorRule:
         self._config_path = config_path or Path(__file__).with_name(
             "class-nesting-mappings.yml"
         )
+        self._policy_path = Path(__file__).with_name("class-policy-v2.yml")
         self._pre_check_gate = PreCheckGate()
         self._post_check_gate = PostCheckGate()
 
@@ -208,6 +225,11 @@ class ClassNestingRefactorRule:
                 file_path.write_text(result_code, encoding="utf-8")
 
             if modified:
+                post_payload = self._build_postcheck_payload(
+                    mappings,
+                    file_path,
+                    confidence_threshold,
+                )
                 post_ok, post_errors = self._post_check_gate.validate(
                     RefactorResult(
                         file_path=file_path,
@@ -216,7 +238,7 @@ class ClassNestingRefactorRule:
                         changes=changes,
                         refactored_code=result_code,
                     ),
-                    {"source_symbol": "", "expected_base_chain": []},
+                    post_payload,
                 )
                 if not post_ok:
                     return RefactorResult(
@@ -446,6 +468,62 @@ class ClassNestingRefactorRule:
                 entry["confidence"] = confidence
             coerced.append(entry)
         return coerced
+
+    def _build_postcheck_payload(
+        self,
+        config: _RuleConfig,
+        file_path: Path,
+        confidence_threshold: str,
+    ) -> _PostCheckPayload:
+        payload: _PostCheckPayload = {
+            "source_symbol": "",
+            "expected_base_chain": [],
+            "post_checks": ["imports_resolve", "mro_valid"],
+            "quality_gates": ["lsp_diagnostics_clean"],
+        }
+        class_entries = self._entries_for_source_file(
+            config.get("class_nesting", []),
+            file_path,
+            confidence_threshold,
+        )
+        if not class_entries:
+            return payload
+
+        source_symbol = class_entries[0].get("loose_name", "")
+        if not source_symbol:
+            return payload
+
+        payload["source_symbol"] = source_symbol
+        policy_doc = self._load_policy_document()
+        rules = policy_doc.get("rules", [])
+        for rule in rules:
+            if rule.get("source_symbol", "") != source_symbol:
+                continue
+
+            expected_chain = rule.get("expected_base_chain", [])
+            payload["expected_base_chain"] = [item for item in expected_chain]
+
+            post_checks_raw = rule.get("post_checks", [])
+            post_checks: list[str] = []
+            for check in post_checks_raw:
+                check_type = check.get("type")
+                if check_type is not None:
+                    post_checks.append(check_type)
+            if post_checks:
+                payload["post_checks"] = post_checks
+            break
+
+        return payload
+
+    def _load_policy_document(self) -> _PolicyDocument:
+        try:
+            loaded = cast(
+                "_PolicyDocument",
+                yaml.safe_load(self._policy_path.read_text(encoding="utf-8")),
+            )
+        except (OSError, yaml.YAMLError):
+            return {}
+        return loaded
 
     def _scope_applies_to_file(
         self,

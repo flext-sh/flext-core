@@ -12,6 +12,8 @@ class PostCheckGate:
     class _PostCheckExpected(TypedDict, total=False):
         source_symbol: str
         expected_base_chain: list[str]
+        post_checks: list[str]
+        quality_gates: list[str]
 
     def validate(
         self,
@@ -27,15 +29,28 @@ class PostCheckGate:
             return True, []
 
         file_path = result.file_path
-        errors.extend(self._validate_imports(file_path))
+        post_checks = expected.get("post_checks", [])
+        quality_gates = expected.get("quality_gates", [])
+
+        if self._check_enabled("imports_resolve", post_checks):
+            errors.extend(self._validate_imports(file_path))
 
         source_symbol = expected.get("source_symbol", "")
         expected_chain = expected.get("expected_base_chain", [])
-        if source_symbol:
+        if (
+            source_symbol
+            and expected_chain
+            and self._check_enabled("mro_valid", post_checks)
+        ):
             errors.extend(self._validate_mro(file_path, source_symbol, expected_chain))
 
-        errors.extend(self._validate_types(file_path))
+        if self._check_enabled("lsp_diagnostics_clean", quality_gates):
+            errors.extend(self._validate_types(file_path))
+
         return len(errors) == 0, errors
+
+    def _check_enabled(self, check_name: str, checks: list[str]) -> bool:
+        return check_name in checks
 
     def _validate_imports(self, file_path: Path) -> list[str]:
         try:

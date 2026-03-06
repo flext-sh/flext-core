@@ -15,7 +15,9 @@ def test_class_nesting_refactor_single_file_end_to_end(tmp_path: Path) -> None:
     fixture_file = Path("tests/fixtures/namespace_validator/rule0_valid.py")
     source = fixture_file.read_text(encoding="utf-8")
 
-    target_file = tmp_path / "single_file_refactor_target.py"
+    dispatcher_dir = tmp_path / "_dispatcher"
+    dispatcher_dir.mkdir(parents=True, exist_ok=True)
+    target_file = dispatcher_dir / "single_file_refactor_target.py"
     target_file.write_text(
         source
         + "\n\n"

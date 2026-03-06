@@ -61,3 +61,15 @@ def test_runtime_family_blocks_non_runtime_target() -> None:
     assert not ok
     assert violation is not None
     assert violation["violation_type"] == "forbidden_target"
+
+
+def test_decorators_family_blocks_dispatcher_target() -> None:
+    gate = PreCheckGate(policy_path=_policy_path())
+    ok, violation = gate.validate_entry({
+        "loose_name": "FactoryDecoratorsDiscovery",
+        "current_file": "flext-core/src/flext_core/_decorators/discovery.py",
+        "target_namespace": "FlextDispatcher",
+    })
+    assert not ok
+    assert violation is not None
+    assert violation["violation_type"] == "forbidden_target"

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+from typing import cast
 
 from pydantic import Field
 
@@ -17,7 +18,11 @@ from flext_infra import (
     c,
     m,
 )
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra.deps.detection import (
+    FlextInfraDependencyDetectionService,
+    IssueMap,
+    dm,
+)
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -148,7 +153,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         root_result = self._paths.workspace_root_from_file(__file__)
         if root_result.is_failure:
             return r[int].fail(root_result.error or "workspace root resolution failed")
-        root = root_result.value
+        root: Path = cast("Path", root_result.value)
 
         venv_bin = root / c.Paths.VENV_BIN_REL
         limits_default = Path(__file__).resolve().parent / "dependency_limits.toml"
@@ -161,7 +166,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         )
         if projects_result.is_failure:
             return r[int].fail(projects_result.error or "project discovery failed")
-        projects = projects_result.value
+        projects: list[Path] = cast("list[Path]", projects_result.value)
         if not projects:
             logger.error("deps_no_projects_found")
             return r[int].ok(2)
@@ -205,7 +210,11 @@ class FlextInfraRuntimeDevDependencyDetector:
             deptry_result = self._deps.run_deptry(project_path, venv_bin)
             if deptry_result.is_failure:
                 return r[int].fail(deptry_result.error or "deptry run failed")
-            issues, _ = deptry_result.value
+            deptry_value: tuple[list[IssueMap], int] = cast(
+                "tuple[list[IssueMap], int]",
+                deptry_result.value,
+            )
+            issues, _ = deptry_value
             project_payload = self._deps.build_project_report(project_name, issues)
             project_dict = project_payload.model_dump()
             projects_report[project_name] = project_dict
@@ -222,7 +231,8 @@ class FlextInfraRuntimeDevDependencyDetector:
                     return r[int].fail(
                         typings_result.error or "typing dependency detection failed",
                     )
-                typing_dict = typings_result.value.model_dump()
+                typings_report = cast("dm.TypingsReport", typings_result.value)
+                typing_dict = typings_report.model_dump()
                 projects_report[project_name]["typings"] = typing_dict
 
                 to_add_obj = typing_dict.get("to_add")
@@ -244,12 +254,23 @@ class FlextInfraRuntimeDevDependencyDetector:
                             timeout=120,
                             env=env,
                         )
-                        if run.is_failure or run.value.exit_code != 0:
+                        if run.is_failure:
                             logger.warning(
                                 "deps_typings_add_failed",
                                 project=project_name,
                                 package=package,
                             )
+                        else:
+                            run_output: m.CommandOutput = cast(
+                                "m.CommandOutput",
+                                run.value,
+                            )
+                            if run_output.exit_code != 0:
+                                logger.warning(
+                                    "deps_typings_add_failed",
+                                    project=project_name,
+                                    package=package,
+                                )
 
         if not args.no_pip_check:
             if not args.quiet:
@@ -257,7 +278,11 @@ class FlextInfraRuntimeDevDependencyDetector:
             pip_result = self._deps.run_pip_check(root, venv_bin)
             if pip_result.is_failure:
                 return r[int].fail(pip_result.error or "pip check failed")
-            pip_lines, pip_exit = pip_result.value
+            pip_value: tuple[list[str], int] = cast(
+                "tuple[list[str], int]",
+                pip_result.value,
+            )
+            pip_lines, pip_exit = pip_value
             report_model.pip_check = ddm.PipCheckReport(
                 ok=pip_exit == 0,
                 lines=pip_lines,
@@ -317,7 +342,7 @@ def main() -> int:
     if result.is_failure:
         logger.error("deps_detector_failed", error=result.error or "unknown error")
         return 1
-    return result.value
+    return cast("int", result.value)
 
 
 if __name__ == "__main__":

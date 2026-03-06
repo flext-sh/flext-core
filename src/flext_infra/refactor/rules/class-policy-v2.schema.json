@@ -33,6 +33,13 @@
         "$ref": "#/definitions/whitelistEntry"
       }
     },
+    "rules": {
+      "type": "array",
+      "description": "Concrete class refactor rules validated by classRule",
+      "items": {
+        "$ref": "#/definitions/classRule"
+      }
+    },
     "defaults": {
       "type": "object",
       "description": "Default enforcement behavior",
@@ -60,6 +67,7 @@
       }
     }
   },
+  "additionalProperties": false,
   "definitions": {
     "policyEntry": {
       "type": "object",

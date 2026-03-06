@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextResult, r, t
 from flext_infra import FlextInfraCommandRunner, m
@@ -132,7 +133,10 @@ class FlextInfraStubSupplyChain:
                 if result.is_failure:
                     violations.append(f"{proj.name}: {result.error}")
                     continue
-                data = result.value
+                data: Mapping[str, t.ContainerValue] = cast(
+                    "Mapping[str, t.ContainerValue]",
+                    result.value,
+                )
                 internal = data.get("internal_missing", [])
                 unresolved = data.get("unresolved_missing", [])
                 if isinstance(internal, list) and internal:
@@ -174,7 +178,8 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            output = result.value.stdout
+            cmd_output: m.CommandOutput = cast("m.CommandOutput", result.value)
+            output = cmd_output.stdout
         return sorted({
             m.group(1).strip()
             for m in c.Infra.Core.MYPY_HINT_RE.finditer(output)
@@ -189,7 +194,8 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            output = result.value.stdout
+            cmd_output: m.CommandOutput = cast("m.CommandOutput", result.value)
+            output = cmd_output.stdout
         seen: set[str] = set()
         ordered: list[str] = []
         for match in c.Infra.Core.MISSING_IMPORT_RE.finditer(output):
