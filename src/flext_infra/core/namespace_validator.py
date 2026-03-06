@@ -436,7 +436,7 @@ class FlextInfraNamespaceValidator:
     def _parse_file(self, path: Path) -> ast.Module | None:
         """Parse a Python file into an AST, returning None on failure."""
         try:
-            source = path.read_text(encoding="utf-8")
+            source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             return ast.parse(source, filename=str(path))
         except (SyntaxError, UnicodeDecodeError):
             return None

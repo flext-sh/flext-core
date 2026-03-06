@@ -143,7 +143,7 @@ class PreCheckGate:
         try:
             loaded = cast(
                 "_PolicyDocument",
-                yaml.safe_load(self._policy_path.read_text(encoding="utf-8")),
+                yaml.safe_load(self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)),
             )
         except (OSError, yaml.YAMLError):
             return {}
@@ -176,7 +176,7 @@ class PreCheckGate:
 
     def _schema_valid(self, loaded: _PolicyDocument) -> bool:
         try:
-            schema_raw = self._schema_path.read_text(encoding="utf-8")
+            schema_raw = self._schema_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             schema = json.loads(schema_raw)
         except (OSError, json.JSONDecodeError):
             return False
@@ -258,7 +258,7 @@ class ClassNestingRefactorRule:
                     refactored_code=None,
                 )
 
-            source = file_path.read_text(encoding="utf-8")
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = cst.parse_module(source)
             mappings = self._load_config()
             confidence_threshold = self._confidence_threshold(mappings)
@@ -329,7 +329,7 @@ class ClassNestingRefactorRule:
                     )
 
             if modified and not dry_run:
-                file_path.write_text(result_code, encoding="utf-8")
+                file_path.write_text(result_code, encoding=c.Infra.Encoding.DEFAULT)
 
             return m.Infra.Refactor.Result(
                 file_path=file_path,
@@ -349,7 +349,7 @@ class ClassNestingRefactorRule:
             )
 
     def _load_config(self) -> _RuleConfig:
-        raw = self._config_path.read_text(encoding="utf-8")
+        raw = self._config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         loaded = yaml.safe_load(raw)
         if not isinstance(loaded, dict):
             return {}
@@ -608,7 +608,7 @@ class ClassNestingRefactorRule:
         try:
             loaded = cast(
                 "_PolicyDocument",
-                yaml.safe_load(self._policy_path.read_text(encoding="utf-8")),
+                yaml.safe_load(self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)),
             )
         except (OSError, yaml.YAMLError):
             return {}
@@ -619,7 +619,7 @@ class ClassNestingRefactorRule:
     def _policy_document_schema_valid(self, loaded: _PolicyDocument) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
         try:
-            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            schema = json.loads(schema_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
         except (OSError, json.JSONDecodeError):
             return False
 

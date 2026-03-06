@@ -16,7 +16,6 @@ import libcst as cst
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels
-from flext_infra import t
 
 _PROJECT_NAME_DESC = "Project name"
 
@@ -144,7 +143,7 @@ class FlextInfraModels(FlextModels):
             total: int = Field(ge=0, description="Total repositories processed")
             success: int = Field(ge=0, description="Successful executions")
             fail: int = Field(ge=0, description="Failed executions")
-            results: list[t.Dict] = Field(
+            results: list[FlextInfraModels.Infra.PrExecutionResult] = Field(
                 default_factory=list,
                 description="Per-repository results",
             )
@@ -174,7 +173,7 @@ class FlextInfraModels(FlextModels):
             """Aggregated census report for a single project."""
 
             project: str = Field(min_length=1, description="Project name")
-            violations: list[t.Dict] = Field(
+            violations: list[FlextInfraModels.Infra.CensusViolation] = Field(
                 default_factory=list, description="Detected violations"
             )
             total: int = Field(ge=0, description="Total violation count")
@@ -196,10 +195,10 @@ class FlextInfraModels(FlextModels):
             """Result of auto-fixing namespace violations for a project."""
 
             project: str = Field(min_length=1, description="Project name")
-            violations_fixed: list[t.Dict] = Field(
+            violations_fixed: list[FlextInfraModels.Infra.CensusViolation] = Field(
                 default_factory=list, description="Fixed violations"
             )
-            violations_skipped: list[t.Dict] = Field(
+            violations_skipped: list[FlextInfraModels.Infra.CensusViolation] = Field(
                 default_factory=list,
                 description="Skipped violations (not auto-fixable)",
             )

@@ -41,6 +41,9 @@ class FlextInfraConstants(FlextConstants):
     class Infra:
         """Infrastructure domain constants."""
 
+        MIN_ARGV: Final[int] = 2
+        """Minimum argv length for CLI dispatch."""
+
         class Files:
             """File-related constants."""
 
@@ -190,6 +193,9 @@ class FlextInfraConstants(FlextConstants):
 
         class Versioning:
             """Semantic versioning constants for version management."""
+
+            PROJECT_SECTION: Final[str] = "[project]"
+            """TOML section header for project metadata."""
 
             SEMVER_RE: Final[re.Pattern[str]] = re.compile(
                 r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$",

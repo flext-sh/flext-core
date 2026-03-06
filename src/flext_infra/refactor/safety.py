@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Protocol, overload
 
 from flext_core import r
+from flext_infra.constants import c
 from flext_infra.models import m
 from flext_infra.subprocess import FlextInfraCommandRunner
 
@@ -228,7 +229,7 @@ class FlextInfraRefactorSafetyManager:
             self._checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
             self._checkpoint_path.write_text(
                 json.dumps(payload, ensure_ascii=True, indent=2) + "\n",
-                encoding="utf-8",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
             return r[bool].ok(True)
         except OSError as exc:
@@ -256,7 +257,9 @@ class FlextInfraRefactorSafetyManager:
         if not self._checkpoint_path.exists():
             return r[m.Infra.Refactor.Checkpoint].fail("checkpoint does not exist")
         try:
-            payload_text = self._checkpoint_path.read_text(encoding="utf-8")
+            payload_text = self._checkpoint_path.read_text(
+                encoding=c.Infra.Encoding.DEFAULT
+            )
             checkpoint = m.Infra.Refactor.Checkpoint.model_validate_json(
                 payload_text,
             )

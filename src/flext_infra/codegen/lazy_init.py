@@ -106,7 +106,7 @@ class FlextInfraCodegenLazyInit(FlextService[int]):
 
         """
         try:
-            content = path.read_text(encoding="utf-8")
+            content = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except Exception as exc:
             output.error(f"reading {path}: {exc}")
             return -1
@@ -156,7 +156,7 @@ class FlextInfraCodegenLazyInit(FlextService[int]):
             inline_constants,
             current_pkg,
         )
-        path.write_text(generated, encoding="utf-8")
+        path.write_text(generated, encoding=c.Infra.Encoding.DEFAULT)
 
         _run_ruff_fix(path)
 

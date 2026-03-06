@@ -7,6 +7,7 @@ from typing import cast, override
 
 import libcst as cst
 
+from flext_infra import c
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 
 
@@ -238,8 +239,6 @@ class _DictToMappingTransformer(cst.CSTTransformer):
 
 
 class _RedundantCastRemover(cst.CSTTransformer):
-    _CAST_ARITY = 2
-
     def __init__(self, removable_types: set[str]) -> None:
         self.removable_types = removable_types
         self.changes: list[str] = []
@@ -254,7 +253,7 @@ class _RedundantCastRemover(cst.CSTTransformer):
         func = updated_node.func
         if not isinstance(func, cst.Name) or func.value != "cast":
             return updated_node
-        if len(updated_node.args) != self._CAST_ARITY:
+        if len(updated_node.args) != c.Infra.Refactor.CAST_ARITY:
             return updated_node
         type_arg, value_arg = updated_node.args
         if type_arg.keyword is not None or value_arg.keyword is not None:
@@ -291,7 +290,7 @@ class _RedundantCastRemover(cst.CSTTransformer):
             return None
         if not isinstance(node.func, cst.Name) or node.func.value != "cast":
             return None
-        if len(node.args) != self._CAST_ARITY:
+        if len(node.args) != c.Infra.Refactor.CAST_ARITY:
             return None
         type_arg, value_arg = node.args
         if type_arg.keyword is not None or value_arg.keyword is not None:

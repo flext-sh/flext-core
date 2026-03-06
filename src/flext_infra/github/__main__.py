@@ -18,6 +18,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import FlextRuntime, r, t
+from flext_infra.constants import c
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import (
@@ -26,8 +27,6 @@ from flext_infra.github.pr_workspace import (
 )
 from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
 from flext_infra.output import output
-
-_MIN_ARGV = 2
 
 _Handler = Callable[[list[str]], int]
 
@@ -148,11 +147,14 @@ _SUBCOMMANDS: Mapping[str, _Handler] = {
 def main() -> int:
     """Dispatch to the appropriate github subcommand."""
     FlextRuntime.ensure_structlog_configured()
-    if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
+    if len(sys.argv) < c.Infra.Github.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         for _name in sorted(_SUBCOMMANDS):
             pass
         return (
-            0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+            0
+            if len(sys.argv) >= c.Infra.Github.MIN_ARGV
+            and sys.argv[1] in {"-h", "--help"}
+            else 1
         )
 
     subcommand = sys.argv[1]

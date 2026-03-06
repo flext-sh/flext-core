@@ -47,7 +47,7 @@ class ProjectClassifier:
             return "", []
 
         parsed: dict[str, str | list[str] | dict[str, str | list[str]]] = tomllib.loads(
-            self._pyproject_path.read_text(encoding="utf-8")
+            self._pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         )
 
         raw_project = parsed.get("project")
@@ -122,7 +122,7 @@ class ProjectClassifier:
         self, file_path: Path, suffix: str
     ) -> tuple[set[str], set[str]]:
         try:
-            tree = ast.parse(file_path.read_text(encoding="utf-8"))
+            tree = ast.parse(file_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
         except (OSError, SyntaxError, UnicodeDecodeError):
             return set(), set()
 

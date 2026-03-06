@@ -28,9 +28,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from flext_core import FlextRuntime
+from flext_infra.constants import c
 from flext_infra.output import output
-
-_MIN_ARGV = 2
 
 _GROUPS: Mapping[str, str] = MappingProxyType({
     "basemk": "flext_infra.basemk.__main__",
@@ -70,10 +69,12 @@ def _print_help() -> None:
 def main() -> int:
     """Dispatch to the appropriate group CLI."""
     FlextRuntime.ensure_structlog_configured()
-    if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
+    if len(sys.argv) < c.Infra.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _print_help()
         return (
-            0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+            0
+            if len(sys.argv) >= c.Infra.MIN_ARGV and sys.argv[1] in {"-h", "--help"}
+            else 1
         )
 
     group = sys.argv[1]

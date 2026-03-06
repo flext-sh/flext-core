@@ -17,14 +17,11 @@ from flext_core import r, s
 from flext_infra.constants import c
 from flext_infra.toml_io import FlextInfraTomlService
 
-_PROJECT_SECTION = "[project]"
-
 
 class FlextInfraVersioningService(s[str]):
     """Infrastructure service for semantic versioning operations.
 
     Provides r-wrapped version parsing, bumping, and
-    project version management.
     project version management.
     """
 
@@ -39,7 +36,7 @@ class FlextInfraVersioningService(s[str]):
         for raw_line in content.splitlines():
             line = raw_line.strip()
             if line.startswith("[") and line.endswith("]"):
-                in_project_section = line == _PROJECT_SECTION
+                in_project_section = line == c.Infra.Versioning.PROJECT_SECTION
                 continue
             if not in_project_section or not line.startswith("version"):
                 continue
@@ -51,7 +48,8 @@ class FlextInfraVersioningService(s[str]):
     @staticmethod
     def _has_project_table(content: str) -> bool:
         return any(
-            raw_line.strip() == _PROJECT_SECTION for raw_line in content.splitlines()
+            raw_line.strip() == c.Infra.Versioning.PROJECT_SECTION
+            for raw_line in content.splitlines()
         )
 
     @staticmethod
@@ -63,7 +61,7 @@ class FlextInfraVersioningService(s[str]):
         for raw_line in lines:
             line = raw_line.strip()
             if line.startswith("[") and line.endswith("]"):
-                in_project_section = line == _PROJECT_SECTION
+                in_project_section = line == c.Infra.Versioning.PROJECT_SECTION
                 updated_lines.append(raw_line)
                 continue
             if in_project_section and line.startswith("version") and not replaced:

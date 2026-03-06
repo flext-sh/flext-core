@@ -248,7 +248,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
             Path(__file__).resolve().parent / c.Infra.Refactor.MAPPINGS_RELATIVE_PATH
         )
         try:
-            raw_content = mapping_path.read_text(encoding="utf-8")
+            raw_content = mapping_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             parsed = cast("object", yaml.safe_load(raw_content))
         except (OSError, yaml.YAMLError):
             return {}
@@ -326,7 +326,7 @@ class FlextInfraRefactorViolationAnalyzer:
 
         for file_path in files:
             try:
-                content = file_path.read_text(encoding="utf-8")
+                content = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             except (OSError, UnicodeDecodeError):
                 continue
 

@@ -10,5 +10,8 @@ class FlextInfraGithubConstants:
 
     MANAGED_FILES: Final[frozenset[str]] = frozenset({"ci.yml"})
 
+    # From __main__.py
+    MIN_ARGV: Final[int] = 2
+
 
 __all__ = ["FlextInfraGithubConstants"]

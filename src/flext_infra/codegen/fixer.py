@@ -249,7 +249,7 @@ class FlextInfraCodegenFixer(FlextService[list[m.Infra.AutoFixResult]]):
         """Write an AST module back to disk and run ruff fix."""
         _ = ast.fix_missing_locations(tree)
         source = ast.unparse(tree)
-        _ = path.write_text(source, encoding="utf-8")
+        _ = path.write_text(source, encoding=c.Infra.Encoding.DEFAULT)
         FlextInfraCodegenTransforms.run_ruff_fix(path)
 
     @override

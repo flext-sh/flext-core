@@ -8,8 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict
 
-from flext_infra import m
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra import FlextInfraCommandRunner, c, m
 
 
 class PostCheckGate:
@@ -65,7 +64,7 @@ class PostCheckGate:
 
     def _validate_imports(self, file_path: Path) -> list[str]:
         try:
-            source = file_path.read_text(encoding="utf-8")
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = ast.parse(source)
         except (OSError, UnicodeDecodeError, SyntaxError) as exc:
             return [f"parse_error:{exc}"]
@@ -86,7 +85,7 @@ class PostCheckGate:
         expected_bases: Sequence[str],
     ) -> list[str]:
         try:
-            source = file_path.read_text(encoding="utf-8")
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = ast.parse(source)
         except (OSError, UnicodeDecodeError, SyntaxError) as exc:
             return [f"mro_parse_error:{exc}"]

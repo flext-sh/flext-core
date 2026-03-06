@@ -11,7 +11,8 @@ from typing import cast, override
 
 import libcst as cst
 
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra import c
+from flext_infra import FlextInfraCommandRunner
 
 
 @dataclass(frozen=True)
@@ -259,7 +260,7 @@ class DependencyAnalyzer:
 
     def _parse_imports(self, file_path: Path) -> _FileImportData:
         try:
-            source = file_path.read_text(encoding="utf-8")
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             module = cst.parse_module(source)
             collector = _ImportCollector()
             module.visit(collector)

@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra import FlextInfraCommandRunner, c
 
 
 class FlextInfraCodegenTransforms:
@@ -167,7 +167,7 @@ class {class_name}({base_class}):
     def parse_module(path: Path) -> ast.Module | None:
         """Parse a Python module from disk and return None on syntax error."""
         try:
-            source = path.read_text(encoding="utf-8")
+            source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             return ast.parse(source)
         except (OSError, UnicodeDecodeError, SyntaxError):
             return None

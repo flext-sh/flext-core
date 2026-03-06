@@ -209,6 +209,10 @@ class FlextInfraRefactorConstants:
     )
     """Priority order for violation classification."""
 
+    # From pattern_corrections.py
+    CAST_ARITY: int = 2
+    """Expected number of arguments for typing.cast calls."""
+
     # -- Enums ---------------------------------------------------------------
 
     class MethodCategory(StrEnum):

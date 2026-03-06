@@ -23,14 +23,13 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import FlextRuntime, t
-from flext_infra import m
+from flext_infra import c, m, output
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra.core.inventory import FlextInfraInventoryService
 from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor
 from flext_infra.core.scanner import FlextInfraTextPatternScanner
 from flext_infra.core.skill_validator import FlextInfraSkillValidator
 from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
-from flext_infra.output import output
 
 
 def _run_basemk_validate(args: argparse.Namespace) -> int:
@@ -78,33 +77,35 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
             failed_cases = [str(item) for item in failed_cases_raw]
             Path(args.failed).write_text(
                 "\n\n".join(failed_cases) + "\n",
-                encoding="utf-8",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
         error_traces_raw = data.get("error_traces")
         if args.errors and isinstance(error_traces_raw, list):
             error_traces = [str(item) for item in error_traces_raw]
             Path(args.errors).write_text(
                 "\n\n".join(error_traces) + "\n",
-                encoding="utf-8",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
         warning_lines_raw = data.get("warning_lines")
         if args.warnings and isinstance(warning_lines_raw, list):
             warning_lines = [str(item) for item in warning_lines_raw]
             Path(args.warnings).write_text(
                 "\n".join(warning_lines) + "\n",
-                encoding="utf-8",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
         slow_entries_raw = data.get("slow_entries")
         if args.slowest and isinstance(slow_entries_raw, list):
             slow_entries = [str(item) for item in slow_entries_raw]
             Path(args.slowest).write_text(
                 "\n".join(slow_entries) + "\n",
-                encoding="utf-8",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
         skip_cases_raw = data.get("skip_cases")
         if args.skips and isinstance(skip_cases_raw, list):
             skip_cases = [str(item) for item in skip_cases_raw]
-            Path(args.skips).write_text("\n".join(skip_cases) + "\n", encoding="utf-8")
+            Path(args.skips).write_text(
+                "\n".join(skip_cases) + "\n", encoding=c.Infra.Encoding.DEFAULT
+            )
 
         return 0
     output.error(result.error or "unknown error")

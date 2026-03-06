@@ -282,7 +282,7 @@ class FlextInfraRefactorEngine:
                 args.analysis_output.parent.mkdir(parents=True, exist_ok=True)
                 args.analysis_output.write_text(
                     json.dumps(analysis, indent=2, ensure_ascii=True) + "\n",
-                    encoding="utf-8",
+                    encoding=c.Infra.Encoding.DEFAULT,
                 )
                 output.info(f"Analysis report written: {args.analysis_output}")
             sys.exit(0)
@@ -302,7 +302,7 @@ class FlextInfraRefactorEngine:
             if not args.file.exists():
                 output.error(f"File not found: {args.file}")
                 sys.exit(1)
-            original_code = args.file.read_text(encoding="utf-8")
+            original_code = args.file.read_text(encoding=c.Infra.Encoding.DEFAULT)
             result_single = engine.refactor_file(args.file, dry_run=args.dry_run)
             results = [result_single]
             if args.show_diff and result_single.modified:
@@ -445,7 +445,7 @@ class FlextInfraRefactorEngine:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(
                 json.dumps(impact_map, indent=2, ensure_ascii=True) + "\n",
-                encoding="utf-8",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
             output.info(f"Impact map written: {output_path}")
             output.info(f"Impact map entries: {len(impact_map)}")
@@ -528,7 +528,7 @@ class FlextInfraRefactorEngine:
     def load_config(self) -> r[dict[str, Any]]:
         """Load YAML configuration for this engine instance."""
         try:
-            content = self.config_path.read_text(encoding="utf-8")
+            content = self.config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             loaded = yaml.safe_load(content)
             self.config = loaded if loaded is not None else {}
             output.info(f"Loaded config from {self.config_path}")
@@ -545,7 +545,7 @@ class FlextInfraRefactorEngine:
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 output.info(f"Loading rules from {rule_file.name}")
-                rule_config = yaml.safe_load(rule_file.read_text(encoding="utf-8"))
+                rule_config = yaml.safe_load(rule_file.read_text(encoding=c.Infra.Encoding.DEFAULT))
                 if rule_config is None:
                     continue
                 rules = rule_config.get("rules", [])
@@ -600,7 +600,7 @@ class FlextInfraRefactorEngine:
                     changes=["Skipped non-Python file"],
                     refactored_code=None,
                 )
-            source = file_path.read_text(encoding="utf-8")
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = cst.parse_module(source)
             all_changes: list[str] = []
 
@@ -612,7 +612,7 @@ class FlextInfraRefactorEngine:
             result_code = tree.code
             modified = result_code != source
             if not dry_run and modified:
-                file_path.write_text(result_code, encoding="utf-8")
+                file_path.write_text(result_code, encoding=c.Infra.Encoding.DEFAULT)
 
             return m.Infra.Refactor.Result(
                 file_path=file_path,

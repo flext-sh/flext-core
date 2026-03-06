@@ -19,9 +19,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from flext_core import FlextRuntime
+from flext_infra.constants import c
 from flext_infra.output import output
-
-_MIN_ARGV = 2
 
 _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
     "detect": "flext_infra.deps.detector",
@@ -35,13 +34,16 @@ _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
 def main() -> int:
     """Dispatch to the appropriate deps subcommand."""
     FlextRuntime.ensure_structlog_configured()
-    if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
+    if len(sys.argv) < c.Infra.Deps.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         output.info("Usage: flext-infra deps <subcommand> [args...]")
         output.info("Subcommands:")
         for name in sorted(_SUBCOMMANDS):
             output.info(f"  {name}")
         return (
-            0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+            0
+            if len(sys.argv) >= c.Infra.Deps.MIN_ARGV
+            and sys.argv[1] in {"-h", "--help"}
+            else 1
         )
 
     subcommand = sys.argv[1]

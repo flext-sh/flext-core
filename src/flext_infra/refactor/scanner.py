@@ -168,7 +168,7 @@ class FlextInfraRefactorLooseClassScanner:
         file_path: Path,
     ) -> list[m.Infra.Refactor.ClassOccurrence]:
         try:
-            source = file_path.read_text(encoding="utf-8")
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             module = cst.parse_module(source)
             collector = _TopLevelClassCollector()
             module.visit(collector)
