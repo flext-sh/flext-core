@@ -54,7 +54,7 @@ class FlextInfraStubSupplyChain:
     def _stub_exists(module_name: str, root: Path) -> bool:
         """Check if a stub file exists for a module."""
         rel = module_name.replace(".", "/")
-        for base in (root / "typings", root / "typings" / "generated"):
+        for base in (root / c.Infra.Directories.TYPINGS, root / c.Infra.Directories.TYPINGS / "generated"):
             candidates = [
                 base / f"{rel}.pyi",
                 base / rel / "__init__.pyi",

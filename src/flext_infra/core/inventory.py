@@ -54,7 +54,7 @@ class FlextInfraInventoryService:
                 scripts = sorted(
                     path.relative_to(root).as_posix()
                     for path in scripts_dir.rglob("*")
-                    if path.is_file() and path.suffix in {".py", ".sh"}
+                    if path.is_file() and path.suffix in {c.Infra.Extensions.PYTHON, ".sh"}
                 )
 
             now = datetime.now(UTC).isoformat()

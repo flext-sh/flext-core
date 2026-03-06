@@ -226,7 +226,7 @@ class FlextInfraRefactorEngine:
         mode_group.add_argument("--list-rules", "-l", action="store_true")
 
         parser.add_argument("--rules", "-r", type=str)
-        parser.add_argument("--pattern", default="*.py")
+        parser.add_argument("--pattern", default=c.Infra.Extensions.PYTHON_GLOB)
         parser.add_argument("--dry-run", "-n", action="store_true")
         parser.add_argument("--show-diff", "-d", action="store_true")
         parser.add_argument("--impact-map-output", type=Path)
@@ -463,7 +463,7 @@ class FlextInfraRefactorEngine:
         self,
         project_path: Path,
         *,
-        pattern: str = "*.py",
+        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
         """Collect project files that match current engine scope filters."""
         engine_config_obj = self.config.get("refactor_engine")
@@ -507,7 +507,7 @@ class FlextInfraRefactorEngine:
         self,
         workspace_root: Path,
         *,
-        pattern: str = "*.py",
+        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
         """Collect all candidate files under workspace projects."""
         root = workspace_root.resolve()
@@ -625,7 +625,7 @@ class FlextInfraRefactorEngine:
     ) -> m.Infra.Refactor.Result:
         """Refactor one file with currently loaded rules."""
         try:
-            if file_path.suffix != ".py":
+            if file_path.suffix != c.Infra.Extensions.PYTHON:
                 return m.Infra.Refactor.Result(
                     file_path=file_path,
                     success=True,
@@ -633,8 +633,10 @@ class FlextInfraRefactorEngine:
                     changes=["Skipped non-Python file"],
                     refactored_code=None,
                 )
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            original_source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            source = original_source
             all_changes: list[str] = []
+            file_rule_modified = False
 
             for file_rule in self.file_rules:
                 file_rule_result = file_rule.apply(file_path, dry_run=True)
@@ -649,6 +651,7 @@ class FlextInfraRefactorEngine:
                     )
                 if file_rule_result.modified and file_rule_result.refactored_code:
                     source = file_rule_result.refactored_code
+                    file_rule_modified = True
                 all_changes.extend(file_rule_result.changes)
 
             tree = cst.parse_module(source)
@@ -659,7 +662,7 @@ class FlextInfraRefactorEngine:
                     all_changes.extend(changes)
 
             result_code = tree.code
-            modified = result_code != source
+            modified = file_rule_modified or (result_code != original_source)
             if not dry_run and modified:
                 file_path.write_text(result_code, encoding=c.Infra.Encoding.DEFAULT)
 
@@ -689,7 +692,7 @@ class FlextInfraRefactorEngine:
         """Refactor many files and collect individual results."""
         results: list[m.Infra.Refactor.Result] = []
         for file_path in file_paths:
-            if file_path.suffix != ".py":
+            if file_path.suffix != c.Infra.Extensions.PYTHON:
                 output.info(f"Skipped non-Python file: {file_path.name}")
                 results.append(
                     m.Infra.Refactor.Result(
@@ -721,7 +724,7 @@ class FlextInfraRefactorEngine:
         project_path: Path,
         *,
         dry_run: bool = False,
-        pattern: str = "*.py",
+        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
         apply_safety: bool = True,
     ) -> list[m.Infra.Refactor.Result]:
         """Refactor files under configured project directories matching the pattern."""
@@ -791,7 +794,7 @@ class FlextInfraRefactorEngine:
         workspace_root: Path,
         *,
         dry_run: bool = False,
-        pattern: str = "*.py",
+        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
         apply_safety: bool = True,
     ) -> list[m.Infra.Refactor.Result]:
         """Refactor all discoverable workspace projects with one command."""

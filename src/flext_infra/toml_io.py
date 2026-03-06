@@ -18,8 +18,8 @@ import tomlkit
 import tomlkit.exceptions
 from tomlkit.items import Table
 
-from flext_core import r, s, t
-from flext_infra import c
+from flext_core import r, s
+from flext_infra import c, t
 
 type TomlScalar = t.Primitives | None
 type TomlValue = (

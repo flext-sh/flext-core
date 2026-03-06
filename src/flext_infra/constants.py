@@ -71,6 +71,63 @@ class FlextInfraConstants(FlextConstants):
             GO_MOD: Final[str] = "go.mod"
             """Go module manifest filename."""
 
+            GITMODULES: Final[str] = ".gitmodules"
+            """Git submodule manifest filename."""
+
+            GITIGNORE: Final[str] = ".gitignore"
+            """Git ignore configuration filename."""
+
+            INIT_PY: Final[str] = "__init__.py"
+            """Python package initializer filename."""
+
+        class Git:
+            """Git-related constants."""
+
+            DIR: Final[str] = ".git"
+            """Git repository marker directory."""
+
+        class Extensions:
+            """File extension constants."""
+
+            PYTHON: Final[str] = ".py"
+            """Python source file extension."""
+
+            PYTHON_GLOB: Final[str] = "*.py"
+            """Glob pattern to match Python source files."""
+
+        class Directories:
+            """Common directory name constants."""
+
+            TESTS: Final[str] = "tests"
+            """Standard test directory name."""
+
+            EXAMPLES: Final[str] = "examples"
+            """Standard examples directory name."""
+
+            SCRIPTS: Final[str] = "scripts"
+            """Standard scripts directory name."""
+
+            TYPINGS: Final[str] = "typings"
+            """Stub typings directory or poetry group name."""
+
+        class Timeouts:
+            """Standard timeout values in seconds."""
+
+            DEFAULT: Final[int] = 300
+            """Default timeout for CI/command operations."""
+
+            SHORT: Final[int] = 60
+            """Short timeout for quick operations."""
+
+            MEDIUM: Final[int] = 120
+            """Medium timeout for moderate operations."""
+
+            LONG: Final[int] = 600
+            """Long timeout for heavy operations (pyright, etc.)."""
+
+            CI: Final[int] = 900
+            """Extended timeout for CI operations (go vet, etc.)."""
+
         class Gates:
             """Quality gate identifiers."""
 

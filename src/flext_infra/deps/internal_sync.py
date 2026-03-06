@@ -96,7 +96,7 @@ class FlextInfraInternalDependencySyncService:
     @staticmethod
     def _workspace_root_from_parents(project_root: Path) -> Path | None:
         for candidate in (project_root, *project_root.parents):
-            if (candidate / ".gitmodules").exists():
+            if (candidate / c.Infra.Files.GITMODULES).exists():
                 return candidate
         return None
 
@@ -116,9 +116,9 @@ class FlextInfraInternalDependencySyncService:
         if (
             workspace_mode
             and workspace_root
-            and (workspace_root / ".gitmodules").exists()
+            and (workspace_root / c.Infra.Files.GITMODULES).exists()
         ):
-            repo_map = self._parse_gitmodules(workspace_root / ".gitmodules")
+            repo_map = self._parse_gitmodules(workspace_root / c.Infra.Files.GITMODULES)
             if map_file.exists():
                 parsed_map_result = self._parse_repo_map(map_file)
                 if parsed_map_result.is_failure:
@@ -248,7 +248,7 @@ class FlextInfraInternalDependencySyncService:
         safe_ref_name = safe_ref_name_result.value
 
         dep_path.parent.mkdir(parents=True, exist_ok=True)
-        if not (dep_path / ".git").exists():
+        if not (dep_path / c.Infra.Git.DIR).exists():
             try:
                 if dep_path.exists() or dep_path.is_symlink():
                     if dep_path.is_dir() and not dep_path.is_symlink():

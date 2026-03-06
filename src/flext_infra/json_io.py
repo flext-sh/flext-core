@@ -16,8 +16,8 @@ from typing import override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import r, s, t
-from flext_infra import c
+from flext_core import r, s
+from flext_infra import c, t
 
 
 class FlextInfraJsonService(s[bool]):

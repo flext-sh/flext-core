@@ -374,7 +374,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             path = project_dir / directory
             if not path.is_dir():
                 continue
-            if next(path.rglob("*.py"), None) or next(path.rglob("*.pyi"), None):
+            if next(path.rglob(c.Infra.Extensions.PYTHON_GLOB), None) or next(path.rglob("*.pyi"), None):
                 out.append(directory)
         return out
 
@@ -840,7 +840,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         issues: list[_CheckIssue] = []
         raw_output = ""
 
-        vet_result = self._run(["go", "vet", "./..."], project_dir, timeout=900)
+        vet_result = self._run(["go", "vet", "./..."], project_dir, timeout=c.Infra.Timeouts.CI)
         raw_output = "\n".join(
             part for part in (vet_result.stdout, vet_result.stderr) if part
         )
@@ -879,7 +879,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                     *[str(path.relative_to(project_dir)) for path in go_files],
                 ],
                 project_dir,
-                timeout=900,
+                timeout=c.Infra.Timeouts.CI,
             )
             fmt_raw_output = "\n".join(
                 part for part in (fmt_result.stdout, fmt_result.stderr) if part
@@ -988,7 +988,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             and "[tool.mypy]" in proj_py.read_text(encoding=c.Infra.Encoding.DEFAULT)
             else self._workspace_root / c.Infra.Files.PYPROJECT_FILENAME
         )
-        typings_generated = self._workspace_root / "typings" / "generated"
+        typings_generated = self._workspace_root / c.Infra.Directories.TYPINGS / "generated"
         mypy_env = os.environ.copy()
         if typings_generated.is_dir():
             existing = mypy_env.get("MYPYPATH", "")
@@ -1127,7 +1127,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         result = self._run(
             [sys.executable, "-m", "pyright", *check_dirs, "--outputjson"],
             project_dir,
-            timeout=600,
+            timeout=c.Infra.Timeouts.LONG,
         )
         issues: list[_CheckIssue] = []
         try:
@@ -1185,7 +1185,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                             message="Would be reformatted",
                         ),
                     )
-                elif path.endswith(".py") and " " not in path and path not in seen:
+                elif path.endswith(c.Infra.Extensions.PYTHON) and " " not in path and path not in seen:
                     seen.add(path)
                     issues.append(
                         _CheckIssue(

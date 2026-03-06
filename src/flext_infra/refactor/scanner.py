@@ -128,8 +128,8 @@ class FlextInfraRefactorLooseClassScanner:
             return []
 
         files: list[Path] = []
-        for file_path in sorted(src_dir.rglob("*.py")):
-            if file_path.name.startswith("__") and file_path.name != "__init__.py":
+        for file_path in sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
+            if file_path.name.startswith("__") and file_path.name != c.Infra.Files.INIT_PY:
                 continue
             if "__pycache__" in file_path.parts:
                 continue

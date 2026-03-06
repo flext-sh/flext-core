@@ -244,9 +244,9 @@ class FlextInfraRuntimeDevDependencyDetector:
                         if not isinstance(package, str):
                             continue
                         run = self._runner.run_raw(
-                            ["poetry", "add", "--group", "typings", package],
+                            ["poetry", "add", "--group", c.Infra.Directories.TYPINGS, package],
                             cwd=project_path,
-                            timeout=120,
+                            timeout=c.Infra.Timeouts.MEDIUM,
                             env=env,
                         )
                         if run.is_failure:

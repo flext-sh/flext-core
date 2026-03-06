@@ -237,7 +237,7 @@ class FlextInfraSkillValidator:
         result_wrapper = self._runner.run_raw(
             cmd,
             cwd=project_path,
-            timeout=300,
+            timeout=c.Infra.Timeouts.DEFAULT,
         )
         if result_wrapper.is_failure:
             return 0
@@ -276,7 +276,7 @@ class FlextInfraSkillValidator:
             return 0
 
         cmd: list[str] = (
-            [sys.executable, str(script)] if script.suffix == ".py" else [str(script)]
+            [sys.executable, str(script)] if script.suffix == c.Infra.Extensions.PYTHON else [str(script)]
         )
         cmd.extend(["--root", str(project_path)])
         if bool(rule.get("pass_mode")):
@@ -285,7 +285,7 @@ class FlextInfraSkillValidator:
         result_wrapper = self._runner.run_raw(
             cmd,
             cwd=project_path,
-            timeout=300,
+            timeout=c.Infra.Timeouts.DEFAULT,
         )
         if result_wrapper.is_failure:
             return 0

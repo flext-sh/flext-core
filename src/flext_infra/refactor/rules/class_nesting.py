@@ -251,7 +251,7 @@ class ClassNestingRefactorRule:
     ) -> m.Infra.Refactor.Result:
         """Transform *file_path* according to loaded mappings and policy."""
         try:
-            if file_path.suffix != ".py":
+            if file_path.suffix != c.Infra.Extensions.PYTHON:
                 return m.Infra.Refactor.Result(
                     file_path=file_path,
                     success=True,

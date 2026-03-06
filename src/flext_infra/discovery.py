@@ -21,18 +21,17 @@ class FlextInfraDiscoveryService(s[list[m.Infra.ProjectInfo]]):
     """Infrastructure service for discovering workspace projects.
 
     Structurally satisfies ``InfraProtocols.Discovery``.
-    Structurally satisfies ``InfraProtocols.Discovery``.
     """
 
     @staticmethod
     def _is_git_project(path: Path) -> bool:
         """Check if a directory is a Git repository."""
-        return (path / ".git").exists()
+        return (path / c.Infra.Git.DIR).exists()
 
     @staticmethod
     def _submodule_names(workspace_root: Path) -> set[str]:
         """Retrieve submodule names from .gitmodules."""
-        gitmodules = workspace_root / ".gitmodules"
+        gitmodules = workspace_root / c.Infra.Files.GITMODULES
         if not gitmodules.exists():
             return set()
         try:
@@ -95,7 +94,7 @@ class FlextInfraDiscoveryService(s[list[m.Infra.ProjectInfo]]):
                         path=entry,
                         name=entry.name,
                         stack=f"{stack}/{kind}",
-                        has_tests=(entry / "tests").is_dir(),
+                        has_tests=(entry / c.Infra.Directories.TESTS).is_dir(),
                         has_src=(entry / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir(),
                     ),
                 )

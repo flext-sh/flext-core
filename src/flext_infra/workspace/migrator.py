@@ -85,7 +85,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         """Detect workspace root as a project if it has Makefile, pyproject.toml, and .git."""
         has_makefile = (workspace_root / c.Infra.Files.MAKEFILE_FILENAME).is_file()
         has_pyproject = (workspace_root / c.Infra.Files.PYPROJECT_FILENAME).is_file()
-        has_git = (workspace_root / ".git").exists()
+        has_git = (workspace_root / c.Infra.Git.DIR).exists()
         if not (has_makefile and has_pyproject and has_git):
             return None
 
@@ -93,7 +93,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
             name=workspace_root.name,
             path=workspace_root,
             stack="python/workspace",
-            has_tests=(workspace_root / "tests").is_dir(),
+            has_tests=(workspace_root / c.Infra.Directories.TESTS).is_dir(),
             has_src=(workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir(),
         )
 
@@ -170,7 +170,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         )
 
     def _migrate_gitignore(self, project_root: Path, *, dry_run: bool) -> r[str]:
-        gitignore_path = project_root / ".gitignore"
+        gitignore_path = project_root / c.Infra.Files.GITIGNORE
         try:
             existing_lines = (
                 gitignore_path.read_text(encoding=c.Infra.Encoding.DEFAULT).splitlines()

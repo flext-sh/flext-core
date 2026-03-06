@@ -13,7 +13,8 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import FlextDispatcher, FlextService, m, r, t
+from flext_core import FlextDispatcher, s, r
+from flext_infra import m, t
 
 
 class _BaseInfraCommand(m.Command):
@@ -23,7 +24,7 @@ class _BaseInfraCommand(m.Command):
     args: list[str] = Field(default_factory=list, description="Command arguments")
 
 
-class FlextInfraDispatcher(FlextService[bool]):
+class FlextInfraDispatcher(s[bool]):
     """Unified dispatcher for flext_infra CLI operations with integrated command classes."""
 
     @override

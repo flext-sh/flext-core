@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TypeAlias
 
-from flext_core.typings import FlextTypes
+from flext_core import FlextTypes
 
 
 class FlextInfraTypes(FlextTypes):

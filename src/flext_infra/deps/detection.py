@@ -334,7 +334,7 @@ class FlextInfraDependencyDetectionService:
             for excluded in extend_exclude:
                 cmd.extend(["--extend-exclude", excluded])
 
-        result = self._runner.run_raw(cmd, cwd=project_path, timeout=120)
+        result = self._runner.run_raw(cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM)
         if result.is_failure:
             return r[tuple[list[IssueMap], int]].fail(
                 result.error or "deptry execution failed",
@@ -425,7 +425,7 @@ class FlextInfraDependencyDetectionService:
         result = self._runner.run_raw(
             [str(pip), "check"],
             cwd=workspace_root,
-            timeout=60,
+            timeout=c.Infra.Timeouts.SHORT,
             env=env,
         )
         if result.is_failure:

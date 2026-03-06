@@ -18,7 +18,7 @@ logger = FlextLogger.create_module_logger(__name__)
 def _workspace_root() -> Path:
     here = Path(__file__).resolve()
     for candidate in here.parents:
-        if (candidate / ".gitmodules").exists():
+        if (candidate / c.Infra.Files.GITMODULES).exists():
             return candidate
     return here.parents[4]
 
@@ -37,7 +37,7 @@ class FlextInfraDependencyPathSync:
 def detect_mode(project_root: Path) -> str:
     """Detect workspace or standalone mode from project structure."""
     for candidate in (project_root, *project_root.parents):
-        if (candidate / ".gitmodules").exists():
+        if (candidate / c.Infra.Files.GITMODULES).exists():
             return "workspace"
     return "standalone"
 

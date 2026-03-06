@@ -177,7 +177,7 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
             FlextResult with True if file was changed, False otherwise.
 
         """
-        gitignore = project_root / ".gitignore"
+        gitignore = project_root / c.Infra.Files.GITIGNORE
         try:
             existing_lines: list[str] = []
             if gitignore.exists():

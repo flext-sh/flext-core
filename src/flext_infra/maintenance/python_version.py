@@ -222,7 +222,7 @@ class FlextInfraPythonVersionEnforcer(FlextService[int]):
         # Walk up the directory tree
         for parent in [current] + list(current.parents):
             markers = {
-                ".git",
+                c.Infra.Git.DIR,
                 c.Infra.Files.MAKEFILE_FILENAME,
                 c.Infra.Files.PYPROJECT_FILENAME,
             }

@@ -172,9 +172,9 @@ class DependencyAnalyzer:
         for path in src_path.iterdir():
             if path.name.startswith("."):
                 continue
-            if path.is_dir() and (path / "__init__.py").is_file():
+            if path.is_dir() and (path / c.Infra.Files.INIT_PY).is_file():
                 package_roots.add(path.name)
-            elif path.is_file() and path.suffix == ".py" and path.stem != "__init__":
+            elif path.is_file() and path.suffix == c.Infra.Extensions.PYTHON and path.stem != "__init__":
                 package_roots.add(path.stem)
 
         return package_roots
@@ -200,7 +200,7 @@ class DependencyAnalyzer:
 
     def _iter_python_files(self, src_path: Path) -> list[Path]:
         files: list[Path] = []
-        for file_path in src_path.rglob("*.py"):
+        for file_path in src_path.rglob(c.Infra.Extensions.PYTHON_GLOB):
             if "__pycache__" in file_path.parts:
                 continue
             files.append(file_path)
@@ -218,7 +218,7 @@ class DependencyAnalyzer:
                 file_path = Path(file_raw)
                 if not file_path.is_absolute():
                     file_path = (src_path / file_path).resolve()
-                if file_path.suffix == ".py":
+                if file_path.suffix == c.Infra.Extensions.PYTHON:
                     files.add(file_path)
 
         return files

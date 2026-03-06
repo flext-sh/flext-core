@@ -52,7 +52,7 @@ class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
         parsed = urlparse(url)
         path = parsed.path or url
         name = path.rsplit("/", 1)[-1]
-        return name.removesuffix(".git")
+        return name.removesuffix(c.Infra.Git.DIR)
 
     def detect(self, project_root: Path) -> r[WorkspaceMode]:
         """Detect workspace mode by inspecting parent repository origin URL.
@@ -67,7 +67,7 @@ class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
         """
         try:
             parent = project_root.resolve().parent
-            git_marker = parent / ".git"
+            git_marker = parent / c.Infra.Git.DIR
 
             if not git_marker.exists():
                 output.info("Running in standalone mode (no parent workspace detected)")

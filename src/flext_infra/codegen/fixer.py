@@ -191,7 +191,7 @@ class FlextInfraCodegenFixer(FlextService[list[m.Infra.AutoFixResult]]):
         if not src_dir.is_dir():
             return None
         for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / "__init__.py").exists():
+            if child.is_dir() and (child / c.Infra.Files.INIT_PY).exists():
                 return child
         return None
 
@@ -299,8 +299,8 @@ class FlextInfraCodegenFixer(FlextService[list[m.Infra.AutoFixResult]]):
                 files_modified=[],
             )
 
-        for py_file in sorted(src_dir.rglob("*.py")):
-            if py_file.name in {"__init__.py", "conftest.py", "__main__.py"}:
+        for py_file in sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
+            if py_file.name in {c.Infra.Files.INIT_PY, "conftest.py", "__main__.py"}:
                 continue
             if py_file.name.startswith(("test_", "_")):
                 continue

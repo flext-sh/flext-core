@@ -36,7 +36,7 @@ class FlextInfraCodegenScaffolder(FlextService[list[m.Infra.ScaffoldResult]]):
         if not src_dir.is_dir():
             return None
         for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / "__init__.py").exists():
+            if child.is_dir() and (child / c.Infra.Files.INIT_PY).exists():
                 return child
         return None
 
@@ -103,7 +103,7 @@ class FlextInfraCodegenScaffolder(FlextService[list[m.Infra.ScaffoldResult]]):
             )
 
         # Scaffold tests/ modules
-        tests_dir = project_path / "tests"
+        tests_dir = project_path / c.Infra.Directories.TESTS
         if tests_dir.is_dir():
             self._scaffold_dir(
                 target_dir=tests_dir,

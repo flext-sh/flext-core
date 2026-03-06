@@ -60,7 +60,7 @@ class FlextInfraNamespaceValidator:
         if not src_dir.is_dir():
             return ""
         for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / "__init__.py").exists():
+            if child.is_dir() and (child / c.Infra.Files.INIT_PY).exists():
                 return "".join(part.title() for part in child.name.split("_"))
         return ""
 
@@ -353,14 +353,14 @@ class FlextInfraNamespaceValidator:
         result: list[Path] = []
         dirs_to_scan = [root / c.Infra.Paths.DEFAULT_SRC_DIR]
         if scan_tests:
-            dirs_to_scan.append(root / "tests")
+            dirs_to_scan.append(root / c.Infra.Directories.TESTS)
 
         for base_dir in dirs_to_scan:
             if not base_dir.is_dir():
                 continue
             result.extend(
                 py_file
-                for py_file in sorted(base_dir.rglob("*.py"))
+                for py_file in sorted(base_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
                 if not self._is_exempt_file(py_file)
             )
 

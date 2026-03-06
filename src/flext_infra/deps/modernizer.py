@@ -20,10 +20,10 @@ def _workspace_root(start: Path) -> Path:
     """Detect workspace root by searching for .gitmodules or .git with pyproject.toml."""
     current = start.resolve()
     for parent in (current, *current.parents):
-        if (parent / ".gitmodules").exists() and (parent / c.Infra.Files.PYPROJECT_FILENAME).exists():
+        if (parent / c.Infra.Files.GITMODULES).exists() and (parent / c.Infra.Files.PYPROJECT_FILENAME).exists():
             return parent
     for parent in (current, *current.parents):
-        if (parent / ".git").exists() and (parent / c.Infra.Files.PYPROJECT_FILENAME).exists():
+        if (parent / c.Infra.Git.DIR).exists() and (parent / c.Infra.Files.PYPROJECT_FILENAME).exists():
             return parent
     return start.resolve().parents[4]
 
