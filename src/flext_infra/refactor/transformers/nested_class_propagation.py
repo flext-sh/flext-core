@@ -1,7 +1,9 @@
+"""CST transformer for propagating nested class references after nesting."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypedDict, cast, override
+from typing import TypedDict, override
 
 import libcst as cst
 from libcst.metadata import ParentNodeProvider
@@ -18,6 +20,8 @@ type PolicyContext = Mapping[str, _FamilyPolicy]
 
 
 class NestedClassPropagationTransformer(cst.CSTTransformer):
+    """Propagate import and name references after classes are nested into namespaces."""
+
     METADATA_DEPENDENCIES = (ParentNodeProvider,)
 
     def __init__(
@@ -26,6 +30,7 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         policy_context: PolicyContext | None = None,
         class_families: Mapping[str, str] | None = None,
     ) -> None:
+        """Initialize with class rename mappings and optional policy context."""
         self._class_renames = class_renames
         self._name_renames: dict[str, str] = dict(class_renames)
         self._policy_context = policy_context
@@ -125,8 +130,9 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         return self._attribute_from_base(updated_node.value, rename_parts)
 
     def _should_skip_name(self, node: cst.Name) -> bool:
-        parent = self.get_metadata(ParentNodeProvider, node, default=None)
-        if parent is None:
+        try:
+            parent = self.get_metadata(ParentNodeProvider, node)
+        except KeyError:
             return False
 
         if isinstance(parent, cst.Attribute) and parent.attr is node:
@@ -142,9 +148,7 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
             return True
         if isinstance(parent, cst.Param) and parent.name is node:
             return True
-        if isinstance(parent, cst.AsName) and parent.name is node:
-            return True
-        return False
+        return bool(isinstance(parent, cst.AsName) and parent.name is node)
 
     def _expression_from_dotted(self, dotted_name: str) -> cst.BaseExpression:
         parts = self._split_dotted(dotted_name)
@@ -190,16 +194,21 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         if policy is None:
             return False
 
-        blocked_prefixes = policy.get("blocked_reference_prefixes")
-        if not isinstance(blocked_prefixes, list | tuple):
-            return False
-        typed_prefixes = cast("tuple[object, ...] | list[object]", blocked_prefixes)
-        for prefix in typed_prefixes:
-            if not isinstance(prefix, str):
-                continue
-            if symbol_name.startswith(prefix):
-                return True
-        return False
+        blocked_prefixes = self._string_collection(
+            policy.get("blocked_reference_prefixes"),
+        )
+        return any(symbol_name.startswith(prefix) for prefix in blocked_prefixes)
+
+    def _string_collection(
+        self,
+        value: str | list[str] | tuple[str, ...] | None,
+    ) -> tuple[str, ...]:
+        """Extract a tuple of strings from a policy value."""
+        if value is None:
+            return ()
+        if isinstance(value, str):
+            return (value,)
+        return tuple(entry for entry in value if isinstance(entry, str))
 
     def _policy_for_symbol(self, symbol_name: str) -> _FamilyPolicy | None:
         if self._policy_context is None:
