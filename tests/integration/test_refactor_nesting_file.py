@@ -1,3 +1,5 @@
+"""Integration test for single-file class-nesting refactor flow."""
+
 from __future__ import annotations
 
 import subprocess

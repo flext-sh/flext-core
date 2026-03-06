@@ -1,3 +1,5 @@
+"""Unit tests for class nesting transformer behavior."""
+
 from __future__ import annotations
 
 import libcst as cst

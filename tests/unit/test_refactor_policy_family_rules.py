@@ -1,3 +1,5 @@
+"""Unit tests for module-family policy pre-check rules."""
+
 from __future__ import annotations
 
 from pathlib import Path

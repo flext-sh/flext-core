@@ -19,13 +19,6 @@ def util_helper(x: int) -> int:
     """Helper docstring."""
     return x * 2
 '''
-        expected = '''
-class FlextUtilities:
-    @staticmethod
-    def util_helper(x: int) -> int:
-        """Helper docstring."""
-        return x * 2
-'''
         mappings = {"util_helper": "FlextUtilities"}
         transformer = HelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
@@ -103,7 +96,7 @@ def unmapped_helper():
         assert "def unmapped_helper()" in modified.code
         # Should be outside class (no indentation before def)
         lines = modified.code.strip().split("\n")
-        unmapped_line = [l for l in lines if "unmapped_helper" in l][0]
+        unmapped_line = next(line for line in lines if "unmapped_helper" in line)
         assert not unmapped_line.startswith(" ")
 
     def test_existing_namespace_extended(self) -> None:

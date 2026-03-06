@@ -1,3 +1,5 @@
+"""Unit tests for nested class propagation transformer behavior."""
+
 from __future__ import annotations
 
 import importlib

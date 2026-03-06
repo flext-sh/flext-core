@@ -1,3 +1,5 @@
+"""Integration tests for policy-driven MRO resolution."""
+
 from __future__ import annotations
 
 from flext_infra.refactor.mro_resolver import (
@@ -7,62 +9,92 @@ from flext_infra.refactor.mro_resolver import (
 
 
 class FlextLdapModels:
+    """Stub LDAP models facade."""
+
     pass
 
 
 class FlextCliModels:
+    """Stub CLI models facade."""
+
     pass
 
 
 class AlgarOudMigModels(FlextLdapModels, FlextCliModels):
+    """Stub composed models facade."""
+
     pass
 
 
 class FlextLdapConstants:
+    """Stub LDAP constants facade."""
+
     pass
 
 
 class FlextCliConstants:
+    """Stub CLI constants facade."""
+
     pass
 
 
 class AlgarOudMigConstants(FlextLdapConstants, FlextCliConstants):
+    """Stub composed constants facade."""
+
     pass
 
 
 class FlextLdapTypes:
+    """Stub LDAP typings facade."""
+
     pass
 
 
 class FlextCliTypes:
+    """Stub CLI typings facade."""
+
     pass
 
 
 class AlgarOudMigTypes(FlextLdapTypes, FlextCliTypes):
+    """Stub composed typings facade."""
+
     pass
 
 
 class FlextLdapProtocols:
+    """Stub LDAP protocols facade."""
+
     pass
 
 
 class FlextCliProtocols:
+    """Stub CLI protocols facade."""
+
     pass
 
 
 class AlgarOudMigProtocols(FlextLdapProtocols, FlextCliProtocols):
+    """Stub composed protocols facade."""
+
     pass
 
 
 class FlextLdapUtilities:
+    """Stub LDAP utilities facade."""
+
     pass
 
 
 class FlextCliUtilities:
+    """Stub CLI utilities facade."""
+
     pass
 
 
 class AlgarOudMigUtilities(FlextLdapUtilities, FlextCliUtilities):
+    """Stub composed utilities facade."""
+
     pass
 
 
