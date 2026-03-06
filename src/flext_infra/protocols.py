@@ -14,10 +14,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core import r
-from flext_core import FlextProtocols
-
-from flext_infra.typings import FlextInfraTypings as t
+from flext_core import FlextProtocols, r
+from flext_infra.typings import t
 
 
 class FlextInfraProtocols(FlextProtocols):

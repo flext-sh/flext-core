@@ -307,7 +307,10 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         return default
 
     def _tuple_from_policy(self, policy: _FamilyPolicy, key: str) -> tuple[str, ...]:
-        return self._string_collection(policy.get(key))
+        raw = policy.get(key)
+        if isinstance(raw, (str, list, tuple)):
+            return self._string_collection(raw)
+        return ()
 
     def _string_collection(
         self,
