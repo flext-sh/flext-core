@@ -15,11 +15,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r
+from flext_core import s, r
 from flext_infra import c, m
 
 
-class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
+class FlextInfraCommandRunner(s[m.Infra.CommandOutput]):
     """Infrastructure service for subprocess execution.
 
     Provides r-wrapped command execution, replacing the bare
@@ -61,7 +61,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
 
     @override
     def execute(self) -> r[m.Infra.CommandOutput]:
-        """Execute the service (required by FlextService base class)."""
+        """Execute the service (required by s base class)."""
         return r[m.Infra.CommandOutput].ok(
             m.Infra.CommandOutput(stdout="", stderr="", exit_code=0)
         )

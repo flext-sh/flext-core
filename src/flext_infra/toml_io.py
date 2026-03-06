@@ -18,7 +18,7 @@ import tomlkit
 import tomlkit.exceptions
 from tomlkit.items import Table
 
-from flext_core import FlextService, r, t
+from flext_core import s, r, t
 from flext_infra import c
 
 type TomlScalar = t.Primitives | None
@@ -35,7 +35,7 @@ def _as_toml_mapping(value: TomlValue) -> TomlMutableMap | None:
     return None
 
 
-class FlextInfraTomlService(FlextService[bool]):
+class FlextInfraTomlService(s[bool]):
     """Infrastructure service for TOML file I/O.
 
     Provides r-wrapped TOML read/write operations, replacing
@@ -70,7 +70,7 @@ class FlextInfraTomlService(FlextService[bool]):
 
     @override
     def execute(self) -> r[bool]:
-        """Execute the service (required by FlextService base class)."""
+        """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
     def read(self, path: Path) -> r[TomlMap]:
