@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess  # noqa: S404  # JUSTIFIED: invokes local `sg` CLI only
 from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -12,6 +11,8 @@ from pathlib import Path
 from typing import ClassVar, cast, override
 
 import libcst as cst
+
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 @dataclass(frozen=True)
@@ -238,22 +239,12 @@ class FlextInfraRefactorLooseClassScanner:
             "--json",
             str(project_root / "src"),
         ]
-        try:
-            completed = subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv for local sg CLI
-                cmd,
-                check=False,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-        except (OSError, ValueError):
+        runner = FlextInfraCommandRunner()
+        result = runner.capture(cmd)
+        if result.is_failure:
             return {}
 
-        sg_ok_codes = {0, 1}
-        if completed.returncode not in sg_ok_codes:
-            return {}
-
-        payload = completed.stdout.strip()
+        payload = result.value.strip()
         if not payload:
             return {}
 

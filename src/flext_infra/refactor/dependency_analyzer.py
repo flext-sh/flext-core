@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess  # noqa: S404  # JUSTIFIED: only invokes local `sg` CLI
 import sys
 from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
@@ -11,6 +10,8 @@ from pathlib import Path
 from typing import cast, override
 
 import libcst as cst
+
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 @dataclass(frozen=True)
@@ -232,26 +233,17 @@ class DependencyAnalyzer:
             "--json",
             str(src_path),
         ]
-        try:
-            completed = subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv for local sg CLI
-                cmd,
-                check=False,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
-        except (OSError, ValueError):
+        runner = FlextInfraCommandRunner()
+        result = runner.capture(cmd)
+        if result.is_failure:
             return []
 
-        if completed.returncode not in {0, 1}:
-            return []
-
-        output = completed.stdout.strip()
-        if not output:
+        raw_output = result.value.strip()
+        if not raw_output:
             return []
 
         try:
-            payload = json.loads(output)
+            payload = json.loads(raw_output)
         except json.JSONDecodeError:
             return []
 

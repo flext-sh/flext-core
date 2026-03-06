@@ -307,8 +307,6 @@ class ClassNestingRefactorRule:
 
             result_code = tree.code
             modified = result_code != source
-            if modified and not dry_run:
-                file_path.write_text(result_code, encoding="utf-8")
 
             if modified:
                 post_payload = self._build_postcheck_payload(
@@ -335,6 +333,9 @@ class ClassNestingRefactorRule:
                         changes=post_errors,
                         refactored_code=None,
                     )
+
+            if modified and not dry_run:
+                file_path.write_text(result_code, encoding="utf-8")
 
             return RefactorResult(
                 file_path=file_path,

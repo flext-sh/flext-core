@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import subprocess  # noqa: S404  # JUSTIFIED: Python stdlib subprocess needed for ruff invocation — https://bandit.readthedocs.io/en/latest/plugins/b404_import_subprocess.html
 from pathlib import Path
+
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class FlextInfraCodegenTransforms:
@@ -174,16 +175,9 @@ class {class_name}({base_class}):
     @staticmethod
     def run_ruff_fix(path: Path) -> None:
         """Run ruff check --fix and ruff format on a file."""
-        _ = subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv, shell=False for local tooling — https://bandit.readthedocs.io/en/latest/plugins/b603_subprocess_without_shell_equals_true.html
-            ["ruff", "check", "--fix", str(path)],  # noqa: S607  # JUSTIFIED: ruff resolved from controlled dev environment PATH — https://bandit.readthedocs.io/en/latest/plugins/b607_start_process_with_partial_path.html
-            check=False,
-            capture_output=True,
-        )
-        _ = subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv, shell=False for local tooling — https://bandit.readthedocs.io/en/latest/plugins/b603_subprocess_without_shell_equals_true.html
-            ["ruff", "format", str(path)],  # noqa: S607  # JUSTIFIED: ruff resolved from controlled dev environment PATH — https://bandit.readthedocs.io/en/latest/plugins/b607_start_process_with_partial_path.html
-            check=False,
-            capture_output=True,
-        )
+        runner = FlextInfraCommandRunner()
+        runner.run_checked(["ruff", "check", "--fix", str(path)])
+        runner.run_checked(["ruff", "format", str(path)])
 
     @staticmethod
     def unparse_and_format(tree: ast.Module, path: Path) -> str:
