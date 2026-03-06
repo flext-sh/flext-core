@@ -7,10 +7,7 @@ from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
-    from flext_infra.refactor.constants import FlextInfraRefactorConstants
     from flext_infra.refactor.engine import FlextInfraRefactorEngine
-    from flext_infra.refactor.method_info import FlextInfraRefactorMethodInfo
-    from flext_infra.refactor.result import FlextInfraRefactorResult
     from flext_infra.refactor.rule import FlextInfraRefactorRule
     from flext_infra.refactor.rules.class_reconstructor import (
         FlextInfraRefactorClassReconstructorRule,
@@ -36,21 +33,9 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
-    "FlextInfraRefactorConstants": (
-        "flext_infra.refactor.constants",
-        "FlextInfraRefactorConstants",
-    ),
     "FlextInfraRefactorEngine": (
         "flext_infra.refactor.engine",
         "FlextInfraRefactorEngine",
-    ),
-    "FlextInfraRefactorMethodInfo": (
-        "flext_infra.refactor.method_info",
-        "FlextInfraRefactorMethodInfo",
-    ),
-    "FlextInfraRefactorResult": (
-        "flext_infra.refactor.result",
-        "FlextInfraRefactorResult",
     ),
     "FlextInfraRefactorRule": (
         "flext_infra.refactor.rule",
@@ -109,15 +94,12 @@ def __getattr__(name: str) -> object:
 
 __all__ = [
     "FlextInfraRefactorClassReconstructorRule",
-    "FlextInfraRefactorConstants",
     "FlextInfraRefactorEngine",
     "FlextInfraRefactorEnsureFutureAnnotationsRule",
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
     "FlextInfraRefactorMRORedundancyChecker",
-    "FlextInfraRefactorMethodInfo",
     "FlextInfraRefactorPatternCorrectionsRule",
-    "FlextInfraRefactorResult",
     "FlextInfraRefactorRule",
     "FlextInfraRefactorSignaturePropagationRule",
     "FlextInfraRefactorSymbolPropagationRule",

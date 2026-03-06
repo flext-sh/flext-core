@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict
 
-from flext_infra.refactor.result import FlextInfraRefactorResult
+from flext_infra import m
 from flext_infra.subprocess import FlextInfraCommandRunner
 
 
@@ -27,7 +27,7 @@ class PostCheckGate:
 
     def validate(
         self,
-        result: FlextInfraRefactorResult,
+        result: m.Infra.Refactor.Result,
         expected: _PostCheckExpected,
     ) -> tuple[bool, list[str]]:
         """Validate a refactor result against expected post-checks and gates."""

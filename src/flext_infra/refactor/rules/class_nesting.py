@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import ClassVar, TypedDict, cast
+from typing import TypedDict, cast
 
 import libcst as cst
 import yaml
 from libcst.metadata import MetadataWrapper
 
-from flext_infra.refactor.result import FlextInfraRefactorResult
+from flext_infra import c, m
 from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
 from flext_infra.refactor.transformers.helper_consolidation import (
     HelperConsolidationTransformer,
@@ -19,8 +19,6 @@ from flext_infra.refactor.transformers.nested_class_propagation import (
     NestedClassPropagationTransformer,
 )
 from flext_infra.refactor.validation import PostCheckGate
-
-RefactorResult = FlextInfraRefactorResult
 
 
 class _MappingEntry(TypedDict, total=False):
@@ -237,12 +235,6 @@ class PreCheckGate:
 class ClassNestingRefactorRule:
     """Apply class-nesting transforms driven by YAML mapping files."""
 
-    _CONFIDENCE_RANKS: ClassVar[dict[str, int]] = {
-        "low": 0,
-        "medium": 1,
-        "high": 2,
-    }
-
     def __init__(self, config_path: Path | None = None) -> None:
         """Initialize rule with an optional path to the YAML config."""
         self._config_path = config_path or Path(__file__).with_name(
@@ -252,11 +244,13 @@ class ClassNestingRefactorRule:
         self._pre_check_gate = PreCheckGate()
         self._post_check_gate = PostCheckGate()
 
-    def apply(self, file_path: Path, *, dry_run: bool = False) -> RefactorResult:
+    def apply(
+        self, file_path: Path, *, dry_run: bool = False
+    ) -> m.Infra.Refactor.Result:
         """Transform *file_path* according to loaded mappings and policy."""
         try:
             if file_path.suffix != ".py":
-                return RefactorResult(
+                return m.Infra.Refactor.Result(
                     file_path=file_path,
                     success=True,
                     modified=False,
@@ -291,7 +285,7 @@ class ClassNestingRefactorRule:
                 confidence_threshold,
             )
             if precheck_violations:
-                return RefactorResult(
+                return m.Infra.Refactor.Result(
                     file_path=file_path,
                     success=False,
                     modified=False,
@@ -315,7 +309,7 @@ class ClassNestingRefactorRule:
                     confidence_threshold,
                 )
                 post_ok, post_errors = self._post_check_gate.validate(
-                    RefactorResult(
+                    m.Infra.Refactor.Result(
                         file_path=file_path,
                         success=True,
                         modified=True,
@@ -325,7 +319,7 @@ class ClassNestingRefactorRule:
                     post_payload,
                 )
                 if not post_ok:
-                    return RefactorResult(
+                    return m.Infra.Refactor.Result(
                         file_path=file_path,
                         success=False,
                         modified=False,
@@ -337,7 +331,7 @@ class ClassNestingRefactorRule:
             if modified and not dry_run:
                 file_path.write_text(result_code, encoding="utf-8")
 
-            return RefactorResult(
+            return m.Infra.Refactor.Result(
                 file_path=file_path,
                 success=True,
                 modified=modified,
@@ -345,7 +339,7 @@ class ClassNestingRefactorRule:
                 refactored_code=result_code,
             )
         except Exception as exc:
-            return RefactorResult(
+            return m.Infra.Refactor.Result(
                 file_path=file_path,
                 success=False,
                 modified=False,
@@ -379,13 +373,15 @@ class ClassNestingRefactorRule:
     def _confidence_threshold(self, config: _RuleConfig) -> str:
         raw = config.get("confidence_threshold", "low")
         candidate = raw.strip().lower()
-        if candidate in self._CONFIDENCE_RANKS:
+        if candidate in c.Infra.Refactor.CONFIDENCE_RANKS:
             return candidate
         return "low"
 
     def _confidence_allowed(self, confidence: str, threshold: str) -> bool:
-        confidence_rank = self._CONFIDENCE_RANKS.get(confidence.strip().lower(), 0)
-        threshold_rank = self._CONFIDENCE_RANKS.get(threshold, 0)
+        confidence_rank = c.Infra.Refactor.CONFIDENCE_RANKS.get(
+            confidence.strip().lower(), 0
+        )
+        threshold_rank = c.Infra.Refactor.CONFIDENCE_RANKS.get(threshold, 0)
         return confidence_rank >= threshold_rank
 
     def _class_nesting_mappings(
@@ -755,4 +751,4 @@ class ClassNestingRefactorRule:
         return updated_tree
 
 
-__all__ = ["ClassNestingRefactorRule", "RefactorResult"]
+__all__ = ["ClassNestingRefactorRule"]

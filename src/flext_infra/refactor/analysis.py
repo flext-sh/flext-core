@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-import re
 import sys
 from collections import Counter
 from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
-from types import MappingProxyType
-from typing import ClassVar, TypedDict, cast, override
+from typing import TypedDict, cast, override
 
 import libcst as cst
 import yaml
 
+from flext_infra import c
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
 
@@ -115,10 +114,6 @@ class _FunctionDependencyCollector(cst.CSTVisitor):
 
 class FlextInfraRefactorClassNestingAnalyzer:
     """Analyze files for class nesting violations using YAML mapping rules."""
-
-    _MAPPINGS_RELATIVE_PATH: ClassVar[Path] = (
-        Path("rules") / "class-nesting-mappings.yml"
-    )
 
     @classmethod
     def analyze_files(cls, files: list[Path]) -> Mapping[str, object]:
@@ -249,7 +244,9 @@ class FlextInfraRefactorClassNestingAnalyzer:
 
     @classmethod
     def _load_mapping_index(cls) -> Mapping[tuple[str, str], _ClassNestingMappingEntry]:
-        mapping_path = Path(__file__).resolve().parent / cls._MAPPINGS_RELATIVE_PATH
+        mapping_path = (
+            Path(__file__).resolve().parent / c.Infra.Refactor.MAPPINGS_RELATIVE_PATH
+        )
         try:
             raw_content = mapping_path.read_text(encoding="utf-8")
             parsed = cast("object", yaml.safe_load(raw_content))
@@ -318,53 +315,6 @@ class FlextInfraRefactorClassNestingAnalyzer:
 class FlextInfraRefactorViolationAnalyzer:
     """Scan files and aggregate massive pattern violations."""
 
-    _PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = MappingProxyType({
-        "container_invariance": re.compile(
-            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
-        ),
-        "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
-        "direct_submodule_import": re.compile(
-            r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
-        ),
-        "legacy_typing_mapping": re.compile(
-            r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
-        ),
-        "runtime_alias_violation": re.compile(
-            r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
-        ),
-    })
-    _MODEL_TOKENS: ClassVar[tuple[str, ...]] = (
-        "model",
-        "schema",
-        "entity",
-        "pydantic",
-        "dataclass",
-    )
-    _DECORATOR_TOKENS: ClassVar[tuple[str, ...]] = (
-        "decorator",
-        "inject",
-        "provide",
-    )
-    _DISPATCHER_TOKENS: ClassVar[tuple[str, ...]] = (
-        "dispatcher",
-        "dispatch",
-        "command",
-        "query",
-        "event",
-    )
-    _NAMESPACE_PREFIXES: ClassVar[Mapping[str, str]] = MappingProxyType({
-        "utility": "FlextUtilities",
-        "models": "FlextModels",
-        "decorators": "FlextDecorators",
-        "dispatcher": "FlextDispatcher",
-    })
-    _CLASSIFICATION_PRIORITY: ClassVar[tuple[str, ...]] = (
-        "dispatcher",
-        "decorators",
-        "models",
-        "utility",
-    )
-
     @classmethod
     def analyze_files(cls, files: list[Path]) -> Mapping[str, object]:
         """Return aggregate and per-file violation counts."""
@@ -388,7 +338,7 @@ class FlextInfraRefactorViolationAnalyzer:
             helper_manual_review.extend(helper_analysis["manual_review"])
 
             file_counts: dict[str, int] = {}
-            for name, pattern in cls._PATTERNS.items():
+            for name, pattern in c.Infra.Refactor.VIOLATION_PATTERNS.items():
                 count = len(pattern.findall(content))
                 if count <= 0:
                     continue
@@ -524,7 +474,7 @@ class FlextInfraRefactorViolationAnalyzer:
             dependencies=dependencies,
             matched_categories=matched_categories,
         )
-        namespace_root = cls._NAMESPACE_PREFIXES[category]
+        namespace_root = c.Infra.Refactor.NAMESPACE_PREFIXES[category]
 
         return {
             "file": str(file_path),
@@ -546,11 +496,11 @@ class FlextInfraRefactorViolationAnalyzer:
         matched: set[str] = set()
         for dependency in dependencies:
             lowered = dependency.lower()
-            if any(token in lowered for token in cls._MODEL_TOKENS):
+            if any(token in lowered for token in c.Infra.Refactor.MODEL_TOKENS):
                 matched.add("models")
-            if any(token in lowered for token in cls._DECORATOR_TOKENS):
+            if any(token in lowered for token in c.Infra.Refactor.DECORATOR_TOKENS):
                 matched.add("decorators")
-            if any(token in lowered for token in cls._DISPATCHER_TOKENS):
+            if any(token in lowered for token in c.Infra.Refactor.DISPATCHER_TOKENS):
                 matched.add("dispatcher")
         if has_decorators:
             matched.add("decorators")
@@ -566,7 +516,7 @@ class FlextInfraRefactorViolationAnalyzer:
         if len(matched_categories) > 1:
             ordered = [
                 category
-                for category in cls._CLASSIFICATION_PRIORITY
+                for category in c.Infra.Refactor.CLASSIFICATION_PRIORITY
                 if category in matched_categories
             ]
             return (

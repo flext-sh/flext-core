@@ -2,24 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from pathlib import Path
+from flext_infra.models import m
 
-
-def _empty_str_list() -> list[str]:
-    return []
-
-
-@dataclass
-class FlextInfraRefactorResult:
-    """Result of applying refactor rules to a single file."""
-
-    file_path: Path
-    success: bool
-    modified: bool
-    error: str | None = None
-    changes: list[str] = field(default_factory=_empty_str_list)
-    refactored_code: str | None = None
-
+FlextInfraRefactorResult = m.Infra.Refactor.Result
 
 __all__ = ["FlextInfraRefactorResult"]

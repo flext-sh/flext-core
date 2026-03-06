@@ -9,14 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import Final
 
 from flext_core import FlextConstants
-from flext_infra._constants_modules import (
-    FlextInfraPathsConstants,
-    FlextInfraReportingConstants,
-    FlextInfraVersioningConstants,
-)
 from flext_infra.basemk._constants import FlextInfraBasemkConstants
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.codegen._constants import FlextInfraCodegenConstants
@@ -24,7 +20,7 @@ from flext_infra.core._constants import FlextInfraCoreConstants
 from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.docs._constants import FlextInfraDocsConstants
 from flext_infra.github._constants import FlextInfraGithubConstants
-from flext_infra.refactor.constants import FlextInfraRefactorConstants
+from flext_infra.refactor._constants import FlextInfraRefactorConstants
 from flext_infra.release._constants import FlextInfraReleaseConstants
 from flext_infra.workspace._constants import FlextInfraWorkspaceConstants
 
@@ -176,10 +172,15 @@ class FlextInfraConstants(FlextConstants):
         class Workspace(FlextInfraWorkspaceConstants):
             """Workspace constants via MRO."""
 
-        class Paths(FlextInfraPathsConstants):
-            """Paths module constants via MRO."""
+        class Paths:
+            """Path resolution constants for workspace navigation."""
 
-            """Path-related constants."""
+            WORKSPACE_MARKERS: Final[frozenset[str]] = frozenset({
+                ".git",
+                "Makefile",
+                "pyproject.toml",
+            })
+            """Filesystem markers used to detect workspace root directories."""
 
             VENV_BIN_REL: Final[str] = ".venv/bin"
             """Relative path to the virtualenv bin directory from workspace root."""
@@ -187,11 +188,31 @@ class FlextInfraConstants(FlextConstants):
             DEFAULT_SRC_DIR: Final[str] = "src"
             """Default source directory for Python projects."""
 
-        class Versioning(FlextInfraVersioningConstants):
-            """Versioning module constants via MRO."""
+        class Versioning:
+            """Semantic versioning constants for version management."""
 
-        class Reporting(FlextInfraReportingConstants):
-            """Reporting module constants via MRO."""
+            SEMVER_RE: Final[re.Pattern[str]] = re.compile(
+                r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$",
+            )
+            """Regex pattern for parsing semantic version strings."""
+
+            DEV_BRANCH_RE: Final[re.Pattern[str]] = re.compile(
+                r"^(\d+\.\d+\.\d+)-dev$",
+            )
+            """Regex pattern for matching development branch names."""
+
+            VALID_BUMP_TYPES: Final[frozenset[str]] = frozenset({
+                "major",
+                "minor",
+                "patch",
+            })
+            """Allowed version bump type identifiers."""
+
+        class Reporting:
+            """Reporting service constants for .reports/ path management."""
+
+            REPORTS_DIR_NAME: Final[str] = ".reports"
+            """Standard directory name for report output."""
 
         class Refactor(FlextInfraRefactorConstants):
             """Refactor module constants via MRO."""

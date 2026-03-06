@@ -8,8 +8,7 @@ from typing import Any, cast, override
 
 import libcst as cst
 
-from flext_infra import c
-from flext_infra.refactor.method_info import FlextInfraRefactorMethodInfo
+from flext_infra import c, m
 
 
 class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
@@ -83,7 +82,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             body=updated_node.body.with_changes(body=new_body)
         )
 
-    def _analyze_method(self, node: cst.FunctionDef) -> FlextInfraRefactorMethodInfo:
+    def _analyze_method(self, node: cst.FunctionDef) -> m.Infra.Refactor.MethodInfo:
         name = node.name.value
         decorators: list[str] = []
 
@@ -94,7 +93,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 decorators.append(dec.decorator.attr.value)
 
         category = self._categorize(name, decorators)
-        return FlextInfraRefactorMethodInfo(
+        return m.Infra.Refactor.MethodInfo(
             name=name,
             category=category,
             node=node,
@@ -130,10 +129,10 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
     def _sort_methods(
         self,
-        methods: list[FlextInfraRefactorMethodInfo],
-    ) -> list[FlextInfraRefactorMethodInfo]:
+        methods: list[m.Infra.Refactor.MethodInfo],
+    ) -> list[m.Infra.Refactor.MethodInfo]:
         def matches_rule(
-            method: FlextInfraRefactorMethodInfo,
+            method: m.Infra.Refactor.MethodInfo,
             rule_config: Mapping[str, Any],
         ) -> bool:
             decorators = set(method.decorators)
@@ -180,7 +179,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
             return True
 
-        def sort_key(method: FlextInfraRefactorMethodInfo) -> tuple[int, int, str]:
+        def sort_key(method: m.Infra.Refactor.MethodInfo) -> tuple[int, int, str]:
             for idx, rule_config in enumerate(self._order_config):
                 if rule_config.get("category") == "class_attributes":
                     continue

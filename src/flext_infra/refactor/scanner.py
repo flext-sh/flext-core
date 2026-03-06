@@ -3,64 +3,26 @@
 from __future__ import annotations
 
 import json
-import re
 from collections import Counter
 from collections.abc import Mapping
-from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, cast, override
+from typing import cast, override
 
 import libcst as cst
 
-from flext_infra.subprocess import FlextInfraCommandRunner
-
-
-@dataclass(frozen=True)
-class FlextInfraRefactorClassOccurrence:
-    """A single class definition occurrence within a source file."""
-
-    name: str
-    line: int
-    is_top_level: bool
-
-
-@dataclass(frozen=True)
-class FlextInfraRefactorLooseClassViolation:
-    """A detected loose-class naming violation with confidence score."""
-
-    file: str
-    line: int
-    class_name: str
-    expected_prefix: str
-    rule: str
-    reason: str
-    confidence: str
-    score: float
-
-    def to_dict(self) -> dict[str, object]:
-        """Serialise violation to a plain dict for JSON output."""
-        return {
-            "file": self.file,
-            "line": self.line,
-            "class_name": self.class_name,
-            "expected_prefix": self.expected_prefix,
-            "rule": self.rule,
-            "reason": self.reason,
-            "confidence": self.confidence,
-            "score": self.score,
-        }
+from flext_infra import FlextInfraCommandRunner, c, m
 
 
 class _TopLevelClassCollector(cst.CSTVisitor):
     def __init__(self) -> None:
         self._depth = 0
-        self.classes: list[FlextInfraRefactorClassOccurrence] = []
+        self.classes: list[m.Infra.Refactor.ClassOccurrence] = []
 
     @override
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         is_top_level = self._depth == 0
         self.classes.append(
-            FlextInfraRefactorClassOccurrence(
+            m.Infra.Refactor.ClassOccurrence(
                 name=node.name.value,
                 line=0,
                 is_top_level=is_top_level,
@@ -77,26 +39,13 @@ class _TopLevelClassCollector(cst.CSTVisitor):
 class FlextInfraRefactorLooseClassScanner:
     """Scan a project tree and report top-level classes lacking namespace prefixes."""
 
-    _CONFIDENCE_TO_SCORE: ClassVar[Mapping[str, float]] = {
-        "high": 0.95,
-        "medium": 0.75,
-        "low": 0.55,
-    }
-
-    _REQUIRED_CLASS_TARGETS: ClassVar[tuple[str, ...]] = (
-        "TimeoutEnforcer",
-        "CircuitBreakerManager",
-    )
-
-    _CLASS_PATTERN = re.compile(r"[^A-Za-z0-9]+")
-
     def scan(self, project_root: Path) -> Mapping[str, object]:
         """Scan *project_root*/src and return a violation report dict."""
         python_files = self._discover_python_files(project_root)
         ast_grep_index = self._scan_with_ast_grep(project_root)
 
-        violations: list[FlextInfraRefactorLooseClassViolation] = []
-        targets_found = dict.fromkeys(self._REQUIRED_CLASS_TARGETS, False)
+        violations: list[m.Infra.Refactor.LooseClassViolation] = []
+        targets_found = dict.fromkeys(c.Infra.Refactor.REQUIRED_CLASS_TARGETS, False)
         classes_scanned = 0
 
         for file_path in python_files:
@@ -125,15 +74,15 @@ class FlextInfraRefactorLooseClassScanner:
             "violations_count": len(violations),
             "confidence_counts": dict(counters),
             "required_targets": targets_found,
-            "violations": [item.to_dict() for item in violations],
+            "violations": [item.model_dump() for item in violations],
         }
 
     def _build_violation(
         self,
         rel_path: Path,
-        occurrence: FlextInfraRefactorClassOccurrence,
+        occurrence: m.Infra.Refactor.ClassOccurrence,
         ast_grep_hits: Mapping[str, int],
-    ) -> FlextInfraRefactorLooseClassViolation | None:
+    ) -> m.Infra.Refactor.LooseClassViolation | None:
         if not occurrence.is_top_level:
             return None
 
@@ -142,7 +91,7 @@ class FlextInfraRefactorLooseClassScanner:
             return None
 
         confidence = self._confidence_from_location(rel_path)
-        score = self._CONFIDENCE_TO_SCORE[confidence]
+        score = c.Infra.Refactor.CONFIDENCE_TO_SCORE[confidence]
         line = occurrence.line
         if occurrence.name in ast_grep_hits:
             score = min(score + 0.02, 0.99)
@@ -154,7 +103,7 @@ class FlextInfraRefactorLooseClassScanner:
             else "top_level_class_without_namespace_prefix"
         )
 
-        return FlextInfraRefactorLooseClassViolation(
+        return m.Infra.Refactor.LooseClassViolation(
             file=rel_path.as_posix(),
             line=max(line, 1),
             class_name=occurrence.name,
@@ -204,7 +153,7 @@ class FlextInfraRefactorLooseClassScanner:
         return any(part.startswith("_") for part in rel_path.parent.parts[1:])
 
     def _pascal_case(self, value: str) -> str:
-        normalized = self._CLASS_PATTERN.sub(" ", value.replace("_", " "))
+        normalized = c.Infra.Refactor.CLASS_PATTERN.sub(" ", value.replace("_", " "))
         return "".join(word.capitalize() for word in normalized.split())
 
     def _relative_module_path(self, project_root: Path, file_path: Path) -> Path | None:
@@ -217,7 +166,7 @@ class FlextInfraRefactorLooseClassScanner:
     def _scan_file_with_libcst(
         self,
         file_path: Path,
-    ) -> list[FlextInfraRefactorClassOccurrence]:
+    ) -> list[m.Infra.Refactor.ClassOccurrence]:
         try:
             source = file_path.read_text(encoding="utf-8")
             module = cst.parse_module(source)
@@ -300,7 +249,5 @@ class FlextInfraRefactorLooseClassScanner:
 
 
 __all__ = [
-    "FlextInfraRefactorClassOccurrence",
     "FlextInfraRefactorLooseClassScanner",
-    "FlextInfraRefactorLooseClassViolation",
 ]

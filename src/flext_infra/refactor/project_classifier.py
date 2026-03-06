@@ -5,58 +5,16 @@ from __future__ import annotations
 import ast
 import re
 import tomllib
-from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, Literal
+from typing import Literal
+
+from flext_infra import c, m
 
 ProjectKind = Literal["core", "domain", "platform", "integration", "app"]
 
 
-@dataclass(frozen=True)
-class ProjectClassification:
-    """Result of classifying a project by kind and family MRO chains."""
-
-    project_kind: ProjectKind
-    family_chains: dict[str, list[str]]
-
-
 class ProjectClassifier:
     """Classify a project by kind and discover MRO family chains."""
-
-    _FAMILY_SUFFIXES: ClassVar[dict[str, str]] = {
-        "c": "Constants",
-        "t": "Types",
-        "p": "Protocols",
-        "m": "Models",
-        "u": "Utilities",
-    }
-    _FAMILY_FILES: ClassVar[dict[str, str]] = {
-        "c": "*constants.py",
-        "t": "*typings.py",
-        "p": "*protocols.py",
-        "m": "*models.py",
-        "u": "*utilities.py",
-    }
-    _DOMAIN_PACKAGES: ClassVar[frozenset[str]] = frozenset({
-        "flext-ldap",
-        "flext-ldif",
-        "flext-db-oracle",
-        "flext-oracle-wms",
-        "flext-oracle-oic",
-    })
-    _PLATFORM_PACKAGES: ClassVar[frozenset[str]] = frozenset({
-        "flext-cli",
-        "flext-meltano",
-        "flext-api",
-        "flext-auth",
-        "flext-web",
-        "flext-grpc",
-    })
-    _INTEGRATION_CLASS_PREFIXES: ClassVar[tuple[str, ...]] = (
-        "FlextTap",
-        "FlextTarget",
-        "FlextDbt",
-    )
 
     def __init__(self, project_root: Path) -> None:
         """Initialize classifier for the given project root."""
@@ -64,7 +22,7 @@ class ProjectClassifier:
         self._pyproject_path = self._project_root / "pyproject.toml"
         self._src_path = self._project_root / "src"
 
-    def classify(self) -> ProjectClassification:
+    def classify(self) -> m.Infra.Refactor.ProjectClassification:
         """Return classification and family chains for this project."""
         project_name, dependencies = self._read_project_metadata()
         internal_dependencies = self._internal_dependencies(
@@ -80,7 +38,7 @@ class ProjectClassifier:
             internal_dependencies=internal_dependencies,
             local_facade_classes=local_facade_classes,
         )
-        return ProjectClassification(
+        return m.Infra.Refactor.ProjectClassification(
             project_kind=project_kind, family_chains=family_chains
         )
 
@@ -144,15 +102,15 @@ class ProjectClassifier:
 
     def _discover_facade_inheritance(self) -> tuple[dict[str, set[str]], set[str]]:
         family_bases: dict[str, set[str]] = {
-            family: set() for family in self._FAMILY_SUFFIXES
+            family: set() for family in c.Infra.Refactor.FAMILY_SUFFIXES
         }
         local_facade_classes: set[str] = set()
 
         if not self._src_path.is_dir():
             return family_bases, local_facade_classes
 
-        for family, suffix in self._FAMILY_SUFFIXES.items():
-            file_pattern = self._FAMILY_FILES[family]
+        for family, suffix in c.Infra.Refactor.FAMILY_SUFFIXES.items():
+            file_pattern = c.Infra.Refactor.FAMILY_FILES[family]
             for file_path in self._src_path.rglob(file_pattern):
                 class_bases, class_names = self._parse_family_file(file_path, suffix)
                 family_bases[family].update(class_bases)
@@ -199,7 +157,7 @@ class ProjectClassifier:
         family_bases: dict[str, set[str]],
     ) -> dict[str, list[str]]:
         family_chains: dict[str, list[str]] = {}
-        for family, suffix in self._FAMILY_SUFFIXES.items():
+        for family, suffix in c.Infra.Refactor.FAMILY_SUFFIXES.items():
             expected_parents = self._expected_parents_for_family(
                 family_suffix=suffix,
                 internal_dependencies=internal_dependencies,
@@ -258,10 +216,11 @@ class ProjectClassifier:
             return "core"
 
         has_domain_dependency = any(
-            dependency in self._DOMAIN_PACKAGES for dependency in internal_dependencies
+            dependency in c.Infra.Refactor.DOMAIN_PACKAGES
+            for dependency in internal_dependencies
         )
         has_platform_dependency = any(
-            dependency in self._PLATFORM_PACKAGES
+            dependency in c.Infra.Refactor.PLATFORM_PACKAGES
             for dependency in internal_dependencies
         )
 
@@ -274,7 +233,7 @@ class ProjectClassifier:
             dependency_kind = "platform"
 
         has_integration_facade = any(
-            class_name.startswith(self._INTEGRATION_CLASS_PREFIXES)
+            class_name.startswith(c.Infra.Refactor.INTEGRATION_CLASS_PREFIXES)
             for class_name in local_facade_classes
         )
         if dependency_kind == "integration" and not has_integration_facade:
@@ -289,4 +248,4 @@ class ProjectClassifier:
         return dependency_kind
 
 
-__all__ = ["ProjectClassification", "ProjectClassifier", "ProjectKind"]
+__all__ = ["ProjectClassifier", "ProjectKind"]

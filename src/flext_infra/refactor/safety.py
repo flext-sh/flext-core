@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, cast, overload
+from typing import Protocol, overload
 
 from flext_core import r
+from flext_infra.models import m
 from flext_infra.subprocess import FlextInfraCommandRunner
 
 
@@ -37,21 +36,6 @@ class FlextInfraRefactorSafetyRunnerProtocol(Protocol):
 
 def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
-
-
-def _empty_str_list() -> list[str]:
-    return []
-
-
-@dataclass
-class FlextInfraRefactorCheckpoint:
-    """Serialisable checkpoint state for refactor safety recovery."""
-
-    workspace_root: str
-    status: str = "running"
-    stash_ref: str = ""
-    processed_targets: list[str] = field(default_factory=_empty_str_list)
-    updated_at: str = field(default_factory=_now_iso)
 
 
 class FlextInfraRefactorSafetyManager:
@@ -236,15 +220,10 @@ class FlextInfraRefactorSafetyManager:
             command.append(stash_ref)
         return self._runner.run_checked(command, cwd=workspace_root)
 
-    def save_checkpoint(self, checkpoint: FlextInfraRefactorCheckpoint) -> r[bool]:
+    def save_checkpoint(self, checkpoint: m.Infra.Refactor.Checkpoint) -> r[bool]:
         """Persist a checkpoint to disk as JSON."""
-        payload = {
-            "workspace_root": checkpoint.workspace_root,
-            "status": checkpoint.status,
-            "stash_ref": checkpoint.stash_ref,
-            "processed_targets": checkpoint.processed_targets,
-            "updated_at": _now_iso(),
-        }
+        payload = checkpoint.model_dump()
+        payload["updated_at"] = _now_iso()
         try:
             self._checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
             self._checkpoint_path.write_text(
@@ -264,7 +243,7 @@ class FlextInfraRefactorSafetyManager:
         processed_targets: list[str],
     ) -> r[bool]:
         """Build and persist a checkpoint from individual state components."""
-        checkpoint = FlextInfraRefactorCheckpoint(
+        checkpoint = m.Infra.Refactor.Checkpoint(
             workspace_root=str(workspace_root),
             status=status,
             stash_ref=stash_ref,
@@ -272,64 +251,18 @@ class FlextInfraRefactorSafetyManager:
         )
         return self.save_checkpoint(checkpoint)
 
-    def load_checkpoint(self) -> r[FlextInfraRefactorCheckpoint]:
+    def load_checkpoint(self) -> r[m.Infra.Refactor.Checkpoint]:
         """Load a previously persisted checkpoint from disk."""
         if not self._checkpoint_path.exists():
-            return r[FlextInfraRefactorCheckpoint].fail("checkpoint does not exist")
+            return r[m.Infra.Refactor.Checkpoint].fail("checkpoint does not exist")
         try:
             payload_text = self._checkpoint_path.read_text(encoding="utf-8")
-            payload_obj = json.loads(payload_text)
-            if not isinstance(payload_obj, Mapping):
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint payload must be a mapping",
-                )
-            typed_payload = cast("Mapping[str, object]", payload_obj)
-
-            workspace_root = typed_payload.get("workspace_root", "")
-            status = typed_payload.get("status", "running")
-            stash_ref = typed_payload.get("stash_ref", "")
-            processed_targets_obj = typed_payload.get("processed_targets", [])
-            updated_at = typed_payload.get("updated_at", _now_iso())
-            if not isinstance(workspace_root, str) or not workspace_root:
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint workspace_root is invalid",
-                )
-            if not isinstance(status, str):
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint status is invalid",
-                )
-            if not isinstance(stash_ref, str):
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint stash_ref is invalid",
-                )
-            if not isinstance(updated_at, str):
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint updated_at is invalid",
-                )
-            if not isinstance(processed_targets_obj, list):
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint processed_targets is invalid",
-                )
-            processed_targets_raw = cast("list[object]", processed_targets_obj)
-            if any(not isinstance(item, str) for item in processed_targets_raw):
-                return r[FlextInfraRefactorCheckpoint].fail(
-                    "checkpoint processed_targets is invalid",
-                )
-
-            processed_targets = cast("list[str]", processed_targets_raw)
-
-            checkpoint = FlextInfraRefactorCheckpoint(
-                workspace_root=workspace_root,
-                status=status,
-                stash_ref=stash_ref,
-                processed_targets=processed_targets,
-                updated_at=updated_at,
+            checkpoint = m.Infra.Refactor.Checkpoint.model_validate_json(
+                payload_text,
             )
-            return r[FlextInfraRefactorCheckpoint].ok(checkpoint)
+            return r[m.Infra.Refactor.Checkpoint].ok(checkpoint)
         except (OSError, ValueError) as exc:
-            return r[FlextInfraRefactorCheckpoint].fail(
-                f"checkpoint load failed: {exc}"
-            )
+            return r[m.Infra.Refactor.Checkpoint].fail(f"checkpoint load failed: {exc}")
 
     def clear_checkpoint(self) -> r[bool]:
         """Remove the on-disk checkpoint file."""
@@ -343,7 +276,6 @@ class FlextInfraRefactorSafetyManager:
 
 
 __all__ = [
-    "FlextInfraRefactorCheckpoint",
     "FlextInfraRefactorSafetyManager",
     "FlextInfraRefactorSafetyRunnerProtocol",
 ]

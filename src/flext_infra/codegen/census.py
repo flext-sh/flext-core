@@ -9,22 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from typing import Final, override
+from typing import override
 
 from flext_core import FlextService, r
+from flext_infra import c
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.models import m
 
 __all__ = ["FlextInfraCodegenCensus"]
-
-_VIOLATION_PATTERN: Final[re.Pattern[str]] = re.compile(
-    r"\[(?P<rule>NS-\d{3})-\d{3}\]\s+(?P<module>[^:]+):(?P<line>\d+)\s+—\s+(?P<message>.+)"
-)
-
-_EXCLUDED_PROJECTS: Final[frozenset[str]] = frozenset({"flexcore"})
 
 
 class FlextInfraCodegenCensus(FlextService[list[m.Infra.CensusReport]]):
@@ -51,7 +45,7 @@ class FlextInfraCodegenCensus(FlextService[list[m.Infra.CensusReport]]):
         violation_str: str,
     ) -> m.Infra.CensusViolation | None:
         """Parse a violation string into a CensusViolation model."""
-        match = _VIOLATION_PATTERN.match(violation_str)
+        match = c.Infra.Codegen.VIOLATION_PATTERN.match(violation_str)
         if match is None:
             return None
 
@@ -100,7 +94,7 @@ class FlextInfraCodegenCensus(FlextService[list[m.Infra.CensusReport]]):
         reports: list[m.Infra.CensusReport] = []
         discovered: list[m.Infra.ProjectInfo] = projects_result.unwrap()
         for project in discovered:
-            if project.name in _EXCLUDED_PROJECTS:
+            if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue
             report = self._census_project(project)
             reports.append(report)
