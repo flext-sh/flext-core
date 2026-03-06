@@ -1,6 +1,6 @@
 """Project discovery service for workspace scanning.
 
-Wraps project discovery logic with FlextResult error handling,
+Wraps project discovery logic with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_infra import c, m
 
 
@@ -50,7 +50,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
     def discover_projects(
         self,
         workspace_root: Path,
-    ) -> FlextResult[list[m.Infra.ProjectInfo]]:
+    ) -> r[list[m.Infra.ProjectInfo]]:
         """Discover all subprojects in the workspace.
 
         Scans the workspace root for directories that are Git repositories
@@ -60,7 +60,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
             workspace_root: The root directory of the workspace.
 
         Returns:
-            FlextResult with list of discovered ProjectInfo models.
+            r with list of discovered ProjectInfo models.
 
         """
         try:
@@ -107,11 +107,11 @@ class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
             )
 
     @override
-    def execute(self) -> FlextResult[list[m.Infra.ProjectInfo]]:
+    def execute(self) -> r[list[m.Infra.ProjectInfo]]:
         """Execute discovery of all projects in workspace.
 
         Returns:
-            FlextResult with list of discovered ProjectInfo models.
+            r with list of discovered ProjectInfo models.
 
         """
         # Default implementation - subclasses can override
@@ -123,7 +123,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
         *,
         skip_dirs: frozenset[str] | None = None,
         project_paths: list[Path] | None = None,
-    ) -> FlextResult[list[Path]]:
+    ) -> r[list[Path]]:
         """Find every pyproject.toml under workspace_root recursively.
 
         Args:
@@ -132,7 +132,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
             project_paths: If given, only return files for these project dirs.
 
         Returns:
-            FlextResult with sorted list of pyproject.toml paths.
+            r with sorted list of pyproject.toml paths.
 
         """
         try:

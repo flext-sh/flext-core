@@ -14,7 +14,7 @@ class FlextInfraUtilities(FlextUtilities):
     """Utility namespace for flext-infra; extends FlextUtilities."""
 
     class Infra:
-        pass
+        """Infrastructure-domain utilities."""
 
 
 u = FlextInfraUtilities

@@ -23,6 +23,8 @@ class FlextInfraModels(_FlextModels):
     """Pydantic model namespace for infrastructure services."""
 
     class Infra:
+        """Infrastructure-domain models."""
+
         class ProjectInfo(_FlextModels.ArbitraryTypesModel):
             """Discovered project metadata for workspace operations."""
 

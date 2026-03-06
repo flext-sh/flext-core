@@ -27,6 +27,8 @@ class FlextInfraProtocols(FlextProtocols):
     """
 
     class Infra:
+        """Infrastructure-domain protocols."""
+
         @runtime_checkable
         class ProjectInfoProtocol(Protocol):
             """Minimal project descriptor used by orchestration services."""

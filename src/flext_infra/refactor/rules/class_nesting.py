@@ -9,7 +9,6 @@ import yaml
 from libcst.metadata import MetadataWrapper
 
 from flext_infra.refactor.result import FlextInfraRefactorResult
-from flext_infra.refactor.validation import PostCheckGate
 from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
 from flext_infra.refactor.transformers.helper_consolidation import (
     HelperConsolidationTransformer,
@@ -17,6 +16,7 @@ from flext_infra.refactor.transformers.helper_consolidation import (
 from flext_infra.refactor.transformers.nested_class_propagation import (
     NestedClassPropagationTransformer,
 )
+from flext_infra.refactor.validation import PostCheckGate
 
 RefactorResult = FlextInfraRefactorResult
 
@@ -41,7 +41,7 @@ class _PolicyFamily(TypedDict, total=False):
 
 class _PolicyDocument(TypedDict, total=False):
     policy_matrix: list[_PolicyFamily]
-    rules: list["_PolicyRule"]
+    rules: list[_PolicyRule]
 
 
 class _PolicyCheck(TypedDict, total=False):

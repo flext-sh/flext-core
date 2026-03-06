@@ -1,8 +1,8 @@
 """Type aliases for flext-infra.
 
 Re-exports and extends flext_core typings for infrastructure services.
-Infra-specific type aliases live inside ``FlextInfraTypings`` so they are
-accessed via ``t.InfraPayload``, ``t.InfraPayloadMap``, etc.
+Infra-specific type aliases live inside ``FlextInfraTypes`` so they are
+accessed via ``t.Infra.Payload``, ``t.Infra.PayloadMap``, etc.
 
 Non-recursive aliases MUST use ``X: TypeAlias = ...`` (isinstance-safe).
 See CLAUDE.md §3 AXIOMATIC rule.
