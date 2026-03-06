@@ -1,6 +1,6 @@
 """Git operations service for repository interaction.
 
-Wraps Git commands with FlextResult error handling,
+Wraps Git commands with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_infra import FlextInfraCommandRunner
 
 
@@ -27,14 +27,14 @@ class FlextInfraGitService(FlextService[str]):
         super().__init__()
         self._runner = runner or FlextInfraCommandRunner()
 
-    def current_branch(self, repo_root: Path) -> FlextResult[str]:
+    def current_branch(self, repo_root: Path) -> r[str]:
         """Return the name of the current active branch.
 
         Args:
             repo_root: The root directory of the Git repository.
 
         Returns:
-            FlextResult[str] with the branch name.
+            r[str] with the branch name.
 
         """
         return self._runner.capture(
@@ -43,7 +43,7 @@ class FlextInfraGitService(FlextService[str]):
         )
 
     @override
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Execute the service (required by FlextService base class)."""
         return r[str].ok("")
 
@@ -51,7 +51,7 @@ class FlextInfraGitService(FlextService[str]):
         self,
         cmd: list[str],
         cwd: Path | None = None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Run an arbitrary git command and capture output.
 
         Args:
@@ -59,12 +59,12 @@ class FlextInfraGitService(FlextService[str]):
             cwd: Working directory.
 
         Returns:
-            FlextResult[str] with command output.
+            r[str] with command output.
 
         """
         return self._runner.capture(["git", *cmd], cwd=cwd)
 
-    def tag_exists(self, repo_root: Path, tag: str) -> FlextResult[bool]:
+    def tag_exists(self, repo_root: Path, tag: str) -> r[bool]:
         """Check if a specific tag exists in the repository.
 
         Args:
@@ -72,7 +72,7 @@ class FlextInfraGitService(FlextService[str]):
             tag: The tag name to check.
 
         Returns:
-            FlextResult[bool] with True if the tag exists.
+            r[bool] with True if the tag exists.
 
         """
         result = self._runner.capture(

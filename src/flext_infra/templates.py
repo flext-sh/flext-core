@@ -1,7 +1,7 @@
 """Template engine service for text rendering.
 
 Consolidates shared text templates used by infrastructure scripts
-into a service class with FlextResult error handling.
+into a service class with r error handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,14 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, r
+from flext_core import r
 
 
 class FlextInfraTemplateEngine:
     """Infrastructure service for text template rendering.
 
     Centralizes template constants and provides safe rendering
-    with FlextResult error handling.
+    with r error handling.
     """
 
     TOC_START: str = "<!-- TOC START -->"
@@ -41,7 +41,7 @@ class FlextInfraTemplateEngine:
         self,
         template: str,
         **kwargs: str,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Render a template string with keyword arguments.
 
         Args:
@@ -49,7 +49,7 @@ class FlextInfraTemplateEngine:
             **kwargs: Values to substitute into the template.
 
         Returns:
-            FlextResult[str] with the rendered string.
+            r[str] with the rendered string.
 
         """
         try:

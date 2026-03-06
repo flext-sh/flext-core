@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextContainer, FlextResult, t
+from flext_core import FlextContainer, r, t
 from flext_infra.basemk import (
     FlextInfraBaseMkGenerator,
     FlextInfraBaseMkTemplateEngine,
@@ -47,14 +47,14 @@ def get_flext_infra_container() -> FlextContainer:
 
 def get_flext_infra_service(
     service_name: str,
-) -> FlextResult[t.RegisterableService]:
+) -> r[t.RegisterableService]:
     """Get service from FLEXT DI container.
 
     Args:
         service_name: Name of the service to retrieve.
 
     Returns:
-        FlextResult containing the service or error.
+        r containing the service or error.
 
     """
     container = get_flext_infra_container()

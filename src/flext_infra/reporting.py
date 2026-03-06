@@ -21,7 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_core.constants import KNOWN_VERBS
 from flext_infra.constants import c
 
@@ -42,7 +42,7 @@ class FlextInfraReportingService(FlextService[Path]):
     Structurally satisfies ``InfraProtocols.ReporterProtocol``.
     """
 
-    def create_latest_symlink(self, report_dir: Path, run_id: str) -> FlextResult[Path]:
+    def create_latest_symlink(self, report_dir: Path, run_id: str) -> r[Path]:
         """Create or update a ``latest`` symlink pointing to *run_id*.
 
         Args:
@@ -50,7 +50,7 @@ class FlextInfraReportingService(FlextService[Path]):
             run_id: The run-specific subdirectory name.
 
         Returns:
-            FlextResult[Path] with the symlink path.
+            r[Path] with the symlink path.
 
         """
         link = report_dir / "latest"
@@ -62,9 +62,7 @@ class FlextInfraReportingService(FlextService[Path]):
         except OSError as exc:
             return r[Path].fail(f"failed to create latest symlink: {exc}")
 
-    def ensure_report_dir(
-        self, root: Path | str, scope: str, verb: str
-    ) -> FlextResult[Path]:
+    def ensure_report_dir(self, root: Path | str, scope: str, verb: str) -> r[Path]:
         """Ensure report directory exists, creating it if necessary.
 
         Args:
@@ -73,7 +71,7 @@ class FlextInfraReportingService(FlextService[Path]):
             verb: Action verb (check, test, validate, docs, …).
 
         Returns:
-            FlextResult[Path] with the report directory path.
+            r[Path] with the report directory path.
 
         """
         try:
@@ -84,11 +82,11 @@ class FlextInfraReportingService(FlextService[Path]):
             return r[Path].fail(f"failed to create report directory: {exc}")
 
     @override
-    def execute(self) -> FlextResult[Path]:
+    def execute(self) -> r[Path]:
         """Execute reporting (default: empty path).
 
         Returns:
-            FlextResult with empty path by default.
+            r with empty path by default.
 
         """
         return r[Path].ok(Path())

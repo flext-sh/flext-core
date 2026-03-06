@@ -1,6 +1,6 @@
 """Command execution service for infrastructure operations.
 
-Wraps subprocess execution with FlextResult error handling,
+Wraps subprocess execution with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,14 +15,14 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_infra import c, m
 
 
 class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
     """Infrastructure service for subprocess execution.
 
-    Provides FlextResult-wrapped command execution, replacing the bare
+    Provides r-wrapped command execution, replacing the bare
     ``run_checked`` and ``run_capture`` functions from ``scripts/libs/subprocess.py``.
 
     Structurally satisfies ``InfraProtocols.CommandRunnerProtocol``.
@@ -38,7 +38,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Run a command and capture its stdout.
 
         Equivalent to the legacy ``run_capture`` function.
@@ -50,7 +50,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
             env: Optional environment override.
 
         Returns:
-            FlextResult[str] with stripped stdout on success.
+            r[str] with stripped stdout on success.
 
         """
         result = self.run(cmd, cwd=cwd, timeout=timeout, env=env)
@@ -60,9 +60,11 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
         return r[str].fail(result.error or "capture failed")
 
     @override
-    def execute(self) -> FlextResult[m.Infra.CommandOutput]:
+    def execute(self) -> r[m.Infra.CommandOutput]:
         """Execute the service (required by FlextService base class)."""
-        return r[m.Infra.CommandOutput].ok(m.Infra.CommandOutput(stdout="", stderr="", exit_code=0))
+        return r[m.Infra.CommandOutput].ok(
+            m.Infra.CommandOutput(stdout="", stderr="", exit_code=0)
+        )
 
     def run(
         self,
@@ -70,7 +72,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[m.Infra.CommandOutput]:
+    ) -> r[m.Infra.CommandOutput]:
         """Run a command and return structured output.
 
         Args:
@@ -78,7 +80,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
             cwd: Optional working directory for the command.
 
         Returns:
-            FlextResult containing CommandOutput on success,
+            r containing CommandOutput on success,
             or failure with error details.
 
         """
@@ -103,7 +105,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Run a command and return success/failure status.
 
         Args:
@@ -111,7 +113,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
             cwd: Optional working directory for the command.
 
         Returns:
-            FlextResult[bool] with True on success, or failure with error.
+            r[bool] with True on success, or failure with error.
 
         """
         result = self.run(cmd, cwd=cwd, timeout=timeout, env=env)
@@ -125,7 +127,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[m.Infra.CommandOutput]:
+    ) -> r[m.Infra.CommandOutput]:
         """Run a command without enforcing zero exit code.
 
         Args:
@@ -135,7 +137,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
             env: Optional environment override.
 
         Returns:
-            FlextResult containing raw command output and exit code.
+            r containing raw command output and exit code.
 
         """
         try:
@@ -170,7 +172,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[int]:
+    ) -> r[int]:
         """Run a command and stream combined output to a file.
 
         Args:
@@ -181,7 +183,7 @@ class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
             env: Optional environment override.
 
         Returns:
-            FlextResult containing the process exit code.
+            r containing the process exit code.
 
         """
         try:

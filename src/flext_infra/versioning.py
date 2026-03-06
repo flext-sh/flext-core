@@ -1,6 +1,6 @@
 """Versioning service for semantic version management.
 
-Wraps versioning operations with FlextResult error handling,
+Wraps versioning operations with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_infra.constants import c
 from flext_infra.toml_io import FlextInfraTomlService
 
@@ -23,7 +23,7 @@ _PROJECT_SECTION = "[project]"
 class FlextInfraVersioningService(FlextService[str]):
     """Infrastructure service for semantic versioning operations.
 
-    Provides FlextResult-wrapped version parsing, bumping, and
+    Provides r-wrapped version parsing, bumping, and
     project version management.
     project version management.
     """
@@ -80,7 +80,7 @@ class FlextInfraVersioningService(FlextService[str]):
         self,
         version: str,
         bump_type: str,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Bump a semantic version string.
 
         Args:
@@ -88,7 +88,7 @@ class FlextInfraVersioningService(FlextService[str]):
             bump_type: One of "major", "minor", or "patch".
 
         Returns:
-            FlextResult[str] with the bumped version.
+            r[str] with the bumped version.
 
         """
         if bump_type not in c.Infra.Versioning.VALID_BUMP_TYPES:
@@ -114,14 +114,14 @@ class FlextInfraVersioningService(FlextService[str]):
     def current_workspace_version(
         self,
         workspace_root: Path,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Read the current version from the main pyproject.toml.
 
         Args:
             workspace_root: The root directory of the workspace.
 
         Returns:
-            FlextResult[str] with the version string.
+            r[str] with the version string.
 
         """
         pyproject = workspace_root / c.Infra.Files.PYPROJECT_FILENAME
@@ -136,11 +136,11 @@ class FlextInfraVersioningService(FlextService[str]):
         return r[str].ok(version)
 
     @override
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Execute versioning (default: empty string).
 
         Returns:
-            FlextResult with empty string by default.
+            r with empty string by default.
 
         """
         return r[str].ok("")
@@ -148,14 +148,14 @@ class FlextInfraVersioningService(FlextService[str]):
     def parse_semver(
         self,
         version: str,
-    ) -> FlextResult[tuple[int, int, int]]:
+    ) -> r[tuple[int, int, int]]:
         """Parse a semantic version string into (major, minor, patch).
 
         Args:
             version: The version string to parse.
 
         Returns:
-            FlextResult with version tuple.
+            r with version tuple.
 
         """
         match = c.Infra.Versioning.SEMVER_RE.match(version)
@@ -167,7 +167,7 @@ class FlextInfraVersioningService(FlextService[str]):
             (int(match.group(1)), int(match.group(2)), int(match.group(3))),
         )
 
-    def release_tag_from_branch(self, branch: str) -> FlextResult[str]:
+    def release_tag_from_branch(self, branch: str) -> r[str]:
         """Extract a release tag name from a branch name.
 
         Supports ``release/X.Y.Z`` and ``X.Y.Z-dev`` patterns.
@@ -176,7 +176,7 @@ class FlextInfraVersioningService(FlextService[str]):
             branch: The branch name.
 
         Returns:
-            FlextResult[str] with the tag name (e.g., "v1.2.3"),
+            r[str] with the tag name (e.g., "v1.2.3"),
             or failure if no pattern matches.
 
         """
@@ -194,7 +194,7 @@ class FlextInfraVersioningService(FlextService[str]):
         self,
         project_path: Path,
         version: str,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Update the version field in a project's pyproject.toml.
 
         Args:
@@ -202,7 +202,7 @@ class FlextInfraVersioningService(FlextService[str]):
             version: The new version string.
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         pyproject = project_path / c.Infra.Files.PYPROJECT_FILENAME

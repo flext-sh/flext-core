@@ -1,6 +1,6 @@
 """JSON I/O service for reading and writing JSON files.
 
-Wraps JSON operations with FlextResult error handling,
+Wraps JSON operations with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,14 +16,14 @@ from typing import override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextResult, FlextService, r, t
+from flext_core import r, FlextService, r, t
 from flext_infra import c
 
 
 class FlextInfraJsonService(FlextService[bool]):
     """Infrastructure service for JSON file I/O.
 
-    Provides FlextResult-wrapped JSON read/write operations, replacing
+    Provides r-wrapped JSON read/write operations, replacing
     the bare functions from ``scripts/libs/json_io.py``.
     """
 
@@ -32,18 +32,18 @@ class FlextInfraJsonService(FlextService[bool]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextResult[bool]:
+    def execute(self) -> r[bool]:
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    def read(self, path: Path) -> r[Mapping[str, t.ContainerValue]]:
         """Read and parse a JSON file.
 
         Args:
             path: Source file path.
 
         Returns:
-            FlextResult with parsed JSON data. Returns empty mapping
+            r with parsed JSON data. Returns empty mapping
             if the file does not exist.
 
         """
@@ -74,7 +74,7 @@ class FlextInfraJsonService(FlextService[bool]):
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Write a JSON payload to a file.
 
         Creates parent directories as needed.
@@ -86,7 +86,7 @@ class FlextInfraJsonService(FlextService[bool]):
             ensure_ascii: If True, escape non-ASCII characters.
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         try:
@@ -110,14 +110,14 @@ class FlextInfraJsonService(FlextService[bool]):
 # Module-level convenience functions for direct usage without instantiation
 
 
-def read_json(path: Path) -> FlextResult[Mapping[str, t.ContainerValue]]:
+def read_json(path: Path) -> r[Mapping[str, t.ContainerValue]]:
     """Read and parse a JSON file (convenience function).
 
     Args:
         path: Source file path.
 
     Returns:
-        FlextResult with parsed JSON data. Returns empty mapping
+        r with parsed JSON data. Returns empty mapping
         if the file does not exist.
 
     Example:
@@ -135,7 +135,7 @@ def write_json(
     *,
     sort_keys: bool = False,
     ensure_ascii: bool = False,
-) -> FlextResult[bool]:
+) -> r[bool]:
     """Write a JSON payload to a file (convenience function).
 
     Creates parent directories as needed.
@@ -147,7 +147,7 @@ def write_json(
         ensure_ascii: If True, escape non-ASCII characters.
 
     Returns:
-        FlextResult[bool] with True on success.
+        r[bool] with True on success.
 
     Example:
         >>> result = write_json(Path("output.json"), {"key": "value"})

@@ -1,6 +1,6 @@
 """TOML I/O service for reading and writing TOML files.
 
-Wraps TOML operations with FlextResult error handling,
+Wraps TOML operations with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -18,7 +18,7 @@ import tomlkit
 import tomlkit.exceptions
 from tomlkit.items import Table
 
-from flext_core import FlextResult, FlextService, r, t
+from flext_core import r, FlextService, r, t
 from flext_infra import c
 
 type TomlScalar = t.Primitives | None
@@ -38,7 +38,7 @@ def _as_toml_mapping(value: TomlValue) -> TomlMutableMap | None:
 class FlextInfraTomlService(FlextService[bool]):
     """Infrastructure service for TOML file I/O.
 
-    Provides FlextResult-wrapped TOML read/write operations, replacing
+    Provides r-wrapped TOML read/write operations, replacing
     the bare functions from ``scripts/libs/toml_io.py``.
     """
 
@@ -69,18 +69,18 @@ class FlextInfraTomlService(FlextService[bool]):
         return str(current) != str(expected)
 
     @override
-    def execute(self) -> FlextResult[bool]:
+    def execute(self) -> r[bool]:
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> FlextResult[TomlMap]:
+    def read(self, path: Path) -> r[TomlMap]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
             path: Path to the TOML file.
 
         Returns:
-            FlextResult with parsed TOML data, or failure on error.
+            r with parsed TOML data, or failure on error.
 
         """
         if not path.exists():
@@ -94,7 +94,7 @@ class FlextInfraTomlService(FlextService[bool]):
         except (tomllib.TOMLDecodeError, OSError) as exc:
             return r[TomlMap].fail(f"TOML read error: {exc}")
 
-    def read_document(self, path: Path) -> FlextResult[tomlkit.TOMLDocument]:
+    def read_document(self, path: Path) -> r[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
 
         Preserves formatting and comments for round-trip editing.
@@ -103,7 +103,7 @@ class FlextInfraTomlService(FlextService[bool]):
             path: Path to the TOML file.
 
         Returns:
-            FlextResult with TOMLDocument, or failure on error.
+            r with TOMLDocument, or failure on error.
 
         """
         if not path.exists():
@@ -173,7 +173,7 @@ class FlextInfraTomlService(FlextService[bool]):
         self,
         path: Path,
         payload: tomlkit.TOMLDocument | MutableMapping[str, TomlValue],
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Write a TOML payload to a file.
 
         Creates parent directories as needed.
@@ -183,7 +183,7 @@ class FlextInfraTomlService(FlextService[bool]):
             payload: Data to serialize as TOML (dict or TOMLDocument).
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         try:
@@ -209,7 +209,7 @@ class FlextInfraTomlService(FlextService[bool]):
         self,
         path: Path,
         doc: tomlkit.TOMLDocument,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Write a tomlkit document to a TOML file.
 
         Args:
@@ -217,7 +217,7 @@ class FlextInfraTomlService(FlextService[bool]):
             doc: TOMLDocument to write.
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         try:

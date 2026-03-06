@@ -1,6 +1,6 @@
 """Project selection and filtering service.
 
-Wraps project selection logic with FlextResult error handling,
+Wraps project selection logic with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_infra import FlextInfraDiscoveryService, m
 
 
@@ -30,11 +30,11 @@ class FlextInfraProjectSelector(FlextService[list[m.Infra.ProjectInfo]]):
         self._discovery = discovery or FlextInfraDiscoveryService()
 
     @override
-    def execute(self) -> FlextResult[list[m.Infra.ProjectInfo]]:
+    def execute(self) -> r[list[m.Infra.ProjectInfo]]:
         """Execute project selection (default: empty list).
 
         Returns:
-            FlextResult with empty list by default.
+            r with empty list by default.
 
         """
         return r[list[m.Infra.ProjectInfo]].ok([])
@@ -43,7 +43,7 @@ class FlextInfraProjectSelector(FlextService[list[m.Infra.ProjectInfo]]):
         self,
         workspace_root: Path,
         names: list[str],
-    ) -> FlextResult[list[m.Infra.ProjectInfo]]:
+    ) -> r[list[m.Infra.ProjectInfo]]:
         """Resolve project names into ProjectInfo structures.
 
         Args:
@@ -51,7 +51,7 @@ class FlextInfraProjectSelector(FlextService[list[m.Infra.ProjectInfo]]):
             names: Project names to resolve. If empty, returns all.
 
         Returns:
-            FlextResult with sorted list of resolved projects.
+            r with sorted list of resolved projects.
 
         """
         discover_result = self._discovery.discover_projects(workspace_root)

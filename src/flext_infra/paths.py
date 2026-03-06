@@ -1,6 +1,6 @@
 """Path resolution service for workspace navigation.
 
-Wraps path resolution functions with FlextResult error handling,
+Wraps path resolution functions with r error handling,
 replacing bare functions with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,14 +12,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r
+from flext_core import r, FlextService, r
 from flext_infra.constants import c
 
 
 class FlextInfraPathResolver(FlextService[Path]):
     """Infrastructure service for workspace path resolution.
 
-    Provides FlextResult-wrapped path resolution, replacing the bare
+    Provides r-wrapped path resolution, replacing the bare
     functions from ``scripts/libs/paths.py``.
     """
 
@@ -28,18 +28,18 @@ class FlextInfraPathResolver(FlextService[Path]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextResult[Path]:
+    def execute(self) -> r[Path]:
         """Execute the service (required by FlextService base class)."""
         return r[Path].ok(Path.cwd())
 
-    def workspace_root(self, path: str | Path = ".") -> FlextResult[Path]:
+    def workspace_root(self, path: str | Path = ".") -> r[Path]:
         """Resolve and return the absolute path to the workspace root.
 
         Args:
             path: A starting path, defaults to the current directory.
 
         Returns:
-            FlextResult[Path] with the resolved absolute path.
+            r[Path] with the resolved absolute path.
 
         """
         try:
@@ -48,7 +48,7 @@ class FlextInfraPathResolver(FlextService[Path]):
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
 
-    def workspace_root_from_file(self, file: str | Path) -> FlextResult[Path]:
+    def workspace_root_from_file(self, file: str | Path) -> r[Path]:
         """Resolve workspace root by walking up from file location.
 
         Finds the first directory containing .git, Makefile, and pyproject.toml.
@@ -57,7 +57,7 @@ class FlextInfraPathResolver(FlextService[Path]):
             file: Path to a file (usually __file__).
 
         Returns:
-            FlextResult[Path] with absolute path to workspace root,
+            r[Path] with absolute path to workspace root,
             or failure if not found.
 
         """
