@@ -22,8 +22,8 @@ from typing import Annotated, Final, cast
 
 import pytest
 
-from flext_core import p, r, t
-from flext_tests import u
+from flext_core import r
+from flext_tests import p, t, u
 from tests.test_utils import assertion_helpers
 
 

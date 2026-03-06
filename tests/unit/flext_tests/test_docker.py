@@ -20,13 +20,13 @@ from pathlib import Path
 import pytest
 from docker import DockerClient
 
-from flext_core import FlextConstants, FlextResult
-from flext_tests import FlextTestsDocker, c as tests_c
+from flext_core import r
+from flext_tests import FlextTestsDocker, c
 from tests.test_utils import assertion_helpers
 
 # Access nested classes
 ContainerInfo = FlextTestsDocker.ContainerInfo
-ContainerStatus = tests_c.Tests.Docker.ContainerStatus
+ContainerStatus = c.Tests.Docker.ContainerStatus
 
 
 class TestContainerStatus:
@@ -240,19 +240,19 @@ class TestFlextTestsDocker:
         self,
         docker_manager: FlextTestsDocker,
     ) -> None:
-        """Test compose_up returns FlextResult."""
+        """Test compose_up returns r."""
         result = docker_manager.compose_up("docker-compose.yml")
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_compose_down_returns_flext_result(
         self,
         docker_manager: FlextTestsDocker,
     ) -> None:
-        """Test compose_down returns FlextResult."""
+        """Test compose_down returns r."""
         result = docker_manager.compose_down("docker-compose.yml")
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_start_existing_container_not_found(
         self,
@@ -289,7 +289,7 @@ class TestFlextTestsDocker:
     ) -> None:
         """Test wait_for_port_ready returns quickly for unavailable port."""
         result = docker_manager.wait_for_port_ready(
-            FlextConstants.Network.LOOPBACK_IP,
+            c.Network.LOOPBACK_IP,
             59999,
             max_wait=1,
         )
@@ -301,10 +301,10 @@ class TestFlextTestsDocker:
         self,
         docker_manager: FlextTestsDocker,
     ) -> None:
-        """Test start_compose_stack returns FlextResult."""
+        """Test start_compose_stack returns r."""
         result = docker_manager.start_compose_stack("docker-compose.yml")
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_cleanup_dirty_containers_empty(
         self,

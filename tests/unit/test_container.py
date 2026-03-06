@@ -13,7 +13,7 @@ Tests FlextContainer functionality including:
 - Configuration management
 - Complex workflows
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, c,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -29,15 +29,10 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import (
-    FlextConstants,
     FlextContainer,
-    FlextResult,
-    c,
-    m,
     r,
-    t,
 )
-from flext_tests import FlextTestsUtilities, tm, u
+from flext_tests import c, m, t, tm, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,7 +94,7 @@ class ContainerScenarios:
 
 
 class TestFlextContainer:
-    """Unified test suite for FlextContainer using FlextTestsUtilities."""
+    """Unified test suite for FlextContainer using u."""
 
     def test_container_initialization(
         self,
@@ -199,7 +194,7 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test factory registration using fixtures."""
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
+        factory = u.Tests.ContainerHelpers.create_factory(
             return_value,
         )
         factory_typed: Callable[[], t.RegisterableService] = factory
@@ -225,7 +220,7 @@ class TestFlextContainer:
     ) -> None:
         """Test fluent interface for factory using fixtures."""
         container = clean_container
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
+        factory = u.Tests.ContainerHelpers.create_factory(
             return_value,
         )
         # Cast factory to correct type for with_factory
@@ -268,9 +263,9 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test that registering duplicate factory name preserves original using fixtures."""
-        factory1 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value1")
+        factory1 = u.Tests.ContainerHelpers.create_factory("value1")
         clean_container.register("factory1", factory1, kind="factory")
-        factory2 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value2")
+        factory2 = u.Tests.ContainerHelpers.create_factory("value2")
         clean_container.register("factory1", factory2, kind="factory")
         # Fluent API returns self; verify original factory is preserved
         tm.that(
@@ -318,7 +313,7 @@ class TestFlextContainer:
     ) -> None:
         """Test retrieving service created by factory using fixtures."""
         factory_result = {"created": "by_factory"}
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
+        factory = u.Tests.ContainerHelpers.create_factory(
             factory_result,
         )
         clean_container.register("factory_service", factory, kind="factory")
@@ -333,10 +328,8 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test that factory is called each time get() is invoked using fixtures."""
-        factory, get_count = (
-            FlextTestsUtilities.Tests.ContainerHelpers.create_counting_factory(
-                "service_value",
-            )
+        factory, get_count = u.Tests.ContainerHelpers.create_counting_factory(
+            "service_value",
         )
         clean_container.register("factory_service", factory, kind="factory")
         result1: r[t.RegisterableService] = clean_container.get("factory_service")
@@ -366,7 +359,7 @@ class TestFlextContainer:
         # Runtime: object is compatible with t.ContainerValue | BaseModel |
 
         container.register(scenario.name, scenario.service)
-        typed_result: FlextResult[t.RegisterableService] = container.get(
+        typed_result: r[t.RegisterableService] = container.get(
             scenario.name, type_cls=scenario.expected_type
         )
         if scenario.should_pass:
@@ -435,7 +428,7 @@ class TestFlextContainer:
     ) -> None:
         """Test has_service returns True for factories using fixtures."""
         container = clean_container
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value")
+        factory = u.Tests.ContainerHelpers.create_factory("value")
         container.register("factory_service", factory, kind="factory")
         tm.that(
             container.has_service("factory_service"),
@@ -470,7 +463,7 @@ class TestFlextContainer:
         container = clean_container
         container.register("service1", "value1")
         container.register("service2", "value2")
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value3")
+        factory = u.Tests.ContainerHelpers.create_factory("value3")
         container.register("factory1", factory, kind="factory")
         services = container.list_services()
         tm.that(len(services), eq=3, msg="Container must list 3 registered services")
@@ -497,7 +490,7 @@ class TestFlextContainer:
         container = clean_container
         name = "test_service"
         if use_factory:
-            factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value")
+            factory = u.Tests.ContainerHelpers.create_factory("value")
             container.register(name, factory, kind="factory")
         else:
             container.register(name, "value")
@@ -603,7 +596,7 @@ class TestFlextContainer:
         container = clean_container
         container.register("service1", "value1")
         container.register("service2", "value2")
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value3")
+        factory = u.Tests.ContainerHelpers.create_factory("value3")
         container.register("factory1", factory, kind="factory")
         tm.that(
             len(container.list_services()),
@@ -646,9 +639,9 @@ class TestFlextContainer:
     ) -> None:
         """Test complete container workflow using fixtures."""
         container = clean_container
-        container.register("db_connection", {"host": FlextConstants.Network.LOCALHOST})
+        container.register("db_connection", {"host": c.Network.LOCALHOST})
         container.register("cache", {"type": "redis"})
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory({
+        factory = u.Tests.ContainerHelpers.create_factory({
             "logger": "instance",
         })
         container.register("logger", factory, kind="factory")

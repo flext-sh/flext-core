@@ -11,7 +11,7 @@ Tests core FlextSettings functionality including:
 - Namespace management and auto-registration
 - Pydantic model integration and serialization
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -30,8 +30,8 @@ import pytest
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextSettings, c, m, u
-from flext_tests import FlextTestsUtilities, tm
+from flext_core import FlextSettings
+from flext_tests import c, m, tm, u
 
 # cast is already imported at top level
 
@@ -74,7 +74,7 @@ class ConfigScenarios:
 
 
 class TestFlextSettings:
-    """Test suite for FlextSettings using FlextTestsUtilities and c."""
+    """Test suite for FlextSettings using u and c."""
 
     @pytest.mark.parametrize(
         "config_data",
@@ -83,10 +83,10 @@ class TestFlextSettings:
     )
     def test_config_initialization(self, config_data: dict[str, str | bool]) -> None:
         """Test config initialization with various values."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             **config_data,
         )
-        FlextTestsUtilities.Tests.ConfigHelpers.assert_config_fields(
+        u.Tests.ConfigHelpers.assert_config_fields(
             config,
             m.ConfigMap.model_validate(dict(config_data)),
         )
@@ -99,17 +99,17 @@ class TestFlextSettings:
             "version": "2.0.0",
             "debug": False,
         }
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             **config_data,
         )
-        FlextTestsUtilities.Tests.ConfigHelpers.assert_config_fields(
+        u.Tests.ConfigHelpers.assert_config_fields(
             config,
             m.ConfigMap.model_validate(dict(config_data)),
         )
 
     def test_config_to_dict(self) -> None:
         """Test config conversion to dictionary."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             app_name="test_app",
             version="1.0.0",
             debug=True,
@@ -122,7 +122,7 @@ class TestFlextSettings:
 
     def test_config_clone(self) -> None:
         """Test config cloning with singleton pattern."""
-        original_config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        original_config = u.Tests.ConfigHelpers.create_test_config(
             app_name="original_app",
             version="1.0.0",
         )
@@ -156,7 +156,7 @@ class TestFlextSettings:
         modified: str,
     ) -> None:
         """Test config field access operations."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         setattr(config, field_name, value)
         tm.that(
             getattr(config, field_name),
@@ -172,7 +172,7 @@ class TestFlextSettings:
 
     def test_config_field_reset(self) -> None:
         """Test config field reset operation."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         config.app_name = "value1"
         config.version = "2.0.0"
         tm.that(config.app_name, eq="value1", msg="app_name must be set to value1")
@@ -184,7 +184,7 @@ class TestFlextSettings:
 
     def test_config_keys_values_items(self) -> None:
         """Test config keys, values, and items operations."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         config.app_name = "value1"
         config.version = "2.0.0"
         config_dict = config.model_dump()
@@ -223,7 +223,7 @@ class TestFlextSettings:
 
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         results: list[str] = []
 
         def set_value(thread_id: int) -> None:
@@ -241,7 +241,7 @@ class TestFlextSettings:
 
     def test_config_performance(self) -> None:
         """Test config performance characteristics."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         start_time = time.time()
         for i in range(100):
             config.app_name = f"value_{i}"
@@ -250,7 +250,7 @@ class TestFlextSettings:
 
     def test_config_serialization(self) -> None:
         """Test config serialization."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             app_name="serialize_app",
             version="1.0.0",
         )
@@ -287,7 +287,7 @@ class TestFlextSettings:
         """Test direct instantiation and configuration pattern."""
         FlextSettings.reset_for_testing()
         try:
-            config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+            config = u.Tests.ConfigHelpers.create_test_config(
                 app_name="Test Application",
                 debug=True,
             )
@@ -310,7 +310,7 @@ class TestFlextSettings:
     )
     def test_config_debug_enabled(self, debug_trace: dict[str, bool]) -> None:
         """Test debug enabled checking using direct fields."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             **debug_trace,
         )
         assert config.debug == debug_trace["debug"]
@@ -328,7 +328,7 @@ class TestFlextSettings:
         trace: bool,
     ) -> None:
         """Test effective log level using direct fields."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             log_level=log_level,
             debug=debug,
             trace=trace,
@@ -367,7 +367,7 @@ class TestFlextSettingsPydantic:
         log_level: str,
     ) -> None:
         """Test that FlextSettings uses FLEXT_ prefix for environment variables."""
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {env_key: env_value},
             ["DEBUG", "LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_LOG_LEVEL"],
         ):
@@ -397,7 +397,7 @@ class TestFlextSettingsPydantic:
         assert env_file.read_text() == env_content
 
         # Use FLEXT_ENV_FILE to point to temp directory .env file
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {"FLEXT_ENV_FILE": str(env_file)},
             ["FLEXT_LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_APP_NAME", "FLEXT_ENV_FILE"],
         ):
@@ -428,7 +428,7 @@ class TestFlextSettingsPydantic:
         Uses tmp_path fixture to avoid writing files to current directory.
         Validates precedence: env vars > .env file.
         """
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {},
             ["FLEXT_APP_NAME", "FLEXT_LOG_LEVEL"],
         ):
@@ -471,7 +471,7 @@ class TestFlextSettingsPydantic:
         assert "FLEXT_TIMEOUT_SECONDS=45" in env_file.read_text()
 
         # Use FLEXT_ENV_FILE to point to temp directory .env file
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {
                 "FLEXT_TIMEOUT_SECONDS": "60",
                 "FLEXT_ENV_FILE": str(env_file),
@@ -510,7 +510,7 @@ class TestFlextSettingsPydantic:
 
     def test_pydantic_env_var_naming(self) -> None:
         """Test that environment variables follow correct naming convention."""
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {"FLEXT_DEBUG": "true"},
             ["FLEXT_DEBUG"],
         ):
@@ -524,7 +524,7 @@ class TestFlextSettingsPydantic:
 
     def test_pydantic_effective_log_level_with_precedence(self) -> None:
         """Test that effective_log_level respects debug mode precedence."""
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {"FLEXT_LOG_LEVEL": "ERROR", "FLEXT_DEBUG": "true"},
             ["FLEXT_LOG_LEVEL", "FLEXT_DEBUG"],
         ):
@@ -546,7 +546,7 @@ class TestFlextSettingsPydantic:
 
     def test_config_with_all_fields(self) -> None:
         """Test config initialization with all fields set."""
-        with FlextTestsUtilities.Tests.ConfigHelpers.env_vars_context(
+        with u.Tests.ConfigHelpers.env_vars_context(
             {"FLEXT_DEBUG": "true", "FLEXT_LOG_LEVEL": "DEBUG"},
             ["FLEXT_DEBUG", "FLEXT_LOG_LEVEL"],
         ):
@@ -600,7 +600,7 @@ class TestFlextSettingsPydantic:
 
     def test_effective_log_level_trace(self) -> None:
         """Test effective_log_level with trace mode."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             trace=True,
             debug=True,
         )
@@ -608,12 +608,12 @@ class TestFlextSettingsPydantic:
 
     def test_effective_log_level_debug(self) -> None:
         """Test effective_log_level with debug mode."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(debug=True)
+        config = u.Tests.ConfigHelpers.create_test_config(debug=True)
         assert config.effective_log_level == c.Settings.LogLevel.INFO
 
     def test_effective_log_level_normal(self) -> None:
         """Test effective_log_level without debug/trace."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
+        config = u.Tests.ConfigHelpers.create_test_config(
             debug=False,
             trace=False,
         )
@@ -621,7 +621,7 @@ class TestFlextSettingsPydantic:
 
     def test_get_di_config_provider(self) -> None:
         """Test get_di_config_provider creates provider."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         provider = config.get_di_config_provider()
         assert provider is not None
         # Second call should return same provider
@@ -630,12 +630,12 @@ class TestFlextSettingsPydantic:
 
     def test_apply_override_invalid_key(self) -> None:
         """Test apply_override returns False for invalid key."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         assert config.apply_override("invalid_key", "value") is False
 
     def test_apply_override(self) -> None:
         """Test apply_override applies validated override."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
         original_value = config.app_name
         config.apply_override("app_name", "new_name")
         assert config.app_name == "new_name"
@@ -668,7 +668,7 @@ class TestFlextSettingsPydantic:
 
     def test_get_namespace_not_found(self) -> None:
         """Test get_namespace raises ValueError for unregistered namespace."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
 
         # get_namespace raises ValueError for unregistered namespace
 
@@ -679,7 +679,7 @@ class TestFlextSettingsPydantic:
     def test_get_namespace_type_mismatch(self) -> None:
         """Test get_namespace raises TypeError for type mismatch."""
         FlextSettings.register_namespace("test_type", FlextSettings)
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
 
         with pytest.raises(TypeError, match="is not subclass"):
             config.get_namespace("test_type", threading.Thread)
@@ -694,7 +694,7 @@ class TestFlextSettingsPydantic:
     def test_get_namespace_found(self) -> None:
         """Test get_namespace returns namespace config when registered."""
         FlextSettings.register_namespace("test_attr", FlextSettings)
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
+        config = u.Tests.ConfigHelpers.create_test_config()
 
         # Test get_namespace() access (replaces __getattr__)
         instance = config.get_namespace("test_attr", FlextSettings)

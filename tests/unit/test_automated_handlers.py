@@ -14,13 +14,13 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextHandlers, r, t
+from flext_core import h, r, t
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
 class TestAutomatedFlextHandlers:
-    """Automated tests for FlextHandlers functionality.
+    """Automated tests for h functionality.
 
     Generated for 100% coverage with:
     - Real functionality testing (no mocks)
@@ -76,12 +76,12 @@ class TestAutomatedFlextHandlers:
             if test_scenario["expected_success"]:
                 assertion_helpers.assert_flext_result_success(
                     result,
-                    f"FlextHandlers operation failed: {test_scenario['description']}",
+                    f"h operation failed: {test_scenario['description']}",
                 )
             else:
                 assertion_helpers.assert_flext_result_failure(
                     result,
-                    f"FlextHandlers operation should fail: {test_scenario['description']}",
+                    f"h operation should fail: {test_scenario['description']}",
                 )
 
         except Exception as e:
@@ -100,7 +100,7 @@ class TestAutomatedFlextHandlers:
         result = self._execute_handlers_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
             result,
-            "FlextHandlers type safety test",
+            "h type safety test",
         )
 
     def test_automated_handlers_error_handling(self) -> None:
@@ -138,7 +138,7 @@ class TestAutomatedFlextHandlers:
         assert elapsed < 1.0
         assertion_helpers.assert_flext_result_success(
             result,
-            "FlextHandlers performance test exceeded timeout",
+            "h performance test exceeded timeout",
         )
 
     def test_automated_handlers_resource_management(self) -> None:
@@ -149,7 +149,7 @@ class TestAutomatedFlextHandlers:
         result = self._execute_handlers_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
             result,
-            "FlextHandlers resource test",
+            "h resource test",
         )
 
         # Test cleanup (if applicable)
@@ -159,25 +159,25 @@ class TestAutomatedFlextHandlers:
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
                     cast("r[t.ContainerValue]", cleanup_result),
-                    "FlextHandlers cleanup failed",
+                    "h cleanup failed",
                 )
 
     def _execute_handlers_operation(
         self,
-        instance: type[FlextHandlers[t.ContainerValue, t.ContainerValue]],
+        instance: type[h[t.ContainerValue, t.ContainerValue]],
         input_data: dict[str, t.ContainerValue],
     ) -> r[t.ContainerValue]:
         """Execute a test operation on handlers instance.
 
-        Tests FlextHandlers class methods and utilities.
+        Tests h class methods and utilities.
         """
         try:
-            # Test FlextHandlers class methods
-            if instance is not FlextHandlers:
-                # Instance is not the FlextHandlers class
+            # Test h class methods
+            if instance is not h:
+                # Instance is not the h class
                 return r[t.ContainerValue].fail("Invalid handlers instance type")
 
-            # instance is the FlextHandlers class itself
+            # instance is the h class itself
             def test_handler(msg: t.Scalar) -> t.Scalar:
                 """Test handler callable."""
                 return msg
@@ -200,13 +200,13 @@ class TestAutomatedFlextHandlers:
                 instance.create_from_callable(test_handler)
                 return r[t.ContainerValue].ok(True)
             # Generic test - check class availability
-            return r[t.ContainerValue].ok("FlextHandlers class available")
+            return r[t.ContainerValue].ok("h class available")
         except Exception as e:
-            return r[t.ContainerValue].fail(f"FlextHandlers operation failed: {e}")
+            return r[t.ContainerValue].fail(f"h operation failed: {e}")
 
     @pytest.fixture
     def test_handlers_instance(
         self,
-    ) -> type[FlextHandlers[t.ContainerValue, t.ContainerValue]]:
+    ) -> type[h[t.ContainerValue, t.ContainerValue]]:
         """Fixture for handlers test instance."""
         return fixture_factory.create_test_handlers_instance()

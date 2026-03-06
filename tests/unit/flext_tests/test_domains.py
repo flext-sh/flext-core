@@ -11,10 +11,7 @@ import operator
 
 import pytest
 
-from flext_core import (
-    u,
-)
-from flext_tests import FlextTestsDomains
+from flext_tests import FlextTestsDomains, u
 
 
 class TestFlextTestsDomains:

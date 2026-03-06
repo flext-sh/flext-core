@@ -21,8 +21,7 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import t
-from flext_tests import u
+from flext_tests import t, u
 
 
 class Status(StrEnum):

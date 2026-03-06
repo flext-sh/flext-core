@@ -13,8 +13,8 @@ from typing import cast
 import pytest
 from pydantic import BaseModel as _BaseModel
 
-from flext_core import FlextResult, r
-from flext_tests import m, t as t_test, tt
+from flext_core import r
+from flext_tests import m, t, tt
 from tests.test_utils import assertion_helpers
 
 # Access models from centralized m.Tests.Factory namespace
@@ -30,9 +30,9 @@ def _extract_model(
         _BaseModel
         | list[_BaseModel]
         | Mapping[str, _BaseModel]
-        | FlextResult[_BaseModel]
-        | FlextResult[list[_BaseModel]]
-        | FlextResult[Mapping[str, _BaseModel]]
+        | r[_BaseModel]
+        | r[list[_BaseModel]]
+        | r[Mapping[str, _BaseModel]]
     ),
 ) -> _BaseModel:
     """Extract BaseModel from union type returned by tt.model().
@@ -47,7 +47,7 @@ def _extract_model(
         AssertionError: If result is not a single BaseModel
 
     """
-    if isinstance(result, FlextResult):
+    if isinstance(result, r):
         unwrapped = result.value
         if isinstance(unwrapped, _BaseModel):
             return unwrapped
@@ -70,21 +70,21 @@ def _extract_model(
 
 
 def _as_single_payload_result(
-    value: r[t_test.Tests.ContainerValue] | list[r[t_test.Tests.ContainerValue]],
-) -> r[t_test.Tests.ContainerValue]:
+    value: r[t.Tests.ContainerValue] | list[r[t.Tests.ContainerValue]],
+) -> r[t.Tests.ContainerValue]:
     return value if isinstance(value, r) else value[0]
 
 
 def _as_payload_list(
-    value: list[t_test.Tests.ContainerValue] | r[list[t_test.Tests.ContainerValue]],
-) -> list[t_test.Tests.ContainerValue]:
+    value: list[t.Tests.ContainerValue] | r[list[t.Tests.ContainerValue]],
+) -> list[t.Tests.ContainerValue]:
     return value if isinstance(value, list) else value.value
 
 
 def _as_payload_mapping(
-    value: Mapping[str, t_test.Tests.ContainerValue]
-    | r[Mapping[str, t_test.Tests.ContainerValue]],
-) -> Mapping[str, t_test.Tests.ContainerValue]:
+    value: Mapping[str, t.Tests.ContainerValue]
+    | r[Mapping[str, t.Tests.ContainerValue]],
+) -> Mapping[str, t.Tests.ContainerValue]:
     return value if isinstance(value, Mapping) else value.value
 
 
@@ -287,7 +287,7 @@ class TestFlextTestsFactoriesModernAPI:
         users_result = tt.batch("user")
         if isinstance(users_result, list):
             users = users_result
-        elif isinstance(users_result, FlextResult):
+        elif isinstance(users_result, r):
             users = users_result.value
             assert isinstance(users, list)
         else:
@@ -484,7 +484,7 @@ class TestFlextTestsFactoriesModernAPI:
 
         result = service.validate_business_rules()
         # Should call super() which returns success
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
 
 # =============================================================================
@@ -519,10 +519,10 @@ class TestsFlextTestsFactoriesModel:
         assert all(isinstance(user, User) for user in users)
 
     def test_model_as_result(self) -> None:
-        """Test model wrapped in FlextResult."""
+        """Test model wrapped in r."""
         result = tt.model("user", as_result=True)
-        assert isinstance(result, FlextResult)
-        typed_result = cast("FlextResult[_BaseModel]", cast("object", result))
+        assert isinstance(result, r)
+        typed_result = cast("r[_BaseModel]", cast("object", result))
         assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, User)
 
@@ -564,7 +564,7 @@ class TestsFlextTestsFactoriesModel:
             "user",
             name="Original",
             transform=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast(
                     "object",
                     lambda u: User(
@@ -586,7 +586,7 @@ class TestsFlextTestsFactoriesModel:
             "user",
             active=True,
             validate=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda u: cast("User", u).active),
             ),
         )
@@ -598,7 +598,7 @@ class TestsFlextTestsFactoriesModel:
             "user",
             active=False,
             validate=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda u: cast("User", u).active),
             ),
             as_result=True,
@@ -611,7 +611,7 @@ class TestsFlextTestsFactoriesModel:
         else:
             msg = f"Expected r[BaseModel], got {type(result_raw)}"
             raise AssertionError(msg)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         assert result.is_failure
 
 
@@ -622,7 +622,7 @@ class TestsFlextTestsFactoriesRes:
         """Test successful result creation."""
         result_raw = tt.res("ok", value=42)
         result = cast("r[int]", cast("object", _as_single_payload_result(result_raw)))
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
@@ -630,7 +630,7 @@ class TestsFlextTestsFactoriesRes:
         """Test failed result creation."""
         result_raw = tt.res("fail", error="Error message")
         result = _as_single_payload_result(result_raw)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
 
@@ -720,7 +720,7 @@ class TestsFlextTestsFactoriesRes:
             "ok",
             value=5,
             transform=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda x: cast("int", x) * 2),
             ),
         )
@@ -753,7 +753,7 @@ class TestsFlextTestsFactoriesList:
         doubled_raw = tt.list(
             [1, 2, 3],
             transform=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda x: cast("int", x) * 2),
             ),
         )
@@ -767,7 +767,7 @@ class TestsFlextTestsFactoriesList:
         evens_raw = tt.list(
             [1, 2, 3, 4, 5],
             filter_=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda x: cast("int", x) % 2 == 0),
             ),
         )
@@ -791,7 +791,7 @@ class TestsFlextTestsFactoriesList:
         )
         assert isinstance(result_raw, r)
         result = cast("r[list[User]]", cast("object", result_raw))
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
 
@@ -818,7 +818,7 @@ class TestsFlextTestsFactoriesDict:
             "user",
             count=3,
             key_factory=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda i: f"user_{cast('int', i)}"),
             ),
         )
@@ -837,7 +837,7 @@ class TestsFlextTestsFactoriesDict:
             "user",
             count=2,
             value_factory=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", value_factory),
             ),
         )
@@ -863,7 +863,7 @@ class TestsFlextTestsFactoriesDict:
         )
         assert isinstance(result_raw, r)
         result = cast("r[dict[str, User]]", cast("object", result_raw))
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
 
@@ -927,7 +927,7 @@ class TestsFlextTestsFactoriesGeneric:
             ValidatedClass,
             kwargs={"age": 25},
             validate=cast(
-                "t_test.Tests.TestResultValue",
+                "t.Tests.TestResultValue",
                 cast("object", lambda o: cast("ValidatedClass", o).age >= 18),
             ),
         )
@@ -945,7 +945,7 @@ class TestsFlextTestsFactoriesGeneric:
                 ValidatedClass,
                 kwargs={"age": 15},
                 validate=cast(
-                    "t_test.Tests.TestResultValue",
+                    "t.Tests.TestResultValue",
                     cast("object", lambda o: cast("ValidatedClass", o).age >= 18),
                 ),
             )
@@ -958,8 +958,8 @@ class TestsFlextTestsFactoriesGeneric:
                 self.value = value
 
         result = tt.generic(ResultClass, kwargs={"value": "test"}, as_result=True)
-        assert isinstance(result, FlextResult)
-        typed_result = cast("FlextResult[ResultClass]", cast("object", result))
+        assert isinstance(result, r)
+        typed_result = cast("r[ResultClass]", cast("object", result))
         assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, ResultClass)
         assert result.value.value == "test"

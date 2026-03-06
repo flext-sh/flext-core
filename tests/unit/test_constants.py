@@ -11,7 +11,7 @@ Tests FlextConstants functionality including:
 - Completeness checks
 - Edge cases and integration
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -25,8 +25,7 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import c
-from flext_tests import FlextTestsUtilities, tm
+from flext_tests import c, tm, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,7 +156,7 @@ class ConstantsScenarios:
 
 
 class TestFlextConstants:
-    """Comprehensive test suite for FlextConstants using FlextTestsUtilities."""
+    """Comprehensive test suite for FlextConstants using u."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -166,7 +165,7 @@ class TestFlextConstants:
     )
     def test_core_constant_values(self, scenario: ConstantPathScenario) -> None:
         """Test all core constant values using parametrized test cases."""
-        actual = FlextTestsUtilities.Tests.ConstantsHelpers.get_constant_by_path(
+        actual = u.Tests.ConstantsHelpers.get_constant_by_path(
             scenario.path,
         )
         tm.that(str(actual), eq=str(scenario.expected))
@@ -187,7 +186,7 @@ class TestFlextConstants:
         scenario: PatternValidationScenario,
     ) -> None:
         """Test regex patterns with comprehensive valid and invalid cases."""
-        compiled_pattern = FlextTestsUtilities.Tests.ConstantsHelpers.compile_pattern(
+        compiled_pattern = u.Tests.ConstantsHelpers.compile_pattern(
             scenario.pattern_attr,
         )
         for valid_case in scenario.valid_cases:
@@ -265,13 +264,13 @@ class TestFlextConstants:
 
     def test_edge_cases_pattern_edge_cases(self) -> None:
         """Test regex patterns with edge cases."""
-        email_pattern = FlextTestsUtilities.Tests.ConstantsHelpers.compile_pattern(
+        email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
             "Platform.PATTERN_EMAIL",
         )
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
         tm.that(len(long_email), lte=c.Validation.MAX_EMAIL_LENGTH)
         tm.that(email_pattern.match(long_email), none=False)
-        phone_pattern = FlextTestsUtilities.Tests.ConstantsHelpers.compile_pattern(
+        phone_pattern = u.Tests.ConstantsHelpers.compile_pattern(
             "Platform.PATTERN_PHONE_NUMBER",
         )
         tm.that(phone_pattern.match("+123456789012345"), none=False)
@@ -300,7 +299,7 @@ class TestFlextConstants:
 
     def test_integration_pattern_and_validation_consistency(self) -> None:
         """Test that patterns work with validation constants."""
-        email_pattern = FlextTestsUtilities.Tests.ConstantsHelpers.compile_pattern(
+        email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
             "Platform.PATTERN_EMAIL",
         )
         max_length_email = "a" * (c.Validation.MAX_EMAIL_LENGTH - 9) + "@test.com"

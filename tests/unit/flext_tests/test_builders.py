@@ -13,28 +13,28 @@ from typing import cast
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextConstants, FlextResult as r, t
-from flext_tests import FlextTestsBuilders, t as t_test, tb
+from flext_core import r
+from flext_tests import FlextTestsBuilders, c, t, tb
 from tests.test_utils import assertion_helpers
 
 
-def _as_builder_dict(value: object) -> t_test.Tests.Builders.BuilderDict:
+def _as_builder_dict(value: object) -> t.Tests.Builders.BuilderDict:
     assert isinstance(value, Mapping)
-    return cast("t_test.Tests.Builders.BuilderDict", dict(value))
+    return cast("t.Tests.Builders.BuilderDict", dict(value))
 
 
 def _as_builder_result(
-    value: t_test.Tests.Builders.BuilderValue | r[t_test.Tests.Builders.BuilderValue],
-) -> r[t_test.Tests.Builders.BuilderDict]:
+    value: t.Tests.Builders.BuilderValue | r[t.Tests.Builders.BuilderValue],
+) -> r[t.Tests.Builders.BuilderDict]:
     assert isinstance(value, r)
-    return cast("r[t_test.Tests.Builders.BuilderDict]", value)
+    return cast("r[t.Tests.Builders.BuilderDict]", value)
 
 
 def _as_parametrized_cases(
     value: object,
-) -> list[t_test.Tests.Builders.ParametrizedCase]:
+) -> list[t.Tests.Builders.ParametrizedCase]:
     assert isinstance(value, list)
-    return cast("list[t_test.Tests.Builders.ParametrizedCase]", value)
+    return cast("list[t.Tests.Builders.ParametrizedCase]", value)
 
 
 class TestFlextTestsBuilders:
@@ -122,7 +122,7 @@ class TestFlextTestsBuilders:
 
         assert fields["valid_hostnames"] == [
             "example.com",
-            FlextConstants.Network.LOCALHOST,
+            c.Network.LOCALHOST,
         ]
 
     def test_with_validation_fields_custom_count(self) -> None:
@@ -240,7 +240,7 @@ class TestFlextTestsBuilders:
         builder.add(
             "doubled",
             items=[1, 2, 3],
-            items_map=cast("t_test.Tests.ContainerValue", lambda x: cast("int", x) * 2),
+            items_map=cast("t.Tests.ContainerValue", lambda x: cast("int", x) * 2),
         )
         data = _as_builder_dict(builder.build())
         doubled = cast("list[int]", data["doubled"])
@@ -253,7 +253,7 @@ class TestFlextTestsBuilders:
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
             entries_filter=cast(
-                "t_test.Tests.ContainerValue",
+                "t.Tests.ContainerValue",
                 cast("object", {"a", "c"}),
             ),
         )
@@ -375,10 +375,8 @@ class TestFlextTestsBuilders:
         # build() accepts **kwargs: object, validated by BuildParams
         build_result = builder.build(
             validate_with=cast(
-                "t_test.Tests.ContainerValue",
-                lambda d: (
-                    cast("t_test.Tests.Builders.BuilderOutputDict", d)["count"] == 5
-                ),
+                "t.Tests.ContainerValue",
+                lambda d: cast("t.Tests.Builders.BuilderOutputDict", d)["count"] == 5,
             ),
         )
         # Type narrowing: build() returns union, extract dict
@@ -399,10 +397,9 @@ class TestFlextTestsBuilders:
         # Type ignore needed because map_result is Callable, not t.ContainerValue
         build_result = builder.build(
             map_result=cast(
-                "t_test.Tests.ContainerValue",
+                "t.Tests.ContainerValue",
                 lambda d: (
-                    cast("int", cast("t_test.Tests.Builders.BuilderOutputDict", d)["x"])
-                    * 2
+                    cast("int", cast("t.Tests.Builders.BuilderOutputDict", d)["x"]) * 2
                 ),
             ),
         )
@@ -449,7 +446,7 @@ class TestFlextTestsBuilders:
         # unwrap=True returns T directly (not wrapped in r[T])
         # Actual return type is more specific, use explicit type annotation with cast
         result_raw = builder.to_result(unwrap=True)
-        data = cast("t_test.Tests.Builders.BuilderDict", result_raw)
+        data = cast("t.Tests.Builders.BuilderDict", result_raw)
         assert isinstance(data, dict)
         assert data["x"] == 1
 
@@ -464,8 +461,8 @@ class TestFlextTestsBuilders:
         # Actual return type is more specific, use explicit type annotation with cast
         result_raw = builder.to_result(
             validate=cast(
-                "t_test.Tests.ContainerValue",
-                lambda d: cast("t_test.Tests.Builders.BuilderDict", d)["count"] == 5,
+                "t.Tests.ContainerValue",
+                lambda d: cast("t.Tests.Builders.BuilderDict", d)["count"] == 5,
             ),
         )
         result = _as_builder_result(result_raw)
@@ -676,7 +673,7 @@ class TestFlextTestsBuilders:
         # build() returns complex union, but filter_none=True returns BuilderDict
         # build() accepts **kwargs: object, validated by BuildParams
         data_raw = builder.build(filter_none=True)
-        data = cast("t_test.Tests.Builders.BuilderDict", data_raw)
+        data = cast("t.Tests.Builders.BuilderDict", data_raw)
         assert data["x"] == 1
 
     def test_to_result_uses_model_from_kwargs(self) -> None:
@@ -776,7 +773,7 @@ class TestFlextTestsBuilders:
     def test_result_assert_failure_delegates_to_tu(self) -> None:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
         # Result.assert_failure() delegates to tu.Tests.Result.assert_failure()
-        result: r[t_test.Tests.ContainerValue] = r[t_test.Tests.ContainerValue].fail(
+        result: r[t.Tests.ContainerValue] = r[t.Tests.ContainerValue].fail(
             "Error",
         )
         # Type narrowing: assert_failure accepts r[t.ContainerValue], r[int] is compatible

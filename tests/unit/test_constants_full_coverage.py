@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, m, r, u
+from flext_core import r
+from flext_tests import c, m, u
 
 
 def test_constants_auto_enum_and_bimapping_paths() -> None:
