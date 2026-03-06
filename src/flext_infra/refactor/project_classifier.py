@@ -1,3 +1,5 @@
+"""Project classification and family chain discovery for flext workspace."""
+
 from __future__ import annotations
 
 import ast
@@ -5,40 +7,44 @@ import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 ProjectKind = Literal["core", "domain", "platform", "integration", "app"]
 
 
 @dataclass(frozen=True)
 class ProjectClassification:
+    """Result of classifying a project by kind and family MRO chains."""
+
     project_kind: ProjectKind
     family_chains: dict[str, list[str]]
 
 
 class ProjectClassifier:
-    _FAMILY_SUFFIXES: dict[str, str] = {
+    """Classify a project by kind and discover MRO family chains."""
+
+    _FAMILY_SUFFIXES: ClassVar[dict[str, str]] = {
         "c": "Constants",
         "t": "Types",
         "p": "Protocols",
         "m": "Models",
         "u": "Utilities",
     }
-    _FAMILY_FILES: dict[str, str] = {
+    _FAMILY_FILES: ClassVar[dict[str, str]] = {
         "c": "*constants.py",
         "t": "*typings.py",
         "p": "*protocols.py",
         "m": "*models.py",
         "u": "*utilities.py",
     }
-    _DOMAIN_PACKAGES: frozenset[str] = frozenset({
+    _DOMAIN_PACKAGES: ClassVar[frozenset[str]] = frozenset({
         "flext-ldap",
         "flext-ldif",
         "flext-db-oracle",
         "flext-oracle-wms",
         "flext-oracle-oic",
     })
-    _PLATFORM_PACKAGES: frozenset[str] = frozenset({
+    _PLATFORM_PACKAGES: ClassVar[frozenset[str]] = frozenset({
         "flext-cli",
         "flext-meltano",
         "flext-api",
@@ -46,18 +52,20 @@ class ProjectClassifier:
         "flext-web",
         "flext-grpc",
     })
-    _INTEGRATION_CLASS_PREFIXES: tuple[str, ...] = (
+    _INTEGRATION_CLASS_PREFIXES: ClassVar[tuple[str, ...]] = (
         "FlextTap",
         "FlextTarget",
         "FlextDbt",
     )
 
     def __init__(self, project_root: Path) -> None:
+        """Initialize classifier for the given project root."""
         self._project_root = project_root.resolve()
         self._pyproject_path = self._project_root / "pyproject.toml"
         self._src_path = self._project_root / "src"
 
     def classify(self) -> ProjectClassification:
+        """Return classification and family chains for this project."""
         project_name, dependencies = self._read_project_metadata()
         internal_dependencies = self._internal_dependencies(
             dependencies=dependencies,

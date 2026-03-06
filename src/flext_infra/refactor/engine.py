@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import difflib
 import fnmatch
-import importlib
 import json
 import re
 import sys
@@ -45,6 +44,7 @@ from flext_infra.refactor.rules.symbol_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
 )
+from flext_infra.refactor.safety import FlextInfraRefactorSafetyManager
 
 
 class FlextInfraRefactorEngine:
@@ -59,10 +59,8 @@ class FlextInfraRefactorEngine:
         self.safety_manager = self._build_safety_manager()
 
     @staticmethod
-    def _build_safety_manager() -> Any:
-        module = importlib.import_module("flext_infra.refactor.safety")
-        manager_type = getattr(module, "FlextInfraRefactorSafetyManager")
-        return manager_type()
+    def _build_safety_manager() -> FlextInfraRefactorSafetyManager:
+        return FlextInfraRefactorSafetyManager()
 
     @staticmethod
     def _discover_workspace_projects(workspace_root: Path) -> list[Path]:

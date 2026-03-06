@@ -114,12 +114,15 @@ class _FunctionDependencyCollector(cst.CSTVisitor):
 
 
 class FlextInfraRefactorClassNestingAnalyzer:
+    """Analyze files for class nesting violations using YAML mapping rules."""
+
     _MAPPINGS_RELATIVE_PATH: ClassVar[Path] = (
         Path("rules") / "class-nesting-mappings.yml"
     )
 
     @classmethod
     def analyze_files(cls, files: list[Path]) -> Mapping[str, object]:
+        """Return aggregate and per-file class-nesting violation counts."""
         if not files:
             return {
                 "violations_count": 0,

@@ -1,8 +1,10 @@
+"""Loose class detection and scanning for flext-infra refactor."""
+
 from __future__ import annotations
 
 import json
 import re
-import subprocess
+import subprocess  # noqa: S404  # JUSTIFIED: invokes local `sg` CLI only
 from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -14,6 +16,8 @@ import libcst as cst
 
 @dataclass(frozen=True)
 class FlextInfraRefactorClassOccurrence:
+    """A single class definition occurrence within a source file."""
+
     name: str
     line: int
     is_top_level: bool
@@ -21,6 +25,8 @@ class FlextInfraRefactorClassOccurrence:
 
 @dataclass(frozen=True)
 class FlextInfraRefactorLooseClassViolation:
+    """A detected loose-class naming violation with confidence score."""
+
     file: str
     line: int
     class_name: str
@@ -31,6 +37,7 @@ class FlextInfraRefactorLooseClassViolation:
     score: float
 
     def to_dict(self) -> dict[str, object]:
+        """Serialise violation to a plain dict for JSON output."""
         return {
             "file": self.file,
             "line": self.line,
@@ -67,6 +74,8 @@ class _TopLevelClassCollector(cst.CSTVisitor):
 
 
 class FlextInfraRefactorLooseClassScanner:
+    """Scan a project tree and report top-level classes lacking namespace prefixes."""
+
     _CONFIDENCE_TO_SCORE: ClassVar[Mapping[str, float]] = {
         "high": 0.95,
         "medium": 0.75,
@@ -81,6 +90,7 @@ class FlextInfraRefactorLooseClassScanner:
     _CLASS_PATTERN = re.compile(r"[^A-Za-z0-9]+")
 
     def scan(self, project_root: Path) -> Mapping[str, object]:
+        """Scan *project_root*/src and return a violation report dict."""
         python_files = self._discover_python_files(project_root)
         ast_grep_index = self._scan_with_ast_grep(project_root)
 
@@ -227,7 +237,7 @@ class FlextInfraRefactorLooseClassScanner:
             str(project_root / "src"),
         ]
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv for local sg CLI
                 cmd,
                 check=False,
                 capture_output=True,
@@ -237,7 +247,8 @@ class FlextInfraRefactorLooseClassScanner:
         except (OSError, ValueError):
             return {}
 
-        if completed.returncode not in {0, 1}:
+        sg_ok_codes = {0, 1}
+        if completed.returncode not in sg_ok_codes:
             return {}
 
         payload = completed.stdout.strip()

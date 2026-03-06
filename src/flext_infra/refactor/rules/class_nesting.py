@@ -1,8 +1,10 @@
+"""Class nesting refactor rule: move loose classes under namespace classes."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import ClassVar, TypedDict, cast
 
 import libcst as cst
 import yaml
@@ -75,7 +77,10 @@ class _PreCheckViolation(TypedDict):
 
 
 class PreCheckGate:
+    """Validate mapping entries against family-level policy before transforms."""
+
     def __init__(self, policy_path: Path | None = None) -> None:
+        """Initialize pre-check gate with optional policy path."""
         self._policy_path = policy_path or Path(__file__).with_name(
             "class-policy-v2.yml"
         )
@@ -85,6 +90,7 @@ class PreCheckGate:
     def validate_entry(
         self, entry: _MappingEntry
     ) -> tuple[bool, _PreCheckViolation | None]:
+        """Return (ok, violation) for a single mapping entry."""
         source_symbol = entry.get("loose_name", "")
         helper_symbol = entry.get("helper_name", "")
         symbol = source_symbol or helper_symbol
@@ -152,14 +158,13 @@ class PreCheckGate:
             family_name = raw.get("family_name")
             if family_name is None:
                 continue
-            forbidden_targets_raw = raw.get("forbidden_targets", [])
-            forbidden_targets = [item for item in forbidden_targets_raw]
+            forbidden_targets = list(raw.get("forbidden_targets", []))
 
             allowed_operations_raw = raw.get("allowed_operations", [])
-            allowed_operations = [item for item in allowed_operations_raw]
+            allowed_operations = list(allowed_operations_raw)
 
             forbidden_operations_raw = raw.get("forbidden_operations", [])
-            forbidden_operations = [item for item in forbidden_operations_raw]
+            forbidden_operations = list(forbidden_operations_raw)
 
             validation_requirements = raw.get("validation_requirements", {})
             by_family[family_name] = {
@@ -205,15 +210,9 @@ class PreCheckGate:
             return True
 
         required_items = cast("list[object]", required_fields)
-        keys: list[str] = []
-        for candidate in required_items:
-            if isinstance(candidate, str):
-                keys.append(candidate)
+        keys = [candidate for candidate in required_items if isinstance(candidate, str)]
 
-        for key in keys:
-            if key not in entry:
-                return False
-        return True
+        return all(key in entry for key in keys)
 
     def _module_family_from_path(self, path: str) -> str:
         normalized = path.replace("\\", "/")
@@ -236,13 +235,16 @@ class PreCheckGate:
 
 
 class ClassNestingRefactorRule:
-    _CONFIDENCE_RANKS: dict[str, int] = {
+    """Apply class-nesting transforms driven by YAML mapping files."""
+
+    _CONFIDENCE_RANKS: ClassVar[dict[str, int]] = {
         "low": 0,
         "medium": 1,
         "high": 2,
     }
 
     def __init__(self, config_path: Path | None = None) -> None:
+        """Initialize rule with an optional path to the YAML config."""
         self._config_path = config_path or Path(__file__).with_name(
             "class-nesting-mappings.yml"
         )
@@ -250,7 +252,8 @@ class ClassNestingRefactorRule:
         self._pre_check_gate = PreCheckGate()
         self._post_check_gate = PostCheckGate()
 
-    def apply(self, file_path: Path, dry_run: bool = False) -> RefactorResult:
+    def apply(self, file_path: Path, *, dry_run: bool = False) -> RefactorResult:
+        """Transform *file_path* according to loaded mappings and policy."""
         try:
             if file_path.suffix != ".py":
                 return RefactorResult(
@@ -590,7 +593,7 @@ class ClassNestingRefactorRule:
                 continue
 
             expected_chain = rule.get("expected_base_chain", [])
-            payload["expected_base_chain"] = [item for item in expected_chain]
+            payload["expected_base_chain"] = list(expected_chain)
 
             post_checks_raw = rule.get("post_checks", [])
             post_checks: list[str] = []
@@ -648,15 +651,9 @@ class ClassNestingRefactorRule:
             return True
 
         required_items = cast("list[object]", required_fields)
-        keys: list[str] = []
-        for candidate in required_items:
-            if isinstance(candidate, str):
-                keys.append(candidate)
+        keys = [candidate for candidate in required_items if isinstance(candidate, str)]
 
-        for key in keys:
-            if key not in entry:
-                return False
-        return True
+        return all(key in entry for key in keys)
 
     def _scope_applies_to_file(
         self,

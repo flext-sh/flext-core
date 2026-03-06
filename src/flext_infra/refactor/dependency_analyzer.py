@@ -1,7 +1,9 @@
+"""Cross-project dependency analysis using LibCST and ast-grep."""
+
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # noqa: S404  # JUSTIFIED: only invokes local `sg` CLI
 import sys
 from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
@@ -79,7 +81,10 @@ class _ImportCollector(cst.CSTVisitor):
 
 
 class DependencyAnalyzer:
+    """Build inter-project import graphs from workspace source trees."""
+
     def __init__(self, workspace_root: Path) -> None:
+        """Initialize analyzer for the given workspace root."""
         self._workspace_root = workspace_root.resolve()
         self._stdlib_roots = set(sys.stdlib_module_names)
         self._projects = self._discover_projects()
@@ -87,6 +92,7 @@ class DependencyAnalyzer:
         self._graph_cache: dict[str, list[str]] | None = None
 
     def build_import_graph(self) -> dict[str, list[str]]:
+        """Build and cache the inter-project import graph."""
         if self._graph_cache is not None:
             return self._graph_cache
 
@@ -112,6 +118,7 @@ class DependencyAnalyzer:
         return ordered_graph
 
     def find_consumers(self, class_name: str) -> list[Path]:
+        """Find all files importing the given class name."""
         consumers: set[Path] = set()
 
         for project in self._projects:
@@ -124,6 +131,7 @@ class DependencyAnalyzer:
         return sorted(consumers)
 
     def determine_transformation_order(self) -> list[str]:
+        """Return topologically sorted project order for safe transformations."""
         graph = self.build_import_graph()
         if not graph:
             return []
@@ -225,7 +233,7 @@ class DependencyAnalyzer:
             str(src_path),
         ]
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv for local sg CLI
                 cmd,
                 check=False,
                 capture_output=True,

@@ -1,3 +1,5 @@
+"""Safety management for refactor operations: checkpoints, rollback, and validation."""
+
 from __future__ import annotations
 
 import json
@@ -12,6 +14,8 @@ from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class FlextInfraRefactorSafetyRunnerProtocol(Protocol):
+    """Protocol for command execution backends used by the safety manager."""
+
     def capture(
         self,
         cmd: list[str],
@@ -37,6 +41,8 @@ def _empty_str_list() -> list[str]:
 
 @dataclass
 class FlextInfraRefactorCheckpoint:
+    """Serialisable checkpoint state for refactor safety recovery."""
+
     workspace_root: str
     status: str = "running"
     stash_ref: str = ""
@@ -45,12 +51,15 @@ class FlextInfraRefactorCheckpoint:
 
 
 class FlextInfraRefactorSafetyManager:
+    """Orchestrate pre-/post-transform safety: stash, validate, rollback."""
+
     def __init__(
         self,
         runner: FlextInfraRefactorSafetyRunnerProtocol | None = None,
         checkpoint_path: Path | None = None,
         test_command: list[str] | None = None,
     ) -> None:
+        """Initialize safety manager with runner, checkpoint path, and test command."""
         self._runner = runner or FlextInfraCommandRunner()
         self._checkpoint_path = checkpoint_path or Path(
             ".sisyphus/refactor/safety-checkpoint.json"
@@ -60,6 +69,7 @@ class FlextInfraRefactorSafetyManager:
         self._last_workspace_root: Path | None = None
 
     def create_checkpoint(self, project_root: Path) -> str:
+        """Stash current state and return the stash reference."""
         self._last_workspace_root = project_root
         stash_result = self.create_pre_transformation_stash(project_root)
         if stash_result.is_failure:
@@ -70,6 +80,7 @@ class FlextInfraRefactorSafetyManager:
         return stash_result.value
 
     def validate_transform(self, files_changed: list[Path]) -> bool:
+        """Run semantic validation after a transformation batch."""
         workspace_root = self._resolve_workspace_root(files_changed)
         if workspace_root is None:
             self.request_emergency_stop(
@@ -86,18 +97,23 @@ class FlextInfraRefactorSafetyManager:
         return True
 
     def emergency_stop(self, reason: str) -> None:
+        """Trigger an emergency stop with the given reason."""
         self.request_emergency_stop(reason)
 
     def request_emergency_stop(self, reason: str) -> None:
+        """Record an emergency stop reason for later inspection."""
         self._emergency_stop_reason = reason.strip() or "unspecified emergency stop"
 
     def clear_emergency_stop(self) -> None:
+        """Clear any previously recorded emergency stop."""
         self._emergency_stop_reason = ""
 
     def is_emergency_stop_requested(self) -> bool:
+        """Return True if an emergency stop has been requested."""
         return bool(self._emergency_stop_reason)
 
     def ensure_can_continue(self) -> r[bool]:
+        """Fail if an emergency stop is active; succeed otherwise."""
         if self._emergency_stop_reason:
             return r[bool].fail(
                 f"Emergency stop requested: {self._emergency_stop_reason}",
@@ -105,6 +121,7 @@ class FlextInfraRefactorSafetyManager:
         return r[bool].ok(True)
 
     def is_git_repository(self, workspace_root: Path) -> bool:
+        """Check whether *workspace_root* sits inside a Git work-tree."""
         result = self._runner.run_checked(
             ["git", "rev-parse", "--is-inside-work-tree"],
             cwd=workspace_root,
@@ -176,6 +193,7 @@ class FlextInfraRefactorSafetyManager:
         return None
 
     def run_semantic_validation(self, workspace_root: Path) -> r[bool]:
+        """Run import checks and tests against the workspace root."""
         self._last_workspace_root = workspace_root
         can_continue = self.ensure_can_continue()
         if can_continue.is_failure:
@@ -213,6 +231,7 @@ class FlextInfraRefactorSafetyManager:
         return self._runner.run_checked(command, cwd=workspace_root)
 
     def save_checkpoint(self, checkpoint: FlextInfraRefactorCheckpoint) -> r[bool]:
+        """Persist a checkpoint to disk as JSON."""
         payload = {
             "workspace_root": checkpoint.workspace_root,
             "status": checkpoint.status,
@@ -238,6 +257,7 @@ class FlextInfraRefactorSafetyManager:
         stash_ref: str,
         processed_targets: list[str],
     ) -> r[bool]:
+        """Build and persist a checkpoint from individual state components."""
         checkpoint = FlextInfraRefactorCheckpoint(
             workspace_root=str(workspace_root),
             status=status,
@@ -247,6 +267,7 @@ class FlextInfraRefactorSafetyManager:
         return self.save_checkpoint(checkpoint)
 
     def load_checkpoint(self) -> r[FlextInfraRefactorCheckpoint]:
+        """Load a previously persisted checkpoint from disk."""
         if not self._checkpoint_path.exists():
             return r[FlextInfraRefactorCheckpoint].fail("checkpoint does not exist")
         try:
@@ -305,6 +326,7 @@ class FlextInfraRefactorSafetyManager:
             )
 
     def clear_checkpoint(self) -> r[bool]:
+        """Remove the on-disk checkpoint file."""
         if not self._checkpoint_path.exists():
             return r[bool].ok(True)
         try:

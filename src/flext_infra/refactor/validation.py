@@ -1,27 +1,36 @@
+"""Post-transformation validation gates for refactor results."""
+
 from __future__ import annotations
 
 import ast
-import subprocess
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict
 
 from flext_infra.refactor.result import FlextInfraRefactorResult
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class PostCheckGate:
+    """Validate refactor results against policy expectations."""
+
     class _PostCheckExpected(TypedDict, total=False):
         source_symbol: str
         expected_base_chain: list[str]
         post_checks: list[str]
         quality_gates: list[str]
 
+    def __init__(self) -> None:
+        """Initialize gate with a command runner."""
+        self._runner = FlextInfraCommandRunner()
+
     def validate(
         self,
         result: FlextInfraRefactorResult,
         expected: _PostCheckExpected,
     ) -> tuple[bool, list[str]]:
+        """Validate a refactor result against expected post-checks and gates."""
         errors: list[str] = []
         if not result.success:
             if result.error:
@@ -95,13 +104,12 @@ class PostCheckGate:
         return [f"class_not_found:{class_name}"]
 
     def _validate_types(self, file_path: Path) -> list[str]:
-        proc = subprocess.run(
+        """Check that the file compiles without syntax errors."""
+        result = self._runner.capture(
             [sys.executable, "-m", "py_compile", str(file_path)],
-            capture_output=True,
-            text=True,
         )
-        if proc.returncode != 0:
-            output = (proc.stderr or proc.stdout).strip()
+        if result.is_failure:
+            output = (result.error or "").strip()
             return [f"lsp_diagnostics_clean_failed:{output}"]
         return []
 

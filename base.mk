@@ -43,7 +43,7 @@ PROJECT_ROOT := $(CURDIR)
 ifeq ($(FLEXT_STANDALONE),1)
 FLEXT_MODE := standalone
 else
-DETECTED_MODE := $(shell python -m flext_infra workspace detect --project-root "$(PROJECT_ROOT)" 2>/dev/null || printf standalone)
+DETECTED_MODE := $(shell python -m flext_infra workspace detect --project-root "$(PROJECT_ROOT)" 2>/dev/null || printf 'standalone')
 FLEXT_MODE := $(DETECTED_MODE)
 endif
 
@@ -107,59 +107,59 @@ $(STANDARD_VERBS): _preflight
 
 define ENFORCE_WORKSPACE_VENV
 if [ "$(FLEXT_MODE)" = "workspace" ]; then \
-	if [ -d "$(WORKSPACE_ROOT)/.venv" ]; then \
-		if [ -d ".venv" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
-			echo "Enforcing workspace venv: removing local .venv in $(CURDIR)"; \
-			rm -rf .venv; \
-			if [ -d ".venv" ]; then \
-				echo "ERROR: unable to remove local .venv in $(CURDIR)"; \
-				exit 1; \
-			fi; \
-		fi; \
-	elif [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
-		echo "ERROR: workspace .venv not found at $(ACTIVE_VENV). Run 'make setup' in workspace root."; \
-		exit 1; \
-	elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
-		echo "ERROR: workspace .venv not found; fallback local .venv missing at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
-		exit 1; \
-	else \
-		echo "INFO: workspace .venv not found; using project-local fallback in $(PROJECT_NAME)."; \
-	fi; \
+if [ -d "$(WORKSPACE_ROOT)/.venv" ]; then \
+if [ -d ".venv" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
+echo "Enforcing workspace venv: removing local .venv in $(CURDIR)"; \
+rm -rf .venv; \
+if [ -d ".venv" ]; then \
+echo "ERROR: unable to remove local .venv in $(CURDIR)"; \
+exit 1; \
+fi; \
+fi; \
+elif [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+echo "ERROR: workspace .venv not found at $(ACTIVE_VENV). Run 'make setup' in workspace root."; \
+exit 1; \
 elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
-	echo "ERROR: local .venv not found at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
-	exit 1; \
+echo "ERROR: workspace .venv not found; fallback local .venv missing at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
+exit 1; \
+else \
+echo "INFO: workspace .venv not found; using project-local fallback in $(PROJECT_NAME)."; \
+fi; \
+elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
+echo "ERROR: local .venv not found at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
+exit 1; \
 fi
 endef
 
 define AUTO_ADJUST_PROJECT
 if [ "$(AUTO_ADJUST)" = "1" ]; then \
-	md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './node_modules/*' ! -path './.flext-deps/*' ! -path './.mypy_cache/*' ! -path './.pytest_cache/*' ! -path './.ruff_cache/*' ! -path './dist/*' ! -path './build/*'); \
-	if [ -n "$$md_files" ] && command -v mdformat >/dev/null 2>&1; then \
-		mkdir -p .reports/preflight; \
-		printf '%s\n' "$$md_files" | xargs -r mdformat 2>>.reports/preflight/mdformat.log || true; \
-	fi; \
-	if [ -n "$$md_files" ] && command -v markdownlint >/dev/null 2>&1; then \
-		md_config=""; \
-		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
-		elif [ -f ".markdownlint.json" ]; then \
-			md_config="--config .markdownlint.json"; \
-		fi; \
-		markdownlint --fix $$md_config $$md_files || true; \
-	fi; \
-	if [ -f go.mod ] && command -v gofmt >/dev/null 2>&1; then \
-		go_files=$$(find . -type f -name '*.go' ! -path './.git/*'); \
-		if [ -n "$$go_files" ]; then \
-			printf '%s\n' "$$go_files" | xargs -r gofmt -w; \
-		fi; \
-	fi; \
+md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './node_modules/*' ! -path './.flext-deps/*' ! -path './.mypy_cache/*' ! -path './.pytest_cache/*' ! -path './.ruff_cache/*' ! -path './dist/*' ! -path './build/*'); \
+if [ -n "$$md_files" ] && command -v mdformat >/dev/null 2>&1; then \
+mkdir -p .reports/preflight; \
+printf '%s\n' "$$md_files" | xargs -r mdformat 2>>.reports/preflight/mdformat.log || true; \
+fi; \
+if [ -n "$$md_files" ] && command -v markdownlint >/dev/null 2>&1; then \
+md_config=""; \
+if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
+md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+elif [ -f ".markdownlint.json" ]; then \
+md_config="--config .markdownlint.json"; \
+fi; \
+markdownlint --fix $$md_config $$md_files || true; \
+fi; \
+if [ -f go.mod ] && command -v gofmt >/dev/null 2>&1; then \
+go_files=$$(find . -type f -name '*.go' ! -path './.git/*'); \
+if [ -n "$$go_files" ]; then \
+printf '%s\n' "$$go_files" | xargs -r gofmt -w; \
+fi; \
+fi; \
 fi
 endef
 
 define AUTO_SYNC_BASE_AND_SCRIPTS
 if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
-	python -m flext_infra workspace sync \
-		--project-root "$(CURDIR)"; \
+python -m flext_infra workspace sync \
+--project-root "$(CURDIR)"; \
 fi
 endef
 
@@ -496,27 +496,27 @@ validate: ## Run validate gates (VALIDATE_GATES=complexity,docstring to select, 
 
 pr: ## Manage pull requests for this repository
 	$(Q)python3 -m flext_infra github pr \
-		--repo-root "$(CURDIR)" \
-		--action "$(PR_ACTION)" \
-		--base "$(PR_BASE)" \
-		$(if $(PR_HEAD),--head "$(PR_HEAD)",) \
-		$(if $(PR_NUMBER),--number "$(PR_NUMBER)",) \
-		$(if $(PR_TITLE),--title "$(PR_TITLE)",) \
-		$(if $(PR_BODY),--body "$(PR_BODY)",) \
-		--draft "$(PR_DRAFT)" \
-		--merge-method "$(PR_MERGE_METHOD)" \
-		--auto "$(PR_AUTO)" \
-		--delete-branch "$(PR_DELETE_BRANCH)" \
-		--checks-strict "$(PR_CHECKS_STRICT)" \
-		--release-on-merge "$(PR_RELEASE_ON_MERGE)"
+--repo-root "$(CURDIR)" \
+--action "$(PR_ACTION)" \
+--base "$(PR_BASE)" \
+$(if $(PR_HEAD),--head "$(PR_HEAD)",) \
+$(if $(PR_NUMBER),--number "$(PR_NUMBER)",) \
+$(if $(PR_TITLE),--title "$(PR_TITLE)",) \
+$(if $(PR_BODY),--body "$(PR_BODY)",) \
+--draft "$(PR_DRAFT)" \
+--merge-method "$(PR_MERGE_METHOD)" \
+--auto "$(PR_AUTO)" \
+--delete-branch "$(PR_DELETE_BRANCH)" \
+--checks-strict "$(PR_CHECKS_STRICT)" \
+--release-on-merge "$(PR_RELEASE_ON_MERGE)"
 
 clean: ## Clean artifacts
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		rm -f coverage.out coverage.html; \
-		go clean; \
-	fi
+rm -f coverage.out coverage.html; \
+go clean; \
+fi
 	$(Q)rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage* \
-		.mypy_cache/ .pyrefly_cache/ .ruff_cache/ $(LINT_CACHE_DIR)/ \
-		.pyright/ .pytype/ .pyrefly-report.json .pyrefly-output.txt
+.mypy_cache/ .pyrefly_cache/ .ruff_cache/ $(LINT_CACHE_DIR)/ \
+.pyright/ .pytype/ .pyrefly-report.json .pyrefly-output.txt
 	$(Q)find . -type d -name __pycache__ -exec rm -rf {} +
 	$(Q)find . -type f -name "*.pyc" -delete
