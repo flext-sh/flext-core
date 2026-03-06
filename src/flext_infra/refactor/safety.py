@@ -21,14 +21,18 @@ class FlextInfraRefactorSafetyRunnerProtocol(Protocol):
         cmd: list[str],
         cwd: Path | None = None,
         timeout: int | None = None,
-    ) -> r[str]: ...
+    ) -> r[str]:
+        """Run a command and capture its stdout."""
+        ...
 
     def run_checked(
         self,
         cmd: list[str],
         cwd: Path | None = None,
         timeout: int | None = None,
-    ) -> r[bool]: ...
+    ) -> r[bool]:
+        """Run a command and return success/failure."""
+        ...
 
 
 def _now_iso() -> str:
@@ -134,6 +138,7 @@ class FlextInfraRefactorSafetyManager:
         *,
         label: str = "flext-refactor-pre-transform",
     ) -> r[str]:
+        """Stash uncommitted changes and return the stash reference."""
         self._last_workspace_root = workspace_root
         if not self.is_git_repository(workspace_root):
             return r[str].ok("")
@@ -176,6 +181,7 @@ class FlextInfraRefactorSafetyManager:
         workspace_root: Path | str,
         stash_ref: str = "",
     ) -> r[bool] | None:
+        """Restore previously stashed state, resolving workspace from context."""
         if isinstance(workspace_root, Path):
             self._last_workspace_root = workspace_root
             return self._rollback_to_stash(workspace_root, stash_ref)

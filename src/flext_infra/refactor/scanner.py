@@ -186,9 +186,11 @@ class FlextInfraRefactorLooseClassScanner:
             files.append(file_path)
         return files
 
+    _MIN_PATH_DEPTH = 2
+
     def _expected_prefix_for_module(self, rel_path: Path) -> str:
         parts = rel_path.parts
-        if len(parts) < 2:
+        if len(parts) < self._MIN_PATH_DEPTH:
             return ""
 
         project_part = parts[0]
