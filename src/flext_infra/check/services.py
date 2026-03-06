@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import sys
@@ -509,10 +508,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             project_dir,
         )
         issues: list[m.Infra.Check.Issue] = []
+        bandit_data = self._json.loads(result.stdout or "{}")
         try:
-            output = m.Infra.Check.Parsers.BanditOutput.model_validate(
-                json.loads(result.stdout or "{}")
-            )
+            output = m.Infra.Check.Parsers.BanditOutput.model_validate(bandit_data)
             issues.extend(
                 m.Infra.Check.Issue(
                     file=finding.filename,
@@ -524,7 +522,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 )
                 for finding in output.results
             )
-        except (json.JSONDecodeError, ValidationError):
+        except (TypeError, ValidationError):
             pass
         return self._build_gate_result(
             gate=c.Infra.Gates.SECURITY,
@@ -731,10 +729,11 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             stripped = raw_line.strip()
             if not stripped:
                 continue
+            line_data = self._json.loads(stripped)
+            if line_data is None:
+                continue
             try:
-                parsed = m.Infra.Check.Parsers.MypyJsonError.model_validate(
-                    json.loads(stripped)
-                )
+                parsed = m.Infra.Check.Parsers.MypyJsonError.model_validate(line_data)
                 if parsed.severity in {"error", "warning", "note"}:
                     issues.append(
                         m.Infra.Check.Issue(
@@ -746,7 +745,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                             severity=parsed.severity,
                         ),
                     )
-            except (json.JSONDecodeError, ValidationError):
+            except ValidationError:
                 continue
 
         return self._build_gate_result(
@@ -783,15 +782,19 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         issues: list[m.Infra.Check.Issue] = []
         if json_file.exists():
             try:
-                raw = json.loads(json_file.read_text(encoding=c.Infra.Encoding.DEFAULT))
+                raw = self._json.loads(
+                    json_file.read_text(encoding=c.Infra.Encoding.DEFAULT),
+                )
                 if isinstance(raw, dict):
                     output = m.Infra.Check.Parsers.PyreflyOutput.model_validate(raw)
                     pyrefly_errors = output.errors
-                else:
+                elif isinstance(raw, list):
                     pyrefly_errors = [
                         m.Infra.Check.Parsers.PyreflyError.model_validate(item)
                         for item in raw
                     ]
+                else:
+                    pyrefly_errors: list[m.Infra.Check.Parsers.PyreflyError] = []
                 issues.extend(
                     m.Infra.Check.Issue(
                         file=err.path,
@@ -803,7 +806,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     )
                     for err in pyrefly_errors
                 )
-            except (json.JSONDecodeError, ValidationError):
+            except (TypeError, ValidationError):
                 pass
 
         if not issues and result.returncode != 0:
@@ -850,10 +853,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             timeout=c.Infra.Timeouts.LONG,
         )
         issues: list[m.Infra.Check.Issue] = []
+        pyright_data = self._json.loads(result.stdout or "{}")
         try:
-            output = m.Infra.Check.Parsers.PyrightOutput.model_validate(
-                json.loads(result.stdout or "{}")
-            )
+            output = m.Infra.Check.Parsers.PyrightOutput.model_validate(pyright_data)
             issues.extend(
                 m.Infra.Check.Issue(
                     file=diag.file,
@@ -865,7 +867,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 )
                 for diag in output.general_diagnostics
             )
-        except (json.JSONDecodeError, ValidationError):
+        except (TypeError, ValidationError):
             pass
 
         return self._build_gate_result(
@@ -957,19 +959,21 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             project_dir,
         )
         issues: list[m.Infra.Check.Issue] = []
+        ruff_data = self._json.loads(result.stdout or "[]")
         try:
-            for entry in json.loads(result.stdout or "[]"):
-                parsed = m.Infra.Check.Parsers.RuffLintError.model_validate(entry)
-                issues.append(
-                    m.Infra.Check.Issue(
-                        file=parsed.filename,
-                        line=parsed.location.row,
-                        column=parsed.location.column,
-                        code=parsed.code,
-                        message=parsed.message,
-                    ),
-                )
-        except (json.JSONDecodeError, ValidationError):
+            if isinstance(ruff_data, list):
+                for entry in ruff_data:
+                    parsed = m.Infra.Check.Parsers.RuffLintError.model_validate(entry)
+                    issues.append(
+                        m.Infra.Check.Issue(
+                            file=parsed.filename,
+                            line=parsed.location.row,
+                            column=parsed.location.column,
+                            code=parsed.code,
+                            message=parsed.message,
+                        ),
+                    )
+        except (TypeError, ValidationError):
             pass
         return self._build_gate_result(
             gate=c.Infra.Gates.LINT,
@@ -993,7 +997,9 @@ class FlextInfraConfigFixer(s[list[str]]):
 
     @staticmethod
     def _to_array(items_list: list[str]) -> items.Array:
-        inline_doc = tomlkit.parse(f"items = {json.dumps(items_list)}\n")
+        inline_doc = tomlkit.parse(
+            f"items = {FlextInfraJsonService().dumps(items_list)}\n"
+        )
         arr_raw = inline_doc["items"]
         if not isinstance(arr_raw, items.Array):
             return tomlkit.array()

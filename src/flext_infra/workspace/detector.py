@@ -15,7 +15,7 @@ from typing import override
 from urllib.parse import urlparse
 
 from flext_core import r, s
-from flext_infra import FlextInfraCommandRunner, c, output, p
+from flext_infra import FlextInfraGitService, c, output
 
 
 class WorkspaceMode(StrEnum):
@@ -36,7 +36,7 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
     def __init__(self) -> None:
         """Initialize the workspace detector."""
         super().__init__()
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._git = FlextInfraGitService()
 
     @staticmethod
     def _repo_name_from_url(url: str) -> str:
@@ -73,26 +73,12 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
                 output.info("Running in standalone mode (no parent workspace detected)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
-            result_wrapper = self._runner.run_raw(
-                [
-                    c.Infra.Cli.GIT,
-                    "-C",
-                    str(parent),
-                    c.Infra.ReportKeys.CONFIG,
-                    "--get",
-                    "remote.origin.url",
-                ],
-            )
-            if result_wrapper.is_failure:
-                output.info("Running in standalone mode (unable to detect workspace)")
-                return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
-            result = result_wrapper.value
-
-            if result.exit_code != 0:
+            result = self._git.config_get(parent, "remote.origin.url")
+            if result.is_failure:
                 output.info("Running in standalone mode (unable to detect workspace)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
-            origin = result.stdout.strip()
+            origin = result.value.strip()
             if not origin:
                 output.info("Running in standalone mode (no remote origin found)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)

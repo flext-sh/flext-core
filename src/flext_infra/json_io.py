@@ -1,7 +1,10 @@
-"""JSON I/O service for reading and writing JSON files.
+"""JSON I/O service for reading, writing, parsing and serialising JSON.
 
-Wraps JSON operations with r error handling,
-replacing bare functions with a service class.
+Provides two APIs:
+  * **r-wrapped** (``read``, ``write``, ``parse``, ``serialize``) for callers
+    that need full error control.
+  * **Direct-return** (``load``, ``dump``, ``loads``, ``dumps``, ``is_json``)
+    for zero-boilerplate call-sites that accept sensible defaults on error.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +15,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from pathlib import Path
-from typing import override
+from typing import overload, override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -21,14 +24,27 @@ from flext_infra import c, t
 
 
 class FlextInfraJsonService(s[bool]):
-    """Infrastructure service for JSON file I/O.
+    """Infrastructure service for JSON I/O.
 
-    Provides r-wrapped JSON read/write operations, replacing
-    the bare functions from ``scripts/libs/json_io.py``.
+    **r-wrapped API** (full error info)::
+
+        result = svc.read(path)  # r[Mapping]
+        result = svc.write(path, data)  # r[bool]
+        result = svc.parse(text)  # r[object]
+        result = svc.serialize(data)  # r[str]
+
+    **Direct-return API** (zero boilerplate)::
+
+        data = svc.load(path)  # dict | None
+        ok = svc.dump(path, data)  # bool
+        value = svc.loads(text)  # object | None
+        value = svc.loads(text, {})  # object (fallback)
+        text = svc.dumps(data)  # str
+        valid = svc.is_json(text)  # bool
     """
 
     def __init__(self) -> None:
-        """Initialize the JSON service."""
+        """Initialise the JSON service."""
         super().__init__()
 
     @override
@@ -36,15 +52,15 @@ class FlextInfraJsonService(s[bool]):
         """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> r[Mapping[str, t.ContainerValue]]:
-        """Read and parse a JSON file.
+    # ------------------------------------------------------------------
+    #  r-wrapped API
+    # ------------------------------------------------------------------
 
-        Args:
-            path: Source file path.
+    def read(self, path: Path) -> r[Mapping[str, t.ContainerValue]]:
+        """Read and parse a JSON **file**.
 
         Returns:
-            r with parsed JSON data. Returns empty mapping
-            if the file does not exist.
+            r with parsed dict.  Empty mapping when file is absent.
 
         """
         if not path.exists():
@@ -70,24 +86,16 @@ class FlextInfraJsonService(s[bool]):
     def write(
         self,
         path: Path,
-        payload: BaseModel | t.ConfigurationMapping,
+        payload: object,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
+        indent: int = 2,
     ) -> r[bool]:
-        """Write a JSON payload to a file.
+        """Write a JSON payload to a **file** (r-wrapped).
 
-        Creates parent directories as needed.
-
-        Args:
-            path: Destination file path.
-            payload: Data to serialize as JSON.
-            sort_keys: If True, sort dictionary keys alphabetically.
-            ensure_ascii: If True, escape non-ASCII characters.
-
-        Returns:
-            r[bool] with True on success.
-
+        Creates parent directories as needed.  Accepts any JSON-serialisable
+        object: ``dict``, ``list``, ``BaseModel``, ``Mapping``, etc.
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,7 +103,7 @@ class FlextInfraJsonService(s[bool]):
             content = (
                 json.dumps(
                     data,
-                    indent=2,
+                    indent=indent,
                     sort_keys=sort_keys,
                     ensure_ascii=ensure_ascii,
                 )
@@ -106,47 +114,148 @@ class FlextInfraJsonService(s[bool]):
             return r[bool].fail(f"JSON write error: {exc}")
         return r[bool].ok(True)
 
+    def parse(
+        self,
+        text: str,
+        *,
+        fallback: object | None = None,
+    ) -> r[object]:
+        """Parse a JSON **string** (r-wrapped).
+
+        Args:
+            text: Raw JSON string.
+            fallback: If supplied and *text* is empty/blank, this value is
+                returned as a success instead of attempting to parse.
+
+        """
+        stripped = text.strip()
+        if not stripped and fallback is not None:
+            return r[object].ok(fallback)
+        try:
+            return r[object].ok(json.loads(stripped or text))
+        except (json.JSONDecodeError, ValueError) as exc:
+            return r[object].fail(f"JSON parse error: {exc}")
+
+    def serialize(
+        self,
+        data: object,
+        *,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+        indent: int | None = 2,
+    ) -> r[str]:
+        """Serialise a Python object to a JSON **string** (r-wrapped).
+
+        Accepts ``BaseModel``, ``dict``, ``list``, or any JSON-serialisable
+        value.
+        """
+        try:
+            raw = data.model_dump() if isinstance(data, BaseModel) else data
+            return r[str].ok(
+                json.dumps(
+                    raw,
+                    indent=indent,
+                    sort_keys=sort_keys,
+                    ensure_ascii=ensure_ascii,
+                )
+            )
+        except (TypeError, ValueError) as exc:
+            return r[str].fail(f"JSON serialize error: {exc}")
+
+    # ------------------------------------------------------------------
+    #  Direct-return API  (zero boilerplate)
+    # ------------------------------------------------------------------
+
+    def load(self, path: Path) -> dict[str, object] | None:
+        """Read a JSON file → ``dict`` or ``None`` on any error."""
+        result = self.read(path)
+        if result.is_failure:
+            return None
+        raw = result.value
+        return dict(raw) if raw is not None else None
+
+    def dump(
+        self,
+        path: Path,
+        payload: object,
+        *,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+        indent: int = 2,
+    ) -> bool:
+        """Write JSON to *path* — fire-and-forget.  Returns ``True`` on success."""
+        return self.write(
+            path,
+            payload,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+            indent=indent,
+        ).is_success
+
+    @overload
+    def loads(self, text: str) -> object | None: ...
+    @overload
+    def loads(self, text: str, fallback: dict[str, object]) -> dict[str, object]: ...
+    @overload
+    def loads(self, text: str, fallback: list[object]) -> list[object]: ...
+
+    def loads(
+        self,
+        text: str,
+        fallback: object | None = None,
+    ) -> object | None:
+        """Parse a JSON string → value directly, or *fallback* on error.
+
+        Without *fallback*: returns ``None`` on error.
+        With *fallback*: returns *fallback* on error (never ``None``).
+        """
+        try:
+            return json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            return fallback
+
+    def dumps(
+        self,
+        data: object,
+        *,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+        indent: int | None = 2,
+    ) -> str:
+        """Serialise to JSON string directly.  Returns ``""`` on error."""
+        result = self.serialize(
+            data,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+            indent=indent,
+        )
+        return result.value if result.is_success else ""
+
+    def is_json(self, text: str) -> bool:
+        """Return ``True`` if *text* is valid JSON."""
+        try:
+            json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            return False
+        return True
+
 
 # Module-level convenience functions — delegate to u.Infra.Io namespace
 
 
 def read_json(path: Path) -> r[Mapping[str, t.ContainerValue]]:
-    """Read and parse a JSON file (convenience function).
-
-    Delegates to ``u.Infra.Io.read_json()``.
-
-    Args:
-        path: Source file path.
-
-    Returns:
-        r with parsed JSON data. Returns empty mapping
-        if the file does not exist.
-
-    """
+    """Read and parse a JSON file (convenience function)."""
     return FlextInfraJsonService().read(path)
 
 
 def write_json(
     path: Path,
-    payload: BaseModel | t.ConfigurationMapping,
+    payload: object,
     *,
     sort_keys: bool = False,
     ensure_ascii: bool = False,
 ) -> r[bool]:
-    """Write a JSON payload to a file (convenience function).
-
-    Delegates to ``u.Infra.Io.write_json()``.
-
-    Args:
-        path: Destination file path.
-        payload: Data to serialize as JSON.
-        sort_keys: If True, sort dictionary keys alphabetically.
-        ensure_ascii: If True, escape non-ASCII characters.
-
-    Returns:
-        r[bool] with True on success.
-
-    """
+    """Write a JSON payload to a file (convenience function)."""
     return FlextInfraJsonService().write(
         path, payload, sort_keys=sort_keys, ensure_ascii=ensure_ascii
     )

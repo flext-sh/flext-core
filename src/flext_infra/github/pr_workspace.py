@@ -114,154 +114,17 @@ class FlextInfraPrWorkspaceManager:
     def _repo_display_name(repo_root: Path, workspace_root: Path) -> str:
         return workspace_root.name if repo_root == workspace_root else repo_root.name
 
-    def checkout_branch(
-        self,
-        repo_root: Path,
-        branch: str,
-    ) -> r[bool]:
-        """Checkout or create a branch in the repository.
+    def checkout_branch(self, repo_root: Path, branch: str) -> r[bool]:
+        """Checkout or create a branch — delegates to the git service."""
+        return self._git.smart_checkout(repo_root, branch)
 
-        Handles local changes, fetch from origin, and force-create scenarios.
-
-        Args:
-            repo_root: Repository root directory.
-            branch: Branch name to checkout.
-
-        Returns:
-            r[bool] with True on success.
-
-        """
-        if not branch:
-            return r[bool].ok(True)
-
-        current_result = self._git.current_branch(repo_root)
-        if current_result.is_success and current_result.value == branch:
-            return r[bool].ok(True)
-
-        checkout_result = self._runner.run(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, branch],
-            cwd=repo_root,
-        )
-        if checkout_result.is_success:
-            return r[bool].ok(True)
-
-        detail = (checkout_result.error or "").lower()
-        if "local changes" in detail or "would be overwritten" in detail:
-            return self._runner.run_checked(
-                [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
-                cwd=repo_root,
-            )
-
-        fetch_result = self._runner.run(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.FETCH, c.Infra.Git.ORIGIN, branch],
-            cwd=repo_root,
-        )
-        if fetch_result.is_success:
-            return self._runner.run_checked(
-                [
-                    c.Infra.Cli.GIT,
-                    c.Infra.Cli.GitCmd.CHECKOUT,
-                    "-B",
-                    branch,
-                    f"origin/{branch}",
-                ],
-                cwd=repo_root,
-            )
-        return self._runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
-            cwd=repo_root,
-        )
-
-    def checkpoint(
-        self,
-        repo_root: Path,
-        branch: str,
-    ) -> r[bool]:
-        """Commit and push pending changes.
-
-        Args:
-            repo_root: Repository root directory.
-            branch: Branch name for push target.
-
-        Returns:
-            r[bool] with True on success.
-
-        """
-        changes_result = self.has_changes(repo_root)
-        if changes_result.is_failure:
-            return r[bool].fail(changes_result.error or "changes check failed")
-        if not changes_result.value:
-            return r[bool].ok(True)
-
-        add_result = self._runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.ADD, "-A"],
-            cwd=repo_root,
-        )
-        if add_result.is_failure:
-            return r[bool].fail(add_result.error or "git add failed")
-
-        staged_result: r[str] = self._runner.capture(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.DIFF, "--cached", "--name-only"],
-            cwd=repo_root,
-        )
-        if staged_result.is_success and not staged_result.value.strip():
-            return r[bool].ok(True)
-
-        commit_result = self._runner.run_checked(
-            [
-                c.Infra.Cli.GIT,
-                c.Infra.Cli.GitCmd.COMMIT,
-                "-m",
-                "chore: checkpoint pending changes",
-            ],
-            cwd=repo_root,
-        )
-        if commit_result.is_failure:
-            return r[bool].fail(commit_result.error or "git commit failed")
-
-        push_cmd = (
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "-u", c.Infra.Git.ORIGIN, branch]
-            if branch
-            else [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH]
-        )
-        push_result = self._runner.run(push_cmd, cwd=repo_root)
-        if push_result.is_success:
-            return r[bool].ok(True)
-
-        rebase_cmd = (
-            [
-                c.Infra.Cli.GIT,
-                c.Infra.Cli.GitCmd.PULL,
-                "--rebase",
-                c.Infra.Git.ORIGIN,
-                branch,
-            ]
-            if branch
-            else [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PULL, "--rebase"]
-        )
-        rebase_result = self._runner.run_checked(rebase_cmd, cwd=repo_root)
-        if rebase_result.is_failure:
-            return r[bool].fail(rebase_result.error or "git pull --rebase failed")
-
-        return self._runner.run_checked(push_cmd, cwd=repo_root)
+    def checkpoint(self, repo_root: Path, branch: str) -> r[bool]:
+        """Commit and push pending changes — delegates to the git service."""
+        return self._git.checkpoint(repo_root, branch)
 
     def has_changes(self, repo_root: Path) -> r[bool]:
-        """Check if the repository has uncommitted changes.
-
-        Args:
-            repo_root: Repository root directory.
-
-        Returns:
-            r[bool] with True if changes exist.
-
-        """
-        status_result: r[str] = self._runner.capture(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STATUS, "--porcelain"],
-            cwd=repo_root,
-        )
-        if status_result.is_failure:
-            return r[bool].fail(status_result.error or "git status failed")
-        return r[bool].ok(bool(status_result.value.strip()))
+        """Check if the repository has uncommitted changes."""
+        return self._git.has_changes(repo_root)
 
     def orchestrate(
         self,
