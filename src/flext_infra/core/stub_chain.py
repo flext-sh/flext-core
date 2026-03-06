@@ -111,7 +111,7 @@ class FlextInfraStubSupplyChain:
         self,
         workspace_root: Path,
         project_dirs: list[Path] | None = None,
-    ) -> FlextResult[m.ValidationReport]:
+    ) -> FlextResult[m.Infra.ValidationReport]:
         """Validate stub supply chain across projects.
 
         Args:
@@ -146,15 +146,15 @@ class FlextInfraStubSupplyChain:
 
             passed = len(violations) == 0
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
-            return r[m.ValidationReport].ok(
-                m.ValidationReport(
+            return r[m.Infra.ValidationReport].ok(
+                m.Infra.ValidationReport(
                     passed=passed,
                     violations=violations,
                     summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError) as exc:
-            return r[m.ValidationReport].fail(
+            return r[m.Infra.ValidationReport].fail(
                 f"stub validation failed: {exc}",
             )
 
@@ -174,7 +174,7 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            cmd_output: m.CommandOutput = result.value
+            cmd_output: m.Infra.CommandOutput = result.value
             output = cmd_output.stdout
         return sorted({
             m.group(1).strip()
@@ -190,7 +190,7 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            cmd_output: m.CommandOutput = result.value
+            cmd_output: m.Infra.CommandOutput = result.value
             output = cmd_output.stdout
         seen: set[str] = set()
         ordered: list[str] = []

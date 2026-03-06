@@ -41,7 +41,7 @@ class TestFlextInfraBaseMkValidator:
 
         result = validator.validate(workspace_root)
         assert result.is_success
-        assert isinstance(result.value, m.ValidationReport)
+        assert isinstance(result.value, m.Infra.ValidationReport)
 
     def test_validate_with_mismatched_basemk_returns_failure(
         self, tmp_path: Path
@@ -74,8 +74,8 @@ class TestFlextInfraBaseMkValidator:
         assert isinstance(
             result,
             type(
-                r[m.ValidationReport].ok(
-                    m.ValidationReport(passed=True, violations=[], summary="")
+                r[m.Infra.ValidationReport].ok(
+                    m.Infra.ValidationReport(passed=True, violations=[], summary="")
                 )
             ),
         )

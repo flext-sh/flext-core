@@ -167,7 +167,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return r[list[Path]].fail(result.error or "project resolution failed")
 
-        projects_info: list[m.ProjectInfo] = result.value
+        projects_info: list[m.Infra.ProjectInfo] = result.value
         projects = [
             project.path
             for project in projects_info
@@ -373,7 +373,7 @@ class FlextInfraDependencyDetectionService:
                 with contextlib.suppress(OSError):
                     out_file.unlink()
 
-        cmd_result: m.CommandOutput = result.value
+        cmd_result: m.Infra.CommandOutput = result.value
         return r[tuple[list[IssueMap], int]].ok((issues, cmd_result.exit_code))
 
     def run_mypy_stub_hints(
@@ -411,7 +411,7 @@ class FlextInfraDependencyDetectionService:
                 result.error or "mypy execution failed",
             )
 
-        cmd_result: m.CommandOutput = result.value
+        cmd_result: m.Infra.CommandOutput = result.value
         output = f"{cmd_result.stdout}\n{cmd_result.stderr}"
         hinted = {
             match.group(1).strip()
@@ -445,7 +445,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return r[tuple[list[str], int]].fail(result.error or "pip check failed")
 
-        cmd_result: m.CommandOutput = result.value
+        cmd_result: m.Infra.CommandOutput = result.value
         output = cmd_result.stdout
         lines = output.strip().splitlines() if output else []
         return r[tuple[list[str], int]].ok((lines, cmd_result.exit_code))

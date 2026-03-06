@@ -60,7 +60,7 @@ class FlextInfraWorkflowLinter:
                 self._json.write(report_path, payload_skipped, sort_keys=True)
             return r[Mapping[str, t.Scalar]].ok(payload_skipped)
 
-        result: r[m.CommandOutput] = self._runner.run([actionlint], cwd=root)
+        result: r[m.Infra.CommandOutput] = self._runner.run([actionlint], cwd=root)
 
         if result.is_success:
             output = result.value

@@ -15,7 +15,7 @@ from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class _TemplateRenderer(Protocol):
-    def render_all(self, config: m.BaseMkConfig | None = None) -> r[str]: ...
+    def render_all(self, config: m.Infra.BaseMkConfig | None = None) -> r[str]: ...
 
 
 class FlextInfraBaseMkGenerator(FlextService[str]):
@@ -40,15 +40,15 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
     def generate(
         self,
-        config: m.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
+        config: m.Infra.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
         if config_result.is_failure:
             return r[str].fail(config_result.error or "invalid base.mk configuration")
 
-        config_value: m.BaseMkConfig | None = cast(
-            "m.BaseMkConfig | None",
+        config_value: m.Infra.BaseMkConfig | None = cast(
+            "m.Infra.BaseMkConfig | None",
             config_result.value,
         )
         render_result = self._template_engine.render_all(config_value)
@@ -84,17 +84,19 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
     def _normalize_config(
         self,
-        config: m.BaseMkConfig | Mapping[str, t.Scalar] | None,
-    ) -> r[m.BaseMkConfig]:
+        config: m.Infra.BaseMkConfig | Mapping[str, t.Scalar] | None,
+    ) -> r[m.Infra.BaseMkConfig]:
         if config is None:
-            return r[m.BaseMkConfig].ok(FlextInfraBaseMkTemplateEngine.default_config())
-        if isinstance(config, m.BaseMkConfig):
-            return r[m.BaseMkConfig].ok(config)
+            return r[m.Infra.BaseMkConfig].ok(
+                FlextInfraBaseMkTemplateEngine.default_config()
+            )
+        if isinstance(config, m.Infra.BaseMkConfig):
+            return r[m.Infra.BaseMkConfig].ok(config)
         try:
-            normalized = m.BaseMkConfig.model_validate(dict(config))
-            return r[m.BaseMkConfig].ok(normalized)
+            normalized = m.Infra.BaseMkConfig.model_validate(dict(config))
+            return r[m.Infra.BaseMkConfig].ok(normalized)
         except (TypeError, ValueError) as exc:
-            return r[m.BaseMkConfig].fail(
+            return r[m.Infra.BaseMkConfig].fail(
                 f"base.mk configuration validation failed: {exc}",
             )
 

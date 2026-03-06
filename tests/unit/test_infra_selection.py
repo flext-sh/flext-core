@@ -155,12 +155,12 @@ class TestFlextInfraProjectSelector:
         """Test that result is properly typed FlextResult."""
         result = selector.resolve_projects(workspace_with_projects, [])
 
-        assert isinstance(result, type(r[list[m.ProjectInfo]].ok([])))
+        assert isinstance(result, type(r[list[m.Infra.ProjectInfo]].ok([])))
         assert result.is_success
         assert isinstance(result.value, list)
-        projects: list[m.ProjectInfo] = result.value  # type: ignore[assignment]
+        projects: list[m.Infra.ProjectInfo] = result.value  # type: ignore[assignment]
         for p in projects:
-            assert isinstance(p, m.ProjectInfo)
+            assert isinstance(p, m.Infra.ProjectInfo)
 
     def test_selector_with_default_discovery(
         self,

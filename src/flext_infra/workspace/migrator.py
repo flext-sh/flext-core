@@ -16,7 +16,7 @@ from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.constants import c
 
 
-class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
+class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
     """Migrate projects to standardized base.mk, Makefile, and pyproject structure."""
 
     def __init__(
@@ -81,7 +81,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         return hashlib.sha256(value.encode(c.Infra.Encoding.DEFAULT)).hexdigest()
 
     @staticmethod
-    def _workspace_root_project(workspace_root: Path) -> m.ProjectInfo | None:
+    def _workspace_root_project(workspace_root: Path) -> m.Infra.ProjectInfo | None:
         """Detect workspace root as a project if it has Makefile, pyproject.toml, and .git."""
         has_makefile = (workspace_root / c.Infra.Files.MAKEFILE_FILENAME).is_file()
         has_pyproject = (workspace_root / c.Infra.Files.PYPROJECT_FILENAME).is_file()
@@ -89,7 +89,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         if not (has_makefile and has_pyproject and has_git):
             return None
 
-        return m.ProjectInfo(
+        return m.Infra.ProjectInfo(
             name=workspace_root.name,
             path=workspace_root,
             stack="python/workspace",
@@ -98,25 +98,25 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         )
 
     @override
-    def execute(self) -> r[list[m.MigrationResult]]:
-        return r[list[m.MigrationResult]].fail("Use migrate() method directly")
+    def execute(self) -> r[list[m.Infra.MigrationResult]]:
+        return r[list[m.Infra.MigrationResult]].fail("Use migrate() method directly")
 
     def migrate(
         self,
         *,
         workspace_root: Path,
         dry_run: bool = False,
-    ) -> r[list[m.MigrationResult]]:
+    ) -> r[list[m.Infra.MigrationResult]]:
         """Migrate all projects in workspace."""
         root = workspace_root.resolve()
         if not root.is_dir():
-            return r[list[m.MigrationResult]].fail(
+            return r[list[m.Infra.MigrationResult]].fail(
                 f"workspace root does not exist: {root}",
             )
 
         discovered = self._discovery.discover_projects(root)
         if discovered.is_failure:
-            return r[list[m.MigrationResult]].fail(
+            return r[list[m.Infra.MigrationResult]].fail(
                 discovered.error or "project discovery failed",
             )
 
@@ -127,12 +127,12 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         ):
             projects.append(workspace_project)
 
-        results: list[m.MigrationResult] = [
+        results: list[m.Infra.MigrationResult] = [
             self._migrate_project(project=project, dry_run=dry_run)
             for project in projects
         ]
 
-        return r[list[m.MigrationResult]].ok(results)
+        return r[list[m.Infra.MigrationResult]].ok(results)
 
     def _migrate_basemk(self, project_root: Path, *, dry_run: bool) -> r[str]:
         generated = self._generator.generate()
@@ -259,9 +259,9 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
     def _migrate_project(
         self,
         *,
-        project: m.ProjectInfo,
+        project: m.Infra.ProjectInfo,
         dry_run: bool,
-    ) -> m.MigrationResult:
+    ) -> m.Infra.MigrationResult:
         changes: list[str] = []
         errors: list[str] = []
 
@@ -293,7 +293,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         if not changes and not errors:
             changes.append("no changes needed")
 
-        return m.MigrationResult(
+        return m.Infra.MigrationResult(
             project=project.name,
             changes=changes,
             errors=errors,

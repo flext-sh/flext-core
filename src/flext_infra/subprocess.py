@@ -19,7 +19,7 @@ from flext_core import FlextResult, FlextService, r
 from flext_infra import c, m
 
 
-class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
+class FlextInfraCommandRunner(FlextService[m.Infra.CommandOutput]):
     """Infrastructure service for subprocess execution.
 
     Provides FlextResult-wrapped command execution, replacing the bare
@@ -60,9 +60,9 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         return r[str].fail(result.error or "capture failed")
 
     @override
-    def execute(self) -> FlextResult[m.CommandOutput]:
+    def execute(self) -> FlextResult[m.Infra.CommandOutput]:
         """Execute the service (required by FlextService base class)."""
-        return r[m.CommandOutput].ok(m.CommandOutput(stdout="", stderr="", exit_code=0))
+        return r[m.Infra.CommandOutput].ok(m.Infra.CommandOutput(stdout="", stderr="", exit_code=0))
 
     def run(
         self,
@@ -70,7 +70,7 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[m.CommandOutput]:
+    ) -> FlextResult[m.Infra.CommandOutput]:
         """Run a command and return structured output.
 
         Args:
@@ -84,7 +84,7 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         """
         raw_result = self.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
         if raw_result.is_failure:
-            return r[m.CommandOutput].fail(
+            return r[m.Infra.CommandOutput].fail(
                 raw_result.error or "command execution error",
             )
 
@@ -92,10 +92,10 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         if output.exit_code != 0:
             cmd_str = shlex.join(list(cmd))
             detail = (output.stderr or output.stdout).strip()
-            return r[m.CommandOutput].fail(
+            return r[m.Infra.CommandOutput].fail(
                 f"command failed ({output.exit_code}): {cmd_str}: {detail}",
             )
-        return r[m.CommandOutput].ok(output)
+        return r[m.Infra.CommandOutput].ok(output)
 
     def run_checked(
         self,
@@ -125,7 +125,7 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[m.CommandOutput]:
+    ) -> FlextResult[m.Infra.CommandOutput]:
         """Run a command without enforcing zero exit code.
 
         Args:
@@ -148,20 +148,20 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
                 timeout=timeout,
                 env=env,
             )
-            output = m.CommandOutput(
+            output = m.Infra.CommandOutput(
                 stdout=result.stdout or "",
                 stderr=result.stderr or "",
                 exit_code=result.returncode,
             )
-            return r[m.CommandOutput].ok(output)
+            return r[m.Infra.CommandOutput].ok(output)
         except subprocess.TimeoutExpired as exc:
             cmd_str = shlex.join(list(cmd))
             timeout_text = str(exc.timeout)
-            return r[m.CommandOutput].fail(
+            return r[m.Infra.CommandOutput].fail(
                 f"command timeout after {timeout_text}s: {cmd_str}",
             )
         except (OSError, ValueError) as exc:
-            return r[m.CommandOutput].fail(f"command execution error: {exc}")
+            return r[m.Infra.CommandOutput].fail(f"command execution error: {exc}")
 
     def run_to_file(
         self,

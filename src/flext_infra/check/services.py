@@ -59,7 +59,7 @@ class _GateExecution(BaseModel):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
-    result: m.GateResult = Field(description="Gate result model")
+    result: m.Infra.GateResult = Field(description="Gate result model")
     issues: list[_CheckIssue] = Field(
         default_factory=list,
         description="Detected issues",
@@ -493,9 +493,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         """Return a failure because this service requires explicit run inputs."""
         return r[list[_ProjectResult]].fail("Use run() or run_projects() directly")
 
-    def format(self, project_dir: Path) -> r[m.GateResult]:
+    def format(self, project_dir: Path) -> r[m.Infra.GateResult]:
         """Run the Ruff format check gate for a project."""
-        return r[m.GateResult].ok(self._run_ruff_format(project_dir).result)
+        return r[m.Infra.GateResult].ok(self._run_ruff_format(project_dir).result)
 
     def generate_markdown_report(
         self,
@@ -578,9 +578,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
 
         return "\n".join(lines)
 
-    def lint(self, project_dir: Path) -> r[m.GateResult]:
+    def lint(self, project_dir: Path) -> r[m.Infra.GateResult]:
         """Run the Ruff lint gate for a project."""
-        return r[m.GateResult].ok(self._run_ruff_lint(project_dir).result)
+        return r[m.Infra.GateResult].ok(self._run_ruff_lint(project_dir).result)
 
     def run(
         self,
@@ -694,7 +694,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         duration: float,
         raw_output: str,
     ) -> _GateExecution:
-        model = m.GateResult(
+        model = m.Infra.GateResult(
             gate=gate,
             project=project,
             passed=passed,
@@ -768,7 +768,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 returncode=1,
             )
 
-        cmd_output: m.CommandOutput = result.value
+        cmd_output: m.Infra.CommandOutput = result.value
         return _RunCommandResult(
             stdout=cmd_output.stdout,
             stderr=cmd_output.stderr,

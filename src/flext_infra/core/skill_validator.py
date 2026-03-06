@@ -84,7 +84,7 @@ class FlextInfraSkillValidator:
         *,
         mode: str = "baseline",
         _project_filter: list[str] | None = None,
-    ) -> FlextResult[m.ValidationReport]:
+    ) -> FlextResult[m.Infra.ValidationReport]:
         """Validate a single skill across workspace projects.
 
         Args:
@@ -101,8 +101,8 @@ class FlextInfraSkillValidator:
             skills_dir = root / c.Infra.Core.SKILLS_DIR
             rules_path = skills_dir / skill_name / "rules.yml"
             if not rules_path.exists():
-                return r[m.ValidationReport].ok(
-                    m.ValidationReport(
+                return r[m.Infra.ValidationReport].ok(
+                    m.Infra.ValidationReport(
                         passed=False,
                         violations=[f"rules.yml not found for skill '{skill_name}'"],
                         summary=f"no rules.yml for {skill_name}",
@@ -112,7 +112,7 @@ class FlextInfraSkillValidator:
             rules = _safe_load_yaml(rules_path)
             scan_targets = rules.get("scan_targets", {}) or {}
             if not isinstance(scan_targets, dict):
-                return r[m.ValidationReport].fail(
+                return r[m.Infra.ValidationReport].fail(
                     f"scan_targets must be a mapping: {rules_path}",
                 )
 
@@ -127,7 +127,7 @@ class FlextInfraSkillValidator:
 
             rules_list = rules.get("rules", []) or []
             if not isinstance(rules_list, list):
-                return r[m.ValidationReport].fail("rules must be a list")
+                return r[m.Infra.ValidationReport].fail("rules must be a list")
 
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []
@@ -196,15 +196,15 @@ class FlextInfraSkillValidator:
             summary = (
                 f"{skill_name}: {total} violations, {'PASS' if passed else 'FAIL'}"
             )
-            return r[m.ValidationReport].ok(
-                m.ValidationReport(
+            return r[m.Infra.ValidationReport].ok(
+                m.Infra.ValidationReport(
                     passed=passed,
                     violations=violations,
                     summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
-            return r[m.ValidationReport].fail(
+            return r[m.Infra.ValidationReport].fail(
                 f"skill validation failed: {exc}",
             )
 
@@ -240,7 +240,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: m.CommandOutput = result_wrapper.value
+        result: m.Infra.CommandOutput = result_wrapper.value
 
         if result.exit_code not in {0, 1}:
             return 0
@@ -288,7 +288,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: m.CommandOutput = result_wrapper.value
+        result: m.Infra.CommandOutput = result_wrapper.value
 
         count = 0
         for raw_line in (result.stdout or "").splitlines():

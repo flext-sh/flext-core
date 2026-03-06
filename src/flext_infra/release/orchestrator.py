@@ -513,7 +513,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
-        project_list: list[m.ProjectInfo] = (
+        project_list: list[m.Infra.ProjectInfo] = (
             projects_result.value if projects_result.is_success else []
         )
 

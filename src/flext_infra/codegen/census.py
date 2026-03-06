@@ -16,7 +16,7 @@ from typing import Final, override
 from flext_core import FlextService, r
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
-from flext_infra.models import FlextInfraModels
+from flext_infra.models import m
 
 __all__ = ["FlextInfraCodegenCensus"]
 
@@ -27,7 +27,7 @@ _VIOLATION_PATTERN: Final[re.Pattern[str]] = re.compile(
 _EXCLUDED_PROJECTS: Final[frozenset[str]] = frozenset({"flexcore"})
 
 
-class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]]):
+class FlextInfraCodegenCensus(FlextService[list[m.Infra.CensusReport]]):
     """Read-only census service for namespace violation counting."""
 
     def __init__(self, workspace_root: Path) -> None:
@@ -49,7 +49,7 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
     @staticmethod
     def _parse_violation(
         violation_str: str,
-    ) -> FlextInfraModels.CensusViolation | None:
+    ) -> m.Infra.CensusViolation | None:
         """Parse a violation string into a CensusViolation model."""
         match = _VIOLATION_PATTERN.match(violation_str)
         if match is None:
@@ -62,7 +62,7 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
             message=match.group("message"),
         )
 
-        return FlextInfraModels.CensusViolation(
+        return m.Infra.CensusViolation(
             module=match.group("module"),
             rule=rule,
             line=int(match.group("line")),
@@ -71,16 +71,16 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
         )
 
     @override
-    def execute(self) -> r[list[FlextInfraModels.CensusReport]]:
+    def execute(self) -> r[list[m.Infra.CensusReport]]:
         """Execute census across all workspace projects."""
-        return r[list[FlextInfraModels.CensusReport]].ok(self.run())
+        return r[list[m.Infra.CensusReport]].ok(self.run())
 
     def run(
         self,
         workspace_root: Path | None = None,
         *,
         output_format: str = "json",
-    ) -> list[FlextInfraModels.CensusReport]:
+    ) -> list[m.Infra.CensusReport]:
         """Run census on all projects in workspace.
 
         Returns:
@@ -97,8 +97,8 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
         if not projects_result.is_success:
             return []
 
-        reports: list[FlextInfraModels.CensusReport] = []
-        discovered: list[FlextInfraModels.ProjectInfo] = projects_result.unwrap()
+        reports: list[m.Infra.CensusReport] = []
+        discovered: list[m.Infra.ProjectInfo] = projects_result.unwrap()
         for project in discovered:
             if project.name in _EXCLUDED_PROJECTS:
                 continue
@@ -108,21 +108,21 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
 
     def _census_project(
         self,
-        project: FlextInfraModels.ProjectInfo,
-    ) -> FlextInfraModels.CensusReport:
+        project: m.Infra.ProjectInfo,
+    ) -> m.Infra.CensusReport:
         """Run census on a single project."""
         validator = FlextInfraNamespaceValidator()
         result = validator.validate(project.path, scan_tests=False)
 
-        violations: list[FlextInfraModels.CensusViolation] = []
+        violations: list[m.Infra.CensusViolation] = []
         if result.is_success:
-            report: FlextInfraModels.ValidationReport = result.unwrap()
+            report: m.Infra.ValidationReport = result.unwrap()
             for violation_str in report.violations:
                 violation = self._parse_violation(violation_str)
                 if violation is not None:
                     violations.append(violation)
 
-        return FlextInfraModels.CensusReport(
+        return m.Infra.CensusReport(
             project=project.name,
             violations=violations,
             total=len(violations),

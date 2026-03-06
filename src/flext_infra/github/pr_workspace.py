@@ -272,7 +272,7 @@ class FlextInfraPrWorkspaceManager:
             r with orchestration summary.
 
         """
-        projects_result: r[list[m.ProjectInfo]] = self._selector.resolve_projects(
+        projects_result: r[list[m.Infra.ProjectInfo]] = self._selector.resolve_projects(
             workspace_root,
             projects or [],
         )
@@ -356,7 +356,7 @@ class FlextInfraPrWorkspaceManager:
                 )
             exit_code: int = to_file_result.value
         else:
-            raw_result: r[m.CommandOutput] = self._runner.run_raw(command)
+            raw_result: r[m.Infra.CommandOutput] = self._runner.run_raw(command)
             if raw_result.is_failure:
                 return r[Mapping[str, t.Scalar]].fail(
                     raw_result.error or "command execution error",

@@ -169,11 +169,11 @@ class TestFlextInfraDiscoveryService:
         """Test that result is properly typed FlextResult."""
         result = service.discover_projects(workspace_with_projects)
 
-        assert isinstance(result, type(r[list[m.ProjectInfo]].ok([])))
+        assert isinstance(result, type(r[list[m.Infra.ProjectInfo]].ok([])))
         assert result.is_success
-        projects: list[m.ProjectInfo] = result.value
+        projects: list[m.Infra.ProjectInfo] = result.value
         for item in projects:
-            assert isinstance(item, m.ProjectInfo)
+            assert isinstance(item, m.Infra.ProjectInfo)
 
     def test_discover_projects_empty_workspace_v2(
         self, service: FlextInfraDiscoveryService, tmp_path: Path

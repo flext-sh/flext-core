@@ -12,7 +12,7 @@ from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 
-def _build_config(project_name: str | None) -> m.BaseMkConfig | None:
+def _build_config(project_name: str | None) -> m.Infra.BaseMkConfig | None:
     if project_name is None:
         return None
     return FlextInfraBaseMkTemplateEngine.default_config().model_copy(

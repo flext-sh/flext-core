@@ -65,7 +65,7 @@ if TYPE_CHECKING:
     from flext_infra.subprocess import FlextInfraCommandRunner
     from flext_infra.templates import FlextInfraTemplateEngine
     from flext_infra.toml_io import FlextInfraTomlService
-    from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
+    from flext_infra.typings import FlextInfraTypes, t
     from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
     from flext_infra.versioning import FlextInfraVersioningService
 

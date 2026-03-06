@@ -35,14 +35,14 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
         )
 
     @classmethod
-    def default_config(cls) -> m.BaseMkConfig:
+    def default_config(cls) -> m.Infra.BaseMkConfig:
         """Return the default base.mk configuration."""
         return cls._default_config()
 
     @staticmethod
-    def _default_config() -> m.BaseMkConfig:
+    def _default_config() -> m.Infra.BaseMkConfig:
         """Return the default base.mk configuration."""
-        return m.BaseMkConfig(
+        return m.Infra.BaseMkConfig(
             project_name="unnamed",
             python_version="3.13",
             core_stack="python",
@@ -57,7 +57,7 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
     def execute(self) -> r[str]:
         return self.render_all()
 
-    def render_all(self, config: m.BaseMkConfig | None = None) -> r[str]:
+    def render_all(self, config: m.Infra.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
         context: Mapping[str, t.ContainerValue] = {

@@ -58,7 +58,7 @@ class FlextInfraDocsShared:
                     part.strip() for part in requested[0].split(" ") if part.strip()
                 ]
             return requested
-        result: r[list[m.ProjectInfo]] = _discovery.discover_projects(root)
+        result: r[list[m.Infra.ProjectInfo]] = _discovery.discover_projects(root)
         if result.is_success:
             return [p.name for p in result.value]
         return []

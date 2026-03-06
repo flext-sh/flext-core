@@ -111,7 +111,7 @@ class FlextInfraInternalDependencySyncService:
 
         workspace_mode, workspace_root = self._is_workspace_mode(project_root)
         map_file = project_root / "flext-repo-map.toml"
-        repo_map: Mapping[str, m.RepoUrls]
+        repo_map: Mapping[str, m.Infra.RepoUrls]
 
         if (
             workspace_mode
@@ -315,10 +315,10 @@ class FlextInfraInternalDependencySyncService:
 
         return False, None
 
-    def _parse_gitmodules(self, path: Path) -> Mapping[str, m.RepoUrls]:
+    def _parse_gitmodules(self, path: Path) -> Mapping[str, m.Infra.RepoUrls]:
         parser = configparser.RawConfigParser()
         _ = parser.read(path)
-        mapping: MutableMapping[str, m.RepoUrls] = {}
+        mapping: MutableMapping[str, m.Infra.RepoUrls] = {}
         for section in parser.sections():
             if not section.startswith("submodule "):
                 continue
@@ -326,34 +326,34 @@ class FlextInfraInternalDependencySyncService:
             repo_url = parser.get(section, "url", fallback="").strip()
             if not repo_url:
                 continue
-            mapping[repo_name] = m.RepoUrls(
+            mapping[repo_name] = m.Infra.RepoUrls(
                 ssh_url=repo_url,
                 https_url=self._ssh_to_https(repo_url),
             )
         return mapping
 
-    def _parse_repo_map(self, path: Path) -> r[Mapping[str, m.RepoUrls]]:
+    def _parse_repo_map(self, path: Path) -> r[Mapping[str, m.Infra.RepoUrls]]:
         data_result = self._toml.read(path)
         if data_result.is_failure:
-            return r[Mapping[str, m.RepoUrls]].fail(
+            return r[Mapping[str, m.Infra.RepoUrls]].fail(
                 data_result.error or "failed to read repository map",
             )
         data = data_result.value
         repos_obj = data.get("repo", {})
         if not isinstance(repos_obj, dict):
-            return r[Mapping[str, m.RepoUrls]].ok({})
-        result: MutableMapping[str, m.RepoUrls] = {}
+            return r[Mapping[str, m.Infra.RepoUrls]].ok({})
+        result: MutableMapping[str, m.Infra.RepoUrls] = {}
         for repo_name, values in repos_obj.items():
             if not isinstance(values, dict):
                 continue
             ssh_url = str(values.get("ssh_url", ""))
             https_url = str(values.get("https_url", self._ssh_to_https(ssh_url)))
             if ssh_url:
-                result[repo_name] = m.RepoUrls(
+                result[repo_name] = m.Infra.RepoUrls(
                     ssh_url=ssh_url,
                     https_url=https_url,
                 )
-        return r[Mapping[str, m.RepoUrls]].ok(result)
+        return r[Mapping[str, m.Infra.RepoUrls]].ok(result)
 
     def _resolve_ref(self, project_root: Path) -> str:
         if os.getenv("GITHUB_ACTIONS") == "true":
@@ -373,18 +373,18 @@ class FlextInfraInternalDependencySyncService:
             return tag.value.stdout.strip()
         return "main"
 
-    def _run_git(self, args: list[str], cwd: Path) -> r[m.CommandOutput]:
+    def _run_git(self, args: list[str], cwd: Path) -> r[m.Infra.CommandOutput]:
         return self._runner.run_raw(["git", *args], cwd=cwd)
 
     def _synthesized_repo_map(
         self,
         owner: str,
         repo_names: set[str],
-    ) -> Mapping[str, m.RepoUrls]:
-        result: MutableMapping[str, m.RepoUrls] = {}
+    ) -> Mapping[str, m.Infra.RepoUrls]:
+        result: MutableMapping[str, m.Infra.RepoUrls] = {}
         for repo_name in sorted(repo_names):
             ssh_url = f"git@github.com:{owner}/{repo_name}.git"
-            result[repo_name] = m.RepoUrls(
+            result[repo_name] = m.Infra.RepoUrls(
                 ssh_url=ssh_url,
                 https_url=self._ssh_to_https(ssh_url),
             )

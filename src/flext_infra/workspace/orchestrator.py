@@ -21,7 +21,7 @@ from flext_infra import FlextInfraCommandRunner, FlextInfraReportingService, m, 
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
+class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
     """Infrastructure service for multi-project make orchestration.
 
     Executes a make verb across a list of projects sequentially, capturing
@@ -37,9 +37,9 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
         self._reporting = FlextInfraReportingService()
 
     @override
-    def execute(self) -> r[list[m.CommandOutput]]:
+    def execute(self) -> r[list[m.Infra.CommandOutput]]:
         """Not used; call orchestrate() directly instead."""
-        return r[list[m.CommandOutput]].fail("Use orchestrate() method directly")
+        return r[list[m.Infra.CommandOutput]].fail("Use orchestrate() method directly")
 
     def orchestrate(
         self,
@@ -48,7 +48,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
         *,
         fail_fast: bool = False,
         make_args: Sequence[str] = (),
-    ) -> r[list[m.CommandOutput]]:
+    ) -> r[list[m.Infra.CommandOutput]]:
         """Execute make verb across projects with per-project logging.
 
         Args:
@@ -63,7 +63,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
         """
         output.header("Workspace Orchestration")
         try:
-            results: list[m.CommandOutput] = []
+            results: list[m.Infra.CommandOutput] = []
             total = len(projects)
             success = 0
             failed = 0
@@ -74,7 +74,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
                 output.progress(idx, total, project, verb)
                 if skipped:
                     results.append(
-                        m.CommandOutput(
+                        m.Infra.CommandOutput(
                             stdout="",
                             stderr="",
                             exit_code=0,
@@ -92,7 +92,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
                 if output_result.is_failure:
                     failed += 1
                     results.append(
-                        m.CommandOutput(
+                        m.Infra.CommandOutput(
                             stdout="",
                             stderr=output_result.error or "project execution failed",
                             exit_code=1,
@@ -104,10 +104,10 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
                     continue
 
                 output_value = output_result.value
-                cmd_output: m.CommandOutput = (
+                cmd_output: m.Infra.CommandOutput = (
                     output_value
-                    if isinstance(output_value, m.CommandOutput)
-                    else m.CommandOutput(
+                    if isinstance(output_value, m.Infra.CommandOutput)
+                    else m.Infra.CommandOutput(
                         stdout="", stderr="unknown", exit_code=1, duration=0.0
                     )
                 )
@@ -122,10 +122,10 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
 
             elapsed_total = time.monotonic() - started_total
             output.summary(verb, total, success, failed, skipped, elapsed_total)
-            return r[list[m.CommandOutput]].ok(results)
+            return r[list[m.Infra.CommandOutput]].ok(results)
 
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
-            return r[list[m.CommandOutput]].fail(f"Orchestration failed: {exc}")
+            return r[list[m.Infra.CommandOutput]].fail(f"Orchestration failed: {exc}")
 
     def _run_project(
         self,
@@ -134,7 +134,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
         _index: int,
         *,
         make_args: list[str],
-    ) -> r[m.CommandOutput]:
+    ) -> r[m.Infra.CommandOutput]:
         """Execute make verb for a single project.
 
         Args:
@@ -172,8 +172,8 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
             f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})",
         )
 
-        return r[m.CommandOutput].ok(
-            m.CommandOutput(
+        return r[m.Infra.CommandOutput].ok(
+            m.Infra.CommandOutput(
                 stdout=str(log_path),
                 stderr=stderr,
                 exit_code=return_code,

@@ -39,7 +39,7 @@ def _run_basemk_validate(args: argparse.Namespace) -> int:
     result = validator.validate(Path(args.root).resolve())
 
     if result.is_success:
-        report: m.ValidationReport = result.value
+        report: m.Infra.ValidationReport = result.value
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -143,7 +143,7 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
     )
 
     if result.is_success:
-        report: m.ValidationReport = result.value
+        report: m.Infra.ValidationReport = result.value
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -162,7 +162,7 @@ def _run_stub_validate(args: argparse.Namespace) -> int:
     result = chain.validate(root, project_dirs=project_dirs)
 
     if result.is_success:
-        report: m.ValidationReport = result.value
+        report: m.Infra.ValidationReport = result.value
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)

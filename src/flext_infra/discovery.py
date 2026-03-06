@@ -17,7 +17,7 @@ from flext_core import FlextResult, FlextService, r
 from flext_infra import c, m
 
 
-class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
+class FlextInfraDiscoveryService(FlextService[list[m.Infra.ProjectInfo]]):
     """Infrastructure service for discovering workspace projects.
 
     Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
@@ -50,7 +50,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
     def discover_projects(
         self,
         workspace_root: Path,
-    ) -> FlextResult[list[m.ProjectInfo]]:
+    ) -> FlextResult[list[m.Infra.ProjectInfo]]:
         """Discover all subprojects in the workspace.
 
         Scans the workspace root for directories that are Git repositories
@@ -64,7 +64,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
 
         """
         try:
-            projects: list[m.ProjectInfo] = []
+            projects: list[m.Infra.ProjectInfo] = []
             submodules = self._submodule_names(workspace_root)
 
             for entry in sorted(
@@ -91,7 +91,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
                 kind = "submodule" if entry.name in submodules else "external"
 
                 projects.append(
-                    m.ProjectInfo(
+                    m.Infra.ProjectInfo(
                         path=entry,
                         name=entry.name,
                         stack=f"{stack}/{kind}",
@@ -100,14 +100,14 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
                     ),
                 )
 
-            return r[list[m.ProjectInfo]].ok(projects)
+            return r[list[m.Infra.ProjectInfo]].ok(projects)
         except OSError as exc:
-            return r[list[m.ProjectInfo]].fail(
+            return r[list[m.Infra.ProjectInfo]].fail(
                 f"project discovery failed: {exc}",
             )
 
     @override
-    def execute(self) -> FlextResult[list[m.ProjectInfo]]:
+    def execute(self) -> FlextResult[list[m.Infra.ProjectInfo]]:
         """Execute discovery of all projects in workspace.
 
         Returns:
@@ -115,7 +115,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
 
         """
         # Default implementation - subclasses can override
-        return r[list[m.ProjectInfo]].ok([])
+        return r[list[m.Infra.ProjectInfo]].ok([])
 
     def find_all_pyproject_files(
         self,

@@ -16,7 +16,7 @@ from flext_core import FlextResult, FlextService, r
 from flext_infra import FlextInfraDiscoveryService, m
 
 
-class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
+class FlextInfraProjectSelector(FlextService[list[m.Infra.ProjectInfo]]):
     """Infrastructure service for project selection and filtering.
 
     Combines project discovery with filtering and resolution capabilities.
@@ -30,20 +30,20 @@ class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
         self._discovery = discovery or FlextInfraDiscoveryService()
 
     @override
-    def execute(self) -> FlextResult[list[m.ProjectInfo]]:
+    def execute(self) -> FlextResult[list[m.Infra.ProjectInfo]]:
         """Execute project selection (default: empty list).
 
         Returns:
             FlextResult with empty list by default.
 
         """
-        return r[list[m.ProjectInfo]].ok([])
+        return r[list[m.Infra.ProjectInfo]].ok([])
 
     def resolve_projects(
         self,
         workspace_root: Path,
         names: list[str],
-    ) -> FlextResult[list[m.ProjectInfo]]:
+    ) -> FlextResult[list[m.Infra.ProjectInfo]]:
         """Resolve project names into ProjectInfo structures.
 
         Args:
@@ -56,13 +56,13 @@ class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
         """
         discover_result = self._discovery.discover_projects(workspace_root)
         if discover_result.is_failure:
-            return r[list[m.ProjectInfo]].fail(
+            return r[list[m.Infra.ProjectInfo]].fail(
                 discover_result.error or "discovery failed",
             )
 
         projects = discover_result.value
         if not names:
-            return r[list[m.ProjectInfo]].ok(
+            return r[list[m.Infra.ProjectInfo]].ok(
                 sorted(projects, key=lambda p: p.name),
             )
 
@@ -70,12 +70,12 @@ class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
         missing = [name for name in names if name not in by_name]
         if missing:
             missing_text = ", ".join(sorted(missing))
-            return r[list[m.ProjectInfo]].fail(
+            return r[list[m.Infra.ProjectInfo]].fail(
                 f"unknown projects: {missing_text}",
             )
 
         resolved = [by_name[name] for name in names]
-        return r[list[m.ProjectInfo]].ok(
+        return r[list[m.Infra.ProjectInfo]].ok(
             sorted(resolved, key=lambda p: p.name),
         )
 

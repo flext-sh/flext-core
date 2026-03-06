@@ -17,12 +17,12 @@ from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.constants import c
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
-from flext_infra.models import FlextInfraModels
+from flext_infra.models import m
 
 __all__ = ["FlextInfraCodegenScaffolder"]
 
 
-class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldResult]]):
+class FlextInfraCodegenScaffolder(FlextService[list[m.Infra.ScaffoldResult]]):
     """Generates missing base modules in src/ and tests/ directories."""
 
     def __init__(self, workspace_root: Path) -> None:  # noqa: D107  # JUSTIFIED: pydocstyle allows __init__ omission in internal service classes — https://docs.astral.sh/ruff/rules/undocumented-public-init/
@@ -41,11 +41,11 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
         return None
 
     @override
-    def execute(self) -> r[list[FlextInfraModels.ScaffoldResult]]:
+    def execute(self) -> r[list[m.Infra.ScaffoldResult]]:
         """Execute scaffolding across all workspace projects."""
-        return r[list[FlextInfraModels.ScaffoldResult]].ok(self.run())
+        return r[list[m.Infra.ScaffoldResult]].ok(self.run())
 
-    def run(self) -> list[FlextInfraModels.ScaffoldResult]:
+    def run(self) -> list[m.Infra.ScaffoldResult]:
         """Scaffold missing base modules for all projects in workspace.
 
         Returns:
@@ -57,8 +57,8 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
         if not projects_result.is_success:
             return []
 
-        results: list[FlextInfraModels.ScaffoldResult] = []
-        discovered: list[FlextInfraModels.ProjectInfo] = projects_result.unwrap()
+        results: list[m.Infra.ScaffoldResult] = []
+        discovered: list[m.Infra.ProjectInfo] = projects_result.unwrap()
         projects = discovered
         for project in projects:
             if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
@@ -69,7 +69,7 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
             results.append(result)
         return results
 
-    def scaffold_project(self, project_path: Path) -> FlextInfraModels.ScaffoldResult:
+    def scaffold_project(self, project_path: Path) -> m.Infra.ScaffoldResult:
         """Scaffold missing base modules for a single project.
 
         Args:
@@ -81,7 +81,7 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
         """
         prefix = FlextInfraNamespaceValidator.derive_prefix(project_path)
         if not prefix:
-            return FlextInfraModels.ScaffoldResult(
+            return m.Infra.ScaffoldResult(
                 project=project_path.name,
                 files_created=[],
                 files_skipped=[],
@@ -114,7 +114,7 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
                 files_skipped=files_skipped,
             )
 
-        return FlextInfraModels.ScaffoldResult(
+        return m.Infra.ScaffoldResult(
             project=project_path.name,
             files_created=files_created,
             files_skipped=files_skipped,
