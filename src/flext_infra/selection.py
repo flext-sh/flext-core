@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import r, FlextService, r
+from flext_core import FlextService, r
 from flext_infra import FlextInfraDiscoveryService, m
 
 
