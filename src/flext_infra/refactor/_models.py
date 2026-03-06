@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -146,6 +145,22 @@ class FlextInfraRefactorModels:
             description="Rewrite scope (file/project/workspace)",
         )
 
+    class ClassNestingMappingRecord(FlextModels.ArbitraryTypesModel):
+        """Resolved mapping record for class nesting rewrite input."""
+
+        model_config = ConfigDict(extra="ignore", frozen=True)
+
+        loose_name: str = Field(min_length=1, description="Original loose class name")
+        current_file: str = Field(min_length=1, description="File containing class")
+        target_namespace: str = Field(min_length=1, description="Target namespace")
+        target_name: str = Field(default="", description="Target class name")
+        confidence: str = Field(min_length=1, description="Confidence level")
+        reason: str = Field(default="", description="Optional mapping rationale")
+        rewrite_scope: str | None = Field(
+            default=None,
+            description="Rewrite scope (file/project/workspace)",
+        )
+
     class ClassNestingViolation(FlextModels.ArbitraryTypesModel):
         """Normalized class-nesting violation with rewrite metadata."""
 
@@ -172,7 +187,7 @@ class FlextInfraRefactorModels:
             default_factory=dict,
             description="Confidence histogram",
         )
-        violations: Sequence[object] = Field(
+        violations: list[FlextInfraRefactorModels.ClassNestingViolation] = Field(
             default_factory=list,
             description="Violation details",
         )
@@ -211,10 +226,10 @@ class FlextInfraRefactorModels:
             default_factory=dict,
             description="Category totals",
         )
-        suggestions: Sequence[object] = Field(
+        suggestions: list[FlextInfraRefactorModels.HelperClassification] = Field(
             default_factory=list, description="Classification suggestions"
         )
-        manual_review: Sequence[object] = Field(
+        manual_review: list[FlextInfraRefactorModels.HelperClassification] = Field(
             default_factory=list,
             description="Manual-review candidates",
         )
@@ -240,14 +255,136 @@ class FlextInfraRefactorModels:
             default_factory=dict,
             description="Per-file per-pattern counts",
         )
-        top_files: Sequence[object] = Field(
+        top_files: list[dict[str, str | int | dict[str, int]]] = Field(
             default_factory=list, description="Top hotspot files"
         )
         files_scanned: int = Field(ge=0, description="Files scanned")
-        helper_classification: object = Field(
+        helper_classification: dict[str, object] = Field(
             description="Helper classification summary"
         )
-        class_nesting: object = Field(description="Class nesting analysis summary")
+        class_nesting: dict[str, object] = Field(
+            description="Class nesting analysis summary"
+        )
+
+    class AstGrepNameEntry(FlextModels.ArbitraryTypesModel):
+        """A single name entry from ast-grep meta-variables."""
+
+        text: str = Field(min_length=1, description="Captured text value")
+
+    class AstGrepStart(FlextModels.ArbitraryTypesModel):
+        """Start position from an ast-grep match range."""
+
+        line: int | None = Field(default=None, description="Line number")
+
+    class AstGrepRange(FlextModels.ArbitraryTypesModel):
+        """Range information from an ast-grep match."""
+
+        start: FlextInfraRefactorModels.AstGrepStart | None = Field(
+            default=None,
+            description="Start position",
+        )
+
+    class AstGrepMetaVariables(FlextModels.ArbitraryTypesModel):
+        """Meta-variable captures from an ast-grep match."""
+
+        single: dict[str, FlextInfraRefactorModels.AstGrepNameEntry] = Field(
+            default_factory=dict,
+            description="Single-capture meta-variables",
+        )
+
+    class AstGrepEntry(FlextModels.ArbitraryTypesModel):
+        """A single ast-grep match entry from JSON output."""
+
+        file: str = Field(min_length=1, description="Matched file path")
+        meta_variables: FlextInfraRefactorModels.AstGrepMetaVariables = Field(
+            alias="metaVariables",
+            description="Captured meta-variables",
+        )
+        range: FlextInfraRefactorModels.AstGrepRange | None = Field(
+            default=None,
+            description="Match range",
+        )
+
+    class AstGrepMatch(FlextModels.ArbitraryTypesModel):
+        """A single ast-grep match entry (file-only variant)."""
+
+        file: str = Field(min_length=1, description="Matched file path")
+
+    class RuleConfigs:
+        """Configuration schemas parsed by refactor rules at runtime."""
+
+        class MethodOrderRule(FlextModels.ArbitraryTypesModel):
+            """A declarative method ordering rule for class reconstruction."""
+
+            model_config = ConfigDict(extra="ignore")
+
+            category: str | None = Field(default=None, description="Method category")
+            visibility: str | None = Field(
+                default=None, description="Visibility filter"
+            )
+            exclude_decorators: list[str] = Field(
+                default_factory=list,
+                description="Decorators to exclude",
+            )
+            decorators: list[str] = Field(
+                default_factory=list,
+                description="Decorators to match",
+            )
+            patterns: list[str | dict[str, str | list[str]]] = Field(
+                default_factory=list,
+                description="Pattern rules",
+            )
+            order: list[str] = Field(
+                default_factory=list,
+                description="Explicit method order",
+            )
+
+        class SignatureMigration(FlextModels.ArbitraryTypesModel):
+            """Declarative signature migration rule for callsite propagation."""
+
+            id: str = Field(default="signature-migration", description="Migration ID")
+            enabled: bool = Field(
+                default=True, description="Whether migration is active"
+            )
+            target_qualified_names: list[str] = Field(
+                default_factory=list, description="Qualified names to match"
+            )
+            target_simple_names: list[str] = Field(
+                default_factory=list, description="Simple names to match"
+            )
+            keyword_renames: dict[str, str] = Field(
+                default_factory=dict, description="Keyword rename mapping"
+            )
+            remove_keywords: list[str] = Field(
+                default_factory=list, description="Keywords to remove"
+            )
+            add_keywords: dict[str, str] = Field(
+                default_factory=dict, description="Keywords to add"
+            )
+
+        class ImportModernizerRuleConfig(FlextModels.ArbitraryTypesModel):
+            """Configuration for a single import modernizer rule."""
+
+            module: str = Field(default="", description="Module path to modernize")
+            symbol_mapping: dict[str, str] = Field(
+                default_factory=dict, description="Symbol-to-alias mapping"
+            )
+
+    # -- Parsing models for raw tool/scanner output --------------------------
+
+    class Parsers:
+        """Models for parsing raw tool output (scanner JSON, YAML, etc.)."""
+
+        class LooseClassViolation(FlextModels.ArbitraryTypesModel):
+            """Parsing model for raw scanner output (subset of fields)."""
+
+            model_config = ConfigDict(extra="ignore", frozen=True)
+
+            file: str = Field(default="", description="Source file path")
+            line: int = Field(default=1, ge=0, description="Line number")
+            class_name: str = Field(default="", description="Class name")
+            confidence: str = Field(default="low", description="Confidence level")
+            expected_prefix: str = Field(default="", description="Expected prefix")
 
 
 __all__ = ["FlextInfraRefactorModels"]

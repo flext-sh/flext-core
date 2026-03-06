@@ -32,6 +32,39 @@ from flext_infra.core.skill_validator import FlextInfraSkillValidator
 from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 
 
+def _extract_reports_written(
+    payload: m.Infra.Core.InventoryReport | Mapping[str, t.ContainerValue],
+) -> list[str]:
+    if isinstance(payload, Mapping):
+        raw = payload.get("reports_written", [])
+        if isinstance(raw, list):
+            return [item for item in raw if isinstance(item, str)]
+        return []
+    return payload.reports_written
+
+
+def _extract_diag_entries(
+    payload: m.Infra.Core.PytestDiagnostics | Mapping[str, t.ContainerValue],
+    key: str,
+) -> list[str]:
+    if isinstance(payload, Mapping):
+        raw = payload.get(key, [])
+        if isinstance(raw, list):
+            return [item for item in raw if isinstance(item, str)]
+        return []
+    if key == "failed_cases":
+        return payload.failed_cases
+    if key == "error_traces":
+        return payload.error_traces
+    if key == "warning_lines":
+        return payload.warning_lines
+    if key == "slow_entries":
+        return payload.slow_entries
+    if key == "skip_cases":
+        return payload.skip_cases
+    return []
+
+
 def _run_basemk_validate(args: argparse.Namespace) -> int:
     """Execute base.mk sync validation."""
     validator = FlextInfraBaseMkValidator()
@@ -55,7 +88,7 @@ def _run_inventory(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
-        for path in data.reports_written:
+        for path in _extract_reports_written(data):
             output.info(f"Wrote: {path}")
         return 0
     output.error(result.error or "unknown error")
@@ -71,31 +104,31 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
         data = result.value
 
         if args.failed:
-            failed_cases = data.failed_cases
+            failed_cases = _extract_diag_entries(data, "failed_cases")
             Path(args.failed).write_text(
                 "\n\n".join(failed_cases) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.errors:
-            error_traces = data.error_traces
+            error_traces = _extract_diag_entries(data, "error_traces")
             Path(args.errors).write_text(
                 "\n\n".join(error_traces) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.warnings:
-            warning_lines = data.warning_lines
+            warning_lines = _extract_diag_entries(data, "warning_lines")
             Path(args.warnings).write_text(
                 "\n".join(warning_lines) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.slowest:
-            slow_entries = data.slow_entries
+            slow_entries = _extract_diag_entries(data, "slow_entries")
             Path(args.slowest).write_text(
                 "\n".join(slow_entries) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.skips:
-            skip_cases = data.skip_cases
+            skip_cases = _extract_diag_entries(data, "skip_cases")
             Path(args.skips).write_text(
                 "\n".join(skip_cases) + "\n", encoding=c.Infra.Encoding.DEFAULT
             )

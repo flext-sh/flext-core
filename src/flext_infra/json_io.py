@@ -50,14 +50,14 @@ class FlextInfraJsonService(s[bool]):
         if not path.exists():
             return r[t.ConfigurationMapping].ok({})
         try:
-            loaded_obj: object = json.loads(
+            loaded_obj: t.ContainerValue = json.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             )
             if not isinstance(loaded_obj, dict):
                 return r[t.ConfigurationMapping].fail(
                     "JSON root must be object",
                 )
-            parser = TypeAdapter(dict[str, t.Scalar])
+            parser = TypeAdapter(dict[str, t.ContainerValue])
             data = parser.validate_python(loaded_obj, strict=True)
             return r[t.ConfigurationMapping].ok(data)
         except ValidationError as exc:

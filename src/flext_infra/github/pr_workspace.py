@@ -58,7 +58,7 @@ class FlextInfraPrWorkspaceManager:
             "--repo-root",
             str(repo_root),
             "--action",
-            pr_args.get("action", "status"),
+            pr_args.get(c.Infra.ReportKeys.ACTION, c.Infra.ReportKeys.STATUS),
             "--base",
             pr_args.get("base", c.Infra.Git.MAIN),
             "--draft",
@@ -304,7 +304,10 @@ class FlextInfraPrWorkspaceManager:
         if include_root:
             repos.append(workspace_root)
 
-        effective_args = pr_args or {"action": "status", "base": c.Infra.Git.MAIN}
+        effective_args = pr_args or {
+            c.Infra.ReportKeys.ACTION: c.Infra.ReportKeys.STATUS,
+            "base": c.Infra.Git.MAIN,
+        }
         failures = 0
         results: list[m.Infra.Github.PrExecutionResult] = []
 
@@ -329,12 +332,15 @@ class FlextInfraPrWorkspaceManager:
                     break
 
         total = len(repos)
+        orchestration_results: tuple[m.Infra.Github.PrExecutionResult, ...] = tuple(
+            results
+        )
         return r[m.Infra.Github.PrOrchestrationResult].ok(
             m.Infra.Github.PrOrchestrationResult(
                 total=total,
                 success=total - failures,
                 fail=failures,
-                results=results,
+                results=orchestration_results,
             )
         )
 
@@ -357,7 +363,7 @@ class FlextInfraPrWorkspaceManager:
         """
         display = self._repo_display_name(repo_root, workspace_root)
         report_dir = self._reporting.get_report_dir(
-            workspace_root, "workspace", c.Infra.Cli.GhCmd.PR
+            workspace_root, c.Infra.ReportKeys.WORKSPACE, c.Infra.Cli.GhCmd.PR
         )
         with contextlib.suppress(OSError):
             report_dir.mkdir(parents=True, exist_ok=True)

@@ -113,16 +113,7 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
                     continue
 
                 output_value = output_result.value
-                cmd_output: m.Infra.Core.CommandOutput = (
-                    output_value
-                    if isinstance(output_value, m.Infra.Core.CommandOutput)
-                    else m.Infra.Core.CommandOutput(
-                        stdout="",
-                        stderr=c.Infra.Defaults.UNKNOWN,
-                        exit_code=1,
-                        duration=0.0,
-                    )
-                )
+                cmd_output: m.Infra.Core.CommandOutput = output_value
                 results.append(cmd_output)
                 if cmd_output.exit_code == 0:
                     success += 1
@@ -163,7 +154,7 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
         """
         log_path = self._reporting.get_report_path(
             Path.cwd(),
-            "workspace",
+            c.Infra.ReportKeys.WORKSPACE,
             verb,
             f"{project}.log",
         )

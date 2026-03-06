@@ -31,8 +31,8 @@ class TestFlextInfraWorkflowLinter:
             result = linter.lint(tmp_path)
 
         assert result.is_success
-        assert result.value["status"] == "ok"
-        assert result.value["exit_code"] == 0
+        assert result.value.status == "ok"
+        assert result.value.exit_code == 0
 
     def test_lint_skipped_when_actionlint_not_installed(self, tmp_path: Path) -> None:
         """Test linting skipped when actionlint is not available."""
@@ -44,10 +44,10 @@ class TestFlextInfraWorkflowLinter:
             result = linter.lint(tmp_path)
 
         assert result.is_success
-        assert result.value["status"] == "skipped"
+        assert result.value.status == "skipped"
         assert (
-            isinstance(result.value["reason"], str)
-            and "actionlint not installed" in result.value["reason"]
+            isinstance(result.value.reason, str)
+            and "actionlint not installed" in result.value.reason
         )
 
     def test_lint_with_report_path(self, tmp_path: Path) -> None:
@@ -84,8 +84,8 @@ class TestFlextInfraWorkflowLinter:
     def test_lint_default_runner_initialization(self) -> None:
         """Test linter initializes with default runner and json service."""
         linter = FlextInfraWorkflowLinter()
-        assert linter._runner is not None
-        assert linter._json is not None
+        assert getattr(linter, "_runner", None) is not None
+        assert getattr(linter, "_json", None) is not None
 
     def test_lint_skipped_with_report(self, tmp_path: Path) -> None:
         """Test linting skipped with report output."""

@@ -108,7 +108,7 @@ class FlextInfraSkillValidator:
                 "scan_targets.exclude",
             )
 
-            rules_list = rules.get("rules", []) or []
+            rules_list = rules.get(c.Infra.ReportKeys.RULES, []) or []
             if not isinstance(rules_list, list):
                 return r[m.Infra.Core.ValidationReport].fail("rules must be a list")
 
@@ -118,7 +118,7 @@ class FlextInfraSkillValidator:
             for rule_obj in rules_list:
                 if not isinstance(rule_obj, dict):
                     continue
-                rule_id = str(rule_obj.get("id", "")).strip()
+                rule_id = str(rule_obj.get(c.Infra.ReportKeys.ID, "")).strip()
                 rule_type = str(rule_obj.get("type", "")).strip()
                 group = (
                     str(rule_obj.get(c.Infra.Toml.GROUP, rule_id)).strip() or rule_id
@@ -153,10 +153,16 @@ class FlextInfraSkillValidator:
             if mode != c.Infra.Modes.STRICT:
                 baseline_obj = rules.get(c.Infra.Modes.BASELINE, {}) or {}
                 if isinstance(baseline_obj, dict):
-                    strategy = str(baseline_obj.get("strategy", "total"))
+                    strategy = str(
+                        baseline_obj.get("strategy", c.Infra.ReportKeys.TOTAL)
+                    )
                     baseline_path = self._render_template(
                         root,
-                        str(baseline_obj.get("file", c.Infra.Core.BASELINE_DEFAULT)),
+                        str(
+                            baseline_obj.get(
+                                c.Infra.ReportKeys.FILE, c.Infra.Core.BASELINE_DEFAULT
+                            )
+                        ),
                         skill_name,
                     )
                     if baseline_path.exists():
@@ -170,7 +176,7 @@ class FlextInfraSkillValidator:
                                     for k, v in bl_counts_raw.items()
                                     if isinstance(v, int)
                                 }
-                                if strategy == "total":
+                                if strategy == c.Infra.ReportKeys.TOTAL:
                                     passed = total <= sum(bl_counts.values())
                                 else:
                                     passed = all(
@@ -202,7 +208,7 @@ class FlextInfraSkillValidator:
         exclude_globs: list[str],
     ) -> int:
         """Run an ast-grep rule and return match count."""
-        rule_file_raw = str(rule.get("file", "")).strip()
+        rule_file_raw = str(rule.get(c.Infra.ReportKeys.FILE, "")).strip()
         if not rule_file_raw:
             return 0
         rule_file = Path(rule_file_raw)

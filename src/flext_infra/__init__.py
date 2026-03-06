@@ -9,12 +9,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 _GITHUB_MODULE = "flext_infra.github"
 _CONTAINER_MODULE = "flext_infra.container"
+_LAZY_SUBMODULES = frozenset({
+    "basemk",
+    "check",
+    "codegen",
+    "core",
+    "deps",
+    "docs",
+    "github",
+    "maintenance",
+    "release",
+    "workspace",
+})
 
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
@@ -27,7 +40,10 @@ if TYPE_CHECKING:
         FlextInfraWorkspaceChecker as FlextInfraCheckWorkspaceChecker,
     )
     from flext_infra.codegen import FlextInfraCodegenLazyInit
-    from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
+    from flext_infra.constants import (
+        FlextInfraConstants,
+        FlextInfraConstants as c,
+    )
     from flext_infra.container import (
         configure_flext_infra_dependencies,
         get_flext_infra_container,
@@ -221,6 +237,10 @@ __all__ = [
 
 def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
+    if name in _LAZY_SUBMODULES:
+        module = importlib.import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 

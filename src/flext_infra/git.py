@@ -77,7 +77,7 @@ class FlextInfraGitService(s[str]):
 
         """
         result = self._runner.capture(
-            [c.Infra.Cli.GIT, "tag", "-l", tag],
+            [c.Infra.Cli.GIT, c.Infra.ReportKeys.TAG, "-l", tag],
             cwd=repo_root,
         )
         if result.is_success:

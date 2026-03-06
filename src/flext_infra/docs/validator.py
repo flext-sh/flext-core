@@ -61,7 +61,7 @@ class FlextInfraDocValidator:
     @staticmethod
     def _maybe_write_todo(scope: FlextInfraDocScope, *, apply_mode: bool) -> bool:
         """Write a TODOS.md file for the scope if apply mode is enabled."""
-        if scope.name == "root" or not apply_mode:
+        if scope.name == c.Infra.ReportKeys.ROOT or not apply_mode:
             return False
         path = scope.path / "TODOS.md"
         content = (
@@ -154,7 +154,11 @@ class FlextInfraDocValidator:
         config_exists = (
             scope.path / "docs/architecture/architecture_config.json"
         ).exists()
-        if scope.name == "root" and config_exists and check in {"adr-skill", "all"}:
+        if (
+            scope.name == c.Infra.ReportKeys.ROOT
+            and config_exists
+            and check in {"adr-skill", "all"}
+        ):
             code, missing = self._run_adr_skill_check(scope.path)
             missing_adr_skills = missing
             if code != 0:
@@ -166,10 +170,10 @@ class FlextInfraDocValidator:
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "validate-summary.json",
             {
-                "summary": {
-                    "scope": scope.name,
+                c.Infra.ReportKeys.SUMMARY: {
+                    c.Infra.ReportKeys.SCOPE: scope.name,
                     "result": status,
-                    "message": message,
+                    c.Infra.ReportKeys.MESSAGE: message,
                     "apply": apply_mode,
                 },
                 "details": {
@@ -192,7 +196,7 @@ class FlextInfraDocValidator:
         logger.info(
             "docs_validate_scope_completed",
             project=scope.name,
-            phase="validate",
+            phase=c.Infra.Verbs.VALIDATE,
             result=status,
             reason=message,
         )

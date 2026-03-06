@@ -46,8 +46,8 @@ class FlextInfraTomlService(s[bool]):
 
     @staticmethod
     def value_differs(
-        current: t.Infra.TomlValue,
-        expected: t.Infra.TomlValue,
+        current: object,
+        expected: object,
     ) -> bool:
         """Return True if current and expected differ.
 

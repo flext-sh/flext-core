@@ -85,7 +85,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     _ = parser.add_argument("--branch", default="")
     _ = parser.add_argument("--checkpoint", type=int, default=1)
     _ = parser.add_argument("--fail-fast", type=int, default=0)
-    _ = parser.add_argument("--pr-action", default="status")
+    _ = parser.add_argument("--pr-action", default=c.Infra.ReportKeys.STATUS)
     _ = parser.add_argument("--pr-base", default=c.Infra.Git.MAIN)
     _ = parser.add_argument("--pr-head", default="")
     _ = parser.add_argument("--pr-number", default="")
@@ -100,7 +100,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     pr_args: Mapping[str, str] = {
-        "action": args.pr_action,
+        c.Infra.ReportKeys.ACTION: args.pr_action,
         "base": args.pr_base,
         "head": args.pr_head,
         "number": args.pr_number,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, override
+from typing import override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
@@ -29,7 +29,7 @@ class FlextInfraRefactorClassReconstructorRule(FlextInfraRefactorRule):
         )
 
         try:
-            order_config = TypeAdapter(list[dict[str, Any]]).validate_python(
+            order_config = TypeAdapter(list[dict[str, object]]).validate_python(
                 order_config_raw
             )
         except ValidationError:

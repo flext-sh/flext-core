@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping
-from typing import Any, cast, override
+from collections.abc import Callable
+from typing import override
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c, m
 
@@ -16,11 +17,16 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
     def __init__(
         self,
-        order_config: list[dict[str, Any]],
+        order_config: list[dict[str, object]],
         on_change: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize with rule order config and optional change callback."""
-        self._order_config = order_config
+        try:
+            self._order_config = TypeAdapter(
+                list[m.Infra.Refactor.RuleConfigs.MethodOrderRule]
+            ).validate_python(order_config)
+        except ValidationError:
+            self._order_config = []
         self._on_change = on_change
         self.changes: list[str] = []
 
@@ -31,12 +37,14 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
         updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         """Sort methods in every contiguous method block of a class body."""
-        # Cast the body to list[Any] to bypass Pyrefly's incorrect inference of Union type
-        body = cast("list[Any]", list(updated_node.body.body))
+        if not isinstance(updated_node.body, cst.IndentedBlock):
+            return updated_node
+
+        body = list(updated_node.body.body)
         if not body:
             return updated_node
 
-        new_body = list(body)
+        new_body: list[cst.BaseStatement] = list(body)
         block_start = 0
         changed_blocks = 0
         reordered_methods_total = 0
@@ -53,10 +61,11 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 block_end += 1
 
             method_indices = list(range(block_start, block_end))
-            methods = [
-                self._analyze_method(cast("cst.FunctionDef", body[idx]))
-                for idx in method_indices
-            ]
+            methods: list[m.Infra.Refactor.MethodInfo] = []
+            for idx in method_indices:
+                block_item = body[idx]
+                if isinstance(block_item, cst.FunctionDef):
+                    methods.append(self._analyze_method(block_item))
             sorted_methods = self._sort_methods(methods)
 
             original_method_names = [method.name for method in methods]
@@ -133,14 +142,14 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
     ) -> list[m.Infra.Refactor.MethodInfo]:
         def matches_rule(
             method: m.Infra.Refactor.MethodInfo,
-            rule_config: Mapping[str, Any],
+            rule_config: m.Infra.Refactor.RuleConfigs.MethodOrderRule,
         ) -> bool:
             decorators = set(method.decorators)
-            exclude_decorators = set(rule_config.get("exclude_decorators", []))
+            exclude_decorators = set(rule_config.exclude_decorators)
             if exclude_decorators and decorators.intersection(exclude_decorators):
                 return False
 
-            visibility = rule_config.get("visibility")
+            visibility = rule_config.visibility
             if visibility == "public" and method.name.startswith("_"):
                 return False
             if visibility == "protected" and not (
@@ -152,11 +161,11 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             ):
                 return False
 
-            rule_decorators = rule_config.get("decorators", [])
+            rule_decorators = rule_config.decorators
             if rule_decorators and not decorators.intersection(rule_decorators):
                 return False
 
-            patterns = rule_config.get("patterns", [])
+            patterns = rule_config.patterns
             if patterns:
                 matched = False
                 for pattern in patterns:
@@ -165,11 +174,15 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                             matched = True
                         continue
 
-                    regex = pattern.get("regex")
+                    regex_raw = pattern.get("regex")
+                    regex = regex_raw if isinstance(regex_raw, str) else None
                     if regex and re.match(regex, method.name):
                         matched = True
 
-                    pattern_decorators = pattern.get("decorators", [])
+                    decorators_raw = pattern.get("decorators")
+                    pattern_decorators: list[str] = []
+                    if isinstance(decorators_raw, list):
+                        pattern_decorators = decorators_raw
                     if pattern_decorators and decorators.intersection(
                         pattern_decorators
                     ):
@@ -181,11 +194,11 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
         def sort_key(method: m.Infra.Refactor.MethodInfo) -> tuple[int, int, str]:
             for idx, rule_config in enumerate(self._order_config):
-                if rule_config.get("category") == "class_attributes":
+                if rule_config.category == "class_attributes":
                     continue
                 if not matches_rule(method, rule_config):
                     continue
-                explicit_order = rule_config.get("order", [])
+                explicit_order = rule_config.order
                 if explicit_order:
                     if method.name in explicit_order:
                         return (idx, explicit_order.index(method.name), method.name)

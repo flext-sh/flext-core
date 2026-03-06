@@ -61,13 +61,6 @@ class FlextInfraTypes(FlextTypes):
         MutableStrMap: TypeAlias = MutableMapping[str, str]
         """Mutable string-to-string mapping for accumulation patterns."""
 
-        # ── Config / rule types ──────────────────────────────────────
-        RuleConfig: TypeAlias = dict[str, object]
-        """A single rule configuration dict (parsed from TOML/YAML)."""
-
-        RuleConfigList: TypeAlias = list[RuleConfig]
-        """List of rule configuration dicts."""
-
         ContainerDict: TypeAlias = dict[str, FlextTypes.ContainerValue]
         """Dict with string keys and container values (project reports, etc.)."""
 
@@ -96,32 +89,32 @@ class FlextInfraTypes(FlextTypes):
         TomlScalar: TypeAlias = FlextTypes.Primitives
         """TOML scalar value (str | int | float | bool). Add ``| None`` at usage sites."""
 
-        type TomlValue = (
-            FlextInfraTypes.Infra.TomlScalar
-            | None
-            | list[FlextInfraTypes.Infra.TomlScalar | None]
-            | list[FlextInfraTypes.Infra.TomlValue]
-            | MutableMapping[str, FlextInfraTypes.Infra.TomlValue]
+        TomlValue: TypeAlias = (
+            TomlScalar | None | Sequence[object] | MutableMapping[str, object]
         )
         """Recursive TOML value: scalar, null, scalar list, nested list, or mapping."""
 
-        TomlMap: TypeAlias = MutableMapping[str, TomlValue]
+        TomlMap: TypeAlias = MutableMapping[str, object]
         """TOML mapping: string-keyed mutable mapping of TOML values."""
 
-        TomlMutableMap: TypeAlias = MutableMapping[str, TomlValue]
+        TomlMutableMap: TypeAlias = MutableMapping[str, object]
         """TOML mutable mapping (alias for accumulation/modification patterns)."""
 
         # ── Dependency detection types ───────────────────────────────
-        type InfraValue = (
-            FlextTypes.Primitives
-            | list[FlextInfraTypes.Infra.InfraValue]
-            | Mapping[str, FlextInfraTypes.Infra.InfraValue]
-            | None
+        InfraValue: TypeAlias = (
+            FlextTypes.Primitives | Sequence[object] | Mapping[str, object] | None
         )
         """Recursive infrastructure value: primitive, nested list/mapping, or null."""
 
         IssueMap: TypeAlias = Mapping[str, InfraValue]
         """Dependency issue mapping: string-keyed mapping of infra values."""
+
+        # ── Config / rule types ──────────────────────────────────────
+        RuleConfig: TypeAlias = dict[str, InfraValue]
+        """A single rule configuration dict (parsed from TOML/YAML)."""
+
+        RuleConfigList: TypeAlias = list[RuleConfig]
+        """List of rule configuration dicts."""
 
         # ── PR / orchestration types ─────────────────────────────────
         OrchestrationSummary: TypeAlias = Mapping[

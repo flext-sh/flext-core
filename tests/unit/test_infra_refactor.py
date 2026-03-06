@@ -1113,8 +1113,11 @@ def test_violation_analyzer_skips_non_utf8_files(tmp_path: Path) -> None:
     assert result.totals == {}
 
 
-class _EngineSafetyStub(FlextInfraRefactorSafetyManager):
+class EngineSafetyStub(FlextInfraRefactorSafetyManager):
+    """Test double for safety manager lifecycle operations."""
+
     def __init__(self) -> None:
+        """Initialize call capture state for assertions."""
         super().__init__()
         self.calls: list[str] = []
 
@@ -1206,7 +1209,7 @@ rules:
     (src_dir / "sample.py").write_text("import os\n", encoding="utf-8")
 
     engine = FlextInfraRefactorEngine(config_path=config_path)
-    stub = _EngineSafetyStub()
+    stub = EngineSafetyStub()
     engine.safety_manager = stub
     loaded = engine.load_rules()
     assert loaded.is_success

@@ -92,7 +92,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         """
         reporting = FlextInfraReportingService()
         output_dir = (
-            reporting.get_report_dir(root, c.Infra.Toml.PROJECT, "release")
+            reporting.get_report_dir(
+                root, c.Infra.Toml.PROJECT, c.Infra.ReportKeys.RELEASE
+            )
             / f"v{version}"
         )
         try:
@@ -118,14 +120,14 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             records.append({
                 c.Infra.Toml.PROJECT: name,
                 c.Infra.Toml.PATH: str(path),
-                "exit_code": code,
+                c.Infra.ReportKeys.EXIT_CODE: code,
                 "log": str(log),
             })
             logger.info("release_phase_build_project", project=name, exit_code=code)
 
         report: Mapping[str, t.ContainerValue] = {
             c.Infra.Toml.VERSION: version,
-            "total": len(records),
+            c.Infra.ReportKeys.TOTAL: len(records),
             "failures": failures,
             "records": records,
         }
@@ -172,7 +174,10 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         """
         reporting = FlextInfraReportingService()
         notes_dir = (
-            reporting.get_report_dir(root, c.Infra.Toml.PROJECT, "release") / tag
+            reporting.get_report_dir(
+                root, c.Infra.Toml.PROJECT, c.Infra.ReportKeys.RELEASE
+            )
+            / tag
         )
         try:
             notes_dir.mkdir(parents=True, exist_ok=True)
@@ -225,7 +230,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
         return FlextInfraCommandRunner().run_checked(
-            [c.Infra.Cli.MAKE, "validate", "VALIDATE_SCOPE=workspace"],
+            [c.Infra.Cli.MAKE, c.Infra.Verbs.VALIDATE, "VALIDATE_SCOPE=workspace"],
             cwd=root,
         )
 
@@ -323,6 +328,11 @@ class FlextInfraReleaseOrchestrator(s[bool]):
 
         """
         names = project_names or []
+        spec = m.Infra.Release.ReleaseSpec(
+            version=version,
+            tag=tag,
+            bump_type=next_bump,
+        )
 
         for phase in phases:
             if phase not in c.Infra.Release.VALID_PHASES:
@@ -330,8 +340,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
 
         logger.info(
             "release_run_started",
-            release_version=version,
-            release_tag=tag,
+            release_version=spec.version,
+            release_tag=spec.tag,
             phases=phases,
             projects=names,
         )
@@ -345,8 +355,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             result = self._dispatch_phase(
                 phase,
                 root,
-                version,
-                tag,
+                spec.version,
+                spec.tag,
                 names,
                 dry_run=dry_run,
                 push=push,
@@ -358,7 +368,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         if next_dev and not dry_run:
             return self._bump_next_dev(root, version, names, next_bump)
 
-        logger.info("release_run_completed", status="ok")
+        logger.info("release_run_completed", status=c.Infra.ReportKeys.OK)
         return r[bool].ok(True)
 
     def _build_targets(
@@ -367,7 +377,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         project_names: list[str],
     ) -> list[tuple[str, Path]]:
         """Resolve unique build targets from project names."""
-        targets: list[tuple[str, Path]] = [("root", root)]
+        targets: list[tuple[str, Path]] = [(c.Infra.ReportKeys.ROOT, root)]
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
@@ -493,7 +503,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         dev_suffix: bool,
     ) -> r[bool]:
         """Route to the correct phase method."""
-        if phase == "validate":
+        if phase == c.Infra.Verbs.VALIDATE:
             return self.phase_validate(root, dry_run=dry_run)
         if phase == c.Infra.Toml.VERSION:
             return self.phase_version(

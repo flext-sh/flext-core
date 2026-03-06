@@ -67,7 +67,7 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
         context: Mapping[str, t.ContainerValue] = {
-            "config": active_config,
+            c.Infra.ReportKeys.CONFIG: active_config,
             "lint_gates_csv": ",".join(active_config.lint_gates),
         }
         sections: list[str] = []

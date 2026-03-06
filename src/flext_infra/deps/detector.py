@@ -319,14 +319,14 @@ class FlextInfraRuntimeDevDependencyDetector:
 
         pip_ok = True
         if isinstance(report_model.pip_check, dict):
-            pip_ok = bool(report_model.pip_check.get("ok", True))
+            pip_ok = bool(report_model.pip_check.get(c.Infra.ReportKeys.OK, True))
 
         if not args.quiet:
             logger.info(
                 "deps_summary",
                 projects=len(projects),
                 deptry_issues=total_issues,
-                pip_check="ok" if pip_ok else "FAIL",
+                pip_check=c.Infra.ReportKeys.OK if pip_ok else "FAIL",
             )
 
         if args.no_fail:

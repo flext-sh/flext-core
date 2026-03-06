@@ -93,8 +93,6 @@ def main() -> int:
     """Orchestrate the release process through configured phases."""
     FlextRuntime.ensure_structlog_configured()
     args = _parse_args()
-    """Orchestrate the release process through configured phases."""
-    args = _parse_args()
 
     resolver = FlextInfraPathResolver()
     root_result = resolver.workspace_root(args.root)
@@ -104,7 +102,12 @@ def main() -> int:
     root = root_result.value
 
     phases = (
-        ["validate", c.Infra.Toml.VERSION, c.Infra.Directories.BUILD, "publish"]
+        [
+            c.Infra.Verbs.VALIDATE,
+            c.Infra.Toml.VERSION,
+            c.Infra.Directories.BUILD,
+            "publish",
+        ]
         if args.phase == "all"
         else [part.strip() for part in args.phase.split(",") if part.strip()]
     )

@@ -12,6 +12,14 @@ from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 class TestFlextInfraStubSupplyChain:
     """Test suite for FlextInfraStubSupplyChain."""
 
+    run_mypy_hints = getattr(FlextInfraStubSupplyChain, "_run_mypy_hints")
+    run_pyrefly_missing = getattr(FlextInfraStubSupplyChain, "_run_pyrefly_missing")
+    is_internal = getattr(FlextInfraStubSupplyChain, "_is_internal")
+    stub_exists = getattr(FlextInfraStubSupplyChain, "_stub_exists")
+    discover_stub_projects = getattr(
+        FlextInfraStubSupplyChain, "_discover_stub_projects"
+    )
+
     def test_init_creates_service_instance(self) -> None:
         """Test that StubSupplyChain initializes correctly."""
         chain = FlextInfraStubSupplyChain()
@@ -225,42 +233,43 @@ class TestFlextInfraStubSupplyChain:
         """Test _run_mypy_hints extracts types packages."""
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
+        runner = getattr(chain, "_runner")
 
         with patch.object(
-            type(chain._runner),
+            type(runner),
             "run",
             return_value=Mock(
                 is_success=True, value=Mock(stdout="note: hint: `types-requests`")
             ),
         ):
-            hints = chain._run_mypy_hints(project_dir)
+            hints = self.run_mypy_hints(chain, project_dir)
             assert "types-requests" in hints
 
     def test_run_mypy_hints_with_failed_run_returns_empty(self, tmp_path: Path) -> None:
         """Test _run_mypy_hints returns empty on failed run."""
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
+        runner = getattr(chain, "_runner")
 
-        with patch.object(
-            type(chain._runner), "run", return_value=Mock(is_success=False)
-        ):
-            hints = chain._run_mypy_hints(project_dir)
+        with patch.object(type(runner), "run", return_value=Mock(is_success=False)):
+            hints = self.run_mypy_hints(chain, project_dir)
             assert hints == []
 
     def test_run_pyrefly_missing_extracts_imports(self, tmp_path: Path) -> None:
         """Test _run_pyrefly_missing extracts missing imports."""
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
+        runner = getattr(chain, "_runner")
 
         with patch.object(
-            type(chain._runner),
+            type(runner),
             "run",
             return_value=Mock(
                 is_success=True,
                 value=Mock(stdout="Cannot find module `requests` [missing-import]"),
             ),
         ):
-            imports = chain._run_pyrefly_missing(project_dir)
+            imports = self.run_pyrefly_missing(chain, project_dir)
             assert "requests" in imports
 
     def test_run_pyrefly_missing_with_failed_run_returns_empty(
@@ -269,30 +278,29 @@ class TestFlextInfraStubSupplyChain:
         """Test _run_pyrefly_missing returns empty on failed run."""
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
+        runner = getattr(chain, "_runner")
 
-        with patch.object(
-            type(chain._runner), "run", return_value=Mock(is_success=False)
-        ):
-            imports = chain._run_pyrefly_missing(project_dir)
+        with patch.object(type(runner), "run", return_value=Mock(is_success=False)):
+            imports = self.run_pyrefly_missing(chain, project_dir)
             assert imports == []
 
     def test_is_internal_with_flext_prefix(self) -> None:
         """Test _is_internal identifies flext_ prefix."""
-        assert FlextInfraStubSupplyChain._is_internal("flext_core", "project")
-        assert FlextInfraStubSupplyChain._is_internal("flext_api", "project")
+        assert self.is_internal("flext_core", "project")
+        assert self.is_internal("flext_api", "project")
 
     def test_is_internal_with_flext_dash_prefix(self) -> None:
         """Test _is_internal identifies flext- prefix."""
-        assert FlextInfraStubSupplyChain._is_internal("flext-core", "project")
+        assert self.is_internal("flext-core", "project")
 
     def test_is_internal_with_project_name(self) -> None:
         """Test _is_internal identifies project name."""
-        assert FlextInfraStubSupplyChain._is_internal("my_project", "my_project")
-        assert FlextInfraStubSupplyChain._is_internal("my_project.sub", "my_project")
+        assert self.is_internal("my_project", "my_project")
+        assert self.is_internal("my_project.sub", "my_project")
 
     def test_is_internal_with_external_module(self) -> None:
         """Test _is_internal returns False for external modules."""
-        assert not FlextInfraStubSupplyChain._is_internal("requests", "my_project")
+        assert not self.is_internal("requests", "my_project")
 
     def test_stub_exists_with_pyi_file(self, tmp_path: Path) -> None:
         """Test _stub_exists finds .pyi files."""
@@ -300,7 +308,7 @@ class TestFlextInfraStubSupplyChain:
         typings_dir.mkdir()
         (typings_dir / "requests.pyi").write_text("")
 
-        assert FlextInfraStubSupplyChain._stub_exists("requests", tmp_path)
+        assert self.stub_exists("requests", tmp_path)
 
     def test_stub_exists_with_package_init(self, tmp_path: Path) -> None:
         """Test _stub_exists finds package __init__.pyi."""
@@ -309,7 +317,7 @@ class TestFlextInfraStubSupplyChain:
         pkg_dir.mkdir(parents=True)
         (pkg_dir / "__init__.pyi").write_text("")
 
-        assert FlextInfraStubSupplyChain._stub_exists("requests", tmp_path)
+        assert self.stub_exists("requests", tmp_path)
 
     def test_stub_exists_with_generated_stubs(self, tmp_path: Path) -> None:
         """Test _stub_exists finds generated stubs."""
@@ -317,11 +325,11 @@ class TestFlextInfraStubSupplyChain:
         gen_dir.mkdir(parents=True)
         (gen_dir / "requests.pyi").write_text("")
 
-        assert FlextInfraStubSupplyChain._stub_exists("requests", tmp_path)
+        assert self.stub_exists("requests", tmp_path)
 
     def test_stub_exists_returns_false_for_missing(self, tmp_path: Path) -> None:
         """Test _stub_exists returns False for missing stubs."""
-        assert not FlextInfraStubSupplyChain._stub_exists("requests", tmp_path)
+        assert not self.stub_exists("requests", tmp_path)
 
     def test_discover_stub_projects_finds_projects(self, tmp_path: Path) -> None:
         """Test _discover_stub_projects finds projects."""
@@ -335,7 +343,7 @@ class TestFlextInfraStubSupplyChain:
         (proj2 / "pyproject.toml").write_text("")
         (proj2 / "src").mkdir()
 
-        projects = FlextInfraStubSupplyChain._discover_stub_projects(tmp_path)
+        projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 2
 
     def test_discover_stub_projects_skips_hidden_dirs(self, tmp_path: Path) -> None:
@@ -345,7 +353,7 @@ class TestFlextInfraStubSupplyChain:
         (hidden / "pyproject.toml").write_text("")
         (hidden / "src").mkdir()
 
-        projects = FlextInfraStubSupplyChain._discover_stub_projects(tmp_path)
+        projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 0
 
     def test_discover_stub_projects_requires_src_dir(self, tmp_path: Path) -> None:
@@ -354,7 +362,7 @@ class TestFlextInfraStubSupplyChain:
         proj.mkdir()
         (proj / "pyproject.toml").write_text("")
 
-        projects = FlextInfraStubSupplyChain._discover_stub_projects(tmp_path)
+        projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 0
 
     def test_discover_stub_projects_requires_pyproject(self, tmp_path: Path) -> None:
@@ -363,7 +371,7 @@ class TestFlextInfraStubSupplyChain:
         proj.mkdir()
         (proj / "src").mkdir()
 
-        projects = FlextInfraStubSupplyChain._discover_stub_projects(tmp_path)
+        projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 0
 
     def test_analyze_with_exception_raises_failure(self, tmp_path: Path) -> None:

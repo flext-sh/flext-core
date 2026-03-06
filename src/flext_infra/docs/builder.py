@@ -50,7 +50,7 @@ class FlextInfraDocBuilder:
         """Persist build JSON summary and markdown report."""
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "build-summary.json",
-            {"summary": report.model_dump()},
+            {c.Infra.ReportKeys.SUMMARY: report.model_dump()},
         )
         _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "build-report.md",

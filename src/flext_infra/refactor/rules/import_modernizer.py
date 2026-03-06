@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper
+from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c
+from flext_infra import c, m
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.import_modernizer import (
     FlextInfraRefactorImportModernizer,
@@ -16,6 +17,28 @@ from flext_infra.refactor.transformers.import_modernizer import (
 from flext_infra.refactor.transformers.lazy_import_fixer import (
     FlextInfraRefactorLazyImportFixer,
 )
+
+
+def _parse_forbidden_rules(
+    value: object,
+) -> list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]:
+    try:
+        raw_items = TypeAdapter(list[dict[str, object]]).validate_python(value)
+    except ValidationError:
+        return []
+    normalized: list[dict[str, object]] = [
+        {
+            "module": item_mapping.get("module", ""),
+            "symbol_mapping": item_mapping.get("symbol_mapping", {}),
+        }
+        for item_mapping in raw_items
+    ]
+    try:
+        return TypeAdapter(
+            list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]
+        ).validate_python(normalized)
+    except ValidationError:
+        return []
 
 
 class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
@@ -28,7 +51,9 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Apply import modernizer or lazy-import hoisting based on fix action."""
-        fix_action = str(self.config.get("fix_action", "")).strip().lower()
+        fix_action = (
+            str(self.config.get(c.Infra.ReportKeys.FIX_ACTION, "")).strip().lower()
+        )
         if "lazy-import" in self.rule_id or fix_action == "hoist_to_module_top":
             return self._fix_lazy_imports(tree)
 
@@ -46,13 +71,9 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
 
         imports_to_remove: list[str] = []
         symbols_to_replace: dict[str, str] = {}
-        for rule_config in cast("list[dict[str, object]]", forbidden):
-            module_name = rule_config.get(c.Infra.Toml.MODULE, "")
-            mapping = rule_config.get("symbol_mapping", {})
-            imports_to_remove.append(str(module_name))
-            if isinstance(mapping, dict):
-                for k, v in cast("dict[str, object]", mapping).items():
-                    symbols_to_replace[k] = str(v)
+        for rule_config in _parse_forbidden_rules(forbidden):
+            imports_to_remove.append(rule_config.module)
+            symbols_to_replace.update(rule_config.symbol_mapping)
 
         transformer = FlextInfraRefactorImportModernizer(
             imports_to_remove=imports_to_remove,

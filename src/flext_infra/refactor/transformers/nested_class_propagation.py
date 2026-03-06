@@ -9,14 +9,14 @@ import libcst as cst
 from libcst.metadata import ParentNodeProvider
 
 
-class _FamilyPolicy(TypedDict, total=False):
+class FamilyPolicy(TypedDict, total=False):
     propagate_imports: bool
     propagate_name_references: bool
     propagate_attribute_references: bool
     blocked_reference_prefixes: list[str] | tuple[str, ...]
 
 
-type PolicyContext = Mapping[str, _FamilyPolicy]
+type PolicyContext = Mapping[str, FamilyPolicy]
 
 
 class NestedClassPropagationTransformer(cst.CSTTransformer):
@@ -208,9 +208,9 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
             return ()
         if isinstance(value, str):
             return (value,)
-        return tuple(entry for entry in value if isinstance(entry, str))
+        return tuple(value)
 
-    def _policy_for_symbol(self, symbol_name: str) -> _FamilyPolicy | None:
+    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy | None:
         if self._policy_context is None:
             return None
         family = self._class_families.get(symbol_name)

@@ -260,7 +260,7 @@ class FlextInfraDocGenerator:
         workspace_root: Path,
     ) -> GenerateReport:
         """Generate docs for a single scope and write reports."""
-        if scope.name == "root":
+        if scope.name == c.Infra.ReportKeys.ROOT:
             files = self._generate_root_docs(scope=scope, apply=apply)
             source = "root-generated-artifacts"
         else:
@@ -276,8 +276,8 @@ class FlextInfraDocGenerator:
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "generate-summary.json",
             {
-                "summary": {
-                    "scope": scope.name,
+                c.Infra.ReportKeys.SUMMARY: {
+                    c.Infra.ReportKeys.SCOPE: scope.name,
                     "generated": generated,
                     "apply": apply,
                     "source": source,

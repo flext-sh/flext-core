@@ -9,7 +9,7 @@ from typing import TypedDict, override
 import libcst as cst
 
 
-class _FamilyPolicy(TypedDict, total=False):
+class FamilyPolicy(TypedDict, total=False):
     enable_class_nesting: bool
     allow_namespace_creation: bool
     allow_existing_namespace_merge: bool
@@ -17,7 +17,7 @@ class _FamilyPolicy(TypedDict, total=False):
     forbidden_targets: list[str] | tuple[str, ...]
 
 
-type PolicyContext = Mapping[str, _FamilyPolicy]
+type PolicyContext = Mapping[str, FamilyPolicy]
 
 
 class ClassNestingTransformer(cst.CSTTransformer):
@@ -187,7 +187,7 @@ class ClassNestingTransformer(cst.CSTTransformer):
             return True
         return default
 
-    def _policy_for_symbol(self, symbol_name: str) -> _FamilyPolicy | None:
+    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy | None:
         if self._policy_context is None:
             return None
         family = self._class_families.get(symbol_name)
@@ -200,7 +200,7 @@ class ClassNestingTransformer(cst.CSTTransformer):
 
     def _bool_from_policy(
         self,
-        policy: _FamilyPolicy,
+        policy: FamilyPolicy,
         key: str,
         *,
         default: bool,
@@ -210,7 +210,7 @@ class ClassNestingTransformer(cst.CSTTransformer):
             return raw
         return default
 
-    def _target_allowed(self, policy: _FamilyPolicy, target_namespace: str) -> bool:
+    def _target_allowed(self, policy: FamilyPolicy, target_namespace: str) -> bool:
         allowed = self._string_collection(policy.get("allowed_targets"))
         if allowed and target_namespace not in allowed:
             return False
@@ -227,7 +227,7 @@ class ClassNestingTransformer(cst.CSTTransformer):
             return ()
         if isinstance(value, str):
             return (value,)
-        return tuple(entry for entry in value if isinstance(entry, str))
+        return tuple(value)
 
 
 __all__ = ["ClassNestingTransformer"]

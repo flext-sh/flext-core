@@ -73,7 +73,7 @@ class FlextInfraVersion:
             "author": cls.__author__,
             "author_email": cls.__author_email__,
             "license": cls.__license__,
-            "url": cls.__url__,
+            c.Infra.ReportKeys.URL: cls.__url__,
         }
 
     @classmethod

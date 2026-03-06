@@ -429,6 +429,11 @@ class FlextInfraConstants(FlextConstants):
                 MERGE: Final[str] = "merge"
                 SQUASH: Final[str] = "squash"
                 LIST: Final[str] = "list"
+                CHECKS: Final[str] = "checks"
+                CLOSE: Final[str] = "close"
+                UPDATE_BRANCH: Final[str] = "update-branch"
+                RELEASE: Final[str] = "release"
+                WORKFLOW: Final[str] = "workflow"
 
         class Gates:
             """Quality gate identifiers."""
@@ -492,6 +497,81 @@ class FlextInfraConstants(FlextConstants):
 
             STRICT: Final[str] = "strict"
             """Strict quality mode."""
+
+        class Severity:
+            """Severity level constants for check/report results."""
+
+            ERROR: Final[str] = "error"
+            WARNING: Final[str] = "warning"
+            NOTE: Final[str] = "note"
+            LOW: Final[str] = "low"
+            SKIP: Final[str] = "skip"
+
+        class ReportKeys:
+            """Common dictionary key names for reports and results."""
+
+            STATUS: Final[str] = "status"
+            FILE: Final[str] = "file"
+            LINE: Final[str] = "line"
+            MESSAGE: Final[str] = "message"
+            NAME: Final[str] = "name"
+            VERSION: Final[str] = "version"
+            SUMMARY: Final[str] = "summary"
+            TOTALS: Final[str] = "totals"
+            TOTAL: Final[str] = "total"
+            RULES: Final[str] = "rules"
+            CONFIG: Final[str] = "config"
+            RELEASE: Final[str] = "release"
+            ACTION: Final[str] = "action"
+            PATH: Final[str] = "path"
+            SCOPE: Final[str] = "scope"
+            VIOLATIONS: Final[str] = "violations"
+            VIOLATIONS_COUNT: Final[str] = "violations_count"
+            EXIT_CODE: Final[str] = "exit_code"
+            RULE_ID: Final[str] = "rule_id"
+            OK: Final[str] = "ok"
+            ENABLED: Final[str] = "enabled"
+            PROJECTS: Final[str] = "projects"
+            WORKSPACE: Final[str] = "workspace"
+            ROOT: Final[str] = "root"
+            ID: Final[str] = "id"
+            GENERATED_AT: Final[str] = "generated_at"
+            TAG: Final[str] = "tag"
+            URL: Final[str] = "url"
+            STRATEGY: Final[str] = "strategy"
+
+            # Refactor-specific report keys
+            CLASS_NESTING: Final[str] = "class_nesting"
+            TARGET_NAMESPACE: Final[str] = "target_namespace"
+            SOURCE_SYMBOL: Final[str] = "source_symbol"
+            LOOSE_NAME: Final[str] = "loose_name"
+            REWRITE_SCOPE: Final[str] = "rewrite_scope"
+            CONFIDENCE: Final[str] = "confidence"
+            MANUAL_REVIEW: Final[str] = "manual_review"
+            FIX_ACTION: Final[str] = "fix_action"
+            CURRENT_FILE: Final[str] = "current_file"
+            VIOLATION_TYPE: Final[str] = "violation_type"
+            SUGGESTED_FIX: Final[str] = "suggested_fix"
+            HELPER_CONSOLIDATION: Final[str] = "helper_consolidation"
+            FORBIDDEN_TARGETS: Final[str] = "forbidden_targets"
+            PER_FILE_COUNTS: Final[str] = "per_file_counts"
+            POST_CHECKS: Final[str] = "post_checks"
+            SUGGESTIONS: Final[str] = "suggestions"
+
+        class Verbs:
+            """CLI subcommand / action verb constants."""
+
+            CHECK: Final[str] = "check"
+            VALIDATE: Final[str] = "validate"
+            RELEASE: Final[str] = "release"
+            WORKSPACE: Final[str] = "workspace"
+            RUN: Final[str] = "run"
+            STATUS: Final[str] = "status"
+            CLOSE: Final[str] = "close"
+            OPEN: Final[str] = "open"
+            CHECKS: Final[str] = "checks"
+            REBASE: Final[str] = "rebase"
+            BUILD: Final[str] = "build"
 
         class Excluded:
             """Directory exclusion sets for analysis."""

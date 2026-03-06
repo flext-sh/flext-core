@@ -3,15 +3,23 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 
 
-class _DictToMappingTransformer(cst.CSTTransformer):
+def _string_list(value: object) -> list[str]:
+    try:
+        return TypeAdapter(list[str]).validate_python(value)
+    except ValidationError:
+        return []
+
+
+class DictToMappingTransformer(cst.CSTTransformer):
     def __init__(self, *, include_return_annotations: bool) -> None:
         self.changes: list[str] = []
         self._has_mapping_import = False
@@ -38,7 +46,7 @@ class _DictToMappingTransformer(cst.CSTTransformer):
             "update",
         }
 
-        class _MutableParamVisitor(cst.CSTVisitor):
+        class MutableParamVisitor(cst.CSTVisitor):
             def __init__(self) -> None:
                 self.mutated: set[str] = set()
 
@@ -70,7 +78,7 @@ class _DictToMappingTransformer(cst.CSTTransformer):
                 if func.attr.value in mutating_methods:
                     self.mutated.add(func.value.value)
 
-        visitor = _MutableParamVisitor()
+        visitor = MutableParamVisitor()
         function_node.visit(visitor)
         return visitor.mutated
 
@@ -238,7 +246,7 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         )
 
 
-class _RedundantCastRemover(cst.CSTTransformer):
+class RedundantCastRemover(cst.CSTTransformer):
     def __init__(self, removable_types: set[str]) -> None:
         self.removable_types = removable_types
         self.changes: list[str] = []
@@ -310,10 +318,12 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
         tree: cst.Module,
         _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
-        fix_action = str(self.config.get("fix_action", "")).strip().lower()
+        fix_action = (
+            str(self.config.get(c.Infra.ReportKeys.FIX_ACTION, "")).strip().lower()
+        )
         if fix_action == "convert_dict_to_mapping_annotations":
             include_returns = bool(self.config.get("include_return_annotations", False))
-            dict_to_mapping_transformer = _DictToMappingTransformer(
+            dict_to_mapping_transformer = DictToMappingTransformer(
                 include_return_annotations=include_returns,
             )
             updated = tree.visit(dict_to_mapping_transformer)
@@ -321,12 +331,8 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
 
         if fix_action == "remove_redundant_casts":
             raw_types = self.config.get("redundant_type_targets", [])
-            removable_types = {
-                str(item)
-                for item in cast("list[object]", raw_types)
-                if isinstance(item, str)
-            }
-            cast_remover = _RedundantCastRemover(removable_types=removable_types)
+            removable_types = set(_string_list(raw_types))
+            cast_remover = RedundantCastRemover(removable_types=removable_types)
             updated = tree.visit(cast_remover)
             return updated, cast_remover.changes
 

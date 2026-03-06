@@ -178,10 +178,11 @@ class TestFlextInfraInitLazyLoading:
         output = flext_infra.output
         assert output is not None
 
-    def test_lazy_import_known_verbs(self) -> None:
-        """Test lazy loading of KNOWN_VERBS."""
-        verbs = flext_infra.KNOWN_VERBS
+    def test_known_verbs_accessible_via_constants(self) -> None:
+        """Test KNOWN_VERBS is accessible via c.Infra.KNOWN_VERBS."""
+        verbs = c.Infra.KNOWN_VERBS
         assert verbs is not None
+        assert isinstance(verbs, frozenset)
 
     def test_reports_dir_name_via_constants(self) -> None:
         """Test REPORTS_DIR_NAME access via c.Infra.Reporting."""

@@ -4,24 +4,28 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
 
 import libcst as cst
 
-from flext_infra import c
+from flext_infra import c, t
 
 
 class FlextInfraRefactorRule:
     """Base class for flext_infra refactor rules."""
 
-    def __init__(self, config: Mapping[str, Any]) -> None:
+    def __init__(self, config: Mapping[str, t.ContainerValue]) -> None:
         """Initialize rule metadata from rule config."""
-        self.config = config
-        self.rule_id = config.get("id", c.Infra.Defaults.UNKNOWN)
-        self.name = config.get(c.Infra.Toml.NAME, self.rule_id)
-        self.description = config.get("description", "")
-        self.enabled = config.get("enabled", True)
-        self.severity = config.get("severity", "warning")
+        self.config = dict(config)
+        rule_id = self.config.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)
+        self.rule_id = str(rule_id)
+        name_raw = self.config.get(c.Infra.Toml.NAME, self.rule_id)
+        self.name = str(name_raw)
+        description_raw = self.config.get("description", "")
+        self.description = description_raw if isinstance(description_raw, str) else ""
+        enabled_raw = self.config.get(c.Infra.ReportKeys.ENABLED, True)
+        self.enabled = bool(enabled_raw)
+        severity_raw = self.config.get("severity", c.Infra.Severity.WARNING)
+        self.severity = str(severity_raw)
 
     def apply(
         self, tree: cst.Module, _file_path: Path | None = None

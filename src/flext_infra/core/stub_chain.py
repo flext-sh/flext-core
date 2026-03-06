@@ -26,9 +26,9 @@ class FlextInfraStubSupplyChain:
         """Initialize the stub supply chain."""
         self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
-    @staticmethod
-    def _discover_stub_projects(root: Path) -> list[Path]:
+    def _discover_stub_projects(self, root: Path) -> list[Path]:
         """Discover projects that should participate in stub checks."""
+        _ = self
         projects: list[Path] = []
         for entry in sorted(root.iterdir(), key=lambda v: v.name):
             if not entry.is_dir() or entry.name.startswith("."):
@@ -39,18 +39,18 @@ class FlextInfraStubSupplyChain:
                 projects.append(entry)
         return projects
 
-    @staticmethod
-    def _is_internal(module_name: str, project_name: str) -> bool:
+    def _is_internal(self, module_name: str, project_name: str) -> bool:
         """Check if a module is an internal project module."""
+        _ = self
         root_mod = module_name.split(".", 1)[0]
         project_root = project_name.replace("-", "_")
         if root_mod.startswith(c.Infra.Core.INTERNAL_PREFIXES):
             return True
         return root_mod == project_root
 
-    @staticmethod
-    def _stub_exists(module_name: str, root: Path) -> bool:
+    def _stub_exists(self, module_name: str, root: Path) -> bool:
         """Check if a stub file exists for a module."""
+        _ = self
         rel = module_name.replace(".", "/")
         for base in (
             root / c.Infra.Directories.TYPINGS,
@@ -164,7 +164,7 @@ class FlextInfraStubSupplyChain:
         result = self._runner.run(
             [
                 c.Infra.Cli.POETRY,
-                "run",
+                c.Infra.Verbs.RUN,
                 c.Infra.Cli.MYPY,
                 c.Infra.Paths.DEFAULT_SRC_DIR,
                 "--config-file",
@@ -188,7 +188,7 @@ class FlextInfraStubSupplyChain:
         result = self._runner.run(
             [
                 c.Infra.Cli.POETRY,
-                "run",
+                c.Infra.Verbs.RUN,
                 c.Infra.Cli.PYREFLY,
                 c.Infra.Cli.RuffCmd.CHECK,
                 c.Infra.Paths.DEFAULT_SRC_DIR,

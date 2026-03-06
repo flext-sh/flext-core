@@ -19,11 +19,11 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
+from flext_infra import c, output
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
-from flext_infra.output import output
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -163,7 +163,7 @@ def _handle_census(args: argparse.Namespace) -> int:
 
     if args.output_format == "json":
         data = {
-            "projects": [rpt.model_dump() for rpt in reports],
+            c.Infra.ReportKeys.PROJECTS: [rpt.model_dump() for rpt in reports],
             "total_violations": sum(rpt.total for rpt in reports),
             "total_fixable": sum(rpt.fixable for rpt in reports),
         }

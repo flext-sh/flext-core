@@ -5,14 +5,14 @@ from __future__ import annotations
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Protocol, TextIO, cast, override
+from typing import Protocol, TextIO, override
 
 from flext_core import r, s, t
 from flext_infra import FlextInfraCommandRunner, c, m, p
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 
 
-class _TemplateRenderer(Protocol):
+class TemplateRenderer(Protocol):
     def render_all(
         self, config: m.Infra.Basemk.BaseMkConfig | None = None
     ) -> r[str]: ...
@@ -21,7 +21,7 @@ class _TemplateRenderer(Protocol):
 class FlextInfraBaseMkGenerator(s[str]):
     """Generate base.mk content and write to file or stream."""
 
-    def __init__(self, template_engine: _TemplateRenderer | None = None) -> None:
+    def __init__(self, template_engine: TemplateRenderer | None = None) -> None:
         """Initialize the base.mk generator."""
         super().__init__()
         self._template_engine = template_engine or FlextInfraBaseMkTemplateEngine()
@@ -47,10 +47,7 @@ class FlextInfraBaseMkGenerator(s[str]):
         if config_result.is_failure:
             return r[str].fail(config_result.error or "invalid base.mk configuration")
 
-        config_value: m.Infra.Basemk.BaseMkConfig | None = cast(
-            "m.Infra.Basemk.BaseMkConfig | None",
-            config_result.value,
-        )
+        config_value = config_result.value
         render_result = self._template_engine.render_all(config_value)
         if render_result.is_failure:
             return r[str].fail(render_result.error or "base.mk render failed")

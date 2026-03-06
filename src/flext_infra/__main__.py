@@ -26,32 +26,37 @@ import importlib
 import sys
 from collections.abc import Mapping
 from types import MappingProxyType
+from typing import ClassVar, override
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, r, s
 from flext_infra.constants import c
 from flext_infra.output import output
 
-_GROUPS: Mapping[str, str] = MappingProxyType({
-    "basemk": "flext_infra.basemk.__main__",
-    "check": "flext_infra.check.__main__",
-    "codegen": "flext_infra.codegen.__main__",
-    "core": "flext_infra.core.__main__",
-    "deps": "flext_infra.deps.__main__",
-    c.Infra.Directories.DOCS: "flext_infra.docs.__main__",
-    "github": "flext_infra.github.__main__",
-    "maintenance": "flext_infra.maintenance.__main__",
-    "refactor": "flext_infra.refactor.__main__",
-    "release": "flext_infra.release.__main__",
-    "workspace": "flext_infra.workspace.__main__",
-})
 
+class FlextInfraMainCLI(s[int]):
+    """Unified CLI dispatcher for flext-infra groups.
 
-def _print_help() -> None:
-    output.info("Usage: python -m flext_infra <group> [subcommand] [args...]")
-    output.header("Groups")
-    descriptions: Mapping[str, str] = {
+    Encapsulates group routing, help display, and argv rewriting
+    for the top-level ``python -m flext_infra`` entry point.
+    """
+
+    GROUPS: ClassVar[Mapping[str, str]] = MappingProxyType({
+        "basemk": "flext_infra.basemk.__main__",
+        c.Infra.Verbs.CHECK: "flext_infra.check.__main__",
+        "codegen": "flext_infra.codegen.__main__",
+        "core": "flext_infra.core.__main__",
+        "deps": "flext_infra.deps.__main__",
+        c.Infra.Directories.DOCS: "flext_infra.docs.__main__",
+        "github": "flext_infra.github.__main__",
+        "maintenance": "flext_infra.maintenance.__main__",
+        "refactor": "flext_infra.refactor.__main__",
+        c.Infra.ReportKeys.RELEASE: "flext_infra.release.__main__",
+        c.Infra.ReportKeys.WORKSPACE: "flext_infra.workspace.__main__",
+    })
+
+    DESCRIPTIONS: ClassVar[Mapping[str, str]] = MappingProxyType({
         "basemk": "Base.mk template generation",
-        "check": "Lint gates and pyrefly config management",
+        c.Infra.Verbs.CHECK: "Lint gates and pyrefly config management",
         "codegen": "Code generation (lazy-init, standardization)",
         "core": "Infrastructure validators and diagnostics",
         "deps": "Dependency detection, sync, and modernization",
@@ -59,36 +64,52 @@ def _print_help() -> None:
         "github": "GitHub workflows, linting, and PR automation",
         "maintenance": "Python version enforcement",
         "refactor": "Declarative code refactoring (libcst + YAML rules)",
-        "release": "Release orchestration",
-        "workspace": "Workspace detection, sync, orchestration, migration",
-    }
-    for group in sorted(_GROUPS):
-        output.info(f"  {group:<16}{descriptions.get(group, '')}")
+        c.Infra.ReportKeys.RELEASE: "Release orchestration",
+        c.Infra.ReportKeys.WORKSPACE: "Workspace detection, sync, orchestration, migration",
+    })
+
+    @override
+    def execute(self) -> r[int]:
+        """Execute the CLI dispatcher and return exit code."""
+        return r[int].ok(self.main())
+
+    @staticmethod
+    def _print_help() -> None:
+        """Display available groups and their descriptions."""
+        output.info("Usage: python -m flext_infra <group> [subcommand] [args...]")
+        output.header("Groups")
+        for group in sorted(FlextInfraMainCLI.GROUPS):
+            output.info(f"  {group:<16}{FlextInfraMainCLI.DESCRIPTIONS.get(group, '')}")
+
+    @staticmethod
+    def main() -> int:
+        """Dispatch to the appropriate group CLI."""
+        FlextRuntime.ensure_structlog_configured()
+        if len(sys.argv) < c.Infra.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
+            FlextInfraMainCLI._print_help()
+            return (
+                0
+                if len(sys.argv) >= c.Infra.MIN_ARGV and sys.argv[1] in {"-h", "--help"}
+                else 1
+            )
+
+        group = sys.argv[1]
+        if group not in FlextInfraMainCLI.GROUPS:
+            output.error(f"unknown group '{group}'")
+            FlextInfraMainCLI._print_help()
+            return 1
+
+        # Rewrite argv so each group's argparse sees the correct prog name
+        sys.argv = [f"flext-infra {group}"] + sys.argv[2:]
+
+        module = importlib.import_module(FlextInfraMainCLI.GROUPS[group])
+        exit_code = module.main()
+        return int(exit_code) if exit_code is not None else 0
 
 
 def main() -> int:
-    """Dispatch to the appropriate group CLI."""
-    FlextRuntime.ensure_structlog_configured()
-    if len(sys.argv) < c.Infra.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
-        _print_help()
-        return (
-            0
-            if len(sys.argv) >= c.Infra.MIN_ARGV and sys.argv[1] in {"-h", "--help"}
-            else 1
-        )
-
-    group = sys.argv[1]
-    if group not in _GROUPS:
-        output.error(f"unknown group '{group}'")
-        _print_help()
-        return 1
-
-    # Rewrite argv so each group's argparse sees the correct prog name
-    sys.argv = [f"flext-infra {group}"] + sys.argv[2:]
-
-    module = importlib.import_module(_GROUPS[group])
-    exit_code = module.main()
-    return int(exit_code) if exit_code is not None else 0
+    """Run the top-level flext-infra CLI dispatcher."""
+    return FlextInfraMainCLI.main()
 
 
 if __name__ == "__main__":

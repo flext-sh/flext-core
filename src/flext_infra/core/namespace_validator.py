@@ -338,7 +338,7 @@ class FlextInfraNamespaceValidator:
                 if isinstance(node, ast.TypeAlias):
                     name = getattr(node, c.Infra.Toml.NAME, None)
                     name_str = (
-                        getattr(name, "id", str(name))
+                        getattr(name, c.Infra.ReportKeys.ID, str(name))
                         if name
                         else c.Infra.Defaults.UNKNOWN
                     )

@@ -11,13 +11,13 @@ import sys
 from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, cast
 
 import libcst as cst
 import yaml
+from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, output
+from flext_infra import c, m, output, t
 from flext_infra.refactor.analysis import (
     FlextInfraRefactorViolationAnalyzer,
     ViolationAnalysisReport,
@@ -55,11 +55,42 @@ class FlextInfraRefactorEngine:
     def __init__(self, config_path: Path | None = None) -> None:
         """Initialize engine state and config file path."""
         self.config_path = config_path or self._default_config_path()
-        self.config: dict[str, Any] = {}
+        self.config: t.ConfigurationMapping = {}
         self.rules: list[FlextInfraRefactorRule] = []
         self.file_rules: list[ClassNestingRefactorRule] = []
         self.rule_filters: list[str] = []
         self.safety_manager = self._build_safety_manager()
+
+    @staticmethod
+    def _default_scan_dirs() -> list[str]:
+        return [
+            c.Infra.Paths.DEFAULT_SRC_DIR,
+            c.Infra.Directories.TESTS,
+            c.Infra.Directories.SCRIPTS,
+            c.Infra.Directories.EXAMPLES,
+        ]
+
+    @staticmethod
+    def _coerce_str_list(value: t.ContainerValue | None) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [
+            item.strip() for item in value if isinstance(item, str) and item.strip()
+        ]
+
+    @staticmethod
+    def _coerce_rule_definitions(
+        value: t.ContainerValue | None,
+    ) -> list[t.ConfigurationMapping]:
+        if not isinstance(value, list):
+            return []
+        definitions: list[t.ConfigurationMapping] = []
+        for item in value:
+            if not isinstance(item, Mapping):
+                continue
+            normalized = {str(key): raw_value for key, raw_value in item.items()}
+            definitions.append(normalized)
+        return definitions
 
     @staticmethod
     def _build_safety_manager() -> FlextInfraRefactorSafetyManager:
@@ -89,62 +120,28 @@ class FlextInfraRefactorEngine:
 
     @staticmethod
     def _extract_engine_file_filters(
-        config_value: object,
+        config_value: t.ContainerValue,
     ) -> tuple[list[str], list[str]]:
-        if not isinstance(config_value, dict):
+        if not isinstance(config_value, Mapping):
             return [], []
-
-        typed_config = cast("dict[str, object]", config_value)
-
-        ignore_raw = typed_config.get("ignore_patterns", None)
-        ext_raw = typed_config.get("file_extensions", None)
-        ignore_patterns: list[str] = []
-        if isinstance(ignore_raw, list):
-            ignore_patterns.extend(
-                item
-                for item in cast("list[object]", ignore_raw)
-                if isinstance(item, str)
-            )
-
-        extensions: list[str] = []
-        if isinstance(ext_raw, list):
-            extensions.extend(
-                item for item in cast("list[object]", ext_raw) if isinstance(item, str)
-            )
+        ignore_patterns = FlextInfraRefactorEngine._coerce_str_list(
+            config_value.get("ignore_patterns")
+        )
+        extensions = FlextInfraRefactorEngine._coerce_str_list(
+            config_value.get("file_extensions")
+        )
         return ignore_patterns, extensions
 
     @staticmethod
-    def _extract_project_scan_dirs(config_value: object) -> list[str]:
-        if not isinstance(config_value, dict):
-            return [
-                c.Infra.Paths.DEFAULT_SRC_DIR,
-                c.Infra.Directories.TESTS,
-                c.Infra.Directories.SCRIPTS,
-                c.Infra.Directories.EXAMPLES,
-            ]
+    def _extract_project_scan_dirs(config_value: t.ContainerValue) -> list[str]:
+        if not isinstance(config_value, Mapping):
+            return FlextInfraRefactorEngine._default_scan_dirs()
 
-        typed_config = cast("dict[str, object]", config_value)
-        scan_dirs_raw = typed_config.get("project_scan_dirs", None)
-        if not isinstance(scan_dirs_raw, list):
-            return [
-                c.Infra.Paths.DEFAULT_SRC_DIR,
-                c.Infra.Directories.TESTS,
-                c.Infra.Directories.SCRIPTS,
-                c.Infra.Directories.EXAMPLES,
-            ]
-
-        scan_dirs = [
-            item.strip()
-            for item in cast("list[object]", scan_dirs_raw)
-            if isinstance(item, str) and item.strip()
-        ]
+        scan_dirs = FlextInfraRefactorEngine._coerce_str_list(
+            config_value.get("project_scan_dirs")
+        )
         if not scan_dirs:
-            return [
-                c.Infra.Paths.DEFAULT_SRC_DIR,
-                c.Infra.Directories.TESTS,
-                c.Infra.Directories.SCRIPTS,
-                c.Infra.Directories.EXAMPLES,
-            ]
+            return FlextInfraRefactorEngine._default_scan_dirs()
         return scan_dirs
 
     @staticmethod
@@ -173,11 +170,11 @@ class FlextInfraRefactorEngine:
                     c.Infra.Toml.PROJECT: FlextInfraRefactorEngine._project_name_from_path(
                         result.file_path
                     ),
-                    "file": str(result.file_path),
+                    c.Infra.ReportKeys.FILE: str(result.file_path),
                     "kind": "failure",
                     "old": "",
                     "new": "",
-                    "status": result.error or "failed",
+                    c.Infra.ReportKeys.STATUS: result.error or "failed",
                 })
                 continue
 
@@ -193,11 +190,11 @@ class FlextInfraRefactorEngine:
                     _, old_symbol, new_symbol = symbol_match.groups()
                     impact_map.append({
                         c.Infra.Toml.PROJECT: project_name,
-                        "file": str(result.file_path),
+                        c.Infra.ReportKeys.FILE: str(result.file_path),
                         "kind": "rename",
                         "old": old_symbol.strip(),
                         "new": new_symbol.strip(),
-                        "status": "changed",
+                        c.Infra.ReportKeys.STATUS: "changed",
                     })
                     continue
 
@@ -206,11 +203,11 @@ class FlextInfraRefactorEngine:
                     migration_id, payload = add_match.groups()
                     impact_map.append({
                         c.Infra.Toml.PROJECT: project_name,
-                        "file": str(result.file_path),
+                        c.Infra.ReportKeys.FILE: str(result.file_path),
                         "kind": "signature_add",
                         "old": "",
                         "new": payload.strip(),
-                        "status": migration_id,
+                        c.Infra.ReportKeys.STATUS: migration_id,
                     })
                     continue
 
@@ -219,11 +216,11 @@ class FlextInfraRefactorEngine:
                     migration_id, payload = remove_match.groups()
                     impact_map.append({
                         c.Infra.Toml.PROJECT: project_name,
-                        "file": str(result.file_path),
+                        c.Infra.ReportKeys.FILE: str(result.file_path),
                         "kind": "signature_remove",
                         "old": payload.strip(),
                         "new": "",
-                        "status": migration_id,
+                        c.Infra.ReportKeys.STATUS: migration_id,
                     })
 
         return impact_map
@@ -373,22 +370,34 @@ class FlextInfraRefactorEngine:
             output.info("No changes")
 
     @staticmethod
-    def print_rules_table(rules: list[dict[str, Any]]) -> None:
+    def print_rules_table(rules: list[dict[str, str | bool]]) -> None:
         """Print rule table in terminal-friendly format."""
         output.header("Available Rules")
         if not rules:
             output.info("No rules loaded.")
             return
 
-        id_width = max(len(item["id"]) for item in rules) + 2
-        name_width = max(len(item[c.Infra.Toml.NAME]) for item in rules) + 2
+        id_width = (
+            max(
+                len(str(item.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)))
+                for item in rules
+            )
+            + 2
+        )
+        name_width = (
+            max(
+                len(str(item.get(c.Infra.Toml.NAME, c.Infra.Defaults.UNKNOWN)))
+                for item in rules
+            )
+            + 2
+        )
         header = (
             f"{'ID':<{id_width}} {'Name':<{name_width}} {'Severity':<10} {'Status'}"
         )
         output.info(header)
         output.info("-" * len(header))
         for rule in rules:
-            status = "✓" if rule["enabled"] else "✗"
+            status = "✓" if rule[c.Infra.ReportKeys.ENABLED] else "✗"
             line = f"{rule['id']:<{id_width}} {rule['name']:<{name_width}} {rule['severity']:<10} {status}"
             output.info(line)
             if rule["description"]:
@@ -444,8 +453,17 @@ class FlextInfraRefactorEngine:
             return
         output.info("Hottest files:")
         for entry in analysis.top_files[:10]:
-            file_name = entry.get("file")
-            total = entry.get("total")
+            file_name = None
+            total = None
+            if isinstance(entry, dict):
+                mapped_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                    entry
+                )
+                file_name = mapped_entry.get(c.Infra.ReportKeys.FILE)
+                total = mapped_entry.get(c.Infra.ReportKeys.TOTAL)
+            else:
+                file_name = getattr(entry, c.Infra.ReportKeys.FILE, None)
+                total = getattr(entry, c.Infra.ReportKeys.TOTAL, None)
             if isinstance(file_name, str) and isinstance(total, int):
                 output.info(f"  - {file_name}: {total}")
 
@@ -527,64 +545,72 @@ class FlextInfraRefactorEngine:
             all_files.extend(self.collect_project_files(project, pattern=pattern))
         return all_files
 
-    def list_rules(self) -> list[dict[str, Any]]:
+    def list_rules(self) -> list[dict[str, str | bool]]:
         """Return loaded rules metadata for listing."""
         return [
             {
-                "id": rule.rule_id,
+                c.Infra.ReportKeys.ID: rule.rule_id,
                 c.Infra.Toml.NAME: rule.name,
                 "description": rule.description,
-                "enabled": rule.enabled,
+                c.Infra.ReportKeys.ENABLED: rule.enabled,
                 "severity": rule.severity,
             }
             for rule in self.rules
         ]
 
-    def load_config(self) -> r[dict[str, Any]]:
+    def load_config(self) -> r[t.ConfigurationMapping]:
         """Load YAML configuration for this engine instance."""
         try:
             content = self.config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            loaded = yaml.safe_load(content)
-            self.config = loaded if loaded is not None else {}
+            loaded_raw = yaml.safe_load(content)
+            if loaded_raw is None:
+                self.config = {}
+            else:
+                typed_config = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                    loaded_raw
+                )
+                self.config = dict(typed_config)
             output.info(f"Loaded config from {self.config_path}")
-            return r[dict[str, Any]].ok(self.config)
-        except Exception as exc:
-            return r[dict[str, Any]].fail(f"Failed to load config: {exc}")
+            return r[t.ConfigurationMapping].ok(self.config)
+        except (OSError, ValidationError, yaml.YAMLError) as exc:
+            return r[t.ConfigurationMapping].fail(f"Failed to load config: {exc}")
 
     def load_rules(self) -> r[list[FlextInfraRefactorRule]]:
         """Load and instantiate enabled rules from rules directory."""
         try:
-            rules_dir = self.config_path.parent / "rules"
+            rules_dir = self.config_path.parent / c.Infra.ReportKeys.RULES
             loaded_rules: list[FlextInfraRefactorRule] = []
             loaded_file_rules: list[ClassNestingRefactorRule] = []
             unknown_rules: list[str] = []
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 output.info(f"Loading rules from {rule_file.name}")
-                rule_config = yaml.safe_load(
+                rule_config_raw = yaml.safe_load(
                     rule_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
                 )
-                if rule_config is None:
+                if not isinstance(rule_config_raw, Mapping):
                     continue
-                rules_raw = rule_config.get("rules", [])
-                if not isinstance(rules_raw, list):
+                try:
+                    rule_config = TypeAdapter(
+                        dict[str, t.ContainerValue]
+                    ).validate_python(rule_config_raw)
+                except ValidationError:
                     continue
-                typed_rules = [
-                    cast("dict[str, Any]", item)
-                    for item in cast("list[object]", rules_raw)
-                    if isinstance(item, dict)
-                ]
+                typed_rules = self._coerce_rule_definitions(
+                    rule_config.get(c.Infra.ReportKeys.RULES)
+                )
 
                 for typed_rule_def in typed_rules:
-                    if "id" not in typed_rule_def:
+                    if c.Infra.ReportKeys.ID not in typed_rule_def:
                         continue
-                    if not typed_rule_def.get("enabled", True):
+                    if not typed_rule_def.get(c.Infra.ReportKeys.ENABLED, True):
                         continue
 
                     fix_action = (
                         str(
                             typed_rule_def.get(
-                                "fix_action", typed_rule_def.get("action", "")
+                                c.Infra.ReportKeys.FIX_ACTION,
+                                typed_rule_def.get(c.Infra.ReportKeys.ACTION, ""),
                             )
                         )
                         .strip()
@@ -602,7 +628,11 @@ class FlextInfraRefactorEngine:
                     rule = self._build_rule(typed_rule_def)
                     if rule is None:
                         unknown_rules.append(
-                            str(typed_rule_def.get("id", c.Infra.Defaults.UNKNOWN))
+                            str(
+                                typed_rule_def.get(
+                                    c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN
+                                )
+                            )
                         )
                         continue
 
@@ -899,13 +929,20 @@ class FlextInfraRefactorEngine:
 
     def _build_rule(
         self,
-        rule_def: Mapping[str, Any],
+        rule_def: Mapping[str, t.ContainerValue],
     ) -> FlextInfraRefactorRule | None:
-        rule_id = str(rule_def.get("id", c.Infra.Defaults.UNKNOWN))
+        rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
         fix_action = (
-            str(rule_def.get("fix_action", rule_def.get("action", ""))).strip().lower()
+            str(
+                rule_def.get(
+                    c.Infra.ReportKeys.FIX_ACTION,
+                    rule_def.get(c.Infra.ReportKeys.ACTION, ""),
+                )
+            )
+            .strip()
+            .lower()
         )
-        check = str(rule_def.get("check", "")).strip().lower()
+        check = str(rule_def.get(c.Infra.Verbs.CHECK, "")).strip().lower()
 
         if (
             fix_action in c.Infra.Refactor.FUTURE_FIX_ACTIONS
@@ -957,10 +994,15 @@ class FlextInfraRefactorEngine:
     def _default_config_path(self) -> Path:
         return Path(__file__).parent / "config.yml"
 
-    def _validate_rule_definition(self, rule_def: Mapping[str, Any]) -> str | None:
+    def _validate_rule_definition(
+        self,
+        rule_def: Mapping[str, t.ContainerValue],
+    ) -> str | None:
         """Return validation error for malformed declarative rules."""
-        rule_id = str(rule_def.get("id", c.Infra.Defaults.UNKNOWN))
-        fix_action = str(rule_def.get("fix_action", "")).strip().lower()
+        rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
+        fix_action = (
+            str(rule_def.get(c.Infra.ReportKeys.FIX_ACTION, "")).strip().lower()
+        )
         if not fix_action:
             return None
 

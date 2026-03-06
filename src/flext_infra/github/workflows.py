@@ -265,12 +265,12 @@ class FlextInfraWorkflowSyncer:
 
         payload: MutableMapping[str, t.ContainerValue] = {
             "mode": "apply" if apply else "dry-run",
-            "summary": by_action,
+            c.Infra.ReportKeys.SUMMARY: by_action,
             "operations": [
                 {
                     c.Infra.Toml.PROJECT: op.project,
                     c.Infra.Toml.PATH: op.path,
-                    "action": op.action,
+                    c.Infra.ReportKeys.ACTION: op.action,
                     "reason": op.reason,
                 }
                 for op in operations

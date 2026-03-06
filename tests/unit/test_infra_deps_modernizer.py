@@ -10,8 +10,6 @@ from unittest.mock import Mock, patch
 import tomlkit
 from tomlkit.items import Array, Table
 
-# Ensure modules are imported for coverage
-import flext_infra.deps.modernizer  # noqa: F401
 from flext_infra.deps.modernizer import (
     ConsolidateGroupsPhase,
     EnsurePyreflyConfigPhase,

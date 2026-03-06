@@ -351,11 +351,21 @@ class FlextInfraDependencyDetectionService:
                     json.loads(raw) if raw.strip() else []
                 )
                 if isinstance(loaded, list):
-                    issues = [
-                        {str(key): value for key, value in item.items()}
-                        for item in loaded
-                        if isinstance(item, dict)
-                    ]
+                    normalized_issues: list[t.Infra.IssueMap] = []
+                    for item in loaded:
+                        if not isinstance(item, dict):
+                            continue
+                        converted_issue: dict[str, t.Infra.InfraValue] = {}
+                        valid = True
+                        for key, value in item.items():
+                            converted = _to_infra_value(value)
+                            if converted is None and value is not None:
+                                valid = False
+                                break
+                            converted_issue[str(key)] = converted
+                        if valid:
+                            normalized_issues.append(converted_issue)
+                    issues = normalized_issues
             except (json.JSONDecodeError, OSError):
                 issues = []
             if json_output_path is None:
@@ -426,7 +436,7 @@ class FlextInfraDependencyDetectionService:
 
         env = {**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)}
         result = self._runner.run_raw(
-            [str(pip), "check"],
+            [str(pip), c.Infra.Verbs.CHECK],
             cwd=workspace_root,
             timeout=c.Infra.Timeouts.SHORT,
             env=env,

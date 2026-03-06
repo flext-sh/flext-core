@@ -25,7 +25,7 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def as_toml_mapping(
-        value: FlextInfraTypes.Infra.TomlValue,
+        value: object,
     ) -> FlextInfraTypes.Infra.TomlMutableMap | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if isinstance(value, MutableMapping):

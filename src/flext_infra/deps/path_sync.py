@@ -38,7 +38,7 @@ def detect_mode(project_root: Path) -> str:
     """Detect workspace or standalone mode from project structure."""
     for candidate in (project_root, *project_root.parents):
         if (candidate / c.Infra.Files.GITMODULES).exists():
-            return "workspace"
+            return c.Infra.ReportKeys.WORKSPACE
     return "standalone"
 
 
@@ -52,7 +52,7 @@ def extract_dep_name(raw_path: str) -> str:
 
 def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
     """Compute target path for dependency based on mode and location."""
-    if mode == "workspace":
+    if mode == c.Infra.ReportKeys.WORKSPACE:
         return dep_name if is_root else f"../{dep_name}"
     return f"{c.Infra.Deps.FLEXT_DEPS_DIR}/{dep_name}"
 

@@ -76,7 +76,7 @@ class FlextInfraDocsShared:
         try:
             scopes: list[FlextInfraDocScope] = [
                 FlextInfraDocScope(
-                    name="root",
+                    name=c.Infra.ReportKeys.ROOT,
                     path=root,
                     report_dir=(root / output_dir).resolve(),
                 ),

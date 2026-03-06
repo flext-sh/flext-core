@@ -135,7 +135,7 @@ class FlextInfraPytestDiagExtractor:
 
             if failure is not None:
                 diag.failed_cases.append(label)
-                msg = (failure.attrib.get("message") or "").strip()
+                msg = (failure.attrib.get(c.Infra.ReportKeys.MESSAGE) or "").strip()
                 trace = (failure.text or "").strip()
                 chunk = [f"=== FAILURE: {label} ==="]
                 if msg:
@@ -145,7 +145,7 @@ class FlextInfraPytestDiagExtractor:
                 diag.error_traces.append("\n".join(chunk))
 
             if error is not None:
-                msg = (error.attrib.get("message") or "").strip()
+                msg = (error.attrib.get(c.Infra.ReportKeys.MESSAGE) or "").strip()
                 trace = (error.text or "").strip()
                 chunk = [f"=== ERROR: {label} ==="]
                 if msg:
@@ -155,7 +155,9 @@ class FlextInfraPytestDiagExtractor:
                 diag.error_traces.append("\n".join(chunk))
 
             if skipped is not None:
-                reason = (skipped.attrib.get("message") or skipped.text or "").strip()
+                reason = (
+                    skipped.attrib.get(c.Infra.ReportKeys.MESSAGE) or skipped.text or ""
+                ).strip()
                 diag.skip_cases.append(
                     f"{label} | {reason}" if reason else label,
                 )

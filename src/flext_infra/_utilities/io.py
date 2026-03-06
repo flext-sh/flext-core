@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -93,7 +94,7 @@ class FlextInfraUtilitiesIo:
 
         """
         if isinstance(value, MutableMapping):
-            return value
+            return cast("MutableMapping[str, object]", value)
         return None
 
 

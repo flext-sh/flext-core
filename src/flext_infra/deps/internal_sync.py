@@ -292,7 +292,9 @@ class FlextInfraInternalDependencySyncService:
         return r[bool].ok(True)
 
     def _infer_owner_from_origin(self, project_root: Path) -> str | None:
-        remote = self._run_git(["config", "--get", "remote.origin.url"], project_root)
+        remote = self._run_git(
+            [c.Infra.ReportKeys.CONFIG, "--get", "remote.origin.url"], project_root
+        )
         if remote.is_failure or remote.value.exit_code != 0:
             return None
         return self._owner_from_remote_url(remote.value.stdout.strip())
@@ -329,7 +331,7 @@ class FlextInfraInternalDependencySyncService:
             if not section.startswith("submodule "):
                 continue
             repo_name = section.split('"')[1]
-            repo_url = parser.get(section, "url", fallback="").strip()
+            repo_url = parser.get(section, c.Infra.ReportKeys.URL, fallback="").strip()
             if not repo_url:
                 continue
             mapping[repo_name] = m.Infra.Github.RepoUrls(

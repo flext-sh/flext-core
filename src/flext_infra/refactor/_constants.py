@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from enum import StrEnum, auto
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 
 class FlextInfraRefactorConstants:
@@ -229,6 +229,8 @@ class FlextInfraRefactorConstants:
         PUBLIC = auto()
         PROTECTED = auto()
         PRIVATE = auto()
+
+    ProjectKind = Literal["core", "domain", "platform", "integration", "app"]
 
 
 __all__ = ["FlextInfraRefactorConstants"]

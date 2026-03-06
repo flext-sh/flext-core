@@ -6,11 +6,8 @@ import ast
 import re
 import tomllib
 from pathlib import Path
-from typing import Literal
 
 from flext_infra import c, m
-
-ProjectKind = Literal["core", "domain", "platform", "integration", "app"]
 
 
 class ProjectClassifier:
@@ -211,7 +208,7 @@ class ProjectClassifier:
         *,
         internal_dependencies: list[str],
         local_facade_classes: set[str],
-    ) -> ProjectKind:
+    ) -> c.Infra.Refactor.ProjectKind:
         if not internal_dependencies:
             return "core"
 
@@ -224,7 +221,7 @@ class ProjectClassifier:
             for dependency in internal_dependencies
         )
 
-        dependency_kind: ProjectKind = "app"
+        dependency_kind: c.Infra.Refactor.ProjectKind = "app"
         if has_domain_dependency and has_platform_dependency:
             dependency_kind = "integration"
         elif has_domain_dependency:
@@ -248,4 +245,4 @@ class ProjectClassifier:
         return dependency_kind
 
 
-__all__ = ["ProjectClassifier", "ProjectKind"]
+__all__ = ["ProjectClassifier"]

@@ -152,7 +152,9 @@ def main() -> int:
     _ = gen_parser.add_argument("--apply", action="store_true")
 
     # validate
-    val_parser = subparsers.add_parser("validate", help="Validate documentation")
+    val_parser = subparsers.add_parser(
+        c.Infra.Verbs.VALIDATE, help="Validate documentation"
+    )
     _add_common_args(val_parser)
     _ = val_parser.add_argument("--check", default="all")
     _ = val_parser.add_argument("--apply", action="store_true")
@@ -164,7 +166,7 @@ def main() -> int:
         "fix": _run_fix,
         c.Infra.Directories.BUILD: _run_build,
         "generate": _run_generate,
-        "validate": _run_validate,
+        c.Infra.Verbs.VALIDATE: _run_validate,
     }
 
     handler = handlers.get(args.command)

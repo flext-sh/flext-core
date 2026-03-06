@@ -8,6 +8,7 @@ from typing import override
 
 import libcst as cst
 
+from flext_infra import c
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.alias_remover import (
     FlextInfraRefactorAliasRemover,
@@ -87,7 +88,9 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
     ) -> tuple[cst.Module, list[str]]:
         """Apply configured legacy-removal transforms to module tree."""
         changes: list[str] = []
-        fix_action = str(self.config.get("fix_action", "")).strip().lower()
+        fix_action = (
+            str(self.config.get(c.Infra.ReportKeys.FIX_ACTION, "")).strip().lower()
+        )
 
         if "alias" in self.rule_id or fix_action == "remove":
             tree, alias_changes = self._remove_aliases(tree)

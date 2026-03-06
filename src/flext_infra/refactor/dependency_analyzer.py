@@ -11,7 +11,7 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraCommandRunner, c
+from flext_infra import FlextInfraCommandRunner, c, m
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class _FileImportData:
     imported_symbols: set[str]
 
 
-class _ImportCollector(cst.CSTVisitor):
+class ImportCollector(cst.CSTVisitor):
     def __init__(self) -> None:
         self.imported_modules: set[str] = set()
         self.imported_symbols: set[str] = set()
@@ -216,10 +216,7 @@ class DependencyAnalyzer:
         for pattern in ("import $MODULE", "from $MODULE import $$$"):
             payload = self._run_ast_grep(src_path, pattern)
             for entry in payload:
-                file_raw = entry.get("file")
-                if not isinstance(file_raw, str):
-                    continue
-                file_path = Path(file_raw)
+                file_path = Path(entry.file)
                 if not file_path.is_absolute():
                     file_path = (src_path / file_path).resolve()
                 if file_path.suffix == c.Infra.Extensions.PYTHON:
@@ -227,7 +224,9 @@ class DependencyAnalyzer:
 
         return files
 
-    def _run_ast_grep(self, src_path: Path, pattern: str) -> list[dict[str, object]]:
+    def _run_ast_grep(
+        self, src_path: Path, pattern: str
+    ) -> list[m.Infra.Refactor.AstGrepMatch]:
         cmd = [
             "sg",
             "--pattern",
@@ -247,7 +246,9 @@ class DependencyAnalyzer:
             return []
 
         try:
-            return TypeAdapter(list[dict[str, object]]).validate_json(raw_output)
+            return TypeAdapter(list[m.Infra.Refactor.AstGrepMatch]).validate_json(
+                raw_output
+            )
         except ValidationError:
             return []
 
@@ -255,7 +256,7 @@ class DependencyAnalyzer:
         try:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             module = cst.parse_module(source)
-            collector = _ImportCollector()
+            collector = ImportCollector()
             module.visit(collector)
             return _FileImportData(
                 imported_modules=collector.imported_modules,

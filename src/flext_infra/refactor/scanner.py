@@ -8,12 +8,13 @@ from pathlib import Path
 from typing import override
 
 import libcst as cst
-from pydantic import BaseModel, Field, TypeAdapter, ValidationError
+from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraCommandRunner, c, m
+from flext_infra import FlextInfraCommandRunner, c, t
+from flext_infra.models import FlextInfraModels as m
 
 
-class _TopLevelClassCollector(cst.CSTVisitor):
+class TopLevelClassCollector(cst.CSTVisitor):
     def __init__(self) -> None:
         self._depth = 0
         self.classes: list[m.Infra.Refactor.ClassOccurrence] = []
@@ -36,32 +37,10 @@ class _TopLevelClassCollector(cst.CSTVisitor):
         self._depth -= 1
 
 
-class _AstGrepNameEntry(BaseModel):
-    text: str
-
-
-class _AstGrepMetaVariables(BaseModel):
-    single: dict[str, _AstGrepNameEntry]
-
-
-class _AstGrepStart(BaseModel):
-    line: int | None = None
-
-
-class _AstGrepRange(BaseModel):
-    start: _AstGrepStart | None = None
-
-
-class _AstGrepEntry(BaseModel):
-    file: str
-    meta_variables: _AstGrepMetaVariables = Field(alias="metaVariables")
-    range: _AstGrepRange | None = None
-
-
 class FlextInfraRefactorLooseClassScanner:
     """Scan a project tree and report top-level classes lacking namespace prefixes."""
 
-    def scan(self, project_root: Path) -> Mapping[str, object]:
+    def scan(self, project_root: Path) -> t.ConfigurationMapping:
         """Scan *project_root*/src and return a violation report dict."""
         python_files = self._discover_python_files(project_root)
         ast_grep_index = self._scan_with_ast_grep(project_root)
@@ -90,13 +69,13 @@ class FlextInfraRefactorLooseClassScanner:
         counters = Counter(item.confidence for item in violations)
 
         return {
-            "rule": "class_nesting",
+            "rule": c.Infra.ReportKeys.CLASS_NESTING,
             "files_scanned": len(python_files),
             "classes_scanned": classes_scanned,
-            "violations_count": len(violations),
+            c.Infra.ReportKeys.VIOLATIONS_COUNT: len(violations),
             "confidence_counts": dict(counters),
             "required_targets": targets_found,
-            "violations": [item.model_dump() for item in violations],
+            c.Infra.ReportKeys.VIOLATIONS: [item.model_dump() for item in violations],
         }
 
     def _build_violation(
@@ -130,7 +109,7 @@ class FlextInfraRefactorLooseClassScanner:
             line=max(line, 1),
             class_name=occurrence.name,
             expected_prefix=expected_prefix,
-            rule="class_nesting",
+            rule=c.Infra.ReportKeys.CLASS_NESTING,
             reason=reason,
             confidence=confidence,
             score=round(score, 2),
@@ -142,7 +121,7 @@ class FlextInfraRefactorLooseClassScanner:
             return "high"
         if parent_parts:
             return "medium"
-        return "low"
+        return c.Infra.Severity.LOW
 
     def _discover_python_files(self, project_root: Path) -> list[Path]:
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
@@ -193,7 +172,7 @@ class FlextInfraRefactorLooseClassScanner:
         try:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             module = cst.parse_module(source)
-            collector = _TopLevelClassCollector()
+            collector = TopLevelClassCollector()
             module.visit(collector)
             return collector.classes
         except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
@@ -221,7 +200,9 @@ class FlextInfraRefactorLooseClassScanner:
             return {}
 
         try:
-            entries = TypeAdapter(list[_AstGrepEntry]).validate_json(payload)
+            entries = TypeAdapter(list[m.Infra.Refactor.AstGrepEntry]).validate_json(
+                payload
+            )
         except ValidationError:
             return {}
 

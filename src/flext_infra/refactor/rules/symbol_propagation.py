@@ -4,15 +4,31 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, QualifiedNameProvider
+from pydantic import TypeAdapter, ValidationError
 
+from flext_infra import m
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.symbol_propagator import (
     FlextInfraRefactorSymbolPropagator,
 )
+
+
+def _string_list(value: object) -> list[str]:
+    try:
+        return TypeAdapter(list[str]).validate_python(value)
+    except ValidationError:
+        return []
+
+
+def _string_mapping(value: object) -> dict[str, str]:
+    try:
+        return TypeAdapter(dict[str, str]).validate_python(value)
+    except ValidationError:
+        return {}
 
 
 class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
@@ -28,21 +44,9 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
         module_renames_raw = self.config.get("module_renames", {})
         symbol_renames_raw = self.config.get("import_symbol_renames", {})
 
-        target_modules = {
-            str(item)
-            for item in cast("list[object]", target_modules_raw)
-            if isinstance(item, str)
-        }
-        module_renames = {
-            str(k): str(v)
-            for k, v in cast("dict[object, object]", module_renames_raw).items()
-            if isinstance(k, str) and isinstance(v, str)
-        }
-        symbol_renames = {
-            str(k): str(v)
-            for k, v in cast("dict[object, object]", symbol_renames_raw).items()
-            if isinstance(k, str) and isinstance(v, str)
-        }
+        target_modules = set(_string_list(target_modules_raw))
+        module_renames = _string_mapping(module_renames_raw)
+        symbol_renames = _string_mapping(symbol_renames_raw)
 
         if not target_modules and not module_renames and not symbol_renames:
             return tree, []
@@ -64,7 +68,7 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
     def __init__(
         self,
         *,
-        migrations: list[dict[str, object]],
+        migrations: list[m.Infra.Refactor.RuleConfigs.SignatureMigration],
         on_change: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize transformer state for declarative signature migrations."""
@@ -98,7 +102,7 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
             ):
                 continue
 
-            migration_id = str(migration.get("id", "signature-migration"))
+            migration_id = str(migration.id)
             keyword_renames = self._keyword_renames(migration)
             remove_keywords = self._remove_keywords(migration)
             add_keywords = self._add_keywords(migration)
@@ -148,30 +152,20 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
 
         return result_call
 
-    def _add_keywords(self, migration: Mapping[str, object]) -> Mapping[str, str]:
-        raw = migration.get("add_keywords", {})
-        if not isinstance(raw, dict):
-            return {}
-        return {
-            str(k): str(v)
-            for k, v in cast("dict[object, object]", raw).items()
-            if isinstance(k, str) and isinstance(v, str)
-        }
+    def _add_keywords(
+        self, migration: m.Infra.Refactor.RuleConfigs.SignatureMigration
+    ) -> Mapping[str, str]:
+        return migration.add_keywords
 
     def _keyword_name(self, arg: cst.Arg) -> str | None:
         if arg.keyword is None:
             return None
         return arg.keyword.value
 
-    def _keyword_renames(self, migration: Mapping[str, object]) -> Mapping[str, str]:
-        raw = migration.get("keyword_renames", {})
-        if not isinstance(raw, dict):
-            return {}
-        return {
-            str(k): str(v)
-            for k, v in cast("dict[object, object]", raw).items()
-            if isinstance(k, str) and isinstance(v, str)
-        }
+    def _keyword_renames(
+        self, migration: m.Infra.Refactor.RuleConfigs.SignatureMigration
+    ) -> Mapping[str, str]:
+        return migration.keyword_renames
 
     def _literal_expr(self, value: str) -> cst.BaseExpression:
         lowered = value.strip().lower()
@@ -191,23 +185,13 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
 
     def _matches_migration(
         self,
-        migration: Mapping[str, object],
+        migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
         *,
         qualified_names: set[str],
         simple_name: str | None,
     ) -> bool:
-        target_qualified = {
-            item
-            for item in cast(
-                "list[object]", migration.get("target_qualified_names", [])
-            )
-            if isinstance(item, str)
-        }
-        target_simple = {
-            item
-            for item in cast("list[object]", migration.get("target_simple_names", []))
-            if isinstance(item, str)
-        }
+        target_qualified = set(migration.target_qualified_names)
+        target_simple = set(migration.target_simple_names)
 
         if target_qualified and qualified_names.intersection(target_qualified):
             return True
@@ -220,11 +204,10 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
         if self._on_change is not None:
             self._on_change(message)
 
-    def _remove_keywords(self, migration: Mapping[str, object]) -> set[str]:
-        raw = migration.get("remove_keywords", [])
-        if not isinstance(raw, list):
-            return set()
-        return {item for item in cast("list[object]", raw) if isinstance(item, str)}
+    def _remove_keywords(
+        self, migration: m.Infra.Refactor.RuleConfigs.SignatureMigration
+    ) -> set[str]:
+        return set(migration.remove_keywords)
 
     def _simple_callable_name(self, expr: cst.BaseExpression) -> str | None:
         if isinstance(expr, cst.Name):
@@ -244,15 +227,13 @@ class FlextInfraRefactorSignaturePropagationRule(FlextInfraRefactorRule):
         _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         migrations_raw = self.config.get("signature_migrations", [])
-        migrations: list[dict[str, object]] = []
-        for item in cast("list[object]", migrations_raw):
-            if not isinstance(item, dict):
-                continue
-            typed_item = cast("dict[str, object]", item)
-            enabled_raw = typed_item.get("enabled", True)
-            if not bool(enabled_raw):
-                continue
-            migrations.append(typed_item)
+        try:
+            parsed = TypeAdapter(
+                list[m.Infra.Refactor.RuleConfigs.SignatureMigration]
+            ).validate_python(migrations_raw)
+        except ValidationError:
+            return tree, []
+        migrations = [item for item in parsed if item.enabled]
         if not migrations:
             return tree, []
 

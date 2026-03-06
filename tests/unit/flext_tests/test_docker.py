@@ -24,45 +24,41 @@ from flext_core import r
 from flext_tests import FlextTestsDocker, c
 from tests.test_utils import assertion_helpers
 
-# Access nested classes
-ContainerInfo = FlextTestsDocker.ContainerInfo
-ContainerStatus = c.Tests.Docker.ContainerStatus
-
 
 class TestContainerStatus:
-    """Test suite for ContainerStatus enum."""
+    """Test suite for c.Tests.Docker.ContainerStatus enum."""
 
     def test_container_status_values(self) -> None:
-        """Test ContainerStatus enum values."""
-        assert ContainerStatus.RUNNING.value == "running"
-        assert ContainerStatus.STOPPED.value == "stopped"
-        assert ContainerStatus.NOT_FOUND.value == "not_found"
-        assert ContainerStatus.ERROR.value == "error"
+        """Test c.Tests.Docker.ContainerStatus enum values."""
+        assert c.Tests.Docker.ContainerStatus.RUNNING.value == "running"
+        assert c.Tests.Docker.ContainerStatus.STOPPED.value == "stopped"
+        assert c.Tests.Docker.ContainerStatus.NOT_FOUND.value == "not_found"
+        assert c.Tests.Docker.ContainerStatus.ERROR.value == "error"
 
 
 class TestContainerInfo:
-    """Test suite for ContainerInfo model."""
+    """Test suite for FlextTestsDocker.ContainerInfo model."""
 
     def test_container_info_creation(self) -> None:
-        """Test ContainerInfo creation with required fields."""
-        info = ContainerInfo(
+        """Test FlextTestsDocker.ContainerInfo creation with required fields."""
+        info = FlextTestsDocker.ContainerInfo(
             name="test_container",
-            status=ContainerStatus.RUNNING,
+            status=c.Tests.Docker.ContainerStatus.RUNNING,
             ports={"8080/tcp": "8080"},
             image="nginx:latest",
         )
 
         assert info.name == "test_container"
-        assert info.status == ContainerStatus.RUNNING.value
+        assert info.status == c.Tests.Docker.ContainerStatus.RUNNING.value
         assert info.ports == {"8080/tcp": "8080"}
         assert info.image == "nginx:latest"
         assert not info.container_id
 
     def test_container_info_with_container_id(self) -> None:
-        """Test ContainerInfo with container_id."""
-        info = ContainerInfo(
+        """Test FlextTestsDocker.ContainerInfo with container_id."""
+        info = FlextTestsDocker.ContainerInfo(
             name="test_container",
-            status=ContainerStatus.RUNNING,
+            status=c.Tests.Docker.ContainerStatus.RUNNING,
             ports={},
             image="nginx:latest",
             container_id="abc123",

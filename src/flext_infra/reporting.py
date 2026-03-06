@@ -104,8 +104,8 @@ class FlextInfraReportingService(s[Path]):
         """
         root_path = Path(root) if isinstance(root, str) else root
         base = root_path / c.Infra.Reporting.REPORTS_DIR_NAME
-        if scope == "workspace":
-            return (base / "workspace" / verb).resolve()
+        if scope == c.Infra.ReportKeys.WORKSPACE:
+            return (base / c.Infra.ReportKeys.WORKSPACE / verb).resolve()
         return (base / verb).resolve()
 
     def get_report_path(

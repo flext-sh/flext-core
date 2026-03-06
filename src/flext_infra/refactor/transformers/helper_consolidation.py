@@ -7,9 +7,10 @@ from collections.abc import Mapping
 from typing import TypedDict, override
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
 
-class _FamilyPolicy(TypedDict, total=False):
+class FamilyPolicy(TypedDict, total=False):
     enable_helper_consolidation: bool
     allow_helper_call_rewrite: bool
     require_signature_validation: bool
@@ -23,7 +24,7 @@ class _FamilyPolicy(TypedDict, total=False):
     forbidden_targets: list[str] | tuple[str, ...]
 
 
-type PolicyContext = Mapping[str, _FamilyPolicy]
+type PolicyContext = Mapping[str, FamilyPolicy]
 
 
 class HelperConsolidationTransformer(cst.CSTTransformer):
@@ -283,7 +284,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
                 return False
         return True
 
-    def _policy_for_helper(self, helper_name: str) -> _FamilyPolicy | None:
+    def _policy_for_helper(self, helper_name: str) -> FamilyPolicy | None:
         if self._policy_context is None:
             return None
         family = self._helper_families.get(helper_name)
@@ -296,7 +297,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
 
     def _bool_from_policy(
         self,
-        policy: _FamilyPolicy,
+        policy: FamilyPolicy,
         key: str,
         *,
         default: bool,
@@ -306,24 +307,23 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
             return raw
         return default
 
-    def _tuple_from_policy(self, policy: _FamilyPolicy, key: str) -> tuple[str, ...]:
+    def _tuple_from_policy(self, policy: FamilyPolicy, key: str) -> tuple[str, ...]:
         raw = policy.get(key)
-        if isinstance(raw, (str, list, tuple)):
-            return self._string_collection(raw)
+        if isinstance(raw, str):
+            return (raw,)
+        if isinstance(raw, list):
+            try:
+                return tuple(TypeAdapter(list[str]).validate_python(raw))
+            except ValidationError:
+                return ()
+        if isinstance(raw, tuple):
+            try:
+                return TypeAdapter(tuple[str, ...]).validate_python(raw)
+            except ValidationError:
+                return ()
         return ()
 
-    def _string_collection(
-        self,
-        value: str | list[str] | tuple[str, ...] | None,
-    ) -> tuple[str, ...]:
-        """Extract a tuple of strings from a policy value."""
-        if value is None:
-            return ()
-        if isinstance(value, str):
-            return (value,)
-        return tuple(entry for entry in value if isinstance(entry, str))
-
-    def _target_allowed(self, policy: _FamilyPolicy, target_namespace: str) -> bool:
+    def _target_allowed(self, policy: FamilyPolicy, target_namespace: str) -> bool:
         allowed = self._tuple_from_policy(policy, "allowed_targets")
         if allowed and target_namespace not in allowed:
             return False

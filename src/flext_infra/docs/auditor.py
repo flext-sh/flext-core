@@ -203,23 +203,23 @@ class FlextInfraDocAuditor:
 
         # Write reports
         summary: Mapping[str, t.ContainerValue] = {
-            "scope": scope.name,
+            c.Infra.ReportKeys.SCOPE: scope.name,
             "issues": len(issues),
-            "checks": sorted(checks),
+            c.Infra.Verbs.CHECKS: sorted(checks),
             c.Infra.Modes.STRICT: strict,
             "report_dir": scope.report_dir.as_posix(),
         }
         issues_payload: list[Mapping[str, t.ContainerValue]] = [
             {
-                "file": issue.file,
+                c.Infra.ReportKeys.FILE: issue.file,
                 "issue_type": issue.issue_type,
                 "severity": issue.severity,
-                "message": issue.message,
+                c.Infra.ReportKeys.MESSAGE: issue.message,
             }
             for issue in issues
         ]
         summary_payload: Mapping[str, t.ContainerValue] = {
-            "summary": summary,
+            c.Infra.ReportKeys.SUMMARY: summary,
             "issues": issues_payload,
         }
         _ = FlextInfraDocsShared.write_json(
@@ -303,7 +303,7 @@ class FlextInfraDocAuditor:
         for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
             rel = md_file.relative_to(scope.path).as_posix()
             rel_lower = rel.lower()
-            if scope.name == "root":
+            if scope.name == c.Infra.ReportKeys.ROOT:
                 if not rel_lower.startswith("docs/"):
                     continue
             elif not scope.name.startswith("flext-"):

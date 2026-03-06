@@ -7,8 +7,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Ensure modules are imported for coverage
-import flext_infra.deps.__main__  # noqa: F401
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main, main as main_func
 
 

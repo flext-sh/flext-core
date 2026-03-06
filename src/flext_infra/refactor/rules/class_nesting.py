@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TypedDict, cast
 
 import libcst as cst
 import yaml
 from libcst.metadata import MetadataWrapper
+from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m
+from flext_infra import c, m, t
 from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
 from flext_infra.refactor.transformers.helper_consolidation import (
     HelperConsolidationTransformer,
@@ -20,58 +20,32 @@ from flext_infra.refactor.transformers.nested_class_propagation import (
 )
 from flext_infra.refactor.validation import PostCheckGate
 
-
-class _MappingEntry(TypedDict, total=False):
-    loose_name: str
-    helper_name: str
-    current_file: str
-    target_namespace: str
-    target_name: str
-    confidence: str
-    rewrite_scope: str
+type _MappingEntry = dict[str, str]
+type _PolicyFamily = dict[str, t.ContainerValue]
+type _PolicyDocument = dict[str, t.ContainerValue]
+type _RuleConfig = dict[str, str | list[_MappingEntry]]
+type _PostCheckPayload = dict[str, str | list[str]]
+type _PreCheckViolation = dict[str, str]
 
 
-class _PolicyFamily(TypedDict, total=False):
-    family_name: str
-    allowed_operations: list[str]
-    forbidden_operations: list[str]
-    forbidden_targets: list[str]
-    validation_requirements: dict[str, list[str]]
+def _entry_list(value: str | list[_MappingEntry] | None) -> list[_MappingEntry]:
+    if isinstance(value, list):
+        return value
+    return []
 
 
-class _PolicyDocument(TypedDict, total=False):
-    policy_matrix: list[_PolicyFamily]
-    rules: list[_PolicyRule]
+def _string_list(value: t.ContainerValue | None) -> list[str]:
+    try:
+        return TypeAdapter(list[str]).validate_python(value)
+    except ValidationError:
+        return []
 
 
-class _PolicyCheck(TypedDict, total=False):
-    type: str
-
-
-class _PolicyRule(TypedDict, total=False):
-    source_symbol: str
-    expected_base_chain: list[str]
-    post_checks: list[_PolicyCheck]
-
-
-class _RuleConfig(TypedDict, total=False):
-    confidence_threshold: str
-    class_nesting: list[_MappingEntry]
-    helper_consolidation: list[_MappingEntry]
-
-
-class _PostCheckPayload(TypedDict, total=False):
-    source_symbol: str
-    expected_base_chain: list[str]
-    post_checks: list[str]
-    quality_gates: list[str]
-
-
-class _PreCheckViolation(TypedDict):
-    rule_id: str
-    source_symbol: str
-    violation_type: str
-    suggested_fix: str
+def _mapping_list(value: t.ContainerValue | None) -> list[dict[str, t.ContainerValue]]:
+    try:
+        return TypeAdapter(list[dict[str, t.ContainerValue]]).validate_python(value)
+    except ValidationError:
+        return []
 
 
 class PreCheckGate:
@@ -89,90 +63,101 @@ class PreCheckGate:
         self, entry: _MappingEntry
     ) -> tuple[bool, _PreCheckViolation | None]:
         """Return (ok, violation) for a single mapping entry."""
-        source_symbol = entry.get("loose_name", "")
+        source_symbol = entry.get(c.Infra.ReportKeys.LOOSE_NAME, "")
         helper_symbol = entry.get("helper_name", "")
         symbol = source_symbol or helper_symbol
-        target_namespace = entry.get("target_namespace", "")
-        current_file = entry.get("current_file", "")
+        target_namespace = entry.get(c.Infra.ReportKeys.TARGET_NAMESPACE, "")
+        current_file = entry.get(c.Infra.ReportKeys.CURRENT_FILE, "")
         if not symbol or not target_namespace or not current_file:
             return True, None
 
         module_family = self._module_family_from_path(current_file)
+        if module_family == "other_private":
+            return True, None
         policy = self._policy_by_family.get(module_family)
         if policy is None:
             return False, {
-                "rule_id": f"precheck:{symbol}",
-                "source_symbol": symbol,
-                "violation_type": "unknown_module_family",
-                "suggested_fix": f"declare explicit policy for {module_family}",
+                c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
+                c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
+                c.Infra.ReportKeys.VIOLATION_TYPE: "unknown_module_family",
+                c.Infra.ReportKeys.SUGGESTED_FIX: f"declare explicit policy for {module_family}",
             }
 
-        operation = "helper_consolidation" if helper_symbol else "class_nesting"
-        allowed_operations = policy.get("allowed_operations", [])
+        operation = (
+            c.Infra.ReportKeys.HELPER_CONSOLIDATION
+            if helper_symbol
+            else c.Infra.ReportKeys.CLASS_NESTING
+        )
+        allowed_operations = _string_list(policy.get("allowed_operations"))
         if operation not in allowed_operations:
             return False, {
-                "rule_id": f"precheck:{symbol}",
-                "source_symbol": symbol,
-                "violation_type": "operation_not_allowed",
-                "suggested_fix": f"allow {operation} in policy for {module_family}",
+                c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
+                c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
+                c.Infra.ReportKeys.VIOLATION_TYPE: "operation_not_allowed",
+                c.Infra.ReportKeys.SUGGESTED_FIX: f"allow {operation} in policy for {module_family}",
             }
 
-        forbidden_operations = policy.get("forbidden_operations", [])
+        forbidden_operations = _string_list(policy.get("forbidden_operations"))
         if operation in forbidden_operations:
             return False, {
-                "rule_id": f"precheck:{symbol}",
-                "source_symbol": symbol,
-                "violation_type": "operation_forbidden",
-                "suggested_fix": f"remove {operation} from forbidden_operations for {module_family}",
+                c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
+                c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
+                c.Infra.ReportKeys.VIOLATION_TYPE: "operation_forbidden",
+                c.Infra.ReportKeys.SUGGESTED_FIX: f"remove {operation} from forbidden_operations for {module_family}",
             }
 
-        forbidden_targets = policy.get("forbidden_targets", [])
+        forbidden_targets = _string_list(
+            policy.get(c.Infra.ReportKeys.FORBIDDEN_TARGETS)
+        )
         if any(
             self._target_matches(target_namespace, pattern)
             for pattern in forbidden_targets
         ):
             return False, {
-                "rule_id": f"precheck:{symbol}",
-                "source_symbol": symbol,
-                "violation_type": "forbidden_target",
-                "suggested_fix": f"choose allowed target for family {module_family}",
+                c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
+                c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
+                c.Infra.ReportKeys.VIOLATION_TYPE: "forbidden_target",
+                c.Infra.ReportKeys.SUGGESTED_FIX: f"choose allowed target for family {module_family}",
             }
         return True, None
 
     def _load_policy(self) -> dict[str, _PolicyFamily]:
         try:
-            loaded = cast(
-                "_PolicyDocument",
-                yaml.safe_load(
-                    self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                ),
+            loaded_raw = yaml.safe_load(
+                self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             )
         except (OSError, yaml.YAMLError):
             return {}
+        try:
+            loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                loaded_raw
+            )
+        except ValidationError:
+            return {}
         if not self._schema_valid(loaded):
             return {}
-        policy_matrix = loaded.get("policy_matrix", [])
+        policy_matrix = _mapping_list(loaded.get("policy_matrix"))
 
         by_family: dict[str, _PolicyFamily] = {}
         for raw in policy_matrix:
             family_name = raw.get("family_name")
-            if family_name is None:
+            if not isinstance(family_name, str):
                 continue
-            forbidden_targets = list(raw.get("forbidden_targets", []))
+            forbidden_targets = _string_list(
+                raw.get(c.Infra.ReportKeys.FORBIDDEN_TARGETS)
+            )
 
-            allowed_operations_raw = raw.get("allowed_operations", [])
-            allowed_operations = list(allowed_operations_raw)
+            allowed_operations = _string_list(raw.get("allowed_operations"))
 
-            forbidden_operations_raw = raw.get("forbidden_operations", [])
-            forbidden_operations = list(forbidden_operations_raw)
+            forbidden_operations = _string_list(raw.get("forbidden_operations"))
 
-            validation_requirements = raw.get("validation_requirements", {})
+            validation_requirements = raw.get("validation_requirements")
             by_family[family_name] = {
                 "family_name": family_name,
                 "allowed_operations": allowed_operations,
                 "forbidden_operations": forbidden_operations,
-                "forbidden_targets": forbidden_targets,
-                "validation_requirements": validation_requirements,
+                c.Infra.ReportKeys.FORBIDDEN_TARGETS: forbidden_targets,
+                "validation_requirements": validation_requirements or {},
             }
         return by_family
 
@@ -191,26 +176,32 @@ class PreCheckGate:
         policy_entry_required = definitions.get("policyEntry", {}).get("required", [])
         class_rule_required = definitions.get("classRule", {}).get("required", [])
 
-        policy_matrix = loaded.get("policy_matrix", [])
+        policy_matrix = _mapping_list(loaded.get("policy_matrix"))
         for entry in policy_matrix:
             if not self._has_required_fields(entry, policy_entry_required):
                 return False
 
-        rules = loaded.get("rules", [])
+        rules = _mapping_list(loaded.get(c.Infra.ReportKeys.RULES))
         for rule in rules:
             if not self._has_required_fields(rule, class_rule_required):
                 return False
 
         return True
 
-    def _has_required_fields(self, entry: object, required_fields: object) -> bool:
+    def _has_required_fields(
+        self,
+        entry: t.ContainerValue,
+        required_fields: t.ContainerValue,
+    ) -> bool:
         if not isinstance(entry, dict):
             return False
         if not isinstance(required_fields, list):
             return True
 
-        required_items = cast("list[object]", required_fields)
-        keys = [candidate for candidate in required_items if isinstance(candidate, str)]
+        try:
+            keys = TypeAdapter(list[str]).validate_python(required_fields)
+        except ValidationError:
+            return False
 
         return all(key in entry for key in keys)
 
@@ -352,32 +343,41 @@ class ClassNestingRefactorRule:
 
     def _load_config(self) -> _RuleConfig:
         raw = self._config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        loaded = yaml.safe_load(raw)
-        if not isinstance(loaded, dict):
+        loaded_raw = yaml.safe_load(raw)
+        try:
+            loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                loaded_raw
+            )
+        except ValidationError:
             return {}
 
-        typed = cast("dict[str, str | list[dict[str, str]]]", loaded)
         config: _RuleConfig = {}
-        confidence_threshold = typed.get("confidence_threshold")
+        confidence_threshold = loaded.get("confidence_threshold")
         if isinstance(confidence_threshold, str):
             config["confidence_threshold"] = confidence_threshold
 
-        class_nesting_raw = typed.get("class_nesting")
+        class_nesting_raw = loaded.get(c.Infra.ReportKeys.CLASS_NESTING)
         if isinstance(class_nesting_raw, list):
-            config["class_nesting"] = self._coerce_entries(class_nesting_raw)
+            config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
+                _mapping_list(class_nesting_raw)
+            )
 
-        helper_raw = typed.get("helper_consolidation")
+        helper_raw = loaded.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
         if isinstance(helper_raw, list):
-            config["helper_consolidation"] = self._coerce_entries(helper_raw)
+            config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
+                _mapping_list(helper_raw)
+            )
 
         return config
 
     def _confidence_threshold(self, config: _RuleConfig) -> str:
-        raw = config.get("confidence_threshold", "low")
+        raw = config.get("confidence_threshold", c.Infra.Severity.LOW)
+        if not isinstance(raw, str):
+            return c.Infra.Severity.LOW
         candidate = raw.strip().lower()
         if candidate in c.Infra.Refactor.CONFIDENCE_RANKS:
             return candidate
-        return "low"
+        return c.Infra.Severity.LOW
 
     def _confidence_allowed(self, confidence: str, threshold: str) -> bool:
         confidence_rank = c.Infra.Refactor.CONFIDENCE_RANKS.get(
@@ -394,12 +394,12 @@ class ClassNestingRefactorRule:
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_source_file(
-            config.get("class_nesting", []),
+            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
             file_path,
             confidence_threshold,
         ):
-            loose_name = entry.get("loose_name")
-            target_namespace = entry.get("target_namespace")
+            loose_name = entry.get(c.Infra.ReportKeys.LOOSE_NAME)
+            target_namespace = entry.get(c.Infra.ReportKeys.TARGET_NAMESPACE)
             if isinstance(loose_name, str) and isinstance(target_namespace, str):
                 mappings[loose_name] = target_namespace
         return mappings
@@ -412,12 +412,12 @@ class ClassNestingRefactorRule:
     ) -> list[str]:
         violations: list[str] = []
         entries = self._entries_for_source_file(
-            config.get("class_nesting", []),
+            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
             file_path,
             confidence_threshold,
         )
         helper_entries = self._entries_for_source_file(
-            config.get("helper_consolidation", []),
+            _entry_list(config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)),
             file_path,
             confidence_threshold,
         )
@@ -427,10 +427,10 @@ class ClassNestingRefactorRule:
             if not ok and violation is not None:
                 violations.append(
                     "|".join([
-                        violation["rule_id"],
-                        violation["source_symbol"],
-                        violation["violation_type"],
-                        violation["suggested_fix"],
+                        violation[c.Infra.ReportKeys.RULE_ID],
+                        violation[c.Infra.ReportKeys.SOURCE_SYMBOL],
+                        violation[c.Infra.ReportKeys.VIOLATION_TYPE],
+                        violation[c.Infra.ReportKeys.SUGGESTED_FIX],
                     ])
                 )
         return violations
@@ -443,12 +443,12 @@ class ClassNestingRefactorRule:
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_source_file(
-            config.get("helper_consolidation", []),
+            _entry_list(config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)),
             file_path,
             confidence_threshold,
         ):
             helper_name = entry.get("helper_name")
-            target_namespace = entry.get("target_namespace")
+            target_namespace = entry.get(c.Infra.ReportKeys.TARGET_NAMESPACE)
             if isinstance(helper_name, str) and isinstance(target_namespace, str):
                 mappings[helper_name] = target_namespace
         return mappings
@@ -461,12 +461,12 @@ class ClassNestingRefactorRule:
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_scope(
-            config.get("class_nesting", []),
+            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
             file_path,
             confidence_threshold,
         ):
-            loose_name = entry.get("loose_name")
-            target_namespace = entry.get("target_namespace")
+            loose_name = entry.get(c.Infra.ReportKeys.LOOSE_NAME)
+            target_namespace = entry.get(c.Infra.ReportKeys.TARGET_NAMESPACE)
             target_name = entry.get("target_name")
             if not isinstance(loose_name, str):
                 continue
@@ -490,15 +490,17 @@ class ClassNestingRefactorRule:
         module_path = self._normalize_module_path(file_path)
         accepted: list[_MappingEntry] = []
         for entry in entries:
-            current_file = entry.get("current_file")
+            current_file = entry.get(c.Infra.ReportKeys.CURRENT_FILE)
             if current_file is None:
                 continue
 
             current_module = self._normalize_module_path(Path(current_file))
-            if current_module != module_path:
+            if current_module != module_path and not module_path.endswith(
+                f"/{current_module}"
+            ):
                 continue
 
-            confidence = entry.get("confidence", "low")
+            confidence = entry.get(c.Infra.ReportKeys.CONFIDENCE, c.Infra.Severity.LOW)
             if not self._confidence_allowed(confidence, confidence_threshold):
                 continue
 
@@ -517,11 +519,11 @@ class ClassNestingRefactorRule:
 
         accepted: list[_MappingEntry] = []
         for entry in entries:
-            confidence = entry.get("confidence", "low")
+            confidence = entry.get(c.Infra.ReportKeys.CONFIDENCE, c.Infra.Severity.LOW)
             if not self._confidence_allowed(confidence, confidence_threshold):
                 continue
 
-            current_file = entry.get("current_file", "")
+            current_file = entry.get(c.Infra.ReportKeys.CURRENT_FILE, "")
             if not current_file:
                 continue
 
@@ -531,32 +533,35 @@ class ClassNestingRefactorRule:
             accepted.append(entry)
         return accepted
 
-    def _coerce_entries(self, entries: list[dict[str, str]]) -> list[_MappingEntry]:
+    def _coerce_entries(
+        self,
+        entries: list[dict[str, t.ContainerValue]],
+    ) -> list[_MappingEntry]:
         coerced: list[_MappingEntry] = []
         for typed in entries:
-            current_file = typed.get("current_file")
-            if current_file is None:
+            current_file = typed.get(c.Infra.ReportKeys.CURRENT_FILE)
+            if not isinstance(current_file, str):
                 continue
 
-            entry: _MappingEntry = {"current_file": current_file}
-            loose_name = typed.get("loose_name")
-            if loose_name is not None:
-                entry["loose_name"] = loose_name
+            entry: _MappingEntry = {c.Infra.ReportKeys.CURRENT_FILE: current_file}
+            loose_name = typed.get(c.Infra.ReportKeys.LOOSE_NAME)
+            if isinstance(loose_name, str):
+                entry[c.Infra.ReportKeys.LOOSE_NAME] = loose_name
             helper_name = typed.get("helper_name")
-            if helper_name is not None:
+            if isinstance(helper_name, str):
                 entry["helper_name"] = helper_name
-            target_namespace = typed.get("target_namespace")
-            if target_namespace is not None:
-                entry["target_namespace"] = target_namespace
+            target_namespace = typed.get(c.Infra.ReportKeys.TARGET_NAMESPACE)
+            if isinstance(target_namespace, str):
+                entry[c.Infra.ReportKeys.TARGET_NAMESPACE] = target_namespace
             target_name = typed.get("target_name")
-            if target_name is not None:
+            if isinstance(target_name, str):
                 entry["target_name"] = target_name
-            rewrite_scope = typed.get("rewrite_scope")
-            if rewrite_scope is not None:
-                entry["rewrite_scope"] = rewrite_scope
-            confidence = typed.get("confidence")
-            if confidence is not None:
-                entry["confidence"] = confidence
+            rewrite_scope = typed.get(c.Infra.ReportKeys.REWRITE_SCOPE)
+            if isinstance(rewrite_scope, str):
+                entry[c.Infra.ReportKeys.REWRITE_SCOPE] = rewrite_scope
+            confidence = typed.get(c.Infra.ReportKeys.CONFIDENCE)
+            if isinstance(confidence, str):
+                entry[c.Infra.ReportKeys.CONFIDENCE] = confidence
             coerced.append(entry)
         return coerced
 
@@ -567,54 +572,61 @@ class ClassNestingRefactorRule:
         confidence_threshold: str,
     ) -> _PostCheckPayload:
         payload: _PostCheckPayload = {
-            "source_symbol": "",
+            c.Infra.ReportKeys.SOURCE_SYMBOL: "",
             "expected_base_chain": [],
-            "post_checks": ["imports_resolve", "mro_valid"],
+            c.Infra.ReportKeys.POST_CHECKS: ["imports_resolve", "mro_valid"],
             "quality_gates": ["lsp_diagnostics_clean"],
         }
         class_entries = self._entries_for_source_file(
-            config.get("class_nesting", []),
+            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
             file_path,
             confidence_threshold,
         )
         if not class_entries:
             return payload
 
-        source_symbol = class_entries[0].get("loose_name", "")
+        source_symbol = class_entries[0].get(c.Infra.ReportKeys.LOOSE_NAME, "")
         if not source_symbol:
             return payload
 
-        payload["source_symbol"] = source_symbol
+        payload[c.Infra.ReportKeys.SOURCE_SYMBOL] = source_symbol
         policy_doc = self._load_policy_document()
-        rules = policy_doc.get("rules", [])
+        rules = _mapping_list(policy_doc.get(c.Infra.ReportKeys.RULES))
         for rule in rules:
-            if rule.get("source_symbol", "") != source_symbol:
+            if rule.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "") != source_symbol:
                 continue
 
-            expected_chain = rule.get("expected_base_chain", [])
-            payload["expected_base_chain"] = list(expected_chain)
+            payload["expected_base_chain"] = _string_list(
+                rule.get("expected_base_chain")
+            )
 
-            post_checks_raw = rule.get("post_checks", [])
+            post_checks_raw = rule.get(c.Infra.ReportKeys.POST_CHECKS, [])
             post_checks: list[str] = []
-            for check in post_checks_raw:
+            if not isinstance(post_checks_raw, list):
+                continue
+            checks = _mapping_list(post_checks_raw)
+            for check in checks:
                 check_type = check.get("type")
-                if check_type is not None:
+                if isinstance(check_type, str):
                     post_checks.append(check_type)
             if post_checks:
-                payload["post_checks"] = post_checks
+                payload[c.Infra.ReportKeys.POST_CHECKS] = post_checks
             break
 
         return payload
 
     def _load_policy_document(self) -> _PolicyDocument:
         try:
-            loaded = cast(
-                "_PolicyDocument",
-                yaml.safe_load(
-                    self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                ),
+            loaded_raw = yaml.safe_load(
+                self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             )
         except (OSError, yaml.YAMLError):
+            return {}
+        try:
+            loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                loaded_raw
+            )
+        except ValidationError:
             return {}
         if not self._policy_document_schema_valid(loaded):
             return {}
@@ -637,26 +649,24 @@ class ClassNestingRefactorRule:
         policy_entry_required = definitions.get("policyEntry", {}).get("required", [])
         class_rule_required = definitions.get("classRule", {}).get("required", [])
 
-        for entry in loaded.get("policy_matrix", []):
+        for entry in _mapping_list(loaded.get("policy_matrix")):
             if not self._has_required_fields(entry, policy_entry_required):
                 return False
 
-        for rule in loaded.get("rules", []):
+        for rule in _mapping_list(loaded.get(c.Infra.ReportKeys.RULES)):
             if not self._has_required_fields(rule, class_rule_required):
                 return False
 
         return True
 
-    def _has_required_fields(self, entry: object, required_fields: object) -> bool:
+    def _has_required_fields(
+        self, entry: t.ContainerValue, required_fields: t.ContainerValue
+    ) -> bool:
         if not isinstance(entry, dict):
             return False
         if not isinstance(required_fields, list):
             return True
-
-        required_items = cast("list[object]", required_fields)
-        keys = [candidate for candidate in required_items if isinstance(candidate, str)]
-
-        return all(key in entry for key in keys)
+        return all(key in entry for key in _string_list(required_fields))
 
     def _scope_applies_to_file(
         self,
@@ -665,12 +675,12 @@ class ClassNestingRefactorRule:
         candidate_file: Path,
     ) -> bool:
         rewrite_scope = self._rewrite_scope(entry)
-        if rewrite_scope == "workspace":
+        if rewrite_scope == c.Infra.ReportKeys.WORKSPACE:
             return True
 
         current_module = self._normalize_module_path(current_file)
         candidate_module = self._normalize_module_path(candidate_file)
-        if rewrite_scope == "file":
+        if rewrite_scope == c.Infra.ReportKeys.FILE:
             return current_module == candidate_module
 
         current_tokens = self._project_scope_tokens(current_file)
@@ -681,11 +691,15 @@ class ClassNestingRefactorRule:
         return current_module == candidate_module
 
     def _rewrite_scope(self, entry: _MappingEntry) -> str:
-        raw_scope = entry.get("rewrite_scope", "file")
+        raw_scope = entry.get(c.Infra.ReportKeys.REWRITE_SCOPE, c.Infra.ReportKeys.FILE)
         scope = raw_scope.strip().lower()
-        if scope in {"file", c.Infra.Toml.PROJECT, "workspace"}:
+        if scope in {
+            c.Infra.ReportKeys.FILE,
+            c.Infra.Toml.PROJECT,
+            c.Infra.ReportKeys.WORKSPACE,
+        }:
             return scope
-        return "file"
+        return c.Infra.ReportKeys.FILE
 
     def _project_scope_tokens(self, path_value: Path) -> set[str]:
         normalized = path_value.as_posix().replace("\\", "/")

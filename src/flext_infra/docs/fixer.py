@@ -145,15 +145,15 @@ class FlextInfraDocFixer:
 
         changes_payload: list[Mapping[str, t.ContainerValue]] = [
             {
-                "file": item.file,
+                c.Infra.ReportKeys.FILE: item.file,
                 "links": item.links,
                 "toc": item.toc,
             }
             for item in items
         ]
         payload: Mapping[str, t.ContainerValue] = {
-            "summary": {
-                "scope": scope.name,
+            c.Infra.ReportKeys.SUMMARY: {
+                c.Infra.ReportKeys.SCOPE: scope.name,
                 "changed_files": len(items),
                 "apply": apply,
             },

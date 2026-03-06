@@ -21,7 +21,7 @@ from flext_infra import FlextInfraCommandRunner, c, output, p
 class WorkspaceMode(StrEnum):
     """Workspace execution mode enumeration."""
 
-    WORKSPACE = "workspace"
+    WORKSPACE = c.Infra.ReportKeys.WORKSPACE
     STANDALONE = "standalone"
 
 
@@ -78,7 +78,7 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
                     c.Infra.Cli.GIT,
                     "-C",
                     str(parent),
-                    "config",
+                    c.Infra.ReportKeys.CONFIG,
                     "--get",
                     "remote.origin.url",
                 ],

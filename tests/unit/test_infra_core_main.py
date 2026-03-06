@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,9 +26,6 @@ from flext_infra.core.__main__ import (
     _run_stub_validate,
     main,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class TestCoreMainBaseMkValidate:

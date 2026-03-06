@@ -354,6 +354,26 @@ class TestsFlextConstants(FlextTestsConstants):
     class Processing(c.Processing):
         """Processing pipeline constants for tests - real inheritance."""
 
+    class StatusEnum(StrEnum):
+        """Reusable test status enum for test fixtures.
+
+        Standard three-state status enum used across multiple test modules.
+        """
+
+        ACTIVE = "active"
+        PENDING = "pending"
+        INACTIVE = "inactive"
+
+    class PriorityEnum(StrEnum):
+        """Reusable test priority enum for test fixtures.
+
+        Standard three-level priority enum used across multiple test modules.
+        """
+
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+
     class Fixtures:
         """Test fixture dataclasses for flext-core tests."""
 
