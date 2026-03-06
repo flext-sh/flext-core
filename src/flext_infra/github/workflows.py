@@ -14,7 +14,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextResult, r, t
+from flext_core import r, t
 from flext_infra import (
     FlextInfraJsonService,
     FlextInfraProjectSelector,
@@ -52,7 +52,7 @@ class FlextInfraWorkflowSyncer:
         self._json = json_io or FlextInfraJsonService()
         self._templates = templates or FlextInfraTemplateEngine()
 
-    def render_template(self, template_path: Path) -> FlextResult[str]:
+    def render_template(self, template_path: Path) -> r[str]:
         """Read and render a workflow template with generated header.
 
         Args:
@@ -78,7 +78,7 @@ class FlextInfraWorkflowSyncer:
         self,
         workspace_root: Path,
         source_workflow: Path | None = None,
-    ) -> FlextResult[Path]:
+    ) -> r[Path]:
         """Resolve the source workflow file path.
 
         Args:
@@ -112,7 +112,7 @@ class FlextInfraWorkflowSyncer:
         rendered_template: str,
         apply: bool = False,
         prune: bool = False,
-    ) -> FlextResult[list[SyncOperation]]:
+    ) -> r[list[SyncOperation]]:
         """Sync workflow to a single project.
 
         Args:
@@ -202,7 +202,7 @@ class FlextInfraWorkflowSyncer:
         report_path: Path | None = None,
         apply: bool = False,
         prune: bool = False,
-    ) -> FlextResult[list[SyncOperation]]:
+    ) -> r[list[SyncOperation]]:
         """Sync workflows across all workspace projects.
 
         Args:

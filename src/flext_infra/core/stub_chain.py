@@ -12,9 +12,8 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
-from flext_infra import FlextInfraCommandRunner, m
-from flext_infra.constants import c
+from flext_core import r
+from flext_infra import FlextInfraCommandRunner, c, m, t
 
 
 class FlextInfraStubSupplyChain:
@@ -70,7 +69,7 @@ class FlextInfraStubSupplyChain:
         self,
         project_dir: Path,
         workspace_root: Path,
-    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Analyze a project for missing stubs and type packages.
 
         Runs mypy for hints and pyrefly for missing imports, then
@@ -114,7 +113,7 @@ class FlextInfraStubSupplyChain:
         self,
         workspace_root: Path,
         project_dirs: list[Path] | None = None,
-    ) -> FlextResult[m.Infra.ValidationReport]:
+    ) -> r[m.Infra.ValidationReport]:
         """Validate stub supply chain across projects.
 
         Args:
@@ -165,7 +164,7 @@ class FlextInfraStubSupplyChain:
         """Run mypy and extract types-package hints."""
         result = self._runner.run(
             [
-                "poetry",
+                c.Infra.Cli.POETRY,
                 "run",
                 "mypy",
                 "src",
@@ -189,10 +188,10 @@ class FlextInfraStubSupplyChain:
         """Run pyrefly check and extract missing imports."""
         result = self._runner.run(
             [
-                "poetry",
+                c.Infra.Cli.POETRY,
                 "run",
-                "pyrefly",
-                "check",
+                c.Infra.Cli.PYREFLY,
+                c.Infra.Cli.RuffCmd.CHECK,
                 "src",
                 "--config",
                 c.Infra.Files.PYPROJECT_FILENAME,

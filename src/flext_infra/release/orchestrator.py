@@ -409,7 +409,12 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
         runner = FlextInfraCommandRunner()
         result = runner.capture(
-            ["git", "log", "--pretty=format:- %h %s (%an)", rev],
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.LOG,
+                "--pretty=format:- %h %s (%an)",
+                rev,
+            ],
             cwd=root,
         )
         if result.is_failure:
@@ -426,7 +431,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         runner = FlextInfraCommandRunner()
         branch = f"release/{version}"
         result = runner.run_checked(
-            ["git", "checkout", "-B", branch],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
             cwd=root,
         )
         if result.is_failure:
@@ -437,7 +442,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         if projects_result.is_success:
             for project in projects_result.value:
                 proj_result = runner.run_checked(
-                    ["git", "checkout", "-B", branch],
+                    [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
                     cwd=project.path,
                 )
                 if proj_result.is_failure:
@@ -453,7 +458,14 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             return r[bool].ok(True)
         runner = FlextInfraCommandRunner()
         return runner.run_checked(
-            ["git", "tag", "-a", tag, "-m", f"release: {tag}"],
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.TAG,
+                "-a",
+                tag,
+                "-m",
+                f"release: {tag}",
+            ],
             cwd=root,
         )
 
@@ -563,7 +575,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         """Find the tag immediately preceding the given tag."""
         runner = FlextInfraCommandRunner()
         result = runner.capture(
-            ["git", "tag", "--sort=-v:refname"],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.TAG, "--sort=-v:refname"],
             cwd=root,
         )
         if result.is_failure:
@@ -581,10 +593,14 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
     def _push_release(self, root: Path, tag: str) -> r[bool]:
         """Push branch and tag to remote origin."""
         runner = FlextInfraCommandRunner()
-        result = runner.run_checked(["git", "push", "origin", "HEAD"], cwd=root)
+        result = runner.run_checked(
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "origin", "HEAD"], cwd=root
+        )
         if result.is_failure:
             return result
-        return runner.run_checked(["git", "push", "origin", tag], cwd=root)
+        return runner.run_checked(
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "origin", tag], cwd=root
+        )
 
     def _update_changelog(
         self,

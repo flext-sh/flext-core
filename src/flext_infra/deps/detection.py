@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from flext_core import FlextResult, r, t
+from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraPatterns,
@@ -18,8 +18,8 @@ from flext_infra import (
     FlextInfraTomlService,
     c,
     m,
+    t,
 )
-from flext_infra.toml_io import TomlMap
 
 type InfraValue = t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | None
 
@@ -110,10 +110,10 @@ class FlextInfraDependencyDetectionService:
         """Classify deptry issues by error code (DEP001-DEP004)."""
         groups = dm.DeptryIssueGroups()
         for item in issues:
-            error_obj = item.get("error")
+            error_obj = item.get(c.Infra.Toml.ERROR)
             if not isinstance(error_obj, Mapping):
                 continue
-            code = error_obj.get("code")
+            code = error_obj.get(c.Infra.Toml.CODE)
             if code == "DEP001":
                 groups.dep001.append(item)
             elif code == "DEP002":
@@ -134,10 +134,14 @@ class FlextInfraDependencyDetectionService:
         return dm.ProjectDependencyReport(
             project=project_name,
             deptry=dm.DeptryReport(
-                missing=[item.get("module") for item in classified.dep001],
-                unused=[item.get("module") for item in classified.dep002],
-                transitive=[item.get("module") for item in classified.dep003],
-                dev_in_runtime=[item.get("module") for item in classified.dep004],
+                missing=[item.get(c.Infra.Toml.MODULE) for item in classified.dep001],
+                unused=[item.get(c.Infra.Toml.MODULE) for item in classified.dep002],
+                transitive=[
+                    item.get(c.Infra.Toml.MODULE) for item in classified.dep003
+                ],
+                dev_in_runtime=[
+                    item.get(c.Infra.Toml.MODULE) for item in classified.dep004
+                ],
                 raw_count=len(deptry_issues),
             ),
         )
@@ -146,7 +150,7 @@ class FlextInfraDependencyDetectionService:
         self,
         workspace_root: Path,
         projects_filter: list[str] | None = None,
-    ) -> FlextResult[list[Path]]:
+    ) -> r[list[Path]]:
         """Discover projects with pyproject.toml in workspace."""
         names = projects_filter or []
         result = self._selector.resolve_projects(workspace_root, names)
@@ -167,7 +171,7 @@ class FlextInfraDependencyDetectionService:
         read_result = self._toml.read(pyproject)
         if read_result.is_failure:
             return []
-        data: TomlMap = read_result.value
+        data: t.Infra.TomlMap = read_result.value
         if not data:
             return []
 
@@ -212,14 +216,14 @@ class FlextInfraDependencyDetectionService:
         limits_path: Path | None = None,
         *,
         include_mypy: bool = True,
-    ) -> FlextResult[dm.TypingsReport]:
+    ) -> r[dm.TypingsReport]:
         """Analyze project and generate typing stubs requirements report."""
         limits = self.load_dependency_limits(limits_path)
         exclude_set: set[str] = set()
 
-        typing_libraries = limits.get("typing_libraries")
+        typing_libraries = limits.get(c.Infra.Toml.TYPING_LIBRARIES)
         if typing_libraries is not None and isinstance(typing_libraries, Mapping):
-            excluded = typing_libraries.get("exclude")
+            excluded = typing_libraries.get(c.Infra.Toml.EXCLUDE)
             if isinstance(excluded, list):
                 exclude_set = {str(item) for item in excluded}
 
@@ -243,12 +247,12 @@ class FlextInfraDependencyDetectionService:
 
         current = self.get_current_typings_from_pyproject(project_path)
         current_set = set(current)
-        python_cfg = limits.get("python")
+        python_cfg = limits.get(c.Infra.Toml.PYTHON)
         python_version = (
-            str(python_cfg.get("version"))
+            str(python_cfg.get(c.Infra.Toml.VERSION))
             if python_cfg is not None
             and isinstance(python_cfg, Mapping)
-            and python_cfg.get("version") is not None
+            and python_cfg.get(c.Infra.Toml.VERSION) is not None
             else None
         )
 
@@ -276,7 +280,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return {}
         limits: MutableMapping[str, InfraValue] = {}
-        toml_data: TomlMap = result.value
+        toml_data: t.Infra.TomlMap = result.value
         for key, value in toml_data.items():
             converted = _to_infra_value(value)
             if converted is not None or value is None:
@@ -293,9 +297,9 @@ class FlextInfraDependencyDetectionService:
         if root.startswith(FlextInfraPatterns.INTERNAL_PREFIXES):
             return None
 
-        typing_libraries = limits.get("typing_libraries")
+        typing_libraries = limits.get(c.Infra.Toml.TYPING_LIBRARIES)
         if typing_libraries is not None and isinstance(typing_libraries, Mapping):
-            module_to_package = typing_libraries.get("module_to_package")
+            module_to_package = typing_libraries.get(c.Infra.Toml.MODULE_TO_PACKAGE)
             if (
                 module_to_package is not None
                 and isinstance(module_to_package, Mapping)
@@ -314,7 +318,7 @@ class FlextInfraDependencyDetectionService:
         config_path: Path | None = None,
         json_output_path: Path | None = None,
         extend_exclude: list[str] | None = None,
-    ) -> FlextResult[tuple[list[IssueMap], int]]:
+    ) -> r[tuple[list[IssueMap], int]]:
         """Run deptry analysis on a project and parse JSON output."""
         config = config_path or (project_path / c.Infra.Files.PYPROJECT_FILENAME)
         if not config.exists():
@@ -370,7 +374,7 @@ class FlextInfraDependencyDetectionService:
         venv_bin: Path,
         *,
         timeout: int = c.Infra.Timeouts.DEFAULT,
-    ) -> FlextResult[tuple[list[str], list[str]]]:
+    ) -> r[tuple[list[str], list[str]]]:
         """Run mypy to detect missing type stubs and hinted packages."""
         mypy_bin = venv_bin / "mypy"
         if not mypy_bin.exists():
@@ -417,7 +421,7 @@ class FlextInfraDependencyDetectionService:
         self,
         workspace_root: Path,
         venv_bin: Path,
-    ) -> FlextResult[tuple[list[str], int]]:
+    ) -> r[tuple[list[str], int]]:
         """Run pip check to detect dependency conflicts in workspace."""
         pip = venv_bin / "pip"
         if not pip.exists():
@@ -445,7 +449,7 @@ _service = FlextInfraDependencyDetectionService()
 def discover_projects(
     workspace_root: Path,
     projects_filter: list[str] | None = None,
-) -> FlextResult[list[Path]]:
+) -> r[list[Path]]:
     """Discover projects with pyproject.toml in workspace."""
     return _service.discover_projects(workspace_root, projects_filter=projects_filter)
 
@@ -457,7 +461,7 @@ def run_deptry(
     config_path: Path | None = None,
     json_output_path: Path | None = None,
     extend_exclude: list[str] | None = None,
-) -> FlextResult[tuple[list[IssueMap], int]]:
+) -> r[tuple[list[IssueMap], int]]:
     """Run deptry analysis on a project and parse JSON output."""
     return _service.run_deptry(
         project_path,
@@ -471,7 +475,7 @@ def run_deptry(
 def run_pip_check(
     workspace_root: Path,
     venv_bin: Path,
-) -> FlextResult[tuple[list[str], int]]:
+) -> r[tuple[list[str], int]]:
     """Run pip check to detect dependency conflicts in workspace."""
     return _service.run_pip_check(workspace_root, venv_bin)
 
@@ -501,7 +505,7 @@ def run_mypy_stub_hints(
     venv_bin: Path,
     *,
     timeout: int = c.Infra.Timeouts.DEFAULT,
-) -> FlextResult[tuple[list[str], list[str]]]:
+) -> r[tuple[list[str], list[str]]]:
     """Run mypy to detect missing type stubs and hinted packages."""
     return _service.run_mypy_stub_hints(project_path, venv_bin, timeout=timeout)
 
@@ -525,7 +529,7 @@ def get_required_typings(
     limits_path: Path | None = None,
     *,
     include_mypy: bool = True,
-) -> FlextResult[dm.TypingsReport]:
+) -> r[dm.TypingsReport]:
     """Analyze project and generate typing stubs requirements report."""
     return _service.get_required_typings(
         project_path,

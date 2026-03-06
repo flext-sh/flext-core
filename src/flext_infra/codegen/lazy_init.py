@@ -21,13 +21,11 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r
-from flext_infra.constants import c
-from flext_infra.output import output
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_core import r, s
+from flext_infra import FlextInfraCommandRunner, c, output
 
 
-class FlextInfraCodegenLazyInit(FlextService[int]):
+class FlextInfraCodegenLazyInit(s[int]):
     """Generates ``__init__.py`` with PEP 562 lazy imports.
 
     This service scans ``__init__.py`` files under ``src/`` directories in a
@@ -503,4 +501,10 @@ def _run_ruff_fix(path: Path) -> None:
     """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
     with contextlib.suppress(FileNotFoundError):
         runner = FlextInfraCommandRunner()
-        runner.run_checked(["ruff", "check", "--fix", "--quiet", str(path)])
+        runner.run_checked([
+            c.Infra.Cli.RUFF,
+            c.Infra.Cli.RuffCmd.CHECK,
+            "--fix",
+            "--quiet",
+            str(path),
+        ])

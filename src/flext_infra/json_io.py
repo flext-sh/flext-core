@@ -107,11 +107,13 @@ class FlextInfraJsonService(s[bool]):
         return r[bool].ok(True)
 
 
-# Module-level convenience functions for direct usage without instantiation
+# Module-level convenience functions — delegate to u.Infra.Io namespace
 
 
 def read_json(path: Path) -> r[Mapping[str, t.ContainerValue]]:
     """Read and parse a JSON file (convenience function).
+
+    Delegates to ``u.Infra.Io.read_json()``.
 
     Args:
         path: Source file path.
@@ -119,11 +121,6 @@ def read_json(path: Path) -> r[Mapping[str, t.ContainerValue]]:
     Returns:
         r with parsed JSON data. Returns empty mapping
         if the file does not exist.
-
-    Example:
-        >>> result = read_json(Path("config.json"))
-        >>> if result.is_success:
-        ...     data = result.value
 
     """
     return FlextInfraJsonService().read(path)
@@ -138,7 +135,7 @@ def write_json(
 ) -> r[bool]:
     """Write a JSON payload to a file (convenience function).
 
-    Creates parent directories as needed.
+    Delegates to ``u.Infra.Io.write_json()``.
 
     Args:
         path: Destination file path.
@@ -148,10 +145,6 @@ def write_json(
 
     Returns:
         r[bool] with True on success.
-
-    Example:
-        >>> result = write_json(Path("output.json"), {"key": "value"})
-        >>> assert result.is_success
 
     """
     return FlextInfraJsonService().write(

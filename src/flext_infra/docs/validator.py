@@ -14,7 +14,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextLogger, FlextResult, r
+from flext_core import FlextLogger, r
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     FlextInfraDocScope,
@@ -81,7 +81,7 @@ class FlextInfraDocValidator:
         output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         check: str = "all",
         apply: bool = False,
-    ) -> FlextResult[list[ValidateReport]]:
+    ) -> r[list[ValidateReport]]:
         """Run documentation validation across project scopes.
 
         Args:

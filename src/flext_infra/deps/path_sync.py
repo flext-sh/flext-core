@@ -211,7 +211,7 @@ def main() -> int:
         if root_data_result.is_success:
             root_project = root_data_result.unwrap().get(c.Infra.Toml.PROJECT)
             if isinstance(root_project, dict):
-                root_name = root_project.get("name")
+                root_name = root_project.get(c.Infra.Toml.NAME)
                 if isinstance(root_name, str) and root_name:
                     internal_names.add(root_name)
 
@@ -263,7 +263,7 @@ def main() -> int:
         project_obj = data_result.unwrap().get(c.Infra.Toml.PROJECT)
         if not isinstance(project_obj, dict):
             continue
-        project_name = project_obj.get("name")
+        project_name = project_obj.get(c.Infra.Toml.NAME)
         if isinstance(project_name, str) and project_name:
             internal_names.add(project_name)
 
@@ -277,7 +277,7 @@ def main() -> int:
         project_obj = data_result.unwrap().get(c.Infra.Toml.PROJECT)
         if not isinstance(project_obj, dict):
             continue
-        project_name = project_obj.get("name")
+        project_name = project_obj.get(c.Infra.Toml.NAME)
         if isinstance(project_name, str) and project_name:
             internal_names.add(project_name)
 

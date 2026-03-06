@@ -14,8 +14,6 @@ import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from yaml import safe_load
-
 from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
@@ -24,35 +22,18 @@ from flext_infra import (
     c,
     m,
     t,
+    u,
 )
 
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
-    """Load YAML file safely, returning empty mapping on missing/invalid."""
-    raw = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-    parsed = safe_load(raw)
-    if parsed is None:
-        return {}
-    if not isinstance(parsed, dict):
-        msg = f"rules.yml must be a mapping: {path}"
-        raise TypeError(msg)
-    return dict(parsed)
+    """Load YAML file safely; delegates to ``u.Infra.Yaml``."""
+    return u.Yaml.safe_load_yaml(path)
 
 
 def _normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:
-    """Validate and normalize a list[str] config field."""
-    if value is None:
-        return []
-    if isinstance(value, list):
-        out: list[str] = []
-        for item in value:
-            if not isinstance(item, str):
-                msg = f"{field} must be list[str]"
-                raise TypeError(msg)
-            out.append(item)
-        return out
-    msg = f"{field} must be list[str]"
-    raise TypeError(msg)
+    """Validate and normalize a list[str] config field; delegates to ``u.Infra.Yaml``."""
+    return u.Yaml.normalize_string_list(value, field)
 
 
 class FlextInfraSkillValidator:
@@ -227,7 +208,13 @@ class FlextInfraSkillValidator:
         if not rule_file.exists():
             return 0
 
-        cmd = ["sg", "scan", "--rule", str(rule_file), "--json=stream"]
+        cmd = [
+            c.Infra.Cli.SG,
+            c.Infra.Cli.SgCmd.SCAN,
+            "--rule",
+            str(rule_file),
+            "--json=stream",
+        ]
         for pat in include_globs:
             cmd.extend(["--globs", pat])
         for pat in exclude_globs:

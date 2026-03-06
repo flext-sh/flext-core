@@ -176,8 +176,13 @@ class {class_name}({base_class}):
     def run_ruff_fix(path: Path) -> None:
         """Run ruff check --fix and ruff format on a file."""
         runner = FlextInfraCommandRunner()
-        runner.run_checked(["ruff", "check", "--fix", str(path)])
-        runner.run_checked(["ruff", "format", str(path)])
+        runner.run_checked([
+            c.Infra.Cli.RUFF,
+            c.Infra.Cli.RuffCmd.CHECK,
+            "--fix",
+            str(path),
+        ])
+        runner.run_checked([c.Infra.Cli.RUFF, c.Infra.Cli.RuffCmd.FORMAT, str(path)])
 
     @staticmethod
     def unparse_and_format(tree: ast.Module, path: Path) -> str:

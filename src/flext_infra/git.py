@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraCommandRunner
+from flext_infra import FlextInfraCommandRunner, c, p
 
 
 class FlextInfraGitService(s[str]):
@@ -22,10 +22,11 @@ class FlextInfraGitService(s[str]):
     Delegates to ``FlextInfraCommandRunner`` for subprocess execution.
     """
 
-    def __init__(self, runner: FlextInfraCommandRunner | None = None) -> None:
+    def __init__(self, runner: p.Infra.SafetyRunner | None = None) -> None:
         """Initialize the Git service."""
         super().__init__()
-        self._runner = runner or FlextInfraCommandRunner()
+        selected_runner = runner or FlextInfraCommandRunner()
+        self._runner: p.Infra.SafetyRunner = selected_runner
 
     def current_branch(self, repo_root: Path) -> r[str]:
         """Return the name of the current active branch.
@@ -38,7 +39,7 @@ class FlextInfraGitService(s[str]):
 
         """
         return self._runner.capture(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            [c.Infra.Cli.GIT, "rev-parse", "--abbrev-ref", "HEAD"],
             cwd=repo_root,
         )
 
@@ -62,7 +63,7 @@ class FlextInfraGitService(s[str]):
             r[str] with command output.
 
         """
-        return self._runner.capture(["git", *cmd], cwd=cwd)
+        return self._runner.capture([c.Infra.Cli.GIT, *cmd], cwd=cwd)
 
     def tag_exists(self, repo_root: Path, tag: str) -> r[bool]:
         """Check if a specific tag exists in the repository.
@@ -76,7 +77,7 @@ class FlextInfraGitService(s[str]):
 
         """
         result = self._runner.capture(
-            ["git", "tag", "-l", tag],
+            [c.Infra.Cli.GIT, "tag", "-l", tag],
             cwd=repo_root,
         )
         if result.is_success:

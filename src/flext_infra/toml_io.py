@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import tomllib
-from collections.abc import MutableMapping
 from pathlib import Path
 from typing import override
 
@@ -19,20 +18,7 @@ import tomlkit.exceptions
 from tomlkit.items import Table
 
 from flext_core import r, s
-from flext_infra import c, t
-
-type TomlScalar = t.Primitives | None
-type TomlValue = (
-    TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
-)
-type TomlMap = MutableMapping[str, TomlValue]
-type TomlMutableMap = MutableMapping[str, TomlValue]
-
-
-def _as_toml_mapping(value: TomlValue) -> TomlMutableMap | None:
-    if isinstance(value, MutableMapping):
-        return value
-    return None
+from flext_infra import c, t, u
 
 
 class FlextInfraTomlService(s[bool]):
@@ -47,11 +33,11 @@ class FlextInfraTomlService(s[bool]):
         super().__init__()
 
     @staticmethod
-    def build_table(data: TomlMap) -> Table:
+    def build_table(data: t.Infra.TomlMap) -> Table:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
-            nested_mapping = _as_toml_mapping(value)
+            nested_mapping = u.Infra.Toml.as_toml_mapping(value)
             if nested_mapping is not None:
                 table[key] = FlextInfraTomlService.build_table(nested_mapping)
             else:
@@ -59,7 +45,10 @@ class FlextInfraTomlService(s[bool]):
         return table
 
     @staticmethod
-    def value_differs(current: TomlValue, expected: TomlValue) -> bool:
+    def value_differs(
+        current: t.Infra.TomlValue,
+        expected: t.Infra.TomlValue,
+    ) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.
@@ -73,7 +62,7 @@ class FlextInfraTomlService(s[bool]):
         """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> r[TomlMap]:
+    def read(self, path: Path) -> r[t.Infra.TomlMap]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
@@ -84,15 +73,15 @@ class FlextInfraTomlService(s[bool]):
 
         """
         if not path.exists():
-            return r[TomlMap].ok({})
+            return r[t.Infra.TomlMap].ok({})
         try:
             data_raw = tomllib.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
-            data: TomlMap = data_raw
-            return r[TomlMap].ok(data)
+            data: t.Infra.TomlMap = data_raw
+            return r[t.Infra.TomlMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[TomlMap].fail(f"TOML read error: {exc}")
+            return r[t.Infra.TomlMap].fail(f"TOML read error: {exc}")
 
     def read_document(self, path: Path) -> r[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
@@ -120,8 +109,8 @@ class FlextInfraTomlService(s[bool]):
 
     def sync_mapping(
         self,
-        target: TomlMutableMap,
-        canonical: TomlMap,
+        target: t.Infra.TomlMutableMap,
+        canonical: t.Infra.TomlMap,
         *,
         prune_extras: bool,
         prefix: str,
@@ -133,10 +122,12 @@ class FlextInfraTomlService(s[bool]):
         for key, expected in canonical.items():
             current = target.get(key)
             path = f"{prefix}.{key}" if prefix else key
-            expected_mapping = _as_toml_mapping(expected)
+            expected_mapping = u.Infra.Toml.as_toml_mapping(expected)
             if expected_mapping is not None:
                 current_mapping = (
-                    _as_toml_mapping(current) if current is not None else None
+                    u.Infra.Toml.as_toml_mapping(current)
+                    if current is not None
+                    else None
                 )
                 if current_mapping is None:
                     target[key] = expected_mapping
@@ -172,7 +163,7 @@ class FlextInfraTomlService(s[bool]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | MutableMapping[str, TomlValue],
+        payload: tomlkit.TOMLDocument | t.Infra.TomlMutableMap,
     ) -> r[bool]:
         """Write a TOML payload to a file.
 
@@ -194,7 +185,7 @@ class FlextInfraTomlService(s[bool]):
                 # Convert dict to TOMLDocument
                 doc = tomlkit.document()
                 for key, value in payload.items():
-                    nested_mapping = _as_toml_mapping(value)
+                    nested_mapping = u.Infra.Toml.as_toml_mapping(value)
                     if nested_mapping is not None:
                         doc[key] = self.build_table(nested_mapping)
                     else:

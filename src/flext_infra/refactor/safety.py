@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import overload
 
 from flext_core import r
+from flext_core.utilities import FlextUtilities
 from flext_infra import FlextInfraCommandRunner, c, m, p
 
 
 def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
+    """Generate ISO timestamp; delegates to ``u.generate_iso_timestamp()``."""
+    return FlextUtilities.generate_iso_timestamp()
 
 
 class FlextInfraRefactorSafetyManager:
@@ -88,7 +90,7 @@ class FlextInfraRefactorSafetyManager:
     def is_git_repository(self, workspace_root: Path) -> bool:
         """Check whether *workspace_root* sits inside a Git work-tree."""
         result = self._runner.run_checked(
-            ["git", "rev-parse", "--is-inside-work-tree"],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.REV_PARSE, "--is-inside-work-tree"],
             cwd=workspace_root,
         )
         return result.is_success
@@ -105,7 +107,7 @@ class FlextInfraRefactorSafetyManager:
             return r[str].ok("")
 
         status_result = self._runner.capture(
-            ["git", "status", "--porcelain"],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STATUS, "--porcelain"],
             cwd=workspace_root,
         )
         if status_result.is_failure:
@@ -117,14 +119,28 @@ class FlextInfraRefactorSafetyManager:
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         message = f"{label}:{stamp}"
         stash_result = self._runner.run_checked(
-            ["git", "stash", "push", "--include-untracked", "-m", message],
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.STASH,
+                "push",
+                "--include-untracked",
+                "-m",
+                message,
+            ],
             cwd=workspace_root,
         )
         if stash_result.is_failure:
             return r[str].fail(stash_result.error or "git stash push failed")
 
         ref_result = self._runner.capture(
-            ["git", "stash", "list", "-n", "1", "--format=%gd"],
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.STASH,
+                "list",
+                "-n",
+                "1",
+                "--format=%gd",
+            ],
             cwd=workspace_root,
         )
         if ref_result.is_failure:
@@ -192,7 +208,7 @@ class FlextInfraRefactorSafetyManager:
     def _rollback_to_stash(self, workspace_root: Path, stash_ref: str) -> r[bool]:
         if not self.is_git_repository(workspace_root):
             return r[bool].ok(True)
-        command = ["git", "stash", "pop"]
+        command = [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STASH, "pop"]
         if stash_ref:
             command.append(stash_ref)
         return self._runner.run_checked(command, cwd=workspace_root)

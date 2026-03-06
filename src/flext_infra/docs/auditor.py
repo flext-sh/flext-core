@@ -19,7 +19,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextLogger, FlextResult, r, t
+from flext_core import FlextLogger, r, t
 from flext_infra import FlextInfraPatterns, output
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -141,7 +141,7 @@ class FlextInfraDocAuditor:
         output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         check: str = "all",
         strict: bool = True,
-    ) -> FlextResult[list[AuditReport]]:
+    ) -> r[list[AuditReport]]:
         """Run documentation audit across project scopes.
 
         Args:

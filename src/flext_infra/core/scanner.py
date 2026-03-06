@@ -67,7 +67,7 @@ class FlextInfraTextPatternScanner:
         *,
         includes: list[str],
         excludes: list[str] | None = None,
-        match_mode: str = "present",
+        match_mode: str = c.Infra.MatchModes.PRESENT,
     ) -> r[Mapping[str, t.Scalar]]:
         """Scan files under root for regex matches.
 

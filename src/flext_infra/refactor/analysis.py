@@ -13,28 +13,18 @@ import libcst as cst
 import yaml
 
 from flext_infra import c
+from flext_infra._utilities.refactor import FlextInfraUtilitiesRefactor
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
 
 def _dotted_name(expr: cst.BaseExpression) -> str:
-    if isinstance(expr, cst.Name):
-        return expr.value
-    if isinstance(expr, cst.Attribute):
-        root = _dotted_name(expr.value)
-        if not root:
-            return ""
-        return f"{root}.{expr.attr.value}"
-    return ""
+    """Extract dotted name; delegates to ``u.Infra.Refactor``."""
+    return FlextInfraUtilitiesRefactor.dotted_name(expr)
 
 
 def _root_name(expr: cst.BaseExpression) -> str:
-    if isinstance(expr, cst.Name):
-        return expr.value
-    if isinstance(expr, cst.Attribute):
-        return _root_name(expr.value)
-    if isinstance(expr, cst.Call):
-        return _root_name(expr.func)
-    return ""
+    """Extract root name; delegates to ``u.Infra.Refactor``."""
+    return FlextInfraUtilitiesRefactor.root_name(expr)
 
 
 class _HelperFileAnalysis(TypedDict):
@@ -59,11 +49,8 @@ class _ClassNestingViolation(TypedDict):
 
 
 def _asname_to_local(asname: cst.AsName | None) -> str | None:
-    if asname is None:
-        return None
-    if isinstance(asname.name, cst.Name):
-        return asname.name.value
-    return None
+    """Extract local alias; delegates to ``u.Infra.Refactor``."""
+    return FlextInfraUtilitiesRefactor.asname_to_local(asname)
 
 
 class _ImportDependencyCollector(cst.CSTVisitor):

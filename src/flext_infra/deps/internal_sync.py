@@ -209,7 +209,7 @@ class FlextInfraInternalDependencySyncService:
         for dep_name, dep_value in deps.items():
             if not isinstance(dep_value, dict):
                 continue
-            dep_path = dep_value.get("path")
+            dep_path = dep_value.get(c.Infra.Toml.PATH)
             if not isinstance(dep_path, str):
                 continue
             repo_name = self._is_internal_path_dep(dep_path)
@@ -378,7 +378,7 @@ class FlextInfraInternalDependencySyncService:
         return "main"
 
     def _run_git(self, args: list[str], cwd: Path) -> r[m.Infra.CommandOutput]:
-        return self._runner.run_raw(["git", *args], cwd=cwd)
+        return self._runner.run_raw([c.Infra.Cli.GIT, *args], cwd=cwd)
 
     def _synthesized_repo_map(
         self,

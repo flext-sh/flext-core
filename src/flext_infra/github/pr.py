@@ -17,7 +17,7 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextResult, r, t
+from flext_core import r, t
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
@@ -50,7 +50,7 @@ class FlextInfraPrManager:
         selector: str,
         *,
         strict: bool = False,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Run PR checks.
 
         Args:
@@ -72,7 +72,7 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].ok({"status": "checks-nonblocking"})
         return r[Mapping[str, t.Scalar]].fail(result.error or "checks failed")
 
-    def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
+    def close(self, repo_root: Path, selector: str) -> r[bool]:
         """Close a PR.
 
         Args:
@@ -97,7 +97,7 @@ class FlextInfraPrManager:
         body: str,
         *,
         draft: bool = False,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Create a new PR or report existing one.
 
         Args:
@@ -163,7 +163,7 @@ class FlextInfraPrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -221,7 +221,7 @@ class FlextInfraPrManager:
         self,
         repo_root: Path,
         head: str,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Find an open PR for the given head branch.
 
         Args:
@@ -269,7 +269,7 @@ class FlextInfraPrManager:
         repo_root: Path,
         base: str,
         head: str,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Get PR status for the given head branch.
 
         Args:
@@ -304,7 +304,7 @@ class FlextInfraPrManager:
             info["pr_draft"] = cast("t.Scalar", pr.get("isDraft"))
         return r[Mapping[str, t.Scalar]].ok(info)
 
-    def view(self, repo_root: Path, selector: str) -> FlextResult[str]:
+    def view(self, repo_root: Path, selector: str) -> r[str]:
         """View a PR by selector (number or branch name).
 
         Args:
@@ -324,7 +324,7 @@ class FlextInfraPrManager:
         self,
         repo_root: Path,
         head: str,
-    ) -> FlextResult[Mapping[str, str]]:
+    ) -> r[Mapping[str, str]]:
         """Trigger release workflow if repo supports it.
 
         Args:

@@ -13,7 +13,7 @@ import shutil
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
+from flext_core import r, t
 from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService, m
 
 
@@ -38,7 +38,7 @@ class FlextInfraWorkflowLinter:
         *,
         report_path: Path | None = None,
         strict: bool = False,
-    ) -> FlextResult[Mapping[str, t.Scalar]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Run actionlint on the repository and return results.
 
         Args:

@@ -14,11 +14,11 @@ from jinja2 import (
     select_autoescape,
 )
 
-from flext_core import FlextService, r, t
-from flext_infra import c, m
+from flext_core import r, s
+from flext_infra import c, m, t
 
 
-class FlextInfraBaseMkTemplateEngine(FlextService[str]):
+class FlextInfraBaseMkTemplateEngine(s[str]):
     """Render base.mk templates with configuration context."""
 
     def __init__(self) -> None:
@@ -43,12 +43,12 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
     def _default_config() -> m.Infra.BaseMkConfig:
         """Return the default base.mk configuration."""
         return m.Infra.BaseMkConfig(
-            project_name="unnamed",
+            project_name=c.Infra.Defaults.UNNAMED,
             python_version="3.13",
-            core_stack="python",
+            core_stack=c.Infra.Toml.PYTHON,
             package_manager=c.Infra.Toml.POETRY,
-            source_dir="src",
-            tests_dir="tests",
+            source_dir=c.Infra.Paths.DEFAULT_SRC_DIR,
+            tests_dir=c.Infra.Directories.TESTS,
             lint_gates=["lint", "format", "pyrefly", "mypy", "pyright"],
             test_command="pytest",
         )

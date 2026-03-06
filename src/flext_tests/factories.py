@@ -496,7 +496,7 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         | builtins.list[BaseModel]
         | Mapping[str, BaseModel]
         | r[BaseModel]
-        | r[list[BaseModel]]
+        | r[builtins.list[BaseModel]]
         | r[Mapping[str, BaseModel]]
     ):
         """Unified model factory - creates any model type with full customization.

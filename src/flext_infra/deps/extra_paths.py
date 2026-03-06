@@ -137,8 +137,8 @@ def sync_one(
     if not isinstance(tool, dict):
         return r[bool].ok(False)
     tool_dict = tool
-    pyright = tool_dict.get("pyright")
-    mypy = tool_dict.get("mypy")
+    pyright = tool_dict.get(c.Infra.Toml.PYRIGHT)
+    mypy = tool_dict.get(c.Infra.Toml.MYPY)
     if not isinstance(pyright, dict):
         return r[bool].ok(False)
 
@@ -163,7 +163,7 @@ def sync_one(
             changed = True
 
     if not is_root:
-        pyrefly = tool_dict.get("pyrefly")
+        pyrefly = tool_dict.get(c.Infra.Toml.PYREFLY)
         if isinstance(pyrefly, dict):
             pyrefly_dict = pyrefly
             base_search: list[str] = ["."] + dep_paths

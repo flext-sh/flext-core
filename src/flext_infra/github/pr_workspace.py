@@ -141,7 +141,7 @@ class FlextInfraPrWorkspaceManager:
             return r[bool].ok(True)
 
         checkout_result = self._runner.run(
-            ["git", "checkout", branch],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, branch],
             cwd=repo_root,
         )
         if checkout_result.is_success:
@@ -150,21 +150,27 @@ class FlextInfraPrWorkspaceManager:
         detail = (checkout_result.error or "").lower()
         if "local changes" in detail or "would be overwritten" in detail:
             return self._runner.run_checked(
-                ["git", "checkout", "-B", branch],
+                [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
                 cwd=repo_root,
             )
 
         fetch_result = self._runner.run(
-            ["git", "fetch", "origin", branch],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.FETCH, "origin", branch],
             cwd=repo_root,
         )
         if fetch_result.is_success:
             return self._runner.run_checked(
-                ["git", "checkout", "-B", branch, f"origin/{branch}"],
+                [
+                    c.Infra.Cli.GIT,
+                    c.Infra.Cli.GitCmd.CHECKOUT,
+                    "-B",
+                    branch,
+                    f"origin/{branch}",
+                ],
                 cwd=repo_root,
             )
         return self._runner.run_checked(
-            ["git", "checkout", "-B", branch],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
             cwd=repo_root,
         )
 
@@ -190,37 +196,44 @@ class FlextInfraPrWorkspaceManager:
             return r[bool].ok(True)
 
         add_result = self._runner.run_checked(
-            ["git", "add", "-A"],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.ADD, "-A"],
             cwd=repo_root,
         )
         if add_result.is_failure:
             return r[bool].fail(add_result.error or "git add failed")
 
         staged_result: r[str] = self._runner.capture(
-            ["git", "diff", "--cached", "--name-only"],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.DIFF, "--cached", "--name-only"],
             cwd=repo_root,
         )
         if staged_result.is_success and not staged_result.value.strip():
             return r[bool].ok(True)
 
         commit_result = self._runner.run_checked(
-            ["git", "commit", "-m", "chore: checkpoint pending changes"],
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.COMMIT,
+                "-m",
+                "chore: checkpoint pending changes",
+            ],
             cwd=repo_root,
         )
         if commit_result.is_failure:
             return r[bool].fail(commit_result.error or "git commit failed")
 
         push_cmd = (
-            ["git", "push", "-u", "origin", branch] if branch else ["git", "push"]
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "-u", "origin", branch]
+            if branch
+            else [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH]
         )
         push_result = self._runner.run(push_cmd, cwd=repo_root)
         if push_result.is_success:
             return r[bool].ok(True)
 
         rebase_cmd = (
-            ["git", "pull", "--rebase", "origin", branch]
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PULL, "--rebase", "origin", branch]
             if branch
-            else ["git", "pull", "--rebase"]
+            else [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PULL, "--rebase"]
         )
         rebase_result = self._runner.run_checked(rebase_cmd, cwd=repo_root)
         if rebase_result.is_failure:
@@ -239,7 +252,7 @@ class FlextInfraPrWorkspaceManager:
 
         """
         status_result: r[str] = self._runner.capture(
-            ["git", "status", "--porcelain"],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STATUS, "--porcelain"],
             cwd=repo_root,
         )
         if status_result.is_failure:

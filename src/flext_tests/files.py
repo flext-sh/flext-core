@@ -1605,7 +1605,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                 else:
                     # YAML parsing
-                    parsed_raw = _yaml_safe_load(text) if text.strip() else {}
+                    parsed_raw = (
+                        _yaml_safe_load(text)
+                        if text.strip()
+                        else m.ConfigMap(root={}).root
+                    )
 
                 if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult, r, t
+from flext_core import FlextLogger, r, t
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraJsonService,
@@ -146,7 +146,7 @@ class FlextInfraRuntimeDevDependencyDetector:
             return [name.strip() for name in args.projects.split(",") if name.strip()]
         return None
 
-    def run(self, argv: list[str] | None = None) -> FlextResult[int]:
+    def run(self, argv: list[str] | None = None) -> r[int]:
         """Execute dependency detection and generate workspace report."""
         root_result = self._paths.workspace_root_from_file(__file__)
         if root_result.is_failure:
@@ -188,11 +188,11 @@ class FlextInfraRuntimeDevDependencyDetector:
         if do_typings:
             limits_data = self._deps.load_dependency_limits(limits_path)
             if limits_data:
-                python_cfg = limits_data.get("python")
+                python_cfg = limits_data.get(c.Infra.Toml.PYTHON)
                 python_version = (
-                    str(python_cfg.get("version"))
+                    str(python_cfg.get(c.Infra.Toml.VERSION))
                     if isinstance(python_cfg, dict)
-                    and python_cfg.get("version") is not None
+                    and python_cfg.get(c.Infra.Toml.VERSION) is not None
                     else None
                 )
                 report_model.dependency_limits = ddm.DependencyLimitsInfo(
@@ -245,7 +245,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                             continue
                         run = self._runner.run_raw(
                             [
-                                "poetry",
+                                c.Infra.Cli.POETRY,
                                 "add",
                                 "--group",
                                 c.Infra.Directories.TYPINGS,
@@ -308,7 +308,7 @@ class FlextInfraRuntimeDevDependencyDetector:
 
         total_issues = 0
         for payload in projects_report.values():
-            deptry_obj = payload.get("deptry")
+            deptry_obj = payload.get(c.Infra.Toml.DEPTRY)
             if isinstance(deptry_obj, dict):
                 raw_count = deptry_obj.get("raw_count", 0)
                 if isinstance(raw_count, int):

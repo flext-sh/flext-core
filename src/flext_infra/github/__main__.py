@@ -72,7 +72,7 @@ def _run_lint(argv: list[str]) -> int:
         output.error(lint_result.error or "lint failed")
         return 1
 
-    _ = lint_result.value.get("status", "unknown")
+    _ = lint_result.value.get("status", c.Infra.Defaults.UNKNOWN)
     return 0
 
 

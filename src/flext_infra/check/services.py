@@ -17,15 +17,13 @@ import tomlkit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 from tomlkit import items
 
-from flext_core import FlextLogger, FlextService, r, t
+from flext_core import FlextLogger, c, m, r, s, t
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraDiscoveryService,
     FlextInfraJsonService,
     FlextInfraPathResolver,
     FlextInfraReportingService,
-    c,
-    m,
     output,
 )
 
@@ -343,7 +341,7 @@ class _SarifReport(BaseModel):
     runs: list[_SarifRun] = Field(default_factory=list, description="SARIF runs")
 
 
-class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
+class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
     """Run quality gates across one or more workspace projects."""
 
     def __init__(self, workspace_root: Path | None = None) -> None:
@@ -415,7 +413,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 if not gate_result:
                     continue
                 for issue in gate_result.issues:
-                    rule_id = issue.code or "unknown"
+                    rule_id = issue.code or c.Infra.Defaults.UNKNOWN
                     if rule_id not in rules_seen:
                         rules_seen.add(rule_id)
                         rules.append(
@@ -782,7 +780,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         src_path = project_dir / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_path.exists():
             return self._build_gate_result(
-                gate="security",
+                gate=c.Infra.Gates.SECURITY,
                 project=project_dir.name,
                 passed=True,
                 issues=[],
@@ -793,11 +791,11 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             [
                 sys.executable,
                 "-m",
-                "bandit",
+                c.Infra.Cli.BANDIT,
                 "-r",
                 c.Infra.Paths.DEFAULT_SRC_DIR,
                 "-f",
-                "json",
+                c.Infra.Cli.OUTPUT_JSON,
                 "-q",
                 "-ll",
             ],
@@ -820,7 +818,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         except (json.JSONDecodeError, ValidationError):
             pass
         return self._build_gate_result(
-            gate="security",
+            gate=c.Infra.Gates.SECURITY,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -832,7 +830,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         started = time.monotonic()
         if not (project_dir / c.Infra.Files.GO_MOD).exists():
             return self._build_gate_result(
-                gate="go",
+                gate=c.Infra.Gates.GO,
                 project=project_dir.name,
                 passed=True,
                 issues=[],
@@ -843,7 +841,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         raw_output = ""
 
         vet_result = self._run(
-            ["go", "vet", "./..."], project_dir, timeout=c.Infra.Timeouts.CI
+            [c.Infra.Cli.GOVET, "vet", "./..."],
+            project_dir,
+            timeout=c.Infra.Timeouts.CI,
         )
         raw_output = "\n".join(
             part for part in (vet_result.stdout, vet_result.stderr) if part
@@ -857,7 +857,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                     file=match.group("file"),
                     line=int(match.group("line")),
                     column=int(match.group("col") or 1),
-                    code="govet",
+                    code=c.Infra.Gates.GOVET,
                     message=match.group("msg"),
                 ),
             )
@@ -867,7 +867,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                     file=".",
                     line=1,
                     column=1,
-                    code="govet",
+                    code=c.Infra.Gates.GOVET,
                     message=(
                         vet_result.stdout or vet_result.stderr or "go vet failed"
                     ).strip(),
@@ -878,7 +878,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         if go_files:
             fmt_result = self._run(
                 [
-                    "gofmt",
+                    c.Infra.Cli.GOFMT,
                     "-l",
                     *[str(path.relative_to(project_dir)) for path in go_files],
                 ],
@@ -900,13 +900,13 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                         file=cleaned,
                         line=1,
                         column=1,
-                        code="gofmt",
+                        code=c.Infra.Gates.GOFMT,
                         message="File is not gofmt-formatted",
                     ),
                 )
 
         return self._build_gate_result(
-            gate="go",
+            gate=c.Infra.Gates.GO,
             project=project_dir.name,
             passed=len(issues) == 0,
             issues=issues,
@@ -919,14 +919,14 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         md_files = self._collect_markdown_files(project_dir)
         if not md_files:
             return self._build_gate_result(
-                gate="markdown",
+                gate=c.Infra.Gates.MARKDOWN,
                 project=project_dir.name,
                 passed=True,
                 issues=[],
                 duration=time.monotonic() - started,
                 raw_output="",
             )
-        cmd = ["markdownlint"]
+        cmd = [c.Infra.Cli.MARKDOWNLINT]
         root_config = self._workspace_root / ".markdownlint.json"
         local_config = project_dir / ".markdownlint.json"
         if root_config.exists():
@@ -955,7 +955,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                     file=".",
                     line=1,
                     column=1,
-                    code="markdownlint",
+                    code=c.Infra.Gates.MARKDOWNLINT,
                     message=(
                         result.stdout or result.stderr or "markdownlint failed"
                     ).strip(),
@@ -963,7 +963,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             )
 
         return self._build_gate_result(
-            gate="markdown",
+            gate=c.Infra.Gates.MARKDOWN,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -977,7 +977,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         mypy_dirs = self._dirs_with_py(project_dir, check_dirs)
         if not mypy_dirs:
             return self._build_gate_result(
-                gate="mypy",
+                gate=c.Infra.Gates.MYPY,
                 project=project_dir.name,
                 passed=True,
                 issues=[],
@@ -1006,7 +1006,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             [
                 sys.executable,
                 "-m",
-                "mypy",
+                c.Infra.Cli.MYPY,
                 *mypy_dirs,
                 "--config-file",
                 str(cfg),
@@ -1039,7 +1039,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 continue
 
         return self._build_gate_result(
-            gate="mypy",
+            gate=c.Infra.Gates.MYPY,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -1055,8 +1055,8 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         cmd = [
             sys.executable,
             "-m",
-            "pyrefly",
-            "check",
+            c.Infra.Cli.PYREFLY,
+            c.Infra.Cli.RuffCmd.CHECK,
             *targets,
             "--config",
             c.Infra.Files.PYPROJECT_FILENAME,
@@ -1101,13 +1101,13 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                         file="?",
                         line=0,
                         column=0,
-                        code="pyrefly",
+                        code=c.Infra.Gates.PYREFLY,
                         message=f"Pyrefly reported {count} error(s)",
                     ),
                 ] * count
 
         return self._build_gate_result(
-            gate="pyrefly",
+            gate=c.Infra.Gates.PYREFLY,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -1123,7 +1123,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         if not check_dirs:
             return self._build_gate_result(
-                gate="pyright",
+                gate=c.Infra.Gates.PYRIGHT,
                 project=project_dir.name,
                 passed=True,
                 issues=[],
@@ -1131,7 +1131,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 raw_output="",
             )
         result = self._run(
-            [sys.executable, "-m", "pyright", *check_dirs, "--outputjson"],
+            [sys.executable, "-m", c.Infra.Cli.PYRIGHT, *check_dirs, "--outputjson"],
             project_dir,
             timeout=c.Infra.Timeouts.LONG,
         )
@@ -1153,7 +1153,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             pass
 
         return self._build_gate_result(
-            gate="pyright",
+            gate=c.Infra.Gates.PYRIGHT,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -1166,7 +1166,15 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         check_dirs = self._existing_check_dirs(project_dir)
         targets = check_dirs or ["."]
         result = self._run(
-            [sys.executable, "-m", "ruff", "format", "--check", *targets, "--quiet"],
+            [
+                sys.executable,
+                "-m",
+                c.Infra.Cli.RUFF,
+                c.Infra.Cli.RuffCmd.FORMAT,
+                "--check",
+                *targets,
+                "--quiet",
+            ],
             project_dir,
         )
         issues: list[_CheckIssue] = []
@@ -1187,7 +1195,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                             file=file_path,
                             line=0,
                             column=0,
-                            code="format",
+                            code=c.Infra.Gates.FORMAT,
                             message="Would be reformatted",
                         ),
                     )
@@ -1202,12 +1210,12 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                             file=path,
                             line=0,
                             column=0,
-                            code="format",
+                            code=c.Infra.Gates.FORMAT,
                             message="Would be reformatted",
                         ),
                     )
         return self._build_gate_result(
-            gate="format",
+            gate=c.Infra.Gates.FORMAT,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -1248,7 +1256,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         except (json.JSONDecodeError, ValidationError):
             pass
         return self._build_gate_result(
-            gate="lint",
+            gate=c.Infra.Gates.LINT,
             project=project_dir.name,
             passed=result.returncode == 0,
             issues=issues,
@@ -1257,7 +1265,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
 
 
-class FlextInfraConfigFixer(FlextService[list[str]]):
+class FlextInfraConfigFixer(s[list[str]]):
     """Repair workspace and project pyrefly configuration blocks."""
 
     def __init__(self, workspace_root: Path | None = None) -> None:
@@ -1305,7 +1313,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         if not isinstance(tool, Mapping) or "pyrefly" not in tool:
             return r[list[str]].ok([])
 
-        pyrefly = tool["pyrefly"]
+        pyrefly = tool[c.Infra.Toml.PYREFLY]
         if not isinstance(pyrefly, MutableMapping):
             return r[list[str]].ok([])
 
@@ -1384,7 +1392,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
-        excludes = pyrefly.get("project-excludes")
+        excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
 
         current: list[str] = []
         if isinstance(excludes, list):
@@ -1410,7 +1418,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
-        search_path = pyrefly.get("search-path")
+        search_path = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
 
         if not isinstance(search_path, list):
             return []
@@ -1434,7 +1442,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
                 pyrefly["search-path"] = self._to_array(new_paths)
 
         # Remove nonexistent paths
-        search_raw = pyrefly.get("search-path")
+        search_raw = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
         current_paths: list[t.ContainerValue] = (
             list(search_raw) if isinstance(search_raw, list) else []
         )
@@ -1459,14 +1467,14 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
-        sub_configs = pyrefly.get("sub-config")
+        sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
         if not isinstance(sub_configs, list):
             return []
 
         new_configs: list[t.ContainerValue] = []
         for conf in sub_configs:
-            if isinstance(conf, Mapping) and conf.get("ignore") is True:
-                matches = conf.get("matches", "unknown")
+            if isinstance(conf, Mapping) and conf.get(c.Infra.Toml.IGNORE) is True:
+                matches = conf.get("matches", c.Infra.Defaults.UNKNOWN)
                 fixes.append(f"removed ignore=true sub-config for '{matches}'")
                 continue
             new_configs.append(conf)

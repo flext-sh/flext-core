@@ -78,4 +78,7 @@ class_nesting:
 
         assert result.success
         # Verify type hints preserved in output
-        assert "Optional[int]" in result.output or "int" in result.output
+        assert result.refactored_code is not None
+        assert (
+            "Optional[int]" in result.refactored_code or "int" in result.refactored_code
+        )

@@ -175,19 +175,19 @@ class TestAutomatedFlextLoggings:
                 result = process(dict(input_data))
                 # Check if result is FlextResult or needs wrapping
                 if isinstance(result, r):
-                    return cast("r[t.ContainerValue]", result)
+                    return result
                 return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
-                    return cast("r[t.ContainerValue]", result)
+                    return result
                 return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
-                    return cast("r[t.ContainerValue]", result)
+                    return result
                 return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             # Fallback: if no methods found, return the instance itself as success
             return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))

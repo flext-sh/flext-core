@@ -13,7 +13,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextLogger, FlextResult, r
+from flext_core import FlextLogger, r
 from flext_infra import FlextInfraCommandRunner
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -72,7 +72,7 @@ class FlextInfraDocBuilder:
         project: str | None = None,
         projects: str | None = None,
         output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
-    ) -> FlextResult[list[BuildReport]]:
+    ) -> r[list[BuildReport]]:
         """Build MkDocs sites across project scopes.
 
         Args:

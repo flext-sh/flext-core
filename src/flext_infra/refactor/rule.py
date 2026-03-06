@@ -8,6 +8,8 @@ from typing import Any
 
 import libcst as cst
 
+from flext_infra import c
+
 
 class FlextInfraRefactorRule:
     """Base class for flext_infra refactor rules."""
@@ -15,8 +17,8 @@ class FlextInfraRefactorRule:
     def __init__(self, config: Mapping[str, Any]) -> None:
         """Initialize rule metadata from rule config."""
         self.config = config
-        self.rule_id = config.get("id", "unknown")
-        self.name = config.get("name", self.rule_id)
+        self.rule_id = config.get("id", c.Infra.Defaults.UNKNOWN)
+        self.name = config.get(c.Infra.Toml.NAME, self.rule_id)
         self.description = config.get("description", "")
         self.enabled = config.get("enabled", True)
         self.severity = config.get("severity", "warning")

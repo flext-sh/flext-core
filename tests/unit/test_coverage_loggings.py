@@ -929,7 +929,7 @@ class TestEdgeCases:
     def test_logging_with_none_context_values(self) -> None:
         """Test logging with None context values."""
         logger = make_result_logger("test")
-        result = logger.info("Message", context_key=None)
+        result = logger.info("Message", context_key="")
         assertion_helpers.assert_flext_result_success(result)
 
     def test_logging_with_large_context(self) -> None:

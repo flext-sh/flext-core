@@ -276,7 +276,7 @@ class TestFlextHandlers:
 
         class DictHandler(h[dict[str, t.ContainerValue], str]):
             @override
-            def __init__(self, config: m.CqrsHandler) -> None:
+            def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
@@ -322,7 +322,7 @@ class TestFlextHandlers:
 
         class RestrictiveHandler(h[str, str]):
             @override
-            def __init__(self, config: m.CqrsHandler) -> None:
+            def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
@@ -353,12 +353,12 @@ class TestFlextHandlers:
 
         class ValidationFailingHandler(h[str, str]):
             @override
-            def __init__(self, config: m.CqrsHandler) -> None:
+            def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def validate(self, message: object) -> FlextResult[bool]:
-                _ = message
+            def validate(self, data: object) -> FlextResult[bool]:
+                _ = data
                 return FlextResult[bool].fail("Validation failed for test")
 
             @override
@@ -384,7 +384,7 @@ class TestFlextHandlers:
 
         class ExceptionHandler(h[str, str]):
             @override
-            def __init__(self, config: m.CqrsHandler) -> None:
+            def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override

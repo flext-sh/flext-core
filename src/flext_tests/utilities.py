@@ -51,7 +51,7 @@ def _to_scalar(value: object) -> core_t.Scalar:
         ScalarValue (str | int | float | bool | datetime | None)
 
     """
-    if value is None or isinstance(value, t.Primitives):
+    if isinstance(value, t.Primitives) and value is not None:
         return value
     return str(value)
 

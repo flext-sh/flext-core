@@ -154,6 +154,8 @@ class FlextInfraModels(FlextModels):
             ssh_url: str = Field(default="", description="SSH clone URL")
             https_url: str = Field(default="", description="HTTPS clone URL")
 
+        # -- Census domain models --------------------------------------------------
+
         class CensusViolation(FlextModels.ArbitraryTypesModel):
             """A single namespace violation detected by the census service."""
 
@@ -220,6 +222,22 @@ class FlextInfraModels(FlextModels):
             )
             census_after: FlextInfraModels.Infra.CensusReport = Field(
                 description="Census report after transformations"
+            )
+
+        # -- Dependency domain models ----------------------------------------------
+
+        class DependencyReport(FlextModels.ArbitraryTypesModel):
+            """Report of dependency detection for a single project."""
+
+            project: str = Field(min_length=1, description=_PROJECT_NAME_DESC)
+            missing: list[str] = Field(
+                default_factory=list, description="Missing dependencies"
+            )
+            unused: list[str] = Field(
+                default_factory=list, description="Unused dependencies"
+            )
+            outdated: list[str] = Field(
+                default_factory=list, description="Outdated dependencies"
             )
 
         # -- Refactor domain models -----------------------------------------------
@@ -333,6 +351,27 @@ class FlextInfraModels(FlextModels):
                 family_chains: dict[str, list[str]] = Field(
                     description="Family letter to MRO chain mapping"
                 )
+
+            class Suggestion(FlextModels.ArbitraryTypesModel):
+                """A single refactoring suggestion from analysis."""
+
+                model_config = ConfigDict(frozen=True)
+
+                file: str = Field(min_length=1, description="Source file path")
+                name: str = Field(min_length=1, description="Symbol name")
+                kind: str = Field(description="Symbol kind (function, class, etc.)")
+                target: str = Field(description="Suggested target location")
+                reason: str = Field(default="", description="Reason for suggestion")
+
+            class ManualReviewItem(FlextModels.ArbitraryTypesModel):
+                """An item flagged for manual review during analysis."""
+
+                model_config = ConfigDict(frozen=True)
+
+                file: str = Field(min_length=1, description="Source file path")
+                name: str = Field(min_length=1, description="Symbol name")
+                kind: str = Field(description="Symbol kind (function, class, etc.)")
+                reason: str = Field(description="Reason for manual review")
 
 
 m = FlextInfraModels

@@ -161,6 +161,222 @@ class FlextInfraConstants(FlextConstants):
             GROUP: Final[str] = "group"
             """Poetry group key for dependency groups."""
 
+            NAME: Final[str] = "name"
+            """Project/package name key."""
+
+            VERSION: Final[str] = "version"
+            """Version key within project or tool sections."""
+
+            # -- Tool subsection names ------------------------------------------
+
+            PYREFLY: Final[str] = "pyrefly"
+            """Pyrefly tool section key."""
+
+            MYPY: Final[str] = "mypy"
+            """Mypy tool section key."""
+
+            PYRIGHT: Final[str] = "pyright"
+            """Pyright tool section key."""
+
+            RUFF: Final[str] = "ruff"
+            """Ruff tool section key."""
+
+            DEPTRY: Final[str] = "deptry"
+            """Deptry tool section key."""
+
+            PYTEST: Final[str] = "pytest"
+            """Pytest tool section key (tool.pytest.ini_options)."""
+
+            ISORT: Final[str] = "isort"
+            """Isort tool section key (ruff.lint.isort)."""
+
+            INI_OPTIONS: Final[str] = "ini_options"
+            """Pytest ini_options subsection key."""
+
+            LINT_SECTION: Final[str] = "lint"
+            """Ruff lint subsection key."""
+
+            # -- Config sub-keys -------------------------------------------------
+
+            SEARCH_PATH: Final[str] = "search-path"
+            """Pyrefly search-path config key."""
+
+            PROJECT_EXCLUDES: Final[str] = "project-excludes"
+            """Pyrefly project-excludes config key."""
+
+            SUB_CONFIG: Final[str] = "sub-config"
+            """Pyrefly sub-config key."""
+
+            PYTHON_VERSION_HYPHEN: Final[str] = "python-version"
+            """Pyrefly/pyright python-version config key (hyphenated)."""
+
+            PYTHON_VERSION_UNDERSCORE: Final[str] = "python_version"
+            """Mypy python_version config key (underscored)."""
+
+            EXTEND: Final[str] = "extend"
+            """Ruff extend config key."""
+
+            KNOWN_FIRST_PARTY_HYPHEN: Final[str] = "known-first-party"
+            """Ruff isort known-first-party key (hyphenated)."""
+
+            KNOWN_FIRST_PARTY_UNDERSCORE: Final[str] = "known_first_party"
+            """Ruff isort known_first_party key (underscored)."""
+
+            IGNORE_ERRORS_IN_GENERATED: Final[str] = "ignore-errors-in-generated-code"
+            """Pyrefly ignore-errors-in-generated-code key."""
+
+            MINVERSION: Final[str] = "minversion"
+            """Pytest minversion config key."""
+
+            PYTHON_CLASSES: Final[str] = "python_classes"
+            """Pytest python_classes config key."""
+
+            PYTHON_FILES: Final[str] = "python_files"
+            """Pytest python_files config key."""
+
+            ADDOPTS: Final[str] = "addopts"
+            """Pytest addopts config key."""
+
+            MARKERS: Final[str] = "markers"
+            """Pytest markers config key."""
+
+            PLUGINS: Final[str] = "plugins"
+            """Mypy plugins config key."""
+
+            DISABLE_ERROR_CODE: Final[str] = "disable_error_code"
+            """Mypy disable_error_code config key."""
+
+            IGNORE: Final[str] = "ignore"
+            """Pyrefly/sub-config ignore key."""
+
+            # -- Dependency / limits keys ----------------------------------------
+
+            TYPING_LIBRARIES: Final[str] = "typing_libraries"
+            """Project limits typing_libraries key."""
+
+            MODULE_TO_PACKAGE: Final[str] = "module_to_package"
+            """Typing libraries module_to_package mapping key."""
+
+            EXCLUDE: Final[str] = "exclude"
+            """Generic exclude key."""
+
+            PYTHON: Final[str] = "python"
+            """Python config subsection key (in limits)."""
+
+            PATH: Final[str] = "path"
+            """Path key within dependency entries."""
+
+            # -- Deptry JSON keys -----------------------------------------------
+
+            ERROR: Final[str] = "error"
+            """Deptry JSON error field key."""
+
+            CODE: Final[str] = "code"
+            """Deptry JSON code field key."""
+
+            MODULE: Final[str] = "module"
+            """Deptry JSON module field key."""
+
+            # -- Poetry group names ---------------------------------------------
+
+            DEV: Final[str] = "dev"
+            """Development dependency group name."""
+
+            DOCS: Final[str] = "docs"
+            """Documentation dependency group name."""
+
+            SECURITY: Final[str] = "security"
+            """Security dependency group name."""
+
+            TEST: Final[str] = "test"
+            """Test dependency group name."""
+
+        class Cli:
+            """CLI tool binary names used in subprocess calls."""
+
+            GIT: Final[str] = "git"
+            """Git version control binary."""
+
+            RUFF: Final[str] = "ruff"
+            """Ruff linter/formatter binary."""
+
+            POETRY: Final[str] = "poetry"
+            """Poetry package manager binary."""
+
+            SG: Final[str] = "sg"
+            """ast-grep (sg) binary."""
+
+            DEPTRY: Final[str] = "deptry"
+            """Deptry dependency checker binary."""
+
+            BANDIT: Final[str] = "bandit"
+            """Bandit security linter binary."""
+
+            MARKDOWNLINT: Final[str] = "markdownlint"
+            """Markdown linter binary."""
+
+            GOFMT: Final[str] = "gofmt"
+            """Go formatter binary."""
+
+            OUTPUT_JSON: Final[str] = "json"
+            """Common CLI output format flag value."""
+
+            MYPY: Final[str] = "mypy"
+            """Mypy type checker binary."""
+
+            PYRIGHT: Final[str] = "pyright"
+            """Pyright type checker binary."""
+
+            PYREFLY: Final[str] = "pyrefly"
+            """Pyrefly type checker binary."""
+
+            GOVET: Final[str] = "go"
+            """Go vet binary (invoked as 'go vet')."""
+
+            # -- Git subcommands -------------------------------------------------
+
+            class GitCmd:
+                """Git subcommand constants."""
+
+                CHECKOUT: Final[str] = "checkout"
+                STATUS: Final[str] = "status"
+                PUSH: Final[str] = "push"
+                PULL: Final[str] = "pull"
+                FETCH: Final[str] = "fetch"
+                COMMIT: Final[str] = "commit"
+                DIFF: Final[str] = "diff"
+                ADD: Final[str] = "add"
+                STASH: Final[str] = "stash"
+                TAG: Final[str] = "tag"
+                LOG: Final[str] = "log"
+                REV_PARSE: Final[str] = "rev-parse"
+                CONFIG: Final[str] = "config"
+
+            # -- Ruff subcommands ------------------------------------------------
+
+            class RuffCmd:
+                """Ruff subcommand constants."""
+
+                CHECK: Final[str] = "check"
+                FORMAT: Final[str] = "format"
+
+            # -- Poetry subcommands ----------------------------------------------
+
+            class PoetryCmd:
+                """Poetry subcommand constants."""
+
+                RUN: Final[str] = "run"
+                ADD: Final[str] = "add"
+                CHECK: Final[str] = "check"
+                SHOW: Final[str] = "show"
+
+            # -- SG subcommands --------------------------------------------------
+
+            class SgCmd:
+                """ast-grep subcommand constants."""
+
+                SCAN: Final[str] = "scan"
+
         class Gates:
             """Quality gate identifiers."""
 
@@ -172,6 +388,9 @@ class FlextInfraConstants(FlextConstants):
             SECURITY: Final[str] = "security"
             MARKDOWN: Final[str] = "markdown"
             GO: Final[str] = "go"
+            GOVET: Final[str] = "govet"
+            GOFMT: Final[str] = "gofmt"
+            MARKDOWNLINT: Final[str] = "markdownlint"
 
             TYPE_ALIAS: Final[str] = "type"
 
@@ -193,6 +412,33 @@ class FlextInfraConstants(FlextConstants):
 
             WARN: Final[str] = "WARN"
             """Status string for operations with warnings."""
+
+        class Defaults:
+            """Default fallback values."""
+
+            UNKNOWN: Final[str] = "unknown"
+            """Fallback for missing identifiers."""
+
+            UNNAMED: Final[str] = "unnamed"
+            """Default name for unnamed projects."""
+
+        class MatchModes:
+            """Scanner match mode constants."""
+
+            PRESENT: Final[str] = "present"
+            """Match mode where presence indicates violations."""
+
+            ABSENT: Final[str] = "absent"
+            """Match mode where absence indicates violations."""
+
+        class Modes:
+            """Operation mode constants."""
+
+            BASELINE: Final[str] = "baseline"
+            """Baseline quality mode."""
+
+            STRICT: Final[str] = "strict"
+            """Strict quality mode."""
 
         class Excluded:
             """Directory exclusion sets for analysis."""

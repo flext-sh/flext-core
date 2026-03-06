@@ -122,7 +122,7 @@ class FlextInfraPytestDiagExtractor:
         slow_rows: list[tuple[float, str]] = []
         for case in root.iter("testcase"):
             classname = case.attrib.get("classname", "")
-            name = case.attrib.get("name", "")
+            name = case.attrib.get(c.Infra.Toml.NAME, "")
             label = f"{classname}::{name}" if classname else name
             try:
                 secs = float(case.attrib.get("time", "0") or 0.0)

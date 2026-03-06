@@ -591,7 +591,9 @@ class FlextInfraRefactorEngine:
 
                     rule = self._build_rule(typed_rule_def)
                     if rule is None:
-                        unknown_rules.append(str(typed_rule_def.get("id", "unknown")))
+                        unknown_rules.append(
+                            str(typed_rule_def.get("id", c.Infra.Defaults.UNKNOWN))
+                        )
                         continue
 
                     if self.rule_filters:
@@ -889,7 +891,7 @@ class FlextInfraRefactorEngine:
         self,
         rule_def: Mapping[str, Any],
     ) -> FlextInfraRefactorRule | None:
-        rule_id = str(rule_def.get("id", "unknown"))
+        rule_id = str(rule_def.get("id", c.Infra.Defaults.UNKNOWN))
         fix_action = (
             str(rule_def.get("fix_action", rule_def.get("action", ""))).strip().lower()
         )
@@ -947,7 +949,7 @@ class FlextInfraRefactorEngine:
 
     def _validate_rule_definition(self, rule_def: Mapping[str, Any]) -> str | None:
         """Return validation error for malformed declarative rules."""
-        rule_id = str(rule_def.get("id", "unknown"))
+        rule_id = str(rule_def.get("id", c.Infra.Defaults.UNKNOWN))
         fix_action = str(rule_def.get("fix_action", "")).strip().lower()
         if not fix_action:
             return None

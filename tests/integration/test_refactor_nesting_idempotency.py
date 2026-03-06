@@ -32,7 +32,8 @@ class_nesting:
         result = rule.apply(test_file, dry_run=False)
 
         assert result.modified is True
-        assert "class FlextDispatcher:" in result.output
+        assert result.refactored_code is not None
+        assert "class FlextDispatcher:" in result.refactored_code
 
     def test_second_run_produces_no_changes(self, tmp_path: Path) -> None:
         """Second run on already-refactored code should produce no changes."""
@@ -56,7 +57,8 @@ class_nesting:
 
         # First run
         result1 = rule.apply(test_file, dry_run=False)
-        test_file.write_text(result1.output)
+        assert result1.refactored_code is not None
+        test_file.write_text(result1.refactored_code)
 
         # Second run - should detect already nested
         result2 = rule.apply(test_file, dry_run=True)
@@ -87,8 +89,8 @@ class_nesting:
         # Run three times
         for _ in range(3):
             result = rule.apply(test_file, dry_run=False)
-            if result.modified:
-                test_file.write_text(result.output)
+            if result.modified and result.refactored_code is not None:
+                test_file.write_text(result.refactored_code)
 
         # After third run, should be stable
         final_result = rule.apply(test_file, dry_run=True)

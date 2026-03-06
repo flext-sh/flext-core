@@ -225,9 +225,9 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        value_typed: t.Primitives | Status | None = (
+        value_typed: bool | float | int | str | Status = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
+            if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
         result = u.Enum.is_member(Status, value_typed)
@@ -240,9 +240,9 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        value_typed: t.Primitives | Status | None = (
+        value_typed: bool | float | int | str | Status = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
+            if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
         result = u.Enum.is_subset(
@@ -317,13 +317,18 @@ class TestuEnumCoerceValidator:
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
         validator = u.Enum.coerce_validator(Status)
+        value: bool | float | int | str | Status = (
+            scenario.value
+            if isinstance(scenario.value, (str, int, float, bool, Status))
+            else str(scenario.value)
+        )
 
         if scenario.expected_success:
-            result = validator(scenario.value)
+            result = validator(value)
             assert result == scenario.expected_status
         else:
             with pytest.raises(ValueError) as exc_info:
-                validator(scenario.value)
+                validator(value)
             error_str = str(exc_info.value) if exc_info.value else ""
             assert (
                 scenario.expected_error is not None

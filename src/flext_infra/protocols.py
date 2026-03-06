@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
@@ -39,8 +39,8 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
             @property
-            def root(self) -> Path:
-                """Return the project root path."""
+            def path(self) -> Path:
+                """Return the project path."""
                 ...
 
         @runtime_checkable
@@ -48,7 +48,7 @@ class FlextInfraProtocols(FlextProtocols):
             """Minimal command execution output contract."""
 
             @property
-            def returncode(self) -> int:
+            def exit_code(self) -> int:
                 """Return the command exit code."""
                 ...
 
@@ -132,9 +132,9 @@ class FlextInfraProtocols(FlextProtocols):
         class Discovery(Protocol):
             """Contract for project discovery services."""
 
-            def discover(
+            def discover_projects(
                 self,
-                root: Path,
+                workspace_root: Path,
             ) -> r[list[FlextInfraProtocols.Infra.ProjectInfo]]:
                 """Discover projects in a workspace root."""
                 ...
@@ -147,8 +147,40 @@ class FlextInfraProtocols(FlextProtocols):
                 self,
                 cmd: Sequence[str],
                 cwd: Path | None = None,
+                timeout: int | None = None,
+                env: Mapping[str, str] | None = None,
             ) -> r[FlextInfraProtocols.Infra.CommandOutput]:
                 """Execute a command and return output."""
+                ...
+
+            def capture(
+                self,
+                cmd: Sequence[str],
+                cwd: Path | None = None,
+                timeout: int | None = None,
+                env: Mapping[str, str] | None = None,
+            ) -> r[str]:
+                """Execute a command and return captured stdout."""
+                ...
+
+            def run_raw(
+                self,
+                cmd: Sequence[str],
+                cwd: Path | None = None,
+                timeout: int | None = None,
+                env: Mapping[str, str] | None = None,
+            ) -> r[FlextInfraProtocols.Infra.CommandOutput]:
+                """Execute a command and return raw output, including non-zero exit codes."""
+                ...
+
+            def run_checked(
+                self,
+                cmd: Sequence[str],
+                cwd: Path | None = None,
+                timeout: int | None = None,
+                env: Mapping[str, str] | None = None,
+            ) -> r[bool]:
+                """Execute a command and return success/failure status."""
                 ...
 
         @runtime_checkable

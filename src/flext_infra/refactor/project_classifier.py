@@ -55,7 +55,7 @@ class ProjectClassifier:
             return "", []
 
         project_name = ""
-        raw_name = raw_project.get("name", "")
+        raw_name = raw_project.get(c.Infra.Toml.NAME, "")
         if isinstance(raw_name, str):
             project_name = self._normalize_dependency_name(raw_name)
 
