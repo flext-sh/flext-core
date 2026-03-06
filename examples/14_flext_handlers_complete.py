@@ -112,24 +112,20 @@ class HandlersService(s[m.ConfigMap]):
 
         handler = CommandHandler()
 
-        command = CreateUserCommand.model_validate(
-            {
-                "user_id": "user-123",
-                "name": "Alice",
-                "email": "alice@example.com",
-            }
-        )
+        command = CreateUserCommand.model_validate({
+            "user_id": "user-123",
+            "name": "Alice",
+            "email": "alice@example.com",
+        })
         result = handler.handle(command)
         if result.is_success:
             print(f"✅ Command executed: {result.value}")
 
-        invalid_command = CreateUserCommand.model_validate(
-            {
-                "user_id": "user-456",
-                "name": "",
-                "email": "bob@example.com",
-            }
-        )
+        invalid_command = CreateUserCommand.model_validate({
+            "user_id": "user-456",
+            "name": "",
+            "email": "bob@example.com",
+        })
         invalid_result = handler.handle(invalid_command)
         if invalid_result.is_failure:
             print(f"❌ Command failed: {invalid_result.error}")
@@ -141,13 +137,11 @@ class HandlersService(s[m.ConfigMap]):
 
         command_handler = CommandHandler()
 
-        error_command = CreateUserCommand.model_validate(
-            {
-                "user_id": "error-user",
-                "name": "",
-                "email": "",
-            }
-        )
+        error_command = CreateUserCommand.model_validate({
+            "user_id": "error-user",
+            "name": "",
+            "email": "",
+        })
 
         error_result = command_handler.handle(error_command)
         if error_result.is_failure:

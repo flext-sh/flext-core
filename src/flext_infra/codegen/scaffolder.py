@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextService, r
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
@@ -58,7 +58,11 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
             return []
 
         results: list[FlextInfraModels.ScaffoldResult] = []
-        projects = projects_result.unwrap()
+        discovered: list[FlextInfraModels.ProjectInfo] = cast(
+            "list[FlextInfraModels.ProjectInfo]",
+            projects_result.unwrap(),
+        )
+        projects = discovered
         for project in projects:
             if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue

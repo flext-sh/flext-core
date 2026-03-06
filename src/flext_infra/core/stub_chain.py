@@ -175,13 +175,11 @@ class FlextInfraStubSupplyChain:
         output = ""
         if result.is_success:
             output = result.value.stdout
-        return sorted(
-            {
-                m.group(1).strip()
-                for m in c.Infra.Core.MYPY_HINT_RE.finditer(output)
-                if m.group(1).strip()
-            }
-        )
+        return sorted({
+            m.group(1).strip()
+            for m in c.Infra.Core.MYPY_HINT_RE.finditer(output)
+            if m.group(1).strip()
+        })
 
     def _run_pyrefly_missing(self, project_dir: Path) -> list[str]:
         """Run pyrefly check and extract missing imports."""

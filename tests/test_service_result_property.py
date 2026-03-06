@@ -155,7 +155,8 @@ class TestServiceResultProperty:
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
         result = (
-            service.execute()
+            service
+            .execute()
             .map(lambda user: user.name)
             .map(lambda name: str(name).upper())
             .map(lambda name: f"Hello, {name}!")

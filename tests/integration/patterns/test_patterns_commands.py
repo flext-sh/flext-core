@@ -102,12 +102,10 @@ class FailingCommand(FlextModels.Command):
 
 
 def _create_user_command(*, username: str, email: str) -> CreateUserCommand:
-    return CreateUserCommand.model_validate(
-        {
-            "username": username,
-            "email": email,
-        }
-    )
+    return CreateUserCommand.model_validate({
+        "username": username,
+        "email": email,
+    })
 
 
 def _update_user_command(
@@ -115,12 +113,10 @@ def _update_user_command(
     target_user_id: str,
     updates: dict[str, t.ContainerValue],
 ) -> UpdateUserCommand:
-    return UpdateUserCommand.model_validate(
-        {
-            "target_user_id": target_user_id,
-            "updates": updates,
-        }
-    )
+    return UpdateUserCommand.model_validate({
+        "target_user_id": target_user_id,
+        "updates": updates,
+    })
 
 
 class CreateUserCommandHandler(

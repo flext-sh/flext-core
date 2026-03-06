@@ -333,11 +333,9 @@ class TestContext100Coverage:
         invalid_metadata: t.ContainerValue = 123
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
-            FlextModelsContext.ContextData.model_validate(
-                {
-                    "metadata": invalid_metadata,
-                }
-            )
+            FlextModelsContext.ContextData.model_validate({
+                "metadata": invalid_metadata,
+            })
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextData.validate_dict_serializable with non-string key.
@@ -481,11 +479,9 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = FlextModelsContext.ContextScopeData.model_validate(
-            {
-                "metadata": model,
-            }
-        )
+        scope_data = FlextModelsContext.ContextScopeData.model_validate({
+            "metadata": model,
+        })
         assert isinstance(scope_data.metadata, dict)
         assert "field" in scope_data.metadata
 
@@ -504,11 +500,9 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        stats = FlextModelsContext.ContextStatistics.model_validate(
-            {
-                "operations": model,
-            }
-        )
+        stats = FlextModelsContext.ContextStatistics.model_validate({
+            "operations": model,
+        })
         assert isinstance(stats.operations, dict)
         assert "field" in stats.operations
 
@@ -516,11 +510,9 @@ class TestContext100Coverage:
         """Test ContextStatistics._validate_operations with None."""
         # Create instance with None - validator will convert to {}
         none_operations: t.ContainerValue = None
-        stats = FlextModelsContext.ContextStatistics.model_validate(
-            {
-                "operations": none_operations,
-            }
-        )
+        stats = FlextModelsContext.ContextStatistics.model_validate({
+            "operations": none_operations,
+        })
         assert isinstance(stats.operations, dict)
         assert stats.operations == {}
 
@@ -532,11 +524,9 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        metadata = FlextModelsContext.ContextMetadata.model_validate(
-            {
-                "custom_fields": model,
-            }
-        )
+        metadata = FlextModelsContext.ContextMetadata.model_validate({
+            "custom_fields": model,
+        })
         assert isinstance(metadata.custom_fields, dict)
         assert "field" in metadata.custom_fields
 
@@ -544,10 +534,8 @@ class TestContext100Coverage:
         """Test ContextMetadata._validate_custom_fields with None."""
         # Create instance with None - validator will convert to {}
         none_custom_fields: t.ContainerValue = None
-        metadata = FlextModelsContext.ContextMetadata.model_validate(
-            {
-                "custom_fields": none_custom_fields,
-            }
-        )
+        metadata = FlextModelsContext.ContextMetadata.model_validate({
+            "custom_fields": none_custom_fields,
+        })
         assert isinstance(metadata.custom_fields, dict)
         assert metadata.custom_fields == {}

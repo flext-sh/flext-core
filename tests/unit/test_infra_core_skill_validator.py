@@ -230,9 +230,9 @@ class TestFlextInfraSkillValidator:
         baseline_file.write_text('{"counts": {"group1": 5}}')  # Lines 174-187
 
         with patch.object(validator, "_json") as mock_json:
-            mock_json.read.return_value = r[dict[str, object]].ok(
-                {"counts": {"group1": 5}}
-            )
+            mock_json.read.return_value = r[dict[str, object]].ok({
+                "counts": {"group1": 5}
+            })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
 
@@ -257,9 +257,9 @@ class TestFlextInfraSkillValidator:
         )  # Lines 174-187
 
         with patch.object(validator, "_json") as mock_json:
-            mock_json.read.return_value = r[dict[str, object]].ok(
-                {"counts": {"group1": 5, "group2": 3}}
-            )
+            mock_json.read.return_value = r[dict[str, object]].ok({
+                "counts": {"group1": 5, "group2": 3}
+            })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
 
@@ -284,9 +284,9 @@ class TestFlextInfraSkillValidator:
         )  # Lines 174-187
 
         with patch.object(validator, "_json") as mock_json:
-            mock_json.read.return_value = r[dict[str, object]].ok(
-                {"counts": {"group1": "not_an_int"}}
-            )
+            mock_json.read.return_value = r[dict[str, object]].ok({
+                "counts": {"group1": "not_an_int"}
+            })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
 
@@ -958,9 +958,9 @@ class TestFlextInfraSkillValidatorUncoveredLines:
 
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             with patch.object(validator, "_json") as mock_json:
-                mock_json.read.return_value = r[dict[str, object]].ok(
-                    {"counts": {"group1": 10}}
-                )
+                mock_json.read.return_value = r[dict[str, object]].ok({
+                    "counts": {"group1": 10}
+                })
                 result = validator.validate(workspace_root, "test-skill")
                 assert result.is_success
                 assert result.value.passed
@@ -993,9 +993,9 @@ class TestFlextInfraSkillValidatorUncoveredLines:
 
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             with patch.object(validator, "_json") as mock_json:
-                mock_json.read.return_value = r[dict[str, object]].ok(
-                    {"counts": {"group1": 5, "group2": 3}}
-                )
+                mock_json.read.return_value = r[dict[str, object]].ok({
+                    "counts": {"group1": 5, "group2": 3}
+                })
                 result = validator.validate(workspace_root, "test-skill")
                 assert result.is_success
                 assert result.value.passed

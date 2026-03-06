@@ -26,9 +26,9 @@ def test_nested_class_propagation_updates_import_annotations_and_calls() -> None
     )
 
     transformed = MetadataWrapper(cst.parse_module(source)).visit(
-        NestedClassPropagationTransformer(
-            {"TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer"}
-        )
+        NestedClassPropagationTransformer({
+            "TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer"
+        })
     )
     code = transformed.code
 
@@ -44,9 +44,9 @@ def test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage() ->
     source = "from pkg import TimeoutEnforcer as TE\n\nvalue = TE()\n"
 
     transformed = MetadataWrapper(cst.parse_module(source)).visit(
-        NestedClassPropagationTransformer(
-            {"TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer"}
-        )
+        NestedClassPropagationTransformer({
+            "TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer"
+        })
     )
     code = transformed.code
 

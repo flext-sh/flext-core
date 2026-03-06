@@ -47,9 +47,9 @@ def _normalize_metadata_before(v: t.ContainerValue | None) -> t.ContainerValue |
     if isinstance(v, FlextModelFoundation.Metadata):
         return v
     if isinstance(v, Mapping):
-        return FlextModelFoundation.Metadata.model_validate(
-            {"attributes": dict(v.items())}
-        )
+        return FlextModelFoundation.Metadata.model_validate({
+            "attributes": dict(v.items())
+        })
     return v
 
 
@@ -176,11 +176,9 @@ class FlextModelsContext:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                _ = structlog.contextvars.bind_contextvars(
-                    **{
-                        token.key: token.previous_value,
-                    }
-                )
+                _ = structlog.contextvars.bind_contextvars(**{
+                    token.key: token.previous_value,
+                })
 
         def get(self) -> t.ContainerValue | None:
             """Get current value from structlog context.
@@ -221,11 +219,9 @@ class FlextModelsContext:
             if value is not None:
                 # T is bounded to ContainerValue in generic contract
                 # Store directly - type parameter constraint guarantees compatibility
-                _ = structlog.contextvars.bind_contextvars(
-                    **{
-                        self._key: value,
-                    }
-                )
+                _ = structlog.contextvars.bind_contextvars(**{
+                    self._key: value,
+                })
             else:
                 # Unbind if setting to None
                 structlog.contextvars.unbind_contextvars(self._key)

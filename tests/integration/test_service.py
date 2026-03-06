@@ -199,13 +199,11 @@ class ServiceConfig(m.CollectionsConfig):
 
 
 def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:
-    return ServiceConfig.model_validate(
-        {
-            "name": name,
-            "version": version,
-            "temp_dir": temp_dir,
-        }
-    )
+    return ServiceConfig.model_validate({
+        "name": name,
+        "version": version,
+        "temp_dir": temp_dir,
+    })
 
 
 class LifecycleService(FlextService[str]):

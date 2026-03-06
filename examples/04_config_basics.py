@@ -277,7 +277,8 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
     def execute(self) -> FlextResult[m.ConfigMap]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
-            self._log_start()
+            self
+            ._log_start()
             .flat_map(lambda _: self._run_demonstrations())
             .flat_map(self._create_success_metadata)
             .lash(self._handle_execution_error)

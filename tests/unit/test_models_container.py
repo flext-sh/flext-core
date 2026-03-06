@@ -33,13 +33,11 @@ def _service_reg_with_metadata(
     name: str, service: str, metadata: object
 ) -> m.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
-    return m.ServiceRegistration.model_validate(
-        {
-            "name": name,
-            "service": service,
-            "metadata": metadata,
-        }
-    )
+    return m.ServiceRegistration.model_validate({
+        "name": name,
+        "service": service,
+        "metadata": metadata,
+    })
 
 
 def _factory_reg_with_metadata(
@@ -48,13 +46,11 @@ def _factory_reg_with_metadata(
     metadata: object,
 ) -> m.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
-    return m.FactoryRegistration.model_validate(
-        {
-            "name": name,
-            "factory": factory,
-            "metadata": metadata,
-        }
-    )
+    return m.FactoryRegistration.model_validate({
+        "name": name,
+        "factory": factory,
+        "metadata": metadata,
+    })
 
 
 def _normalize_metadata_obj(value: object) -> m.Metadata:

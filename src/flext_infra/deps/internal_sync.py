@@ -258,18 +258,16 @@ class FlextInfraInternalDependencySyncService:
             except OSError as exc:
                 return r[bool].fail(f"cleanup failed for {dep_path.name}: {exc}")
 
-            cloned = self._runner.run_raw(
-                [
-                    "git",
-                    "clone",
-                    "--depth",
-                    "1",
-                    "--branch",
-                    safe_ref_name,
-                    safe_repo_url,
-                    str(dep_path),
-                ]
-            )
+            cloned = self._runner.run_raw([
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                safe_ref_name,
+                safe_repo_url,
+                str(dep_path),
+            ])
             if cloned.is_failure or cloned.value.exit_code != 0:
                 stderr = cloned.value.stderr.strip() if cloned.is_success else ""
                 return r[bool].fail(f"clone failed for {dep_path.name}: {stderr}")

@@ -158,7 +158,8 @@ class FlextModelFoundation:
             for tag in raw_tags:
                 try:
                     clean_tag = (
-                        FlextModelFoundation.Validators.strict_string_adapter()
+                        FlextModelFoundation.Validators
+                        .strict_string_adapter()
                         .validate_python(tag)
                         .strip()
                         .lower()

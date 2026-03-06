@@ -450,16 +450,14 @@ def _generate_file(
             "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
         )
 
-    out.extend(
-        [
-            "from __future__ import annotations",
-            "",
-            "from typing import TYPE_CHECKING, Any",
-            "",
-            lazy_import,
-            "",
-        ]
-    )
+    out.extend([
+        "from __future__ import annotations",
+        "",
+        "from typing import TYPE_CHECKING, Any",
+        "",
+        lazy_import,
+        "",
+    ])
 
     out.extend(_generate_type_checking(groups))
     out.append("")
@@ -469,12 +467,10 @@ def _generate_file(
     if inline_constants:
         out.append("")
 
-    out.extend(
-        [
-            "# Lazy import mapping: export_name -> (module_path, attr_name)",
-            "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
-        ]
-    )
+    out.extend([
+        "# Lazy import mapping: export_name -> (module_path, attr_name)",
+        "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
+    ])
     for exp in sorted(exports):
         if exp in filtered:
             mod, attr = filtered[exp]
@@ -485,22 +481,20 @@ def _generate_file(
     out.extend(f'    "{exp}",' for exp in sorted(exports))
     out.extend(["]", "", ""])
 
-    out.extend(
-        [
-            "def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/",
-            '    """Lazy-load module attributes on first access (PEP 562)."""',
-            "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
-            "",
-            "",
-            "def __dir__() -> list[str]:",
-            '    """Return list of available attributes for dir() and autocomplete."""',
-            "    return sorted(__all__)",
-            "",
-            "",
-            "cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)",
-            "",
-        ]
-    )
+    out.extend([
+        "def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/",
+        '    """Lazy-load module attributes on first access (PEP 562)."""',
+        "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
+        "",
+        "",
+        "def __dir__() -> list[str]:",
+        '    """Return list of available attributes for dir() and autocomplete."""',
+        "    return sorted(__all__)",
+        "",
+        "",
+        "cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)",
+        "",
+    ])
 
     return "\n".join(out)
 

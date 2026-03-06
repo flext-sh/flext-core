@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Final, override
+from typing import Final, cast, override
 
 from flext_core import FlextService, r
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
@@ -98,7 +98,11 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
             return []
 
         reports: list[FlextInfraModels.CensusReport] = []
-        for project in projects_result.unwrap():
+        discovered: list[FlextInfraModels.ProjectInfo] = cast(
+            "list[FlextInfraModels.ProjectInfo]",
+            projects_result.unwrap(),
+        )
+        for project in discovered:
             if project.name in _EXCLUDED_PROJECTS:
                 continue
             report = self._census_project(project)
@@ -115,7 +119,10 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
 
         violations: list[FlextInfraModels.CensusViolation] = []
         if result.is_success:
-            report = result.unwrap()
+            report: FlextInfraModels.ValidationReport = cast(
+                "FlextInfraModels.ValidationReport",
+                result.unwrap(),
+            )
             for violation_str in report.violations:
                 violation = self._parse_violation(violation_str)
                 if violation is not None:

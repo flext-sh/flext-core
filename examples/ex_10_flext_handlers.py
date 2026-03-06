@@ -354,13 +354,15 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "pop_context.1",
-            handler.pop_context()
+            handler
+            .pop_context()
             .unwrap_or(m.ConfigMap(root={}))
             .get("handler_name", "-"),
         )
         self.check(
             "pop_context.2",
-            handler.pop_context()
+            handler
+            .pop_context()
             .unwrap_or(m.ConfigMap(root={}))
             .get("handler_name", "-"),
         )
@@ -419,7 +421,8 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.pop_context",
-            stack.pop_context()
+            stack
+            .pop_context()
             .unwrap_or(m.ConfigMap(root={}))
             .get("handler_name", "-"),
         )

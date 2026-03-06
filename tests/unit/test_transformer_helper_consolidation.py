@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import libcst as cst
-import pytest
 
 from flext_infra.refactor.transformers.helper_consolidation import (
     HelperConsolidationTransformer,

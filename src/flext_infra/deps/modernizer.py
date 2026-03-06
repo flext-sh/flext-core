@@ -223,16 +223,14 @@ class ConsolidateGroupsPhase:
             project["optional-dependencies"] = optional
 
         existing = _project_dev_groups(doc)
-        merged_dev = _dedupe_specs(
-            [
-                *canonical_dev,
-                *existing.get("dev", []),
-                *existing.get("docs", []),
-                *existing.get("security", []),
-                *existing.get("test", []),
-                *existing.get("typings", []),
-            ]
-        )
+        merged_dev = _dedupe_specs([
+            *canonical_dev,
+            *existing.get("dev", []),
+            *existing.get("docs", []),
+            *existing.get("security", []),
+            *existing.get("test", []),
+            *existing.get("typings", []),
+        ])
         current_dev = _as_string_list(optional.get("dev"))
         if current_dev != merged_dev:
             optional["dev"] = _array(merged_dev)
@@ -474,7 +472,6 @@ class EnsureRuffConfigPhase:
         doc: tomlkit.TOMLDocument,
         *,
         path: Path,
-        is_root: bool,
     ) -> list[str]:
         """Merge standard Ruff config into existing, preserving project-specific entries."""
         changes: list[str] = []
@@ -590,6 +587,7 @@ class EnsureNamespaceToolingPhase:
     """Ensure namespace discovery is reflected across project tooling tables."""
 
     def apply(self, doc: tomlkit.TOMLDocument, *, path: Path) -> list[str]:
+        """Apply namespace tooling phase to TOML document."""
         changes: list[str] = []
         detected = _discover_first_party_namespaces(path.parent)
         if not detected:
@@ -619,6 +617,7 @@ class EnsureFormattingToolingPhase:
     """Ensure safe default config for TOML/YAML formatting tools."""
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
+        """Apply formatting tooling phase to TOML document."""
         changes: list[str] = []
 
         tool = doc.get("tool")
@@ -787,7 +786,7 @@ class FlextInfraPyprojectModernizer:
         changes.extend(EnsurePydanticMypyConfigPhase().apply(doc))
         changes.extend(EnsureFormattingToolingPhase().apply(doc))
         changes.extend(EnsureNamespaceToolingPhase().apply(doc, path=path))
-        changes.extend(EnsureRuffConfigPhase().apply(doc, path=path, is_root=is_root))
+        changes.extend(EnsureRuffConfigPhase().apply(doc, path=path))
         changes.extend(EnsurePyrightConfigPhase().apply(doc, is_root=is_root))
 
         tool = doc.get("tool")

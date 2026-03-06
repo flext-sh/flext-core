@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import libcst as cst
 
@@ -48,6 +48,7 @@ class _TopLevelClassCollector(cst.CSTVisitor):
         self._depth = 0
         self.classes: list[FlextInfraRefactorClassOccurrence] = []
 
+    @override
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         is_top_level = self._depth == 0
         self.classes.append(
@@ -59,6 +60,7 @@ class _TopLevelClassCollector(cst.CSTVisitor):
         )
         self._depth += 1
 
+    @override
     def leave_ClassDef(self, original_node: cst.ClassDef) -> None:
         _ = original_node
         self._depth -= 1

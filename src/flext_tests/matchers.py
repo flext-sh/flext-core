@@ -754,13 +754,11 @@ class FlextTestsMatchers:
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
 
-            yield m.Tests.Matcher.TestScope.model_validate(
-                {
-                    "config": cfg,
-                    "container": container_dict,
-                    "context": context_map,
-                }
-            )
+            yield m.Tests.Matcher.TestScope.model_validate({
+                "config": cfg,
+                "container": container_dict,
+                "context": context_map,
+            })
 
         finally:
             # Restore environment variables

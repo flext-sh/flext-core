@@ -207,12 +207,10 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
 
         """
         try:
-            params = m.Tests.Factory.DictFactoryParams.model_validate(
-                {
-                    "source": source,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.DictFactoryParams.model_validate({
+                "source": source,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[Mapping[str, t.Tests.ContainerValue]].fail(
                 f"Invalid parameters: {exc}"
@@ -417,12 +415,10 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
 
         """
         try:
-            params = m.Tests.Factory.ListFactoryParams.model_validate(
-                {
-                    "source": source,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.ListFactoryParams.model_validate({
+                "source": source,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[builtins.list[t.Tests.ContainerValue]].fail(
                 f"Invalid parameters: {exc}"
@@ -560,12 +556,10 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
 
         """
         try:
-            params = m.Tests.Factory.ModelFactoryParams.model_validate(
-                {
-                    "kind": kind,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.ModelFactoryParams.model_validate({
+                "kind": kind,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.Factory.FactoryModel].fail(f"Invalid parameters: {exc}")
 
@@ -898,13 +892,11 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
 
         """
         try:
-            params = m.Tests.Factory.ResultFactoryParams.model_validate(
-                {
-                    "kind": kind,
-                    "value": value,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.ResultFactoryParams.model_validate({
+                "kind": kind,
+                "value": value,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.ContainerValue].fail(f"Invalid parameters: {exc}")
         if params.mix_pattern is not None and (

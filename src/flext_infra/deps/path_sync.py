@@ -154,7 +154,7 @@ def rewrite_dep_paths(
     if doc_result.is_failure:
         return r[list[str]].fail(doc_result.error or "failed to read TOML document")
 
-    doc = doc_result.value
+    doc = doc_result.unwrap()
     changes = _rewrite_pep621(
         doc,
         is_root=is_root,
@@ -209,7 +209,7 @@ def main() -> int:
     if root_pyproject.exists():
         root_data_result = toml_service.read(root_pyproject)
         if root_data_result.is_success:
-            root_project = root_data_result.value.get("project")
+            root_project = root_data_result.unwrap().get("project")
             if isinstance(root_project, dict):
                 root_name = root_project.get("name")
                 if isinstance(root_name, str) and root_name:
@@ -230,7 +230,7 @@ def main() -> int:
                 error=changes_result.error,
             )
             return 1
-        changes = changes_result.value
+        changes = changes_result.unwrap()
         if changes:
             prefix = "[DRY-RUN] " if args.dry_run else ""
             output.info(f"{prefix}{root_pyproject}:")
@@ -247,7 +247,7 @@ def main() -> int:
         )
         return 1
 
-    all_project_dirs = [project.path for project in discover_result.value]
+    all_project_dirs = [project.path for project in discover_result.unwrap()]
     if args.projects:
         project_dirs = [ROOT / project for project in args.projects]
     else:
@@ -260,7 +260,7 @@ def main() -> int:
         data_result = toml_service.read(pyproject)
         if data_result.is_failure:
             continue
-        project_obj = data_result.value.get("project")
+        project_obj = data_result.unwrap().get("project")
         if not isinstance(project_obj, dict):
             continue
         project_name = project_obj.get("name")
@@ -274,7 +274,7 @@ def main() -> int:
         data_result = toml_service.read(pyproject)
         if data_result.is_failure:
             continue
-        project_obj = data_result.value.get("project")
+        project_obj = data_result.unwrap().get("project")
         if not isinstance(project_obj, dict):
             continue
         project_name = project_obj.get("name")
@@ -299,7 +299,7 @@ def main() -> int:
                 error=changes_result.error,
             )
             return 1
-        changes = changes_result.value
+        changes = changes_result.unwrap()
         if changes:
             prefix = "[DRY-RUN] " if args.dry_run else ""
             output.info(f"{prefix}{pyproject}:")

@@ -337,12 +337,10 @@ def demo_event_publishing() -> None:
     pub_one = dispatcher.publish(UserCreated(username="alice"))
     _check("publish(single).is_success", pub_one.is_success)
 
-    pub_many = dispatcher.publish(
-        [
-            UserCreated(username="bruno"),
-            UserCreated(username="carla"),
-        ]
-    )
+    pub_many = dispatcher.publish([
+        UserCreated(username="bruno"),
+        UserCreated(username="carla"),
+    ])
     _check("publish(list).is_success", pub_many.is_success)
 
     _check("subscriber.events", subscriber.events)

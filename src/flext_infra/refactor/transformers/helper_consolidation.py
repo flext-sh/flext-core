@@ -1,14 +1,39 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import override
+from collections.abc import Mapping
+from typing import TypedDict, cast, override
 
 import libcst as cst
 
 
+class _FamilyPolicy(TypedDict, total=False):
+    enable_helper_consolidation: bool
+    allow_helper_call_rewrite: bool
+    require_signature_validation: bool
+    required_parameters: list[str] | tuple[str, ...]
+    forbidden_parameters: list[str] | tuple[str, ...]
+    allow_positional_only_params: bool
+    allow_keyword_only_params: bool
+    allow_vararg: bool
+    allow_kwarg: bool
+    allowed_targets: list[str] | tuple[str, ...]
+    forbidden_targets: list[str] | tuple[str, ...]
+
+
+type PolicyContext = Mapping[str, _FamilyPolicy]
+
+
 class HelperConsolidationTransformer(cst.CSTTransformer):
-    def __init__(self, helper_mappings: dict[str, str]) -> None:
+    def __init__(
+        self,
+        helper_mappings: dict[str, str],
+        policy_context: PolicyContext | None = None,
+        helper_families: Mapping[str, str] | None = None,
+    ) -> None:
         self._helper_mappings = helper_mappings
+        self._policy_context = policy_context
+        self._helper_families = helper_families or {}
         self._scope_depth = 0
         self._existing_namespaces: set[str] = set()
         self._collected_helpers: dict[str, list[cst.FunctionDef]] = defaultdict(list)
@@ -44,6 +69,8 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         target_namespace = self._helper_mappings.get(helper_name)
         if target_namespace is None:
             return updated_node
+        if not self._is_call_rewrite_allowed(helper_name, target_namespace):
+            return updated_node
 
         return updated_node.with_changes(
             func=cst.Attribute(
@@ -76,6 +103,10 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
 
         target_namespace = self._helper_mappings.get(original_node.name.value)
         if target_namespace is None:
+            return updated_node
+        if not self._is_helper_move_allowed(original_node.name.value, target_namespace):
+            return updated_node
+        if not self._signature_allowed(original_node):
             return updated_node
 
         helper_method = self._ensure_staticmethod(updated_node)
@@ -171,6 +202,129 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
 
     def _is_pass_only(self, statement: cst.SimpleStatementLine) -> bool:
         return len(statement.body) == 1 and isinstance(statement.body[0], cst.Pass)
+
+    def _is_call_rewrite_allowed(self, helper_name: str, target_namespace: str) -> bool:
+        policy = self._policy_for_helper(helper_name)
+        if policy is None:
+            return True
+        if not self._bool_from_policy(
+            policy, "allow_helper_call_rewrite", default=False
+        ):
+            return False
+        if not self._target_allowed(policy, target_namespace):
+            return False
+        return True
+
+    def _is_helper_move_allowed(self, helper_name: str, target_namespace: str) -> bool:
+        policy = self._policy_for_helper(helper_name)
+        if policy is None:
+            return True
+        if not self._bool_from_policy(
+            policy,
+            "enable_helper_consolidation",
+            default=False,
+        ):
+            return False
+        if not self._target_allowed(policy, target_namespace):
+            return False
+        return True
+
+    def _signature_allowed(self, function_node: cst.FunctionDef) -> bool:
+        policy = self._policy_for_helper(function_node.name.value)
+        if policy is None:
+            return True
+        if not self._bool_from_policy(
+            policy,
+            "require_signature_validation",
+            default=True,
+        ):
+            return True
+
+        required = self._tuple_from_policy(policy, "required_parameters")
+        forbidden = self._tuple_from_policy(policy, "forbidden_parameters")
+        allow_vararg = self._bool_from_policy(policy, "allow_vararg", default=True)
+        allow_kwarg = self._bool_from_policy(policy, "allow_kwarg", default=True)
+        allow_positional_only = self._bool_from_policy(
+            policy,
+            "allow_positional_only_params",
+            default=True,
+        )
+        allow_keyword_only = self._bool_from_policy(
+            policy,
+            "allow_keyword_only_params",
+            default=True,
+        )
+
+        seen_parameters: set[str] = set()
+        parameters = function_node.params
+        if (
+            isinstance(parameters.star_arg, cst.Param | cst.ParamStar)
+            and not allow_vararg
+        ):
+            return False
+        if parameters.star_kwarg is not None and not allow_kwarg:
+            return False
+
+        if parameters.posonly_params and not allow_positional_only:
+            return False
+        if parameters.kwonly_params and not allow_keyword_only:
+            return False
+
+        seen_parameters.update(param.name.value for param in parameters.posonly_params)
+        seen_parameters.update(param.name.value for param in parameters.params)
+        seen_parameters.update(param.name.value for param in parameters.kwonly_params)
+
+        for required_parameter in required:
+            if required_parameter not in seen_parameters:
+                return False
+        for forbidden_parameter in forbidden:
+            if forbidden_parameter in seen_parameters:
+                return False
+        return True
+
+    def _policy_for_helper(self, helper_name: str) -> _FamilyPolicy | None:
+        if self._policy_context is None:
+            return None
+        family = self._helper_families.get(helper_name)
+        if family is None:
+            return None
+        policy = self._policy_context.get(family)
+        if policy is None:
+            return None
+        return policy
+
+    def _bool_from_policy(
+        self,
+        policy: _FamilyPolicy,
+        key: str,
+        *,
+        default: bool,
+    ) -> bool:
+        raw = policy.get(key)
+        if isinstance(raw, bool):
+            return raw
+        return default
+
+    def _tuple_from_policy(self, policy: _FamilyPolicy, key: str) -> tuple[str, ...]:
+        raw = policy.get(key)
+        if not isinstance(raw, list | tuple):
+            return ()
+        typed_raw = cast("tuple[object, ...] | list[object]", raw)
+        validated: list[str] = []
+        for entry in typed_raw:
+            if isinstance(entry, str):
+                validated.append(entry)
+        return tuple(validated)
+
+    def _target_allowed(self, policy: _FamilyPolicy, target_namespace: str) -> bool:
+        allowed = self._tuple_from_policy(policy, "allowed_targets")
+        if allowed and target_namespace not in allowed:
+            return False
+
+        forbidden = self._tuple_from_policy(policy, "forbidden_targets")
+        if target_namespace in forbidden:
+            return False
+        return True
 
 
 __all__ = ["HelperConsolidationTransformer"]

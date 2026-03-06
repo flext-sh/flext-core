@@ -6,7 +6,7 @@ import sys
 from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 import libcst as cst
 
@@ -30,12 +30,14 @@ class _ImportCollector(cst.CSTVisitor):
         self.imported_modules: set[str] = set()
         self.imported_symbols: set[str] = set()
 
+    @override
     def visit_Import(self, node: cst.Import) -> None:
         for alias in node.names:
             module_root = self._module_root(alias.name)
             if module_root:
                 self.imported_modules.add(module_root)
 
+    @override
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
         if node.module is None:
             return
@@ -248,10 +250,11 @@ class DependencyAnalyzer:
         if not isinstance(payload, list):
             return []
 
-        normalized: list[dict[str, object]] = []
-        for item in cast("list[object]", payload):
-            if isinstance(item, dict):
-                normalized.append(cast("dict[str, object]", item))
+        normalized: list[dict[str, object]] = [
+            cast("dict[str, object]", item)
+            for item in cast("list[object]", payload)
+            if isinstance(item, dict)
+        ]
         return normalized
 
     def _parse_imports(self, file_path: Path) -> _FileImportData:

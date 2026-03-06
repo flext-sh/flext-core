@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from flext_infra.refactor.dependency_analyzer import DependencyAnalyzer
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 

@@ -1,17 +1,35 @@
 from __future__ import annotations
 
-from typing import override
+from collections.abc import Mapping
+from typing import TypedDict, cast, override
 
 import libcst as cst
 from libcst.metadata import ParentNodeProvider
 
 
+class _FamilyPolicy(TypedDict, total=False):
+    propagate_imports: bool
+    propagate_name_references: bool
+    propagate_attribute_references: bool
+    blocked_reference_prefixes: list[str] | tuple[str, ...]
+
+
+type PolicyContext = Mapping[str, _FamilyPolicy]
+
+
 class NestedClassPropagationTransformer(cst.CSTTransformer):
     METADATA_DEPENDENCIES = (ParentNodeProvider,)
 
-    def __init__(self, class_renames: dict[str, str]) -> None:
+    def __init__(
+        self,
+        class_renames: dict[str, str],
+        policy_context: PolicyContext | None = None,
+        class_families: Mapping[str, str] | None = None,
+    ) -> None:
         self._class_renames = class_renames
         self._name_renames: dict[str, str] = dict(class_renames)
+        self._policy_context = policy_context
+        self._class_families = class_families or {}
 
     @override
     def leave_ImportFrom(
@@ -33,6 +51,9 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
             rename_to = self._class_renames.get(alias.name.value)
             if rename_to is None:
+                updated_aliases.append(alias)
+                continue
+            if not self._should_propagate(alias.name.value, "propagate_imports"):
                 updated_aliases.append(alias)
                 continue
 
@@ -63,7 +84,14 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         rename_to = self._name_renames.get(original_node.value)
         if rename_to is None:
             return updated_node
+        if not self._should_propagate(
+            original_node.value,
+            "propagate_name_references",
+        ):
+            return updated_node
         if self._should_skip_name(original_node):
+            return updated_node
+        if self._blocked_by_prefix(original_node.value):
             return updated_node
         return self._expression_from_dotted(rename_to)
 
@@ -75,6 +103,13 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
     ) -> cst.BaseExpression:
         rename_to = self._class_renames.get(original_node.attr.value)
         if rename_to is None:
+            return updated_node
+        if not self._should_propagate(
+            original_node.attr.value,
+            "propagate_attribute_references",
+        ):
+            return updated_node
+        if self._blocked_by_prefix(original_node.attr.value):
             return updated_node
 
         rename_parts = self._split_dotted(rename_to)
@@ -140,6 +175,42 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
     def _split_dotted(self, dotted_name: str) -> list[str]:
         return [part for part in dotted_name.split(".") if part]
+
+    def _should_propagate(self, symbol_name: str, policy_key: str) -> bool:
+        policy = self._policy_for_symbol(symbol_name)
+        if policy is None:
+            return True
+        raw = policy.get(policy_key)
+        if isinstance(raw, bool):
+            return raw
+        return False
+
+    def _blocked_by_prefix(self, symbol_name: str) -> bool:
+        policy = self._policy_for_symbol(symbol_name)
+        if policy is None:
+            return False
+
+        blocked_prefixes = policy.get("blocked_reference_prefixes")
+        if not isinstance(blocked_prefixes, list | tuple):
+            return False
+        typed_prefixes = cast("tuple[object, ...] | list[object]", blocked_prefixes)
+        for prefix in typed_prefixes:
+            if not isinstance(prefix, str):
+                continue
+            if symbol_name.startswith(prefix):
+                return True
+        return False
+
+    def _policy_for_symbol(self, symbol_name: str) -> _FamilyPolicy | None:
+        if self._policy_context is None:
+            return None
+        family = self._class_families.get(symbol_name)
+        if family is None:
+            return None
+        policy = self._policy_context.get(family)
+        if policy is None:
+            return None
+        return policy
 
 
 __all__ = ["NestedClassPropagationTransformer"]

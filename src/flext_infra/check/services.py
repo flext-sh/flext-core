@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 import tomlkit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
@@ -559,13 +559,11 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 gate_result = project.gates.get(gate)
                 if not gate_result or len(gate_result.issues) == 0:
                     continue
-                lines.extend(
-                    [
-                        f"### {gate} ({len(gate_result.issues)} errors)",
-                        "",
-                        "```",
-                    ]
-                )
+                lines.extend([
+                    f"### {gate} ({len(gate_result.issues)} errors)",
+                    "",
+                    "```",
+                ])
                 lines.extend(
                     issue.formatted
                     for issue in gate_result.issues[: c.Infra.Check.MAX_DISPLAY_ISSUES]
@@ -604,7 +602,10 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             return r[list[_ProjectResult]].fail(
                 resolved_gates_result.error or "invalid gates",
             )
-        resolved_gates = resolved_gates_result.value
+        resolved_gates: list[str] = cast(
+            "list[str]",
+            resolved_gates_result.value,
+        )
 
         report_base = reports_dir or self._default_reports_dir
         report_base.mkdir(parents=True, exist_ok=True)
@@ -746,7 +747,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         if workspace_root is not None:
             return workspace_root.resolve()
         result = self._path_resolver.workspace_root()
-        return result.value if result.is_success else Path.cwd().resolve()
+        return cast("Path", result.value) if result.is_success else Path.cwd().resolve()
 
     def _run(
         self,
@@ -768,11 +769,11 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 returncode=1,
             )
 
-        output = result.value
+        cmd_output: m.CommandOutput = cast("m.CommandOutput", result.value)
         return _RunCommandResult(
-            stdout=output.stdout,
-            stderr=output.stderr,
-            returncode=output.exit_code,
+            stdout=cmd_output.stdout,
+            stderr=cmd_output.stderr,
+            returncode=cmd_output.exit_code,
         )
 
     def _run_bandit(self, project_dir: Path) -> _GateExecution:
@@ -1343,13 +1344,14 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
         messages: list[str] = []
         total_fixes = 0
-        for path in files_result.value:
+        pyproject_files: list[Path] = cast("list[Path]", files_result.value)
+        for path in pyproject_files:
             fixes_result = self.process_file(path, dry_run=dry_run)
             if fixes_result.is_failure:
                 return r[list[str]].fail(
                     fixes_result.error or f"failed to process {path}",
                 )
-            fixes = fixes_result.value
+            fixes: list[str] = cast("list[str]", fixes_result.value)
             if not fixes:
                 continue
             total_fixes += len(fixes)
@@ -1475,7 +1477,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         if workspace_root is not None:
             return workspace_root.resolve()
         result = self._path_resolver.workspace_root()
-        return result.value if result.is_success else Path.cwd().resolve()
+        return cast("Path", result.value) if result.is_success else Path.cwd().resolve()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1522,9 +1524,11 @@ def run_cli(argv: list[str] | None = None) -> int:
         if run_result.is_failure:
             output.error(run_result.error or "check failed")
             return 2
-        failed_projects = [
-            project for project in run_result.value if not project.passed
-        ]
+        run_results: list[_ProjectResult] = cast(
+            "list[_ProjectResult]",
+            run_result.value,
+        )
+        failed_projects = [project for project in run_results if not project.passed]
         return 1 if failed_projects else 0
 
     if args.command == "fix-pyrefly-config":

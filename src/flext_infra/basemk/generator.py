@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Protocol, TextIO, override
+from typing import Protocol, TextIO, cast, override
 
 from flext_core import FlextService, r, t
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
@@ -47,11 +47,15 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
         if config_result.is_failure:
             return r[str].fail(config_result.error or "invalid base.mk configuration")
 
-        render_result = self._template_engine.render_all(config_result.value)
+        config_value: m.BaseMkConfig | None = cast(
+            "m.BaseMkConfig | None",
+            config_result.value,
+        )
+        render_result = self._template_engine.render_all(config_value)
         if render_result.is_failure:
             return r[str].fail(render_result.error or "base.mk render failed")
 
-        return self._validate_generated_output(render_result.value)
+        return self._validate_generated_output(cast("str", render_result.value))
 
     def write(
         self,

@@ -18,9 +18,12 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Mapping
 from pathlib import Path
+from typing import cast
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, t
+from flext_infra import m
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra.core.inventory import FlextInfraInventoryService
 from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor
@@ -36,7 +39,7 @@ def _run_basemk_validate(args: argparse.Namespace) -> int:
     result = validator.validate(Path(args.root).resolve())
 
     if result.is_success:
-        report = result.value
+        report: m.ValidationReport = cast("m.ValidationReport", result.value)
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -52,7 +55,10 @@ def _run_inventory(args: argparse.Namespace) -> int:
     result = service.generate(Path(args.root).resolve(), output_dir=output_dir)
 
     if result.is_success:
-        data = result.value
+        data: Mapping[str, t.ContainerValue] = cast(
+            "Mapping[str, t.ContainerValue]",
+            result.value,
+        )
         written = data.get("reports_written", [])
         if isinstance(written, list):
             for path in written:
@@ -68,7 +74,10 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
     result = extractor.extract(Path(args.junit), Path(args.log))
 
     if result.is_success:
-        data = result.value
+        data: Mapping[str, t.ContainerValue] = cast(
+            "Mapping[str, t.ContainerValue]",
+            result.value,
+        )
 
         failed_cases_raw = data.get("failed_cases")
         if args.failed and isinstance(failed_cases_raw, list):
@@ -120,7 +129,10 @@ def _run_scan(args: argparse.Namespace) -> int:
     )
 
     if result.is_success:
-        data = result.value
+        data: Mapping[str, t.ContainerValue] = cast(
+            "Mapping[str, t.ContainerValue]",
+            result.value,
+        )
         violation_count = data.get("violation_count", 0)
         return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
     output.error(result.error or "unknown error")
@@ -137,7 +149,7 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
     )
 
     if result.is_success:
-        report = result.value
+        report: m.ValidationReport = cast("m.ValidationReport", result.value)
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -156,7 +168,7 @@ def _run_stub_validate(args: argparse.Namespace) -> int:
     result = chain.validate(root, project_dirs=project_dirs)
 
     if result.is_success:
-        report = result.value
+        report: m.ValidationReport = cast("m.ValidationReport", result.value)
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)

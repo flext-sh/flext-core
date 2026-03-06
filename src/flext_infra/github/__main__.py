@@ -17,11 +17,14 @@ import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, r, t
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
-from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
-from flext_infra.github.workflows import FlextInfraWorkflowSyncer
+from flext_infra.github.pr_workspace import (
+    FlextInfraPrWorkspaceManager,
+    OrchestrationSummary,
+)
+from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
 from flext_infra.output import output
 
 _MIN_ARGV = 2
@@ -38,7 +41,7 @@ def _run_workflows(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     syncer = FlextInfraWorkflowSyncer()
-    result = syncer.sync_workspace(
+    result: r[list[SyncOperation]] = syncer.sync_workspace(
         workspace_root=args.workspace_root.resolve(),
         apply=args.apply,
         prune=args.prune,
@@ -61,16 +64,16 @@ def _run_lint(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     linter = FlextInfraWorkflowLinter()
-    result = linter.lint(
+    lint_result: r[Mapping[str, t.Scalar]] = linter.lint(
         root=args.root.resolve(),
         report_path=args.report,
         strict=args.strict,
     )
-    if result.is_failure:
-        output.error(result.error or "lint failed")
+    if lint_result.is_failure:
+        output.error(lint_result.error or "lint failed")
         return 1
 
-    result.value.get("status", "unknown")
+    _ = lint_result.value.get("status", "unknown")
     return 0
 
 
@@ -117,7 +120,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     }
 
     manager = FlextInfraPrWorkspaceManager()
-    result = manager.orchestrate(
+    orch_result: r[OrchestrationSummary] = manager.orchestrate(
         workspace_root=args.workspace_root.resolve(),
         projects=args.project or None,
         include_root=args.include_root == 1,
@@ -126,11 +129,11 @@ def _run_pr_workspace(argv: list[str]) -> int:
         fail_fast=args.fail_fast == 1,
         pr_args=pr_args,
     )
-    if result.is_failure:
-        output.error(result.error or "pr-workspace failed")
+    if orch_result.is_failure:
+        output.error(orch_result.error or "pr-workspace failed")
         return 1
 
-    data = result.value
+    data = orch_result.value
     return 1 if data.get("fail", 0) else 0
 
 

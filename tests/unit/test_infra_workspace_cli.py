@@ -25,19 +25,13 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
     ) -> r[list[im.MigrationResult]]:
         del self, workspace_root
         assert dry_run is True
-        return r[list[im.MigrationResult]].ok(
-            [
-                im.MigrationResult.model_validate(
-                    {
-                        "project": "flext-core",
-                        "changes": [
-                            "[DRY-RUN] base.mk regenerated via BaseMkGenerator"
-                        ],
-                        "errors": [],
-                    }
-                ),
-            ]
-        )
+        return r[list[im.MigrationResult]].ok([
+            im.MigrationResult.model_validate({
+                "project": "flext-core",
+                "changes": ["[DRY-RUN] base.mk regenerated via BaseMkGenerator"],
+                "errors": [],
+            }),
+        ])
 
     _ = monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _fake_migrate)
     _ = monkeypatch.setattr(
@@ -68,19 +62,15 @@ def test_workspace_cli_migrate_output_contains_summary(
         dry_run: bool,
     ) -> r[list[im.MigrationResult]]:
         del self, workspace_root, dry_run
-        return r[list[im.MigrationResult]].ok(
-            [
-                im.MigrationResult.model_validate(
-                    {
-                        "project": "flext-core",
-                        "changes": [
-                            "[DRY-RUN] .gitignore cleaned from scripts/ and normalized",
-                        ],
-                        "errors": [],
-                    }
-                ),
-            ]
-        )
+        return r[list[im.MigrationResult]].ok([
+            im.MigrationResult.model_validate({
+                "project": "flext-core",
+                "changes": [
+                    "[DRY-RUN] .gitignore cleaned from scripts/ and normalized",
+                ],
+                "errors": [],
+            }),
+        ])
 
     _ = monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _fake_migrate)
     _ = monkeypatch.setattr(

@@ -487,14 +487,12 @@ class FlextRegistry(s[bool]):
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
                 try:
-                    m.HandlerRegistrationDetails.model_validate(
-                        {
-                            "registration_id": key,
-                            "handler_mode": c.Cqrs.HandlerType.COMMAND,
-                            "timestamp": "",
-                            "status": c.Cqrs.CommonStatus.RUNNING,
-                        }
-                    )
+                    m.HandlerRegistrationDetails.model_validate({
+                        "registration_id": key,
+                        "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                        "timestamp": "",
+                        "status": c.Cqrs.CommonStatus.RUNNING,
+                    })
                 except ValidationError:
                     _ = self._add_registration_error(
                         key,
@@ -614,14 +612,12 @@ class FlextRegistry(s[bool]):
 
         """
         try:
-            m.HandlerRegistrationDetails.model_validate(
-                {
-                    "registration_id": handler.__class__.__name__,
-                    "handler_mode": c.Cqrs.HandlerType.COMMAND,
-                    "timestamp": "",
-                    "status": c.Cqrs.CommonStatus.RUNNING,
-                }
-            )
+            m.HandlerRegistrationDetails.model_validate({
+                "registration_id": handler.__class__.__name__,
+                "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                "timestamp": "",
+                "status": c.Cqrs.CommonStatus.RUNNING,
+            })
         except ValidationError:
             return r[m.HandlerRegistrationDetails].fail(
                 "Handler validation failed",

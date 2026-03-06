@@ -878,7 +878,9 @@ class FlextContext(FlextRuntime):
                 # Note: Hooks should not raise exceptions
                 # All exceptions indicate a programming error in hook implementation
                 hook_data: t.Scalar
-                if event_data is None or isinstance(
+                if event_data is None:
+                    hook_data = ""
+                elif isinstance(
                     event_data,
                     (str, int, float, bool, datetime),
                 ):

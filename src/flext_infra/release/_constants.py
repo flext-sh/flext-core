@@ -9,14 +9,12 @@ from typing import Final
 class FlextInfraReleaseConstants:
     """Release infrastructure constants."""
 
-    VALID_PHASES: Final[frozenset[str]] = frozenset(
-        {
-            "validate",
-            "version",
-            "build",
-            "publish",
-        }
-    )
+    VALID_PHASES: Final[frozenset[str]] = frozenset({
+        "validate",
+        "version",
+        "build",
+        "publish",
+    })
     VERSION_RE: Final[re.Pattern[str]] = re.compile(
         r'^version\s*=\s*"(.+?)"', re.MULTILINE
     )

@@ -1,14 +1,33 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import override
+from collections.abc import Mapping
+from typing import TypedDict, cast, override
 
 import libcst as cst
 
 
+class _FamilyPolicy(TypedDict, total=False):
+    enable_class_nesting: bool
+    allow_namespace_creation: bool
+    allow_existing_namespace_merge: bool
+    allowed_targets: list[str] | tuple[str, ...]
+    forbidden_targets: list[str] | tuple[str, ...]
+
+
+type PolicyContext = Mapping[str, _FamilyPolicy]
+
+
 class ClassNestingTransformer(cst.CSTTransformer):
-    def __init__(self, mappings: dict[str, str]) -> None:
+    def __init__(
+        self,
+        mappings: dict[str, str],
+        policy_context: PolicyContext | None = None,
+        class_families: Mapping[str, str] | None = None,
+    ) -> None:
         self._mappings = mappings
+        self._policy_context = policy_context
+        self._class_families = class_families or {}
         self._class_depth = 0
         self._existing_namespaces: set[str] = set()
         self._collected_nested: dict[str, list[cst.ClassDef]] = defaultdict(list)
@@ -44,6 +63,8 @@ class ClassNestingTransformer(cst.CSTTransformer):
         target_namespace = self._mappings.get(class_name)
         if target_namespace is None:
             return updated_node
+        if not self._is_nesting_allowed(class_name, target_namespace):
+            return updated_node
 
         self._collected_nested[target_namespace].append(updated_node)
         return cst.RemoveFromParent()
@@ -58,6 +79,14 @@ class ClassNestingTransformer(cst.CSTTransformer):
 
         module_body = list(updated_node.body)
         for namespace, nested_classes in self._collected_nested.items():
+            if not self._can_operate_for_namespace(
+                nested_classes,
+                namespace,
+                "allow_namespace_creation",
+                default=True,
+            ):
+                continue
+
             namespace_index = None
             if namespace in self._existing_namespaces:
                 namespace_index = next(
@@ -69,6 +98,14 @@ class ClassNestingTransformer(cst.CSTTransformer):
                     ),
                     None,
                 )
+
+            if namespace_index is not None and not self._can_operate_for_namespace(
+                nested_classes,
+                namespace,
+                "allow_existing_namespace_merge",
+                default=True,
+            ):
+                continue
 
             if namespace_index is None:
                 module_body.append(
@@ -114,6 +151,81 @@ class ClassNestingTransformer(cst.CSTTransformer):
 
     def _is_pass_only(self, statement: cst.SimpleStatementLine) -> bool:
         return len(statement.body) == 1 and isinstance(statement.body[0], cst.Pass)
+
+    def _is_nesting_allowed(self, class_name: str, target_namespace: str) -> bool:
+        policy = self._policy_for_symbol(class_name)
+        if policy is None:
+            return True
+        if not self._bool_from_policy(policy, "enable_class_nesting", default=False):
+            return False
+        if not self._target_allowed(policy, target_namespace):
+            return False
+        return True
+
+    def _can_operate_for_namespace(
+        self,
+        nested_classes: list[cst.ClassDef],
+        target_namespace: str,
+        operation_key: str,
+        *,
+        default: bool,
+    ) -> bool:
+        applied_policy_found = False
+        for class_def in nested_classes:
+            policy = self._policy_for_symbol(class_def.name.value)
+            if policy is None:
+                continue
+            applied_policy_found = True
+            if not self._bool_from_policy(policy, operation_key, default=default):
+                return False
+            if not self._target_allowed(policy, target_namespace):
+                return False
+        if applied_policy_found:
+            return True
+        return default
+
+    def _policy_for_symbol(self, symbol_name: str) -> _FamilyPolicy | None:
+        if self._policy_context is None:
+            return None
+        family = self._class_families.get(symbol_name)
+        if family is None:
+            return None
+        policy = self._policy_context.get(family)
+        if policy is None:
+            return None
+        return policy
+
+    def _bool_from_policy(
+        self,
+        policy: _FamilyPolicy,
+        key: str,
+        *,
+        default: bool,
+    ) -> bool:
+        raw = policy.get(key)
+        if isinstance(raw, bool):
+            return raw
+        return default
+
+    def _target_allowed(self, policy: _FamilyPolicy, target_namespace: str) -> bool:
+        allowed = self._string_collection(policy.get("allowed_targets"))
+        if allowed and target_namespace not in allowed:
+            return False
+
+        forbidden = self._string_collection(policy.get("forbidden_targets"))
+        if target_namespace in forbidden:
+            return False
+        return True
+
+    def _string_collection(self, value: object) -> tuple[str, ...]:
+        if not isinstance(value, list | tuple):
+            return ()
+        typed_value = cast("tuple[object, ...] | list[object]", value)
+        result: list[str] = []
+        for entry in typed_value:
+            if isinstance(entry, str):
+                result.append(entry)
+        return tuple(result)
 
 
 __all__ = ["ClassNestingTransformer"]

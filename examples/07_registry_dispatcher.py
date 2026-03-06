@@ -120,12 +120,10 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         create_handler = CreateUserHandler()
         _ = dispatcher.register_handler(create_handler)
 
-        command = CreateUserCommand.model_validate(
-            {
-                "name": "Alice",
-                "email": "alice@example.com",
-            }
-        )
+        command = CreateUserCommand.model_validate({
+            "name": "Alice",
+            "email": "alice@example.com",
+        })
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
@@ -159,12 +157,10 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         _ = dispatcher.register_handler(get_handler)
 
         # Dispatch command - Pydantic models as message payload
-        command: CreateUserCommand = CreateUserCommand.model_validate(
-            {
-                "name": "Bob",
-                "email": "bob@example.com",
-            }
-        )
+        command: CreateUserCommand = CreateUserCommand.model_validate({
+            "name": "Bob",
+            "email": "bob@example.com",
+        })
         command_result = dispatcher.dispatch(command)
         if command_result.is_success:
             print("✅ Command dispatched successfully")

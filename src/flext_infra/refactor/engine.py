@@ -149,18 +149,16 @@ class FlextInfraRefactorEngine:
 
         for result in results:
             if not result.success:
-                impact_map.append(
-                    {
-                        "project": FlextInfraRefactorEngine._project_name_from_path(
-                            result.file_path
-                        ),
-                        "file": str(result.file_path),
-                        "kind": "failure",
-                        "old": "",
-                        "new": "",
-                        "status": result.error or "failed",
-                    }
-                )
+                impact_map.append({
+                    "project": FlextInfraRefactorEngine._project_name_from_path(
+                        result.file_path
+                    ),
+                    "file": str(result.file_path),
+                    "kind": "failure",
+                    "old": "",
+                    "new": "",
+                    "status": result.error or "failed",
+                })
                 continue
 
             if not result.changes:
@@ -173,46 +171,40 @@ class FlextInfraRefactorEngine:
                 symbol_match = symbol_pattern.match(change)
                 if symbol_match is not None:
                     _, old_symbol, new_symbol = symbol_match.groups()
-                    impact_map.append(
-                        {
-                            "project": project_name,
-                            "file": str(result.file_path),
-                            "kind": "rename",
-                            "old": old_symbol.strip(),
-                            "new": new_symbol.strip(),
-                            "status": "changed",
-                        }
-                    )
+                    impact_map.append({
+                        "project": project_name,
+                        "file": str(result.file_path),
+                        "kind": "rename",
+                        "old": old_symbol.strip(),
+                        "new": new_symbol.strip(),
+                        "status": "changed",
+                    })
                     continue
 
                 add_match = added_pattern.match(change)
                 if add_match is not None:
                     migration_id, payload = add_match.groups()
-                    impact_map.append(
-                        {
-                            "project": project_name,
-                            "file": str(result.file_path),
-                            "kind": "signature_add",
-                            "old": "",
-                            "new": payload.strip(),
-                            "status": migration_id,
-                        }
-                    )
+                    impact_map.append({
+                        "project": project_name,
+                        "file": str(result.file_path),
+                        "kind": "signature_add",
+                        "old": "",
+                        "new": payload.strip(),
+                        "status": migration_id,
+                    })
                     continue
 
                 remove_match = removed_pattern.match(change)
                 if remove_match is not None:
                     migration_id, payload = remove_match.groups()
-                    impact_map.append(
-                        {
-                            "project": project_name,
-                            "file": str(result.file_path),
-                            "kind": "signature_remove",
-                            "old": payload.strip(),
-                            "new": "",
-                            "status": migration_id,
-                        }
-                    )
+                    impact_map.append({
+                        "project": project_name,
+                        "file": str(result.file_path),
+                        "kind": "signature_remove",
+                        "old": payload.strip(),
+                        "new": "",
+                        "status": migration_id,
+                    })
 
         return impact_map
 

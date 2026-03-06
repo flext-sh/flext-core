@@ -451,7 +451,8 @@ class TestMonadicOperationsUnchanged:
         """Verify monadic operations (map, flat_map, filter) work unchanged."""
         result: r[int] = r[int].ok(5)
         final: r[int] = (
-            result.map(lambda x: x * 2)
+            result
+            .map(lambda x: x * 2)
             .flat_map(lambda x: r[int].ok(x + 1))
             .filter(lambda x: x > 5)
         )
@@ -465,7 +466,8 @@ class TestMonadicOperationsUnchanged:
         exc = ValueError("chain error")
         result = r[int].ok(5)
         final: r[int] = (
-            result.map(lambda x: x * 2)
+            result
+            .map(lambda x: x * 2)
             .flat_map(lambda x: r[int].fail("error", exception=exc))
             .map(lambda x: x + 1)
         )

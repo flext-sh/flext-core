@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import cast
 
 from flext_infra import c, output
-from flext_infra.check.services import FlextInfraWorkspaceChecker
+from flext_infra.check.services import FlextInfraWorkspaceChecker, _ProjectResult
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -41,7 +42,8 @@ def main(argv: list[str] | None = None) -> int:
         output.error(result.error or "workspace check failed")
         return 2
 
-    failed_projects = [project for project in result.value if not project.passed]
+    projects: list[_ProjectResult] = cast("list[_ProjectResult]", result.value)
+    failed_projects = [project for project in projects if not project.passed]
     return 1 if failed_projects else 0
 
 

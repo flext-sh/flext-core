@@ -648,11 +648,9 @@ class TestFlextContainer:
         container = clean_container
         container.register("db_connection", {"host": FlextConstants.Network.LOCALHOST})
         container.register("cache", {"type": "redis"})
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
-            {
-                "logger": "instance",
-            }
-        )
+        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory({
+            "logger": "instance",
+        })
         container.register("logger", factory, kind="factory")
         required_services = ["db_connection", "cache", "logger"]
         for service_name in required_services:

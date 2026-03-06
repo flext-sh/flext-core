@@ -4,8 +4,8 @@ version = ">=3.13,<3.15"
 [limits]
 
 [typing_libraries]
-exclude = []
+exclude = [  ]
 
 [typing_libraries.module_to_package]
-yaml = "types-pyyaml"
 ldap3 = "types-ldap3"
+yaml = "types-pyyaml"

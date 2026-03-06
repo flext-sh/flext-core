@@ -23,15 +23,13 @@ from flext_infra.output import output
 
 _MIN_ARGV = 2
 
-_SUBCOMMANDS: Mapping[str, str] = MappingProxyType(
-    {
-        "detect": "flext_infra.deps.detector",
-        "extra-paths": "flext_infra.deps.extra_paths",
-        "internal-sync": "flext_infra.deps.internal_sync",
-        "modernize": "flext_infra.deps.modernizer",
-        "path-sync": "flext_infra.deps.path_sync",
-    }
-)
+_SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
+    "detect": "flext_infra.deps.detector",
+    "extra-paths": "flext_infra.deps.extra_paths",
+    "internal-sync": "flext_infra.deps.internal_sync",
+    "modernize": "flext_infra.deps.modernizer",
+    "path-sync": "flext_infra.deps.path_sync",
+})
 
 
 def main() -> int:

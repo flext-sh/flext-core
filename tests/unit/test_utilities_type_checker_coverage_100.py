@@ -67,12 +67,10 @@ class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
         message: dict[str, t.ContainerValue],
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle dict message."""
-        return FlextResult[dict[str, t.ContainerValue]].ok(
-            {
-                "processed": True,
-                **message,
-            }
-        )
+        return FlextResult[dict[str, t.ContainerValue]].ok({
+            "processed": True,
+            **message,
+        })
 
 
 class ObjectHandler(h[object, object]):

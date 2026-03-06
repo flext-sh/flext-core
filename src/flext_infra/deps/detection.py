@@ -206,7 +206,8 @@ class FlextInfraDependencyDetectionService:
                     for spec in typings:
                         if isinstance(spec, str):
                             names.add(
-                                spec.split("[")[0]
+                                spec
+                                .split("[")[0]
                                 .split(">=")[0]
                                 .split("==")[0]
                                 .strip(),

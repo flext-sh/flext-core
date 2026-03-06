@@ -180,7 +180,8 @@ class TestFlextTestsBuilders:
         """Test fluent interface method chaining."""
         builder = FlextTestsBuilders()
         result = (
-            builder.with_users(2)
+            builder
+            .with_users(2)
             .with_configs(production=False)
             .with_validation_fields(3)
             .build()

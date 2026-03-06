@@ -96,7 +96,7 @@ class FlextInfraDocValidator:
             FlextResult with list of ValidateReport objects.
 
         """
-        scopes_result = FlextInfraDocsShared.build_scopes(
+        scopes_result: r[list[FlextInfraDocScope]] = FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,
             projects=projects,

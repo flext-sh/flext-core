@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextRuntime
 from flext_infra import m, output
@@ -56,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     write_result = generator.write(
-        generated_result.value,
+        cast("str", generated_result.value),
         output=args.output,
         stream=sys.stdout,
     )

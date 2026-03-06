@@ -13,6 +13,7 @@ import contextlib
 import time
 from collections.abc import Mapping
 from pathlib import Path
+from typing import cast
 
 from flext_core import r, t
 from flext_infra import (
@@ -21,6 +22,7 @@ from flext_infra import (
     FlextInfraProjectSelector,
     FlextInfraReportingService,
     c,
+    m,
 )
 
 type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.Scalar]]]
@@ -194,7 +196,7 @@ class FlextInfraPrWorkspaceManager:
         if add_result.is_failure:
             return r[bool].fail(add_result.error or "git add failed")
 
-        staged_result = self._runner.capture(
+        staged_result: r[str] = self._runner.capture(
             ["git", "diff", "--cached", "--name-only"],
             cwd=repo_root,
         )
@@ -236,13 +238,13 @@ class FlextInfraPrWorkspaceManager:
             r[bool] with True if changes exist.
 
         """
-        result = self._runner.capture(
+        status_result: r[str] = self._runner.capture(
             ["git", "status", "--porcelain"],
             cwd=repo_root,
         )
-        if result.is_failure:
-            return r[bool].fail(result.error or "git status failed")
-        return r[bool].ok(bool(result.value.strip()))
+        if status_result.is_failure:
+            return r[bool].fail(status_result.error or "git status failed")
+        return r[bool].ok(bool(status_result.value.strip()))
 
     def orchestrate(
         self,
@@ -270,7 +272,7 @@ class FlextInfraPrWorkspaceManager:
             r with orchestration summary.
 
         """
-        projects_result = self._selector.resolve_projects(
+        projects_result: r[list[m.ProjectInfo]] = self._selector.resolve_projects(
             workspace_root,
             projects or [],
         )
@@ -292,10 +294,13 @@ class FlextInfraPrWorkspaceManager:
             if checkpoint:
                 self.checkpoint(repo_root, branch)
 
-            run_result = self.run_pr(repo_root, workspace_root, effective_args)
+            run_result: r[Mapping[str, t.Scalar]] = self.run_pr(
+                repo_root, workspace_root, effective_args
+            )
             if run_result.is_success:
-                results.append(run_result.value)
-                if run_result.value.get("exit_code", 0) != 0:
+                pr_data = cast("Mapping[str, t.Scalar]", run_result.value)  # type: ignore[redundant-cast]
+                results.append(pr_data)
+                if pr_data.get("exit_code", 0) != 0:
                     failures += 1
                     if fail_fast:
                         break
@@ -305,14 +310,12 @@ class FlextInfraPrWorkspaceManager:
                     break
 
         total = len(repos)
-        return r[OrchestrationSummary].ok(
-            {
-                "total": total,
-                "success": total - failures,
-                "fail": failures,
-                "results": results,
-            }
-        )
+        return r[OrchestrationSummary].ok({
+            "total": total,
+            "success": total - failures,
+            "fail": failures,
+            "results": results,
+        })
 
     def run_pr(
         self,
@@ -346,14 +349,14 @@ class FlextInfraPrWorkspaceManager:
 
         started = time.monotonic()
         if log_path is not None:
-            to_file_result = self._runner.run_to_file(command, log_path)
+            to_file_result: r[int] = self._runner.run_to_file(command, log_path)
             if to_file_result.is_failure:
                 return r[Mapping[str, t.Scalar]].fail(
                     to_file_result.error or "command execution error",
                 )
             exit_code: int = to_file_result.value
         else:
-            raw_result = self._runner.run_raw(command)
+            raw_result: r[m.CommandOutput] = self._runner.run_raw(command)
             if raw_result.is_failure:
                 return r[Mapping[str, t.Scalar]].fail(
                     raw_result.error or "command execution error",
@@ -362,15 +365,14 @@ class FlextInfraPrWorkspaceManager:
 
         elapsed = int(time.monotonic() - started)
         status = c.Status.OK if exit_code == 0 else c.Status.FAIL
-        return r[Mapping[str, t.Scalar]].ok(
-            {
-                "display": display,
-                "status": status,
-                "elapsed": elapsed,
-                "exit_code": exit_code,
-                "log_path": str(log_path) if log_path else None,
-            }
-        )
+        log_str: str = str(log_path) if log_path else ""
+        return r[Mapping[str, t.Scalar]].ok({
+            "display": display,
+            "status": status,
+            "elapsed": elapsed,
+            "exit_code": exit_code,
+            "log_path": log_str,
+        })
 
 
 __all__ = ["FlextInfraPrWorkspaceManager"]

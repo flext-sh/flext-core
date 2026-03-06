@@ -61,12 +61,10 @@ class Ex08FlextContainer(Examples):
 
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()
-        container.configure(
-            {
-                "max_services": configured_max_services,
-                "enable_factory_caching": configured_factory_caching,
-            }
-        )
+        container.configure({
+            "max_services": configured_max_services,
+            "enable_factory_caching": configured_factory_caching,
+        })
         config_map = container.get_config()
         max_services = config_map["max_services"]
         enable_factory_caching = config_map["enable_factory_caching"]

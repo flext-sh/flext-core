@@ -1379,10 +1379,7 @@ class FlextRuntime:
                     "_",
                     c.Validation.LEVEL_PREFIX_PARTS_COUNT,
                 )  # Split into ['', 'level', 'debug', 'config']
-                if (
-                    len(parts) >= c.Validation.LEVEL_PREFIX_PARTS_COUNT
-                    and len(parts) > 3
-                ):
+                if len(parts) >= c.Validation.LEVEL_PREFIX_PARTS_COUNT:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(

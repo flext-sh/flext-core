@@ -111,14 +111,12 @@ class TestWorkspaceCheckerResolveGates:
 
     def test_resolve_gates_deduplicates_entries(self) -> None:
         """Test duplicates are removed."""
-        result = FlextInfraWorkspaceChecker.resolve_gates(
-            [
-                "lint",
-                "lint",
-                "format",
-                "lint",
-            ]
-        )
+        result = FlextInfraWorkspaceChecker.resolve_gates([
+            "lint",
+            "lint",
+            "format",
+            "lint",
+        ])
         assert result.is_success
         assert result.value.count("lint") == 1
 
@@ -311,9 +309,9 @@ class TestWorkspaceCheckCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
-            mock.run_projects.return_value = r[list[SimpleNamespace]].ok(
-                [SimpleNamespace(passed=True)]
-            )
+            mock.run_projects.return_value = r[list[SimpleNamespace]].ok([
+                SimpleNamespace(passed=True)
+            ])
 
             exit_code = workspace_check_main(["p1", "--gates", "lint"])
 
@@ -326,9 +324,9 @@ class TestWorkspaceCheckCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
-            mock.run_projects.return_value = r[list[SimpleNamespace]].ok(
-                [SimpleNamespace(passed=False)]
-            )
+            mock.run_projects.return_value = r[list[SimpleNamespace]].ok([
+                SimpleNamespace(passed=False)
+            ])
 
             exit_code = workspace_check_main(["p1", "--gates", "lint"])
 
@@ -354,9 +352,9 @@ class TestWorkspaceCheckCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
-            mock.run_projects.return_value = r[list[SimpleNamespace]].ok(
-                [SimpleNamespace(passed=True)]
-            )
+            mock.run_projects.return_value = r[list[SimpleNamespace]].ok([
+                SimpleNamespace(passed=True)
+            ])
 
             exit_code = workspace_check_main(["p1", "--gates", "lint", "--fail-fast"])
 
@@ -694,17 +692,15 @@ class TestRunCLI:
                 project = _ProjectResult(project="p", gates={"lint": gate_exec})
                 mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
 
-                exit_code = run_cli(
-                    [
-                        "run",
-                        "--gates",
-                        "lint",
-                        "--project",
-                        "p",
-                        "--reports-dir",
-                        "reports/check",
-                    ]
-                )
+                exit_code = run_cli([
+                    "run",
+                    "--gates",
+                    "lint",
+                    "--project",
+                    "p",
+                    "--reports-dir",
+                    "reports/check",
+                ])
 
                 assert exit_code == 0
                 call_kwargs = mock.run_projects.call_args.kwargs
@@ -720,16 +716,14 @@ class TestRunCLI:
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
 
-            exit_code = run_cli(
-                [
-                    "run",
-                    "--gates",
-                    "lint",
-                    "--project",
-                    "p",
-                    "--fail-fast",
-                ]
-            )
+            exit_code = run_cli([
+                "run",
+                "--gates",
+                "lint",
+                "--project",
+                "p",
+                "--fail-fast",
+            ])
 
             assert exit_code == 0
             call_kwargs = mock.run_projects.call_args.kwargs

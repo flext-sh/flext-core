@@ -449,13 +449,11 @@ class TestPropertyBasedPatterns:
 
     @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(
-        st.fixed_dictionaries(
-            {
-                "id": st.uuids().map(str),
-                "name": st.text(),
-                "email": st.emails(),
-            }
-        ),
+        st.fixed_dictionaries({
+            "id": st.uuids().map(str),
+            "name": st.text(),
+            "email": st.emails(),
+        }),
     )
     def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
         """Property-based test for user profiles."""
@@ -872,13 +870,11 @@ class TestRealWorldScenarios:
             database_url=st.text(),
             debug=st.booleans(),
             timeout_seconds=st.integers(min_value=1, max_value=300),
-            environment=st.sampled_from(
-                [
-                    "development",
-                    "staging",
-                    "production",
-                ]
-            ),
+            environment=st.sampled_from([
+                "development",
+                "staging",
+                "production",
+            ]),
         ),
     )
     @settings()

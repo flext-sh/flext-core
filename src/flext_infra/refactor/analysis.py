@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar, TypedDict, cast
+from typing import ClassVar, TypedDict, cast, override
 
 import libcst as cst
 import yaml
@@ -47,6 +47,7 @@ class _HelperFileAnalysis(TypedDict):
 class _ClassNestingMappingEntry(TypedDict):
     target_namespace: str
     confidence: str
+    rewrite_scope: str
 
 
 class _ClassNestingViolation(TypedDict):
@@ -55,6 +56,7 @@ class _ClassNestingViolation(TypedDict):
     class_name: str
     target_namespace: str
     confidence: str
+    rewrite_scope: str
 
 
 def _asname_to_local(asname: cst.AsName | None) -> str | None:
@@ -69,6 +71,7 @@ class _ImportDependencyCollector(cst.CSTVisitor):
     def __init__(self) -> None:
         self.local_to_import: dict[str, str] = {}
 
+    @override
     def visit_Import(self, node: cst.Import) -> None:
         for raw_alias in node.names:
             imported = _dotted_name(raw_alias.name)
@@ -79,6 +82,7 @@ class _ImportDependencyCollector(cst.CSTVisitor):
                 local_name = imported.split(".", maxsplit=1)[0]
             self.local_to_import[local_name] = imported
 
+    @override
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
         if isinstance(node.names, cst.ImportStar):
             return
@@ -104,6 +108,7 @@ class _FunctionDependencyCollector(cst.CSTVisitor):
     def __init__(self) -> None:
         self.names: set[str] = set()
 
+    @override
     def visit_Name(self, node: cst.Name) -> None:
         self.names.add(node.value)
 
@@ -173,22 +178,23 @@ class FlextInfraRefactorClassNestingAnalyzer:
                     confidence = raw_confidence
 
                 target_namespace = ""
+                rewrite_scope = "file"
                 mapped_entry = mapping_index.get((normalized_file, raw_class_name))
                 if mapped_entry is not None:
                     target_namespace = mapped_entry["target_namespace"]
                     confidence = mapped_entry["confidence"]
+                    rewrite_scope = mapped_entry["rewrite_scope"]
                 elif isinstance(raw_expected_prefix, str):
                     target_namespace = raw_expected_prefix
 
-                violations.append(
-                    {
-                        "file": normalized_file,
-                        "line": line,
-                        "class_name": raw_class_name,
-                        "target_namespace": target_namespace,
-                        "confidence": confidence,
-                    }
-                )
+                violations.append({
+                    "file": normalized_file,
+                    "line": line,
+                    "class_name": raw_class_name,
+                    "target_namespace": target_namespace,
+                    "confidence": confidence,
+                    "rewrite_scope": rewrite_scope,
+                })
                 confidence_counts[confidence] += 1
                 per_file_counts[normalized_file] += 1
 
@@ -264,6 +270,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
             current_file = typed_entry.get("current_file")
             target_namespace = typed_entry.get("target_namespace")
             confidence = typed_entry.get("confidence")
+            rewrite_scope_raw = typed_entry.get("rewrite_scope")
             if not isinstance(loose_name, str):
                 continue
             if not isinstance(current_file, str):
@@ -272,11 +279,13 @@ class FlextInfraRefactorClassNestingAnalyzer:
                 continue
             if not isinstance(confidence, str):
                 continue
+            rewrite_scope = cls._normalize_rewrite_scope(rewrite_scope_raw)
 
             normalized_file = cls._normalize_module_path(current_file)
             index[normalized_file, loose_name] = {
                 "target_namespace": target_namespace,
                 "confidence": confidence,
+                "rewrite_scope": rewrite_scope,
             }
 
         return index
@@ -293,27 +302,34 @@ class FlextInfraRefactorClassNestingAnalyzer:
                 return Path(*suffix).as_posix()
         return path.as_posix().lstrip("./")
 
+    @classmethod
+    def _normalize_rewrite_scope(cls, raw_scope: object) -> str:
+        if not isinstance(raw_scope, str):
+            return "file"
+        candidate = raw_scope.strip().lower()
+        if candidate in {"file", "project", "workspace"}:
+            return candidate
+        return "file"
+
 
 class FlextInfraRefactorViolationAnalyzer:
     """Scan files and aggregate massive pattern violations."""
 
-    _PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = MappingProxyType(
-        {
-            "container_invariance": re.compile(
-                r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
-            ),
-            "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
-            "direct_submodule_import": re.compile(
-                r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
-            ),
-            "legacy_typing_mapping": re.compile(
-                r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
-            ),
-            "runtime_alias_violation": re.compile(
-                r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
-            ),
-        }
-    )
+    _PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = MappingProxyType({
+        "container_invariance": re.compile(
+            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
+        ),
+        "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
+        "direct_submodule_import": re.compile(
+            r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
+        ),
+        "legacy_typing_mapping": re.compile(
+            r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
+        ),
+        "runtime_alias_violation": re.compile(
+            r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
+        ),
+    })
     _MODEL_TOKENS: ClassVar[tuple[str, ...]] = (
         "model",
         "schema",
@@ -333,14 +349,12 @@ class FlextInfraRefactorViolationAnalyzer:
         "query",
         "event",
     )
-    _NAMESPACE_PREFIXES: ClassVar[Mapping[str, str]] = MappingProxyType(
-        {
-            "utility": "FlextUtilities",
-            "models": "FlextModels",
-            "decorators": "FlextDecorators",
-            "dispatcher": "FlextDispatcher",
-        }
-    )
+    _NAMESPACE_PREFIXES: ClassVar[Mapping[str, str]] = MappingProxyType({
+        "utility": "FlextUtilities",
+        "models": "FlextModels",
+        "decorators": "FlextDecorators",
+        "dispatcher": "FlextDispatcher",
+    })
     _CLASSIFICATION_PRIORITY: ClassVar[tuple[str, ...]] = (
         "dispatcher",
         "decorators",

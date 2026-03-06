@@ -335,21 +335,17 @@ class FlextExceptions:
         excluded = excluded_keys or frozenset()
         context_map: m.ConfigMap = m.ConfigMap(root={})
         if context:
-            context_map.update(
-                {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in context.items()
-                    if k not in excluded
-                }
-            )
+            context_map.update({
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in context.items()
+                if k not in excluded
+            })
         if extra_kwargs:
-            context_map.update(
-                {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in extra_kwargs.items()
-                    if k not in excluded
-                }
-            )
+            context_map.update({
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in extra_kwargs.items()
+                if k not in excluded
+            })
         return context_map
 
     @staticmethod
@@ -1413,9 +1409,9 @@ class FlextExceptions:
             attrs_raw = getattr(metadata_raw, "attributes", None)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
-                metadata = m.Metadata.model_validate(
-                    {"attributes": dict(attrs_map.items())}
-                )
+                metadata = m.Metadata.model_validate({
+                    "attributes": dict(attrs_map.items())
+                })
         return (correlation_id, metadata)
 
     @staticmethod

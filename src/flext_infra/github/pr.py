@@ -15,6 +15,7 @@ import argparse
 import json
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextResult, r, t
 from flext_infra import (
@@ -111,20 +112,20 @@ class FlextInfraPrManager:
             FlextResult with creation status info.
 
         """
-        existing_result = self.open_pr_for_head(repo_root, head)
+        existing_result: r[Mapping[str, t.Scalar]] = self.open_pr_for_head(
+            repo_root, head
+        )
         if existing_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
                 existing_result.error or "failed to check existing PRs",
             )
 
-        existing = existing_result.value
+        existing = cast("Mapping[str, t.Scalar]", existing_result.unwrap())  # type: ignore[redundant-cast]
         if existing:
-            return r[Mapping[str, t.Scalar]].ok(
-                {
-                    "status": "already-open",
-                    "pr_url": existing.get("url"),
-                }
-            )
+            return r[Mapping[str, t.Scalar]].ok({
+                "status": "already-open",
+                "pr_url": cast("str", existing.get("url")),
+            })
 
         command = [
             "gh",
@@ -142,17 +143,15 @@ class FlextInfraPrManager:
         if draft:
             command.append("--draft")
 
-        result = self._runner.capture(command, cwd=repo_root)
+        result: r[str] = self._runner.capture(command, cwd=repo_root)
         if result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
                 result.error or "PR creation failed",
             )
-        return r[Mapping[str, t.Scalar]].ok(
-            {
-                "status": "created",
-                "pr_url": result.value,
-            }
-        )
+        return r[Mapping[str, t.Scalar]].ok({
+            "status": "created",
+            "pr_url": cast("str", result.unwrap()),  # type: ignore[redundant-cast]
+        })
 
     def merge(
         self,
@@ -182,7 +181,7 @@ class FlextInfraPrManager:
         """
         if selector == head:
             pr_result = self.open_pr_for_head(repo_root, head)
-            if pr_result.is_success and not pr_result.value:
+            if pr_result.is_success and not pr_result.unwrap():
                 return r[Mapping[str, t.Scalar]].ok({"status": "no-open-pr"})
 
         merge_flag = {
@@ -254,7 +253,7 @@ class FlextInfraPrManager:
                 result.error or "failed to list PRs",
             )
         try:
-            payload = json.loads(result.value)
+            payload = json.loads(cast("str", result.unwrap()))  # type: ignore[redundant-cast]
         except json.JSONDecodeError as exc:
             return r[Mapping[str, t.Scalar]].fail(f"invalid JSON: {exc}")
 
@@ -282,7 +281,7 @@ class FlextInfraPrManager:
             FlextResult with status info dict.
 
         """
-        pr_result = self.open_pr_for_head(repo_root, head)
+        pr_result: r[Mapping[str, t.Scalar]] = self.open_pr_for_head(repo_root, head)
         if pr_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
                 pr_result.error or "status check failed",
@@ -293,16 +292,16 @@ class FlextInfraPrManager:
             "base": base,
             "head": head,
         }
-        pr = pr_result.value
+        pr = cast("Mapping[str, t.Scalar]", pr_result.unwrap())  # type: ignore[redundant-cast]
         if not pr:
             info["status"] = "no-open-pr"
         else:
             info["status"] = "open"
-            info["pr_number"] = pr.get("number")
-            info["pr_title"] = pr.get("title")
-            info["pr_url"] = pr.get("url")
-            info["pr_state"] = pr.get("state")
-            info["pr_draft"] = pr.get("isDraft")
+            info["pr_number"] = cast("t.Scalar", pr.get("number"))
+            info["pr_title"] = cast("t.Scalar", pr.get("title"))
+            info["pr_url"] = cast("t.Scalar", pr.get("url"))
+            info["pr_state"] = cast("t.Scalar", pr.get("state"))
+            info["pr_draft"] = cast("t.Scalar", pr.get("isDraft"))
         return r[Mapping[str, t.Scalar]].ok(info)
 
     def view(self, repo_root: Path, selector: str) -> FlextResult[str]:
@@ -340,11 +339,11 @@ class FlextInfraPrManager:
         if not release_yml.exists():
             return r[Mapping[str, str]].ok({"status": "no-release-workflow"})
 
-        tag_result = self._versioning.release_tag_from_branch(head)
+        tag_result: r[str] = self._versioning.release_tag_from_branch(head)
         if tag_result.is_failure:
             return r[Mapping[str, str]].ok({"status": "no-release-tag"})
 
-        tag = tag_result.value
+        tag = cast("str", tag_result.unwrap())  # type: ignore[redundant-cast]
         view_result = self._runner.run(
             ["gh", "release", "view", tag],
             cwd=repo_root,
@@ -358,12 +357,10 @@ class FlextInfraPrManager:
         )
         if dispatch_result.is_success:
             return r[Mapping[str, str]].ok({"status": "release-dispatched", "tag": tag})
-        return r[Mapping[str, str]].ok(
-            {
-                "status": "release-dispatch-failed",
-                "tag": tag,
-            }
-        )
+        return r[Mapping[str, str]].ok({
+            "status": "release-dispatch-failed",
+            "tag": tag,
+        })
 
 
 def _selector(pr_number: str, head: str) -> str:
@@ -400,7 +397,7 @@ def main() -> int:
 
     git = FlextInfraGitService()
     head_result = git.current_branch(repo_root)
-    head = args.head or (head_result.value if head_result.is_success else "HEAD")
+    head = cast("str", args.head or head_result.unwrap_or("HEAD"))
     base = args.base
     selector = _selector(args.number, head)
 

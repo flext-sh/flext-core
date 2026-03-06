@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from typing import cast
 
 from flext_core import FlextRuntime
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
@@ -41,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     result = service.execute(check_only=args.check, verbose=args.verbose)
 
     if result.is_success:
-        return int(result.value) if result.value is not None else 0
+        return cast("int", result.unwrap())
     output.error(result.error or "maintenance failed")
     return 1
 
