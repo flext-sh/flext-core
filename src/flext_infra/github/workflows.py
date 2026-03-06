@@ -63,7 +63,7 @@ class FlextInfraWorkflowSyncer:
 
         """
         try:
-            body = template_path.read_text(encoding=c.Encoding.DEFAULT)
+            body = template_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"failed to read template: {exc}")
 
@@ -132,12 +132,12 @@ class FlextInfraWorkflowSyncer:
 
         try:
             if destination.exists():
-                current = destination.read_text(encoding=c.Encoding.DEFAULT)
+                current = destination.read_text(encoding=c.Infra.Encoding.DEFAULT)
                 if current != rendered_template:
                     if apply:
                         _ = destination.write_text(
                             rendered_template,
-                            encoding=c.Encoding.DEFAULT,
+                            encoding=c.Infra.Encoding.DEFAULT,
                         )
                     operations.append(
                         SyncOperation(
@@ -161,7 +161,7 @@ class FlextInfraWorkflowSyncer:
                     workflows_dir.mkdir(parents=True, exist_ok=True)
                     _ = destination.write_text(
                         rendered_template,
-                        encoding=c.Encoding.DEFAULT,
+                        encoding=c.Infra.Encoding.DEFAULT,
                     )
                 operations.append(
                     SyncOperation(

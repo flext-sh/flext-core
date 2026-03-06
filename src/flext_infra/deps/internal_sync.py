@@ -180,7 +180,7 @@ class FlextInfraInternalDependencySyncService:
         return r[int].ok(0)
 
     def _collect_internal_deps(self, project_root: Path) -> r[Mapping[str, Path]]:
-        pyproject = project_root / c.Files.PYPROJECT_FILENAME
+        pyproject = project_root / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             return r[Mapping[str, Path]].ok({})
 

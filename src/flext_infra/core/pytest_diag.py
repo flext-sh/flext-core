@@ -46,7 +46,7 @@ class FlextInfraPytestDiagExtractor:
     and uses regex-based log parsing when XML is unavailable.
     """
 
-    _ENCODING: ClassVar[str] = c.Encoding.DEFAULT
+    _ENCODING: ClassVar[str] = c.Infra.Encoding.DEFAULT
 
     @staticmethod
     def _extract_slow_from_log(lines: list[str], diag: _DiagResult) -> None:

@@ -13,7 +13,6 @@ import json
 import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from typing import cast
 
 from yaml import safe_load
 
@@ -29,7 +28,7 @@ from flext_infra.constants import c
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
     """Load YAML file safely, returning empty mapping on missing/invalid."""
-    raw = path.read_text(encoding=c.Encoding.DEFAULT)
+    raw = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
     parsed = safe_load(raw)
     if parsed is None:
         return {}
@@ -178,10 +177,7 @@ class FlextInfraSkillValidator:
                     if baseline_path.exists():
                         bl_result = self._json.read(baseline_path)
                         if bl_result.is_success:
-                            bl_data: Mapping[str, t.ContainerValue] = cast(
-                                "Mapping[str, t.ContainerValue]",
-                                bl_result.value,
-                            )
+                            bl_data: Mapping[str, t.ContainerValue] = bl_result.value
                             bl_counts_raw = bl_data.get("counts", {})
                             if isinstance(bl_counts_raw, dict):
                                 bl_counts = {
@@ -244,7 +240,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: m.CommandOutput = cast("m.CommandOutput", result_wrapper.value)
+        result: m.CommandOutput = result_wrapper.value
 
         if result.exit_code not in {0, 1}:
             return 0
@@ -292,7 +288,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: m.CommandOutput = cast("m.CommandOutput", result_wrapper.value)
+        result: m.CommandOutput = result_wrapper.value
 
         count = 0
         for raw_line in (result.stdout or "").splitlines():

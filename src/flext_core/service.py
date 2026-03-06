@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
 from pydantic import (
     ConfigDict,
@@ -132,10 +132,7 @@ class FlextService[TDomainResult](
 
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            result_value: TDomainResult = cast(
-                "TDomainResult",
-                execution_result.unwrap(),
-            )
+            result_value: TDomainResult = execution_result.unwrap()
             return result_value
         # On failure, raise exception
         raise FlextExceptions.BaseError(

@@ -66,7 +66,7 @@ class FlextInfraInventoryService:
             }
             wiring: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
-                "root_makefile": [c.Files.MAKEFILE_FILENAME],
+                "root_makefile": [c.Infra.Files.MAKEFILE_FILENAME],
                 "unwired_scripts": [],
             }
             external: Mapping[str, t.ContainerValue] = {

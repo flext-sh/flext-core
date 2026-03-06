@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import ast
+import subprocess
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict
@@ -59,14 +61,13 @@ class PostCheckGate:
         except (OSError, UnicodeDecodeError, SyntaxError) as exc:
             return [f"parse_error:{exc}"]
 
-        unresolved: list[str] = []
-        for node in ast.walk(tree):
-            if (
-                isinstance(node, ast.ImportFrom)
-                and node.module is None
-                and node.level == 0
-            ):
-                unresolved.append(f"line_{node.lineno}:invalid_import_from")
+        unresolved: list[str] = [
+            f"line_{node.lineno}:invalid_import_from"
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom)
+            and node.module is None
+            and node.level == 0
+        ]
         return unresolved
 
     def _validate_mro(
@@ -94,11 +95,14 @@ class PostCheckGate:
         return [f"class_not_found:{class_name}"]
 
     def _validate_types(self, file_path: Path) -> list[str]:
-        try:
-            source = file_path.read_text(encoding="utf-8")
-            ast.parse(source)
-        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
-            return [f"type_parse_error:{exc}"]
+        proc = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(file_path)],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            output = (proc.stderr or proc.stdout).strip()
+            return [f"lsp_diagnostics_clean_failed:{output}"]
         return []
 
     def _base_name(self, base: ast.expr) -> str:

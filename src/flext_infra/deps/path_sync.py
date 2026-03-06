@@ -205,7 +205,7 @@ def main() -> int:
     toml_service = FlextInfraTomlService()
 
     internal_names: set[str] = set()
-    root_pyproject = ROOT / c.Files.PYPROJECT_FILENAME
+    root_pyproject = ROOT / c.Infra.Files.PYPROJECT_FILENAME
     if root_pyproject.exists():
         root_data_result = toml_service.read(root_pyproject)
         if root_data_result.is_success:
@@ -254,7 +254,7 @@ def main() -> int:
         project_dirs = all_project_dirs
 
     for project_dir in all_project_dirs:
-        pyproject = project_dir / c.Files.PYPROJECT_FILENAME
+        pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
         data_result = toml_service.read(pyproject)
@@ -268,7 +268,7 @@ def main() -> int:
             internal_names.add(project_name)
 
     for project_dir in project_dirs:
-        pyproject = project_dir / c.Files.PYPROJECT_FILENAME
+        pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
         data_result = toml_service.read(pyproject)
@@ -282,7 +282,7 @@ def main() -> int:
             internal_names.add(project_name)
 
     for project_dir in sorted(project_dirs):
-        pyproject = project_dir / c.Files.PYPROJECT_FILENAME
+        pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
         changes_result = rewrite_dep_paths(

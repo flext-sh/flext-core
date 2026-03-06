@@ -13,6 +13,9 @@ from flext_core import FlextUtilities
 class FlextInfraUtilities(FlextUtilities):
     """Utility namespace for flext-infra; extends FlextUtilities."""
 
+    class Infra:
+        pass
+
 
 u = FlextInfraUtilities
 

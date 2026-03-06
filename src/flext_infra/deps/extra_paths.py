@@ -199,7 +199,7 @@ def sync_extra_paths(
     """Synchronize extraPaths and mypy_path across projects."""
     if project_dirs:
         for project_dir in project_dirs:
-            pyproject = project_dir / c.Files.PYPROJECT_FILENAME
+            pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
             sync_result = sync_one(
                 pyproject,
                 dry_run=dry_run,
@@ -211,7 +211,7 @@ def sync_extra_paths(
                 output.info(f"Updated {pyproject}")
         return r[int].ok(0)
 
-    pyproject = ROOT / c.Files.PYPROJECT_FILENAME
+    pyproject = ROOT / c.Infra.Files.PYPROJECT_FILENAME
     if not pyproject.exists():
         return r[int].fail(f"Missing {pyproject}")
     sync_result = sync_one(pyproject, dry_run=dry_run, is_root=True)

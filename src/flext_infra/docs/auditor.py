@@ -82,7 +82,7 @@ class FlextInfraDocAuditor:
             return None, {}
 
         payload = json.loads(
-            config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
+            config_path.read_text(encoding=c.Infra.Encoding.DEFAULT, errors="ignore"),
         )
         docs_validation = payload.get("docs_validation", {})
         audit_gate = docs_validation.get("audit_gate", {})
@@ -237,7 +237,7 @@ class FlextInfraDocAuditor:
         else:
             passed = True
 
-        status = c.Status.OK if passed else c.Status.FAIL
+        status = c.Infra.Status.OK if passed else c.Infra.Status.FAIL
         reason = f"issues:{len(issues)}"
         logger.info(
             "docs_audit_scope_completed",
@@ -259,7 +259,9 @@ class FlextInfraDocAuditor:
         """Collect broken internal-link issues for markdown files in scope."""
         issues: list[AuditIssue] = []
         for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
-            content = md_file.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
+            content = md_file.read_text(
+                encoding=c.Infra.Encoding.DEFAULT, errors="ignore"
+            )
             rel = md_file.relative_to(scope.path).as_posix()
             in_fenced_code = False
             for number, line in enumerate(content.splitlines(), start=1):
@@ -305,7 +307,7 @@ class FlextInfraDocAuditor:
             elif not scope.name.startswith("flext-"):
                 continue
             content = md_file.read_text(
-                encoding=c.Encoding.DEFAULT,
+                encoding=c.Infra.Encoding.DEFAULT,
                 errors="ignore",
             ).lower()
             issues.extend(

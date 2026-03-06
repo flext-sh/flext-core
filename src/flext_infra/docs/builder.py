@@ -142,7 +142,7 @@ class FlextInfraDocBuilder:
         if completed.is_failure:
             return BuildReport(
                 scope=scope.name,
-                result=c.Status.FAIL,
+                result=c.Infra.Status.FAIL,
                 reason=completed.error or "mkdocs build failed",
                 site_dir=site_dir.as_posix(),
             )
@@ -151,7 +151,7 @@ class FlextInfraDocBuilder:
         if output.exit_code == 0:
             return BuildReport(
                 scope=scope.name,
-                result=c.Status.OK,
+                result=c.Infra.Status.OK,
                 reason="build succeeded",
                 site_dir=site_dir.as_posix(),
             )
@@ -159,7 +159,7 @@ class FlextInfraDocBuilder:
         tail = reason[-1] if reason else f"mkdocs exited {output.exit_code}"
         return BuildReport(
             scope=scope.name,
-            result=c.Status.FAIL,
+            result=c.Infra.Status.FAIL,
             reason=tail,
             site_dir=site_dir.as_posix(),
         )

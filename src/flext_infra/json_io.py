@@ -50,7 +50,9 @@ class FlextInfraJsonService(FlextService[bool]):
         if not path.exists():
             return r[t.ConfigurationMapping].ok({})
         try:
-            loaded_obj: object = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
+            loaded_obj: object = json.loads(
+                path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            )
             if not isinstance(loaded_obj, dict):
                 return r[t.ConfigurationMapping].fail(
                     "JSON root must be object",
@@ -99,7 +101,7 @@ class FlextInfraJsonService(FlextService[bool]):
                 )
                 + "\n"
             )
-            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+            _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
         except (TypeError, OSError) as exc:
             return r[bool].fail(f"JSON write error: {exc}")
         return r[bool].ok(True)

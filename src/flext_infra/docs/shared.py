@@ -88,7 +88,7 @@ class FlextInfraDocsShared:
                 path = (root / name).resolve()
                 if (
                     not path.exists()
-                    or not (path / c.Files.PYPROJECT_FILENAME).exists()
+                    or not (path / c.Infra.Files.PYPROJECT_FILENAME).exists()
                 ):
                     continue
                 scopes.append(
@@ -111,7 +111,7 @@ class FlextInfraDocsShared:
             path
             for path in search_root.rglob("*.md")
             if not any(
-                part in c.Excluded.DOC_EXCLUDED_DIRS or part.startswith(".")
+                part in c.Infra.Excluded.DOC_EXCLUDED_DIRS or part.startswith(".")
                 for part in path.parts
             )
         )
@@ -131,7 +131,7 @@ class FlextInfraDocsShared:
             path.parent.mkdir(parents=True, exist_ok=True)
             _ = path.write_text(
                 "\n".join(lines).rstrip() + "\n",
-                encoding=c.Encoding.DEFAULT,
+                encoding=c.Infra.Encoding.DEFAULT,
             )
             return r[bool].ok(True)
         except OSError as exc:

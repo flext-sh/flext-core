@@ -140,7 +140,7 @@ class FlextInfraModels(_FlextModels):
             total: int = Field(ge=0, description="Total repositories processed")
             success: int = Field(ge=0, description="Successful executions")
             fail: int = Field(ge=0, description="Failed executions")
-            results: list[FlextInfraModels.PrExecutionResult] = Field(
+            results: list[FlextInfraModels.Infra.PrExecutionResult] = Field(
                 default_factory=list,
                 description="Per-repository results",
             )
@@ -170,7 +170,7 @@ class FlextInfraModels(_FlextModels):
             """Aggregated census report for a single project."""
 
             project: str = Field(min_length=1, description="Project name")
-            violations: list[FlextInfraModels.CensusViolation] = Field(
+            violations: list[FlextInfraModels.Infra.CensusViolation] = Field(
                 default_factory=list, description="Detected violations"
             )
             total: int = Field(ge=0, description="Total violation count")
@@ -192,10 +192,10 @@ class FlextInfraModels(_FlextModels):
             """Result of auto-fixing namespace violations for a project."""
 
             project: str = Field(min_length=1, description="Project name")
-            violations_fixed: list[FlextInfraModels.CensusViolation] = Field(
+            violations_fixed: list[FlextInfraModels.Infra.CensusViolation] = Field(
                 default_factory=list, description="Fixed violations"
             )
-            violations_skipped: list[FlextInfraModels.CensusViolation] = Field(
+            violations_skipped: list[FlextInfraModels.Infra.CensusViolation] = Field(
                 default_factory=list,
                 description="Skipped violations (not auto-fixable)",
             )
@@ -206,16 +206,16 @@ class FlextInfraModels(_FlextModels):
         class CodegenPipelineResult(_FlextModels.ArbitraryTypesModel):
             """Full pipeline result combining census, scaffold, auto-fix phases."""
 
-            census_before: FlextInfraModels.CensusReport = Field(
+            census_before: FlextInfraModels.Infra.CensusReport = Field(
                 description="Census report before transformations"
             )
-            scaffold: FlextInfraModels.ScaffoldResult = Field(
+            scaffold: FlextInfraModels.Infra.ScaffoldResult = Field(
                 description="Scaffold phase result"
             )
-            auto_fix: FlextInfraModels.AutoFixResult = Field(
+            auto_fix: FlextInfraModels.Infra.AutoFixResult = Field(
                 description="Auto-fix phase result"
             )
-            census_after: FlextInfraModels.CensusReport = Field(
+            census_after: FlextInfraModels.Infra.CensusReport = Field(
                 description="Census report after transformations"
             )
 

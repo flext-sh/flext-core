@@ -8,6 +8,8 @@ policy_matrix:
   - _models/*
   facade_family: m
   allowed_operations:
+  - class_nesting
+  - helper_consolidation
   - reorganize_composition_classes_under_models_facade
   - move_top_level_classes_to_flext_models_namespace
   - normalize_nested_class_path_within_models_facade
@@ -41,6 +43,8 @@ policy_matrix:
   - _utilities/*
   facade_family: u
   allowed_operations:
+  - class_nesting
+  - helper_consolidation
   - consolidate_helper_classes_under_utilities_facade
   - convert_safe_top_level_helpers_to_static_or_nested_helpers
   - deduplicate_equivalent_helper_implementations_within_u
@@ -74,6 +78,7 @@ policy_matrix:
   - _dispatcher/*
   facade_family: dispatcher
   allowed_operations:
+  - class_nesting
   - reorganize_classes_under_flext_dispatcher_namespace
   - normalize_dispatcher_nested_class_paths
   - consolidate_dispatch_routing_related_classes
@@ -105,6 +110,7 @@ policy_matrix:
   - _decorators/*
   facade_family: d
   allowed_operations:
+  - class_nesting
   - consolidate_decorator_classes_under_flext_decorators_namespace
   - normalize_decorator_nesting_paths
   - propagate_decorator_references_after_relocation
@@ -137,6 +143,7 @@ policy_matrix:
   - _runtime*
   facade_family: x
   allowed_operations:
+  - class_nesting
   - apply_explicitly_whitelisted_runtime_transforms_only
   - propagate_references_for_whitelisted_runtime_moves
   forbidden_operations:
@@ -162,6 +169,23 @@ policy_matrix:
     - transformed_symbols_match_whitelist_expectations
     - runtime_alias_access_remains_resolvable
     - no_non_whitelisted_runtime_changes_detected
+    quality_gates:
+    - lsp_diagnostics_clean
+- family_name: other_private
+  module_patterns:
+  - _*
+  facade_family: x
+  allowed_operations: []
+  forbidden_operations:
+  - class_nesting
+  - helper_consolidation
+  forbidden_targets:
+  - '*'
+  validation_requirements:
+    pre_checks:
+    - module_family_explicit_policy_required
+    post_checks:
+    - no_transform_applied
     quality_gates:
     - lsp_diagnostics_clean
 runtime_whitelist:

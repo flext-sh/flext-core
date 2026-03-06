@@ -52,7 +52,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
                 mode="w",
                 dir=str(target.parent),
                 delete=False,
-                encoding=c.Encoding.DEFAULT,
+                encoding=c.Infra.Encoding.DEFAULT,
                 suffix=".tmp",
             ) as tmp:
                 _ = tmp.write(content)
@@ -65,7 +65,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
     @staticmethod
     def _sha256_content(content: str) -> str:
         """Compute SHA256 of string content."""
-        return hashlib.sha256(content.encode(c.Encoding.DEFAULT)).hexdigest()
+        return hashlib.sha256(content.encode(c.Infra.Encoding.DEFAULT)).hexdigest()
 
     @staticmethod
     def _sha256_file(path: Path) -> str:
@@ -118,7 +118,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
         lock_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            with lock_path.open("w", encoding=c.Encoding.DEFAULT) as lock_handle:
+            with lock_path.open("w", encoding=c.Infra.Encoding.DEFAULT) as lock_handle:
                 fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
                 try:
                     changed = 0
@@ -182,7 +182,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
             existing_lines: list[str] = []
             if gitignore.exists():
                 existing_lines = gitignore.read_text(
-                    encoding=c.Encoding.DEFAULT,
+                    encoding=c.Infra.Encoding.DEFAULT,
                 ).splitlines()
 
             existing_patterns = {
@@ -192,7 +192,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
             if not missing:
                 return r[bool].ok(False)
 
-            with gitignore.open("a", encoding=c.Encoding.DEFAULT) as handle:
+            with gitignore.open("a", encoding=c.Infra.Encoding.DEFAULT) as handle:
                 _ = handle.write(
                     "\n# --- workspace-sync: required ignores (auto-managed) ---\n",
                 )
@@ -223,7 +223,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
             and canonical_basemk.exists()
             and canonical_basemk.resolve() != (project_root / "base.mk").resolve()
         ):
-            content = canonical_basemk.read_text(encoding=c.Encoding.DEFAULT)
+            content = canonical_basemk.read_text(encoding=c.Infra.Encoding.DEFAULT)
         else:
             gen_result = self._generator.generate(config)
             if gen_result.is_failure:

@@ -73,7 +73,7 @@ def _run_build(args: argparse.Namespace) -> int:
         output.error(result.error or "build failed")
         return 1
 
-    failures = sum(1 for report in result.value if report.result == c.Status.FAIL)
+    failures = sum(1 for report in result.value if report.result == c.Infra.Status.FAIL)
     return 1 if failures else 0
 
 
@@ -108,7 +108,7 @@ def _run_validate(args: argparse.Namespace) -> int:
         output.error(result.error or "validate failed")
         return 1
 
-    failures = sum(1 for report in result.value if report.result == c.Status.FAIL)
+    failures = sum(1 for report in result.value if report.result == c.Infra.Status.FAIL)
     return 1 if failures else 0
 
 

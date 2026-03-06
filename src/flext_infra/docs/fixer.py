@@ -179,7 +179,7 @@ class FlextInfraDocFixer:
             lines,
         )
 
-        status = c.Status.OK if apply or not items else c.Status.WARN
+        status = c.Infra.Status.OK if apply or not items else c.Infra.Status.WARN
         logger.info(
             "docs_fix_scope_completed",
             project=scope.name,
@@ -197,7 +197,7 @@ class FlextInfraDocFixer:
 
     def _process_file(self, md_file: Path, *, apply: bool) -> FixItem:
         """Fix links and TOC in a single markdown file."""
-        original = md_file.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
+        original = md_file.read_text(encoding=c.Infra.Encoding.DEFAULT, errors="ignore")
         link_count = 0
 
         def replace_link(match: re.Match[str]) -> str:
@@ -212,7 +212,7 @@ class FlextInfraDocFixer:
         updated = FlextInfraPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
         updated, toc_changed = self._update_toc(updated)
         if apply and (link_count > 0 or toc_changed > 0) and updated != original:
-            _ = md_file.write_text(updated, encoding=c.Encoding.DEFAULT)
+            _ = md_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
         return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
 
     def _update_toc(self, content: str) -> tuple[str, int]:

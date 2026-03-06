@@ -364,7 +364,7 @@ class FlextInfraPrWorkspaceManager:
             exit_code = raw_result.value.exit_code
 
         elapsed = int(time.monotonic() - started)
-        status = c.Status.OK if exit_code == 0 else c.Status.FAIL
+        status = c.Infra.Status.OK if exit_code == 0 else c.Infra.Status.FAIL
         log_str: str = str(log_path) if log_path else ""
         return r[Mapping[str, t.Scalar]].ok({
             "display": display,

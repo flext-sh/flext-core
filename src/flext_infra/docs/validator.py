@@ -53,7 +53,7 @@ class FlextInfraDocValidator:
     def _has_adr_reference(skill_path: Path) -> bool:
         """Check whether a skill file contains an ADR reference."""
         text = skill_path.read_text(
-            encoding=c.Encoding.DEFAULT,
+            encoding=c.Infra.Encoding.DEFAULT,
             errors="ignore",
         ).lower()
         return "adr" in text
@@ -69,7 +69,7 @@ class FlextInfraDocValidator:
             "- [ ] Resolve documentation validation findings "
             "from `.reports/docs/validate-report.md`.\n"
         )
-        _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+        _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
         return True
 
     def validate(
@@ -119,7 +119,7 @@ class FlextInfraDocValidator:
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
             payload = json.loads(
-                config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
+                config.read_text(encoding=c.Infra.Encoding.DEFAULT, errors="ignore"),
             )
             docs_validation = payload.get("docs_validation", {})
             configured = docs_validation.get("required_skills", [])
@@ -145,7 +145,7 @@ class FlextInfraDocValidator:
         apply_mode: bool,
     ) -> ValidateReport:
         """Run validation for a single project scope."""
-        status = c.Status.OK
+        status = c.Infra.Status.OK
         message = "validation passed"
         missing_adr_skills: list[str] = []
 
@@ -156,7 +156,7 @@ class FlextInfraDocValidator:
             code, missing = self._run_adr_skill_check(scope.path)
             missing_adr_skills = missing
             if code != 0:
-                status = c.Status.FAIL
+                status = c.Infra.Status.FAIL
                 message = f"missing adr references in skills: {', '.join(missing)}"
 
         wrote_todo = self._maybe_write_todo(scope, apply_mode=apply_mode)

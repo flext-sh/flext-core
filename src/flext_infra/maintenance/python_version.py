@@ -27,10 +27,10 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextLogger, FlextService, r
-from flext_infra import FlextInfraDiscoveryService, c, m
+from flext_infra import FlextInfraDiscoveryService, c
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -117,9 +117,11 @@ class FlextInfraPythonVersionEnforcer(FlextService[int]):
         result = discovery.discover_projects(workspace_root)
         if result.is_failure:
             return []
-        projects = cast("list[m.ProjectInfo]", result.unwrap())
+        projects = result.unwrap()
         return [
-            p.path for p in projects if (p.path / c.Files.PYPROJECT_FILENAME).exists()
+            p.path
+            for p in projects
+            if (p.path / c.Infra.Files.PYPROJECT_FILENAME).exists()
         ]
 
     def _ensure_python_version_file(self, project: Path, required_minor: int) -> bool:
@@ -189,7 +191,7 @@ class FlextInfraPythonVersionEnforcer(FlextService[int]):
             int: Required Python minor version.
 
         """
-        pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
+        pyproject = workspace_root / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.is_file():
             return 13
         content = pyproject.read_text(encoding="utf-8")
@@ -219,7 +221,11 @@ class FlextInfraPythonVersionEnforcer(FlextService[int]):
 
         # Walk up the directory tree
         for parent in [current] + list(current.parents):
-            markers = {".git", c.Files.MAKEFILE_FILENAME, c.Files.PYPROJECT_FILENAME}
+            markers = {
+                ".git",
+                c.Infra.Files.MAKEFILE_FILENAME,
+                c.Infra.Files.PYPROJECT_FILENAME,
+            }
             if all((parent / marker).exists() for marker in markers):
                 return parent
 

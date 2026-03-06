@@ -111,7 +111,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             if code != 0:
                 failures += 1
             log = output_dir / f"build-{name}.log"
-            log.write_text(output + "\n", encoding=c.Encoding.DEFAULT)
+            log.write_text(output + "\n", encoding=c.Infra.Encoding.DEFAULT)
             records.append({
                 "project": name,
                 "path": str(path),
@@ -261,7 +261,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         for path in files:
             if not path.exists():
                 continue
-            content = path.read_text(encoding=c.Encoding.DEFAULT)
+            content = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             match = c.Infra.Release.VERSION_RE.search(content)
             if match and match.group(1) == target:
                 continue
@@ -552,7 +552,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(
                 "\n".join(lines).rstrip() + "\n",
-                encoding=c.Encoding.DEFAULT,
+                encoding=c.Infra.Encoding.DEFAULT,
             )
             logger.info("release_notes_written", path=str(output_path))
             return r[bool].ok(True)
@@ -599,9 +599,9 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         tagged_path = root / "docs" / "releases" / f"{tag}.md"
 
         try:
-            notes_text = notes_path.read_text(encoding=c.Encoding.DEFAULT)
+            notes_text = notes_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             existing = (
-                changelog_path.read_text(encoding=c.Encoding.DEFAULT)
+                changelog_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
                 if changelog_path.exists()
                 else "# Changelog\n\n"
             )
@@ -625,10 +625,10 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
                 updated = existing
 
             changelog_path.parent.mkdir(parents=True, exist_ok=True)
-            changelog_path.write_text(updated, encoding=c.Encoding.DEFAULT)
+            changelog_path.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
             latest_path.parent.mkdir(parents=True, exist_ok=True)
-            latest_path.write_text(notes_text, encoding=c.Encoding.DEFAULT)
-            tagged_path.write_text(notes_text, encoding=c.Encoding.DEFAULT)
+            latest_path.write_text(notes_text, encoding=c.Infra.Encoding.DEFAULT)
+            tagged_path.write_text(notes_text, encoding=c.Infra.Encoding.DEFAULT)
 
             logger.info("release_changelog_written", path=str(changelog_path))
             logger.info("release_tagged_notes_written", path=str(tagged_path))
@@ -642,12 +642,12 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         project_names: list[str],
     ) -> list[Path]:
         """Discover pyproject.toml files that need version updates."""
-        files: list[Path] = [root / c.Files.PYPROJECT_FILENAME]
+        files: list[Path] = [root / c.Infra.Files.PYPROJECT_FILENAME]
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
-                pyproject = project.path / c.Files.PYPROJECT_FILENAME
+                pyproject = project.path / c.Infra.Files.PYPROJECT_FILENAME
                 if pyproject.exists():
                     files.append(pyproject)
         return sorted({path.resolve() for path in files if path.exists()})

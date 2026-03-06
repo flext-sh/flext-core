@@ -84,7 +84,7 @@
         "family_name": {
           "type": "string",
           "description": "Module family identifier",
-          "enum": ["_models", "_utilities", "_dispatcher", "_decorators", "_runtime"]
+          "enum": ["_models", "_utilities", "_dispatcher", "_decorators", "_runtime", "other_private"]
         },
         "module_patterns": {
           "type": "array",

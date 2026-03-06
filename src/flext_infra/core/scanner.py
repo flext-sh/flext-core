@@ -25,7 +25,7 @@ class FlextInfraTextPatternScanner:
     modes (present = matches are violations, absent = no matches is a violation).
     """
 
-    _ENCODING = c.Encoding.DEFAULT
+    _ENCODING = c.Infra.Encoding.DEFAULT
 
     @staticmethod
     def _collect_files(
@@ -52,7 +52,7 @@ class FlextInfraTextPatternScanner:
         for file_path in files:
             try:
                 text = file_path.read_text(
-                    encoding=c.Encoding.DEFAULT,
+                    encoding=c.Infra.Encoding.DEFAULT,
                     errors="ignore",
                 )
             except OSError:

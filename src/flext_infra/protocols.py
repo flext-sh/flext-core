@@ -14,8 +14,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult
+from flext_core import r
+from flext_core import FlextProtocols
 
 from flext_infra.typings import FlextInfraTypings as t
 
@@ -70,7 +70,7 @@ class FlextInfraProtocols(FlextProtocols):
                 self,
                 project: str,
                 gates: Sequence[str],
-            ) -> FlextResult[t.Infra.PayloadMap]:
+            ) -> r[t.Infra.PayloadMap]:
                 """Execute quality gates for a project."""
                 ...
 
@@ -82,7 +82,7 @@ class FlextInfraProtocols(FlextProtocols):
                 self,
                 source: Path,
                 target: Path,
-            ) -> FlextResult[t.Infra.PayloadMap]:
+            ) -> r[t.Infra.PayloadMap]:
                 """Synchronize source and target paths."""
                 ...
 
@@ -93,7 +93,7 @@ class FlextInfraProtocols(FlextProtocols):
             def generate(
                 self,
                 config: t.Infra.PayloadMap,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 """Generate text or artifacts from configuration."""
                 ...
 
@@ -103,8 +103,8 @@ class FlextInfraProtocols(FlextProtocols):
 
             def report(
                 self,
-                results: Sequence[FlextResult[t.Infra.PayloadMap]],
-            ) -> FlextResult[Path]:
+                results: Sequence[r[t.Infra.PayloadMap]],
+            ) -> r[Path]:
                 """Write validation results to a report file."""
                 ...
 
@@ -112,7 +112,7 @@ class FlextInfraProtocols(FlextProtocols):
         class ValidatorProtocol(Protocol):
             """Contract for validation services."""
 
-            def validate(self, target: Path) -> FlextResult[bool]:
+            def validate(self, target: Path) -> r[bool]:
                 """Validate a target path."""
                 ...
 
@@ -122,9 +122,9 @@ class FlextInfraProtocols(FlextProtocols):
 
             def orchestrate(
                 self,
-                projects: Sequence[FlextInfraProtocols.ProjectInfoProtocol],
+                projects: Sequence[FlextInfraProtocols.Infra.ProjectInfoProtocol],
                 verb: str,
-            ) -> FlextResult[t.Infra.PayloadMap]:
+            ) -> r[t.Infra.PayloadMap]:
                 """Orchestrate operations across multiple projects."""
                 ...
 
@@ -135,7 +135,7 @@ class FlextInfraProtocols(FlextProtocols):
             def discover(
                 self,
                 root: Path,
-            ) -> FlextResult[list[FlextInfraProtocols.ProjectInfoProtocol]]:
+            ) -> r[list[FlextInfraProtocols.Infra.ProjectInfoProtocol]]:
                 """Discover projects in a workspace root."""
                 ...
 
@@ -147,7 +147,7 @@ class FlextInfraProtocols(FlextProtocols):
                 self,
                 cmd: Sequence[str],
                 cwd: Path | None = None,
-            ) -> FlextResult[FlextInfraProtocols.CommandOutputProtocol]:
+            ) -> r[FlextInfraProtocols.Infra.CommandOutputProtocol]:
                 """Execute a command and return output."""
                 ...
 

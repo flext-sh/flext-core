@@ -87,12 +87,12 @@ class FlextInfraDocGenerator:
     ) -> GeneratedFile:
         """Write content to path only when changed and apply is True."""
         exists = path.exists()
-        current = path.read_text(encoding=c.Encoding.DEFAULT) if exists else ""
+        current = path.read_text(encoding=c.Infra.Encoding.DEFAULT) if exists else ""
         if current == content:
             return GeneratedFile(path=path.as_posix(), written=False)
         if apply:
             path.parent.mkdir(parents=True, exist_ok=True)
-            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+            _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
         return GeneratedFile(path=path.as_posix(), written=apply)
 
     def generate(
@@ -164,7 +164,7 @@ class FlextInfraDocGenerator:
         files: list[GeneratedFile] = []
         for source in sorted(source_dir.glob("*.md")):
             rendered = self._project_guide_content(
-                content=source.read_text(encoding=c.Encoding.DEFAULT),
+                content=source.read_text(encoding=c.Infra.Encoding.DEFAULT),
                 project=scope.name,
                 source_name=source.name,
             )
@@ -192,9 +192,9 @@ class FlextInfraDocGenerator:
             "\n".join([
                 f"site_name: {site_name}",
                 f"site_description: Standard guides for {scope.name}",
-                f"site_url: {c.Github.GITHUB_REPO_URL}",
-                f"repo_name: {c.Github.GITHUB_REPO_NAME}",
-                f"repo_url: {c.Github.GITHUB_REPO_URL}",
+                f"site_url: {c.Infra.Github.GITHUB_REPO_URL}",
+                f"repo_name: {c.Infra.Github.GITHUB_REPO_NAME}",
+                f"repo_url: {c.Infra.Github.GITHUB_REPO_URL}",
                 f"edit_uri: edit/main/{scope.name}/docs/guides/",
                 "docs_dir: docs/guides",
                 f"site_dir: {c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR}/site",
@@ -296,7 +296,7 @@ class FlextInfraDocGenerator:
                 f"Source: {source}",
             ],
         )
-        result = c.Status.OK if apply else c.Status.WARN
+        result = c.Infra.Status.OK if apply else c.Infra.Status.WARN
         reason = f"generated:{generated}" if apply else "dry-run"
         logger.info(
             "docs_generate_scope_completed",

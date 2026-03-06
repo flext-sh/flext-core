@@ -124,9 +124,9 @@ class FlextInfraVersioningService(FlextService[str]):
             FlextResult[str] with the version string.
 
         """
-        pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
+        pyproject = workspace_root / c.Infra.Files.PYPROJECT_FILENAME
         try:
-            content = pyproject.read_text(encoding=c.Encoding.DEFAULT)
+            content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"read failed: {exc}")
 
@@ -205,9 +205,9 @@ class FlextInfraVersioningService(FlextService[str]):
             FlextResult[bool] with True on success.
 
         """
-        pyproject = project_path / c.Files.PYPROJECT_FILENAME
+        pyproject = project_path / c.Infra.Files.PYPROJECT_FILENAME
         try:
-            content = pyproject.read_text(encoding=c.Encoding.DEFAULT)
+            content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"read failed: {exc}")
 
@@ -220,7 +220,7 @@ class FlextInfraVersioningService(FlextService[str]):
                 f"missing [project] version in {pyproject}",
             )
         try:
-            _ = pyproject.write_text(updated_content, encoding=c.Encoding.DEFAULT)
+            _ = pyproject.write_text(updated_content, encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"write failed: {exc}")
         return r[bool].ok(True)

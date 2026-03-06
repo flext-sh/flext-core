@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import TypedDict, cast
 
@@ -32,7 +33,10 @@ class _MappingEntry(TypedDict, total=False):
 
 class _PolicyFamily(TypedDict, total=False):
     family_name: str
+    allowed_operations: list[str]
+    forbidden_operations: list[str]
     forbidden_targets: list[str]
+    validation_requirements: dict[str, list[str]]
 
 
 class _PolicyDocument(TypedDict, total=False):
@@ -75,6 +79,7 @@ class PreCheckGate:
         self._policy_path = policy_path or Path(__file__).with_name(
             "class-policy-v2.yml"
         )
+        self._schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
         self._policy_by_family = self._load_policy()
 
     def validate_entry(
@@ -94,6 +99,25 @@ class PreCheckGate:
                 "source_symbol": source_symbol,
                 "violation_type": "unknown_module_family",
                 "suggested_fix": f"declare explicit policy for {module_family}",
+            }
+
+        operation = "class_nesting"
+        allowed_operations = policy.get("allowed_operations", [])
+        if operation not in allowed_operations:
+            return False, {
+                "rule_id": f"precheck:{source_symbol}",
+                "source_symbol": source_symbol,
+                "violation_type": "operation_not_allowed",
+                "suggested_fix": f"allow {operation} in policy for {module_family}",
+            }
+
+        forbidden_operations = policy.get("forbidden_operations", [])
+        if operation in forbidden_operations:
+            return False, {
+                "rule_id": f"precheck:{source_symbol}",
+                "source_symbol": source_symbol,
+                "violation_type": "operation_forbidden",
+                "suggested_fix": f"remove {operation} from forbidden_operations for {module_family}",
             }
 
         forbidden_targets = policy.get("forbidden_targets", [])
@@ -117,6 +141,8 @@ class PreCheckGate:
             )
         except (OSError, yaml.YAMLError):
             return {}
+        if not self._schema_valid(loaded):
+            return {}
         policy_matrix = loaded.get("policy_matrix", [])
 
         by_family: dict[str, _PolicyFamily] = {}
@@ -126,11 +152,66 @@ class PreCheckGate:
                 continue
             forbidden_targets_raw = raw.get("forbidden_targets", [])
             forbidden_targets = [item for item in forbidden_targets_raw]
+
+            allowed_operations_raw = raw.get("allowed_operations", [])
+            allowed_operations = [item for item in allowed_operations_raw]
+
+            forbidden_operations_raw = raw.get("forbidden_operations", [])
+            forbidden_operations = [item for item in forbidden_operations_raw]
+
+            validation_requirements = raw.get("validation_requirements", {})
             by_family[family_name] = {
                 "family_name": family_name,
+                "allowed_operations": allowed_operations,
+                "forbidden_operations": forbidden_operations,
                 "forbidden_targets": forbidden_targets,
+                "validation_requirements": validation_requirements,
             }
         return by_family
+
+    def _schema_valid(self, loaded: _PolicyDocument) -> bool:
+        try:
+            schema_raw = self._schema_path.read_text(encoding="utf-8")
+            schema = json.loads(schema_raw)
+        except (OSError, json.JSONDecodeError):
+            return False
+
+        top_required = schema.get("required", [])
+        if not self._has_required_fields(loaded, top_required):
+            return False
+
+        definitions = schema.get("definitions", {})
+        policy_entry_required = definitions.get("policyEntry", {}).get("required", [])
+        class_rule_required = definitions.get("classRule", {}).get("required", [])
+
+        policy_matrix = loaded.get("policy_matrix", [])
+        for entry in policy_matrix:
+            if not self._has_required_fields(entry, policy_entry_required):
+                return False
+
+        rules = loaded.get("rules", [])
+        for rule in rules:
+            if not self._has_required_fields(rule, class_rule_required):
+                return False
+
+        return True
+
+    def _has_required_fields(self, entry: object, required_fields: object) -> bool:
+        if not isinstance(entry, dict):
+            return False
+        if not isinstance(required_fields, list):
+            return True
+
+        required_items = cast("list[object]", required_fields)
+        keys: list[str] = []
+        for candidate in required_items:
+            if isinstance(candidate, str):
+                keys.append(candidate)
+
+        for key in keys:
+            if key not in entry:
+                return False
+        return True
 
     def _module_family_from_path(self, path: str) -> str:
         normalized = path.replace("\\", "/")
@@ -523,7 +604,51 @@ class ClassNestingRefactorRule:
             )
         except (OSError, yaml.YAMLError):
             return {}
+        if not self._policy_document_schema_valid(loaded):
+            return {}
         return loaded
+
+    def _policy_document_schema_valid(self, loaded: _PolicyDocument) -> bool:
+        schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
+        try:
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+
+        top_required = schema.get("required", [])
+        if not self._has_required_fields(loaded, top_required):
+            return False
+
+        definitions = schema.get("definitions", {})
+        policy_entry_required = definitions.get("policyEntry", {}).get("required", [])
+        class_rule_required = definitions.get("classRule", {}).get("required", [])
+
+        for entry in loaded.get("policy_matrix", []):
+            if not self._has_required_fields(entry, policy_entry_required):
+                return False
+
+        for rule in loaded.get("rules", []):
+            if not self._has_required_fields(rule, class_rule_required):
+                return False
+
+        return True
+
+    def _has_required_fields(self, entry: object, required_fields: object) -> bool:
+        if not isinstance(entry, dict):
+            return False
+        if not isinstance(required_fields, list):
+            return True
+
+        required_items = cast("list[object]", required_fields)
+        keys: list[str] = []
+        for candidate in required_items:
+            if isinstance(candidate, str):
+                keys.append(candidate)
+
+        for key in keys:
+            if key not in entry:
+                return False
+        return True
 
     def _scope_applies_to_file(
         self,

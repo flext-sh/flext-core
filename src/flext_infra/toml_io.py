@@ -87,7 +87,7 @@ class FlextInfraTomlService(FlextService[bool]):
             return r[TomlMap].ok({})
         try:
             data_raw = tomllib.loads(
-                path.read_text(encoding=c.Encoding.DEFAULT),
+                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             data: TomlMap = data_raw
             return r[TomlMap].ok(data)
@@ -110,7 +110,7 @@ class FlextInfraTomlService(FlextService[bool]):
             return r[tomlkit.TOMLDocument].fail(f"file not found: {path}")
         try:
             doc = tomlkit.parse(
-                path.read_text(encoding=c.Encoding.DEFAULT),
+                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             return r[tomlkit.TOMLDocument].ok(doc)
         except (tomlkit.exceptions.ParseError, OSError) as exc:
@@ -200,7 +200,7 @@ class FlextInfraTomlService(FlextService[bool]):
                     else:
                         doc[key] = value
                 content = doc.as_string()
-            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+            _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
             return r[bool].ok(True)
         except (OSError, TypeError) as exc:
             return r[bool].fail(f"TOML write error: {exc}")
@@ -223,7 +223,7 @@ class FlextInfraTomlService(FlextService[bool]):
         try:
             _ = path.write_text(
                 doc.as_string(),
-                encoding=c.Encoding.DEFAULT,
+                encoding=c.Infra.Encoding.DEFAULT,
             )
         except OSError as exc:
             return r[bool].fail(f"TOML write error: {exc}")

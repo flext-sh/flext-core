@@ -55,7 +55,7 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
         if render_result.is_failure:
             return r[str].fail(render_result.error or "base.mk render failed")
 
-        return self._validate_generated_output(cast("str", render_result.value))
+        return self._validate_generated_output(render_result.value)
 
     def write(
         self,
@@ -77,7 +77,7 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
         try:
             output.parent.mkdir(parents=True, exist_ok=True)
-            _ = output.write_text(content, encoding=c.Encoding.DEFAULT)
+            _ = output.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
             return r[bool].ok(True)
         except OSError as exc:
             return r[bool].fail(f"base.mk write failed: {exc}")
@@ -104,12 +104,12 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
             with tempfile.TemporaryDirectory(prefix="flext-basemk-") as temp_dir_name:
                 temp_dir = Path(temp_dir_name)
                 base_mk_path = temp_dir / "base.mk"
-                makefile_path = temp_dir / c.Files.MAKEFILE_FILENAME
+                makefile_path = temp_dir / c.Infra.Files.MAKEFILE_FILENAME
 
-                _ = base_mk_path.write_text(content, encoding=c.Encoding.DEFAULT)
+                _ = base_mk_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
                 _ = makefile_path.write_text(
                     "include base.mk\n",
-                    encoding=c.Encoding.DEFAULT,
+                    encoding=c.Infra.Encoding.DEFAULT,
                 )
 
                 process_result = self._get_runner.run(

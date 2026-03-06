@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import cast
 
 from flext_infra import c, output
 from flext_infra.check.services import FlextInfraWorkspaceChecker, _ProjectResult
@@ -14,7 +13,7 @@ def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run workspace checks for specified projects."""
     parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
     _ = parser.add_argument("projects", nargs="*")
-    _ = parser.add_argument("--gates", default=c.Gates.DEFAULT_CSV)
+    _ = parser.add_argument("--gates", default=c.Infra.Gates.DEFAULT_CSV)
     _ = parser.add_argument(
         "--reports-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check"
     )
@@ -42,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
         output.error(result.error or "workspace check failed")
         return 2
 
-    projects: list[_ProjectResult] = cast("list[_ProjectResult]", result.value)
+    projects: list[_ProjectResult] = result.value
     failed_projects = [project for project in projects if not project.passed]
     return 1 if failed_projects else 0
 

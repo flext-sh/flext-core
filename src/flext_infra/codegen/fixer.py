@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 import builtins as _builtins_module
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextService, r
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
@@ -348,10 +348,7 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
             return []
 
         results: list[FlextInfraModels.AutoFixResult] = []
-        discovered: list[FlextInfraModels.ProjectInfo] = cast(
-            "list[FlextInfraModels.ProjectInfo]",
-            projects_result.unwrap(),
-        )
+        discovered: list[FlextInfraModels.ProjectInfo] = projects_result.unwrap()
         for project in discovered:
             if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue

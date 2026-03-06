@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import ast
 import re
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
-
-import tomllib
 
 ProjectKind = Literal["core", "domain", "platform", "integration", "app"]
 

@@ -186,7 +186,7 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
         """
         try:
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            with output_file.open("w", encoding=c.Encoding.DEFAULT) as handle:
+            with output_file.open("w", encoding=c.Infra.Encoding.DEFAULT) as handle:
                 result = subprocess.run(
                     list(cmd),
                     cwd=cwd,

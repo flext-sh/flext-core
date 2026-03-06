@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextResult, r, t
 from flext_infra import FlextInfraCommandRunner, m
@@ -36,7 +35,7 @@ class FlextInfraStubSupplyChain:
         for entry in sorted(root.iterdir(), key=lambda v: v.name):
             if not entry.is_dir() or entry.name.startswith("."):
                 continue
-            if (entry / c.Files.PYPROJECT_FILENAME).exists() and (
+            if (entry / c.Infra.Files.PYPROJECT_FILENAME).exists() and (
                 entry / "src"
             ).is_dir():
                 projects.append(entry)
@@ -133,10 +132,7 @@ class FlextInfraStubSupplyChain:
                 if result.is_failure:
                     violations.append(f"{proj.name}: {result.error}")
                     continue
-                data: Mapping[str, t.ContainerValue] = cast(
-                    "Mapping[str, t.ContainerValue]",
-                    result.value,
-                )
+                data: Mapping[str, t.ContainerValue] = result.value
                 internal = data.get("internal_missing", [])
                 unresolved = data.get("unresolved_missing", [])
                 if isinstance(internal, list) and internal:
@@ -178,7 +174,7 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            cmd_output: m.CommandOutput = cast("m.CommandOutput", result.value)
+            cmd_output: m.CommandOutput = result.value
             output = cmd_output.stdout
         return sorted({
             m.group(1).strip()
@@ -194,7 +190,7 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            cmd_output: m.CommandOutput = cast("m.CommandOutput", result.value)
+            cmd_output: m.CommandOutput = result.value
             output = cmd_output.stdout
         seen: set[str] = set()
         ordered: list[str] = []

@@ -36,7 +36,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
         if not gitmodules.exists():
             return set()
         try:
-            content = gitmodules.read_text(encoding=c.Encoding.DEFAULT)
+            content = gitmodules.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError:
             return set()
         return set(
@@ -79,11 +79,11 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
                     continue
                 if not self._is_git_project(entry):
                     continue
-                if not (entry / c.Files.MAKEFILE_FILENAME).exists():
+                if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
                     continue
 
-                has_pyproject = (entry / c.Files.PYPROJECT_FILENAME).exists()
-                has_gomod = (entry / c.Files.GO_MOD).exists()
+                has_pyproject = (entry / c.Infra.Files.PYPROJECT_FILENAME).exists()
+                has_gomod = (entry / c.Infra.Files.GO_MOD).exists()
                 if not has_pyproject and not has_gomod:
                     continue
 
@@ -96,7 +96,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
                         name=entry.name,
                         stack=f"{stack}/{kind}",
                         has_tests=(entry / "tests").is_dir(),
-                        has_src=(entry / c.Paths.DEFAULT_SRC_DIR).is_dir(),
+                        has_src=(entry / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir(),
                     ),
                 )
 
@@ -141,20 +141,22 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
                 for p in project_paths:
                     target = (
                         p
-                        if p.name == c.Files.PYPROJECT_FILENAME
-                        else p / c.Files.PYPROJECT_FILENAME
+                        if p.name == c.Infra.Files.PYPROJECT_FILENAME
+                        else p / c.Infra.Files.PYPROJECT_FILENAME
                     )
                     if target.exists() and target.is_file():
                         selected.append(target)
                 return r[list[Path]].ok(sorted(set(selected)))
 
             effective_skip = (
-                skip_dirs if skip_dirs is not None else c.Excluded.PYPROJECT_SKIP_DIRS
+                skip_dirs
+                if skip_dirs is not None
+                else c.Infra.Excluded.PYPROJECT_SKIP_DIRS
             )
             result = [
                 p
                 for p in sorted(
-                    workspace_root.rglob(c.Files.PYPROJECT_FILENAME),
+                    workspace_root.rglob(c.Infra.Files.PYPROJECT_FILENAME),
                 )
                 if not any(skip in p.parts for skip in effective_skip)
             ]
