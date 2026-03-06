@@ -1,8 +1,10 @@
+"""CST transformer for consolidating helper functions into namespace classes."""
+
 from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Mapping
-from typing import TypedDict, cast, override
+from typing import TypedDict, override
 
 import libcst as cst
 
@@ -25,12 +27,15 @@ type PolicyContext = Mapping[str, _FamilyPolicy]
 
 
 class HelperConsolidationTransformer(cst.CSTTransformer):
+    """Move top-level helper functions into target namespace classes."""
+
     def __init__(
         self,
         helper_mappings: dict[str, str],
         policy_context: PolicyContext | None = None,
         helper_families: Mapping[str, str] | None = None,
     ) -> None:
+        """Initialize with helper-to-namespace mappings and optional policy context."""
         self._helper_mappings = helper_mappings
         self._policy_context = policy_context
         self._helper_families = helper_families or {}
@@ -211,9 +216,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
             policy, "allow_helper_call_rewrite", default=False
         ):
             return False
-        if not self._target_allowed(policy, target_namespace):
-            return False
-        return True
+        return self._target_allowed(policy, target_namespace)
 
     def _is_helper_move_allowed(self, helper_name: str, target_namespace: str) -> bool:
         policy = self._policy_for_helper(helper_name)
@@ -225,9 +228,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
             default=False,
         ):
             return False
-        if not self._target_allowed(policy, target_namespace):
-            return False
-        return True
+        return self._target_allowed(policy, target_namespace)
 
     def _signature_allowed(self, function_node: cst.FunctionDef) -> bool:
         policy = self._policy_for_helper(function_node.name.value)
@@ -306,15 +307,18 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         return default
 
     def _tuple_from_policy(self, policy: _FamilyPolicy, key: str) -> tuple[str, ...]:
-        raw = policy.get(key)
-        if not isinstance(raw, list | tuple):
+        return self._string_collection(policy.get(key))
+
+    def _string_collection(
+        self,
+        value: str | list[str] | tuple[str, ...] | None,
+    ) -> tuple[str, ...]:
+        """Extract a tuple of strings from a policy value."""
+        if value is None:
             return ()
-        typed_raw = cast("tuple[object, ...] | list[object]", raw)
-        validated: list[str] = []
-        for entry in typed_raw:
-            if isinstance(entry, str):
-                validated.append(entry)
-        return tuple(validated)
+        if isinstance(value, str):
+            return (value,)
+        return tuple(entry for entry in value if isinstance(entry, str))
 
     def _target_allowed(self, policy: _FamilyPolicy, target_namespace: str) -> bool:
         allowed = self._tuple_from_policy(policy, "allowed_targets")
@@ -322,9 +326,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
             return False
 
         forbidden = self._tuple_from_policy(policy, "forbidden_targets")
-        if target_namespace in forbidden:
-            return False
-        return True
+        return target_namespace not in forbidden
 
 
 __all__ = ["HelperConsolidationTransformer"]
