@@ -17,8 +17,7 @@ import libcst as cst
 import yaml
 
 from flext_core import r
-from flext_infra import c, m
-from flext_infra import output
+from flext_infra import c, m, output
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_reconstructor import (
