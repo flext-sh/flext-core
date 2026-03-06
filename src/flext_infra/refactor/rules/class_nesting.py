@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import libcst as cst
@@ -10,7 +9,7 @@ import yaml
 from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m, t
+from flext_infra import FlextInfraJsonService, c, m, t
 from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
 from flext_infra.refactor.transformers.helper_consolidation import (
     HelperConsolidationTransformer,
@@ -162,10 +161,8 @@ class PreCheckGate:
         return by_family
 
     def _schema_valid(self, loaded: _PolicyDocument) -> bool:
-        try:
-            schema_raw = self._schema_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            schema = json.loads(schema_raw)
-        except (OSError, json.JSONDecodeError):
+        schema = FlextInfraJsonService().load(self._schema_path)
+        if schema is None:
             return False
 
         top_required = schema.get("required", [])
@@ -634,11 +631,8 @@ class ClassNestingRefactorRule:
 
     def _policy_document_schema_valid(self, loaded: _PolicyDocument) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
-        try:
-            schema = json.loads(
-                schema_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            )
-        except (OSError, json.JSONDecodeError):
+        schema = FlextInfraJsonService().load(schema_path)
+        if schema is None:
             return False
 
         top_required = schema.get("required", [])

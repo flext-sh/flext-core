@@ -11,7 +11,14 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core import FlextLogger, r, t
-from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, m, output, p
+from flext_infra import (
+    FlextInfraCommandRunner,
+    FlextInfraGitService,
+    FlextInfraTomlService,
+    m,
+    output,
+    p,
+)
 from flext_infra.constants import c
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -23,6 +30,7 @@ class FlextInfraInternalDependencySyncService:
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
         self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._git = FlextInfraGitService(self._runner)
         self._toml = FlextInfraTomlService()
 
     @staticmethod
@@ -262,42 +270,38 @@ class FlextInfraInternalDependencySyncService:
             except OSError as exc:
                 return r[bool].fail(f"cleanup failed for {dep_path.name}: {exc}")
 
-            cloned = self._runner.run_raw([
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                safe_ref_name,
-                safe_repo_url,
-                str(dep_path),
-            ])
-            if cloned.is_failure or cloned.value.exit_code != 0:
-                stderr = cloned.value.stderr.strip() if cloned.is_success else ""
-                return r[bool].fail(f"clone failed for {dep_path.name}: {stderr}")
+            cloned = self._git.run_checked(
+                [
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    safe_ref_name,
+                    safe_repo_url,
+                    str(dep_path),
+                ],
+            )
+            if cloned.is_failure:
+                return r[bool].fail(f"clone failed for {dep_path.name}: {cloned.error}")
             return r[bool].ok(True)
 
-        fetch = self._run_git(["fetch", c.Infra.Git.ORIGIN, "--tags"], dep_path)
-        if fetch.is_failure or fetch.value.exit_code != 0:
-            stderr = fetch.value.stderr.strip() if fetch.is_success else ""
-            return r[bool].fail(f"fetch failed for {dep_path.name}: {stderr}")
+        fetch = self._git.fetch(dep_path, c.Infra.Git.ORIGIN)
+        if fetch.is_failure:
+            return r[bool].fail(f"fetch failed for {dep_path.name}: {fetch.error}")
 
-        checkout = self._run_git(["checkout", safe_ref_name], dep_path)
-        if checkout.is_failure or checkout.value.exit_code != 0:
-            stderr = checkout.value.stderr.strip() if checkout.is_success else ""
-            return r[bool].fail(f"checkout failed for {dep_path.name}: {stderr}")
-        _ = self._run_git(
-            ["pull", "--ff-only", c.Infra.Git.ORIGIN, safe_ref_name], dep_path
-        )
+        checkout = self._git.checkout(dep_path, safe_ref_name)
+        if checkout.is_failure:
+            return r[bool].fail(
+                f"checkout failed for {dep_path.name}: {checkout.error}"
+            )
+        _ = self._git.pull(dep_path, remote=c.Infra.Git.ORIGIN, branch=safe_ref_name)
         return r[bool].ok(True)
 
     def _infer_owner_from_origin(self, project_root: Path) -> str | None:
-        remote = self._run_git(
-            [c.Infra.ReportKeys.CONFIG, "--get", "remote.origin.url"], project_root
-        )
-        if remote.is_failure or remote.value.exit_code != 0:
+        remote = self._git.config_get(project_root, "remote.origin.url")
+        if remote.is_failure:
             return None
-        return self._owner_from_remote_url(remote.value.stdout.strip())
+        return self._owner_from_remote_url(remote.value.strip())
 
     def _is_workspace_mode(self, project_root: Path) -> tuple[bool, Path | None]:
         if os.getenv("FLEXT_STANDALONE") == "1":
@@ -308,12 +312,12 @@ class FlextInfraInternalDependencySyncService:
         if env_workspace_root is not None:
             return True, env_workspace_root
 
-        superproject = self._run_git(
+        superproject = self._git.run(
             ["rev-parse", "--show-superproject-working-tree"],
-            project_root,
+            cwd=project_root,
         )
-        if superproject.is_success and superproject.value.exit_code == 0:
-            value = superproject.value.stdout.strip()
+        if superproject.is_success:
+            value = superproject.value.strip()
             if value:
                 return True, Path(value)
 
@@ -370,21 +374,16 @@ class FlextInfraInternalDependencySyncService:
                 if value:
                     return value
 
-        branch = self._run_git(
-            ["rev-parse", "--abbrev-ref", c.Infra.Git.HEAD], project_root
-        )
-        if branch.is_success and branch.value.exit_code == 0:
-            current = branch.value.stdout.strip()
+        branch = self._git.current_branch(project_root)
+        if branch.is_success:
+            current = branch.value.strip()
             if current and current != c.Infra.Git.HEAD:
                 return current
 
-        tag = self._run_git(["describe", "--tags", "--exact-match"], project_root)
-        if tag.is_success and tag.value.exit_code == 0:
-            return tag.value.stdout.strip()
+        tag = self._git.run(["describe", "--tags", "--exact-match"], cwd=project_root)
+        if tag.is_success:
+            return tag.value.strip()
         return c.Infra.Git.MAIN
-
-    def _run_git(self, args: list[str], cwd: Path) -> r[m.Infra.Core.CommandOutput]:
-        return self._runner.run_raw([c.Infra.Cli.GIT, *args], cwd=cwd)
 
     def _synthesized_repo_map(
         self,

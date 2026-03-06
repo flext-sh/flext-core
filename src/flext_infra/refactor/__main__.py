@@ -15,7 +15,7 @@ from .migrate_to_class_mro import FlextInfraRefactorMigrateToClassMRO
 def main() -> int:
     """Module-level CLI entry point."""
     argv = sys.argv[1:]
-    if len(argv) > 0 and argv[0] == "migrate-to-mro":
+    if len(argv) > 0 and argv[0] in {"migrate-to-mro", "migrate-mro"}:
         return _run_migrate_to_mro(argv=argv[1:])
     FlextInfraRefactorEngine.main()
     return 0
@@ -23,7 +23,7 @@ def main() -> int:
 
 def _run_migrate_to_mro(*, argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
-        prog="flext_infra refactor migrate-to-mro",
+        prog="flext_infra refactor migrate-mro",
         description=(
             "Migrate loose Final/TypeVar/TypeAlias declarations "
             "into MRO facade classes and rewrite references"

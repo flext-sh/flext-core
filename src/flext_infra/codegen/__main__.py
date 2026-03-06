@@ -6,6 +6,7 @@ Usage:
     python -m flext_infra codegen scaffold [--workspace PATH] [--dry-run]
     python -m flext_infra codegen auto-fix [--workspace PATH] [--dry-run]
     python -m flext_infra codegen pipeline [--workspace PATH] [--dry-run] [--format json|text]
+    python -m flext_infra codegen constants-quality-gate [--workspace PATH] [--before-report PATH | --baseline-file PATH] [--format json|text]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,13 +15,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 from flext_core import FlextRuntime
-from flext_infra import c, output
+from flext_infra import FlextInfraJsonService, c, output
 from flext_infra.codegen.census import FlextInfraCodegenCensus
+from flext_infra.codegen.constants_quality_gate import (
+    FlextInfraCodegenConstantsQualityGate,
+)
 from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
@@ -129,6 +133,38 @@ def main(argv: list[str] | None = None) -> int:
         help="Output format (default: text)",
     )
 
+    # -- constants-quality-gate subcommand -----------------------------------
+    quality_parser = subparsers.add_parser(
+        "constants-quality-gate",
+        help="Run constants migration quality gate and before/after diff",
+    )
+    _ = quality_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    baseline_group = quality_parser.add_mutually_exclusive_group(required=False)
+    _ = baseline_group.add_argument(
+        "--before-report",
+        type=Path,
+        default=None,
+        help="Path to pre-refactor report JSON for comparison",
+    )
+    _ = baseline_group.add_argument(
+        "--baseline-file",
+        type=Path,
+        default=None,
+        help="Path to baseline JSON payload for comparison",
+    )
+    _ = quality_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        dest="output_format",
+        help="Output format (default: text)",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "lazy-init":
@@ -141,6 +177,8 @@ def main(argv: list[str] | None = None) -> int:
         return _handle_auto_fix(args)
     if args.command == "pipeline":
         return _handle_pipeline(args)
+    if args.command == "constants-quality-gate":
+        return _handle_constants_quality_gate(args)
 
     output.error(f"unknown command: {args.command}")
     return 1
@@ -167,7 +205,7 @@ def _handle_census(args: argparse.Namespace) -> int:
             "total_violations": sum(rpt.total for rpt in reports),
             "total_fixable": sum(rpt.fixable for rpt in reports),
         }
-        print(json.dumps(data, indent=2))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+        print(FlextInfraJsonService().dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         total_v = sum(rpt.total for rpt in reports)
         total_f = sum(rpt.fixable for rpt in reports)
@@ -260,7 +298,7 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
                 "total_fixable": sum(r.fixable for r in reports_after),
             },
         }
-        print(json.dumps(data, indent=2))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+        print(FlextInfraJsonService().dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         before_v = sum(r.total for r in reports_before)
         after_v = sum(r.total for r in reports_after)
@@ -274,6 +312,24 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
         output.info(f"Census after: {after_v} violations")
         output.info(f"Improvement: {before_v - after_v} violations resolved")
     return 0
+
+
+def _handle_constants_quality_gate(args: argparse.Namespace) -> int:
+    """Handle the ``constants-quality-gate`` subcommand."""
+    gate = FlextInfraCodegenConstantsQualityGate(
+        workspace_root=args.workspace.resolve(),
+        before_report=args.before_report,
+        baseline_file=args.baseline_file,
+    )
+    report = gate.run()
+
+    if args.output_format == "json":
+        print(FlextInfraJsonService().dumps(cast("Any", report), ensure_ascii=True))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+    else:
+        print(FlextInfraCodegenConstantsQualityGate.render_text(report), end="")  # noqa: T201  # JUSTIFIED: CLI text output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+
+    verdict = str(report.get("verdict", "FAIL"))
+    return 0 if FlextInfraCodegenConstantsQualityGate.is_success_verdict(verdict) else 1
 
 
 if __name__ == "__main__":

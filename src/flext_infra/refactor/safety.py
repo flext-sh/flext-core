@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import overload
 
 from flext_core import r
 from flext_core.utilities import FlextUtilities
-from flext_infra import FlextInfraGitService, c, m, p
+from flext_infra import (
+    FlextInfraCommandRunner,
+    FlextInfraGitService,
+    FlextInfraJsonService,
+    c,
+    m,
+    p,
+)
 
 
 def _now_iso() -> str:
@@ -27,8 +33,6 @@ class FlextInfraRefactorSafetyManager:
         test_command: list[str] | None = None,
     ) -> None:
         """Initialize safety manager with runner, checkpoint path, and test command."""
-        from flext_infra import FlextInfraCommandRunner
-
         effective_runner = runner or FlextInfraCommandRunner()
         self._runner = effective_runner
         self._git = FlextInfraGitService(effective_runner)
@@ -198,15 +202,11 @@ class FlextInfraRefactorSafetyManager:
         """Persist a checkpoint to disk as JSON."""
         payload = checkpoint.model_dump()
         payload["updated_at"] = _now_iso()
-        try:
-            self._checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-            self._checkpoint_path.write_text(
-                json.dumps(payload, ensure_ascii=True, indent=2) + "\n",
-                encoding=c.Infra.Encoding.DEFAULT,
-            )
-            return r[bool].ok(True)
-        except OSError as exc:
-            return r[bool].fail(f"checkpoint save failed: {exc}")
+        return FlextInfraJsonService().write(
+            self._checkpoint_path,
+            payload,
+            ensure_ascii=True,
+        )
 
     def save_checkpoint_state(
         self,

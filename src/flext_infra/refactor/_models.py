@@ -310,6 +310,64 @@ class FlextInfraRefactorModels:
 
         file: str = Field(min_length=1, description="Matched file path")
 
+    class MROScanCandidate(FlextModels.ArbitraryTypesModel):
+        """One module-level symbol candidate detected for MRO migration."""
+
+        file: str = Field(min_length=1, description="Absolute file path")
+        module: str = Field(min_length=1, description="Import module path")
+        symbol: str = Field(min_length=1, description="Symbol name")
+        line: int = Field(ge=1, description="Source line number")
+        kind: str = Field(min_length=1, description="constant|typevar|typealias")
+        class_name: str = Field(min_length=1, description="Target class name")
+
+    class MROFileMigration(FlextModels.ArbitraryTypesModel):
+        """Migration summary for one transformed file."""
+
+        file: str = Field(min_length=1, description="Absolute file path")
+        module: str = Field(min_length=1, description="Import module path")
+        moved_symbols: tuple[str, ...] = Field(
+            default_factory=tuple,
+            description="Symbols moved to facade class",
+        )
+        created_classes: tuple[str, ...] = Field(
+            default_factory=tuple,
+            description="Facade classes created during migration",
+        )
+
+    class MRORewriteResult(FlextModels.ArbitraryTypesModel):
+        """Reference rewrite summary for one file."""
+
+        file: str = Field(min_length=1, description="Absolute file path")
+        replacements: int = Field(ge=0, description="Reference replacements applied")
+
+    class MROMigrationReport(FlextModels.ArbitraryTypesModel):
+        """End-to-end report for migrate-to-mro command execution."""
+
+        workspace: str = Field(min_length=1, description="Workspace root path")
+        target: str = Field(min_length=1, description="constants|typings|all")
+        dry_run: bool = Field(description="Dry-run indicator")
+        files_scanned: int = Field(ge=0, description="Total scanned Python files")
+        files_with_candidates: int = Field(
+            ge=0,
+            description="Files containing movable declarations",
+        )
+        migrations: tuple[FlextInfraRefactorModels.MROFileMigration, ...] = Field(
+            default_factory=tuple,
+            description="File migration summaries",
+        )
+        rewrites: tuple[FlextInfraRefactorModels.MRORewriteResult, ...] = Field(
+            default_factory=tuple,
+            description="Reference rewrite summaries",
+        )
+        remaining_violations: int = Field(
+            ge=0,
+            description="Loose declarations remaining after run",
+        )
+        mro_failures: int = Field(ge=0, description="MRO validation failures")
+        stash_ref: str = Field(default="", description="Git stash rollback ref")
+        warnings: tuple[str, ...] = Field(default_factory=tuple, description="Warnings")
+        errors: tuple[str, ...] = Field(default_factory=tuple, description="Errors")
+
     class RuleConfigs:
         """Configuration schemas parsed by refactor rules at runtime."""
 

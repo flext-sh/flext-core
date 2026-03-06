@@ -13,14 +13,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import json
 from collections.abc import Mapping
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextLogger, r, t
-from flext_infra import FlextInfraPatterns, output
+from flext_infra import FlextInfraJsonService, FlextInfraPatterns, output
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     FlextInfraDocScope,
@@ -81,11 +80,9 @@ class FlextInfraDocAuditor:
         if config_path is None:
             return None, {}
 
-        payload = json.loads(
-            config_path.read_text(
-                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
-            ),
-        )
+        payload = FlextInfraJsonService().load(config_path)
+        if payload is None:
+            return None, {}
         docs_validation = payload.get("docs_validation", {})
         audit_gate = docs_validation.get("audit_gate", {})
         default_budget = audit_gate.get("max_issues_default")

@@ -7,15 +7,20 @@ from pathlib import Path
 
 from flext_infra import c
 
-from .mro_migrator.rewriter import FlextInfraRefactorMRORewriter
-from .mro_migrator.scanner import FlextInfraRefactorMROScanner
-from .mro_migrator.transformer import FlextInfraRefactorMROTransformer, MROFileMigration
-from .mro_migrator.validator import FlextInfraRefactorMROValidator
+from .mro_migrator import (
+    MROFileMigration,
+    MROImportRewriter,
+    MROMigrationScanner,
+    MROMigrationTransformer,
+    MROMigrationValidator,
+)
 from .safety import FlextInfraRefactorSafetyManager
 
 
 @dataclass(frozen=True)
 class MROMigrationReport:
+    """Execution report for migrate-mro runs."""
+
     workspace: str
     target: str
     dry_run: bool
@@ -34,12 +39,14 @@ class FlextInfraRefactorMigrateToClassMRO:
     """Orchestrate scan, migration, rewrite, and validation phases."""
 
     def __init__(self, *, workspace_root: Path) -> None:
+        """Create migration service bound to a workspace root."""
         self._workspace_root = workspace_root.resolve()
         self._safety = FlextInfraRefactorSafetyManager()
 
     def run(self, *, target: str, apply_changes: bool) -> MROMigrationReport:
+        """Run scan, transform, rewrite, and validation phases."""
         normalized_target = self._normalize_target(target=target)
-        scan_results, files_scanned = FlextInfraRefactorMROScanner.scan_workspace(
+        scan_results, files_scanned = MROMigrationScanner.scan_workspace(
             workspace_root=self._workspace_root,
             target=normalized_target,
         )
@@ -62,9 +69,7 @@ class FlextInfraRefactorMigrateToClassMRO:
         for scan_result in scan_results:
             try:
                 updated_source, migration, symbol_alias_map = (
-                    FlextInfraRefactorMROTransformer.migrate_file(
-                        scan_result=scan_result
-                    )
+                    MROMigrationTransformer.migrate_file(scan_result=scan_result)
                 )
             except Exception as exc:  # pragma: no cover - defensive path
                 errors.append(f"{scan_result.file}: {exc}")
@@ -80,14 +85,14 @@ class FlextInfraRefactorMigrateToClassMRO:
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
 
-        rewrite_results = FlextInfraRefactorMRORewriter.rewrite_workspace(
+        rewrite_results = MROImportRewriter.rewrite_workspace(
             workspace_root=self._workspace_root,
             moved_index=moved_index,
             apply_changes=apply_changes,
         )
         rewrites = tuple((item.file, item.replacements) for item in rewrite_results)
 
-        remaining_violations, mro_failures = FlextInfraRefactorMROValidator.validate(
+        remaining_violations, mro_failures = MROMigrationValidator.validate(
             workspace_root=self._workspace_root,
             target=normalized_target,
         )
@@ -114,6 +119,7 @@ class FlextInfraRefactorMigrateToClassMRO:
 
     @staticmethod
     def render_text(report: MROMigrationReport) -> str:
+        """Render migration report in CLI-friendly plain text."""
         lines = [
             f"Workspace: {report.workspace}",
             f"Target: {report.target}",

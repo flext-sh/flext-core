@@ -13,15 +13,30 @@ from flext_core import r
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
 
 
+def _make_git_mock(**overrides: object) -> Mock:
+    """Create a properly configured git service mock.
+
+    Since pr_workspace delegates to high-level methods (smart_checkout,
+    checkpoint, has_changes), those are the main ones we mock here.
+    """
+    git = Mock()
+    git.smart_checkout.return_value = r[bool].ok(True)
+    git.checkpoint.return_value = r[bool].ok(True)
+    git.has_changes.return_value = r[bool].ok(False)
+    for key, val in overrides.items():
+        setattr(git, key, val)
+    return git
+
+
 class TestFlextInfraPrWorkspaceManager:
     """Test suite for FlextInfraPrWorkspaceManager."""
 
     def test_has_changes_true(self, tmp_path: Path) -> None:
         """Test detecting uncommitted changes in repository."""
-        mock_runner = Mock()
-        mock_runner.capture.return_value = r[str].ok("M file.py\nA new.py")
+        mock_git = _make_git_mock()
+        mock_git.has_changes.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.has_changes(tmp_path)
         assert result.is_success
@@ -29,10 +44,10 @@ class TestFlextInfraPrWorkspaceManager:
 
     def test_has_changes_false(self, tmp_path: Path) -> None:
         """Test when repository has no uncommitted changes."""
-        mock_runner = Mock()
-        mock_runner.capture.return_value = r[str].ok("")
+        mock_git = _make_git_mock()
+        mock_git.has_changes.return_value = r[bool].ok(False)
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.has_changes(tmp_path)
         assert result.is_success
@@ -40,10 +55,10 @@ class TestFlextInfraPrWorkspaceManager:
 
     def test_has_changes_command_failure(self, tmp_path: Path) -> None:
         """Test handling of git status command failure."""
-        mock_runner = Mock()
-        mock_runner.capture.return_value = r[str].fail("not a git repository")
+        mock_git = _make_git_mock()
+        mock_git.has_changes.return_value = r[bool].fail("not a git repository")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.has_changes(tmp_path)
         assert result.is_failure
@@ -51,20 +66,21 @@ class TestFlextInfraPrWorkspaceManager:
 
     def test_checkout_branch_success(self, tmp_path: Path) -> None:
         """Test successful branch checkout."""
-        mock_runner = Mock()
-        mock_runner.run.return_value = r[bool].ok(True)
-        mock_git = Mock()
-        mock_git.current_branch.return_value = r[str].ok("other")
+        mock_git = _make_git_mock()
+        mock_git.smart_checkout.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=mock_git, selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.checkout_branch(tmp_path, "feature/test")
         assert result.is_success
+        mock_git.smart_checkout.assert_called_once_with(tmp_path, "feature/test")
 
     def test_checkout_branch_empty(self, tmp_path: Path) -> None:
-        """Test checkout with empty branch returns True."""
+        """Test checkout with empty branch delegates to smart_checkout."""
+        mock_git = _make_git_mock()
+        mock_git.smart_checkout.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=Mock(), selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.checkout_branch(tmp_path, "")
         assert result.is_success
@@ -72,8 +88,8 @@ class TestFlextInfraPrWorkspaceManager:
 
     def test_checkout_branch_already_on(self, tmp_path: Path) -> None:
         """Test checkout when already on the branch."""
-        mock_git = Mock()
-        mock_git.current_branch.return_value = r[str].ok("feature")
+        mock_git = _make_git_mock()
+        mock_git.smart_checkout.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
             runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
@@ -81,52 +97,15 @@ class TestFlextInfraPrWorkspaceManager:
         assert result.is_success
         assert result.value is True
 
-    def test_checkout_branch_local_changes(self, tmp_path: Path) -> None:
-        """Test checkout with local changes forces -B."""
-        mock_runner = Mock()
-        mock_git = Mock()
-        mock_git.current_branch.return_value = r[str].ok("other")
-        mock_runner.run.return_value = r[bool].fail(
-            "error: local changes would be overwritten"
-        )
-        mock_runner.run_checked.return_value = r[bool].ok(True)
+    def test_checkout_branch_failure(self, tmp_path: Path) -> None:
+        """Test checkout failure propagation."""
+        mock_git = _make_git_mock()
+        mock_git.smart_checkout.return_value = r[bool].fail("checkout failed")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=mock_git, selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.checkout_branch(tmp_path, "feature")
-        assert result.is_success
-
-    def test_checkout_branch_fetch_from_origin(self, tmp_path: Path) -> None:
-        """Test checkout fetches from origin when local branch missing."""
-        mock_runner = Mock()
-        mock_git = Mock()
-        mock_git.current_branch.return_value = r[str].ok("other")
-        mock_runner.run.side_effect = [
-            r[bool].fail("pathspec not found"),
-            r[bool].ok(True),  # fetch succeeds
-        ]
-        mock_runner.run_checked.return_value = r[bool].ok(True)
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=mock_git, selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkout_branch(tmp_path, "feature")
-        assert result.is_success
-
-    def test_checkout_branch_fetch_fail_fallback(self, tmp_path: Path) -> None:
-        """Test checkout when fetch also fails."""
-        mock_runner = Mock()
-        mock_git = Mock()
-        mock_git.current_branch.return_value = r[str].ok("other")
-        mock_runner.run.side_effect = [
-            r[bool].fail("pathspec not found"),
-            r[bool].fail("fetch failed"),
-        ]
-        mock_runner.run_checked.return_value = r[bool].ok(True)
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=mock_git, selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkout_branch(tmp_path, "feature")
-        assert result.is_success
+        assert result.is_failure
 
     def test_default_initialization(self) -> None:
         """Test manager initializes with default dependencies."""
@@ -141,122 +120,23 @@ class TestCheckpoint:
     """Test checkpoint method."""
 
     def test_no_changes(self, tmp_path: Path) -> None:
-        """Test checkpoint with no changes."""
-        mock_runner = Mock()
-        mock_runner.capture.return_value = r[str].ok("")
+        """Test checkpoint delegates to git service."""
+        mock_git = _make_git_mock()
+        mock_git.checkpoint.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.checkpoint(tmp_path, "feature")
         assert result.is_success
         assert result.value is True
+        mock_git.checkpoint.assert_called_once_with(tmp_path, "feature")
 
-    def test_changes_full_flow(self, tmp_path: Path) -> None:
-        """Test checkpoint with changes: add, commit, push."""
-        mock_runner = Mock()
-        mock_runner.capture.side_effect = [
-            r[str].ok("M file.py"),  # has_changes
-            r[str].ok("file.py"),  # staged diff
-        ]
-        mock_runner.run_checked.side_effect = [
-            r[bool].ok(True),  # add
-            r[bool].ok(True),  # commit
-        ]
-        mock_runner.run.return_value = r[bool].ok(True)  # push
+    def test_checkpoint_failure(self, tmp_path: Path) -> None:
+        """Test checkpoint failure propagation."""
+        mock_git = _make_git_mock()
+        mock_git.checkpoint.return_value = r[bool].fail("git error")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkpoint(tmp_path, "feature")
-        assert result.is_success
-
-    def test_changes_check_failure(self, tmp_path: Path) -> None:
-        """Test checkpoint when changes check fails."""
-        mock_runner = Mock()
-        mock_runner.capture.return_value = r[str].fail("git error")
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkpoint(tmp_path, "feature")
-        assert result.is_failure
-
-    def test_add_failure(self, tmp_path: Path) -> None:
-        """Test checkpoint when git add fails."""
-        mock_runner = Mock()
-        mock_runner.capture.return_value = r[str].ok("M file.py")
-        mock_runner.run_checked.return_value = r[bool].fail("add failed")
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkpoint(tmp_path, "feature")
-        assert result.is_failure
-
-    def test_no_staged_after_add(self, tmp_path: Path) -> None:
-        """Test checkpoint when nothing staged after add."""
-        mock_runner = Mock()
-        mock_runner.capture.side_effect = [
-            r[str].ok("M file.py"),  # has_changes
-            r[str].ok(""),  # staged diff empty
-        ]
-        mock_runner.run_checked.return_value = r[bool].ok(True)  # add
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkpoint(tmp_path, "feature")
-        assert result.is_success
-        assert result.value is True
-
-    def test_commit_failure(self, tmp_path: Path) -> None:
-        """Test checkpoint when commit fails."""
-        mock_runner = Mock()
-        mock_runner.capture.side_effect = [
-            r[str].ok("M file.py"),
-            r[str].ok("file.py"),
-        ]
-        mock_runner.run_checked.side_effect = [
-            r[bool].ok(True),  # add
-            r[bool].fail("commit failed"),  # commit
-        ]
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkpoint(tmp_path, "feature")
-        assert result.is_failure
-
-    def test_push_fails_rebase_succeeds(self, tmp_path: Path) -> None:
-        """Test push failure with successful rebase retry."""
-        mock_runner = Mock()
-        mock_runner.capture.side_effect = [
-            r[str].ok("M file.py"),
-            r[str].ok("file.py"),
-        ]
-        mock_runner.run_checked.side_effect = [
-            r[bool].ok(True),  # add
-            r[bool].ok(True),  # commit
-            r[bool].ok(True),  # rebase
-            r[bool].ok(True),  # push retry
-        ]
-        mock_runner.run.return_value = r[bool].fail("push rejected")  # first push
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
-        )
-        result = manager.checkpoint(tmp_path, "feature")
-        assert result.is_success
-
-    def test_push_fails_rebase_fails(self, tmp_path: Path) -> None:
-        """Test push failure with failed rebase."""
-        mock_runner = Mock()
-        mock_runner.capture.side_effect = [
-            r[str].ok("M file.py"),
-            r[str].ok("file.py"),
-        ]
-        mock_runner.run_checked.side_effect = [
-            r[bool].ok(True),  # add
-            r[bool].ok(True),  # commit
-            r[bool].fail("rebase conflict"),  # rebase
-        ]
-        mock_runner.run.return_value = r[bool].fail("push rejected")
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=Mock()
+            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock()
         )
         result = manager.checkpoint(tmp_path, "feature")
         assert result.is_failure
@@ -272,7 +152,10 @@ class TestRunPr:
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=mock_reporting
+            runner=mock_runner,
+            git=_make_git_mock(),
+            selector=Mock(),
+            reporting=mock_reporting,
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         assert result.is_success
@@ -287,7 +170,10 @@ class TestRunPr:
         sub = tmp_path / "sub"
         sub.mkdir()
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=mock_reporting
+            runner=mock_runner,
+            git=_make_git_mock(),
+            selector=Mock(),
+            reporting=mock_reporting,
         )
         result = manager.run_pr(sub, tmp_path, {"action": "status"})
         assert result.is_success
@@ -299,7 +185,10 @@ class TestRunPr:
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].fail("command error")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=mock_reporting
+            runner=mock_runner,
+            git=_make_git_mock(),
+            selector=Mock(),
+            reporting=mock_reporting,
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         assert result.is_failure
@@ -311,7 +200,10 @@ class TestRunPr:
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(1)
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner, git=Mock(), selector=Mock(), reporting=mock_reporting
+            runner=mock_runner,
+            git=_make_git_mock(),
+            selector=Mock(),
+            reporting=mock_reporting,
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         assert result.is_success
@@ -328,8 +220,6 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
-        mock_runner.capture.return_value = r[str].ok("")  # has_changes
-        mock_runner.run.return_value = r[bool].ok(True)  # checkout
 
         proj = Mock()
         proj.path = tmp_path / "proj"
@@ -338,7 +228,7 @@ class TestOrchestrate:
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
-            git=Mock(),
+            git=_make_git_mock(),
             selector=mock_selector,
             reporting=mock_reporting,
         )
@@ -353,7 +243,10 @@ class TestOrchestrate:
         mock_selector = Mock()
         mock_selector.resolve_projects.return_value = r[list[Mock]].fail("no projects")
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=Mock(), selector=mock_selector, reporting=Mock()
+            runner=Mock(),
+            git=_make_git_mock(),
+            selector=mock_selector,
+            reporting=Mock(),
         )
         result = manager.orchestrate(tmp_path)
         assert result.is_failure
@@ -365,8 +258,6 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(1)
-        mock_runner.capture.return_value = r[str].ok("")
-        mock_runner.run.return_value = r[bool].ok(True)
 
         proj1 = Mock()
         proj1.path = tmp_path / "p1"
@@ -378,7 +269,7 @@ class TestOrchestrate:
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
-            git=Mock(),
+            git=_make_git_mock(),
             selector=mock_selector,
             reporting=mock_reporting,
         )
@@ -395,14 +286,12 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
-        mock_runner.capture.return_value = r[str].ok("")
-        mock_runner.run.return_value = r[bool].ok(True)
 
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([])
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
-            git=Mock(),
+            git=_make_git_mock(),
             selector=mock_selector,
             reporting=mock_reporting,
         )
@@ -413,14 +302,14 @@ class TestOrchestrate:
         assert result.value.total == 1
 
     def test_orchestrate_with_checkpoint(self, tmp_path: Path) -> None:
-        """Test orchestrate with checkpoint enabled."""
+        """Test orchestrate with checkpoint enabled calls git service."""
         mock_runner = Mock()
         mock_selector = Mock()
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
-        mock_runner.capture.return_value = r[str].ok("M file.py")  # has_changes
-        mock_runner.run.return_value = r[bool].ok(True)  # checkout
+
+        mock_git = _make_git_mock()
 
         proj = Mock()
         proj.path = tmp_path / "proj"
@@ -429,7 +318,7 @@ class TestOrchestrate:
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
-            git=Mock(),
+            git=mock_git,
             selector=mock_selector,
             reporting=mock_reporting,
         )
@@ -437,8 +326,7 @@ class TestOrchestrate:
             tmp_path, include_root=False, checkpoint=True, branch="test-branch"
         )
         assert result.is_success
-        # checkpoint should be called, which calls has_changes, add, commit, push
-        assert mock_runner.capture.called
+        mock_git.checkpoint.assert_called()
 
     def test_orchestrate_failure_handling(self, tmp_path: Path) -> None:
         """Test orchestrate failure handling with fail_fast."""
@@ -447,8 +335,6 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].fail("command error")
-        mock_runner.capture.return_value = r[str].ok("")
-        mock_runner.run.return_value = r[bool].ok(True)
 
         proj = Mock()
         proj.path = tmp_path / "proj"
@@ -457,7 +343,7 @@ class TestOrchestrate:
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
-            git=Mock(),
+            git=_make_git_mock(),
             selector=mock_selector,
             reporting=mock_reporting,
         )

@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import difflib
 import fnmatch
-import json
 import re
 import sys
 from collections.abc import Mapping
@@ -17,7 +16,7 @@ import yaml
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, output, t
+from flext_infra import FlextInfraJsonService, c, m, output, t
 from flext_infra.refactor.analysis import (
     FlextInfraRefactorViolationAnalyzer,
     ViolationAnalysisReport,
@@ -299,15 +298,10 @@ class FlextInfraRefactorEngine:
             )
             FlextInfraRefactorEngine.print_violation_summary(analysis)
             if args.analysis_output is not None:
-                args.analysis_output.parent.mkdir(parents=True, exist_ok=True)
-                args.analysis_output.write_text(
-                    json.dumps(
-                        analysis.model_dump(mode="json"),
-                        indent=2,
-                        ensure_ascii=True,
-                    )
-                    + "\n",
-                    encoding=c.Infra.Encoding.DEFAULT,
+                FlextInfraJsonService().dump(
+                    args.analysis_output,
+                    analysis.model_dump(mode="json"),
+                    ensure_ascii=True,
                 )
                 output.info(f"Analysis report written: {args.analysis_output}")
             sys.exit(0)
@@ -474,18 +468,13 @@ class FlextInfraRefactorEngine:
     ) -> bool:
         """Write impact map file in JSON format."""
         impact_map = FlextInfraRefactorEngine.build_impact_map(results)
-        try:
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(
-                json.dumps(impact_map, indent=2, ensure_ascii=True) + "\n",
-                encoding=c.Infra.Encoding.DEFAULT,
-            )
+        json_svc = FlextInfraJsonService()
+        if json_svc.dump(output_path, impact_map, ensure_ascii=True):
             output.info(f"Impact map written: {output_path}")
             output.info(f"Impact map entries: {len(impact_map)}")
             return True
-        except OSError as exc:
-            output.error(f"Failed to write impact map {output_path}: {exc}")
-            return False
+        output.error(f"Failed to write impact map {output_path}")
+        return False
 
     def collect_project_files(
         self,

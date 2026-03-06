@@ -77,6 +77,10 @@ _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
         "flext_infra.refactor.analysis",
         "FlextInfraRefactorViolationAnalyzer",
     ),
+    "FlextInfraRefactorMigrateToClassMRO": (
+        "flext_infra.refactor.migrate_to_class_mro",
+        "FlextInfraRefactorMigrateToClassMRO",
+    ),
 }
 
 

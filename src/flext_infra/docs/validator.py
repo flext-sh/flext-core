@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextLogger, r
+from flext_infra import FlextInfraJsonService
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     FlextInfraDocScope,
@@ -118,11 +118,9 @@ class FlextInfraDocValidator:
         required: list[str] = []
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
-            payload = json.loads(
-                config.read_text(
-                    encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
-                ),
-            )
+            payload = FlextInfraJsonService().load(config)
+            if payload is None:
+                return 1, []
             docs_validation = payload.get("docs_validation", {})
             configured = docs_validation.get("required_skills", [])
             if isinstance(configured, list):

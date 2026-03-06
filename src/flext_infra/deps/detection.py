@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import json
 import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
@@ -13,6 +12,7 @@ from pydantic import Field
 from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
+    FlextInfraJsonService,
     FlextInfraPatterns,
     FlextInfraProjectSelector,
     FlextInfraTomlService,
@@ -345,29 +345,27 @@ class FlextInfraDependencyDetectionService:
 
         issues: list[t.Infra.IssueMap] = []
         if out_file.exists():
-            try:
-                raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                loaded: list[t.Infra.InfraValue] | dict[str, t.Infra.InfraValue] = (
-                    json.loads(raw) if raw.strip() else []
-                )
-                if isinstance(loaded, list):
-                    normalized_issues: list[t.Infra.IssueMap] = []
-                    for item in loaded:
-                        if not isinstance(item, dict):
-                            continue
-                        converted_issue: dict[str, t.Infra.InfraValue] = {}
-                        valid = True
-                        for key, value in item.items():
-                            converted = _to_infra_value(value)
-                            if converted is None and value is not None:
-                                valid = False
-                                break
-                            converted_issue[str(key)] = converted
-                        if valid:
-                            normalized_issues.append(converted_issue)
-                    issues = normalized_issues
-            except (json.JSONDecodeError, OSError):
-                issues = []
+            raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            empty_list: list[object] = []
+            loaded = (
+                FlextInfraJsonService().loads(raw, empty_list) if raw.strip() else []
+            )
+            if isinstance(loaded, list):
+                normalized_issues: list[t.Infra.IssueMap] = []
+                for item in loaded:
+                    if not isinstance(item, dict):
+                        continue
+                    converted_issue: dict[str, t.Infra.InfraValue] = {}
+                    valid = True
+                    for key, value in item.items():
+                        converted = _to_infra_value(value)
+                        if converted is None and value is not None:
+                            valid = False
+                            break
+                        converted_issue[str(key)] = converted
+                    if valid:
+                        normalized_issues.append(converted_issue)
+                issues = normalized_issues
             if json_output_path is None:
                 with contextlib.suppress(OSError):
                     out_file.unlink()

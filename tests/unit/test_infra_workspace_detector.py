@@ -11,6 +11,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from flext_core import r
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 
 
@@ -118,15 +119,9 @@ def test_detector_handles_empty_origin_url(
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
 
-    # Mock runner to return empty stdout
-
-    mock_runner = Mock()
-    mock_result = Mock()
-    mock_result.exit_code = 0
-    mock_result.stdout = ""
-    mock_runner.run_raw.return_value.is_failure = False
-    mock_runner.run_raw.return_value.value = mock_result
-    detector._runner = mock_runner
+    mock_git = Mock()
+    mock_git.config_get.return_value = r[str].ok("")
+    detector._git = mock_git
 
     result = detector.detect(project_root)
 
@@ -137,21 +132,15 @@ def test_detector_handles_empty_origin_url(
 def test_detector_handles_git_command_failure(
     detector: FlextInfraWorkspaceDetector, tmp_path: Path
 ) -> None:
-    """Test detection when git command returns non-zero exit code."""
+    """Test detection when git command returns failure."""
     project_root = tmp_path / "project"
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
 
-    # Mock runner to return non-zero exit code
-
-    mock_runner = Mock()
-    mock_result = Mock()
-    mock_result.exit_code = 1
-    mock_result.stdout = ""
-    mock_runner.run_raw.return_value.is_failure = False
-    mock_runner.run_raw.return_value.value = mock_result
-    detector._runner = mock_runner
+    mock_git = Mock()
+    mock_git.config_get.return_value = r[str].fail("git config failed")
+    detector._git = mock_git
 
     result = detector.detect(project_root)
 
@@ -168,15 +157,11 @@ def test_detector_detects_workspace_mode_with_flext_repo(
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
 
-    # Mock runner to return flext repo URL
-
-    mock_runner = Mock()
-    mock_result = Mock()
-    mock_result.exit_code = 0
-    mock_result.stdout = "https://github.com/flext-sh/flext.git"
-    mock_runner.run_raw.return_value.is_failure = False
-    mock_runner.run_raw.return_value.value = mock_result
-    detector._runner = mock_runner
+    mock_git = Mock()
+    mock_git.config_get.return_value = r[str].ok(
+        "https://github.com/flext-sh/flext.git"
+    )
+    detector._git = mock_git
 
     result = detector.detect(project_root)
 
@@ -193,15 +178,11 @@ def test_detector_detects_standalone_with_non_flext_repo(
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
 
-    # Mock runner to return non-flext repo URL
-
-    mock_runner = Mock()
-    mock_result = Mock()
-    mock_result.exit_code = 0
-    mock_result.stdout = "https://github.com/other-org/other-repo.git"
-    mock_runner.run_raw.return_value.is_failure = False
-    mock_runner.run_raw.return_value.value = mock_result
-    detector._runner = mock_runner
+    mock_git = Mock()
+    mock_git.config_get.return_value = r[str].ok(
+        "https://github.com/other-org/other-repo.git"
+    )
+    detector._git = mock_git
 
     result = detector.detect(project_root)
 
@@ -212,17 +193,15 @@ def test_detector_detects_standalone_with_non_flext_repo(
 def test_detector_handles_runner_failure(
     detector: FlextInfraWorkspaceDetector, tmp_path: Path
 ) -> None:
-    """Test detection when runner returns failure."""
+    """Test detection when git service returns failure."""
     project_root = tmp_path / "project"
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
 
-    # Mock runner to return failure
-
-    mock_runner = Mock()
-    mock_runner.run_raw.return_value.is_failure = True
-    detector._runner = mock_runner
+    mock_git = Mock()
+    mock_git.config_get.return_value = r[str].fail("no remote")
+    detector._git = mock_git
 
     result = detector.detect(project_root)
 
@@ -239,15 +218,12 @@ def test_detector_handles_exception_during_detection(
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
 
-    # Mock runner to raise exception
-
-    mock_runner = Mock()
-    mock_runner.run_raw.side_effect = RuntimeError("Command failed")
-    detector._runner = mock_runner
+    mock_git = Mock()
+    mock_git.config_get.side_effect = RuntimeError("Command failed")
+    detector._git = mock_git
 
     result = detector.detect(project_root)
 
     assert result.is_failure
-    assert isinstance(result.error, str)
     assert isinstance(result.error, str)
     assert "Detection failed" in result.error

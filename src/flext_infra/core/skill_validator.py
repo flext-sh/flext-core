@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
@@ -166,9 +165,8 @@ class FlextInfraSkillValidator:
                         skill_name,
                     )
                     if baseline_path.exists():
-                        bl_result = self._json.read(baseline_path)
-                        if bl_result.is_success:
-                            bl_data: Mapping[str, t.ContainerValue] = bl_result.value
+                        bl_data = self._json.load(baseline_path)
+                        if bl_data is not None:
                             bl_counts_raw = bl_data.get("counts", {})
                             if isinstance(bl_counts_raw, dict):
                                 bl_counts = {
@@ -247,11 +245,8 @@ class FlextInfraSkillValidator:
             line = raw_line.strip()
             if not line:
                 continue
-            try:
-                json.loads(line)
+            if self._json.is_json(line):
                 count += 1
-            except json.JSONDecodeError:
-                continue
         return count
 
     def _run_custom_count(
@@ -294,10 +289,7 @@ class FlextInfraSkillValidator:
             line = raw_line.strip()
             if not line:
                 continue
-            try:
-                payload = json.loads(line)
-            except json.JSONDecodeError:
-                continue
+            payload = self._json.loads(line)
             if isinstance(payload, dict):
                 maybe = payload.get("violation_count", payload.get("count", 0))
                 if isinstance(maybe, int):

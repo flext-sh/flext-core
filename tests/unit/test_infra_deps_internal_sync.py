@@ -299,11 +299,9 @@ class TestResolveRef:
         """Test ref resolution from git rev-parse."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=0, stdout="develop\n", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.current_branch.return_value = r[str].ok("develop")
+        service._git = mock_git
 
         with patch.dict("os.environ", {}, clear=True):
             result = service._resolve_ref(Path("/fake"))
@@ -314,16 +312,10 @@ class TestResolveRef:
         """Test ref resolution falls back to git tag."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        head_out = Mock(exit_code=0, stdout="HEAD\n", stderr="")
-
-        tag_out = Mock(exit_code=0, stdout="v1.0.0\n", stderr="")
-
-        service._runner.run_raw.side_effect = [
-            r[Mock].ok(head_out),
-            r[Mock].ok(tag_out),
-        ]
+        mock_git = Mock()
+        mock_git.current_branch.return_value = r[str].ok("HEAD")
+        mock_git.run.return_value = r[str].ok("v1.0.0")
+        service._git = mock_git
 
         with patch.dict("os.environ", {}, clear=True):
             result = service._resolve_ref(Path("/fake"))
@@ -334,9 +326,10 @@ class TestResolveRef:
         """Test ref resolution falls back to main."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        service._runner.run_raw.return_value = r[Mock].fail("not a git repo")
+        mock_git = Mock()
+        mock_git.current_branch.return_value = r[str].fail("not a git repo")
+        mock_git.run.return_value = r[str].fail("not a git repo")
+        service._git = mock_git
 
         with patch.dict("os.environ", {}, clear=True):
             result = service._resolve_ref(Path("/fake"))
@@ -492,11 +485,9 @@ class TestIsWorkspaceMode:
         """Test git superproject detection."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=0, stdout=str(tmp_path) + "\n", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.run.return_value = r[str].ok(str(tmp_path))
+        service._git = mock_git
 
         with patch.dict(
             "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
@@ -517,11 +508,9 @@ class TestIsWorkspaceMode:
 
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=1, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.run.return_value = r[str].ok("")
+        service._git = mock_git
 
         with patch.dict(
             "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
@@ -540,11 +529,9 @@ class TestIsWorkspaceMode:
 
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=1, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.run.return_value = r[str].ok("")
+        service._git = mock_git
 
         with patch.dict(
             "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
@@ -599,15 +586,11 @@ class TestInferOwnerFromOrigin:
         """Test owner inferred from git remote origin."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        cmd_out = Mock(
-            exit_code=0,
-            stdout="git@github.com:flext-sh/flext-core.git\n",
-            stderr="",
+        mock_git = Mock()
+        mock_git.config_get.return_value = r[str].ok(
+            "git@github.com:flext-sh/flext-core.git"
         )
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service._git = mock_git
 
         result = service._infer_owner_from_origin(Path("/fake"))
 
@@ -617,23 +600,21 @@ class TestInferOwnerFromOrigin:
         """Test None on git command failure."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        service._runner.run_raw.return_value = r[Mock].fail("no remote")
+        mock_git = Mock()
+        mock_git.config_get.return_value = r[str].fail("no remote")
+        service._git = mock_git
 
         result = service._infer_owner_from_origin(Path("/fake"))
 
         assert result is None
 
     def test_nonzero_exit(self) -> None:
-        """Test None on non-zero exit code."""
+        """Test None on empty config value."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=1, stdout="", stderr="error")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.config_get.return_value = r[str].ok("")
+        service._git = mock_git
 
         result = service._infer_owner_from_origin(Path("/fake"))
 
@@ -735,11 +716,9 @@ class TestEnsureCheckout:
         """Test cloning a new dependency."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        clone_out = Mock(exit_code=0, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(clone_out)
+        mock_git = Mock()
+        mock_git.run_checked.return_value = r[bool].ok(True)
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
@@ -753,11 +732,9 @@ class TestEnsureCheckout:
         """Test clone failure returns error."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
-
-        clone_out = Mock(exit_code=1, stdout="", stderr="fatal: repo not found")
-
-        service._runner.run_raw.return_value = r[Mock].ok(clone_out)
+        mock_git = Mock()
+        mock_git.run_checked.return_value = r[bool].fail("fatal: repo not found")
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
@@ -771,17 +748,17 @@ class TestEnsureCheckout:
         """Test fetch + checkout for existing repo."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
+        mock_git = Mock()
+        mock_git.fetch.return_value = r[bool].ok(True)
+        mock_git.checkout.return_value = r[bool].ok(True)
+        mock_git.pull.return_value = r[bool].ok(True)
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
         dep_path.mkdir(parents=True)
 
         (dep_path / ".git").mkdir()
-
-        cmd_ok = Mock(exit_code=0, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_ok)
 
         result = service._ensure_checkout(
             dep_path, "https://github.com/flext-sh/flext.git", "main"
@@ -815,17 +792,15 @@ class TestEnsureCheckout:
         """Test fetch failure returns error."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
+        mock_git = Mock()
+        mock_git.fetch.return_value = r[bool].fail("fetch failed")
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
         dep_path.mkdir(parents=True)
 
         (dep_path / ".git").mkdir()
-
-        fetch_fail = Mock(exit_code=1, stdout="", stderr="fetch failed")
-
-        service._runner.run_raw.return_value = r[Mock].ok(fetch_fail)
 
         result = service._ensure_checkout(
             dep_path, "https://github.com/flext-sh/flext.git", "main"
@@ -837,22 +812,16 @@ class TestEnsureCheckout:
         """Test checkout failure after successful fetch."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
+        mock_git = Mock()
+        mock_git.fetch.return_value = r[bool].ok(True)
+        mock_git.checkout.return_value = r[bool].fail("checkout error")
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
         dep_path.mkdir(parents=True)
 
         (dep_path / ".git").mkdir()
-
-        fetch_ok = Mock(exit_code=0, stdout="", stderr="")
-
-        checkout_fail = Mock(exit_code=1, stdout="", stderr="checkout error")
-
-        service._runner.run_raw.side_effect = [
-            r[Mock].ok(fetch_ok),
-            r[Mock].ok(checkout_fail),
-        ]
 
         result = service._ensure_checkout(
             dep_path, "https://github.com/flext-sh/flext.git", "main"
@@ -864,7 +833,9 @@ class TestEnsureCheckout:
         """Test cloning removes existing symlink before clone."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
+        mock_git = Mock()
+        mock_git.run_checked.return_value = r[bool].ok(True)
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
@@ -873,10 +844,6 @@ class TestEnsureCheckout:
         other.mkdir()
 
         dep_path.symlink_to(other)
-
-        clone_out = Mock(exit_code=0, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(clone_out)
 
         result = service._ensure_checkout(
             dep_path, "https://github.com/flext-sh/flext.git", "main"
@@ -888,17 +855,15 @@ class TestEnsureCheckout:
         """Test cloning removes existing directory before clone."""
         service = FlextInfraInternalDependencySyncService()
 
-        service._runner = Mock()
+        mock_git = Mock()
+        mock_git.run_checked.return_value = r[bool].ok(True)
+        service._git = mock_git
 
         dep_path = tmp_path / "dep"
 
         dep_path.mkdir()
 
         (dep_path / "somefile").write_text("old")
-
-        clone_out = Mock(exit_code=0, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(clone_out)
 
         result = service._ensure_checkout(
             dep_path, "https://github.com/flext-sh/flext.git", "main"
@@ -1153,11 +1118,9 @@ class TestSync:
             "project": dict[str, object](),
         })
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=1, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.run.return_value = r[str].ok("")
+        service._git = mock_git
 
         with patch.dict(
             "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
@@ -1194,11 +1157,10 @@ class TestSync:
             r[dict[str, object]].ok({"repo": dict[str, object]()}),
         ]
 
-        service._runner = Mock()
-
-        cmd_out = Mock(exit_code=1, stdout="", stderr="")
-
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        mock_git = Mock()
+        mock_git.run.return_value = r[str].ok("")
+        mock_git.config_get.return_value = r[str].fail("no remote")
+        service._git = mock_git
 
         # Create map file so standalone path is used
 

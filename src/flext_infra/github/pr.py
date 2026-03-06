@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import json
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import cast
@@ -21,6 +20,7 @@ from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
+    FlextInfraJsonService,
     FlextInfraVersioningService,
     c,
     output,
@@ -275,10 +275,9 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].fail(
                 result.error or "failed to list PRs",
             )
-        try:
-            payload = json.loads(cast("str", result.unwrap()))  # type: ignore[redundant-cast]
-        except json.JSONDecodeError as exc:
-            return r[Mapping[str, t.Scalar]].fail(f"invalid JSON: {exc}")
+        payload = FlextInfraJsonService().loads(str(result.unwrap()))
+        if payload is None:
+            return r[Mapping[str, t.Scalar]].fail("invalid JSON")
 
         if not payload:
             return r[Mapping[str, t.Scalar]].ok({})
