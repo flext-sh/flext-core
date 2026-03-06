@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from enum import Enum, auto
+from enum import StrEnum, auto
 from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar
