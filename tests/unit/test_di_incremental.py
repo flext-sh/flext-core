@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import override
@@ -374,7 +375,7 @@ class TestServiceBootstrapWithDI:
         """Test create_service_runtime with wire_modules."""
         runtime = s._create_runtime(
             services={"api_key": "test_key"},
-            wire_modules=[__import__(__name__)],
+            wire_modules=[sys.modules[__name__]],
         )
 
         # Verify runtime has wired modules
@@ -589,7 +590,7 @@ class TestRealWiringScenarios:
             services={"static_service": "static_value"},
             factories={"token_factory": factory},
             resources={"connection": resource_factory},
-            wire_modules=[__import__(__name__)],
+            wire_modules=[sys.modules[__name__]],
         )
 
         # Verify all components

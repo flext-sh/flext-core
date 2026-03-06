@@ -13,9 +13,8 @@ import contextlib
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
@@ -23,9 +22,8 @@ from flext_infra import (
     FlextInfraReportingService,
     c,
     m,
+    p,
 )
-
-type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.Scalar]]]
 
 
 class FlextInfraPrWorkspaceManager:
@@ -37,13 +35,13 @@ class FlextInfraPrWorkspaceManager:
 
     def __init__(
         self,
-        runner: FlextInfraCommandRunner | None = None,
+        runner: p.Infra.CommandRunner | None = None,
         git: FlextInfraGitService | None = None,
         selector: FlextInfraProjectSelector | None = None,
         reporting: FlextInfraReportingService | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
-        self._runner = runner or FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraCommandRunner()
         self._git = git or FlextInfraGitService(self._runner)
         self._selector = selector or FlextInfraProjectSelector()
         self._reporting = reporting or FlextInfraReportingService()
@@ -54,7 +52,7 @@ class FlextInfraPrWorkspaceManager:
         pr_args: Mapping[str, str],
     ) -> list[str]:
         command = [
-            "python",
+            c.Infra.Toml.PYTHON,
             "-m",
             "flext_infra.github.pr",
             "--repo-root",
@@ -62,11 +60,11 @@ class FlextInfraPrWorkspaceManager:
             "--action",
             pr_args.get("action", "status"),
             "--base",
-            pr_args.get("base", "main"),
+            pr_args.get("base", c.Infra.Git.MAIN),
             "--draft",
             pr_args.get("draft", "0"),
             "--merge-method",
-            pr_args.get("merge_method", "squash"),
+            pr_args.get("merge_method", c.Infra.Cli.GhCmd.SQUASH),
             "--auto",
             pr_args.get("auto", "0"),
             "--delete-branch",
@@ -88,10 +86,10 @@ class FlextInfraPrWorkspaceManager:
         pr_args: Mapping[str, str],
     ) -> list[str]:
         command = [
-            "make",
+            c.Infra.Cli.MAKE,
             "-C",
             str(repo_root),
-            "pr",
+            c.Infra.Cli.GhCmd.PR,
             f"PR_ACTION={pr_args.get('action', 'status')}",
             f"PR_BASE={pr_args.get('base', 'main')}",
             f"PR_DRAFT={pr_args.get('draft', '0')}",
@@ -155,7 +153,7 @@ class FlextInfraPrWorkspaceManager:
             )
 
         fetch_result = self._runner.run(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.FETCH, "origin", branch],
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.FETCH, c.Infra.Git.ORIGIN, branch],
             cwd=repo_root,
         )
         if fetch_result.is_success:
@@ -222,7 +220,7 @@ class FlextInfraPrWorkspaceManager:
             return r[bool].fail(commit_result.error or "git commit failed")
 
         push_cmd = (
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "-u", "origin", branch]
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "-u", c.Infra.Git.ORIGIN, branch]
             if branch
             else [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH]
         )
@@ -231,7 +229,13 @@ class FlextInfraPrWorkspaceManager:
             return r[bool].ok(True)
 
         rebase_cmd = (
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PULL, "--rebase", "origin", branch]
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.PULL,
+                "--rebase",
+                c.Infra.Git.ORIGIN,
+                branch,
+            ]
             if branch
             else [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PULL, "--rebase"]
         )
@@ -269,7 +273,7 @@ class FlextInfraPrWorkspaceManager:
         checkpoint: bool = True,
         fail_fast: bool = False,
         pr_args: Mapping[str, str] | None = None,
-    ) -> r[OrchestrationSummary]:
+    ) -> r[m.Infra.Github.PrOrchestrationResult]:
         """Run PR operations across workspace repositories.
 
         Args:
@@ -285,12 +289,14 @@ class FlextInfraPrWorkspaceManager:
             r with orchestration summary.
 
         """
-        projects_result: r[list[m.Infra.ProjectInfo]] = self._selector.resolve_projects(
-            workspace_root,
-            projects or [],
+        projects_result: r[list[m.Infra.Workspace.ProjectInfo]] = (
+            self._selector.resolve_projects(
+                workspace_root,
+                projects or [],
+            )
         )
         if projects_result.is_failure:
-            return r[OrchestrationSummary].fail(
+            return r[m.Infra.Github.PrOrchestrationResult].fail(
                 projects_result.error or "project resolution failed",
             )
 
@@ -298,22 +304,22 @@ class FlextInfraPrWorkspaceManager:
         if include_root:
             repos.append(workspace_root)
 
-        effective_args = pr_args or {"action": "status", "base": "main"}
+        effective_args = pr_args or {"action": "status", "base": c.Infra.Git.MAIN}
         failures = 0
-        results: list[Mapping[str, t.Scalar]] = []
+        results: list[m.Infra.Github.PrExecutionResult] = []
 
         for repo_root in repos:
             self.checkout_branch(repo_root, branch)
             if checkpoint:
                 self.checkpoint(repo_root, branch)
 
-            run_result: r[Mapping[str, t.Scalar]] = self.run_pr(
+            run_result: r[m.Infra.Github.PrExecutionResult] = self.run_pr(
                 repo_root, workspace_root, effective_args
             )
             if run_result.is_success:
-                pr_data = cast("Mapping[str, t.Scalar]", run_result.value)  # type: ignore[redundant-cast]
+                pr_data = run_result.value
                 results.append(pr_data)
-                if pr_data.get("exit_code", 0) != 0:
+                if pr_data.exit_code != 0:
                     failures += 1
                     if fail_fast:
                         break
@@ -323,19 +329,21 @@ class FlextInfraPrWorkspaceManager:
                     break
 
         total = len(repos)
-        return r[OrchestrationSummary].ok({
-            "total": total,
-            "success": total - failures,
-            "fail": failures,
-            "results": results,
-        })
+        return r[m.Infra.Github.PrOrchestrationResult].ok(
+            m.Infra.Github.PrOrchestrationResult(
+                total=total,
+                success=total - failures,
+                fail=failures,
+                results=results,
+            )
+        )
 
     def run_pr(
         self,
         repo_root: Path,
         workspace_root: Path,
         pr_args: Mapping[str, str],
-    ) -> r[Mapping[str, t.Scalar]]:
+    ) -> r[m.Infra.Github.PrExecutionResult]:
         """Execute a PR operation on a single repository.
 
         Args:
@@ -348,11 +356,12 @@ class FlextInfraPrWorkspaceManager:
 
         """
         display = self._repo_display_name(repo_root, workspace_root)
-        report_dir = self._reporting.get_report_dir(workspace_root, "workspace", "pr")
+        report_dir = self._reporting.get_report_dir(
+            workspace_root, "workspace", c.Infra.Cli.GhCmd.PR
+        )
         with contextlib.suppress(OSError):
             report_dir.mkdir(parents=True, exist_ok=True)
 
-        log_path: Path | None = None
         log_path = report_dir / f"{display}.log"
 
         if repo_root == workspace_root:
@@ -361,31 +370,25 @@ class FlextInfraPrWorkspaceManager:
             command = self._build_subproject_command(repo_root, pr_args)
 
         started = time.monotonic()
-        if log_path is not None:
-            to_file_result: r[int] = self._runner.run_to_file(command, log_path)
-            if to_file_result.is_failure:
-                return r[Mapping[str, t.Scalar]].fail(
-                    to_file_result.error or "command execution error",
-                )
-            exit_code: int = to_file_result.value
-        else:
-            raw_result: r[m.Infra.CommandOutput] = self._runner.run_raw(command)
-            if raw_result.is_failure:
-                return r[Mapping[str, t.Scalar]].fail(
-                    raw_result.error or "command execution error",
-                )
-            exit_code = raw_result.value.exit_code
+        to_file_result: r[int] = self._runner.run_to_file(command, log_path)
+        if to_file_result.is_failure:
+            return r[m.Infra.Github.PrExecutionResult].fail(
+                to_file_result.error or "command execution error",
+            )
+        exit_code = to_file_result.value
 
         elapsed = int(time.monotonic() - started)
         status = c.Infra.Status.OK if exit_code == 0 else c.Infra.Status.FAIL
-        log_str: str = str(log_path) if log_path else ""
-        return r[Mapping[str, t.Scalar]].ok({
-            "display": display,
-            "status": status,
-            "elapsed": elapsed,
-            "exit_code": exit_code,
-            "log_path": log_str,
-        })
+        log_str = str(log_path)
+        return r[m.Infra.Github.PrExecutionResult].ok(
+            m.Infra.Github.PrExecutionResult(
+                display=display,
+                status=status,
+                elapsed=elapsed,
+                exit_code=exit_code,
+                log_path=log_str,
+            )
+        )
 
 
 __all__ = ["FlextInfraPrWorkspaceManager"]

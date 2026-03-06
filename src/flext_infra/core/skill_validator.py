@@ -21,19 +21,20 @@ from flext_infra import (
     FlextInfraTomlService,
     c,
     m,
+    p,
     t,
-    u,
 )
+from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
     """Load YAML file safely; delegates to ``u.Infra.Yaml``."""
-    return u.Yaml.safe_load_yaml(path)
+    return FlextInfraUtilitiesYaml.safe_load_yaml(path)
 
 
 def _normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:
     """Validate and normalize a list[str] config field; delegates to ``u.Infra.Yaml``."""
-    return u.Yaml.normalize_string_list(value, field)
+    return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
 
 
 class FlextInfraSkillValidator:
@@ -46,7 +47,7 @@ class FlextInfraSkillValidator:
     def __init__(self) -> None:
         """Initialize the skill validator."""
         self._json = FlextInfraJsonService()
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         self._toml = FlextInfraTomlService()
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
@@ -64,9 +65,9 @@ class FlextInfraSkillValidator:
         workspace_root: Path,
         skill_name: str,
         *,
-        mode: str = "baseline",
+        mode: str = c.Infra.Modes.BASELINE,
         _project_filter: list[str] | None = None,
-    ) -> r[m.Infra.ValidationReport]:
+    ) -> r[m.Infra.Core.ValidationReport]:
         """Validate a single skill across workspace projects.
 
         Args:
@@ -83,8 +84,8 @@ class FlextInfraSkillValidator:
             skills_dir = root / c.Infra.Core.SKILLS_DIR
             rules_path = skills_dir / skill_name / "rules.yml"
             if not rules_path.exists():
-                return r[m.Infra.ValidationReport].ok(
-                    m.Infra.ValidationReport(
+                return r[m.Infra.Core.ValidationReport].ok(
+                    m.Infra.Core.ValidationReport(
                         passed=False,
                         violations=[f"rules.yml not found for skill '{skill_name}'"],
                         summary=f"no rules.yml for {skill_name}",
@@ -94,7 +95,7 @@ class FlextInfraSkillValidator:
             rules = _safe_load_yaml(rules_path)
             scan_targets = rules.get("scan_targets", {}) or {}
             if not isinstance(scan_targets, dict):
-                return r[m.Infra.ValidationReport].fail(
+                return r[m.Infra.Core.ValidationReport].fail(
                     f"scan_targets must be a mapping: {rules_path}",
                 )
 
@@ -103,13 +104,13 @@ class FlextInfraSkillValidator:
                 "scan_targets.include",
             ) or ["**/*"]
             exclude_globs = _normalize_string_list(
-                scan_targets.get("exclude", []),
+                scan_targets.get(c.Infra.Toml.EXCLUDE, []),
                 "scan_targets.exclude",
             )
 
             rules_list = rules.get("rules", []) or []
             if not isinstance(rules_list, list):
-                return r[m.Infra.ValidationReport].fail("rules must be a list")
+                return r[m.Infra.Core.ValidationReport].fail("rules must be a list")
 
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []
@@ -119,7 +120,9 @@ class FlextInfraSkillValidator:
                     continue
                 rule_id = str(rule_obj.get("id", "")).strip()
                 rule_type = str(rule_obj.get("type", "")).strip()
-                group = str(rule_obj.get("group", rule_id)).strip() or rule_id
+                group = (
+                    str(rule_obj.get(c.Infra.Toml.GROUP, rule_id)).strip() or rule_id
+                )
 
                 if rule_type == "ast-grep":
                     count = self._run_ast_grep_count(
@@ -145,10 +148,10 @@ class FlextInfraSkillValidator:
                         violations.append(f"[{rule_id}] {count} custom violations")
 
             total = sum(counts.values())
-            passed = total == 0 if mode == "strict" else True
+            passed = total == 0 if mode == c.Infra.Modes.STRICT else True
 
-            if mode != "strict":
-                baseline_obj = rules.get("baseline", {}) or {}
+            if mode != c.Infra.Modes.STRICT:
+                baseline_obj = rules.get(c.Infra.Modes.BASELINE, {}) or {}
                 if isinstance(baseline_obj, dict):
                     strategy = str(baseline_obj.get("strategy", "total"))
                     baseline_path = self._render_template(
@@ -178,15 +181,15 @@ class FlextInfraSkillValidator:
             summary = (
                 f"{skill_name}: {total} violations, {'PASS' if passed else 'FAIL'}"
             )
-            return r[m.Infra.ValidationReport].ok(
-                m.Infra.ValidationReport(
+            return r[m.Infra.Core.ValidationReport].ok(
+                m.Infra.Core.ValidationReport(
                     passed=passed,
                     violations=violations,
                     summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
-            return r[m.Infra.ValidationReport].fail(
+            return r[m.Infra.Core.ValidationReport].fail(
                 f"skill validation failed: {exc}",
             )
 
@@ -228,7 +231,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: m.Infra.CommandOutput = result_wrapper.value
+        result: p.Infra.CommandOutput = result_wrapper.value
 
         if result.exit_code not in {0, 1}:
             return 0
@@ -278,7 +281,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: m.Infra.CommandOutput = result_wrapper.value
+        result: p.Infra.CommandOutput = result_wrapper.value
 
         count = 0
         for raw_line in (result.stdout or "").splitlines():

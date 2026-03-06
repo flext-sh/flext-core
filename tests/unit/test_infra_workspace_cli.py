@@ -12,7 +12,7 @@ from pathlib import Path
 from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import FlextResult as r
-from flext_infra import __main__ as workspace_cli, m as im
+from flext_infra import __main__ as workspace_cli, m
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 
 
@@ -22,11 +22,11 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
         *,
         workspace_root: Path,
         dry_run: bool,
-    ) -> r[list[im.MigrationResult]]:
+    ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         del self, workspace_root
         assert dry_run is True
-        return r[list[im.MigrationResult]].ok([
-            im.MigrationResult.model_validate({
+        return r[list[m.Infra.Workspace.MigrationResult]].ok([
+            m.Infra.Workspace.MigrationResult.model_validate({
                 "project": "flext-core",
                 "changes": ["[DRY-RUN] base.mk regenerated via BaseMkGenerator"],
                 "errors": [],
@@ -60,10 +60,10 @@ def test_workspace_cli_migrate_output_contains_summary(
         *,
         workspace_root: Path,
         dry_run: bool,
-    ) -> r[list[im.MigrationResult]]:
+    ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         del self, workspace_root, dry_run
-        return r[list[im.MigrationResult]].ok([
-            im.MigrationResult.model_validate({
+        return r[list[m.Infra.Workspace.MigrationResult]].ok([
+            m.Infra.Workspace.MigrationResult.model_validate({
                 "project": "flext-core",
                 "changes": [
                     "[DRY-RUN] .gitignore cleaned from scripts/ and normalized",

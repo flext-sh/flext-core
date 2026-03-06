@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import override
 from urllib.parse import urlparse
 
-from flext_core import FlextService, r
-from flext_infra import FlextInfraCommandRunner, c, output
+from flext_core import r, s
+from flext_infra import FlextInfraCommandRunner, c, output, p
 
 
 class WorkspaceMode(StrEnum):
@@ -25,7 +25,7 @@ class WorkspaceMode(StrEnum):
     STANDALONE = "standalone"
 
 
-class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
+class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
     """Infrastructure service for detecting workspace mode.
 
     Inspects parent repository origin URL to determine if a project
@@ -36,7 +36,7 @@ class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
     def __init__(self) -> None:
         """Initialize the workspace detector."""
         super().__init__()
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
     def _repo_name_from_url(url: str) -> str:
@@ -100,7 +100,7 @@ class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
             repo_name = self._repo_name_from_url(origin)
             mode = (
                 WorkspaceMode.WORKSPACE
-                if repo_name == "flext"
+                if repo_name == c.Infra.Packages.ROOT
                 else WorkspaceMode.STANDALONE
             )
             if mode == WorkspaceMode.STANDALONE:

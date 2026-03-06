@@ -6,21 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import cast
+
 import pytest
 
 from flext_core import c, m, r, u
-
-domain_event_mod = __import__(
-    "flext_core._models.domain_event",
-    fromlist=["_ComparableConfigMap", "FlextModelsDomainEvent"],
-)
-ComparableConfigMap = domain_event_mod._ComparableConfigMap
-
-entity_mod = __import__(
-    "flext_core._models.entity",
-    fromlist=["FlextModelsEntity"],
-)
-FlextModelsEntity = entity_mod.FlextModelsEntity
+from flext_core._models.domain_event import _ComparableConfigMap as ComparableConfigMap
+from flext_core._models.entity import FlextModelsEntity
 
 
 def test_entity_comparable_map_and_bulk_validation_paths() -> None:
@@ -45,5 +38,7 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
         )
 
     entry = FlextModelsEntity.Entry(unique_id="e1")
-    bad = entry.add_domain_events_bulk("invalid")
+    bad = entry.add_domain_events_bulk(
+        cast("Sequence[tuple[str, m.ConfigMap | None]]", "invalid")
+    )
     assert bad.is_failure

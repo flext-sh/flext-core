@@ -368,7 +368,7 @@ def main() -> FlextResult[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        def _sequence_len(x: t.Container) -> int:
+        def _sequence_len(x: object) -> int:
             if isinstance(x, Sequence) and not isinstance(x, str | bytes | bytearray):
                 return len(x)
             return 0

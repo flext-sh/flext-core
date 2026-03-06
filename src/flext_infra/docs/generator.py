@@ -282,7 +282,9 @@ class FlextInfraDocGenerator:
                     "apply": apply,
                     "source": source,
                 },
-                "files": [{"path": f.path, "written": f.written} for f in files],
+                "files": [
+                    {c.Infra.Toml.PATH: f.path, "written": f.written} for f in files
+                ],
             },
         )
         _ = FlextInfraDocsShared.write_markdown(

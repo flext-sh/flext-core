@@ -38,7 +38,7 @@ def _run_basemk_validate(args: argparse.Namespace) -> int:
     result = validator.validate(Path(args.root).resolve())
 
     if result.is_success:
-        report: m.Infra.ValidationReport = result.value
+        report: m.Infra.Core.ValidationReport = result.value
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -54,11 +54,9 @@ def _run_inventory(args: argparse.Namespace) -> int:
     result = service.generate(Path(args.root).resolve(), output_dir=output_dir)
 
     if result.is_success:
-        data: Mapping[str, t.ContainerValue] = result.value
-        written = data.get("reports_written", [])
-        if isinstance(written, list):
-            for path in written:
-                output.info(f"Wrote: {path}")
+        data = result.value
+        for path in data.reports_written:
+            output.info(f"Wrote: {path}")
         return 0
     output.error(result.error or "unknown error")
     return 1
@@ -70,39 +68,34 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
     result = extractor.extract(Path(args.junit), Path(args.log))
 
     if result.is_success:
-        data: Mapping[str, t.ContainerValue] = result.value
+        data = result.value
 
-        failed_cases_raw = data.get("failed_cases")
-        if args.failed and isinstance(failed_cases_raw, list):
-            failed_cases = [str(item) for item in failed_cases_raw]
+        if args.failed:
+            failed_cases = data.failed_cases
             Path(args.failed).write_text(
                 "\n\n".join(failed_cases) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
-        error_traces_raw = data.get("error_traces")
-        if args.errors and isinstance(error_traces_raw, list):
-            error_traces = [str(item) for item in error_traces_raw]
+        if args.errors:
+            error_traces = data.error_traces
             Path(args.errors).write_text(
                 "\n\n".join(error_traces) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
-        warning_lines_raw = data.get("warning_lines")
-        if args.warnings and isinstance(warning_lines_raw, list):
-            warning_lines = [str(item) for item in warning_lines_raw]
+        if args.warnings:
+            warning_lines = data.warning_lines
             Path(args.warnings).write_text(
                 "\n".join(warning_lines) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
-        slow_entries_raw = data.get("slow_entries")
-        if args.slowest and isinstance(slow_entries_raw, list):
-            slow_entries = [str(item) for item in slow_entries_raw]
+        if args.slowest:
+            slow_entries = data.slow_entries
             Path(args.slowest).write_text(
                 "\n".join(slow_entries) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
-        skip_cases_raw = data.get("skip_cases")
-        if args.skips and isinstance(skip_cases_raw, list):
-            skip_cases = [str(item) for item in skip_cases_raw]
+        if args.skips:
+            skip_cases = data.skip_cases
             Path(args.skips).write_text(
                 "\n".join(skip_cases) + "\n", encoding=c.Infra.Encoding.DEFAULT
             )
@@ -144,7 +137,7 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
     )
 
     if result.is_success:
-        report: m.Infra.ValidationReport = result.value
+        report: m.Infra.Core.ValidationReport = result.value
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -158,12 +151,12 @@ def _run_stub_validate(args: argparse.Namespace) -> int:
     chain = FlextInfraStubSupplyChain()
     root = Path(args.root).resolve()
     project_dirs: list[Path] | None = None
-    if hasattr(args, "project") and args.project:
+    if hasattr(args, c.Infra.Toml.PROJECT) and args.project:
         project_dirs = [root / p for p in args.project]
     result = chain.validate(root, project_dirs=project_dirs)
 
     if result.is_success:
-        report: m.Infra.ValidationReport = result.value
+        report: m.Infra.Core.ValidationReport = result.value
         output.info(report.summary)
         for v in report.violations:
             output.warning(v)
@@ -206,7 +199,7 @@ def main() -> int:
     sc.add_argument(
         "--match",
         choices=("present", "absent"),
-        default="present",
+        default=c.Infra.MatchModes.PRESENT,
         help="Violation mode",
     )
 
@@ -217,7 +210,7 @@ def main() -> int:
     sv.add_argument(
         "--mode",
         choices=("baseline", "strict"),
-        default="baseline",
+        default=c.Infra.Modes.BASELINE,
     )
 
     # stub-validate

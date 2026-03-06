@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, r
+from flext_infra.models import m
 from flext_infra.typings import t
 
 
@@ -70,7 +71,7 @@ class FlextInfraProtocols(FlextProtocols):
                 self,
                 project: str,
                 gates: Sequence[str],
-            ) -> r[t.Infra.PayloadMap]:
+            ) -> r[list[m.Infra.Check.ProjectResult]]:
                 """Execute quality gates for a project."""
                 ...
 
@@ -80,9 +81,11 @@ class FlextInfraProtocols(FlextProtocols):
 
             def sync(
                 self,
-                source: Path,
-                target: Path,
-            ) -> r[t.Infra.PayloadMap]:
+                project_root: Path,
+                *,
+                config: m.Infra.Basemk.BaseMkConfig | None = None,
+                canonical_root: Path | None = None,
+            ) -> r[m.Infra.Workspace.SyncResult]:
                 """Synchronize source and target paths."""
                 ...
 
@@ -92,7 +95,9 @@ class FlextInfraProtocols(FlextProtocols):
 
             def generate(
                 self,
-                config: t.Infra.PayloadMap,
+                config: m.Infra.Basemk.BaseMkConfig
+                | t.ConfigurationMapping
+                | None = None,
             ) -> r[str]:
                 """Generate text or artifacts from configuration."""
                 ...
@@ -103,7 +108,7 @@ class FlextInfraProtocols(FlextProtocols):
 
             def report(
                 self,
-                results: Sequence[r[t.Infra.PayloadMap]],
+                results: Sequence[m.Infra.Check.ProjectResult],
             ) -> r[Path]:
                 """Write validation results to a report file."""
                 ...
@@ -122,9 +127,9 @@ class FlextInfraProtocols(FlextProtocols):
 
             def orchestrate(
                 self,
-                projects: Sequence[FlextInfraProtocols.Infra.ProjectInfo],
+                projects: Sequence[str],
                 verb: str,
-            ) -> r[t.Infra.PayloadMap]:
+            ) -> r[list[m.Infra.Core.CommandOutput]]:
                 """Orchestrate operations across multiple projects."""
                 ...
 
@@ -135,7 +140,7 @@ class FlextInfraProtocols(FlextProtocols):
             def discover_projects(
                 self,
                 workspace_root: Path,
-            ) -> r[list[FlextInfraProtocols.Infra.ProjectInfo]]:
+            ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
                 """Discover projects in a workspace root."""
                 ...
 
@@ -149,7 +154,7 @@ class FlextInfraProtocols(FlextProtocols):
                 cwd: Path | None = None,
                 timeout: int | None = None,
                 env: Mapping[str, str] | None = None,
-            ) -> r[FlextInfraProtocols.Infra.CommandOutput]:
+            ) -> r[m.Infra.Core.CommandOutput]:
                 """Execute a command and return output."""
                 ...
 
@@ -169,7 +174,7 @@ class FlextInfraProtocols(FlextProtocols):
                 cwd: Path | None = None,
                 timeout: int | None = None,
                 env: Mapping[str, str] | None = None,
-            ) -> r[FlextInfraProtocols.Infra.CommandOutput]:
+            ) -> r[m.Infra.Core.CommandOutput]:
                 """Execute a command and return raw output, including non-zero exit codes."""
                 ...
 
@@ -181,6 +186,17 @@ class FlextInfraProtocols(FlextProtocols):
                 env: Mapping[str, str] | None = None,
             ) -> r[bool]:
                 """Execute a command and return success/failure status."""
+                ...
+
+            def run_to_file(
+                self,
+                cmd: Sequence[str],
+                output_file: Path,
+                cwd: Path | None = None,
+                timeout: int | None = None,
+                env: Mapping[str, str] | None = None,
+            ) -> r[int]:
+                """Execute a command and write combined output to file."""
                 ...
 
         @runtime_checkable

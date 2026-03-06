@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import FlextInfraCommandRunner, c
 
@@ -233,7 +233,7 @@ class DependencyAnalyzer:
             "--pattern",
             pattern,
             "--lang",
-            "python",
+            c.Infra.Toml.PYTHON,
             "--json",
             str(src_path),
         ]
@@ -247,19 +247,9 @@ class DependencyAnalyzer:
             return []
 
         try:
-            payload = json.loads(raw_output)
-        except json.JSONDecodeError:
+            return TypeAdapter(list[dict[str, object]]).validate_json(raw_output)
+        except ValidationError:
             return []
-
-        if not isinstance(payload, list):
-            return []
-
-        normalized: list[dict[str, object]] = [
-            cast("dict[str, object]", item)
-            for item in cast("list[object]", payload)
-            if isinstance(item, dict)
-        ]
-        return normalized
 
     def _parse_imports(self, file_path: Path) -> _FileImportData:
         try:

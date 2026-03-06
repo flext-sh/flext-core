@@ -12,6 +12,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
 
+from flext_infra import c
+
 
 class FlextInfraVersion:
     """Package version and metadata information.
@@ -65,8 +67,8 @@ class FlextInfraVersion:
 
         """
         return {
-            "name": cls.__title__,
-            "version": cls.__version__,
+            c.Infra.Toml.NAME: cls.__title__,
+            c.Infra.Toml.VERSION: cls.__version__,
             "description": cls.__description__,
             "author": cls.__author__,
             "author_email": cls.__author_email__,

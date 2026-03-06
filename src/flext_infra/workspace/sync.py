@@ -16,14 +16,14 @@ import tempfile
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r
+from flext_core import r, s
 from flext_infra import m
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.constants import c
 from flext_infra.output import output
 
 
-class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
+class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
     """Infrastructure service for workspace base.mk synchronization.
 
     Generates a fresh base.mk via ``FlextInfraBaseMkGenerator``, compares its SHA256
@@ -77,9 +77,9 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
         return hasher.hexdigest()
 
     @override
-    def execute(self) -> r[m.Infra.SyncResult]:
+    def execute(self) -> r[m.Infra.Workspace.SyncResult]:
         """Not used; call sync() directly instead."""
-        return r[m.Infra.SyncResult].fail("Use sync() method directly")
+        return r[m.Infra.Workspace.SyncResult].fail("Use sync() method directly")
 
     def sync(
         self,
@@ -87,9 +87,9 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
         _target: str | None = None,
         *,
         project_root: Path | None = None,
-        config: m.Infra.BaseMkConfig | None = None,
+        config: m.Infra.Basemk.BaseMkConfig | None = None,
         canonical_root: Path | None = None,
-    ) -> r[m.Infra.SyncResult]:
+    ) -> r[m.Infra.Workspace.SyncResult]:
         """Synchronize base.mk and .gitignore for a project.
 
         Copies base.mk from canonical root when available, otherwise
@@ -106,11 +106,11 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
 
         """
         if project_root is None:
-            return r[m.Infra.SyncResult].fail("project_root is required")
+            return r[m.Infra.Workspace.SyncResult].fail("project_root is required")
 
         resolved = project_root.resolve()
         if not resolved.is_dir():
-            return r[m.Infra.SyncResult].fail(
+            return r[m.Infra.Workspace.SyncResult].fail(
                 f"project root does not exist: {resolved}",
             )
 
@@ -131,7 +131,7 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
                         canonical_root=effective_root,
                     )
                     if basemk_result.is_failure:
-                        return r[m.Infra.SyncResult].fail(
+                        return r[m.Infra.Workspace.SyncResult].fail(
                             basemk_result.error or "base.mk sync failed",
                         )
                     changed += 1 if basemk_result.value else 0
@@ -142,13 +142,13 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
                         c.Infra.Workspace.REQUIRED_GITIGNORE_ENTRIES,
                     )
                     if gitignore_result.is_failure:
-                        return r[m.Infra.SyncResult].fail(
+                        return r[m.Infra.Workspace.SyncResult].fail(
                             gitignore_result.error or ".gitignore sync failed",
                         )
                     changed += 1 if gitignore_result.value else 0
 
-                    return r[m.Infra.SyncResult].ok(
-                        m.Infra.SyncResult(
+                    return r[m.Infra.Workspace.SyncResult].ok(
+                        m.Infra.Workspace.SyncResult(
                             files_changed=changed,
                             source=resolved,
                             target=resolved,
@@ -157,7 +157,9 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
                 finally:
                     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
         except OSError as exc:
-            return r[m.Infra.SyncResult].fail(f"sync lock acquisition failed: {exc}")
+            return r[m.Infra.Workspace.SyncResult].fail(
+                f"sync lock acquisition failed: {exc}"
+            )
 
     def _ensure_gitignore_entries(
         self,
@@ -205,7 +207,7 @@ class FlextInfraSyncService(FlextService[m.Infra.SyncResult]):
     def _sync_basemk(
         self,
         project_root: Path,
-        config: m.Infra.BaseMkConfig | None,
+        config: m.Infra.Basemk.BaseMkConfig | None,
         *,
         canonical_root: Path | None = None,
     ) -> r[bool]:

@@ -8,6 +8,8 @@ from typing import override
 import libcst as cst
 from libcst.metadata import QualifiedNameProvider, QualifiedNameSource
 
+from flext_infra import c
+
 
 class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
     """Rewrite forbidden imports and replace symbols with runtime alias paths."""
@@ -44,7 +46,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
         """Replace forbidden imports and capture symbol replacement map."""
         module_name = self._module_name_from_expr(original_node.module)
 
-        if module_name == "flext_core":
+        if module_name == c.Infra.Packages.CORE_UNDERSCORE:
             imported_aliases = self._extract_import_aliases(original_node.names)
             for imported_alias in imported_aliases:
                 if not isinstance(imported_alias.name, cst.Name):
@@ -120,7 +122,10 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
         ]
         new_import = cst.SimpleStatementLine(
             body=[
-                cst.ImportFrom(module=cst.Name("flext_core"), names=alias_imports),
+                cst.ImportFrom(
+                    module=cst.Name(c.Infra.Packages.CORE_UNDERSCORE),
+                    names=alias_imports,
+                ),
             ]
         )
 

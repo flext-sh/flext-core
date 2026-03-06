@@ -53,7 +53,7 @@ class FlextInfraTextPatternScanner:
             try:
                 text = file_path.read_text(
                     encoding=c.Infra.Encoding.DEFAULT,
-                    errors="ignore",
+                    errors=c.Infra.Toml.IGNORE,
                 )
             except OSError:
                 continue
@@ -92,7 +92,10 @@ class FlextInfraTextPatternScanner:
                 return r[Mapping[str, t.Scalar]].fail(
                     "at least one include glob required",
                 )
-            if match_mode not in {"present", "absent"}:
+            if match_mode not in {
+                c.Infra.MatchModes.PRESENT,
+                c.Infra.MatchModes.ABSENT,
+            }:
                 return r[Mapping[str, t.Scalar]].fail(
                     f"invalid match_mode: {match_mode}",
                 )
@@ -102,7 +105,9 @@ class FlextInfraTextPatternScanner:
             matches = self._count_matches(files, regex)
 
             violation_count = (
-                matches if match_mode == "present" else (0 if matches > 0 else 1)
+                matches
+                if match_mode == c.Infra.MatchModes.PRESENT
+                else (0 if matches > 0 else 1)
             )
 
             result: MutableMapping[str, t.Scalar] = {

@@ -19,7 +19,7 @@ from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 class _SuccessRenderer:
     """Mock renderer that returns valid make syntax."""
 
-    def render_all(self, config: im.Infra.BaseMkConfig | None = None) -> r[str]:
+    def render_all(self, config: im.Infra.Basemk.BaseMkConfig | None = None) -> r[str]:
         del config
         return r[str].ok(".PHONY: help\nhelp:\n\t@echo 'help'\n")
 
@@ -27,7 +27,7 @@ class _SuccessRenderer:
 class _FailureRenderer:
     """Mock renderer that returns failure."""
 
-    def render_all(self, config: im.Infra.BaseMkConfig | None = None) -> r[str]:
+    def render_all(self, config: im.Infra.Basemk.BaseMkConfig | None = None) -> r[str]:
         del config
         return r[str].fail("render error")
 
@@ -64,7 +64,7 @@ def test_generator_generate_with_none_config_uses_default() -> None:
 
 def test_generator_generate_with_basemk_config_object() -> None:
     """Test generate() accepts BaseMkConfig object directly."""
-    config = im.Infra.BaseMkConfig(
+    config = im.Infra.Basemk.BaseMkConfig(
         project_name="test-proj",
         python_version="3.13",
         core_stack="python",
@@ -82,7 +82,7 @@ def test_generator_generate_with_basemk_config_object() -> None:
 
 def test_generator_generate_with_dict_config() -> None:
     """Test generate() accepts dict configuration."""
-    config = im.Infra.BaseMkConfig(
+    config = im.Infra.Basemk.BaseMkConfig(
         project_name="dict-proj",
         python_version="3.13",
         core_stack="python",
@@ -193,12 +193,12 @@ def test_generator_normalize_config_with_none() -> None:
     result = gen._normalize_config(None)
 
     assert result.is_success
-    assert isinstance(result.value, im.Infra.BaseMkConfig)
+    assert isinstance(result.value, im.Infra.Basemk.BaseMkConfig)
 
 
 def test_generator_normalize_config_with_basemk_config() -> None:
     """Test _normalize_config passes through BaseMkConfig."""
-    config = im.Infra.BaseMkConfig(
+    config = im.Infra.Basemk.BaseMkConfig(
         project_name="test",
         python_version="3.13",
         core_stack="python",
@@ -217,7 +217,7 @@ def test_generator_normalize_config_with_basemk_config() -> None:
 
 def test_generator_normalize_config_with_dict() -> None:
     """Test _normalize_config validates dict."""
-    config = im.Infra.BaseMkConfig(
+    config = im.Infra.Basemk.BaseMkConfig(
         project_name="test",
         python_version="3.13",
         core_stack="python",
@@ -231,7 +231,7 @@ def test_generator_normalize_config_with_dict() -> None:
     result = gen._normalize_config(config)
 
     assert result.is_success
-    assert isinstance(result.value, im.Infra.BaseMkConfig)
+    assert isinstance(result.value, im.Infra.Basemk.BaseMkConfig)
 
 
 def test_generator_normalize_config_with_invalid_dict() -> None:

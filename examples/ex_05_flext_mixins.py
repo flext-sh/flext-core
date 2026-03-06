@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import override
 
@@ -94,8 +94,8 @@ class _HandlerBad(FlextSettings):
 
 
 class _ProtocolService:
-    def execute(self) -> r[t.Container]:
-        return r[t.Container].ok("ok")
+    def execute(self) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok("ok")
 
     def get_service_info(self) -> Mapping[str, t.Scalar]:
         return {"name": "protocol-service"}
@@ -236,15 +236,15 @@ def _exercise_cqrs_validation_and_protocols(_service: _DemoService) -> None:
     )
     _check("context_stack.current_context.after_pop", stack.current_context() is None)
 
-    def _validator_ok(value: t.Container) -> r[bool]:
+    def _validator_ok(value: t.ContainerValue) -> r[bool]:
         text = value if isinstance(value, str) else ""
         return r[bool].ok(text.startswith("a"))
 
-    def _validator_fail(_value: t.Container) -> r[bool]:
+    def _validator_fail(_value: t.ContainerValue) -> r[bool]:
         return r[bool].fail("bad-input")
 
-    validators_ok = [_validator_ok]
-    validators_fail = [_validator_fail]
+    validators_ok: list[Callable[[t.ContainerValue], r[bool]]] = [_validator_ok]
+    validators_fail: list[Callable[[t.ContainerValue], r[bool]]] = [_validator_fail]
     validation_ok = x.Validation.validate_with_result("abc", validators_ok)
     validation_fail = x.Validation.validate_with_result("abc", validators_fail)
     _check("validation.ok", validation_ok.is_success)
@@ -257,20 +257,6 @@ def _exercise_cqrs_validation_and_protocols(_service: _DemoService) -> None:
     _check(
         "protocol.is_handler.bad", bool(x.ProtocolValidation.is_handler(_HandlerBad()))
     )
-    protocol_service = _ProtocolService()
-    _check(
-        "protocol.is_service", bool(x.ProtocolValidation.is_service(protocol_service))
-    )
-
-    compliance_ok = x.ProtocolValidation.validate_protocol_compliance(
-        protocol_service, "Service"
-    )
-    compliance_fail = x.ProtocolValidation.validate_protocol_compliance(
-        protocol_service, "Unknown"
-    )
-    _check("protocol.validate_compliance.ok", compliance_ok.is_success)
-    _check("protocol.validate_compliance.fail", compliance_fail.error)
-
     processor_ok = x.ProtocolValidation.validate_processor_protocol(_GoodProcessor())
     processor_fail = x.ProtocolValidation.validate_processor_protocol(_BadProcessor())
     _check("protocol.validate_processor.good", processor_ok.is_success)

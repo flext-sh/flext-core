@@ -7,28 +7,28 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, TextIO, cast, override
 
-from flext_core import FlextService, r, t
+from flext_core import r, s, t
+from flext_infra import FlextInfraCommandRunner, c, m, p
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
-from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.models import FlextInfraModels as m
-from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class _TemplateRenderer(Protocol):
-    def render_all(self, config: m.Infra.BaseMkConfig | None = None) -> r[str]: ...
+    def render_all(
+        self, config: m.Infra.Basemk.BaseMkConfig | None = None
+    ) -> r[str]: ...
 
 
-class FlextInfraBaseMkGenerator(FlextService[str]):
+class FlextInfraBaseMkGenerator(s[str]):
     """Generate base.mk content and write to file or stream."""
 
     def __init__(self, template_engine: _TemplateRenderer | None = None) -> None:
         """Initialize the base.mk generator."""
         super().__init__()
         self._template_engine = template_engine or FlextInfraBaseMkTemplateEngine()
-        self._runner: FlextInfraCommandRunner | None = None
+        self._runner: p.Infra.CommandRunner | None = None
 
     @property
-    def _get_runner(self) -> FlextInfraCommandRunner:
+    def _get_runner(self) -> p.Infra.CommandRunner:
         """Lazily initialize the command runner."""
         if self._runner is None:
             self._runner = FlextInfraCommandRunner()
@@ -40,15 +40,15 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
     def generate(
         self,
-        config: m.Infra.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
+        config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
         if config_result.is_failure:
             return r[str].fail(config_result.error or "invalid base.mk configuration")
 
-        config_value: m.Infra.BaseMkConfig | None = cast(
-            "m.Infra.BaseMkConfig | None",
+        config_value: m.Infra.Basemk.BaseMkConfig | None = cast(
+            "m.Infra.Basemk.BaseMkConfig | None",
             config_result.value,
         )
         render_result = self._template_engine.render_all(config_value)
@@ -84,19 +84,19 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
     def _normalize_config(
         self,
-        config: m.Infra.BaseMkConfig | Mapping[str, t.Scalar] | None,
-    ) -> r[m.Infra.BaseMkConfig]:
+        config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None,
+    ) -> r[m.Infra.Basemk.BaseMkConfig]:
         if config is None:
-            return r[m.Infra.BaseMkConfig].ok(
+            return r[m.Infra.Basemk.BaseMkConfig].ok(
                 FlextInfraBaseMkTemplateEngine.default_config()
             )
-        if isinstance(config, m.Infra.BaseMkConfig):
-            return r[m.Infra.BaseMkConfig].ok(config)
+        if isinstance(config, m.Infra.Basemk.BaseMkConfig):
+            return r[m.Infra.Basemk.BaseMkConfig].ok(config)
         try:
-            normalized = m.Infra.BaseMkConfig.model_validate(dict(config))
-            return r[m.Infra.BaseMkConfig].ok(normalized)
+            normalized = m.Infra.Basemk.BaseMkConfig.model_validate(dict(config))
+            return r[m.Infra.Basemk.BaseMkConfig].ok(normalized)
         except (TypeError, ValueError) as exc:
-            return r[m.Infra.BaseMkConfig].fail(
+            return r[m.Infra.Basemk.BaseMkConfig].fail(
                 f"base.mk configuration validation failed: {exc}",
             )
 
@@ -115,7 +115,7 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
                 )
 
                 process_result = self._get_runner.run(
-                    ["make", "-C", str(temp_dir), "--dry-run", "help"],
+                    [c.Infra.Cli.MAKE, "-C", str(temp_dir), "--dry-run", "help"],
                 )
                 if process_result.is_failure:
                     error_text = process_result.error or "make validation failed"

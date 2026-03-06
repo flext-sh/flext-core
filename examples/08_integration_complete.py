@@ -28,7 +28,6 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDecorators,
-    FlextDispatcher,
     FlextLogger,
     FlextRegistry,
     FlextSettings,
@@ -147,8 +146,7 @@ class IntegrationService(s[m.ConfigMap]):
         """Show FlextRegistry and FlextDispatcher integration."""
         print("\n=== Registry/Dispatcher Integration ===")
 
-        dispatcher = FlextDispatcher()
-        _registry = FlextRegistry(dispatcher=dispatcher)
+        _registry = FlextRegistry()
         print("✅ Registry/Dispatcher initialized")
 
     @staticmethod

@@ -18,19 +18,16 @@ from flext_infra import (
     FlextInfraTomlService,
     c,
     m,
+    p,
     t,
 )
 
-type InfraValue = t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | None
 
-type IssueMap = Mapping[str, InfraValue]
-
-
-def _to_infra_value(value: t.ContainerValue) -> InfraValue | None:
+def _to_infra_value(value: t.ContainerValue) -> t.Infra.InfraValue | None:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, list):
-        converted: list[InfraValue] = []
+        converted: list[t.Infra.InfraValue] = []
         for item in value:
             converted_item = _to_infra_value(item)
             if converted_item is None and item is not None:
@@ -38,7 +35,7 @@ def _to_infra_value(value: t.ContainerValue) -> InfraValue | None:
             converted.append(converted_item)
         return converted
     if isinstance(value, Mapping):
-        converted_map: MutableMapping[str, InfraValue] = {}
+        converted_map: MutableMapping[str, t.Infra.InfraValue] = {}
         for key, item in value.items():
             converted_item = _to_infra_value(item)
             if converted_item is None and item is not None:
@@ -54,18 +51,18 @@ class FlextInfraDependencyDetectionModels(m):
     class DeptryIssueGroups(m.ArbitraryTypesModel):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-        dep001: list[IssueMap] = Field(default_factory=list)
-        dep002: list[IssueMap] = Field(default_factory=list)
-        dep003: list[IssueMap] = Field(default_factory=list)
-        dep004: list[IssueMap] = Field(default_factory=list)
+        dep001: list[t.Infra.IssueMap] = Field(default_factory=list)
+        dep002: list[t.Infra.IssueMap] = Field(default_factory=list)
+        dep003: list[t.Infra.IssueMap] = Field(default_factory=list)
+        dep004: list[t.Infra.IssueMap] = Field(default_factory=list)
 
     class DeptryReport(m.ArbitraryTypesModel):
         """Deptry analysis report with missing, unused, transitive, and dev-in-runtime issues."""
 
-        missing: list[InfraValue] = Field(default_factory=list)
-        unused: list[InfraValue] = Field(default_factory=list)
-        transitive: list[InfraValue] = Field(default_factory=list)
-        dev_in_runtime: list[InfraValue] = Field(default_factory=list)
+        missing: list[t.Infra.InfraValue] = Field(default_factory=list)
+        unused: list[t.Infra.InfraValue] = Field(default_factory=list)
+        transitive: list[t.Infra.InfraValue] = Field(default_factory=list)
+        dev_in_runtime: list[t.Infra.InfraValue] = Field(default_factory=list)
         raw_count: int = Field(default=0, ge=0)
 
     class ProjectDependencyReport(m.ArbitraryTypesModel):
@@ -101,11 +98,11 @@ class FlextInfraDependencyDetectionService:
         """Initialize the dependency detection service with selector, toml, and runner."""
         self._selector = FlextInfraProjectSelector()
         self._toml = FlextInfraTomlService()
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
     def classify_issues(
-        issues: list[IssueMap],
+        issues: list[t.Infra.IssueMap],
     ) -> dm.DeptryIssueGroups:
         """Classify deptry issues by error code (DEP001-DEP004)."""
         groups = dm.DeptryIssueGroups()
@@ -127,7 +124,7 @@ class FlextInfraDependencyDetectionService:
     def build_project_report(
         self,
         project_name: str,
-        deptry_issues: list[IssueMap],
+        deptry_issues: list[t.Infra.IssueMap],
     ) -> dm.ProjectDependencyReport:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
@@ -157,7 +154,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return r[list[Path]].fail(result.error or "project resolution failed")
 
-        projects_info: list[m.Infra.ProjectInfo] = result.value
+        projects_info: list[m.Infra.Workspace.ProjectInfo] = result.value
         projects = [
             project.path
             for project in projects_info
@@ -271,7 +268,7 @@ class FlextInfraDependencyDetectionService:
     def load_dependency_limits(
         self,
         limits_path: Path | None = None,
-    ) -> Mapping[str, InfraValue]:
+    ) -> Mapping[str, t.Infra.InfraValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or (
             Path(__file__).resolve().parent / "dependency_limits.toml"
@@ -279,7 +276,7 @@ class FlextInfraDependencyDetectionService:
         result = self._toml.read(path)
         if result.is_failure:
             return {}
-        limits: MutableMapping[str, InfraValue] = {}
+        limits: MutableMapping[str, t.Infra.InfraValue] = {}
         toml_data: t.Infra.TomlMap = result.value
         for key, value in toml_data.items():
             converted = _to_infra_value(value)
@@ -290,7 +287,7 @@ class FlextInfraDependencyDetectionService:
     def module_to_types_package(
         self,
         module_name: str,
-        limits: Mapping[str, InfraValue],
+        limits: Mapping[str, t.Infra.InfraValue],
     ) -> str | None:
         """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
@@ -318,15 +315,15 @@ class FlextInfraDependencyDetectionService:
         config_path: Path | None = None,
         json_output_path: Path | None = None,
         extend_exclude: list[str] | None = None,
-    ) -> r[tuple[list[IssueMap], int]]:
+    ) -> r[tuple[list[t.Infra.IssueMap], int]]:
         """Run deptry analysis on a project and parse JSON output."""
         config = config_path or (project_path / c.Infra.Files.PYPROJECT_FILENAME)
         if not config.exists():
-            return r[tuple[list[IssueMap], int]].ok(([], 0))
+            return r[tuple[list[t.Infra.IssueMap], int]].ok(([], 0))
 
         out_file = json_output_path or (project_path / ".deptry-report.json")
         cmd: list[str] = [
-            str(venv_bin / "deptry"),
+            str(venv_bin / c.Infra.Toml.DEPTRY),
             ".",
             "--config",
             str(config),
@@ -342,15 +339,15 @@ class FlextInfraDependencyDetectionService:
             cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM
         )
         if result.is_failure:
-            return r[tuple[list[IssueMap], int]].fail(
+            return r[tuple[list[t.Infra.IssueMap], int]].fail(
                 result.error or "deptry execution failed",
             )
 
-        issues: list[IssueMap] = []
+        issues: list[t.Infra.IssueMap] = []
         if out_file.exists():
             try:
                 raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                loaded: list[InfraValue] | dict[str, InfraValue] = (
+                loaded: list[t.Infra.InfraValue] | dict[str, t.Infra.InfraValue] = (
                     json.loads(raw) if raw.strip() else []
                 )
                 if isinstance(loaded, list):
@@ -365,8 +362,8 @@ class FlextInfraDependencyDetectionService:
                 with contextlib.suppress(OSError):
                     out_file.unlink()
 
-        cmd_result: m.Infra.CommandOutput = result.value
-        return r[tuple[list[IssueMap], int]].ok((issues, cmd_result.exit_code))
+        cmd_result: m.Infra.Core.CommandOutput = result.value
+        return r[tuple[list[t.Infra.IssueMap], int]].ok((issues, cmd_result.exit_code))
 
     def run_mypy_stub_hints(
         self,
@@ -376,13 +373,13 @@ class FlextInfraDependencyDetectionService:
         timeout: int = c.Infra.Timeouts.DEFAULT,
     ) -> r[tuple[list[str], list[str]]]:
         """Run mypy to detect missing type stubs and hinted packages."""
-        mypy_bin = venv_bin / "mypy"
+        mypy_bin = venv_bin / c.Infra.Toml.MYPY
         if not mypy_bin.exists():
             return r[tuple[list[str], list[str]]].ok(([], []))
 
         cmd: list[str] = [
             str(mypy_bin),
-            "src",
+            c.Infra.Paths.DEFAULT_SRC_DIR,
             "--config-file",
             c.Infra.Files.PYPROJECT_FILENAME,
             "--no-error-summary",
@@ -403,7 +400,7 @@ class FlextInfraDependencyDetectionService:
                 result.error or "mypy execution failed",
             )
 
-        cmd_result: m.Infra.CommandOutput = result.value
+        cmd_result: m.Infra.Core.CommandOutput = result.value
         output = f"{cmd_result.stdout}\n{cmd_result.stderr}"
         hinted = {
             match.group(1).strip()
@@ -437,7 +434,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return r[tuple[list[str], int]].fail(result.error or "pip check failed")
 
-        cmd_result: m.Infra.CommandOutput = result.value
+        cmd_result: m.Infra.Core.CommandOutput = result.value
         output = cmd_result.stdout
         lines = output.strip().splitlines() if output else []
         return r[tuple[list[str], int]].ok((lines, cmd_result.exit_code))
@@ -461,7 +458,7 @@ def run_deptry(
     config_path: Path | None = None,
     json_output_path: Path | None = None,
     extend_exclude: list[str] | None = None,
-) -> r[tuple[list[IssueMap], int]]:
+) -> r[tuple[list[t.Infra.IssueMap], int]]:
     """Run deptry analysis on a project and parse JSON output."""
     return _service.run_deptry(
         project_path,
@@ -480,14 +477,14 @@ def run_pip_check(
     return _service.run_pip_check(workspace_root, venv_bin)
 
 
-def classify_issues(issues: list[IssueMap]) -> dm.DeptryIssueGroups:
+def classify_issues(issues: list[t.Infra.IssueMap]) -> dm.DeptryIssueGroups:
     """Classify deptry issues by error code (DEP001-DEP004)."""
     return _service.classify_issues(issues)
 
 
 def build_project_report(
     project_name: str,
-    deptry_issues: list[IssueMap],
+    deptry_issues: list[t.Infra.IssueMap],
 ) -> dm.ProjectDependencyReport:
     """Build a project dependency report from classified deptry issues."""
     return _service.build_project_report(project_name, deptry_issues)
@@ -495,7 +492,7 @@ def build_project_report(
 
 def load_dependency_limits(
     limits_path: Path | None = None,
-) -> Mapping[str, InfraValue]:
+) -> Mapping[str, t.Infra.InfraValue]:
     """Load dependency limits configuration from TOML file."""
     return _service.load_dependency_limits(limits_path)
 
@@ -512,7 +509,7 @@ def run_mypy_stub_hints(
 
 def module_to_types_package(
     module_name: str,
-    limits: Mapping[str, InfraValue],
+    limits: Mapping[str, t.Infra.InfraValue],
 ) -> str | None:
     """Map a module name to its corresponding types-* package."""
     return _service.module_to_types_package(module_name, limits)

@@ -7,12 +7,12 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextContext, FlextRuntime, c, r, t, u
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, t, u
 
 _RESULTS: list[str] = []
 
 
-def _check(label: str, value: t.Container) -> None:
+def _check(label: str, value: t.ContainerValue) -> None:
     _RESULTS.append(f"{label}: {_ser(value)}")
 
 
@@ -22,7 +22,7 @@ def _section(name: str) -> None:
     _RESULTS.append(f"[{name}]")
 
 
-def _ser(v: t.Container) -> str:
+def _ser(v: t.ContainerValue) -> str:
     if v is None:
         return "None"
     if isinstance(v, bool):
@@ -208,7 +208,7 @@ def demo_core_context_methods() -> None:
     _check("export.full.has_metadata", "metadata" in exported_full_dict)
 
     scope_names = sorted(ctx.iter_scope_vars().keys())
-    _check("iter_scope_vars", scope_names)
+    _check("iter_scope_vars", ",".join(scope_names))
 
     ctx.clear()
     _check("clear.keys", len(ctx.keys()))
@@ -219,7 +219,7 @@ def demo_container_and_service_methods() -> None:
     _section("container_and_service")
     _check("runtime.class", FlextRuntime.__name__)
 
-    container = _ContainerStub()
+    container = FlextContainer()
     FlextContext.set_container(container)
     fetched_container = FlextContext.get_container()
     _check("set_get_container.same", fetched_container is container)
@@ -358,7 +358,7 @@ def demo_variables_and_domains() -> None:
     cleared_context = FlextContext.Serialization.get_full_context()
     _check(
         "utilities.clear_context.correlation",
-        cleared_context.get(c.Context.KEY_CORRELATION_ID),
+        cleared_context.get(c.Context.KEY_CORRELATION_ID) or "",
     )
     ensured = FlextContext.Utilities.ensure_correlation_id()
     _check("utilities.ensure_correlation_id.non_empty", len(ensured) > 0)

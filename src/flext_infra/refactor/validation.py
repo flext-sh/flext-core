@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict
 
-from flext_infra import FlextInfraCommandRunner, c, m
+from flext_infra import FlextInfraCommandRunner, c, m, p
 
 
 class PostCheckGate:
@@ -22,7 +22,7 @@ class PostCheckGate:
 
     def __init__(self) -> None:
         """Initialize gate with a command runner."""
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     def validate(
         self,

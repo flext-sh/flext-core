@@ -9,12 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraJsonService, c, t
+from flext_infra import FlextInfraJsonService, c, m
 
 
 class FlextInfraInventoryService:
@@ -33,7 +32,7 @@ class FlextInfraInventoryService:
         workspace_root: Path,
         *,
         output_dir: Path | None = None,
-    ) -> r[Mapping[str, t.ContainerValue]]:
+    ) -> r[m.Infra.Core.InventoryReport]:
         """Build and write scripts inventory reports.
 
         Args:
@@ -59,50 +58,58 @@ class FlextInfraInventoryService:
                 )
 
             now = datetime.now(UTC).isoformat()
-            inventory: Mapping[str, t.ContainerValue] = {
-                "generated_at": now,
-                "repo_root": str(root),
-                "total_scripts": len(scripts),
-                "scripts": scripts,
-            }
-            wiring: Mapping[str, t.ContainerValue] = {
-                "generated_at": now,
-                "root_makefile": [c.Infra.Files.MAKEFILE_FILENAME],
-                "unwired_scripts": [],
-            }
-            external: Mapping[str, t.ContainerValue] = {
-                "generated_at": now,
-                "candidates": [],
-            }
+            inventory = m.Infra.Core.ScriptsInventorySnapshot(
+                generated_at=now,
+                repo_root=str(root),
+                total_scripts=len(scripts),
+                scripts=scripts,
+            )
+            wiring = m.Infra.Core.ScriptsWiringSnapshot(
+                generated_at=now,
+                root_makefile=[c.Infra.Files.MAKEFILE_FILENAME],
+                unwired_scripts=[],
+            )
+            external = m.Infra.Core.ExternalScriptsSnapshot(
+                generated_at=now,
+                candidates=[],
+            )
 
             reports_dir = output_dir or (root / c.Infra.Reporting.REPORTS_DIR_NAME)
-            outputs: Mapping[Path, Mapping[str, t.ContainerValue]] = {
-                reports_dir / "scripts-infra--json--scripts-inventory.json": inventory,
-                reports_dir / "scripts-infra--json--scripts-wiring.json": wiring,
-                reports_dir
-                / "scripts-infra--json--external-scripts-candidates.json": external,
-            }
-
             written: list[str] = []
-            for path, payload in outputs.items():
-                write_result = self._json.write(
-                    path,
-                    payload,
-                    sort_keys=True,
-                )
-                if write_result.is_failure:
-                    return r[t.ConfigurationMapping].fail(
-                        write_result.error or "write failed",
-                    )
-                written.append(str(path))
+            inventory_path = reports_dir / "scripts-infra--json--scripts-inventory.json"
+            wiring_path = reports_dir / "scripts-infra--json--scripts-wiring.json"
+            external_path = (
+                reports_dir / "scripts-infra--json--external-scripts-candidates.json"
+            )
 
-            result: MutableMapping[str, t.ContainerValue] = {
-                "total_scripts": len(scripts),
-                "reports_written": written,
-            }
-            return r[t.ConfigurationMapping].ok(result)
+            write_result = self._json.write(inventory_path, inventory, sort_keys=True)
+            if write_result.is_failure:
+                return r[m.Infra.Core.InventoryReport].fail(
+                    write_result.error or "write failed",
+                )
+            written.append(str(inventory_path))
+
+            write_result = self._json.write(wiring_path, wiring, sort_keys=True)
+            if write_result.is_failure:
+                return r[m.Infra.Core.InventoryReport].fail(
+                    write_result.error or "write failed",
+                )
+            written.append(str(wiring_path))
+
+            write_result = self._json.write(external_path, external, sort_keys=True)
+            if write_result.is_failure:
+                return r[m.Infra.Core.InventoryReport].fail(
+                    write_result.error or "write failed",
+                )
+            written.append(str(external_path))
+
+            result = m.Infra.Core.InventoryReport(
+                total_scripts=len(scripts),
+                reports_written=written,
+            )
+            return r[m.Infra.Core.InventoryReport].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[t.ConfigurationMapping].fail(
+            return r[m.Infra.Core.InventoryReport].fail(
                 f"inventory generation failed: {exc}",
             )
 

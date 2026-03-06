@@ -10,14 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import ClassVar
 
 from defusedxml import ElementTree as DefusedET
 
 from flext_core import r
-from flext_infra import c, t
+from flext_infra import c, m
 
 
 class _DiagResult:
@@ -131,7 +130,7 @@ class FlextInfraPytestDiagExtractor:
             slow_rows.append((secs, label))
 
             failure = case.find("failure")
-            error = case.find("error")
+            error = case.find(c.Infra.Toml.ERROR)
             skipped = case.find("skipped")
 
             if failure is not None:
@@ -172,7 +171,7 @@ class FlextInfraPytestDiagExtractor:
         self,
         junit_path: Path,
         log_path: Path,
-    ) -> r[Mapping[str, t.ContainerValue]]:
+    ) -> r[m.Infra.Core.PytestDiagnostics]:
         """Extract diagnostics from JUnit XML and pytest log.
 
         Args:
@@ -200,20 +199,20 @@ class FlextInfraPytestDiagExtractor:
             if not diag.slow_entries:
                 self._extract_slow_from_log(lines, diag)
 
-            result: MutableMapping[str, t.ContainerValue] = {
-                "failed_count": len(diag.failed_cases),
-                "error_count": len(diag.error_traces),
-                "warning_count": len(diag.warning_lines),
-                "skipped_count": len(diag.skip_cases),
-                "failed_cases": diag.failed_cases,
-                "error_traces": diag.error_traces,
-                "warning_lines": diag.warning_lines,
-                "skip_cases": diag.skip_cases,
-                "slow_entries": diag.slow_entries,
-            }
-            return r[t.ConfigurationMapping].ok(result)
+            result = m.Infra.Core.PytestDiagnostics(
+                failed_count=len(diag.failed_cases),
+                error_count=len(diag.error_traces),
+                warning_count=len(diag.warning_lines),
+                skipped_count=len(diag.skip_cases),
+                failed_cases=diag.failed_cases,
+                error_traces=diag.error_traces,
+                warning_lines=diag.warning_lines,
+                skip_cases=diag.skip_cases,
+                slow_entries=diag.slow_entries,
+            )
+            return r[m.Infra.Core.PytestDiagnostics].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[t.ConfigurationMapping].fail(
+            return r[m.Infra.Core.PytestDiagnostics].fail(
                 f"pytest diagnostics extraction failed: {exc}",
             )
 

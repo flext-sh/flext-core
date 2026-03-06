@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import types
 from collections.abc import Callable
 from typing import Any, ClassVar, cast
@@ -63,7 +64,7 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
         f_back=types.SimpleNamespace(f_globals={"__name__": "fake_mod"}),
     )
 
-    monkeypatch.setitem(__import__("sys").modules, "fake_mod", fake_module)
+    monkeypatch.setitem(sys.modules, "fake_mod", cast("types.ModuleType", fake_module))
     monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
     monkeypatch.setattr(
         "flext_core.container.FactoryDecoratorsDiscovery.scan_module",
@@ -352,7 +353,11 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
     frame = types.SimpleNamespace(
         f_back=types.SimpleNamespace(f_globals={"__name__": "fake_factory_mod"}),
     )
-    monkeypatch.setitem(__import__("sys").modules, "fake_factory_mod", fake_module)
+    monkeypatch.setitem(
+        sys.modules,
+        "fake_factory_mod",
+        cast("types.ModuleType", fake_module),
+    )
     monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
     monkeypatch.setattr(
         "flext_core.container.FactoryDecoratorsDiscovery.scan_module",

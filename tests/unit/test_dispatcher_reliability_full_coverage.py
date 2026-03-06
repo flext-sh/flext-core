@@ -5,11 +5,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import c, m, r, u
-
-disp_rel = __import__(
-    "flext_core._dispatcher.reliability",
-    fromlist=["CircuitBreakerManager", "RateLimiterManager", "RetryPolicy"],
-)
+from flext_core._dispatcher import reliability as disp_rel
 
 
 def test_dispatcher_reliability_branch_paths() -> None:

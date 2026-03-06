@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
-from typing import cast
+from typing import overload, override
 
 import libcst as cst
 import pytest
 
 from flext_core import r
+from flext_infra import m
 from flext_infra.refactor import (
     FlextInfraRefactorClassReconstructorRule,
     FlextInfraRefactorEngine,
@@ -18,11 +20,11 @@ from flext_infra.refactor import (
     FlextInfraRefactorLegacyRemovalRule,
     FlextInfraRefactorMRORedundancyChecker,
     FlextInfraRefactorPatternCorrectionsRule,
-    FlextInfraRefactorResult,
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
     FlextInfraRefactorViolationAnalyzer,
 )
+from flext_infra.refactor.safety import FlextInfraRefactorSafetyManager
 
 
 def test_import_modernizer_partial_import_keeps_unmapped_symbols() -> None:
@@ -881,7 +883,7 @@ refactor_engine:
 
 
 def test_build_impact_map_extracts_rename_entries() -> None:
-    result = FlextInfraRefactorResult(
+    result = m.Infra.Refactor.Result(
         file_path=Path("/tmp/flext-core/src/module.py"),
         success=True,
         modified=True,
@@ -900,7 +902,7 @@ def test_build_impact_map_extracts_rename_entries() -> None:
 
 
 def test_build_impact_map_extracts_signature_entries() -> None:
-    result = FlextInfraRefactorResult(
+    result = m.Infra.Refactor.Result(
         file_path=Path("/tmp/flext-core/src/module.py"),
         success=True,
         modified=True,
@@ -956,19 +958,7 @@ rules:
     files = engine.collect_project_files(project_root)
     result = FlextInfraRefactorViolationAnalyzer.analyze_files(files)
 
-    totals_obj = result.get("totals", {})
-    assert isinstance(totals_obj, dict)
-    totals: dict[str, int] = {}
-    typed_totals_obj = cast("dict[object, object]", totals_obj)
-    for raw_key in typed_totals_obj:
-        raw_value = typed_totals_obj[raw_key]
-        if not isinstance(raw_key, str):
-            continue
-        if isinstance(raw_value, int):
-            totals[raw_key] = raw_value
-            continue
-        if isinstance(raw_value, str) and raw_value.isdigit():
-            totals[raw_key] = int(raw_value)
+    totals = result.totals
     assert "container_invariance" in totals
     assert "redundant_cast" in totals
     assert "direct_submodule_import" in totals
@@ -1027,6 +1017,59 @@ rules:
     assert target_file.read_text(encoding="utf-8") == original
 
 
+def test_main_analyze_violations_writes_json_report(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: ensure-future-annotations
+    enabled: true
+    fix_action: ensure_future_annotations
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n',
+        encoding="utf-8",
+    )
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir(parents=True)
+    target_file = src_dir / "sample.py"
+    target_file.write_text("import os\n", encoding="utf-8")
+    report_path = tmp_path / "reports" / "analysis.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "refactor-engine",
+            "--file",
+            str(target_file),
+            "--analyze-violations",
+            "--analysis-output",
+            str(report_path),
+            "--config",
+            str(config_path),
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        FlextInfraRefactorEngine.main()
+
+    assert exc_info.value.code == 0
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert payload["files_scanned"] == 1
+    assert payload["totals"] == {}
+
+
 def test_refactor_files_skips_non_python_inputs(tmp_path: Path) -> None:
     rules_dir = tmp_path / "rules"
     rules_dir.mkdir(parents=True)
@@ -1066,22 +1109,28 @@ def test_violation_analyzer_skips_non_utf8_files(tmp_path: Path) -> None:
     file_path.write_bytes(b"\x80\x81\x82")
 
     result = FlextInfraRefactorViolationAnalyzer.analyze_files([file_path])
-    files_scanned = result.get("files_scanned")
-    assert files_scanned == 1
-    totals = result.get("totals")
-    assert isinstance(totals, dict)
-    assert totals == {}
+    assert result.files_scanned == 1
+    assert result.totals == {}
 
 
-class _EngineSafetyStub:
+class _EngineSafetyStub(FlextInfraRefactorSafetyManager):
     def __init__(self) -> None:
+        super().__init__()
         self.calls: list[str] = []
 
-    def create_pre_transformation_stash(self, workspace_root: Path) -> r[str]:
+    @override
+    def create_pre_transformation_stash(
+        self,
+        workspace_root: Path,
+        *,
+        label: str = "flext-refactor-pre-transform",
+    ) -> r[str]:
         _ = workspace_root
+        _ = label
         self.calls.append("stash")
         return r[str].ok("stash@{0}")
 
+    @override
     def save_checkpoint_state(
         self,
         workspace_root: Path,
@@ -1097,25 +1146,39 @@ class _EngineSafetyStub:
         self.calls.append("checkpoint")
         return r[bool].ok(True)
 
+    @override
     def run_semantic_validation(self, workspace_root: Path) -> r[bool]:
         _ = workspace_root
         self.calls.append("validate")
         return r[bool].ok(True)
 
+    @override
     def clear_checkpoint(self) -> r[bool]:
         self.calls.append("clear")
         return r[bool].ok(True)
 
+    @override
     def request_emergency_stop(self, reason: str) -> None:
         _ = reason
         self.calls.append("stop")
 
-    def rollback(self, workspace_root: Path, stash_ref: str) -> r[bool]:
-        _ = workspace_root
+    @overload
+    def rollback(self, workspace_root: Path, stash_ref: str = "") -> r[bool]: ...
+
+    @overload
+    def rollback(self, workspace_root: str, /) -> None: ...
+
+    @override
+    def rollback(
+        self, workspace_root: Path | str, stash_ref: str = ""
+    ) -> r[bool] | None:
         _ = stash_ref
         self.calls.append("rollback")
-        return r[bool].ok(True)
+        if isinstance(workspace_root, Path):
+            return r[bool].ok(True)
+        return None
 
+    @override
     def is_emergency_stop_requested(self) -> bool:
         self.calls.append("is_stop")
         return False
@@ -1143,7 +1206,8 @@ rules:
     (src_dir / "sample.py").write_text("import os\n", encoding="utf-8")
 
     engine = FlextInfraRefactorEngine(config_path=config_path)
-    engine.safety_manager = _EngineSafetyStub()
+    stub = _EngineSafetyStub()
+    engine.safety_manager = stub
     loaded = engine.load_rules()
     assert loaded.is_success
 
@@ -1151,4 +1215,4 @@ rules:
 
     assert results
     assert all(item.success for item in results)
-    assert engine.safety_manager.calls == ["stash", "checkpoint", "validate", "clear"]
+    assert stub.calls == ["stash", "checkpoint", "validate", "clear"]

@@ -54,7 +54,7 @@ class FlextInfraDocValidator:
         """Check whether a skill file contains an ADR reference."""
         text = skill_path.read_text(
             encoding=c.Infra.Encoding.DEFAULT,
-            errors="ignore",
+            errors=c.Infra.Toml.IGNORE,
         ).lower()
         return "adr" in text
 
@@ -119,7 +119,9 @@ class FlextInfraDocValidator:
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
             payload = json.loads(
-                config.read_text(encoding=c.Infra.Encoding.DEFAULT, errors="ignore"),
+                config.read_text(
+                    encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+                ),
             )
             docs_validation = payload.get("docs_validation", {})
             configured = docs_validation.get("required_skills", [])

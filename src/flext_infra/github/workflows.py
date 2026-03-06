@@ -268,8 +268,8 @@ class FlextInfraWorkflowSyncer:
             "summary": by_action,
             "operations": [
                 {
-                    "project": op.project,
-                    "path": op.path,
+                    c.Infra.Toml.PROJECT: op.project,
+                    c.Infra.Toml.PATH: op.path,
                     "action": op.action,
                     "reason": op.reason,
                 }

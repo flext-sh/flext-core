@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextLogger, FlextService, r, t
+from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
@@ -23,14 +23,16 @@ from flext_infra import (
     FlextInfraProjectSelector,
     FlextInfraReportingService,
     FlextInfraVersioningService,
+    c,
     m,
+    p,
+    t,
 )
-from flext_infra.constants import c
 
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class FlextInfraReleaseOrchestrator(FlextService[bool]):
+class FlextInfraReleaseOrchestrator(s[bool]):
     """Service for release lifecycle orchestration.
 
     Composes infrastructure services to manage the full release process
@@ -51,7 +53,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
     def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
         result = FlextInfraCommandRunner().run_raw([
-            "make",
+            c.Infra.Cli.MAKE,
             "-C",
             str(project_path),
             verb,
@@ -90,7 +92,8 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         """
         reporting = FlextInfraReportingService()
         output_dir = (
-            reporting.get_report_dir(root, "project", "release") / f"v{version}"
+            reporting.get_report_dir(root, c.Infra.Toml.PROJECT, "release")
+            / f"v{version}"
         )
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
@@ -102,7 +105,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         failures = 0
 
         for name, path in targets:
-            make_result = self._run_make(path, "build")
+            make_result = self._run_make(path, c.Infra.Directories.BUILD)
             if make_result.is_failure:
                 code = 1
                 output = make_result.error or "make execution failed"
@@ -113,15 +116,15 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             log = output_dir / f"build-{name}.log"
             log.write_text(output + "\n", encoding=c.Infra.Encoding.DEFAULT)
             records.append({
-                "project": name,
-                "path": str(path),
+                c.Infra.Toml.PROJECT: name,
+                c.Infra.Toml.PATH: str(path),
                 "exit_code": code,
                 "log": str(log),
             })
             logger.info("release_phase_build_project", project=name, exit_code=code)
 
         report: Mapping[str, t.ContainerValue] = {
-            "version": version,
+            c.Infra.Toml.VERSION: version,
             "total": len(records),
             "failures": failures,
             "records": records,
@@ -168,7 +171,9 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
         """
         reporting = FlextInfraReportingService()
-        notes_dir = reporting.get_report_dir(root, "project", "release") / tag
+        notes_dir = (
+            reporting.get_report_dir(root, c.Infra.Toml.PROJECT, "release") / tag
+        )
         try:
             notes_dir.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
@@ -220,7 +225,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
         return FlextInfraCommandRunner().run_checked(
-            ["make", "validate", "VALIDATE_SCOPE=workspace"],
+            [c.Infra.Cli.MAKE, "validate", "VALIDATE_SCOPE=workspace"],
             cwd=root,
         )
 
@@ -404,10 +409,12 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         """Collect Git commit messages between two tags."""
         git = FlextInfraGitService()
         tag_result = git.tag_exists(root, tag)
-        target = tag if (tag_result.is_success and tag_result.value) else "HEAD"
+        target = (
+            tag if (tag_result.is_success and tag_result.value) else c.Infra.Git.HEAD
+        )
         rev = f"{previous}..{target}" if previous else target
 
-        runner = FlextInfraCommandRunner()
+        runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         result = runner.capture(
             [
                 c.Infra.Cli.GIT,
@@ -428,7 +435,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         project_names: list[str],
     ) -> r[bool]:
         """Create local release branches for workspace and projects."""
-        runner = FlextInfraCommandRunner()
+        runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         branch = f"release/{version}"
         result = runner.run_checked(
             [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CHECKOUT, "-B", branch],
@@ -456,7 +463,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         exists_result = git.tag_exists(root, tag)
         if exists_result.is_success and exists_result.value:
             return r[bool].ok(True)
-        runner = FlextInfraCommandRunner()
+        runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         return runner.run_checked(
             [
                 c.Infra.Cli.GIT,
@@ -488,7 +495,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         """Route to the correct phase method."""
         if phase == "validate":
             return self.phase_validate(root, dry_run=dry_run)
-        if phase == "version":
+        if phase == c.Infra.Toml.VERSION:
             return self.phase_version(
                 root,
                 version,
@@ -496,7 +503,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
                 dry_run=dry_run,
                 dev_suffix=dev_suffix,
             )
-        if phase == "build":
+        if phase == c.Infra.Directories.BUILD:
             return self.phase_build(root, version, project_names)
         if phase == "publish":
             return self.phase_publish(
@@ -525,7 +532,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
-        project_list: list[m.Infra.ProjectInfo] = (
+        project_list: list[m.Infra.Workspace.ProjectInfo] = (
             projects_result.value if projects_result.is_success else []
         )
 
@@ -546,7 +553,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             "",
             "- root",
         ]
-        lines.extend(f"- {p.name}" for p in project_list)
+        lines.extend(f"- {proj.name}" for proj in project_list)
         lines.extend([
             "",
             "## Changes since last tag",
@@ -573,7 +580,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
     def _previous_tag(self, root: Path, tag: str) -> r[str]:
         """Find the tag immediately preceding the given tag."""
-        runner = FlextInfraCommandRunner()
+        runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         result = runner.capture(
             [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.TAG, "--sort=-v:refname"],
             cwd=root,
@@ -592,14 +599,21 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
     def _push_release(self, root: Path, tag: str) -> r[bool]:
         """Push branch and tag to remote origin."""
-        runner = FlextInfraCommandRunner()
+        runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         result = runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "origin", "HEAD"], cwd=root
+            [
+                c.Infra.Cli.GIT,
+                c.Infra.Cli.GitCmd.PUSH,
+                c.Infra.Git.ORIGIN,
+                c.Infra.Git.HEAD,
+            ],
+            cwd=root,
         )
         if result.is_failure:
             return result
         return runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, "origin", tag], cwd=root
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, c.Infra.Git.ORIGIN, tag],
+            cwd=root,
         )
 
     def _update_changelog(
@@ -610,9 +624,9 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
         notes_path: Path,
     ) -> r[bool]:
         """Update changelog and release notes files."""
-        changelog_path = root / "docs" / "CHANGELOG.md"
-        latest_path = root / "docs" / "releases" / "latest.md"
-        tagged_path = root / "docs" / "releases" / f"{tag}.md"
+        changelog_path = root / c.Infra.Directories.DOCS / "CHANGELOG.md"
+        latest_path = root / c.Infra.Directories.DOCS / "releases" / "latest.md"
+        tagged_path = root / c.Infra.Directories.DOCS / "releases" / f"{tag}.md"
 
         try:
             notes_text = notes_path.read_text(encoding=c.Infra.Encoding.DEFAULT)

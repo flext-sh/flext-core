@@ -58,7 +58,9 @@ class FlextInfraDocsShared:
                     part.strip() for part in requested[0].split(" ") if part.strip()
                 ]
             return requested
-        result: r[list[m.Infra.ProjectInfo]] = _discovery.discover_projects(root)
+        result: r[list[m.Infra.Workspace.ProjectInfo]] = _discovery.discover_projects(
+            root
+        )
         if result.is_success:
             return [p.name for p in result.value]
         return []
@@ -105,7 +107,7 @@ class FlextInfraDocsShared:
     @staticmethod
     def iter_markdown_files(root: Path) -> list[Path]:
         """Recursively collect markdown files under the docs scope."""
-        docs_root = root / "docs"
+        docs_root = root / c.Infra.Directories.DOCS
         search_root = docs_root if docs_root.is_dir() else root
         return sorted(
             path

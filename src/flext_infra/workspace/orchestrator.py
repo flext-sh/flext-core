@@ -15,13 +15,20 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextLogger, FlextService, r
-from flext_infra import FlextInfraCommandRunner, FlextInfraReportingService, m, output
+from flext_core import FlextLogger, r, s
+from flext_infra import (
+    FlextInfraCommandRunner,
+    FlextInfraReportingService,
+    c,
+    m,
+    output,
+    p,
+)
 
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
+class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
     """Infrastructure service for multi-project make orchestration.
 
     Executes a make verb across a list of projects sequentially, capturing
@@ -33,13 +40,15 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
     def __init__(self) -> None:
         """Initialize the orchestrator service."""
         super().__init__()
-        self._runner = FlextInfraCommandRunner()
-        self._reporting = FlextInfraReportingService()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._reporting: FlextInfraReportingService = FlextInfraReportingService()
 
     @override
-    def execute(self) -> r[list[m.Infra.CommandOutput]]:
+    def execute(self) -> r[list[m.Infra.Core.CommandOutput]]:
         """Not used; call orchestrate() directly instead."""
-        return r[list[m.Infra.CommandOutput]].fail("Use orchestrate() method directly")
+        return r[list[m.Infra.Core.CommandOutput]].fail(
+            "Use orchestrate() method directly"
+        )
 
     def orchestrate(
         self,
@@ -48,7 +57,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
         *,
         fail_fast: bool = False,
         make_args: Sequence[str] = (),
-    ) -> r[list[m.Infra.CommandOutput]]:
+    ) -> r[list[m.Infra.Core.CommandOutput]]:
         """Execute make verb across projects with per-project logging.
 
         Args:
@@ -63,7 +72,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
         """
         output.header("Workspace Orchestration")
         try:
-            results: list[m.Infra.CommandOutput] = []
+            results: list[m.Infra.Core.CommandOutput] = []
             total = len(projects)
             success = 0
             failed = 0
@@ -74,7 +83,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
                 output.progress(idx, total, project, verb)
                 if skipped:
                     results.append(
-                        m.Infra.CommandOutput(
+                        m.Infra.Core.CommandOutput(
                             stdout="",
                             stderr="",
                             exit_code=0,
@@ -92,7 +101,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
                 if output_result.is_failure:
                     failed += 1
                     results.append(
-                        m.Infra.CommandOutput(
+                        m.Infra.Core.CommandOutput(
                             stdout="",
                             stderr=output_result.error or "project execution failed",
                             exit_code=1,
@@ -104,11 +113,14 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
                     continue
 
                 output_value = output_result.value
-                cmd_output: m.Infra.CommandOutput = (
+                cmd_output: m.Infra.Core.CommandOutput = (
                     output_value
-                    if isinstance(output_value, m.Infra.CommandOutput)
-                    else m.Infra.CommandOutput(
-                        stdout="", stderr="unknown", exit_code=1, duration=0.0
+                    if isinstance(output_value, m.Infra.Core.CommandOutput)
+                    else m.Infra.Core.CommandOutput(
+                        stdout="",
+                        stderr=c.Infra.Defaults.UNKNOWN,
+                        exit_code=1,
+                        duration=0.0,
                     )
                 )
                 results.append(cmd_output)
@@ -122,10 +134,12 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
 
             elapsed_total = time.monotonic() - started_total
             output.summary(verb, total, success, failed, skipped, elapsed_total)
-            return r[list[m.Infra.CommandOutput]].ok(results)
+            return r[list[m.Infra.Core.CommandOutput]].ok(results)
 
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
-            return r[list[m.Infra.CommandOutput]].fail(f"Orchestration failed: {exc}")
+            return r[list[m.Infra.Core.CommandOutput]].fail(
+                f"Orchestration failed: {exc}"
+            )
 
     def _run_project(
         self,
@@ -134,7 +148,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
         _index: int,
         *,
         make_args: list[str],
-    ) -> r[m.Infra.CommandOutput]:
+    ) -> r[m.Infra.Core.CommandOutput]:
         """Execute make verb for a single project.
 
         Args:
@@ -157,7 +171,7 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
         started = time.monotonic()
 
         proc_result = self._runner.run_to_file(
-            ["make", "-C", project, verb, *make_args],
+            [c.Infra.Cli.MAKE, "-C", project, verb, *make_args],
             log_path,
             env={"NO_COLOR": "1", **os.environ},
         )
@@ -172,8 +186,8 @@ class FlextInfraOrchestratorService(FlextService[list[m.Infra.CommandOutput]]):
             f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})",
         )
 
-        return r[m.Infra.CommandOutput].ok(
-            m.Infra.CommandOutput(
+        return r[m.Infra.Core.CommandOutput].ok(
+            m.Infra.Core.CommandOutput(
                 stdout=str(log_path),
                 stderr=stderr,
                 exit_code=return_code,

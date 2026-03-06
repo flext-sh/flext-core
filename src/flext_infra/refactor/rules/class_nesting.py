@@ -683,7 +683,7 @@ class ClassNestingRefactorRule:
     def _rewrite_scope(self, entry: _MappingEntry) -> str:
         raw_scope = entry.get("rewrite_scope", "file")
         scope = raw_scope.strip().lower()
-        if scope in {"file", "project", "workspace"}:
+        if scope in {"file", c.Infra.Toml.PROJECT, "workspace"}:
             return scope
         return "file"
 
@@ -694,8 +694,8 @@ class ClassNestingRefactorRule:
             return set()
 
         tokens: set[str] = set()
-        if "src" in parts:
-            src_index = parts.index("src")
+        if c.Infra.Paths.DEFAULT_SRC_DIR in parts:
+            src_index = parts.index(c.Infra.Paths.DEFAULT_SRC_DIR)
             if src_index > 0:
                 tokens.add(parts[src_index - 1])
             if src_index + 1 < len(parts):
@@ -706,8 +706,8 @@ class ClassNestingRefactorRule:
         normalized = path_value.as_posix().replace("\\", "/")
         path = Path(normalized)
         parts = path.parts
-        if "src" in parts:
-            src_index = parts.index("src")
+        if c.Infra.Paths.DEFAULT_SRC_DIR in parts:
+            src_index = parts.index(c.Infra.Paths.DEFAULT_SRC_DIR)
             suffix = parts[src_index + 1 :]
             if suffix:
                 return Path(*suffix).as_posix()

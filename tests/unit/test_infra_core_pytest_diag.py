@@ -5,10 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from flext_infra.core.pytest_diag import (
-    FlextInfraPytestDiagExtractor,
-    _DiagResult,
-)
+from flext_infra import m
+from flext_infra.core import pytest_diag as pytest_diag_module
+
+FlextInfraPytestDiagExtractor = pytest_diag_module.FlextInfraPytestDiagExtractor
+DiagResult = getattr(pytest_diag_module, "_DiagResult")
+parse_xml = getattr(FlextInfraPytestDiagExtractor, "_parse_xml")
+parse_log_into_diag = getattr(FlextInfraPytestDiagExtractor, "_parse_log_into_diag")
+extract_warnings = getattr(FlextInfraPytestDiagExtractor, "_extract_warnings")
+extract_slow_from_log = getattr(FlextInfraPytestDiagExtractor, "_extract_slow_from_log")
 
 
 class TestDiagResult:
@@ -16,7 +21,7 @@ class TestDiagResult:
 
     def test_diag_result_init(self) -> None:
         """Test _DiagResult initializes correctly."""
-        diag = _DiagResult()
+        diag = DiagResult()
         assert diag.failed_cases == []
         assert diag.error_traces == []
         assert diag.skip_cases == []
@@ -25,9 +30,9 @@ class TestDiagResult:
 
     def test_diag_result_has_slots(self) -> None:
         """Test _DiagResult uses __slots__."""
-        _DiagResult()
-        assert hasattr(_DiagResult, "__slots__")
-        assert len(_DiagResult.__slots__) == 5
+        DiagResult()
+        assert hasattr(DiagResult, "__slots__")
+        assert len(DiagResult.__slots__) == 5
 
 
 class TestFlextInfraPytestDiagExtractor:
@@ -51,7 +56,7 @@ class TestFlextInfraPytestDiagExtractor:
 
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
-        assert isinstance(result.value, dict)
+        assert isinstance(result.value, m.Infra.Core.PytestDiagnostics)
 
     def test_extract_with_missing_junit_xml_uses_log(self, tmp_path: Path) -> None:
         """Test extract falls back to log parsing when XML missing."""
@@ -77,8 +82,8 @@ class TestFlextInfraPytestDiagExtractor:
 
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
-        assert result.value["failed_count"] == 1
-        error_traces = result.value["error_traces"]
+        assert result.value.failed_count == 1
+        error_traces = result.value.error_traces
         assert isinstance(error_traces, list)
         assert len(error_traces) > 0
 
@@ -96,7 +101,7 @@ class TestFlextInfraPytestDiagExtractor:
 
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
-        assert result.value["error_count"] == 1
+        assert result.value.error_count == 1
 
     def test_extract_with_skipped_tests_reports_skips(self, tmp_path: Path) -> None:
         """Test that extract reports skipped tests."""
@@ -112,7 +117,7 @@ class TestFlextInfraPytestDiagExtractor:
 
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
-        assert result.value["skipped_count"] == 1
+        assert result.value.skipped_count == 1
 
     def test_extract_with_timing_data_extracts_slow_tests(self, tmp_path: Path) -> None:
         """Test that extract extracts slow test timings."""
@@ -129,7 +134,7 @@ class TestFlextInfraPytestDiagExtractor:
 
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
-        slow_entries = result.value["slow_entries"]
+        slow_entries = result.value.slow_entries
         assert isinstance(slow_entries, list)
         assert len(slow_entries) > 0
 
@@ -174,28 +179,26 @@ class TestFlextInfraPytestDiagExtractor:
 
     def test_parse_xml_with_missing_file_returns_false(self, tmp_path: Path) -> None:
         """Test _parse_xml returns False for missing file."""
-        diag = _DiagResult()
-        result = FlextInfraPytestDiagExtractor._parse_xml(
-            tmp_path / "missing.xml", diag
-        )
+        diag = DiagResult()
+        result = parse_xml(tmp_path / "missing.xml", diag)
         assert result is False
 
     def test_parse_xml_with_invalid_xml_returns_false(self, tmp_path: Path) -> None:
         """Test _parse_xml returns False for invalid XML."""
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text("not valid xml")
-        diag = _DiagResult()
-        result = FlextInfraPytestDiagExtractor._parse_xml(junit_xml, diag)
+        diag = DiagResult()
+        result = parse_xml(junit_xml, diag)
         assert result is False
 
     def test_parse_xml_with_none_root_returns_false(self, tmp_path: Path) -> None:
         """Test _parse_xml returns False when root is None."""
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text('<?xml version="1.0"?>')
-        diag = _DiagResult()
+        diag = DiagResult()
         with patch("flext_infra.core.pytest_diag.DefusedET.parse") as mock_parse:
             mock_parse.return_value.getroot.return_value = None
-            result = FlextInfraPytestDiagExtractor._parse_xml(junit_xml, diag)
+            result = parse_xml(junit_xml, diag)
             assert result is False
 
     def test_parse_xml_extracts_test_timing(self, tmp_path: Path) -> None:
@@ -207,8 +210,8 @@ class TestFlextInfraPytestDiagExtractor:
             '<testcase name="test_b" classname="TestClass" time="0.5"/>'
             "</testsuite></testsuites>"
         )
-        diag = _DiagResult()
-        result = FlextInfraPytestDiagExtractor._parse_xml(junit_xml, diag)
+        diag = DiagResult()
+        result = parse_xml(junit_xml, diag)
         assert result is True
         assert len(diag.slow_entries) == 2
 
@@ -220,8 +223,8 @@ class TestFlextInfraPytestDiagExtractor:
             '<testcase name="test_a" classname="TestClass" time="invalid"/>'
             "</testsuite></testsuites>"
         )
-        diag = _DiagResult()
-        result = FlextInfraPytestDiagExtractor._parse_xml(junit_xml, diag)
+        diag = DiagResult()
+        result = parse_xml(junit_xml, diag)
         assert result is True
 
     def test_parse_log_into_diag_extracts_failures(self, tmp_path: Path) -> None:
@@ -230,8 +233,8 @@ class TestFlextInfraPytestDiagExtractor:
             "FAILED test_case.py::test_foo",
             "PASSED test_case.py::test_bar",
         ]
-        diag = _DiagResult()
-        FlextInfraPytestDiagExtractor._parse_log_into_diag(lines, diag)
+        diag = DiagResult()
+        parse_log_into_diag(lines, diag)
         assert len(diag.failed_cases) > 0
 
     def test_parse_log_into_diag_extracts_skips(self, tmp_path: Path) -> None:
@@ -240,8 +243,8 @@ class TestFlextInfraPytestDiagExtractor:
             "SKIPPED test_case.py::test_skip",
             "PASSED test_case.py::test_pass",
         ]
-        diag = _DiagResult()
-        FlextInfraPytestDiagExtractor._parse_log_into_diag(lines, diag)
+        diag = DiagResult()
+        parse_log_into_diag(lines, diag)
         assert len(diag.skip_cases) > 0
 
     def test_parse_log_into_diag_extracts_error_block(self, tmp_path: Path) -> None:
@@ -252,8 +255,8 @@ class TestFlextInfraPytestDiagExtractor:
             "AssertionError: expected True",
             "=== short test summary info ===",
         ]
-        diag = _DiagResult()
-        FlextInfraPytestDiagExtractor._parse_log_into_diag(lines, diag)
+        diag = DiagResult()
+        parse_log_into_diag(lines, diag)
         assert len(diag.error_traces) > 0
 
     def test_extract_warnings_with_warnings_section(self, tmp_path: Path) -> None:
@@ -263,8 +266,8 @@ class TestFlextInfraPytestDiagExtractor:
             "DeprecationWarning: test warning",
             "-- Docs: https://docs.pytest.org/",
         ]
-        diag = _DiagResult()
-        FlextInfraPytestDiagExtractor._extract_warnings(lines, diag)
+        diag = DiagResult()
+        extract_warnings(lines, diag)
         assert len(diag.warning_lines) > 0
 
     def test_extract_warnings_with_inline_warnings(self, tmp_path: Path) -> None:
@@ -273,8 +276,8 @@ class TestFlextInfraPytestDiagExtractor:
             "test_case.py:10: DeprecationWarning: test",
             "test_case.py:20: UserWarning: another",
         ]
-        diag = _DiagResult()
-        FlextInfraPytestDiagExtractor._extract_warnings(lines, diag)
+        diag = DiagResult()
+        extract_warnings(lines, diag)
         assert len(diag.warning_lines) > 0
 
     def test_extract_slow_from_log_extracts_durations(self, tmp_path: Path) -> None:
@@ -285,8 +288,8 @@ class TestFlextInfraPytestDiagExtractor:
             "0.50s call     test_case.py::test_fast",
             "=== 2 passed in 6.00s ===",
         ]
-        diag = _DiagResult()
-        FlextInfraPytestDiagExtractor._extract_slow_from_log(lines, diag)
+        diag = DiagResult()
+        extract_slow_from_log(lines, diag)
         assert len(diag.slow_entries) > 0
 
     def test_extract_returns_all_diagnostic_fields(self, tmp_path: Path) -> None:
@@ -302,12 +305,12 @@ class TestFlextInfraPytestDiagExtractor:
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         value = result.value
-        assert "failed_count" in value
-        assert "error_count" in value
-        assert "warning_count" in value
-        assert "skipped_count" in value
-        assert "failed_cases" in value
-        assert "error_traces" in value
-        assert "warning_lines" in value
-        assert "skip_cases" in value
-        assert "slow_entries" in value
+        assert value.failed_count == 0
+        assert value.error_count == 0
+        assert value.warning_count == 0
+        assert value.skipped_count == 0
+        assert isinstance(value.failed_cases, list)
+        assert isinstance(value.error_traces, list)
+        assert isinstance(value.warning_lines, list)
+        assert isinstance(value.skip_cases, list)
+        assert isinstance(value.slow_entries, list)

@@ -121,11 +121,11 @@ def test_create_auto_discover_and_mode_mapping(
 
     registry = FlextRegistry()
     query_details = registry._create_registration_details(
-        m.Handler.RegistrationResult(handler_name="q", status="active", mode="query"),
+        m.HandlerRegistrationResult(handler_name="q", status="active", mode="query"),
         "k1",
     )
     event_details = registry._create_registration_details(
-        m.Handler.RegistrationResult(handler_name="e", status="active", mode="event"),
+        m.HandlerRegistrationResult(handler_name="e", status="active", mode="event"),
         "k2",
     )
     assert query_details.handler_mode == c.Cqrs.HandlerType.QUERY

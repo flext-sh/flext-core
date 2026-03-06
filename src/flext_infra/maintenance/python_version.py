@@ -29,13 +29,13 @@ import sys
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextLogger, FlextService, r
+from flext_core import FlextLogger, r, s
 from flext_infra import FlextInfraDiscoveryService, c
 
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class FlextInfraPythonVersionEnforcer(FlextService[int]):
+class FlextInfraPythonVersionEnforcer(s[int]):
     """Service for enforcing Python version constraints across workspace.
 
     Validates that all projects have consistent Python version requirements

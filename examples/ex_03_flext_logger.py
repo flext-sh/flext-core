@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import dataclasses
 import sys
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextRuntime, c, u
+from flext_core import FlextContainer, FlextLogger, FlextRuntime, c, u
 
 FlextRuntime.configure_structlog()
 
@@ -64,18 +63,6 @@ def _verify() -> None:
     else:
         expected_path.write_text(actual, encoding="utf-8")
         sys.stdout.write(f"GENERATED: {expected_path.name} ({n} checks)\n")
-
-
-@dataclasses.dataclass
-class _ContainerConfig:
-    """Minimal container configuration stub."""
-
-    log_level: str = "INFO"
-
-
-class _ContainerStub:
-    def __init__(self, log_level: str) -> None:
-        self.config = _ContainerConfig(log_level)
 
 
 def demo_factory_methods() -> None:
@@ -168,7 +155,7 @@ def demo_container_integration() -> None:
     """Exercise container integration methods."""
     _section("container")
 
-    container = _ContainerStub(log_level="DEBUG")
+    container = FlextContainer()
     logger = FlextLogger.for_container(container, level="DEBUG", worker="w-1")
     _check("for_container.type", type(logger).__name__)
     _check("for_container.debug.ok", logger.debug("for_container debug").is_success)

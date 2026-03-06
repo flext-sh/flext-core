@@ -11,14 +11,26 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from flext_core import r
-from flext_infra.github.__main__ import (
-    _run_lint,
-    _run_pr,
-    _run_pr_workspace,
-    _run_workflows,
-    main,
-)
+from flext_infra import m
+from flext_infra.github import __main__ as github_main
 from flext_infra.github.workflows import SyncOperation
+
+run_lint = getattr(github_main, "_run_lint")
+run_pr = getattr(github_main, "_run_pr")
+run_pr_workspace = getattr(github_main, "_run_pr_workspace")
+run_workflows = getattr(github_main, "_run_workflows")
+main = github_main.main
+
+
+def _orchestration_result(
+    *, fail: int = 0, total: int = 1
+) -> m.Infra.Github.PrOrchestrationResult:
+    return m.Infra.Github.PrOrchestrationResult(
+        total=total,
+        success=max(total - fail, 0),
+        fail=fail,
+        results=[],
+    )
 
 
 class TestRunWorkflows:
@@ -34,7 +46,7 @@ class TestRunWorkflows:
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             argv = ["--workspace-root", str(tmp_path)]
-            result = _run_workflows(argv)
+            result = run_workflows(argv)
 
             assert result == 0
 
@@ -50,7 +62,7 @@ class TestRunWorkflows:
             )
 
             argv = ["--workspace-root", str(tmp_path)]
-            result = _run_workflows(argv)
+            result = run_workflows(argv)
 
             assert result == 1
 
@@ -64,7 +76,7 @@ class TestRunWorkflows:
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             argv = ["--workspace-root", str(tmp_path), "--apply"]
-            result = _run_workflows(argv)
+            result = run_workflows(argv)
 
             assert result == 0
             mock_syncer.sync_workspace.assert_called_once()
@@ -81,7 +93,7 @@ class TestRunWorkflows:
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             argv = ["--workspace-root", str(tmp_path), "--prune"]
-            result = _run_workflows(argv)
+            result = run_workflows(argv)
 
             assert result == 0
             call_kwargs = mock_syncer.sync_workspace.call_args[1]
@@ -98,7 +110,7 @@ class TestRunWorkflows:
 
             report_path = tmp_path / "report.json"
             argv = ["--workspace-root", str(tmp_path), "--report", str(report_path)]
-            result = _run_workflows(argv)
+            result = run_workflows(argv)
 
             assert result == 0
             call_kwargs = mock_syncer.sync_workspace.call_args[1]
@@ -115,10 +127,12 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
+            mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+            )
 
             argv = ["--root", str(tmp_path)]
-            result = _run_lint(argv)
+            result = run_lint(argv)
 
             assert result == 0
 
@@ -132,7 +146,7 @@ class TestRunLint:
             mock_linter.lint.return_value = r[dict[str, object]].fail("lint failed")
 
             argv = ["--root", str(tmp_path)]
-            result = _run_lint(argv)
+            result = run_lint(argv)
 
             assert result == 1
 
@@ -143,11 +157,13 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
+            mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+            )
 
             report_path = tmp_path / "report.json"
             argv = ["--root", str(tmp_path), "--report", str(report_path)]
-            result = _run_lint(argv)
+            result = run_lint(argv)
 
             assert result == 0
             call_kwargs = mock_linter.lint.call_args[1]
@@ -160,10 +176,12 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
+            mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+            )
 
             argv = ["--root", str(tmp_path), "--strict"]
-            result = _run_lint(argv)
+            result = run_lint(argv)
 
             assert result == 0
             call_kwargs = mock_linter.lint.call_args[1]
@@ -179,7 +197,7 @@ class TestRunPr:
             mock_pr_main.return_value = 0
 
             argv = ["--repo-root", "/tmp", "--action", "status"]
-            result = _run_pr(argv)
+            result = run_pr(argv)
 
             assert result == 0
             mock_pr_main.assert_called_once()
@@ -192,7 +210,7 @@ class TestRunPr:
                 mock_pr_main.return_value = 0
 
                 argv = ["--repo-root", "/tmp", "--action", "status"]
-                _run_pr(argv)
+                run_pr(argv)
 
                 # sys.argv should be set with the command and remaining args
                 assert sys.argv[0] == "flext-infra github pr"
@@ -211,10 +229,12 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=0))
 
             argv = ["--workspace-root", str(tmp_path)]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 0
 
@@ -225,12 +245,12 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].fail(
-                "orchestration failed"
-            )
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].fail("orchestration failed")
 
             argv = ["--workspace-root", str(tmp_path)]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 1
 
@@ -241,10 +261,12 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 2})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=2, total=2))
 
             argv = ["--workspace-root", str(tmp_path)]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 1
 
@@ -255,7 +277,9 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=0, total=2))
 
             argv = [
                 "--workspace-root",
@@ -265,7 +289,7 @@ class TestRunPrWorkspace:
                 "--project",
                 "proj2",
             ]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
@@ -278,10 +302,12 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=0))
 
             argv = ["--workspace-root", str(tmp_path), "--branch", "feature/test"]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
@@ -294,10 +320,12 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=0))
 
             argv = ["--workspace-root", str(tmp_path), "--checkpoint", "1"]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
@@ -310,10 +338,12 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=0))
 
             argv = ["--workspace-root", str(tmp_path), "--fail-fast", "1"]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
@@ -326,7 +356,9 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[
+                m.Infra.Github.PrOrchestrationResult
+            ].ok(_orchestration_result(fail=0))
 
             argv = [
                 "--workspace-root",
@@ -338,7 +370,7 @@ class TestRunPrWorkspace:
                 "--pr-head",
                 "feature/test",
             ]
-            result = _run_pr_workspace(argv)
+            result = run_pr_workspace(argv)
 
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
@@ -402,9 +434,9 @@ class TestMain:
             ) as mock_linter_class:
                 mock_linter = Mock()
                 mock_linter_class.return_value = mock_linter
-                mock_linter.lint.return_value = r[dict[str, object]].ok({
-                    "status": "ok"
-                })
+                mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
+                    m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+                )
 
                 sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                 result = main()
@@ -441,9 +473,9 @@ class TestMain:
             ) as mock_manager_class:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
-                mock_manager.orchestrate.return_value = r[dict[str, object]].ok({
-                    "fail": 0
-                })
+                mock_manager.orchestrate.return_value = r[
+                    m.Infra.Github.PrOrchestrationResult
+                ].ok(_orchestration_result(fail=0))
 
                 sys.argv = [
                     "flext-infra",
@@ -476,9 +508,13 @@ class TestMain:
                 ) as mock_linter_class:
                     mock_linter = Mock()
                     mock_linter_class.return_value = mock_linter
-                    mock_linter.lint.return_value = r[dict[str, object]].ok({
-                        "status": "ok"
-                    })
+                    mock_linter.lint.return_value = r[
+                        m.Infra.Github.WorkflowLintResult
+                    ].ok(
+                        m.Infra.Github.WorkflowLintResult.model_validate({
+                            "status": "ok"
+                        })
+                    )
 
                     sys.argv = [
                         "flext-infra",

@@ -507,7 +507,7 @@ class TestFlextRegistry:
     ) -> None:
         """Test safe handler mode extraction."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        assert registry._safe_get_handler_mode(mode) == expected
+        assert registry._safe_get_handler_mode(mode or "") == expected
 
     @pytest.mark.parametrize(
         ("status", "expected"),

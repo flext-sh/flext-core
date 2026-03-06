@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 from unittest.mock import Mock
 
 from flext_core import r
@@ -132,10 +131,10 @@ class TestFlextInfraPrWorkspaceManager:
     def test_default_initialization(self) -> None:
         """Test manager initializes with default dependencies."""
         manager = FlextInfraPrWorkspaceManager()
-        assert manager._runner is not None
-        assert manager._git is not None
-        assert manager._selector is not None
-        assert manager._reporting is not None
+        assert getattr(manager, "_runner", None) is not None
+        assert getattr(manager, "_git", None) is not None
+        assert getattr(manager, "_selector", None) is not None
+        assert getattr(manager, "_reporting", None) is not None
 
 
 class TestCheckpoint:
@@ -277,7 +276,7 @@ class TestRunPr:
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         assert result.is_success
-        assert result.value["status"] == "OK"
+        assert result.value.status == "OK"
 
     def test_subproject(self, tmp_path: Path) -> None:
         """Test run_pr for subproject."""
@@ -316,7 +315,7 @@ class TestRunPr:
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         assert result.is_success
-        assert result.value["exit_code"] == 1
+        assert result.value.exit_code == 1
 
 
 class TestOrchestrate:
@@ -347,7 +346,7 @@ class TestOrchestrate:
             tmp_path, include_root=False, checkpoint=False, branch=""
         )
         assert result.is_success
-        assert result.value["fail"] == 0
+        assert result.value.fail == 0
 
     def test_project_resolution_failure(self, tmp_path: Path) -> None:
         """Test orchestrate when project resolution fails."""
@@ -387,12 +386,7 @@ class TestOrchestrate:
             tmp_path, include_root=False, fail_fast=True, checkpoint=False, branch=""
         )
         assert result.is_success
-        fail_count = (
-            cast("int", result.value.get("fail", 0))
-            if isinstance(result.value, dict)
-            else 0
-        )
-        assert fail_count >= 1
+        assert result.value.fail >= 1
 
     def test_include_root(self, tmp_path: Path) -> None:
         """Test orchestrate includes root repository."""
@@ -416,7 +410,7 @@ class TestOrchestrate:
             tmp_path, include_root=True, checkpoint=False, branch=""
         )
         assert result.is_success
-        assert result.value["total"] == 1
+        assert result.value.total == 1
 
     def test_orchestrate_with_checkpoint(self, tmp_path: Path) -> None:
         """Test orchestrate with checkpoint enabled."""
@@ -471,7 +465,7 @@ class TestOrchestrate:
             tmp_path, include_root=False, fail_fast=True, checkpoint=False, branch=""
         )
         assert result.is_success
-        assert result.value["fail"] == 1
+        assert result.value.fail == 1
 
 
 class TestStaticMethods:
@@ -479,19 +473,24 @@ class TestStaticMethods:
 
     def test_repo_display_name_root(self, tmp_path: Path) -> None:
         """Test display name for root repository."""
-        result = FlextInfraPrWorkspaceManager._repo_display_name(tmp_path, tmp_path)
+        display_name = getattr(FlextInfraPrWorkspaceManager, "_repo_display_name")
+        result = display_name(tmp_path, tmp_path)
         assert result == tmp_path.name
 
     def test_repo_display_name_subproject(self, tmp_path: Path) -> None:
         """Test display name for subproject."""
         sub = tmp_path / "my-project"
         sub.mkdir()
-        result = FlextInfraPrWorkspaceManager._repo_display_name(sub, tmp_path)
+        display_name = getattr(FlextInfraPrWorkspaceManager, "_repo_display_name")
+        result = display_name(sub, tmp_path)
         assert result == "my-project"
 
     def test_build_root_command(self, tmp_path: Path) -> None:
         """Test root command building."""
-        cmd = FlextInfraPrWorkspaceManager._build_root_command(
+        build_root_command = getattr(
+            FlextInfraPrWorkspaceManager, "_build_root_command"
+        )
+        cmd = build_root_command(
             tmp_path, {"action": "create", "head": "feature", "title": "Test"}
         )
         assert "python" in cmd
@@ -504,9 +503,10 @@ class TestStaticMethods:
 
     def test_build_subproject_command(self, tmp_path: Path) -> None:
         """Test subproject command building."""
-        cmd = FlextInfraPrWorkspaceManager._build_subproject_command(
-            tmp_path, {"action": "status", "head": "feat"}
+        build_subproject_command = getattr(
+            FlextInfraPrWorkspaceManager, "_build_subproject_command"
         )
+        cmd = build_subproject_command(tmp_path, {"action": "status", "head": "feat"})
         assert "make" in cmd
         assert "-C" in cmd
         assert "pr" in cmd
@@ -515,13 +515,19 @@ class TestStaticMethods:
 
     def test_build_root_command_defaults(self, tmp_path: Path) -> None:
         """Test root command with default values."""
-        cmd = FlextInfraPrWorkspaceManager._build_root_command(tmp_path, {})
+        build_root_command = getattr(
+            FlextInfraPrWorkspaceManager, "_build_root_command"
+        )
+        cmd = build_root_command(tmp_path, {})
         assert "--action" in cmd
         assert "status" in cmd
 
     def test_build_subproject_command_no_optional(self, tmp_path: Path) -> None:
         """Test subproject command without optional keys."""
-        cmd = FlextInfraPrWorkspaceManager._build_subproject_command(tmp_path, {})
+        build_subproject_command = getattr(
+            FlextInfraPrWorkspaceManager, "_build_subproject_command"
+        )
+        cmd = build_subproject_command(tmp_path, {})
         assert "make" in cmd
         # head, number, title, body are optional — should not appear
         assert not [c for c in cmd if c.startswith("PR_HEAD=")]

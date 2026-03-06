@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-from flext_infra import FlextInfraPathResolver, FlextInfraVersioningService, output
+from flext_infra import FlextInfraPathResolver, FlextInfraVersioningService, c, output
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 
@@ -104,12 +104,14 @@ def main() -> int:
     root = root_result.value
 
     phases = (
-        ["validate", "version", "build", "publish"]
+        ["validate", c.Infra.Toml.VERSION, c.Infra.Directories.BUILD, "publish"]
         if args.phase == "all"
         else [part.strip() for part in args.phase.split(",") if part.strip()]
     )
 
-    needs_version = bool({"version", "build", "publish"} & set(phases))
+    needs_version = bool(
+        {c.Infra.Toml.VERSION, c.Infra.Directories.BUILD, "publish"} & set(phases)
+    )
     if needs_version:
         try:
             version = _resolve_version(args, root)

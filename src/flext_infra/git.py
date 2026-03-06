@@ -39,7 +39,7 @@ class FlextInfraGitService(s[str]):
 
         """
         return self._runner.capture(
-            [c.Infra.Cli.GIT, "rev-parse", "--abbrev-ref", "HEAD"],
+            [c.Infra.Cli.GIT, "rev-parse", "--abbrev-ref", c.Infra.Git.HEAD],
             cwd=repo_root,
         )
 

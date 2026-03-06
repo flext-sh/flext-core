@@ -60,7 +60,7 @@ class ProjectClassifier:
             project_name = self._normalize_dependency_name(raw_name)
 
         dependencies: list[str] = []
-        raw_dependencies = raw_project.get("dependencies", [])
+        raw_dependencies = raw_project.get(c.Infra.Toml.DEPENDENCIES, [])
         if isinstance(raw_dependencies, list):
             for raw_dependency in raw_dependencies:
                 dependency_name = self._extract_dependency_name(raw_dependency)
@@ -191,7 +191,7 @@ class ProjectClassifier:
 
     def _dependency_to_class_stem(self, dependency: str) -> str:
         normalized = self._normalize_dependency_name(dependency)
-        if normalized == "flext-core":
+        if normalized == c.Infra.Packages.CORE:
             return "Flext"
 
         if normalized.startswith("flext-"):

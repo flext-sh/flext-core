@@ -10,11 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shutil
-from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import r, t
-from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService, m
+from flext_core import r
+from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService, m, p
 
 
 class FlextInfraWorkflowLinter:
@@ -25,11 +24,11 @@ class FlextInfraWorkflowLinter:
 
     def __init__(
         self,
-        runner: FlextInfraCommandRunner | None = None,
+        runner: p.Infra.CommandRunner | None = None,
         json_io: FlextInfraJsonService | None = None,
     ) -> None:
         """Initialize the workflow linter."""
-        self._runner = runner or FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraCommandRunner()
         self._json = json_io or FlextInfraJsonService()
 
     def lint(
@@ -38,7 +37,7 @@ class FlextInfraWorkflowLinter:
         *,
         report_path: Path | None = None,
         strict: bool = False,
-    ) -> r[Mapping[str, t.Scalar]]:
+    ) -> r[m.Infra.Github.WorkflowLintResult]:
         """Run actionlint on the repository and return results.
 
         Args:
@@ -52,42 +51,42 @@ class FlextInfraWorkflowLinter:
         """
         actionlint = shutil.which("actionlint")
         if actionlint is None:
-            payload_skipped: MutableMapping[str, t.Scalar] = {
-                "status": "skipped",
-                "reason": "actionlint not installed",
-            }
+            payload_skipped = m.Infra.Github.WorkflowLintResult(
+                status="skipped",
+                reason="actionlint not installed",
+            )
             if report_path is not None:
                 self._json.write(report_path, payload_skipped, sort_keys=True)
-            return r[Mapping[str, t.Scalar]].ok(payload_skipped)
+            return r[m.Infra.Github.WorkflowLintResult].ok(payload_skipped)
 
-        result: r[m.Infra.CommandOutput] = self._runner.run([actionlint], cwd=root)
+        result: r[m.Infra.Core.CommandOutput] = self._runner.run([actionlint], cwd=root)
 
         if result.is_success:
             output = result.value
-            payload: MutableMapping[str, t.Scalar] = {
-                "status": "ok",
-                "exit_code": output.exit_code,
-                "stdout": output.stdout,
-                "stderr": output.stderr,
-            }
+            payload = m.Infra.Github.WorkflowLintResult(
+                status="ok",
+                exit_code=output.exit_code,
+                stdout=output.stdout,
+                stderr=output.stderr,
+            )
         else:
             # actionlint returns non-zero on findings
             # Parse from error message since run() returns failure
-            payload = {
-                "status": "fail",
-                "exit_code": 1,
-                "detail": result.error or "",
-            }
+            payload = m.Infra.Github.WorkflowLintResult(
+                status="fail",
+                exit_code=1,
+                detail=result.error or "",
+            )
 
         if report_path is not None:
             self._json.write(report_path, payload, sort_keys=True)
 
-        if payload.get("status") == "fail" and strict:
-            return r[Mapping[str, t.Scalar]].fail(
+        if payload.status == "fail" and strict:
+            return r[m.Infra.Github.WorkflowLintResult].fail(
                 result.error or "actionlint found issues",
             )
 
-        return r[Mapping[str, t.Scalar]].ok(payload)
+        return r[m.Infra.Github.WorkflowLintResult].ok(payload)
 
 
 __all__ = ["FlextInfraWorkflowLinter"]

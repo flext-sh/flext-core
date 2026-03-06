@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import libcst as cst
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from flext_infra import FlextInfraCommandRunner, c, m
 
@@ -34,6 +34,28 @@ class _TopLevelClassCollector(cst.CSTVisitor):
     def leave_ClassDef(self, original_node: cst.ClassDef) -> None:
         _ = original_node
         self._depth -= 1
+
+
+class _AstGrepNameEntry(BaseModel):
+    text: str
+
+
+class _AstGrepMetaVariables(BaseModel):
+    single: dict[str, _AstGrepNameEntry]
+
+
+class _AstGrepStart(BaseModel):
+    line: int | None = None
+
+
+class _AstGrepRange(BaseModel):
+    start: _AstGrepStart | None = None
+
+
+class _AstGrepEntry(BaseModel):
+    file: str
+    meta_variables: _AstGrepMetaVariables = Field(alias="metaVariables")
+    range: _AstGrepRange | None = None
 
 
 class FlextInfraRefactorLooseClassScanner:
@@ -185,7 +207,7 @@ class FlextInfraRefactorLooseClassScanner:
             "--pattern",
             "class $NAME",
             "--lang",
-            "python",
+            c.Infra.Toml.PYTHON,
             "--json",
             str(project_root / c.Infra.Paths.DEFAULT_SRC_DIR),
         ]
@@ -199,47 +221,24 @@ class FlextInfraRefactorLooseClassScanner:
             return {}
 
         try:
-            entries_raw = json.loads(payload)
-        except json.JSONDecodeError:
-            return {}
-
-        if not isinstance(entries_raw, list):
+            entries = TypeAdapter(list[_AstGrepEntry]).validate_json(payload)
+        except ValidationError:
             return {}
 
         index: dict[Path, dict[str, int]] = {}
-        for item in cast("list[object]", entries_raw):
-            if not isinstance(item, dict):
+        for entry in entries:
+            name_entry = entry.meta_variables.single.get("NAME")
+            if name_entry is None:
                 continue
-            entry = cast("dict[str, object]", item)
-            file_raw = entry.get("file")
-            meta_raw = entry.get("metaVariables")
-            if not isinstance(file_raw, str) or not isinstance(meta_raw, dict):
-                continue
-            meta = cast("dict[str, object]", meta_raw)
-            single_raw = meta.get("single")
-            if not isinstance(single_raw, dict):
-                continue
-            single = cast("dict[str, object]", single_raw)
-            name_raw = single.get("NAME")
-            if not isinstance(name_raw, dict):
-                continue
-            name_entry = cast("dict[str, object]", name_raw)
-            class_name = name_entry.get("text")
-            if not isinstance(class_name, str):
-                continue
+            class_name = name_entry.text
 
             line = 1
-            range_raw = entry.get("range")
-            if isinstance(range_raw, dict):
-                range_dict = cast("dict[str, object]", range_raw)
-                start_raw = range_dict.get("start")
-                if isinstance(start_raw, dict):
-                    start_dict = cast("dict[str, object]", start_raw)
-                    line_raw = start_dict.get("line")
-                    if isinstance(line_raw, int) and line_raw > 0:
-                        line = line_raw
+            if entry.range is not None and entry.range.start is not None:
+                line_raw = entry.range.start.line
+                if line_raw is not None and line_raw > 0:
+                    line = line_raw
 
-            file_path = Path(file_raw)
+            file_path = Path(entry.file)
             if not file_path.is_absolute():
                 file_path = (project_root / file_path).resolve()
             names = index.setdefault(file_path, {})

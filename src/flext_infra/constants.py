@@ -86,6 +86,24 @@ class FlextInfraConstants(FlextConstants):
             DIR: Final[str] = ".git"
             """Git repository marker directory."""
 
+            ORIGIN: Final[str] = "origin"
+            """Default remote name."""
+
+            MAIN: Final[str] = "main"
+            """Default branch name."""
+
+            HEAD: Final[str] = "HEAD"
+            """Git HEAD reference."""
+
+        class Packages:
+            """Package naming constants used across infra modules."""
+
+            CORE: Final[str] = "flext-core"
+
+            CORE_UNDERSCORE: Final[str] = "flext_core"
+
+            ROOT: Final[str] = "flext"
+
         class Extensions:
             """File extension constants."""
 
@@ -109,6 +127,18 @@ class FlextInfraConstants(FlextConstants):
 
             TYPINGS: Final[str] = "typings"
             """Stub typings directory or poetry group name."""
+
+            DOCS: Final[str] = "docs"
+            """Documentation directory name."""
+
+            BUILD: Final[str] = "build"
+            """Build output directory name."""
+
+            DIST: Final[str] = "dist"
+            """Distribution output directory name."""
+
+            SITE: Final[str] = "site"
+            """Documentation site output directory."""
 
         class Timeouts:
             """Standard timeout values in seconds."""
@@ -333,6 +363,12 @@ class FlextInfraConstants(FlextConstants):
             GOVET: Final[str] = "go"
             """Go vet binary (invoked as 'go vet')."""
 
+            MAKE: Final[str] = "make"
+            """Make build tool binary."""
+
+            GH: Final[str] = "gh"
+            """GitHub CLI binary."""
+
             # -- Git subcommands -------------------------------------------------
 
             class GitCmd:
@@ -351,6 +387,11 @@ class FlextInfraConstants(FlextConstants):
                 LOG: Final[str] = "log"
                 REV_PARSE: Final[str] = "rev-parse"
                 CONFIG: Final[str] = "config"
+                BRANCH: Final[str] = "branch"
+                INIT: Final[str] = "init"
+                CLONE: Final[str] = "clone"
+                REMOTE: Final[str] = "remote"
+                VET: Final[str] = "vet"
 
             # -- Ruff subcommands ------------------------------------------------
 
@@ -376,6 +417,18 @@ class FlextInfraConstants(FlextConstants):
                 """ast-grep subcommand constants."""
 
                 SCAN: Final[str] = "scan"
+
+            # -- GH subcommands --------------------------------------------------
+
+            class GhCmd:
+                """GitHub CLI subcommand constants."""
+
+                PR: Final[str] = "pr"
+                VIEW: Final[str] = "view"
+                CREATE: Final[str] = "create"
+                MERGE: Final[str] = "merge"
+                SQUASH: Final[str] = "squash"
+                LIST: Final[str] = "list"
 
         class Gates:
             """Quality gate identifiers."""

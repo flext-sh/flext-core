@@ -6,17 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 import pytest
 
 from flext_core import c, m, r, u
-
-settings_models = __import__(
-    "flext_core._models.settings",
-    fromlist=["FlextModelsConfig"],
-)
-FlextModelsConfig = settings_models.FlextModelsConfig
+from flext_core._models.settings import FlextModelsConfig
 
 
 def test_models_settings_branch_paths() -> None:
@@ -56,7 +51,7 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
             return "503"
 
     converted = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy(
-        [_CodeObj()],
+        cast("list[int]", [_CodeObj()]),
     )
     assert converted == [503]
 

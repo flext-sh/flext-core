@@ -104,7 +104,7 @@ class FlextInfraNamespaceValidator:
 
     def validate(
         self, project_root: Path, *, scan_tests: bool = False
-    ) -> r[m.Infra.ValidationReport]:
+    ) -> r[m.Infra.Core.ValidationReport]:
         """Validate namespace rules 0-2 for all discovered Python files.
 
         Args:
@@ -136,13 +136,13 @@ class FlextInfraNamespaceValidator:
                 else f"{len(violations)} namespace violation(s) found ({len(files)} files checked)"
             )
 
-            return r[m.Infra.ValidationReport].ok(
-                m.Infra.ValidationReport(
+            return r[m.Infra.Core.ValidationReport].ok(
+                m.Infra.Core.ValidationReport(
                     passed=passed, violations=violations, summary=summary
                 ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
-            return r[m.Infra.ValidationReport].fail(
+            return r[m.Infra.Core.ValidationReport].fail(
                 f"Namespace validation failed: {exc}"
             )
 
@@ -336,8 +336,12 @@ class FlextInfraNamespaceValidator:
 
                 # PEP 695 TypeAlias
                 if isinstance(node, ast.TypeAlias):
-                    name = getattr(node, "name", None)
-                    name_str = getattr(name, "id", str(name)) if name else "unknown"
+                    name = getattr(node, c.Infra.Toml.NAME, None)
+                    name_str = (
+                        getattr(name, "id", str(name))
+                        if name
+                        else c.Infra.Defaults.UNKNOWN
+                    )
                     seq += 1
                     violations.append(
                         f"[NS-002-{seq:03d}] {filepath}:{node.lineno}"

@@ -31,7 +31,12 @@ class FlextInfraRefactorSafetyManager:
         self._checkpoint_path = checkpoint_path or Path(
             ".sisyphus/refactor/safety-checkpoint.json"
         )
-        self._test_command = test_command or ["python", "-m", "pytest", "-q"]
+        self._test_command = test_command or [
+            c.Infra.Toml.PYTHON,
+            "-m",
+            c.Infra.Toml.PYTEST,
+            "-q",
+        ]
         self._emergency_stop_reason = ""
         self._last_workspace_root: Path | None = None
 
@@ -136,7 +141,7 @@ class FlextInfraRefactorSafetyManager:
             [
                 c.Infra.Cli.GIT,
                 c.Infra.Cli.GitCmd.STASH,
-                "list",
+                c.Infra.Cli.GhCmd.LIST,
                 "-n",
                 "1",
                 "--format=%gd",
@@ -186,7 +191,7 @@ class FlextInfraRefactorSafetyManager:
             return r[bool].ok(True)
 
         import_check = self._runner.run_checked(
-            ["python", "-m", "pytest", "--collect-only", "-q"],
+            [c.Infra.Toml.PYTHON, "-m", c.Infra.Toml.PYTEST, "--collect-only", "-q"],
             cwd=workspace_root,
         )
         if import_check.is_failure:

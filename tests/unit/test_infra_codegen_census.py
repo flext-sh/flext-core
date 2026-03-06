@@ -87,7 +87,7 @@ class TestParseViolationValid:
         result = FlextInfraCodegenCensus._parse_violation(violation_str)
 
         assert result is not None
-        assert isinstance(result, FlextInfraModels.Infra.CensusViolation)
+        assert isinstance(result, FlextInfraModels.Infra.Codegen.CensusViolation)
         assert result.rule == expected_rule
         assert result.module == expected_module
         assert result.line == expected_line
@@ -208,7 +208,7 @@ class TestCensusViolationModel:
     """CensusViolation model validates parsed data correctly."""
 
     def test_model_fields(self) -> None:
-        violation = FlextInfraModels.Infra.CensusViolation(
+        violation = FlextInfraModels.Infra.Codegen.CensusViolation(
             module="src/file.py",
             rule="NS-001",
             line=10,
@@ -231,7 +231,7 @@ class TestCensusReportModel:
     """CensusReport aggregates violations correctly."""
 
     def test_empty_report(self) -> None:
-        report = FlextInfraModels.Infra.CensusReport(
+        report = FlextInfraModels.Infra.Codegen.CensusReport(
             project="test-project",
             violations=[],
             total=0,
@@ -244,21 +244,21 @@ class TestCensusReportModel:
 
     def test_report_with_mixed_violations(self) -> None:
         violations = [
-            FlextInfraModels.Infra.CensusViolation(
+            FlextInfraModels.Infra.Codegen.CensusViolation(
                 module="src/a.py",
                 rule="NS-000",
                 line=1,
                 message="m1",
                 fixable=False,
             ),
-            FlextInfraModels.Infra.CensusViolation(
+            FlextInfraModels.Infra.Codegen.CensusViolation(
                 module="src/b.py",
                 rule="NS-001",
                 line=2,
                 message="m2",
                 fixable=True,
             ),
-            FlextInfraModels.Infra.CensusViolation(
+            FlextInfraModels.Infra.Codegen.CensusViolation(
                 module="src/c.py",
                 rule="NS-002",
                 line=3,
@@ -266,7 +266,7 @@ class TestCensusReportModel:
                 fixable=True,
             ),
         ]
-        report = FlextInfraModels.Infra.CensusReport(
+        report = FlextInfraModels.Infra.Codegen.CensusReport(
             project="test-project",
             violations=violations,
             total=len(violations),

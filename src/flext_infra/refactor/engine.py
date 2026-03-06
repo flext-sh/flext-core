@@ -18,7 +18,10 @@ import yaml
 
 from flext_core import r
 from flext_infra import c, m, output
-from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
+from flext_infra.refactor.analysis import (
+    FlextInfraRefactorViolationAnalyzer,
+    ViolationAnalysisReport,
+)
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.rules.class_reconstructor import (
@@ -113,12 +116,22 @@ class FlextInfraRefactorEngine:
     @staticmethod
     def _extract_project_scan_dirs(config_value: object) -> list[str]:
         if not isinstance(config_value, dict):
-            return ["src", "tests", "scripts", "examples"]
+            return [
+                c.Infra.Paths.DEFAULT_SRC_DIR,
+                c.Infra.Directories.TESTS,
+                c.Infra.Directories.SCRIPTS,
+                c.Infra.Directories.EXAMPLES,
+            ]
 
         typed_config = cast("dict[str, object]", config_value)
         scan_dirs_raw = typed_config.get("project_scan_dirs", None)
         if not isinstance(scan_dirs_raw, list):
-            return ["src", "tests", "scripts", "examples"]
+            return [
+                c.Infra.Paths.DEFAULT_SRC_DIR,
+                c.Infra.Directories.TESTS,
+                c.Infra.Directories.SCRIPTS,
+                c.Infra.Directories.EXAMPLES,
+            ]
 
         scan_dirs = [
             item.strip()
@@ -126,7 +139,12 @@ class FlextInfraRefactorEngine:
             if isinstance(item, str) and item.strip()
         ]
         if not scan_dirs:
-            return ["src", "tests", "scripts", "examples"]
+            return [
+                c.Infra.Paths.DEFAULT_SRC_DIR,
+                c.Infra.Directories.TESTS,
+                c.Infra.Directories.SCRIPTS,
+                c.Infra.Directories.EXAMPLES,
+            ]
         return scan_dirs
 
     @staticmethod
@@ -137,7 +155,7 @@ class FlextInfraRefactorEngine:
                 parent / c.Infra.Files.MAKEFILE_FILENAME
             ).exists():
                 return parent.name
-        return "unknown"
+        return c.Infra.Defaults.UNKNOWN
 
     @staticmethod
     def build_impact_map(
@@ -152,7 +170,7 @@ class FlextInfraRefactorEngine:
         for result in results:
             if not result.success:
                 impact_map.append({
-                    "project": FlextInfraRefactorEngine._project_name_from_path(
+                    c.Infra.Toml.PROJECT: FlextInfraRefactorEngine._project_name_from_path(
                         result.file_path
                     ),
                     "file": str(result.file_path),
@@ -174,7 +192,7 @@ class FlextInfraRefactorEngine:
                 if symbol_match is not None:
                     _, old_symbol, new_symbol = symbol_match.groups()
                     impact_map.append({
-                        "project": project_name,
+                        c.Infra.Toml.PROJECT: project_name,
                         "file": str(result.file_path),
                         "kind": "rename",
                         "old": old_symbol.strip(),
@@ -187,7 +205,7 @@ class FlextInfraRefactorEngine:
                 if add_match is not None:
                     migration_id, payload = add_match.groups()
                     impact_map.append({
-                        "project": project_name,
+                        c.Infra.Toml.PROJECT: project_name,
                         "file": str(result.file_path),
                         "kind": "signature_add",
                         "old": "",
@@ -200,7 +218,7 @@ class FlextInfraRefactorEngine:
                 if remove_match is not None:
                     migration_id, payload = remove_match.groups()
                     impact_map.append({
-                        "project": project_name,
+                        c.Infra.Toml.PROJECT: project_name,
                         "file": str(result.file_path),
                         "kind": "signature_remove",
                         "old": payload.strip(),
@@ -286,7 +304,12 @@ class FlextInfraRefactorEngine:
             if args.analysis_output is not None:
                 args.analysis_output.parent.mkdir(parents=True, exist_ok=True)
                 args.analysis_output.write_text(
-                    json.dumps(analysis, indent=2, ensure_ascii=True) + "\n",
+                    json.dumps(
+                        analysis.model_dump(mode="json"),
+                        indent=2,
+                        ensure_ascii=True,
+                    )
+                    + "\n",
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
                 output.info(f"Analysis report written: {args.analysis_output}")
@@ -358,7 +381,7 @@ class FlextInfraRefactorEngine:
             return
 
         id_width = max(len(item["id"]) for item in rules) + 2
-        name_width = max(len(item["name"]) for item in rules) + 2
+        name_width = max(len(item[c.Infra.Toml.NAME]) for item in rules) + 2
         header = (
             f"{'ID':<{id_width}} {'Name':<{name_width}} {'Severity':<10} {'Status'}"
         )
@@ -396,48 +419,35 @@ class FlextInfraRefactorEngine:
             output.info(f"{failed} files failed")
 
     @staticmethod
-    def print_violation_summary(analysis: Mapping[str, object]) -> None:
+    def print_violation_summary(
+        analysis: ViolationAnalysisReport,
+    ) -> None:
         """Print aggregate violation counts and hottest files."""
-
-        def _to_int(value: object) -> int:
-            if isinstance(value, int):
-                return value
-            if isinstance(value, str) and value.isdigit():
-                return int(value)
-            return 0
-
         output.header("Violation Analysis")
-        totals_obj = analysis.get("totals", {})
-        top_files_obj = analysis.get("top_files", [])
-        files_scanned = _to_int(analysis.get("files_scanned", 0))
 
-        output.info(f"Files scanned: {files_scanned}")
-        if not isinstance(totals_obj, dict) or not totals_obj:
+        output.info(f"Files scanned: {analysis.files_scanned}")
+        if not analysis.totals:
             output.info("No tracked violations found.")
             return
 
-        typed_totals = cast("dict[object, object]", totals_obj)
-        totals_ranked: list[tuple[str, int]] = []
-        for raw_name, raw_count in typed_totals.items():
-            if not isinstance(raw_name, str):
-                continue
-            totals_ranked.append((raw_name, _to_int(raw_count)))
-        totals_ranked.sort(key=itemgetter(1), reverse=True)
+        totals_ranked = sorted(
+            analysis.totals.items(),
+            key=itemgetter(1),
+            reverse=True,
+        )
 
         output.info("Top pattern counts:")
         for name, count in totals_ranked:
             output.info(f"  - {name}: {count}")
 
-        if not isinstance(top_files_obj, list) or not top_files_obj:
+        if not analysis.top_files:
             return
         output.info("Hottest files:")
-        for entry in cast("list[object]", top_files_obj)[:10]:
-            if not isinstance(entry, dict):
-                continue
-            typed_entry = cast("dict[object, object]", entry)
-            file_name = str(typed_entry.get("file", ""))
-            total_count = _to_int(typed_entry.get("total", 0))
-            output.info(f"  - {file_name}: {total_count}")
+        for entry in analysis.top_files[:10]:
+            file_name = entry.get("file")
+            total = entry.get("total")
+            if isinstance(file_name, str) and isinstance(total, int):
+                output.info(f"  - {file_name}: {total}")
 
     @staticmethod
     def write_impact_map(
@@ -522,7 +532,7 @@ class FlextInfraRefactorEngine:
         return [
             {
                 "id": rule.rule_id,
-                "name": rule.name,
+                c.Infra.Toml.NAME: rule.name,
                 "description": rule.description,
                 "enabled": rule.enabled,
                 "severity": rule.severity,

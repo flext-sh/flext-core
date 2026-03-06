@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from flext_core import FlextLogger, r, t
+from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraJsonService,
@@ -16,11 +16,10 @@ from flext_infra import (
     FlextInfraReportingService,
     c,
     m,
+    p,
+    t,
 )
-from flext_infra.deps.detection import (
-    FlextInfraDependencyDetectionService,
-    IssueMap,
-)
+from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -65,7 +64,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraJsonService()
         self._deps = FlextInfraDependencyDetectionService()
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:
@@ -169,8 +168,10 @@ class FlextInfraRuntimeDevDependencyDetector:
             logger.error("deps_no_projects_found")
             return r[int].ok(2)
 
-        if not (venv_bin / "deptry").exists():
-            logger.error("deps_deptry_missing", path=str(venv_bin / "deptry"))
+        if not (venv_bin / c.Infra.Toml.DEPTRY).exists():
+            logger.error(
+                "deps_deptry_missing", path=str(venv_bin / c.Infra.Toml.DEPTRY)
+            )
             return r[int].ok(3)
 
         apply_typings = bool(args.apply_typings)
@@ -208,7 +209,7 @@ class FlextInfraRuntimeDevDependencyDetector:
             deptry_result = self._deps.run_deptry(project_path, venv_bin)
             if deptry_result.is_failure:
                 return r[int].fail(deptry_result.error or "deptry run failed")
-            deptry_value: tuple[list[IssueMap], int] = deptry_result.value
+            deptry_value: tuple[list[t.Infra.IssueMap], int] = deptry_result.value
             issues, _ = deptry_value
             project_payload = self._deps.build_project_report(project_name, issues)
             project_dict = project_payload.model_dump()
@@ -262,7 +263,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                                 package=package,
                             )
                         else:
-                            run_output: m.Infra.CommandOutput = run.value
+                            run_output: m.Infra.Core.CommandOutput = run.value
                             if run_output.exit_code != 0:
                                 logger.warning(
                                     "deps_typings_add_failed",
@@ -292,7 +293,9 @@ class FlextInfraRuntimeDevDependencyDetector:
         if args.output:
             out_path = Path(args.output)
         elif not args.dry_run:
-            report_dir = self._reporting.get_report_dir(root, "project", "dependencies")
+            report_dir = self._reporting.get_report_dir(
+                root, c.Infra.Toml.PROJECT, c.Infra.Toml.DEPENDENCIES
+            )
             try:
                 report_dir.mkdir(parents=True, exist_ok=True)
             except OSError as exc:

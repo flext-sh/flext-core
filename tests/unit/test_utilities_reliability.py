@@ -18,7 +18,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import Final, Never
+from typing import Final
 
 import pytest
 
@@ -340,7 +340,7 @@ class TestFlextUtilitiesReliability:
 
     def test_with_retry_blocked(self) -> None:
         """Test retry blocked by should_retry_func."""
-        blocked: FlextRuntime.RuntimeResult[Never] = u.Reliability.with_retry(
+        blocked: FlextRuntime.RuntimeResult[str] = u.Reliability.with_retry(
             lambda: r[str].fail("stop"),
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,

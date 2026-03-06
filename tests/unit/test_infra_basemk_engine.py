@@ -20,7 +20,7 @@ from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 
 class _InvalidTemplateEngine:
-    def render_all(self, config: im.Infra.BaseMkConfig | None = None) -> r[str]:
+    def render_all(self, config: im.Infra.Basemk.BaseMkConfig | None = None) -> r[str]:
         del config
         return r[str].ok("ifneq (,\n")
 
@@ -41,7 +41,7 @@ def test_render_all_has_no_scripts_path_references() -> None:
 
 
 def test_generator_renders_with_config_override() -> None:
-    config = im.Infra.BaseMkConfig.model_validate({
+    config = im.Infra.Basemk.BaseMkConfig.model_validate({
         "project_name": "sample-project",
         "python_version": "3.11",
         "core_stack": "python",
@@ -51,7 +51,7 @@ def test_generator_renders_with_config_override() -> None:
         "lint_gates": ["mypy", "ruff"],
         "test_command": "tox",
     })
-    config = im.Infra.BaseMkConfig(
+    config = im.Infra.Basemk.BaseMkConfig(
         project_name="sample-project",
         python_version="3.13",
         core_stack="python",
@@ -122,7 +122,7 @@ def test_basemk_engine_render_all_with_valid_config() -> None:
     """Test engine.render_all() with explicit config."""
     # im is already imported at the top
 
-    config = im.Infra.BaseMkConfig(
+    config = im.Infra.Basemk.BaseMkConfig(
         project_name="test-project",
         python_version="3.13",
         core_stack="python",

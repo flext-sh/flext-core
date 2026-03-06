@@ -240,7 +240,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
         field: NotGeneral = NotGeneral()
 
     res_non_general = mapper.extract(
-        cast("t.ConfigMap | BaseModel", cast("object", Container())),
+        cast("m.ConfigMap | BaseModel", cast("object", Container())),
         "field",
     )
     assert res_non_general.is_success
@@ -251,7 +251,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
             self.model_dump = lambda: (_ for _ in ()).throw(ValueError("boom"))
 
     res_exception = mapper.extract(
-        cast("t.ConfigMap | BaseModel", cast("object", ExplodingModelDump())),
+        cast("m.ConfigMap | BaseModel", cast("object", ExplodingModelDump())),
         "a",
     )
     assert res_exception.is_failure
@@ -261,7 +261,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     assert (
         accessor(
             cast(
-                "t.ConfigMap | BaseModel",
+                "m.ConfigMap | BaseModel",
                 cast("object", AttrObject(name="x", value=1)),
             ),
         )
@@ -269,7 +269,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     )
     assert (
         mapper.prop("missing")(
-            cast("t.ConfigMap | BaseModel", cast("object", {"a": 1})),
+            cast("m.ConfigMap | BaseModel", cast("object", {"a": 1})),
         )
         == ""
     )
@@ -525,7 +525,7 @@ def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
 
     source_obj = AttrObject(name="n", value=1)
     fields = mapper.fields_multi(
-        cast("t.ConfigMap | BaseModel", cast("object", source_obj)),
+        cast("m.ConfigMap | BaseModel", cast("object", source_obj)),
         {"name": "", "missing": None},
     )
     assert fields == {"name": "n", "missing": ""}

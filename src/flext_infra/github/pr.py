@@ -17,12 +17,15 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import cast
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
     FlextInfraVersioningService,
+    c,
     output,
+    p,
+    t,
 )
 
 
@@ -35,12 +38,12 @@ class FlextInfraPrManager:
 
     def __init__(
         self,
-        runner: FlextInfraCommandRunner | None = None,
+        runner: p.Infra.CommandRunner | None = None,
         git: FlextInfraGitService | None = None,
         versioning: FlextInfraVersioningService | None = None,
     ) -> None:
         """Initialize the PR manager."""
-        self._runner = runner or FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraCommandRunner()
         self._git = git or FlextInfraGitService(self._runner)
         self._versioning = versioning or FlextInfraVersioningService()
 
@@ -63,7 +66,7 @@ class FlextInfraPrManager:
 
         """
         result = self._runner.run(
-            ["gh", "pr", "checks", selector],
+            [c.Infra.Cli.GH, c.Infra.Cli.GhCmd.PR, "checks", selector],
             cwd=repo_root,
         )
         if result.is_success:
@@ -84,7 +87,7 @@ class FlextInfraPrManager:
 
         """
         return self._runner.run_checked(
-            ["gh", "pr", "close", selector],
+            [c.Infra.Cli.GH, c.Infra.Cli.GhCmd.PR, "close", selector],
             cwd=repo_root,
         )
 
@@ -128,9 +131,9 @@ class FlextInfraPrManager:
             })
 
         command = [
-            "gh",
-            "pr",
-            "create",
+            c.Infra.Cli.GH,
+            c.Infra.Cli.GhCmd.PR,
+            c.Infra.Cli.GhCmd.CREATE,
             "--base",
             base,
             "--head",
@@ -159,7 +162,7 @@ class FlextInfraPrManager:
         selector: str,
         head: str,
         *,
-        method: str = "squash",
+        method: str = c.Infra.Cli.GhCmd.SQUASH,
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
@@ -185,12 +188,18 @@ class FlextInfraPrManager:
                 return r[Mapping[str, t.Scalar]].ok({"status": "no-open-pr"})
 
         merge_flag = {
-            "merge": "--merge",
+            c.Infra.Cli.GhCmd.MERGE: "--merge",
             "rebase": "--rebase",
-            "squash": "--squash",
+            c.Infra.Cli.GhCmd.SQUASH: "--squash",
         }.get(method, "--squash")
 
-        command = ["gh", "pr", "merge", selector, merge_flag]
+        command = [
+            c.Infra.Cli.GH,
+            c.Infra.Cli.GhCmd.PR,
+            c.Infra.Cli.GhCmd.MERGE,
+            selector,
+            merge_flag,
+        ]
         if auto:
             command.append("--auto")
         if delete_branch:
@@ -201,7 +210,13 @@ class FlextInfraPrManager:
             stderr = result.error or ""
             if "not mergeable" in stderr:
                 update_result = self._runner.run(
-                    ["gh", "pr", "update-branch", selector, "--rebase"],
+                    [
+                        c.Infra.Cli.GH,
+                        c.Infra.Cli.GhCmd.PR,
+                        "update-branch",
+                        selector,
+                        "--rebase",
+                    ],
                     cwd=repo_root,
                 )
                 if update_result.is_success:
@@ -234,9 +249,9 @@ class FlextInfraPrManager:
         """
         result = self._runner.capture(
             [
-                "gh",
-                "pr",
-                "list",
+                c.Infra.Cli.GH,
+                c.Infra.Cli.GhCmd.PR,
+                c.Infra.Cli.GhCmd.LIST,
                 "--state",
                 "open",
                 "--head",
@@ -316,7 +331,7 @@ class FlextInfraPrManager:
 
         """
         return self._runner.capture(
-            ["gh", "pr", "view", selector],
+            [c.Infra.Cli.GH, c.Infra.Cli.GhCmd.PR, c.Infra.Cli.GhCmd.VIEW, selector],
             cwd=repo_root,
         )
 
@@ -345,14 +360,14 @@ class FlextInfraPrManager:
 
         tag = cast("str", tag_result.unwrap())  # type: ignore[redundant-cast]
         view_result = self._runner.run(
-            ["gh", "release", "view", tag],
+            [c.Infra.Cli.GH, "release", c.Infra.Cli.GhCmd.VIEW, tag],
             cwd=repo_root,
         )
         if view_result.is_success:
             return r[Mapping[str, str]].ok({"status": "release-exists", "tag": tag})
 
         dispatch_result = self._runner.run(
-            ["gh", "workflow", "run", "release.yml", "-f", f"tag={tag}"],
+            [c.Infra.Cli.GH, "workflow", "run", "release.yml", "-f", f"tag={tag}"],
             cwd=repo_root,
         )
         if dispatch_result.is_success:
@@ -373,15 +388,22 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument(
         "--action",
         default="status",
-        choices=["status", "create", "view", "checks", "merge", "close"],
+        choices=[
+            "status",
+            c.Infra.Cli.GhCmd.CREATE,
+            c.Infra.Cli.GhCmd.VIEW,
+            "checks",
+            c.Infra.Cli.GhCmd.MERGE,
+            "close",
+        ],
     )
-    _ = parser.add_argument("--base", default="main")
+    _ = parser.add_argument("--base", default=c.Infra.Git.MAIN)
     _ = parser.add_argument("--head", default="")
     _ = parser.add_argument("--number", default="")
     _ = parser.add_argument("--title", default="")
     _ = parser.add_argument("--body", default="")
     _ = parser.add_argument("--draft", type=int, default=0)
-    _ = parser.add_argument("--merge-method", default="squash")
+    _ = parser.add_argument("--merge-method", default=c.Infra.Cli.GhCmd.SQUASH)
     _ = parser.add_argument("--auto", type=int, default=0)
     _ = parser.add_argument("--delete-branch", type=int, default=0)
     _ = parser.add_argument("--checks-strict", type=int, default=0)
@@ -397,7 +419,7 @@ def main() -> int:
 
     git = FlextInfraGitService()
     head_result = git.current_branch(repo_root)
-    head = cast("str", args.head or head_result.unwrap_or("HEAD"))
+    head = cast("str", args.head or head_result.unwrap_or(c.Infra.Git.HEAD))
     base = args.base
     selector = _selector(args.number, head)
 
@@ -408,7 +430,7 @@ def main() -> int:
         output.error(result.error or "status failed")
         return 1
 
-    if args.action == "create":
+    if args.action == c.Infra.Cli.GhCmd.CREATE:
         title = args.title or f"chore: sync {head}"
         body = args.body or "Automated PR managed by flext_infra.github.pr"
         result = manager.create(
@@ -424,7 +446,7 @@ def main() -> int:
         output.error(result.error or "create failed")
         return 1
 
-    if args.action == "view":
+    if args.action == c.Infra.Cli.GhCmd.VIEW:
         result_view = manager.view(repo_root, selector)
         if result_view.is_success:
             return 0
@@ -442,7 +464,7 @@ def main() -> int:
         output.error(result.error or "checks failed")
         return 1
 
-    if args.action == "merge":
+    if args.action == c.Infra.Cli.GhCmd.MERGE:
         merge_result = manager.merge(
             repo_root,
             selector,

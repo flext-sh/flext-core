@@ -6,7 +6,6 @@ import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar
 
 from flext_core import FlextDispatcher, r, u
 
@@ -70,72 +69,90 @@ def _verify() -> None:
 class CreateUser:
     """Command model for user creation."""
 
-    command_type: ClassVar[str] = "create_user"
     username: str
+    command_type: str = "create_user"
+    query_type: str = ""
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class GetUser:
     """Query model for user retrieval."""
 
-    query_type: ClassVar[str] = "get_user"
     username: str
+    command_type: str = ""
+    query_type: str = "get_user"
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class DeleteUser:
     """Command model for user deletion."""
 
-    command_type: ClassVar[str] = "delete_user"
     username: str
+    command_type: str = "delete_user"
+    query_type: str = ""
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class FailingDelete:
     """Command model that intentionally fails."""
 
-    command_type: ClassVar[str] = "failing_delete"
     username: str
+    command_type: str = "failing_delete"
+    query_type: str = ""
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class AutoCommand:
     """Command routed through can_handle auto-discovery."""
 
-    command_type: ClassVar[str] = "auto_command"
     payload: str
+    command_type: str = "auto_command"
+    query_type: str = ""
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class Ping:
     """Command handled by a callable returning plain value."""
 
-    command_type: ClassVar[str] = "ping"
     value: str
+    command_type: str = "ping"
+    query_type: str = ""
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class UnknownQuery:
     """Query model with no registered handler."""
 
-    query_type: ClassVar[str] = "unknown_query"
     payload: str
+    command_type: str = ""
+    query_type: str = "unknown_query"
+    event_type: str = ""
 
 
 @dataclass(slots=True)
 class UserCreated:
     """Event model published to subscribers."""
 
-    event_type: ClassVar[str] = "user_created"
     username: str
+    command_type: str = ""
+    query_type: str = ""
+    event_type: str = "user_created"
 
 
 @dataclass(slots=True)
 class NoSubscriberEvent:
     """Event model without registered subscribers."""
 
-    event_type: ClassVar[str] = "no_subscribers"
     marker: str
+    command_type: str = ""
+    query_type: str = ""
+    event_type: str = "no_subscribers"
 
 
 class CreateUserHandler:

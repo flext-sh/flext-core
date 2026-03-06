@@ -35,29 +35,35 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
         )
 
     @classmethod
-    def default_config(cls) -> m.Infra.BaseMkConfig:
+    def default_config(cls) -> m.Infra.Basemk.BaseMkConfig:
         """Return the default base.mk configuration."""
         return cls._default_config()
 
     @staticmethod
-    def _default_config() -> m.Infra.BaseMkConfig:
+    def _default_config() -> m.Infra.Basemk.BaseMkConfig:
         """Return the default base.mk configuration."""
-        return m.Infra.BaseMkConfig(
+        return m.Infra.Basemk.BaseMkConfig(
             project_name=c.Infra.Defaults.UNNAMED,
             python_version="3.13",
             core_stack=c.Infra.Toml.PYTHON,
             package_manager=c.Infra.Toml.POETRY,
             source_dir=c.Infra.Paths.DEFAULT_SRC_DIR,
             tests_dir=c.Infra.Directories.TESTS,
-            lint_gates=["lint", "format", "pyrefly", "mypy", "pyright"],
-            test_command="pytest",
+            lint_gates=[
+                c.Infra.Gates.LINT,
+                c.Infra.Gates.FORMAT,
+                c.Infra.Gates.PYREFLY,
+                c.Infra.Gates.MYPY,
+                c.Infra.Gates.PYRIGHT,
+            ],
+            test_command=c.Infra.Toml.PYTEST,
         )
 
     @override
     def execute(self) -> r[str]:
         return self.render_all()
 
-    def render_all(self, config: m.Infra.BaseMkConfig | None = None) -> r[str]:
+    def render_all(self, config: m.Infra.Basemk.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
         context: Mapping[str, t.ContainerValue] = {

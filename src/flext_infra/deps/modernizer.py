@@ -11,8 +11,7 @@ import tomlkit
 from tomlkit.items import Array, Item, Table
 
 from flext_core import FlextLogger, t
-from flext_infra import FlextInfraCommandRunner
-from flext_infra.constants import c
+from flext_infra import FlextInfraCommandRunner, c, p
 
 _logger = FlextLogger(__name__)
 
@@ -166,11 +165,13 @@ def _project_dev_groups(doc: tomlkit.TOMLDocument) -> Mapping[str, list[str]]:
     if optional is None or not isinstance(optional, Table):
         return {}
     return {
-        "dev": _as_string_list(optional.get(c.Infra.Toml.DEV)),
-        "docs": _as_string_list(optional.get(c.Infra.Toml.DOCS)),
-        "security": _as_string_list(optional.get(c.Infra.Toml.SECURITY)),
-        "test": _as_string_list(optional.get(c.Infra.Toml.TEST)),
-        "typings": _as_string_list(optional.get(c.Infra.Directories.TYPINGS)),
+        c.Infra.Toml.DEV: _as_string_list(optional.get(c.Infra.Toml.DEV)),
+        c.Infra.Directories.DOCS: _as_string_list(optional.get(c.Infra.Toml.DOCS)),
+        c.Infra.Gates.SECURITY: _as_string_list(optional.get(c.Infra.Toml.SECURITY)),
+        c.Infra.Toml.TEST: _as_string_list(optional.get(c.Infra.Toml.TEST)),
+        c.Infra.Directories.TYPINGS: _as_string_list(
+            optional.get(c.Infra.Directories.TYPINGS)
+        ),
     }
 
 
@@ -178,11 +179,11 @@ def _canonical_dev_dependencies(root_doc: tomlkit.TOMLDocument) -> list[str]:
     """Merge all dev dependency groups from root pyproject."""
     groups = _project_dev_groups(root_doc)
     merged = [
-        *groups.get("dev", []),
-        *groups.get("docs", []),
-        *groups.get("security", []),
-        *groups.get("test", []),
-        *groups.get("typings", []),
+        *groups.get(c.Infra.Toml.DEV, []),
+        *groups.get(c.Infra.Directories.DOCS, []),
+        *groups.get(c.Infra.Gates.SECURITY, []),
+        *groups.get(c.Infra.Toml.TEST, []),
+        *groups.get(c.Infra.Directories.TYPINGS, []),
     ]
     return _dedupe_specs(merged)
 
@@ -211,15 +212,15 @@ class ConsolidateGroupsPhase:
         existing = _project_dev_groups(doc)
         merged_dev = _dedupe_specs([
             *canonical_dev,
-            *existing.get("dev", []),
-            *existing.get("docs", []),
-            *existing.get("security", []),
-            *existing.get("test", []),
-            *existing.get("typings", []),
+            *existing.get(c.Infra.Toml.DEV, []),
+            *existing.get(c.Infra.Directories.DOCS, []),
+            *existing.get(c.Infra.Gates.SECURITY, []),
+            *existing.get(c.Infra.Toml.TEST, []),
+            *existing.get(c.Infra.Directories.TYPINGS, []),
         ])
         current_dev = _as_string_list(optional.get(c.Infra.Toml.DEV))
         if current_dev != merged_dev:
-            optional["dev"] = _array(merged_dev)
+            optional[c.Infra.Toml.DEV] = _array(merged_dev)
             changes.append("project.optional-dependencies.dev consolidated")
 
         for old_key in (
@@ -258,8 +259,8 @@ class ConsolidateGroupsPhase:
             if isinstance(old_deps, Table):
                 if poetry_dev_table is None:
                     poetry_dev_table = _ensure_table(
-                        _ensure_table(poetry_group, "dev"),
-                        "dependencies",
+                        _ensure_table(poetry_group, c.Infra.Toml.DEV),
+                        c.Infra.Toml.DEPENDENCIES,
                     )
                 for dep_name, dep_value in old_deps.items():
                     if dep_name not in poetry_dev_table:
@@ -267,10 +268,10 @@ class ConsolidateGroupsPhase:
             del poetry_group[old_group]
             changes.append(f"tool.poetry.group.{old_group} removed")
 
-        deptry = _ensure_table(tool, "deptry")
+        deptry = _ensure_table(tool, c.Infra.Toml.DEPTRY)
         current_groups = _as_string_list(deptry.get("pep621_dev_dependency_groups"))
-        if current_groups != ["dev"]:
-            deptry["pep621_dev_dependency_groups"] = _array(["dev"])
+        if current_groups != [c.Infra.Toml.DEV]:
+            deptry["pep621_dev_dependency_groups"] = _array([c.Infra.Toml.DEV])
             changes.append("tool.deptry.pep621_dev_dependency_groups set to ['dev']")
 
         return changes
@@ -292,24 +293,28 @@ class EnsurePytestConfigPhase:
         ini = _ensure_table(pytest_tbl, c.Infra.Toml.INI_OPTIONS)
 
         if _unwrap_item(ini.get(c.Infra.Toml.MINVERSION)) != "8.0":
-            ini["minversion"] = "8.0"
+            ini[c.Infra.Toml.MINVERSION] = "8.0"
             changes.append("tool.pytest.ini_options.minversion set to 8.0")
 
         current_classes = _as_string_list(ini.get(c.Infra.Toml.PYTHON_CLASSES))
         if "Test*" not in current_classes:
-            ini["python_classes"] = _array(sorted({*current_classes, "Test*"}))
+            ini[c.Infra.Toml.PYTHON_CLASSES] = _array(
+                sorted({*current_classes, "Test*"})
+            )
             changes.append("tool.pytest.ini_options.python_classes updated")
 
         standard_files = {"*_test.py", "*_tests.py", "test_*.py"}
         current_files = set(_as_string_list(ini.get(c.Infra.Toml.PYTHON_FILES)))
         if not standard_files.issubset(current_files):
-            ini["python_files"] = _array(sorted(current_files | standard_files))
+            ini[c.Infra.Toml.PYTHON_FILES] = _array(
+                sorted(current_files | standard_files)
+            )
             changes.append("tool.pytest.ini_options.python_files updated")
 
         current_addopts = set(_as_string_list(ini.get(c.Infra.Toml.ADDOPTS)))
         needed_addopts = set(c.Infra.Deps.PYTEST_STANDARD_ADDOPTS)
         if not needed_addopts.issubset(current_addopts):
-            ini["addopts"] = _array(sorted(current_addopts | needed_addopts))
+            ini[c.Infra.Toml.ADDOPTS] = _array(sorted(current_addopts | needed_addopts))
             changes.append("tool.pytest.ini_options.addopts updated")
 
         current_markers = _as_string_list(ini.get(c.Infra.Toml.MARKERS))
@@ -320,7 +325,7 @@ class EnsurePytestConfigPhase:
             if name not in current_names:
                 added.append(marker)
         if added:
-            ini["markers"] = _array([*current_markers, *added])
+            ini[c.Infra.Toml.MARKERS] = _array([*current_markers, *added])
             names = ", ".join(m.split(":")[0].strip() for m in added)
             changes.append(f"tool.pytest.ini_options.markers: added {names}")
 
@@ -343,7 +348,7 @@ class EnsureMypyConfigPhase:
 
         # Ensure Python version
         if _unwrap_item(mypy.get(c.Infra.Toml.PYTHON_VERSION_UNDERSCORE)) != "3.13":
-            mypy["python_version"] = "3.13"
+            mypy[c.Infra.Toml.PYTHON_VERSION_UNDERSCORE] = "3.13"
             changes.append("tool.mypy.python_version set to 3.13")
 
         # Ensure pydantic plugin is always active
@@ -352,7 +357,7 @@ class EnsureMypyConfigPhase:
             p for p in c.Infra.Deps.MYPY_PLUGINS if p not in current_plugins
         ]
         if needed_plugins:
-            mypy["plugins"] = _array(
+            mypy[c.Infra.Toml.PLUGINS] = _array(
                 sorted(set(current_plugins) | set(c.Infra.Deps.MYPY_PLUGINS))
             )
             changes.append(f"tool.mypy.plugins added {', '.join(needed_plugins)}")
@@ -365,7 +370,7 @@ class EnsureMypyConfigPhase:
             if ec not in current_disabled
         ]
         if needed_disabled:
-            mypy["disable_error_code"] = _array(
+            mypy[c.Infra.Toml.DISABLE_ERROR_CODE] = _array(
                 sorted(
                     set(current_disabled) | set(c.Infra.Deps.MYPY_DISABLED_ERROR_CODES)
                 ),
@@ -420,8 +425,8 @@ class EnsurePyrightConfigPhase:
 
         if is_root:
             # Root has extensive config (140+ keys); only verify strict mode exists
-            if _unwrap_item(pyright.get("typeCheckingMode")) != "strict":
-                pyright["typeCheckingMode"] = "strict"
+            if _unwrap_item(pyright.get("typeCheckingMode")) != c.Infra.Modes.STRICT:
+                pyright["typeCheckingMode"] = c.Infra.Modes.STRICT
                 changes.append("tool.pyright.typeCheckingMode set to strict")
             return changes
 
@@ -456,20 +461,20 @@ class EnsureRuffConfigPhase:
         # Ensure extend points to managed shared config in workspace root
         _target_shared, expected_extend = _find_ruff_shared_path(path.parent, ROOT)
         if _unwrap_item(ruff.get(c.Infra.Toml.EXTEND)) != expected_extend:
-            ruff["extend"] = expected_extend
+            ruff[c.Infra.Toml.EXTEND] = expected_extend
             changes.append(f"tool.ruff.extend set to {expected_extend}")
 
         detected_packages = _discover_first_party_namespaces(path.parent)
         if detected_packages:
             # Create nested tables: ruff.lint.isort
             lint = _ensure_table(ruff, c.Infra.Toml.LINT_SECTION)
-            isort = _ensure_table(lint, "isort")
+            isort = _ensure_table(lint, c.Infra.Toml.ISORT)
 
             current_kfp = _as_string_list(
                 isort.get(c.Infra.Toml.KNOWN_FIRST_PARTY_HYPHEN)
             )
             if current_kfp != detected_packages:
-                isort["known-first-party"] = _array(detected_packages)
+                isort[c.Infra.Toml.KNOWN_FIRST_PARTY_HYPHEN] = _array(detected_packages)
                 changes.append(
                     f"tool.ruff.lint.isort.known-first-party set to {detected_packages}"
                 )
@@ -494,20 +499,20 @@ class EnsurePyreflyConfigPhase:
         pyrefly = _ensure_table(tool, c.Infra.Toml.PYREFLY)
 
         if _unwrap_item(pyrefly.get(c.Infra.Toml.PYTHON_VERSION_HYPHEN)) != "3.13":
-            pyrefly["python-version"] = "3.13"
+            pyrefly[c.Infra.Toml.PYTHON_VERSION_HYPHEN] = "3.13"
             changes.append("tool.pyrefly.python-version set to 3.13")
 
         if (
             _unwrap_item(pyrefly.get(c.Infra.Toml.IGNORE_ERRORS_IN_GENERATED))
             is not True
         ):
-            pyrefly["ignore-errors-in-generated-code"] = True
+            pyrefly[c.Infra.Toml.IGNORE_ERRORS_IN_GENERATED] = True
             changes.append("tool.pyrefly.ignore-errors-in-generated-code enabled")
 
         expected_search = ["."]
         current_search = _as_string_list(pyrefly.get(c.Infra.Toml.SEARCH_PATH))
         if current_search != expected_search:
-            pyrefly["search-path"] = _array(expected_search)
+            pyrefly[c.Infra.Toml.SEARCH_PATH] = _array(expected_search)
             changes.append(f"tool.pyrefly.search-path set to {expected_search}")
 
         errors = _ensure_table(pyrefly, "errors")
@@ -527,7 +532,7 @@ class EnsurePyreflyConfigPhase:
         if needed and (
             is_root or any(glob in current_excludes for glob in pb2_globs) or True
         ):
-            pyrefly["project-excludes"] = _array(
+            pyrefly[c.Infra.Toml.PROJECT_EXCLUDES] = _array(
                 sorted(set(current_excludes) | set(pb2_globs)),
             )
             changes.append(f"tool.pyrefly.project-excludes added {', '.join(needed)}")
@@ -550,18 +555,20 @@ class EnsureNamespaceToolingPhase:
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
 
-        deptry = _ensure_table(tool, "deptry")
+        deptry = _ensure_table(tool, c.Infra.Toml.DEPTRY)
         current_deptry = _as_string_list(
             deptry.get(c.Infra.Toml.KNOWN_FIRST_PARTY_UNDERSCORE)
         )
         if current_deptry != detected:
-            deptry["known_first_party"] = _array(detected)
+            deptry[c.Infra.Toml.KNOWN_FIRST_PARTY_UNDERSCORE] = _array(detected)
             changes.append(f"tool.deptry.known_first_party set to {detected}")
 
         pyright = _ensure_table(tool, c.Infra.Toml.PYRIGHT)
         extra_paths = _as_string_list(pyright.get("extraPaths"))
-        if "src" not in extra_paths:
-            pyright["extraPaths"] = _array(sorted({*extra_paths, "src"}))
+        if c.Infra.Paths.DEFAULT_SRC_DIR not in extra_paths:
+            pyright["extraPaths"] = _array(
+                sorted({*extra_paths, c.Infra.Paths.DEFAULT_SRC_DIR})
+            )
             changes.append("tool.pyright.extraPaths includes src")
 
         return changes
@@ -666,7 +673,7 @@ class FlextInfraPyprojectModernizer:
         """Initialize modernizer with workspace root."""
         super().__init__()
         self.root = root or ROOT
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     def find_pyproject_files(self) -> list[Path]:
         """Find all pyproject.toml files in workspace."""

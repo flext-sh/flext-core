@@ -44,7 +44,7 @@ class TextLike:
     ],
 )
 def test_private_is_member_by_value(
-    value: str | float | bool | Status | None,
+    value: str | float | bool | Status,
     expected: bool,
 ) -> None:
     assert u.Enum._is_member_by_value(value, Status) is expected

@@ -141,7 +141,9 @@ def main() -> int:
     _ = fix_parser.add_argument("--apply", action="store_true")
 
     # build
-    build_parser = subparsers.add_parser("build", help="Build MkDocs sites")
+    build_parser = subparsers.add_parser(
+        c.Infra.Directories.BUILD, help="Build MkDocs sites"
+    )
     _add_common_args(build_parser)
 
     # generate
@@ -160,7 +162,7 @@ def main() -> int:
     handlers = {
         "audit": _run_audit,
         "fix": _run_fix,
-        "build": _run_build,
+        c.Infra.Directories.BUILD: _run_build,
         "generate": _run_generate,
         "validate": _run_validate,
     }

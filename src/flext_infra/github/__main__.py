@@ -17,16 +17,12 @@ import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
-from flext_core import FlextRuntime, r, t
-from flext_infra.constants import c
+from flext_core import FlextRuntime, r
+from flext_infra import c, m, output
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
-from flext_infra.github.pr_workspace import (
-    FlextInfraPrWorkspaceManager,
-    OrchestrationSummary,
-)
+from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
 from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
-from flext_infra.output import output
 
 _Handler = Callable[[list[str]], int]
 
@@ -63,7 +59,7 @@ def _run_lint(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     linter = FlextInfraWorkflowLinter()
-    lint_result: r[Mapping[str, t.Scalar]] = linter.lint(
+    lint_result: r[m.Infra.Github.WorkflowLintResult] = linter.lint(
         root=args.root.resolve(),
         report_path=args.report,
         strict=args.strict,
@@ -72,7 +68,7 @@ def _run_lint(argv: list[str]) -> int:
         output.error(lint_result.error or "lint failed")
         return 1
 
-    _ = lint_result.value.get("status", c.Infra.Defaults.UNKNOWN)
+    _ = lint_result.value.status
     return 0
 
 
@@ -90,13 +86,13 @@ def _run_pr_workspace(argv: list[str]) -> int:
     _ = parser.add_argument("--checkpoint", type=int, default=1)
     _ = parser.add_argument("--fail-fast", type=int, default=0)
     _ = parser.add_argument("--pr-action", default="status")
-    _ = parser.add_argument("--pr-base", default="main")
+    _ = parser.add_argument("--pr-base", default=c.Infra.Git.MAIN)
     _ = parser.add_argument("--pr-head", default="")
     _ = parser.add_argument("--pr-number", default="")
     _ = parser.add_argument("--pr-title", default="")
     _ = parser.add_argument("--pr-body", default="")
     _ = parser.add_argument("--pr-draft", type=int, default=0)
-    _ = parser.add_argument("--pr-merge-method", default="squash")
+    _ = parser.add_argument("--pr-merge-method", default=c.Infra.Cli.GhCmd.SQUASH)
     _ = parser.add_argument("--pr-auto", type=int, default=0)
     _ = parser.add_argument("--pr-delete-branch", type=int, default=0)
     _ = parser.add_argument("--pr-checks-strict", type=int, default=0)
@@ -119,7 +115,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     }
 
     manager = FlextInfraPrWorkspaceManager()
-    orch_result: r[OrchestrationSummary] = manager.orchestrate(
+    orch_result = manager.orchestrate(
         workspace_root=args.workspace_root.resolve(),
         projects=args.project or None,
         include_root=args.include_root == 1,
@@ -133,12 +129,12 @@ def _run_pr_workspace(argv: list[str]) -> int:
         return 1
 
     data = orch_result.value
-    return 1 if data.get("fail", 0) else 0
+    return 1 if data.fail else 0
 
 
 _SUBCOMMANDS: Mapping[str, _Handler] = {
-    "lint": _run_lint,
-    "pr": _run_pr,
+    c.Infra.Toml.LINT_SECTION: _run_lint,
+    c.Infra.Cli.GhCmd.PR: _run_pr,
     "pr-workspace": _run_pr_workspace,
     "workflows": _run_workflows,
 }

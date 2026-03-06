@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Mapping, Sequence
-from typing import Literal
 
 from flext_infra import c, m
-
-type FlextInfraRefactorFacadeFamily = Literal["c", "t", "p", "m", "u"]
-type FlextInfraRefactorExpectedBase = type | str
+from flext_infra.typings import t
 
 
 class FlextInfraRefactorMROError(RuntimeError):
@@ -25,10 +22,10 @@ class FlextInfraRefactorMROResolver:
     def resolve(
         cls,
         *,
-        family_classes: Mapping[FlextInfraRefactorFacadeFamily, type],
+        family_classes: Mapping[t.Infra.FacadeFamily, type],
         expected_base_chains: Mapping[
-            FlextInfraRefactorFacadeFamily,
-            Sequence[FlextInfraRefactorExpectedBase],
+            t.Infra.FacadeFamily,
+            Sequence[t.Infra.ExpectedBase],
         ],
     ) -> tuple[m.Infra.Refactor.FamilyMROResolution, ...]:
         """Resolve and validate MRO for all facade families."""
@@ -49,7 +46,7 @@ class FlextInfraRefactorMROResolver:
     def resolve_from_classification(
         cls,
         *,
-        family_classes: Mapping[FlextInfraRefactorFacadeFamily, type],
+        family_classes: Mapping[t.Infra.FacadeFamily, type],
         classification: m.Infra.Refactor.ProjectClassification,
     ) -> tuple[m.Infra.Refactor.FamilyMROResolution, ...]:
         """Resolve MRO using family chains produced by project classifier."""
@@ -65,9 +62,9 @@ class FlextInfraRefactorMROResolver:
     def _resolve_family(
         cls,
         *,
-        family: FlextInfraRefactorFacadeFamily,
+        family: t.Infra.FacadeFamily,
         facade_class: type,
-        expected_chain: Sequence[FlextInfraRefactorExpectedBase],
+        expected_chain: Sequence[t.Infra.ExpectedBase],
     ) -> m.Infra.Refactor.FamilyMROResolution:
         expected_names = cls._normalize_expected_chain(expected_chain=expected_chain)
         cls._validate_base_policy(
@@ -99,8 +96,8 @@ class FlextInfraRefactorMROResolver:
         cls,
         *,
         family_chains: Mapping[str, Sequence[str]],
-    ) -> dict[FlextInfraRefactorFacadeFamily, tuple[str, ...]]:
-        normalized: dict[FlextInfraRefactorFacadeFamily, tuple[str, ...]] = {}
+    ) -> dict[t.Infra.FacadeFamily, tuple[str, ...]]:
+        normalized: dict[t.Infra.FacadeFamily, tuple[str, ...]] = {}
         for family in ("c", "t", "p", "m", "u"):
             raw_chain = family_chains.get(family)
             if raw_chain is None:
@@ -113,7 +110,7 @@ class FlextInfraRefactorMROResolver:
     def _normalize_expected_chain(
         cls,
         *,
-        expected_chain: Sequence[FlextInfraRefactorExpectedBase],
+        expected_chain: Sequence[t.Infra.ExpectedBase],
     ) -> tuple[str, ...]:
         expected_names: list[str] = []
         for base in expected_chain:
@@ -127,7 +124,7 @@ class FlextInfraRefactorMROResolver:
     def _validate_base_policy(
         cls,
         *,
-        family: FlextInfraRefactorFacadeFamily,
+        family: t.Infra.FacadeFamily,
         facade_class: type,
         expected_names: tuple[str, ...],
     ) -> None:
@@ -173,7 +170,7 @@ class FlextInfraRefactorMROResolver:
     def _validate_expected_accessibility(
         cls,
         *,
-        family: FlextInfraRefactorFacadeFamily,
+        family: t.Infra.FacadeFamily,
         expected_names: tuple[str, ...],
         accessible_namespaces: tuple[str, ...],
     ) -> None:
@@ -201,7 +198,7 @@ class FlextInfraRefactorMROResolver:
     def _collect_accessible_namespaces(
         cls,
         *,
-        family: FlextInfraRefactorFacadeFamily,
+        family: t.Infra.FacadeFamily,
         facade_class: type,
     ) -> tuple[str, ...]:
         namespace_order: list[str] = []
@@ -230,7 +227,7 @@ class FlextInfraRefactorMROResolver:
         cls,
         *,
         class_name: str,
-        family: FlextInfraRefactorFacadeFamily,
+        family: t.Infra.FacadeFamily,
     ) -> str | None:
         suffix = c.Infra.Refactor.FAMILY_SUFFIXES[family]
         if not class_name.endswith(suffix):
@@ -249,8 +246,6 @@ class FlextInfraRefactorMROResolver:
 
 
 __all__ = [
-    "FlextInfraRefactorExpectedBase",
-    "FlextInfraRefactorFacadeFamily",
     "FlextInfraRefactorMROError",
     "FlextInfraRefactorMROResolver",
 ]

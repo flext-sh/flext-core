@@ -14,8 +14,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraCommandRunner
-from flext_infra.constants import c
+from flext_infra import FlextInfraCommandRunner, c, p
 from flext_infra.docs.shared import (
     FlextInfraDocScope,
     FlextInfraDocsShared,
@@ -44,7 +43,7 @@ class FlextInfraDocBuilder:
 
     def __init__(self) -> None:
         """Initialize the documentation builder."""
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
     def _write_reports(scope: FlextInfraDocScope, report: BuildReport) -> None:
@@ -108,7 +107,7 @@ class FlextInfraDocBuilder:
         logger.info(
             "docs_build_scope_completed",
             project=scope.name,
-            phase="build",
+            phase=c.Infra.Directories.BUILD,
             result=report.result,
             reason=report.reason,
         )
@@ -126,12 +125,12 @@ class FlextInfraDocBuilder:
             )
 
         site_dir = (
-            scope.path / c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR / "site"
+            scope.path / c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR / c.Infra.Directories.SITE
         ).resolve()
         site_dir.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
             "mkdocs",
-            "build",
+            c.Infra.Directories.BUILD,
             "--strict",
             "-f",
             str(config),

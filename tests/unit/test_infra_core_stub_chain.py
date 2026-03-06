@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from flext_infra import m
 from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 
 
@@ -77,7 +78,7 @@ class TestFlextInfraStubSupplyChain:
             ):
                 result = chain.analyze(project_dir, workspace_root)
                 assert result.is_success
-                assert "internal_missing" in result.value
+                assert result.value.internal_missing == ["flext_test"]
 
     def test_analyze_with_exception_returns_failure(self, tmp_path: Path) -> None:
         """Test analyze handles exceptions."""
@@ -97,10 +98,13 @@ class TestFlextInfraStubSupplyChain:
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
-            mock_result.value = {
-                "internal_missing": list[str](),
-                "unresolved_missing": list[str](),
-            }
+            mock_result.value = m.Infra.Core.StubAnalysisReport(
+                project="sample",
+                mypy_hints=[],
+                internal_missing=[],
+                unresolved_missing=[],
+                total_missing=0,
+            )
             mock_analyze.return_value = mock_result
 
             result = chain.validate(workspace_root)
@@ -128,10 +132,13 @@ class TestFlextInfraStubSupplyChain:
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
-            mock_result.value = {
-                "internal_missing": list[str](),
-                "unresolved_missing": list[str](),
-            }
+            mock_result.value = m.Infra.Core.StubAnalysisReport(
+                project="sample",
+                mypy_hints=[],
+                internal_missing=[],
+                unresolved_missing=[],
+                total_missing=0,
+            )
             mock_analyze.return_value = mock_result
 
             result = chain.validate(workspace_root, project_dirs=[project_dir])
@@ -149,10 +156,13 @@ class TestFlextInfraStubSupplyChain:
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
-            mock_result.value = {
-                "internal_missing": ["flext_test.module"],
-                "unresolved_missing": list[str](),
-            }
+            mock_result.value = m.Infra.Core.StubAnalysisReport(
+                project="sample",
+                mypy_hints=[],
+                internal_missing=["flext_test.module"],
+                unresolved_missing=[],
+                total_missing=1,
+            )
             mock_analyze.return_value = mock_result
 
             result = chain.validate(workspace_root, project_dirs=[project_dir])
@@ -171,10 +181,13 @@ class TestFlextInfraStubSupplyChain:
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
-            mock_result.value = {
-                "internal_missing": list[str](),
-                "unresolved_missing": ["external_lib"],
-            }
+            mock_result.value = m.Infra.Core.StubAnalysisReport(
+                project="sample",
+                mypy_hints=[],
+                internal_missing=[],
+                unresolved_missing=["external_lib"],
+                total_missing=1,
+            )
             mock_analyze.return_value = mock_result
 
             result = chain.validate(workspace_root, project_dirs=[project_dir])

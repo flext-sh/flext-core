@@ -14,331 +14,50 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
+from pydantic import ValidationError
 from tomlkit import items
 
-from flext_core import FlextLogger, c, m, r, s, t
+from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraDiscoveryService,
     FlextInfraJsonService,
     FlextInfraPathResolver,
     FlextInfraReportingService,
+    c,
+    m,
     output,
+    p,
+    t,
 )
 
 _logger = FlextLogger.create_module_logger(__name__)
 
-
-class _CheckIssue(BaseModel):
-    """Single issue reported by a quality gate tool."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    file: str = Field(description="Source file path")
-    line: int = Field(description="Line number")
-    column: int = Field(description="Column number")
-    code: str = Field(description="Rule or error code")
-    message: str = Field(description="Human-readable issue description")
-    severity: str = Field(default="error", description="Issue severity level")
-
-    @computed_field
-    @property
-    def formatted(self) -> str:
-        """Format issue as ``file:line:col [code] message``."""
-        code_part = f"[{self.code}] " if self.code else ""
-        return (
-            f"{self.file}:{self.line}:{self.column} {code_part}{self.message}".strip()
-        )
-
-
-class _GateExecution(BaseModel):
-    """Execution result for a single quality gate."""
-
-    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
-
-    result: m.Infra.GateResult = Field(description="Gate result model")
-    issues: list[_CheckIssue] = Field(
-        default_factory=list,
-        description="Detected issues",
-    )
-    raw_output: str = Field(default="", description="Raw tool output")
-
-
-class _ProjectResult(BaseModel):
-    """Aggregated gate results for a single project."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    project: str = Field(description="Project name")
-    gates: dict[str, _GateExecution] = Field(
-        default_factory=dict,
-        description="Gate name to execution mapping",
-    )
-
-    @computed_field
-    @property
-    def passed(self) -> bool:
-        """Whether every gate passed."""
-        return all(v.result.passed for v in self.gates.values())
-
-    @computed_field
-    @property
-    def total_errors(self) -> int:
-        """Total issue count across all gates."""
-        return sum(len(v.issues) for v in self.gates.values())
-
-
-class _RunCommandResult(BaseModel):
-    """Subprocess execution result."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    stdout: str = Field(description="Captured standard output")
-    stderr: str = Field(description="Captured standard error")
-    returncode: int = Field(description="Process exit code")
-
-
-# -- Tool-specific JSON parsing models --
-
-
-class _RuffLintLocation(BaseModel):
-    """Location block inside a Ruff lint JSON entry."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    row: int = Field(default=0, description="Line number")
-    column: int = Field(default=0, description="Column number")
-
-
-class _RuffLintError(BaseModel):
-    """Single Ruff lint error from JSON output."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    filename: str = Field(default="?", description="Source file path")
-    location: _RuffLintLocation = Field(
-        default_factory=_RuffLintLocation,
-        description="Error location",
-    )
-    code: str = Field(default="", description="Ruff rule code")
-    message: str = Field(default="", description="Error description")
-
-
-class _PyreflyError(BaseModel):
-    """Single Pyrefly error entry."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    path: str = Field(default="?", description="Source file path")
-    line: int = Field(default=0, description="Line number")
-    column: int = Field(default=0, description="Column number")
-    name: str = Field(default="", description="Error name/code")
-    description: str = Field(default="", description="Error description")
-    severity: str = Field(default="error", description="Severity level")
-
-
-class _PyreflyOutput(BaseModel):
-    """Pyrefly JSON output wrapper."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    errors: list[_PyreflyError] = Field(
-        default_factory=list,
-        description="Pyrefly errors",
-    )
-
-
-class _MypyJsonError(BaseModel):
-    """Single mypy JSON error entry."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    file: str = Field(default="?", description="Source file path")
-    line: int = Field(default=0, description="Line number")
-    column: int = Field(default=0, description="Column number")
-    code: str = Field(default="", description="Mypy error code")
-    message: str = Field(default="", description="Error description")
-    severity: str = Field(default="error", description="Severity level")
-
-
-class _PyrightPosition(BaseModel):
-    """Pyright position with zero-based line/character."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    line: int = Field(default=0, description="Zero-based line number")
-    character: int = Field(default=0, description="Zero-based character offset")
-
-
-class _PyrightRange(BaseModel):
-    """Pyright range with start position."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    start: _PyrightPosition = Field(
-        default_factory=_PyrightPosition,
-        description="Range start",
-    )
-
-
-class _PyrightDiagnostic(BaseModel):
-    """Single Pyright diagnostic entry."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    file: str = Field(default="?", description="Source file path")
-    range: _PyrightRange = Field(
-        default_factory=_PyrightRange,
-        description="Diagnostic range",
-    )
-    rule: str = Field(default="", description="Pyright rule name")
-    message: str = Field(default="", description="Diagnostic message")
-    severity: str = Field(default="error", description="Severity level")
-
-
-class _PyrightOutput(BaseModel):
-    """Pyright JSON output wrapper."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    generalDiagnostics: list[_PyrightDiagnostic] = Field(
-        default_factory=list,
-        description="General diagnostics list",
-    )
-
-
-class _BanditIssue(BaseModel):
-    """Single Bandit security finding."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    filename: str = Field(default="?", description="Source file path")
-    line_number: int = Field(default=0, description="Line number")
-    test_id: str = Field(default="", description="Bandit test ID")
-    issue_text: str = Field(default="", description="Issue description")
-    issue_severity: str = Field(default="MEDIUM", description="Severity level")
-
-
-class _BanditOutput(BaseModel):
-    """Bandit JSON output wrapper."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    results: list[_BanditIssue] = Field(
-        default_factory=list,
-        description="Bandit findings",
-    )
-
-
-# -- SARIF 2.1.0 report models --
-
-
-class _SarifMessageText(BaseModel):
-    """SARIF message with text content."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    text: str = Field(description="Message text")
-
-
-class _SarifRuleDescriptor(BaseModel):
-    """SARIF rule descriptor with short description."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    id: str = Field(description="Rule identifier")
-    shortDescription: _SarifMessageText = Field(description="Rule short description")
-
-
-class _SarifArtifactLocation(BaseModel):
-    """SARIF artifact location with URI."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    uri: str = Field(description="Artifact URI")
-    uriBaseId: str = Field(default="%SRCROOT%", description="URI base identifier")
-
-
-class _SarifRegion(BaseModel):
-    """SARIF region with start line/column."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    start_line: int = Field(description="Start line (1-based)")
-    start_column: int = Field(description="Start column (1-based)")
-
-
-class _SarifPhysicalLocation(BaseModel):
-    """SARIF physical location combining artifact and region."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    artifactLocation: _SarifArtifactLocation = Field(description="Artifact location")
-    region: _SarifRegion = Field(description="Source region")
-
-
-class _SarifLocation(BaseModel):
-    """SARIF location wrapper."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    physicalLocation: _SarifPhysicalLocation = Field(description="Physical location")
-
-
-class _SarifResult(BaseModel):
-    """SARIF result entry."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    rule_id: str = Field(description="Rule identifier")
-    level: str = Field(description="Result level (error/warning)")
-    message: _SarifMessageText = Field(description="Result message")
-    locations: list[_SarifLocation] = Field(description="Result locations")
-
-
-class _SarifToolDriver(BaseModel):
-    """SARIF tool driver metadata."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    name: str = Field(description="Tool name")
-    information_uri: str = Field(default="", description="Tool documentation URL")
-    rules: list[_SarifRuleDescriptor] = Field(
-        default_factory=list,
-        description="Rule descriptors",
-    )
-
-
-class _SarifTool(BaseModel):
-    """SARIF tool wrapper."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    driver: _SarifToolDriver = Field(description="Tool driver")
-
-
-class _SarifRun(BaseModel):
-    """SARIF run entry."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    tool: _SarifTool = Field(description="Tool information")
-    results: list[_SarifResult] = Field(default_factory=list, description="Run results")
-
-
-class _SarifReport(BaseModel):
-    """Complete SARIF 2.1.0 report."""
-
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
-
-    schema_uri: str = Field(
-        default="https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/Schemata/sarif-schema-2.1.0.json",
-        alias="$schema",
-        description="SARIF schema URI",
-    )
-    version: str = Field(default="2.1.0", description="SARIF version")
-    runs: list[_SarifRun] = Field(default_factory=list, description="SARIF runs")
+# -- Namespaced model aliases for brevity --
+_CheckIssue = m.Infra.Check.Issue
+_GateResult = m.Infra.Check.GateResult
+_GateExecution = m.Infra.Check.GateExecution
+_ProjectResult = m.Infra.Check.ProjectResult
+_RunCommandResult = m.Infra.Check.RunCommandResult
+
+_RuffLintError = m.Infra.Check.Parsers.RuffLintError
+_PyreflyError = m.Infra.Check.Parsers.PyreflyError
+_PyreflyOutput = m.Infra.Check.Parsers.PyreflyOutput
+_MypyJsonError = m.Infra.Check.Parsers.MypyJsonError
+_PyrightOutput = m.Infra.Check.Parsers.PyrightOutput
+_BanditOutput = m.Infra.Check.Parsers.BanditOutput
+
+_SarifRuleDescriptor = m.Infra.Check.Sarif.RuleDescriptor
+_SarifMessageText = m.Infra.Check.Sarif.MessageText
+_SarifResult = m.Infra.Check.Sarif.Result
+_SarifLocation = m.Infra.Check.Sarif.Location
+_SarifPhysicalLocation = m.Infra.Check.Sarif.PhysicalLocation
+_SarifArtifactLocation = m.Infra.Check.Sarif.ArtifactLocation
+_SarifRegion = m.Infra.Check.Sarif.Region
+_SarifRun = m.Infra.Check.Sarif.Run
+_SarifTool = m.Infra.Check.Sarif.Tool
+_SarifToolDriver = m.Infra.Check.Sarif.ToolDriver
+_SarifReport = m.Infra.Check.Sarif.Report
 
 
 class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
@@ -350,11 +69,11 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
         self._path_resolver = FlextInfraPathResolver()
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraJsonService()
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir = self._reporting.get_report_dir(
             self._workspace_root,
-            "project",
+            c.Infra.Toml.PROJECT,
             "check",
         )
         try:
@@ -425,7 +144,11 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
                     sarif_results.append(
                         _SarifResult(
                             rule_id=rule_id,
-                            level=("error" if issue.severity == "error" else "warning"),
+                            level=(
+                                c.Infra.Toml.ERROR
+                                if issue.severity == "error"
+                                else "warning"
+                            ),
                             message=_SarifMessageText(text=issue.message),
                             locations=[
                                 _SarifLocation(
@@ -493,9 +216,9 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
         """Return a failure because this service requires explicit run inputs."""
         return r[list[_ProjectResult]].fail("Use run() or run_projects() directly")
 
-    def format(self, project_dir: Path) -> r[m.Infra.GateResult]:
+    def format(self, project_dir: Path) -> r[_GateResult]:
         """Run the Ruff format check gate for a project."""
-        return r[m.Infra.GateResult].ok(self._run_ruff_format(project_dir).result)
+        return r[_GateResult].ok(self._run_ruff_format(project_dir).result)
 
     def generate_markdown_report(
         self,
@@ -578,9 +301,9 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
 
         return "\n".join(lines)
 
-    def lint(self, project_dir: Path) -> r[m.Infra.GateResult]:
+    def lint(self, project_dir: Path) -> r[_GateResult]:
         """Run the Ruff lint gate for a project."""
-        return r[m.Infra.GateResult].ok(self._run_ruff_lint(project_dir).result)
+        return r[_GateResult].ok(self._run_ruff_lint(project_dir).result)
 
     def run(
         self,
@@ -694,7 +417,7 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
         duration: float,
         raw_output: str,
     ) -> _GateExecution:
-        model = m.Infra.GateResult(
+        model = _GateResult(
             gate=gate,
             project=project,
             passed=passed,
@@ -768,7 +491,7 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
                 returncode=1,
             )
 
-        cmd_output: m.Infra.CommandOutput = result.value
+        cmd_output: m.Infra.Core.CommandOutput = result.value
         return _RunCommandResult(
             stdout=cmd_output.stdout,
             stderr=cmd_output.stderr,
@@ -1011,7 +734,7 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
                 "--config-file",
                 str(cfg),
                 "--output",
-                "json",
+                c.Infra.Cli.OUTPUT_JSON,
             ],
             project_dir,
             env=mypy_env,
@@ -1061,7 +784,7 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
             "--config",
             c.Infra.Files.PYPROJECT_FILENAME,
             "--output-format",
-            "json",
+            c.Infra.Cli.OUTPUT_JSON,
             "-o",
             str(json_file),
             "--summary=none",
@@ -1147,7 +870,7 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
                     message=diag.message,
                     severity=diag.severity,
                 )
-                for diag in output.generalDiagnostics
+                for diag in output.general_diagnostics
             )
         except (json.JSONDecodeError, ValidationError):
             pass
@@ -1231,11 +954,11 @@ class FlextInfraWorkspaceChecker(s[list[_ProjectResult]]):
             [
                 sys.executable,
                 "-m",
-                "ruff",
+                c.Infra.Toml.RUFF,
                 "check",
                 *targets,
                 "--output-format",
-                "json",
+                c.Infra.Cli.OUTPUT_JSON,
                 "--quiet",
             ],
             project_dir,
@@ -1310,7 +1033,7 @@ class FlextInfraConfigFixer(s[list[str]]):
             return r[list[str]].fail(f"failed to parse {path}: {exc}")
 
         tool = doc.get(c.Infra.Toml.TOOL)
-        if not isinstance(tool, Mapping) or "pyrefly" not in tool:
+        if not isinstance(tool, Mapping) or c.Infra.Toml.PYREFLY not in tool:
             return r[list[str]].ok([])
 
         pyrefly = tool[c.Infra.Toml.PYREFLY]
@@ -1407,7 +1130,7 @@ class FlextInfraConfigFixer(s[list[str]]):
 
         if stripped_to_add:
             updated = sorted(set(current) | set(stripped_to_add))
-            pyrefly["project-excludes"] = self._to_array(updated)
+            pyrefly[c.Infra.Toml.PROJECT_EXCLUDES] = self._to_array(updated)
             fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
 
         return fixes
@@ -1439,7 +1162,7 @@ class FlextInfraConfigFixer(s[list[str]]):
                     new_paths.append(p)
 
             if fixes:
-                pyrefly["search-path"] = self._to_array(new_paths)
+                pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(new_paths)
 
         # Remove nonexistent paths
         search_raw = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
@@ -1457,7 +1180,7 @@ class FlextInfraConfigFixer(s[list[str]]):
                 for p in current_paths
                 if isinstance(p, str) and p not in nonexistent
             ]
-            pyrefly["search-path"] = self._to_array(remaining)
+            pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(remaining)
             fixes.append(f"removed nonexistent search-path: {', '.join(nonexistent)}")
 
         return fixes
@@ -1480,7 +1203,7 @@ class FlextInfraConfigFixer(s[list[str]]):
             new_configs.append(conf)
 
         if len(new_configs) != len(sub_configs):
-            pyrefly["sub-config"] = new_configs
+            pyrefly[c.Infra.Toml.SUB_CONFIG] = new_configs
 
         return fixes
 

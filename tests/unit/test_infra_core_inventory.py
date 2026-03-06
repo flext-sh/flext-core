@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from flext_infra import m
 from flext_infra.core.inventory import FlextInfraInventoryService
 
 
@@ -26,7 +27,7 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root)
         assert result.is_success
-        assert isinstance(result.value, dict)
+        assert isinstance(result.value, m.Infra.Core.InventoryReport)
 
     def test_generate_with_output_dir_creates_reports(self, tmp_path: Path) -> None:
         """Test that generate creates reports in output directory."""
@@ -86,7 +87,7 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root)
         assert result.is_success
-        assert result.value["total_scripts"] == 3
+        assert result.value.total_scripts == 3
 
     def test_generate_with_nested_scripts_finds_all(self, tmp_path: Path) -> None:
         """Test that generate finds scripts in nested directories."""
@@ -101,7 +102,7 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root)
         assert result.is_success
-        assert result.value["total_scripts"] == 2
+        assert result.value.total_scripts == 2
 
     def test_generate_ignores_non_script_files(self, tmp_path: Path) -> None:
         """Test that generate ignores non-script files."""
@@ -116,7 +117,7 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root)
         assert result.is_success
-        assert result.value["total_scripts"] == 1
+        assert result.value.total_scripts == 1
 
     def test_generate_with_missing_scripts_dir_returns_success(
         self, tmp_path: Path
@@ -127,7 +128,7 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root)
         assert result.is_success
-        assert result.value["total_scripts"] == 0
+        assert result.value.total_scripts == 0
 
     def test_generate_returns_reports_written_list(self, tmp_path: Path) -> None:
         """Test that generate returns list of written reports."""
@@ -138,8 +139,7 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root, output_dir=output_dir)
         assert result.is_success
-        assert "reports_written" in result.value
-        assert isinstance(result.value["reports_written"], list)
+        assert isinstance(result.value.reports_written, list)
 
     def test_generate_with_json_write_failure_returns_failure(
         self, tmp_path: Path

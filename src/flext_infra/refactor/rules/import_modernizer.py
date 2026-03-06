@@ -47,7 +47,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         imports_to_remove: list[str] = []
         symbols_to_replace: dict[str, str] = {}
         for rule_config in cast("list[dict[str, object]]", forbidden):
-            module_name = rule_config.get("module", "")
+            module_name = rule_config.get(c.Infra.Toml.MODULE, "")
             mapping = rule_config.get("symbol_mapping", {})
             imports_to_remove.append(str(module_name))
             if isinstance(mapping, dict):
@@ -97,7 +97,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
             for small_stmt in stmt.body:
                 if isinstance(small_stmt, cst.ImportFrom):
                     module_name = self._module_name_from_expr(small_stmt.module)
-                    if module_name == "flext_core":
+                    if module_name == c.Infra.Packages.CORE_UNDERSCORE:
                         continue
                     if isinstance(small_stmt.names, cst.ImportStar):
                         continue

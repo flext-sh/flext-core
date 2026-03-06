@@ -10,24 +10,24 @@ import tomlkit
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
-from flext_core import FlextService, r
-from flext_infra import FlextInfraDiscoveryService, m
+from flext_core import r, s
+from flext_infra import FlextInfraDiscoveryService, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.constants import c
 
 
-class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
+class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
     """Migrate projects to standardized base.mk, Makefile, and pyproject structure."""
 
     def __init__(
         self,
         *,
-        discovery: FlextInfraDiscoveryService | None = None,
+        discovery: p.Infra.Discovery | None = None,
         generator: FlextInfraBaseMkGenerator | None = None,
     ) -> None:
         """Initialize migrator with optional custom discovery and generator services."""
         super().__init__()
-        self._discovery = discovery or FlextInfraDiscoveryService()
+        self._discovery: p.Infra.Discovery = discovery or FlextInfraDiscoveryService()
         self._generator = generator or FlextInfraBaseMkGenerator()
 
     @staticmethod
@@ -62,7 +62,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
             deps = project.get(c.Infra.Toml.DEPENDENCIES)
             if isinstance(deps, list):
                 for dep in deps:
-                    if str(dep).strip().startswith("flext-core"):
+                    if str(dep).strip().startswith(c.Infra.Packages.CORE):
                         return True
 
         tool = document.get(c.Infra.Toml.TOOL)
@@ -74,14 +74,16 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         poetry_deps = poetry.get(c.Infra.Toml.DEPENDENCIES)
         if not isinstance(poetry_deps, Table):
             return False
-        return "flext-core" in poetry_deps
+        return c.Infra.Packages.CORE in poetry_deps
 
     @staticmethod
     def _sha256_text(value: str) -> str:
         return hashlib.sha256(value.encode(c.Infra.Encoding.DEFAULT)).hexdigest()
 
     @staticmethod
-    def _workspace_root_project(workspace_root: Path) -> m.Infra.ProjectInfo | None:
+    def _workspace_root_project(
+        workspace_root: Path,
+    ) -> m.Infra.Workspace.ProjectInfo | None:
         """Detect workspace root as a project if it has Makefile, pyproject.toml, and .git."""
         has_makefile = (workspace_root / c.Infra.Files.MAKEFILE_FILENAME).is_file()
         has_pyproject = (workspace_root / c.Infra.Files.PYPROJECT_FILENAME).is_file()
@@ -89,7 +91,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         if not (has_makefile and has_pyproject and has_git):
             return None
 
-        return m.Infra.ProjectInfo(
+        return m.Infra.Workspace.ProjectInfo(
             name=workspace_root.name,
             path=workspace_root,
             stack="python/workspace",
@@ -98,25 +100,27 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         )
 
     @override
-    def execute(self) -> r[list[m.Infra.MigrationResult]]:
-        return r[list[m.Infra.MigrationResult]].fail("Use migrate() method directly")
+    def execute(self) -> r[list[m.Infra.Workspace.MigrationResult]]:
+        return r[list[m.Infra.Workspace.MigrationResult]].fail(
+            "Use migrate() method directly"
+        )
 
     def migrate(
         self,
         *,
         workspace_root: Path,
         dry_run: bool = False,
-    ) -> r[list[m.Infra.MigrationResult]]:
+    ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         """Migrate all projects in workspace."""
         root = workspace_root.resolve()
         if not root.is_dir():
-            return r[list[m.Infra.MigrationResult]].fail(
+            return r[list[m.Infra.Workspace.MigrationResult]].fail(
                 f"workspace root does not exist: {root}",
             )
 
         discovered = self._discovery.discover_projects(root)
         if discovered.is_failure:
-            return r[list[m.Infra.MigrationResult]].fail(
+            return r[list[m.Infra.Workspace.MigrationResult]].fail(
                 discovered.error or "project discovery failed",
             )
 
@@ -127,12 +131,12 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         ):
             projects.append(workspace_project)
 
-        results: list[m.Infra.MigrationResult] = [
+        results: list[m.Infra.Workspace.MigrationResult] = [
             self._migrate_project(project=project, dry_run=dry_run)
             for project in projects
         ]
 
-        return r[list[m.Infra.MigrationResult]].ok(results)
+        return r[list[m.Infra.Workspace.MigrationResult]].ok(results)
 
     def _migrate_basemk(self, project_root: Path, *, dry_run: bool) -> r[str]:
         generated = self._generator.generate()
@@ -259,9 +263,9 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
     def _migrate_project(
         self,
         *,
-        project: m.Infra.ProjectInfo,
+        project: p.Infra.ProjectInfo,
         dry_run: bool,
-    ) -> m.Infra.MigrationResult:
+    ) -> m.Infra.Workspace.MigrationResult:
         changes: list[str] = []
         errors: list[str] = []
 
@@ -293,7 +297,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
         if not changes and not errors:
             changes.append("no changes needed")
 
-        return m.Infra.MigrationResult(
+        return m.Infra.Workspace.MigrationResult(
             project=project.name,
             changes=changes,
             errors=errors,
@@ -313,7 +317,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.Infra.MigrationResult]]):
                     self._action_text("pyproject.toml not found", dry_run=True),
                 )
             return r[str].ok("")
-        if project_name == "flext-core":
+        if project_name == c.Infra.Packages.CORE:
             if dry_run:
                 return r[str].ok(
                     self._action_text(

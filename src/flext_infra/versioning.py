@@ -38,7 +38,7 @@ class FlextInfraVersioningService(s[str]):
             if line.startswith("[") and line.endswith("]"):
                 in_project_section = line == c.Infra.Versioning.PROJECT_SECTION
                 continue
-            if not in_project_section or not line.startswith("version"):
+            if not in_project_section or not line.startswith(c.Infra.Toml.VERSION):
                 continue
             match = re.match(r'^version\s*=\s*["\']([^"\']+)["\']\s*$', line)
             if match:
@@ -64,7 +64,11 @@ class FlextInfraVersioningService(s[str]):
                 in_project_section = line == c.Infra.Versioning.PROJECT_SECTION
                 updated_lines.append(raw_line)
                 continue
-            if in_project_section and line.startswith("version") and not replaced:
+            if (
+                in_project_section
+                and line.startswith(c.Infra.Toml.VERSION)
+                and not replaced
+            ):
                 line_ending = "\n" if raw_line.endswith("\n") else ""
                 updated_lines.append(f'version = "{version}"{line_ending}')
                 replaced = True

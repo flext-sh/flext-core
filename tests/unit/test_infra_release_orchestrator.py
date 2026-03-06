@@ -450,14 +450,14 @@ class TestFlextInfraReleaseOrchestrator:
             ) as mock_runner_cls:
                 mock_runner = mock_runner_cls.return_value
 
-                output_model = FlextInfraModels.CommandOutput(
+                output_model = FlextInfraModels.Infra.Core.CommandOutput(
                     exit_code=1,
                     stdout="error",
                     stderr="",
                 )
-                mock_runner.run_raw.return_value = r[FlextInfraModels.CommandOutput].ok(
-                    output_model
-                )
+                mock_runner.run_raw.return_value = r[
+                    FlextInfraModels.Infra.Core.CommandOutput
+                ].ok(output_model)
                 with patch("flext_infra.release.orchestrator.FlextInfraJsonService"):
                     result = orchestrator.phase_build(workspace_root, "1.0.0", [])
                     assert result.is_failure
@@ -606,14 +606,14 @@ class TestFlextInfraReleaseOrchestrator:
             "flext_infra.release.orchestrator.FlextInfraCommandRunner"
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
-            output_model = FlextInfraModels.CommandOutput(
+            output_model = FlextInfraModels.Infra.Core.CommandOutput(
                 exit_code=0,
                 stdout="build ok",
                 stderr="",
             )
-            mock_runner.run_raw.return_value = r[FlextInfraModels.CommandOutput].ok(
-                output_model
-            )
+            mock_runner.run_raw.return_value = r[
+                FlextInfraModels.Infra.Core.CommandOutput
+            ].ok(output_model)
             result = FlextInfraReleaseOrchestrator._run_make(workspace_root, "build")
             assert result.is_success
             code, _output = result.value

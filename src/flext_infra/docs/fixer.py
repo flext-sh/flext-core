@@ -197,7 +197,9 @@ class FlextInfraDocFixer:
 
     def _process_file(self, md_file: Path, *, apply: bool) -> FixItem:
         """Fix links and TOC in a single markdown file."""
-        original = md_file.read_text(encoding=c.Infra.Encoding.DEFAULT, errors="ignore")
+        original = md_file.read_text(
+            encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+        )
         link_count = 0
 
         def replace_link(match: re.Match[str]) -> str:

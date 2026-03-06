@@ -73,9 +73,9 @@ def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
     deps_dict = deps
     paths: list[str] = []
     for val in deps_dict.values():
-        if isinstance(val, dict) and "path" in val:
+        if isinstance(val, dict) and c.Infra.Toml.PATH in val:
             val_dict = val
-            dep_path = val_dict["path"]
+            dep_path = val_dict[c.Infra.Toml.PATH]
             if isinstance(dep_path, str) and dep_path:
                 dep_path = dep_path.strip()
                 if dep_path.startswith("./"):
@@ -167,7 +167,7 @@ def sync_one(
         if isinstance(pyrefly, dict):
             pyrefly_dict = pyrefly
             base_search: list[str] = ["."] + dep_paths
-            current_search_raw = pyrefly_dict.get("search-path", [])
+            current_search_raw = pyrefly_dict.get(c.Infra.Toml.SEARCH_PATH, [])
             current_search: list[str] = [str(v) for v in current_search_raw]
             seen: set[str] = set(base_search)
             for path_value in current_search:
@@ -178,7 +178,7 @@ def sync_one(
                 arr = tomlkit.array()
                 for path_value in base_search:
                     arr.append(path_value)
-                pyrefly_dict["search-path"] = arr
+                pyrefly_dict[c.Infra.Toml.SEARCH_PATH] = arr
                 changed = True
 
     if changed and not dry_run:

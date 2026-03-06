@@ -127,16 +127,16 @@ def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]
 
     changes: list[str] = []
     for dep_key, value in deps.items():
-        if not isinstance(value, dict) or "path" not in value:
+        if not isinstance(value, dict) or c.Infra.Toml.PATH not in value:
             continue
-        raw_path = value["path"]
+        raw_path = value[c.Infra.Toml.PATH]
         if not isinstance(raw_path, str) or not raw_path.strip():
             continue
         dep_name = extract_dep_name(raw_path)
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
         if raw_path != new_path:
             changes.append(f"  Poetry: {dep_key}.path = {raw_path!r} -> {new_path!r}")
-            value["path"] = new_path
+            value[c.Infra.Toml.PATH] = new_path
     return changes
 
 

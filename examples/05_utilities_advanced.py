@@ -60,7 +60,7 @@ class UserModel(m.ArbitraryTypesModel):
 # SAMPLE DATA
 # ═══════════════════════════════════════════════════════════════════
 
-TEST_DATA: Mapping[str, t.Container] = {
+TEST_DATA: Mapping[str, t.ContainerValue] = {
     "name": "John Doe",
     "status": "active",
     "age": 30,
@@ -135,7 +135,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: r[Mapping[str, t.Container]] = r[t.ConfigurationMapping].fail(
+        map_result: r[Mapping[str, t.ContainerValue]] = r[t.ConfigurationMapping].fail(
             "Invalid data types"
         )
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
@@ -194,16 +194,13 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             status = parse_result.value
             print(f"✅ Enum parsing: {status.value}")
 
-        # Type guard for enum membership
-        test_value: str = "pending"
-        if u.is_member(StatusEnum, test_value):
-            print(f"✅ Type guard: {test_value} is valid StatusEnum")
+        pending_result = u.parse_enum(StatusEnum, "pending")
+        if pending_result.is_success:
+            print("✅ Membership validation: 'pending' is a valid StatusEnum")
 
-        # Subset validation - using string value for type guard
-        active_states = frozenset({StatusEnum.ACTIVE, StatusEnum.PENDING})
-        test_status_str: str = "active"
-        if u.is_subset(StatusEnum, active_states, test_status_str):
-            print("✅ Subset validation: 'active' is in active states")
+        active_result = u.parse_enum(StatusEnum, "active")
+        if active_result.is_success:
+            print("✅ Membership validation: 'active' is a valid StatusEnum")
 
     @staticmethod
     def _demonstrate_model_utilities() -> None:
@@ -211,12 +208,12 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Model Utilities ===")
 
         # Create model from dict
-        user_data: Mapping[str, t.JsonValue] = {
+        user_data: dict[str, t.ContainerValue] = {
             "name": "Alice",
             "status": "active",
             "age": 25,
         }
-        model_result = u.from_dict(UserModel, user_data)
+        model_result = u.load(UserModel, m.ConfigMap(root=user_data))
         if model_result.is_success:
             user = model_result.value
             status_value = (

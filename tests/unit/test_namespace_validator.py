@@ -305,7 +305,7 @@ class TestFlextInfraNamespaceValidator:
         result = validator.validate(root)
 
         assert result.is_success
-        assert isinstance(result.value, m.Infra.ValidationReport)
+        assert isinstance(result.value, m.Infra.Core.ValidationReport)
         assert "files checked" in result.value.summary
 
     def test_violation_message_format(self, tmp_path: Path) -> None:

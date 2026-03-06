@@ -9,11 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraCommandRunner, c, m, t
+from flext_infra import FlextInfraCommandRunner, c, m, p
 
 
 class FlextInfraStubSupplyChain:
@@ -25,7 +24,7 @@ class FlextInfraStubSupplyChain:
 
     def __init__(self) -> None:
         """Initialize the stub supply chain."""
-        self._runner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
     def _discover_stub_projects(root: Path) -> list[Path]:
@@ -69,7 +68,7 @@ class FlextInfraStubSupplyChain:
         self,
         project_dir: Path,
         workspace_root: Path,
-    ) -> r[Mapping[str, t.ContainerValue]]:
+    ) -> r[m.Infra.Core.StubAnalysisReport]:
         """Analyze a project for missing stubs and type packages.
 
         Runs mypy for hints and pyrefly for missing imports, then
@@ -96,16 +95,16 @@ class FlextInfraStubSupplyChain:
             ]
             unresolved = [m for m in external if not self._stub_exists(m, root)]
 
-            result: MutableMapping[str, t.ContainerValue] = {
-                "project": proj.name,
-                "mypy_hints": mypy_hints,
-                "internal_missing": internal,
-                "unresolved_missing": unresolved,
-                "total_missing": len(missing_imports),
-            }
-            return r[t.ConfigurationMapping].ok(result)
+            result = m.Infra.Core.StubAnalysisReport(
+                project=proj.name,
+                mypy_hints=mypy_hints,
+                internal_missing=internal,
+                unresolved_missing=unresolved,
+                total_missing=len(missing_imports),
+            )
+            return r[m.Infra.Core.StubAnalysisReport].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[t.ConfigurationMapping].fail(
+            return r[m.Infra.Core.StubAnalysisReport].fail(
                 f"stub analysis failed for {project_dir.name}: {exc}",
             )
 
@@ -113,7 +112,7 @@ class FlextInfraStubSupplyChain:
         self,
         workspace_root: Path,
         project_dirs: list[Path] | None = None,
-    ) -> r[m.Infra.ValidationReport]:
+    ) -> r[m.Infra.Core.ValidationReport]:
         """Validate stub supply chain across projects.
 
         Args:
@@ -134,29 +133,29 @@ class FlextInfraStubSupplyChain:
                 if result.is_failure:
                     violations.append(f"{proj.name}: {result.error}")
                     continue
-                data: Mapping[str, t.ContainerValue] = result.value
-                internal = data.get("internal_missing", [])
-                unresolved = data.get("unresolved_missing", [])
-                if isinstance(internal, list) and internal:
+                data = result.value
+                internal = data.internal_missing
+                unresolved = data.unresolved_missing
+                if internal:
                     violations.append(
                         f"{proj.name}: {len(internal)} internal missing imports",
                     )
-                if isinstance(unresolved, list) and unresolved:
+                if unresolved:
                     violations.append(
                         f"{proj.name}: {len(unresolved)} unresolved imports",
                     )
 
             passed = len(violations) == 0
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
-            return r[m.Infra.ValidationReport].ok(
-                m.Infra.ValidationReport(
+            return r[m.Infra.Core.ValidationReport].ok(
+                m.Infra.Core.ValidationReport(
                     passed=passed,
                     violations=violations,
                     summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError) as exc:
-            return r[m.Infra.ValidationReport].fail(
+            return r[m.Infra.Core.ValidationReport].fail(
                 f"stub validation failed: {exc}",
             )
 
@@ -166,8 +165,8 @@ class FlextInfraStubSupplyChain:
             [
                 c.Infra.Cli.POETRY,
                 "run",
-                "mypy",
-                "src",
+                c.Infra.Cli.MYPY,
+                c.Infra.Paths.DEFAULT_SRC_DIR,
                 "--config-file",
                 c.Infra.Files.PYPROJECT_FILENAME,
                 "--no-error-summary",
@@ -176,7 +175,7 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            cmd_output: m.Infra.CommandOutput = result.value
+            cmd_output: p.Infra.CommandOutput = result.value
             output = cmd_output.stdout
         return sorted({
             m.group(1).strip()
@@ -192,7 +191,7 @@ class FlextInfraStubSupplyChain:
                 "run",
                 c.Infra.Cli.PYREFLY,
                 c.Infra.Cli.RuffCmd.CHECK,
-                "src",
+                c.Infra.Paths.DEFAULT_SRC_DIR,
                 "--config",
                 c.Infra.Files.PYPROJECT_FILENAME,
             ],
@@ -200,7 +199,7 @@ class FlextInfraStubSupplyChain:
         )
         output = ""
         if result.is_success:
-            cmd_output: m.Infra.CommandOutput = result.value
+            cmd_output: p.Infra.CommandOutput = result.value
             output = cmd_output.stdout
         seen: set[str] = set()
         ordered: list[str] = []

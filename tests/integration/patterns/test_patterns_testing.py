@@ -733,7 +733,7 @@ class TestComprehensiveIntegration:
         # Scenario 1: Success case
         scenario1 = (
             GivenWhenThenBuilder("successful_operation")
-            .given("valid input data", data={"valid": True})
+            .given("valid input data", data_valid=True)
             .when("operation is executed", executed=True)
             .then("operation succeeds", success=True)
             .with_tag("success")
@@ -744,7 +744,7 @@ class TestComprehensiveIntegration:
         # Scenario 2: Failure case
         scenario2 = (
             GivenWhenThenBuilder("failed_operation")
-            .given("invalid input data", data={"valid": False})
+            .given("invalid input data", data_valid=False)
             .when("operation is executed", executed=True)
             .then("operation fails gracefully", success=False, graceful=True)
             .with_tag("failure")
@@ -801,7 +801,7 @@ class TestRealWorldScenarios:
 
         with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
-            test_request: dict[str, FlextTypes.Container] = {
+            test_request: dict[str, FlextTypes.ContainerValue] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -811,8 +811,8 @@ class TestRealWorldScenarios:
 
             # Simulate API processing
             def process_api_request(
-                request: dict[str, FlextTypes.Container],
-            ) -> dict[str, FlextTypes.Container]:
+                request: dict[str, FlextTypes.ContainerValue],
+            ) -> dict[str, FlextTypes.ContainerValue]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -903,13 +903,14 @@ class TestRealWorldScenarios:
         # Build test scenario for this configuration
         scenario = (
             GivenWhenThenBuilder("configuration_validation")
-            .given("a configuration object", config=config)
+            .given(
+                "a configuration object", config_environment=str(config["environment"])
+            )
             .when("configuration is validated", action="validate")
             .then("all required fields are present", validated=True)
             .with_tag("configuration")
             .build()
         )
 
-        given_config = scenario.given.get("config")
-        assert given_config == config
+        assert scenario.given.get("config_environment") == config["environment"]
         assert "configuration" in scenario.tags

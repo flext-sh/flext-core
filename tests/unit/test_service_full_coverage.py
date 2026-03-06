@@ -12,6 +12,7 @@ import pytest
 
 from flext_core import FlextService, FlextSettings, c, m, p, r, u
 from flext_core._models.service import FlextModelsService
+from flext_core.context import FlextContext
 
 
 class _Svc(FlextService[bool]):
@@ -46,10 +47,7 @@ def test_service_init_type_guards_and_properties(
     with pytest.raises(TypeError, match="Expected FlextContext"):
         _Svc()
 
-    good_ctx = __import__(
-        "flext_core.context",
-        fromlist=["FlextContext"],
-    ).FlextContext.create()
+    good_ctx = FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
         config=cast("p.Config", _FakeConfig()),
         context=good_ctx,

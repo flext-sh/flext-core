@@ -23,7 +23,7 @@ class TestFlextInfraCommandRunner:
 
         assert result.is_success
         output = result.value
-        assert isinstance(output, m.Infra.CommandOutput)
+        assert isinstance(output, m.Infra.Core.CommandOutput)
         assert "hello" in output.stdout
         assert output.exit_code == 0
 
@@ -170,7 +170,7 @@ class TestFlextInfraCommandRunner:
 
     def test_command_output_model(self) -> None:
         """Test CommandOutput model creation."""
-        output = m.Infra.CommandOutput(stdout="out", stderr="err", exit_code=0)
+        output = m.Infra.Core.CommandOutput(stdout="out", stderr="err", exit_code=0)
 
         assert output.stdout == "out"
         assert output.stderr == "err"

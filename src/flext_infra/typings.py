@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
-from typing import TypeAlias
+from typing import Literal, TypeAlias
 
 from flext_core import FlextTypes
 
@@ -110,6 +110,31 @@ class FlextInfraTypes(FlextTypes):
 
         TomlMutableMap: TypeAlias = MutableMapping[str, TomlValue]
         """TOML mutable mapping (alias for accumulation/modification patterns)."""
+
+        # ── Dependency detection types ───────────────────────────────
+        type InfraValue = (
+            FlextTypes.Primitives
+            | list[FlextInfraTypes.Infra.InfraValue]
+            | Mapping[str, FlextInfraTypes.Infra.InfraValue]
+            | None
+        )
+        """Recursive infrastructure value: primitive, nested list/mapping, or null."""
+
+        IssueMap: TypeAlias = Mapping[str, InfraValue]
+        """Dependency issue mapping: string-keyed mapping of infra values."""
+
+        # ── PR / orchestration types ─────────────────────────────────
+        OrchestrationSummary: TypeAlias = Mapping[
+            str, int | list[Mapping[str, FlextTypes.Scalar]]
+        ]
+        """Workspace PR orchestration summary."""
+
+        # ── Refactor / MRO types ─────────────────────────────────────
+        FacadeFamily: TypeAlias = Literal["c", "t", "p", "m", "u"]
+        """Facade family identifier for MRO chain resolution."""
+
+        ExpectedBase: TypeAlias = type | str
+        """Expected MRO base: a class or its qualified name."""
 
 
 t = FlextInfraTypes

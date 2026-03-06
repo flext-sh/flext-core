@@ -82,7 +82,9 @@ class FlextInfraDocAuditor:
             return None, {}
 
         payload = json.loads(
-            config_path.read_text(encoding=c.Infra.Encoding.DEFAULT, errors="ignore"),
+            config_path.read_text(
+                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+            ),
         )
         docs_validation = payload.get("docs_validation", {})
         audit_gate = docs_validation.get("audit_gate", {})
@@ -204,7 +206,7 @@ class FlextInfraDocAuditor:
             "scope": scope.name,
             "issues": len(issues),
             "checks": sorted(checks),
-            "strict": strict,
+            c.Infra.Modes.STRICT: strict,
             "report_dir": scope.report_dir.as_posix(),
         }
         issues_payload: list[Mapping[str, t.ContainerValue]] = [
@@ -260,7 +262,7 @@ class FlextInfraDocAuditor:
         issues: list[AuditIssue] = []
         for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
             content = md_file.read_text(
-                encoding=c.Infra.Encoding.DEFAULT, errors="ignore"
+                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
             )
             rel = md_file.relative_to(scope.path).as_posix()
             in_fenced_code = False
@@ -308,7 +310,7 @@ class FlextInfraDocAuditor:
                 continue
             content = md_file.read_text(
                 encoding=c.Infra.Encoding.DEFAULT,
-                errors="ignore",
+                errors=c.Infra.Toml.IGNORE,
             ).lower()
             issues.extend(
                 AuditIssue(
