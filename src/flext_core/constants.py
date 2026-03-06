@@ -14,39 +14,6 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Literal
 
-_DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-_MAX_TIMEOUT_SECONDS: Final[int] = 3600
-_MIN_TIMEOUT_SECONDS: Final[int] = 1
-_DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
-_DEFAULT_BATCH_SIZE: Final[int] = 1000
-_DEFAULT_PAGE_SIZE: Final[int] = 10
-_MAX_PAGE_SIZE: Final[int] = 1000
-_MIN_PAGE_SIZE: Final[int] = 1
-_DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = 3
-_DEFAULT_WORKERS: Final[int] = 4
-_DEFAULT_POOL_SIZE: Final[int] = 10
-_MAX_POOL_SIZE: Final[int] = 100
-_MIN_POOL_SIZE: Final[int] = 1
-_MAX_NAME_LENGTH: Final[int] = 100
-_MAX_OPERATION_NAME_LENGTH: Final[int] = 100
-_MAX_PORT_NUMBER: Final[int] = 65535
-_MIN_PORT_NUMBER: Final[int] = 1
-_MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = 300.0
-_MAX_RETRY_COUNT_VALIDATION: Final[int] = 10
-_MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = 253
-_MAX_WORKERS_VALIDATION: Final[int] = 100
-_ZERO: Final[int] = 0
-_EXPECTED_TUPLE_LENGTH: Final[int] = 2
-_DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
-_PREVIEW_LENGTH: Final[int] = 50
-_DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
-_IDENTIFIER_LENGTH: Final[int] = 12
-_MAX_BATCH_SIZE_LIMIT: Final[int] = 10000
-_DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
-_DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
-_MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = 600
-_DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600
-
 
 class FlextConstants:
     """Centralized constants for the FLEXT ecosystem (Layer 0).
@@ -96,30 +63,7 @@ class FlextConstants:
             ERROR = "error"
 
     NAME: Final[str] = "FLEXT"
-    ZERO: Final[int] = _ZERO
     INITIAL_TIME: Final[float] = 0.0
-    DEFAULT_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
-    MAX_TIMEOUT_SECONDS: Final[int] = _MAX_TIMEOUT_SECONDS
-    MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
-    DEFAULT_MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
-    DEFAULT_BATCH_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
-    DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
-    MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
-    MIN_PAGE_SIZE: Final[int] = _MIN_PAGE_SIZE
-    DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
-    DEFAULT_WORKERS: Final[int] = _DEFAULT_WORKERS
-    DEFAULT_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
-    MAX_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
-    MIN_POOL_SIZE: Final[int] = _MIN_POOL_SIZE
-    MAX_NAME_LENGTH: Final[int] = _MAX_NAME_LENGTH
-    MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
-    MAX_PORT_NUMBER: Final[int] = _MAX_PORT_NUMBER
-    MIN_PORT_NUMBER: Final[int] = _MIN_PORT_NUMBER
-    MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = _MAX_TIMEOUT_VALIDATION_SECONDS
-    MAX_RETRY_COUNT_VALIDATION: Final[int] = _MAX_RETRY_COUNT_VALIDATION
-    MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = _MAX_HOSTNAME_LENGTH_VALIDATION
-    MAX_WORKERS_VALIDATION: Final[int] = _MAX_WORKERS_VALIDATION
-    EXPECTED_TUPLE_LENGTH: Final[int] = _EXPECTED_TUPLE_LENGTH
     EVENT_TUPLE_SIZE: Final[int] = 2
     "Domain event tuple size (event_type, event_data)."
     MIN_QUALNAME_PARTS_FOR_WRAPPER: Final[int] = 2
@@ -130,27 +74,18 @@ class FlextConstants:
     "Multiplier to convert seconds to milliseconds."
     MICROSECONDS_MULTIPLIER: Final[int] = 1000000
     "Multiplier to convert seconds to microseconds."
-    DEFAULT_FAILURE_THRESHOLD: Final[int] = _DEFAULT_FAILURE_THRESHOLD
-    PREVIEW_LENGTH: Final[int] = _PREVIEW_LENGTH
-    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = _DEFAULT_RECOVERY_TIMEOUT_SECONDS
-    IDENTIFIER_LENGTH: Final[int] = _IDENTIFIER_LENGTH
-    MAX_BATCH_SIZE_LIMIT: Final[int] = _MAX_BATCH_SIZE_LIMIT
-    DEFAULT_BACKOFF_MULTIPLIER: Final[float] = _DEFAULT_BACKOFF_MULTIPLIER
-    DEFAULT_MAX_DELAY_SECONDS: Final[float] = _DEFAULT_MAX_DELAY_SECONDS
-    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = _MAX_TIMEOUT_SECONDS_PERFORMANCE
-    DEFAULT_HOUR_IN_SECONDS: Final[int] = _DEFAULT_HOUR_IN_SECONDS
 
     class Network:
         """Network configuration constants and limits."""
 
         LOOPBACK_IP: Final[str] = "127.0.0.1"
         LOCALHOST: Final[str] = "localhost"
-        MIN_PORT: Final[int] = _MIN_PORT_NUMBER
-        MAX_PORT: Final[int] = _MAX_PORT_NUMBER
-        DEFAULT_TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
-        DEFAULT_CONNECTION_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
-        MAX_CONNECTION_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
-        MAX_HOSTNAME_LENGTH: Final[int] = _MAX_HOSTNAME_LENGTH_VALIDATION
+        MIN_PORT: Final[int] = 1
+        MAX_PORT: Final[int] = 65535
+        DEFAULT_TIMEOUT: Final[int] = 30
+        DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
+        MAX_CONNECTION_POOL_SIZE: Final[int] = 100
+        MAX_HOSTNAME_LENGTH: Final[int] = 253
         HTTP_STATUS_MIN: Final[int] = 100
         HTTP_STATUS_MAX: Final[int] = 599
 
@@ -158,7 +93,7 @@ class FlextConstants:
         """Input validation constraints and limits."""
 
         MIN_NAME_LENGTH: Final[int] = 2
-        MAX_NAME_LENGTH: Final[int] = _MAX_NAME_LENGTH
+        MAX_NAME_LENGTH: Final[int] = 100
         MAX_EMAIL_LENGTH: Final[int] = 254
         EMAIL_PARTS_COUNT: Final[int] = 2
         LEVEL_PREFIX_PARTS_COUNT: Final[int] = 4
@@ -167,7 +102,7 @@ class FlextConstants:
         MIN_USERNAME_LENGTH: Final[int] = 3
         MAX_AGE: Final[int] = 150
         MIN_AGE: Final[int] = 0
-        PREVIEW_LENGTH: Final[int] = _PREVIEW_LENGTH
+        PREVIEW_LENGTH: Final[int] = 50
         VALIDATION_TIMEOUT_MS: Final[int] = 100
         MAX_UNCOMMITTED_EVENTS: Final[int] = 100
         DISCOUNT_THRESHOLD: Final[int] = 100
@@ -176,7 +111,7 @@ class FlextConstants:
         RESOURCE_LIMIT_MIN: Final[int] = 50
         FILTER_THRESHOLD: Final[int] = 5
         RETRY_COUNT_MAX: Final[int] = 3
-        MAX_WORKERS_LIMIT: Final[int] = _MAX_WORKERS_VALIDATION
+        MAX_WORKERS_LIMIT: Final[int] = 100
         MAX_RETRY_STATUS_CODES: Final[int] = 100
         "Maximum number of HTTP status codes allowed in retry configuration."
         MAX_CUSTOM_VALIDATORS: Final[int] = 50
@@ -264,15 +199,15 @@ class FlextConstants:
     class Defaults:
         """Default values."""
 
-        TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        TIMEOUT: Final[int] = 30
         PAGE_SIZE: Final[int] = 100
-        TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        TIMEOUT_SECONDS: Final[int] = 30
         CACHE_TTL: Final[int] = 300
         DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
-        DEFAULT_MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
+        DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
         MAX_MESSAGE_LENGTH: Final[int] = 100
         DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
-        OPERATION_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        OPERATION_TIMEOUT_SECONDS: Final[int] = 30
         DATABASE_URL: Final[str] = "sqlite:///:memory:"
         DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
 
@@ -291,7 +226,7 @@ class FlextConstants:
         "UTF-8 format for bytes serialization."
         SERIALIZATION_HEX: Final = "hex"
         "Hex format for bytes serialization."
-        MAX_TIMEOUT_SECONDS: Final[int] = _MAX_TIMEOUT_SECONDS
+        MAX_TIMEOUT_SECONDS: Final[int] = 3600
         LONG_UUID_LENGTH: Final[int] = 12
         SHORT_UUID_LENGTH: Final[int] = 8
         VERSION_MODULO: Final[int] = 100
@@ -325,7 +260,7 @@ class FlextConstants:
         MAX_WORKERS_THRESHOLD: Final[int] = 50
         DEFAULT_ENABLE_CACHING: Final[bool] = True
         DEFAULT_ENABLE_TRACING: Final[bool] = False
-        DEFAULT_TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        DEFAULT_TIMEOUT: Final[int] = 30
         DEFAULT_DEBUG_MODE: Final[bool] = False
         DEFAULT_TRACE_MODE: Final[bool] = False
 
@@ -419,9 +354,9 @@ class FlextConstants:
     class Performance:
         """Performance thresholds."""
 
-        DEFAULT_DB_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
-        MIN_DB_POOL_SIZE: Final[int] = _MIN_POOL_SIZE
-        MAX_DB_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
+        DEFAULT_DB_POOL_SIZE: Final[int] = 10
+        MIN_DB_POOL_SIZE: Final[int] = 1
+        MAX_DB_POOL_SIZE: Final[int] = 100
         MAX_RETRY_ATTEMPTS_LIMIT: Final[int] = 10
         DEFAULT_TIMEOUT_LIMIT: Final[int] = 300
         MIN_CURRENT_STEP: Final[int] = 0
@@ -431,20 +366,20 @@ class FlextConstants:
         DEFAULT_TTL_SECONDS: Final[int] = 3600
         DEFAULT_VERSION: Final[int] = 1
         MIN_VERSION: Final[int] = 1
-        DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
+        DEFAULT_PAGE_SIZE: Final[int] = 10
         HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 1073741824
         MAX_TIMEOUT_SECONDS: Final[int] = 600
         MAX_BATCH_OPERATIONS: Final[int] = 1000
-        MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
+        MAX_OPERATION_NAME_LENGTH: Final[int] = 100
         EXPECTED_TUPLE_LENGTH: Final[int] = 2
         DEFAULT_EMPTY_STRING: Final[str] = ""
 
         class BatchProcessing:
             """Batch processing constants."""
 
-            DEFAULT_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
+            DEFAULT_SIZE: Final[int] = 1000
             MAX_ITEMS: Final[int] = 10000
-            MAX_VALIDATION_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
+            MAX_VALIDATION_SIZE: Final[int] = 1000
 
         CLI_PERFORMANCE_CRITICAL_MS: Final[float] = 10000.0
         RECENT_THRESHOLD_MINUTES: Final[float] = 60.0
@@ -458,8 +393,8 @@ class FlextConstants:
     class Reliability:
         """Reliability thresholds."""
 
-        MAX_RETRY_ATTEMPTS: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
-        DEFAULT_MAX_RETRIES: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
+        MAX_RETRY_ATTEMPTS: Final[int] = 3
+        DEFAULT_MAX_RETRIES: Final[int] = 3
         DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1
         RETRY_BACKOFF_BASE: Final[float] = 2.0
         RETRY_BACKOFF_MAX: Final[float] = 60.0
@@ -473,7 +408,7 @@ class FlextConstants:
         "Linear backoff strategy."
         DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
-        DEFAULT_TIMEOUT_SECONDS: Final[float] = float(_DEFAULT_TIMEOUT_SECONDS)
+        DEFAULT_TIMEOUT_SECONDS: Final[float] = float(30)
         DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final[int] = 60
         DEFAULT_RATE_LIMIT_MAX_REQUESTS: Final[int] = 100
         DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
@@ -1086,8 +1021,8 @@ class FlextConstants:
         MIN_RETRIES: Final[int] = 0
         MAX_RETRIES: Final[int] = 5
         DEFAULT_MAX_COMMAND_RETRIES: Final[int] = 0
-        DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
-        MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
+        DEFAULT_PAGE_SIZE: Final[int] = 10
+        MAX_PAGE_SIZE: Final[int] = 1000
         DEFAULT_MAX_VALIDATION_ERRORS: Final[int] = 10
         DEFAULT_MINIMUM_THROUGHPUT: Final[int] = 10
         DEFAULT_PARALLEL_EXECUTION: Final[bool] = False
@@ -1151,11 +1086,11 @@ class FlextConstants:
     class Container:
         """Dependency injection container constants."""
 
-        DEFAULT_WORKERS: Final[int] = _DEFAULT_WORKERS
-        TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
-        MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
+        DEFAULT_WORKERS: Final[int] = 4
+        TIMEOUT_SECONDS: Final[int] = 30
+        MIN_TIMEOUT_SECONDS: Final[int] = 1
         MAX_TIMEOUT_SECONDS: Final[int] = 300
-        MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
+        MAX_CACHE_SIZE: Final[int] = 100
         DEFAULT_MAX_SERVICES: Final[int] = 1000
         "Default maximum number of services allowed in container."
         DEFAULT_MAX_FACTORIES: Final[int] = 500
@@ -1178,8 +1113,8 @@ class FlextConstants:
         DEFAULT_AUTO_CONTEXT: Final[bool] = True
         DEFAULT_ENABLE_LOGGING: Final[bool] = True
         DEFAULT_ENABLE_METRICS: Final[bool] = True
-        DEFAULT_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
-        MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+        MIN_TIMEOUT_SECONDS: Final[int] = 1
         MAX_TIMEOUT_SECONDS: Final[int] = 600
         MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
         DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core.dispatcher:FlextDispatcher"
@@ -1217,9 +1152,9 @@ class FlextConstants:
         """Pagination configuration."""
 
         DEFAULT_PAGE_NUMBER: Final[int] = 1
-        DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
-        MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
-        MIN_PAGE_SIZE: Final[int] = _MIN_PAGE_SIZE
+        DEFAULT_PAGE_SIZE: Final[int] = 10
+        MAX_PAGE_SIZE: Final[int] = 1000
+        MIN_PAGE_SIZE: Final[int] = 1
         MIN_PAGE_NUMBER: Final[int] = 1
         MAX_PAGE_NUMBER: Final[int] = 10000
         DEFAULT_PAGE_SIZE_EXAMPLE: Final[int] = 20
@@ -1305,7 +1240,7 @@ class FlextConstants:
         STRING_FALSE: Final[str] = "false"
         DEFAULT_USE_UTC: Final[bool] = True
         DEFAULT_AUTO_UPDATE: Final[bool] = True
-        MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
+        MAX_OPERATION_NAME_LENGTH: Final[int] = 100
         MAX_STATE_VALUE_LENGTH: Final[int] = 50
         MAX_FIELD_NAME_LENGTH: Final[int] = 50
         MIN_FIELD_NAME_LENGTH: Final[int] = 1
@@ -1319,8 +1254,8 @@ class FlextConstants:
     class Processing:
         """Processing pipeline constants."""
 
-        DEFAULT_MAX_WORKERS: Final[int] = _DEFAULT_WORKERS
-        DEFAULT_BATCH_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
+        DEFAULT_MAX_WORKERS: Final[int] = 4
+        DEFAULT_BATCH_SIZE: Final[int] = 1000
         PATTERN_TUPLE_MIN_LENGTH: Final[int] = 2
         "Minimum length for tuple patterns in parsing operations."
         PATTERN_TUPLE_MAX_LENGTH: Final[int] = 3
@@ -1373,6 +1308,38 @@ class FlextConstants:
     "Default page size."
     MAX_RETRIES: Final[int] = Reliability.MAX_RETRY_ATTEMPTS
     "Maximum retry attempts."
+    DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+    MAX_TIMEOUT_SECONDS: Final[int] = 3600
+    MIN_TIMEOUT_SECONDS: Final[int] = 1
+    DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
+    DEFAULT_BATCH_SIZE: Final[int] = 1000
+    DEFAULT_PAGE_SIZE: Final[int] = 10
+    MAX_PAGE_SIZE: Final[int] = 1000
+    MIN_PAGE_SIZE: Final[int] = 1
+    DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = 3
+    DEFAULT_WORKERS: Final[int] = 4
+    DEFAULT_POOL_SIZE: Final[int] = 10
+    MAX_POOL_SIZE: Final[int] = 100
+    MIN_POOL_SIZE: Final[int] = 1
+    MAX_NAME_LENGTH: Final[int] = 100
+    MAX_OPERATION_NAME_LENGTH: Final[int] = 100
+    MAX_PORT_NUMBER: Final[int] = 65535
+    MIN_PORT_NUMBER: Final[int] = 1
+    MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = 300.0
+    MAX_RETRY_COUNT_VALIDATION: Final[int] = 10
+    MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = 253
+    MAX_WORKERS_VALIDATION: Final[int] = 100
+    ZERO: Final[int] = 0
+    EXPECTED_TUPLE_LENGTH: Final[int] = 2
+    DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
+    PREVIEW_LENGTH: Final[int] = 50
+    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
+    IDENTIFIER_LENGTH: Final[int] = 12
+    MAX_BATCH_SIZE_LIMIT: Final[int] = 10000
+    DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
+    DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
+    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = 600
+    DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600
 
 
 c = FlextConstants

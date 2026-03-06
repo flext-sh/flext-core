@@ -242,6 +242,16 @@ class MROMigrationTransformer:
             created_classes = (class_name,)
 
         updated_module = module.with_changes(body=tuple(transformed_body))
+
+        replacement_transformer = _ReplacementTransformer(
+            replacement_values={
+                symbol: moved_by_symbol[symbol].value
+                for symbol in ordered_symbols
+                if moved_by_symbol[symbol].value is not None
+            }
+        )
+        updated_module = updated_module.visit(replacement_transformer)
+
         migration = MROFileMigration(
             file=scan_result.file,
             module=scan_result.module,
@@ -280,12 +290,16 @@ class MROMigrationTransformer:
         retained_class_body: list[cst.CSTNode] = []
         alias_by_symbol: dict[str, str] = {}
 
+        alias_replacement_values: dict[str, cst.BaseExpression] = {}
         for statement in class_def.body.body:
             alias = MROMigrationTransformer._extract_alias_assignment(
                 statement=statement
             )
             if alias is not None and alias[1] in moved_by_symbol:
                 alias_by_symbol[alias[1]] = alias[0]
+                private_value = moved_by_symbol[alias[1]].value
+                if private_value is not None:
+                    alias_replacement_values[alias[0]] = private_value
                 continue
             retained_class_body.append(statement)
 
@@ -300,15 +314,17 @@ class MROMigrationTransformer:
                 continue
             added_targets.add(target)
             symbol_map[symbol] = target
-            moved_lines.append(
-                cst.SimpleStatementLine(
-                    body=[
-                        moved_by_symbol[symbol].with_changes(
-                            target=cst.Name(target),
-                        )
-                    ]
+            replacement_value = alias_replacement_values.get(target)
+            if replacement_value is not None:
+                moved_stmt = moved_by_symbol[symbol].with_changes(
+                    target=cst.Name(target),
+                    value=replacement_value,
                 )
-            )
+            else:
+                moved_stmt = moved_by_symbol[symbol].with_changes(
+                    target=cst.Name(target),
+                )
+            moved_lines.append(cst.SimpleStatementLine(body=[moved_stmt]))
 
         cleaned_body = [
             statement
@@ -374,15 +390,21 @@ class MROMigrationTransformer:
         if len(statement.body) != 1:
             return None
         assign = statement.body[0]
-        if not isinstance(assign, cst.Assign):
-            return None
-        if len(assign.targets) != 1:
-            return None
-        if not isinstance(assign.targets[0].target, cst.Name):
-            return None
-        if not isinstance(assign.value, cst.Name):
-            return None
-        return assign.targets[0].target.value, assign.value.value
+        if isinstance(assign, cst.AnnAssign):
+            if not isinstance(assign.target, cst.Name):
+                return None
+            if not isinstance(assign.value, cst.Name):
+                return None
+            return assign.target.value, assign.value.value
+        if isinstance(assign, cst.Assign):
+            if len(assign.targets) != 1:
+                return None
+            if not isinstance(assign.targets[0].target, cst.Name):
+                return None
+            if not isinstance(assign.value, cst.Name):
+                return None
+            return assign.targets[0].target.value, assign.value.value
+        return None
 
     @staticmethod
     def _default_target(*, symbol: str) -> str:
@@ -590,6 +612,20 @@ class MROImportRewriter:
             if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
                 insert_at = index + 1
         return insert_at
+
+
+class _ReplacementTransformer(cst.CSTTransformer):
+    """Replace Name nodes that reference private constants with their literal values."""
+
+    def __init__(self, *, replacement_values: dict[str, cst.BaseExpression]) -> None:
+        self.replacement_values = replacement_values
+
+    def leave_Name(
+        self, original_node: cst.Name, updated_node: cst.Name
+    ) -> cst.BaseExpression:
+        if original_node.value in self.replacement_values:
+            return self.replacement_values[original_node.value]
+        return updated_node
 
 
 class MROMigrationValidator:
