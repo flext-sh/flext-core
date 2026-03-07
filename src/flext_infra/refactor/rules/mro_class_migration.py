@@ -1,0 +1,107 @@
+"""Rule that migrates module-level constants into constants facade classes."""
+
+from __future__ import annotations
+
+import ast
+import re
+from pathlib import Path
+from typing import override
+
+import libcst as cst
+
+from flext_infra import c, m
+from flext_infra.refactor.mro_migrator import FlextInfraRefactorMROMigrationTransformer
+from flext_infra.refactor.rule import FlextInfraRefactorRule
+
+_CONSTANT_PATTERN = re.compile(c.Infra.Refactor.CONSTANT_PATTERN_REGEX)
+
+
+class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
+    """Apply MRO constants-class migration to a single module."""
+
+    @override
+    def apply(
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
+    ) -> tuple[cst.Module, list[str]]:
+        if _file_path is None:
+            return tree, []
+        if _file_path.name != c.Infra.Refactor.CONSTANTS_FILE_GLOB:
+            return tree, []
+
+        source = tree.code
+        try:
+            module_ast = ast.parse(source)
+        except SyntaxError:
+            return tree, []
+
+        candidates: list[m.Infra.Refactor.MROConstantCandidate] = []
+        for stmt in module_ast.body:
+            if not isinstance(stmt, ast.AnnAssign):
+                continue
+            if not isinstance(stmt.target, ast.Name):
+                continue
+            if not _is_constant_candidate(stmt.target.id):
+                continue
+            if not _is_final_annotation(stmt.annotation):
+                continue
+            candidates.append(
+                m.Infra.Refactor.MROConstantCandidate(
+                    symbol=stmt.target.id,
+                    line=stmt.lineno,
+                )
+            )
+
+        if len(candidates) == 0:
+            return tree, []
+
+        constants_class = _first_constants_class_name(module_ast)
+        scan_result = m.Infra.Refactor.MROFileScan(
+            file=str(_file_path),
+            module="",
+            constants_class=constants_class,
+            candidates=tuple(candidates),
+        )
+        updated_source, migration, _ = (
+            FlextInfraRefactorMROMigrationTransformer.migrate_file(
+                scan_result=scan_result
+            )
+        )
+        if len(migration.moved_symbols) == 0 or updated_source == source:
+            return tree, []
+        updated_module = cst.parse_module(updated_source)
+        return updated_module, [
+            f"migrated constants into facade class: {', '.join(migration.moved_symbols)}"
+        ]
+
+
+def _first_constants_class_name(tree: ast.Module) -> str:
+    for stmt in tree.body:
+        if isinstance(stmt, ast.ClassDef) and stmt.name.endswith(
+            c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX
+        ):
+            return stmt.name
+    return ""
+
+
+def _is_constant_candidate(symbol: str) -> bool:
+    return _CONSTANT_PATTERN.match(symbol) is not None
+
+
+def _is_final_annotation(annotation: ast.expr) -> bool:
+    final_name = c.Infra.Refactor.FINAL_ANNOTATION_NAME
+    if isinstance(annotation, ast.Name):
+        return annotation.id == final_name
+    if isinstance(annotation, ast.Attribute):
+        return annotation.attr == final_name
+    if isinstance(annotation, ast.Subscript):
+        base = annotation.value
+        if isinstance(base, ast.Name):
+            return base.id == final_name
+        if isinstance(base, ast.Attribute):
+            return base.attr == final_name
+    return False
+
+
+__all__ = ["FlextInfraRefactorMROClassMigrationRule"]

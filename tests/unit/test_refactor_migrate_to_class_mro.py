@@ -134,3 +134,18 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     assert "from sample_pkg.constants import c as constants" not in consumer_source
     assert "from sample_pkg.constants import c" in consumer_source
     assert "result = c.VALUE" in consumer_source
+
+
+def test_migrate_to_mro_rejects_unknown_target(tmp_path: Path) -> None:
+    project_root = tmp_path / "sample"
+    project_root.mkdir(parents=True)
+
+    migrator = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root)
+
+    try:
+        _ = migrator.run(target="typings", apply_changes=False)
+    except ValueError as exc:
+        assert "unsupported target" in str(exc)
+    else:  # pragma: no cover - defensive assertion
+        msg = "expected ValueError for unsupported target"
+        raise AssertionError(msg)

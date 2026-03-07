@@ -14,6 +14,9 @@ from flext_infra.refactor.rules.import_modernizer import (
 from flext_infra.refactor.rules.legacy_removal import (
     FlextInfraRefactorLegacyRemovalRule,
 )
+from flext_infra.refactor.rules.mro_class_migration import (
+    FlextInfraRefactorMROClassMigrationRule,
+)
 from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
@@ -30,6 +33,7 @@ __all__ = [
     "FlextInfraRefactorEnsureFutureAnnotationsRule",
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
+    "FlextInfraRefactorMROClassMigrationRule",
     "FlextInfraRefactorMRORedundancyChecker",
     "FlextInfraRefactorPatternCorrectionsRule",
     "FlextInfraRefactorSignaturePropagationRule",

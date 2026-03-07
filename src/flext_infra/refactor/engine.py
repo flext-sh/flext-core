@@ -16,10 +16,10 @@ import yaml
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import FlextInfraJsonService, c, m, output, t
+from flext_infra import c, m, output, t
+from flext_infra.json_io import FlextInfraJsonService
 from flext_infra.refactor.analysis import (
     FlextInfraRefactorViolationAnalyzer,
-    ViolationAnalysisReport,
 )
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
@@ -34,6 +34,9 @@ from flext_infra.refactor.rules.import_modernizer import (
 )
 from flext_infra.refactor.rules.legacy_removal import (
     FlextInfraRefactorLegacyRemovalRule,
+)
+from flext_infra.refactor.rules.mro_class_migration import (
+    FlextInfraRefactorMROClassMigrationRule,
 )
 from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
@@ -421,7 +424,7 @@ class FlextInfraRefactorEngine:
 
     @staticmethod
     def print_violation_summary(
-        analysis: ViolationAnalysisReport,
+        analysis: m.Infra.Refactor.ViolationAnalysisReport,
     ) -> None:
         """Print aggregate violation counts and hottest files."""
         output.header("Violation Analysis")
@@ -957,6 +960,8 @@ class FlextInfraRefactorEngine:
         if fix_action in c.Infra.Refactor.CLASS_FIX_ACTIONS:
             return FlextInfraRefactorClassReconstructorRule(rule_def)
         if fix_action in c.Infra.Refactor.MRO_FIX_ACTIONS:
+            if fix_action == "migrate_to_class_mro":
+                return FlextInfraRefactorMROClassMigrationRule(rule_def)
             return FlextInfraRefactorMRORedundancyChecker(rule_def)
         if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
             if fix_action == "propagate_signature_migrations":
@@ -978,6 +983,8 @@ class FlextInfraRefactorEngine:
         if any(key in rule_id_lower for key in ["class", "reorder", "method"]):
             return FlextInfraRefactorClassReconstructorRule(rule_def)
         if "mro" in rule_id_lower:
+            if "migrate-to-class-mro" in rule_id_lower:
+                return FlextInfraRefactorMROClassMigrationRule(rule_def)
             return FlextInfraRefactorMRORedundancyChecker(rule_def)
         if any(
             key in rule_id_lower for key in ["propagate", "symbol-rename", "rename"]

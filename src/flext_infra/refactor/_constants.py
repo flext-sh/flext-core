@@ -50,6 +50,7 @@ class FlextInfraRefactorConstants:
     MRO_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
         "remove_inheritance_keep_class",
         "fix_mro_redeclaration",
+        "migrate_to_class_mro",
     })
 
     PROPAGATION_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
@@ -96,6 +97,9 @@ class FlextInfraRefactorConstants:
 
     DEFAULT_FACADE_ALIAS: ClassVar[str] = "c"
     """Default facade alias inserted during import rewrite."""
+
+    MRO_CLASS_TEMPLATE: ClassVar[str] = "class {class_name}:\n    pass\n"
+    """Template used to create a new constants facade class."""
 
     # -- Family / MRO constants ----------------------------------------------
 
