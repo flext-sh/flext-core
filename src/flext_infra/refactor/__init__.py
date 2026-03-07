@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from flext_infra.refactor.rules.mro_redundancy_checker import (
         FlextInfraRefactorMRORedundancyChecker,
     )
+    from flext_infra.refactor.rules.mro_class_migration import (
+        FlextInfraRefactorMROClassMigrationRule,
+    )
     from flext_infra.refactor.rules.pattern_corrections import (
         FlextInfraRefactorPatternCorrectionsRule,
     )
@@ -60,6 +63,10 @@ _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
     "FlextInfraRefactorMRORedundancyChecker": (
         "flext_infra.refactor.rules.mro_redundancy_checker",
         "FlextInfraRefactorMRORedundancyChecker",
+    ),
+    "FlextInfraRefactorMROClassMigrationRule": (
+        "flext_infra.refactor.rules.mro_class_migration",
+        "FlextInfraRefactorMROClassMigrationRule",
     ),
     "FlextInfraRefactorSymbolPropagationRule": (
         "flext_infra.refactor.rules.symbol_propagation",
@@ -102,6 +109,7 @@ __all__ = [
     "FlextInfraRefactorEnsureFutureAnnotationsRule",
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
+    "FlextInfraRefactorMROClassMigrationRule",
     "FlextInfraRefactorMRORedundancyChecker",
     "FlextInfraRefactorPatternCorrectionsRule",
     "FlextInfraRefactorRule",

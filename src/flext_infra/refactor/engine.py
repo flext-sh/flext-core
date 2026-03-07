@@ -564,7 +564,9 @@ class FlextInfraRefactorEngine:
         try:
             rules_dir = self.config_path.parent / c.Infra.ReportKeys.RULES
             loaded_rules: list[FlextInfraRefactorRule] = []
-            loaded_file_rules: list[ClassNestingRefactorRule] = []
+            loaded_file_rules: list[ClassNestingRefactorRule] = [
+                ClassNestingRefactorRule()
+            ]
             unknown_rules: list[str] = []
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
@@ -609,19 +611,7 @@ class FlextInfraRefactorEngine:
                         .lower()
                     )
                     if fix_action == "nest_classes":
-                        if self.rule_filters:
-                            requested_class_nesting = any(
-                                token in active_filter.lower()
-                                for active_filter in self.rule_filters
-                                for token in (
-                                    "class-nesting",
-                                    "class_nesting",
-                                    "nest_classes",
-                                )
-                            )
-                            if not requested_class_nesting:
-                                continue
-                        loaded_file_rules.append(ClassNestingRefactorRule())
+                        # Class nesting is always active as a file-level rule.
                         continue
 
                     if not matches_active_filters:
@@ -683,22 +673,21 @@ class FlextInfraRefactorEngine:
             all_changes: list[str] = []
             file_rule_modified = False
 
-            if not self.rule_filters:
-                for file_rule in self.file_rules:
-                    file_rule_result = file_rule.apply(file_path, dry_run=True)
-                    if not file_rule_result.success:
-                        return m.Infra.Refactor.Result(
-                            file_path=file_path,
-                            success=False,
-                            modified=False,
-                            error=file_rule_result.error,
-                            changes=file_rule_result.changes,
-                            refactored_code=None,
-                        )
-                    if file_rule_result.modified and file_rule_result.refactored_code:
-                        source = file_rule_result.refactored_code
-                        file_rule_modified = True
-                    all_changes.extend(file_rule_result.changes)
+            for file_rule in self.file_rules:
+                file_rule_result = file_rule.apply(file_path, dry_run=True)
+                if not file_rule_result.success:
+                    return m.Infra.Refactor.Result(
+                        file_path=file_path,
+                        success=False,
+                        modified=False,
+                        error=file_rule_result.error,
+                        changes=file_rule_result.changes,
+                        refactored_code=None,
+                    )
+                if file_rule_result.modified and file_rule_result.refactored_code:
+                    source = file_rule_result.refactored_code
+                    file_rule_modified = True
+                all_changes.extend(file_rule_result.changes)
 
             tree = cst.parse_module(source)
 

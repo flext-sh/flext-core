@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import libcst as cst
 
-from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
+from flext_infra.refactor.transformers.class_nesting import (
+    FlextInfraRefactorClassNestingTransformer,
+)
 
 
 def test_class_nesting_moves_top_level_class_into_new_namespace() -> None:
@@ -16,7 +18,9 @@ def test_class_nesting_moves_top_level_class_into_new_namespace() -> None:
     )
 
     transformed = cst.parse_module(source).visit(
-        ClassNestingTransformer({"TimeoutEnforcer": "FlextDispatcher"})
+        FlextInfraRefactorClassNestingTransformer({
+            "TimeoutEnforcer": "FlextDispatcher"
+        })
     )
     code = transformed.code
 
@@ -33,7 +37,9 @@ def test_class_nesting_appends_to_existing_namespace_and_removes_pass() -> None:
     source = "class FlextDispatcher:\n    pass\n\nclass TimeoutEnforcer:\n    pass\n"
 
     transformed = cst.parse_module(source).visit(
-        ClassNestingTransformer({"TimeoutEnforcer": "FlextDispatcher"})
+        FlextInfraRefactorClassNestingTransformer({
+            "TimeoutEnforcer": "FlextDispatcher"
+        })
     )
     code = transformed.code
 
@@ -47,7 +53,9 @@ def test_class_nesting_keeps_unmapped_top_level_classes() -> None:
     source = "class TimeoutEnforcer:\n    pass\n\nclass OtherClass:\n    pass\n"
 
     transformed = cst.parse_module(source).visit(
-        ClassNestingTransformer({"TimeoutEnforcer": "FlextDispatcher"})
+        FlextInfraRefactorClassNestingTransformer({
+            "TimeoutEnforcer": "FlextDispatcher"
+        })
     )
     code = transformed.code
 

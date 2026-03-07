@@ -10,7 +10,9 @@ from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import FlextInfraJsonService, c, m, t
-from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
+from flext_infra.refactor.transformers.class_nesting import (
+    FlextInfraRefactorClassNestingTransformer,
+)
 from flext_infra.refactor.transformers.helper_consolidation import (
     HelperConsolidationTransformer,
 )
@@ -28,23 +30,32 @@ type _PreCheckViolation = dict[str, str]
 
 
 def _entry_list(value: str | list[_MappingEntry] | None) -> list[_MappingEntry]:
+    if value is None:
+        return []
     if isinstance(value, list):
         return value
-    return []
+    msg = "class nesting entries must be a list"
+    raise ValueError(msg)
 
 
 def _string_list(value: t.ContainerValue | None) -> list[str]:
+    if value is None:
+        return []
     try:
         return TypeAdapter(list[str]).validate_python(value)
     except ValidationError:
-        return []
+        msg = "expected list[str] value"
+        raise ValueError(msg) from None
 
 
 def _mapping_list(value: t.ContainerValue | None) -> list[dict[str, t.ContainerValue]]:
+    if value is None:
+        return []
     try:
         return TypeAdapter(list[dict[str, t.ContainerValue]]).validate_python(value)
     except ValidationError:
-        return []
+        msg = "expected list[dict[str, ContainerValue]] value"
+        raise ValueError(msg) from None
 
 
 class PreCheckGate:
@@ -161,17 +172,42 @@ class PreCheckGate:
         return by_family
 
     def _schema_valid(self, loaded: _PolicyDocument) -> bool:
-        schema = FlextInfraJsonService().load(self._schema_path)
-        if schema is None:
+        schema_raw = FlextInfraJsonService().load(self._schema_path)
+        if schema_raw is None:
+            return False
+        try:
+            schema = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                schema_raw
+            )
+        except ValidationError:
             return False
 
-        top_required = schema.get("required", [])
+        top_required = _string_list(schema.get("required", []))
         if not self._has_required_fields(loaded, top_required):
             return False
 
-        definitions = schema.get("definitions", {})
-        policy_entry_required = definitions.get("policyEntry", {}).get("required", [])
-        class_rule_required = definitions.get("classRule", {}).get("required", [])
+        definitions_raw = schema.get("definitions", {})
+        try:
+            definitions = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                definitions_raw
+            )
+        except ValidationError:
+            return False
+
+        policy_entry_raw = definitions.get("policyEntry", {})
+        class_rule_raw = definitions.get("classRule", {})
+        try:
+            policy_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                policy_entry_raw
+            )
+            class_rule = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                class_rule_raw
+            )
+        except ValidationError:
+            return False
+
+        policy_entry_required = _string_list(policy_entry.get("required", []))
+        class_rule_required = _string_list(class_rule.get("required", []))
 
         policy_matrix = _mapping_list(loaded.get("policy_matrix"))
         for entry in policy_matrix:
@@ -188,19 +224,11 @@ class PreCheckGate:
     def _has_required_fields(
         self,
         entry: t.ContainerValue,
-        required_fields: t.ContainerValue,
+        required_fields: list[str],
     ) -> bool:
         if not isinstance(entry, dict):
             return False
-        if not isinstance(required_fields, list):
-            return True
-
-        try:
-            keys = TypeAdapter(list[str]).validate_python(required_fields)
-        except ValidationError:
-            return False
-
-        return all(key in entry for key in keys)
+        return all(key in entry for key in required_fields)
 
     def _module_family_from_path(self, path: str) -> str:
         normalized = path.replace("\\", "/")
@@ -346,7 +374,8 @@ class ClassNestingRefactorRule:
                 loaded_raw
             )
         except ValidationError:
-            return {}
+            msg = "invalid class nesting mapping config"
+            raise ValueError(msg) from None
 
         config: _RuleConfig = {}
         confidence_threshold = loaded.get("confidence_threshold")
@@ -370,11 +399,13 @@ class ClassNestingRefactorRule:
     def _confidence_threshold(self, config: _RuleConfig) -> str:
         raw = config.get("confidence_threshold", c.Infra.Severity.LOW)
         if not isinstance(raw, str):
-            return c.Infra.Severity.LOW
+            msg = "confidence_threshold must be a string"
+            raise ValueError(msg)
         candidate = raw.strip().lower()
         if candidate in c.Infra.Refactor.CONFIDENCE_RANKS:
             return candidate
-        return c.Infra.Severity.LOW
+        msg = f"unsupported confidence_threshold: {raw}"
+        raise ValueError(msg)
 
     def _confidence_allowed(self, confidence: str, threshold: str) -> bool:
         confidence_rank = c.Infra.Refactor.CONFIDENCE_RANKS.get(
@@ -618,30 +649,58 @@ class ClassNestingRefactorRule:
                 self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             )
         except (OSError, yaml.YAMLError):
-            return {}
+            msg = f"failed to read policy document: {self._policy_path}"
+            raise ValueError(msg) from None
         try:
             loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
                 loaded_raw
             )
         except ValidationError:
-            return {}
+            msg = "policy document must be a mapping"
+            raise ValueError(msg) from None
         if not self._policy_document_schema_valid(loaded):
-            return {}
+            msg = "policy document failed schema validation"
+            raise ValueError(msg)
         return loaded
 
     def _policy_document_schema_valid(self, loaded: _PolicyDocument) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
-        schema = FlextInfraJsonService().load(schema_path)
-        if schema is None:
+        schema_raw = FlextInfraJsonService().load(schema_path)
+        if schema_raw is None:
+            return False
+        try:
+            schema = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                schema_raw
+            )
+        except ValidationError:
             return False
 
-        top_required = schema.get("required", [])
+        top_required = _string_list(schema.get("required", []))
         if not self._has_required_fields(loaded, top_required):
             return False
 
-        definitions = schema.get("definitions", {})
-        policy_entry_required = definitions.get("policyEntry", {}).get("required", [])
-        class_rule_required = definitions.get("classRule", {}).get("required", [])
+        definitions_raw = schema.get("definitions", {})
+        try:
+            definitions = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                definitions_raw
+            )
+        except ValidationError:
+            return False
+
+        policy_entry_raw = definitions.get("policyEntry", {})
+        class_rule_raw = definitions.get("classRule", {})
+        try:
+            policy_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                policy_entry_raw
+            )
+            class_rule = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                class_rule_raw
+            )
+        except ValidationError:
+            return False
+
+        policy_entry_required = _string_list(policy_entry.get("required", []))
+        class_rule_required = _string_list(class_rule.get("required", []))
 
         for entry in _mapping_list(loaded.get("policy_matrix")):
             if not self._has_required_fields(entry, policy_entry_required):
@@ -654,13 +713,11 @@ class ClassNestingRefactorRule:
         return True
 
     def _has_required_fields(
-        self, entry: t.ContainerValue, required_fields: t.ContainerValue
+        self, entry: t.ContainerValue, required_fields: list[str]
     ) -> bool:
         if not isinstance(entry, dict):
             return False
-        if not isinstance(required_fields, list):
-            return True
-        return all(key in entry for key in _string_list(required_fields))
+        return all(key in entry for key in required_fields)
 
     def _scope_applies_to_file(
         self,
@@ -693,7 +750,8 @@ class ClassNestingRefactorRule:
             c.Infra.ReportKeys.WORKSPACE,
         }:
             return scope
-        return c.Infra.ReportKeys.FILE
+        msg = f"unsupported rewrite_scope: {raw_scope}"
+        raise ValueError(msg)
 
     def _project_scope_tokens(self, path_value: Path) -> set[str]:
         normalized = path_value.as_posix().replace("\\", "/")
@@ -727,11 +785,11 @@ class ClassNestingRefactorRule:
         mappings: dict[str, str],
         changes: list[str],
     ) -> cst.Module:
-        transformer = ClassNestingTransformer(mappings=mappings)
+        transformer = FlextInfraRefactorClassNestingTransformer(mappings=mappings)
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
-                f"Applied ClassNestingTransformer ({len(mappings)} mappings)"
+                f"Applied FlextInfraRefactorClassNestingTransformer ({len(mappings)} mappings)"
             )
         return updated_tree
 

@@ -9,7 +9,7 @@ from typing import TypedDict, override
 import libcst as cst
 
 
-class FamilyPolicy(TypedDict, total=False):
+class FamilyPolicy(TypedDict):
     enable_class_nesting: bool
     allow_namespace_creation: bool
     allow_existing_namespace_merge: bool
@@ -20,19 +20,19 @@ class FamilyPolicy(TypedDict, total=False):
 type PolicyContext = Mapping[str, FamilyPolicy]
 
 
-class ClassNestingTransformer(cst.CSTTransformer):
+class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
     """Transform top-level classes into nested classes under namespace parents."""
 
     def __init__(
         self,
         mappings: dict[str, str],
-        policy_context: PolicyContext | None = None,
-        class_families: Mapping[str, str] | None = None,
+        policy_context: PolicyContext,
+        class_families: Mapping[str, str],
     ) -> None:
-        """Initialize with class-to-namespace mappings and optional policy context."""
+        """Initialize with class-to-namespace mappings and strict policy context."""
         self._mappings = mappings
         self._policy_context = policy_context
-        self._class_families = class_families or {}
+        self._class_families = class_families
         self._class_depth = 0
         self._existing_namespaces: set[str] = set()
         self._collected_nested: dict[str, list[cst.ClassDef]] = defaultdict(list)
@@ -88,7 +88,6 @@ class ClassNestingTransformer(cst.CSTTransformer):
                 nested_classes,
                 namespace,
                 "allow_namespace_creation",
-                default=True,
             ):
                 continue
 
@@ -108,7 +107,6 @@ class ClassNestingTransformer(cst.CSTTransformer):
                 nested_classes,
                 namespace,
                 "allow_existing_namespace_merge",
-                default=True,
             ):
                 continue
 
@@ -159,9 +157,7 @@ class ClassNestingTransformer(cst.CSTTransformer):
 
     def _is_nesting_allowed(self, class_name: str, target_namespace: str) -> bool:
         policy = self._policy_for_symbol(class_name)
-        if policy is None:
-            return True
-        if not self._bool_from_policy(policy, "enable_class_nesting", default=False):
+        if not self._bool_from_policy(policy, "enable_class_nesting"):
             return False
         return self._target_allowed(policy, target_namespace)
 
@@ -170,45 +166,36 @@ class ClassNestingTransformer(cst.CSTTransformer):
         nested_classes: list[cst.ClassDef],
         target_namespace: str,
         operation_key: str,
-        *,
-        default: bool,
     ) -> bool:
-        applied_policy_found = False
         for class_def in nested_classes:
             policy = self._policy_for_symbol(class_def.name.value)
-            if policy is None:
-                continue
-            applied_policy_found = True
-            if not self._bool_from_policy(policy, operation_key, default=default):
+            if not self._bool_from_policy(policy, operation_key):
                 return False
             if not self._target_allowed(policy, target_namespace):
                 return False
-        if applied_policy_found:
-            return True
-        return default
+        return True
 
-    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy | None:
-        if self._policy_context is None:
-            return None
+    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy:
         family = self._class_families.get(symbol_name)
         if family is None:
-            return None
+            msg = f"missing class family mapping for symbol: {symbol_name}"
+            raise ValueError(msg)
         policy = self._policy_context.get(family)
         if policy is None:
-            return None
+            msg = f"missing policy for family: {family}"
+            raise ValueError(msg)
         return policy
 
     def _bool_from_policy(
         self,
         policy: FamilyPolicy,
         key: str,
-        *,
-        default: bool,
     ) -> bool:
         raw = policy.get(key)
         if isinstance(raw, bool):
             return raw
-        return default
+        msg = f"policy key {key!r} must be bool"
+        raise ValueError(msg)
 
     def _target_allowed(self, policy: FamilyPolicy, target_namespace: str) -> bool:
         allowed = self._string_collection(policy.get("allowed_targets"))
@@ -220,14 +207,10 @@ class ClassNestingTransformer(cst.CSTTransformer):
 
     def _string_collection(
         self,
-        value: str | list[str] | tuple[str, ...] | None,
+        value: list[str] | tuple[str, ...],
     ) -> tuple[str, ...]:
         """Extract a tuple of strings from a policy value."""
-        if value is None:
-            return ()
-        if isinstance(value, str):
-            return (value,)
         return tuple(value)
 
 
-__all__ = ["ClassNestingTransformer"]
+__all__ = ["FlextInfraRefactorClassNestingTransformer"]

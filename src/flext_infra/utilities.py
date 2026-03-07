@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextUtilities
-from flext_infra._utilities.codegen import FlextInfraUtilitiesCodegen
+from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
-from flext_infra._utilities.refactor import FlextInfraUtilitiesRefactor
+from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra._utilities.toml import FlextInfraUtilitiesToml
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml

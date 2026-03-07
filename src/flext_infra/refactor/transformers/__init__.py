@@ -5,7 +5,9 @@ from __future__ import annotations
 from flext_infra.refactor.transformers.alias_remover import (
     FlextInfraRefactorAliasRemover,
 )
-from flext_infra.refactor.transformers.class_nesting import ClassNestingTransformer
+from flext_infra.refactor.transformers.class_nesting import (
+    FlextInfraRefactorClassNestingTransformer,
+)
 from flext_infra.refactor.transformers.class_reconstructor import (
     FlextInfraRefactorClassReconstructor,
 )
@@ -33,8 +35,8 @@ from flext_infra.refactor.transformers.symbol_propagator import (
 )
 
 __all__ = [
-    "ClassNestingTransformer",
     "FlextInfraRefactorAliasRemover",
+    "FlextInfraRefactorClassNestingTransformer",
     "FlextInfraRefactorClassReconstructor",
     "FlextInfraRefactorDeprecatedRemover",
     "FlextInfraRefactorImportBypassRemover",

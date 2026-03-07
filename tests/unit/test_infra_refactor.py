@@ -18,6 +18,7 @@ from flext_infra.refactor import (
     FlextInfraRefactorEnsureFutureAnnotationsRule,
     FlextInfraRefactorImportModernizerRule,
     FlextInfraRefactorLegacyRemovalRule,
+    FlextInfraRefactorMROClassMigrationRule,
     FlextInfraRefactorMRORedundancyChecker,
     FlextInfraRefactorPatternCorrectionsRule,
     FlextInfraRefactorSignaturePropagationRule,
@@ -656,6 +657,9 @@ rules:
   - id: custom-rule-d
     enabled: true
     fix_action: remove_inheritance_keep_class
+  - id: custom-rule-d2
+    enabled: true
+    fix_action: migrate_to_class_mro
   - id: custom-rule-e
     enabled: true
     fix_action: ensure_future_annotations
@@ -686,15 +690,16 @@ rules:
     result = engine.load_rules()
 
     assert result.is_success
-    assert len(engine.rules) == 8
+    assert len(engine.rules) == 9
     assert isinstance(engine.rules[0], FlextInfraRefactorLegacyRemovalRule)
     assert isinstance(engine.rules[1], FlextInfraRefactorImportModernizerRule)
     assert isinstance(engine.rules[2], FlextInfraRefactorClassReconstructorRule)
     assert isinstance(engine.rules[3], FlextInfraRefactorMRORedundancyChecker)
-    assert isinstance(engine.rules[4], FlextInfraRefactorEnsureFutureAnnotationsRule)
-    assert isinstance(engine.rules[5], FlextInfraRefactorSymbolPropagationRule)
-    assert isinstance(engine.rules[6], FlextInfraRefactorSignaturePropagationRule)
-    assert isinstance(engine.rules[7], FlextInfraRefactorPatternCorrectionsRule)
+    assert isinstance(engine.rules[4], FlextInfraRefactorMROClassMigrationRule)
+    assert isinstance(engine.rules[5], FlextInfraRefactorEnsureFutureAnnotationsRule)
+    assert isinstance(engine.rules[6], FlextInfraRefactorSymbolPropagationRule)
+    assert isinstance(engine.rules[7], FlextInfraRefactorSignaturePropagationRule)
+    assert isinstance(engine.rules[8], FlextInfraRefactorPatternCorrectionsRule)
 
 
 def test_rule_dispatch_fails_on_invalid_pattern_rule_config(tmp_path: Path) -> None:
@@ -746,6 +751,32 @@ rules:
     assert not result.is_success
     assert result.error is not None
     assert "Unknown rule mapping" in result.error
+
+
+def test_engine_always_enables_class_nesting_file_rule(tmp_path: Path) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text("engine: test\n", encoding="utf-8")
+
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: custom-import-rule
+    enabled: true
+    fix_action: replace_with_alias
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    engine = FlextInfraRefactorEngine(config_path=config_path)
+    _ = engine.set_rule_filters(["custom-import-rule"])
+    result = engine.load_rules()
+
+    assert result.is_success
+    assert len(engine.file_rules) == 1
 
 
 def test_rule_dispatch_keeps_legacy_id_fallback_mapping(tmp_path: Path) -> None:
