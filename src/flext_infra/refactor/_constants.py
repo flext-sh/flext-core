@@ -91,6 +91,9 @@ class FlextInfraRefactorConstants:
     CONSTANT_PATTERN_REGEX: ClassVar[str] = r"^_*[A-Z][A-Z0-9_]*$"
     """Naming pattern for module-level constant candidates."""
 
+    CONSTANT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(CONSTANT_PATTERN_REGEX)
+    """Compiled naming pattern for module-level constant candidates."""
+
     DEFAULT_FACADE_ALIAS: ClassVar[str] = "c"
     """Default facade alias inserted during import rewrite."""
 

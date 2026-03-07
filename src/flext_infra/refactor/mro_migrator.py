@@ -5,33 +5,18 @@ from __future__ import annotations
 import ast
 import re
 from pathlib import Path
-from typing import override
 
 import libcst as cst
 
-from flext_infra import c, m
-from flext_infra._utilities.refactor import FlextInfraUtilitiesRefactor
+from flext_infra import c, m, u
+from flext_infra.refactor.transformers.mro_private_inline import (
+    FlextInfraRefactorMROPrivateInlineTransformer,
+)
+from flext_infra.refactor.transformers.mro_reference_rewriter import (
+    FlextInfraRefactorMROReferenceRewriter,
+)
 
-_CONSTANT_PATTERN = re.compile(r"^_*[A-Z][A-Z0-9_]*$")
-_MRO_TARGETS: frozenset[str] = frozenset({"constants", "all"})
-_CONSTANTS_FILE_GLOB = "constants.py"
-_CONSTANTS_CLASS_SUFFIX = "Constants"
-_FINAL_ANNOTATION_NAME = "Final"
-_DEFAULT_CONSTANTS_CLASS = "FlextConstants"
-_DEFAULT_FACADE_ALIAS = "c"
-_RUNTIME_ALIAS_NAMES: frozenset[str] = frozenset({
-    "c",
-    "m",
-    "r",
-    "t",
-    "u",
-    "p",
-    "d",
-    "e",
-    "h",
-    "s",
-    "x",
-})
+_CONSTANT_PATTERN = re.compile(c.Infra.Refactor.CONSTANT_PATTERN_REGEX)
 
 
 class FlextInfraRefactorMROMigrationScanner:
@@ -45,7 +30,7 @@ class FlextInfraRefactorMROMigrationScanner:
         target: str,
     ) -> tuple[list[m.Infra.Refactor.MROFileScan], int]:
         """Scan workspace and return candidate files with counts."""
-        if target not in _MRO_TARGETS:
+        if target not in c.Infra.Refactor.MRO_TARGETS:
             return [], 0
 
         results: list[m.Infra.Refactor.MROFileScan] = []
@@ -101,20 +86,18 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _project_roots(*, workspace_root: Path) -> list[Path]:
-        return FlextInfraUtilitiesRefactor.discover_project_roots(
-            workspace_root=workspace_root
-        )
+        return u.Infra.Refactor.discover_project_roots(workspace_root=workspace_root)
 
     @staticmethod
     def _iter_constants_files(*, project_root: Path) -> list[Path]:
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return []
-        return sorted(src_dir.rglob(_CONSTANTS_FILE_GLOB))
+        return sorted(src_dir.rglob(c.Infra.Refactor.CONSTANTS_FILE_GLOB))
 
     @staticmethod
     def _module_path(*, file_path: Path, project_root: Path) -> str:
-        return FlextInfraUtilitiesRefactor.module_path(
+        return u.Infra.Refactor.module_path(
             file_path=file_path,
             project_root=project_root,
         )
@@ -123,14 +106,14 @@ class FlextInfraRefactorMROMigrationScanner:
     def _first_constants_class_name(*, tree: ast.Module) -> str:
         for stmt in tree.body:
             if isinstance(stmt, ast.ClassDef) and stmt.name.endswith(
-                _CONSTANTS_CLASS_SUFFIX
+                c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX
             ):
                 return stmt.name
         return ""
 
     @staticmethod
     def _is_final_annotation(*, annotation: ast.expr) -> bool:
-        final_name = _FINAL_ANNOTATION_NAME
+        final_name = c.Infra.Refactor.FINAL_ANNOTATION_NAME
         if isinstance(annotation, ast.Name):
             return annotation.id == final_name
         if isinstance(annotation, ast.Attribute):
@@ -187,7 +170,9 @@ class FlextInfraRefactorMROMigrationTransformer:
 
         transformed_body: list[cst.CSTNode] = []
         symbol_map: dict[str, str] = {}
-        class_name = scan_result.constants_class or _DEFAULT_CONSTANTS_CLASS
+        class_name = (
+            scan_result.constants_class or c.Infra.Refactor.DEFAULT_CONSTANTS_CLASS
+        )
         class_found = False
 
         for stmt in retained_module_body:
@@ -229,10 +214,10 @@ class FlextInfraRefactorMROMigrationTransformer:
                 continue
             replacement_values[symbol] = value
 
-        replacement_transformer = _ReplacementTransformer(
+        inline_transformer = FlextInfraRefactorMROPrivateInlineTransformer(
             replacement_values=replacement_values
         )
-        updated_module = updated_module.visit(replacement_transformer)
+        updated_module = updated_module.visit(inline_transformer)
 
         migration = m.Infra.Refactor.MROFileMigration(
             file=scan_result.file,
@@ -398,66 +383,6 @@ class FlextInfraRefactorMROMigrationTransformer:
         return stripped or symbol
 
 
-class _AstReferenceRewriter(ast.NodeTransformer):
-    def __init__(
-        self,
-        *,
-        imported_symbols: dict[str, m.Infra.Refactor.MROImportedSymbol],
-        module_aliases: dict[str, str],
-        module_facades: dict[str, str],
-        moved_index: dict[str, dict[str, str]],
-    ) -> None:
-        self._imported_symbols = imported_symbols
-        self._module_aliases = module_aliases
-        self._module_facades = module_facades
-        self._moved_index = moved_index
-        self.replacements = 0
-
-    @override
-    def visit_Name(self, node: ast.Name) -> ast.AST:
-        if isinstance(node.ctx, ast.Store):
-            return node
-        imported = self._imported_symbols.get(node.id)
-        if imported is None:
-            return node
-        self.replacements += 1
-        return ast.copy_location(
-            ast.Attribute(
-                value=ast.Name(id=imported.facade_name, ctx=ast.Load()),
-                attr=imported.symbol,
-                ctx=node.ctx,
-            ),
-            node,
-        )
-
-    @override
-    def visit_Attribute(self, node: ast.Attribute) -> ast.AST:
-        rewritten = self.generic_visit(node)
-        if not isinstance(rewritten, ast.Attribute):
-            return rewritten
-        if not isinstance(rewritten.value, ast.Name):
-            return rewritten
-        module_name = self._module_aliases.get(rewritten.value.id)
-        if module_name is None:
-            return rewritten
-        symbol_map = self._moved_index.get(module_name)
-        if symbol_map is None:
-            return rewritten
-        new_symbol = symbol_map.get(rewritten.attr)
-        if new_symbol is None:
-            return rewritten
-        facade_name = self._module_facades.get(module_name, _DEFAULT_FACADE_ALIAS)
-        self.replacements += 1
-        return ast.copy_location(
-            ast.Attribute(
-                value=ast.Name(id=facade_name, ctx=ast.Load()),
-                attr=new_symbol,
-                ctx=rewritten.ctx,
-            ),
-            rewritten,
-        )
-
-
 class FlextInfraRefactorMROImportRewriter:
     """Rewrite imports and references to use the local facade alias."""
 
@@ -499,12 +424,7 @@ class FlextInfraRefactorMROImportRewriter:
 
         imported_symbols: dict[str, m.Infra.Refactor.MROImportedSymbol] = {}
         module_aliases: dict[str, str] = {}
-        module_facades: dict[str, m.Infra.Refactor.MROFacadeImport] = (
-            FlextInfraRefactorMROImportRewriter._discover_module_facades(
-                tree=tree,
-                moved_index=moved_index,
-            )
-        )
+        facade_aliases: dict[str, str] = {}
         facade_imports_needed: set[str] = set()
         facade_import_objects: dict[str, m.Infra.Refactor.MROFacadeImport] = {}
 
@@ -517,29 +437,46 @@ class FlextInfraRefactorMROImportRewriter:
                     continue
                 kept_names: list[ast.alias] = []
                 for alias in stmt.names:
+                    if alias.name == c.Infra.Refactor.DEFAULT_FACADE_ALIAS:
+                        facade_local_name = alias.asname or alias.name
+                        facade_aliases[facade_local_name] = module_name
+                        facade_import = m.Infra.Refactor.MROFacadeImport(
+                            module=module_name,
+                            import_name=c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
+                            as_name=None,
+                        )
+                        facade_key = (
+                            f"{facade_import.module}:"
+                            f"{facade_import.import_name}:"
+                            f"{facade_import.as_name or ''}"
+                        )
+                        facade_imports_needed.add(facade_key)
+                        facade_import_objects[facade_key] = facade_import
+                        continue
+
                     symbol_map = moved_index[module_name]
                     new_symbol = symbol_map.get(alias.name)
                     if new_symbol is None:
                         kept_names.append(alias)
                         continue
-                    module_facade = module_facades.get(module_name)
-                    if module_facade is None:
-                        module_facade = m.Infra.Refactor.MROFacadeImport(
-                            module=module_name,
-                            import_name=_DEFAULT_FACADE_ALIAS,
-                            as_name=None,
-                        )
-                        module_facades[module_name] = module_facade
                     imported_symbols[alias.asname or alias.name] = (
                         m.Infra.Refactor.MROImportedSymbol(
                             symbol=new_symbol,
-                            facade_name=module_facade.as_name
-                            or module_facade.import_name,
+                            facade_name=c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
                         )
                     )
-                    facade_key = f"{module_facade.module}:{module_facade.import_name}:{module_facade.as_name or ''}"
+                    facade_import = m.Infra.Refactor.MROFacadeImport(
+                        module=module_name,
+                        import_name=c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
+                        as_name=None,
+                    )
+                    facade_key = (
+                        f"{facade_import.module}:"
+                        f"{facade_import.import_name}:"
+                        f"{facade_import.as_name or ''}"
+                    )
                     facade_imports_needed.add(facade_key)
-                    facade_import_objects[facade_key] = module_facade
+                    facade_import_objects[facade_key] = facade_import
                 stmt.names = kept_names
 
             if isinstance(stmt, ast.Import):
@@ -547,13 +484,10 @@ class FlextInfraRefactorMROImportRewriter:
                     if alias.name in moved_index:
                         module_aliases[alias.asname or alias.name] = alias.name
 
-        rewriter = _AstReferenceRewriter(
+        rewriter = FlextInfraRefactorMROReferenceRewriter(
             imported_symbols=imported_symbols,
             module_aliases=module_aliases,
-            module_facades={
-                module: facade.as_name or facade.import_name
-                for module, facade in module_facades.items()
-            },
+            module_facades=facade_aliases,
             moved_index=moved_index,
         )
         rewritten = rewriter.visit(tree)
@@ -614,7 +548,7 @@ class FlextInfraRefactorMROImportRewriter:
 
     @staticmethod
     def _iter_workspace_python_files(*, workspace_root: Path) -> list[Path]:
-        return FlextInfraUtilitiesRefactor.iter_python_files(
+        return u.Infra.Refactor.iter_python_files(
             workspace_root=workspace_root,
         )
 
@@ -628,48 +562,6 @@ class FlextInfraRefactorMROImportRewriter:
             if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
                 insert_at = index + 1
         return insert_at
-
-    @staticmethod
-    def _discover_module_facades(
-        *,
-        tree: ast.Module,
-        moved_index: dict[str, dict[str, str]],
-    ) -> dict[str, m.Infra.Refactor.MROFacadeImport]:
-        module_facades: dict[str, m.Infra.Refactor.MROFacadeImport] = {}
-        runtime_aliases = _RUNTIME_ALIAS_NAMES
-        for stmt in tree.body:
-            if not isinstance(stmt, ast.ImportFrom):
-                continue
-            module_name = stmt.module
-            if module_name is None or module_name not in moved_index:
-                continue
-            if stmt.level != 0:
-                continue
-            for alias in stmt.names:
-                if alias.name not in runtime_aliases:
-                    continue
-                module_facades[module_name] = m.Infra.Refactor.MROFacadeImport(
-                    module=module_name,
-                    import_name=alias.name,
-                    as_name=alias.asname,
-                )
-                break
-        return module_facades
-
-
-class _ReplacementTransformer(cst.CSTTransformer):
-    """Replace Name nodes that reference private constants with their literal values."""
-
-    def __init__(self, *, replacement_values: dict[str, cst.BaseExpression]) -> None:
-        self.replacement_values = replacement_values
-
-    @override
-    def leave_Name(
-        self, original_node: cst.Name, updated_node: cst.Name
-    ) -> cst.BaseExpression:
-        if original_node.value in self.replacement_values:
-            return self.replacement_values[original_node.value]
-        return updated_node
 
 
 class FlextInfraRefactorMROMigrationValidator:

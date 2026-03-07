@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import overload
 
 from flext_core import r
-from flext_core.utilities import FlextUtilities
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
@@ -15,12 +14,8 @@ from flext_infra import (
     c,
     m,
     p,
+    u,
 )
-
-
-def _now_iso() -> str:
-    """Generate ISO timestamp; delegates to ``u.generate_iso_timestamp()``."""
-    return FlextUtilities.generate_iso_timestamp()
 
 
 class FlextInfraRefactorSafetyManager:
@@ -201,7 +196,7 @@ class FlextInfraRefactorSafetyManager:
     def save_checkpoint(self, checkpoint: m.Infra.Refactor.Checkpoint) -> r[bool]:
         """Persist a checkpoint to disk as JSON."""
         payload = checkpoint.model_dump()
-        payload["updated_at"] = _now_iso()
+        payload["updated_at"] = u.generate_iso_timestamp()
         return FlextInfraJsonService().write(
             self._checkpoint_path,
             payload,

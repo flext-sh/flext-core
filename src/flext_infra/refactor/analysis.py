@@ -14,19 +14,8 @@ import libcst as cst
 import yaml
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m, t
-from flext_infra._utilities.refactor import FlextInfraUtilitiesRefactor
+from flext_infra import c, m, t, u
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
-
-
-def _dotted_name(expr: cst.BaseExpression) -> str:
-    """Extract dotted name; delegates to ``u.Infra.Refactor``."""
-    return FlextInfraUtilitiesRefactor.dotted_name(expr)
-
-
-def _root_name(expr: cst.BaseExpression) -> str:
-    """Extract root name; delegates to ``u.Infra.Refactor``."""
-    return FlextInfraUtilitiesRefactor.root_name(expr)
 
 
 @dataclass(frozen=True)
@@ -36,14 +25,6 @@ class _HelperFileAnalysis:
     manual_review: list[m.Infra.Refactor.HelperClassification]
 
 
-ViolationAnalysisReport = m.Infra.Refactor.ViolationAnalysisReport
-
-
-def _asname_to_local(asname: cst.AsName | None) -> str | None:
-    """Extract local alias; delegates to ``u.Infra.Refactor``."""
-    return FlextInfraUtilitiesRefactor.asname_to_local(asname)
-
-
 class ImportDependencyCollector(cst.CSTVisitor):
     def __init__(self) -> None:
         self.local_to_import: dict[str, str] = {}
@@ -51,10 +32,10 @@ class ImportDependencyCollector(cst.CSTVisitor):
     @override
     def visit_Import(self, node: cst.Import) -> None:
         for raw_alias in node.names:
-            imported = _dotted_name(raw_alias.name)
+            imported = u.Infra.Refactor.dotted_name(raw_alias.name)
             if not imported:
                 continue
-            local_name = _asname_to_local(raw_alias.asname)
+            local_name = u.Infra.Refactor.asname_to_local(raw_alias.asname)
             if local_name is None:
                 local_name = imported.split(".", maxsplit=1)[0]
             self.local_to_import[local_name] = imported
@@ -65,7 +46,7 @@ class ImportDependencyCollector(cst.CSTVisitor):
             return
         if node.module is None:
             return
-        module_name = _dotted_name(node.module)
+        module_name = u.Infra.Refactor.dotted_name(node.module)
         if not module_name:
             return
         for raw_alias in node.names:
@@ -75,7 +56,7 @@ class ImportDependencyCollector(cst.CSTVisitor):
             if imported_name == "*":
                 continue
             local_name = imported_name
-            local_name_from_alias = _asname_to_local(raw_alias.asname)
+            local_name_from_alias = u.Infra.Refactor.asname_to_local(raw_alias.asname)
             if local_name_from_alias is not None:
                 local_name = local_name_from_alias
             self.local_to_import[local_name] = f"{module_name}.{imported_name}"
@@ -416,7 +397,7 @@ class FlextInfraRefactorViolationAnalyzer:
 
         decorator_dependencies: set[str] = set()
         for decorator in function.decorators:
-            decorator_root = _root_name(decorator.decorator)
+            decorator_root = u.Infra.Refactor.root_name(decorator.decorator)
             if not decorator_root:
                 continue
             imported = local_to_import.get(decorator_root)
@@ -515,5 +496,4 @@ class FlextInfraRefactorViolationAnalyzer:
 __all__ = [
     "FlextInfraRefactorClassNestingAnalyzer",
     "FlextInfraRefactorViolationAnalyzer",
-    "ViolationAnalysisReport",
 ]

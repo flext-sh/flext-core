@@ -97,7 +97,7 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     assert "value = c.TIMEOUT" in consumer_source
 
 
-def test_migrate_to_mro_preserves_existing_facade_alias(tmp_path: Path) -> None:
+def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
@@ -131,5 +131,6 @@ def test_migrate_to_mro_preserves_existing_facade_alias(tmp_path: Path) -> None:
 
     assert report.errors == ()
     assert "from sample_pkg.constants import VALUE" not in consumer_source
-    assert "from sample_pkg.constants import c as constants" in consumer_source
-    assert "result = constants.VALUE" in consumer_source
+    assert "from sample_pkg.constants import c as constants" not in consumer_source
+    assert "from sample_pkg.constants import c" in consumer_source
+    assert "result = c.VALUE" in consumer_source
