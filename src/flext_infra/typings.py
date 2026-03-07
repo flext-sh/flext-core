@@ -5,7 +5,7 @@ Infra-specific type aliases live inside ``FlextInfraTypes`` so they are
 accessed via ``t.Infra.Payload``, ``t.Infra.PayloadMap``, etc.
 
 Non-recursive aliases MUST use ``X: TypeAlias = ...`` (isinstance-safe).
-See CLAUDE.md §3 AXIOMATIC rule.
+See AGENTS.md §3 AXIOMATIC rule.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

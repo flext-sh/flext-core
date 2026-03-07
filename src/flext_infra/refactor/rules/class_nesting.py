@@ -10,6 +10,7 @@ from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import FlextInfraJsonService, c, m, t
+import flext_infra.refactor._utilities as refactor_utilities
 from flext_infra.refactor.transformers.class_nesting import (
     FlextInfraRefactorClassNestingTransformer,
 )
@@ -29,33 +30,39 @@ type _PostCheckPayload = dict[str, str | list[str]]
 type _PreCheckViolation = dict[str, str]
 
 
-def _entry_list(value: str | list[_MappingEntry] | None) -> list[_MappingEntry]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    msg = "class nesting entries must be a list"
-    raise ValueError(msg)
+class FlextInfraRefactorClassNestingRuleUtilities:
+    """Typed helper functions for class-nesting rule orchestration."""
 
+    @staticmethod
+    def entry_list(value: str | list[_MappingEntry] | None) -> list[_MappingEntry]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        msg = "class nesting entries must be a list"
+        raise ValueError(msg)
 
-def _string_list(value: t.ContainerValue | None) -> list[str]:
-    if value is None:
-        return []
-    try:
-        return TypeAdapter(list[str]).validate_python(value)
-    except ValidationError:
-        msg = "expected list[str] value"
-        raise ValueError(msg) from None
+    @staticmethod
+    def string_list(value: t.ContainerValue | None) -> list[str]:
+        if value is None:
+            return []
+        try:
+            return TypeAdapter(list[str]).validate_python(value)
+        except ValidationError:
+            msg = "expected list[str] value"
+            raise ValueError(msg) from None
 
-
-def _mapping_list(value: t.ContainerValue | None) -> list[dict[str, t.ContainerValue]]:
-    if value is None:
-        return []
-    try:
-        return TypeAdapter(list[dict[str, t.ContainerValue]]).validate_python(value)
-    except ValidationError:
-        msg = "expected list[dict[str, ContainerValue]] value"
-        raise ValueError(msg) from None
+    @staticmethod
+    def mapping_list(
+        value: t.ContainerValue | None,
+    ) -> list[dict[str, t.ContainerValue]]:
+        if value is None:
+            return []
+        try:
+            return TypeAdapter(list[dict[str, t.ContainerValue]]).validate_python(value)
+        except ValidationError:
+            msg = "expected list[dict[str, ContainerValue]] value"
+            raise ValueError(msg) from None
 
 
 class PreCheckGate:
@@ -296,6 +303,27 @@ class ClassNestingRefactorRule:
                 file_path,
                 confidence_threshold,
             )
+            policy_context = self._policy_context_from_document()
+            class_families = self._families_for_scope(
+                entries=self._entries_for_source_file(
+                    FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                        mappings.get(c.Infra.ReportKeys.CLASS_NESTING)
+                    ),
+                    file_path,
+                    confidence_threshold,
+                ),
+                symbol_key=c.Infra.ReportKeys.LOOSE_NAME,
+            )
+            helper_families = self._families_for_scope(
+                entries=self._entries_for_source_file(
+                    FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                        mappings.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
+                    ),
+                    file_path,
+                    confidence_threshold,
+                ),
+                symbol_key="helper_name",
+            )
 
             precheck_violations = self._run_precheck(
                 mappings,
@@ -313,9 +341,27 @@ class ClassNestingRefactorRule:
                 )
 
             changes: list[str] = []
-            tree = self._apply_class_nesting(tree, class_mappings, changes)
-            tree = self._apply_helper_consolidation(tree, helper_mappings, changes)
-            tree = self._apply_nested_class_propagation(tree, class_renames, changes)
+            tree = self._apply_class_nesting(
+                tree,
+                class_mappings,
+                changes,
+                policy_context,
+                class_families,
+            )
+            tree = self._apply_helper_consolidation(
+                tree,
+                helper_mappings,
+                changes,
+                policy_context,
+                helper_families,
+            )
+            tree = self._apply_nested_class_propagation(
+                tree,
+                class_renames,
+                changes,
+                policy_context,
+                class_families,
+            )
 
             result_code = tree.code
             modified = result_code != source
@@ -784,8 +830,14 @@ class ClassNestingRefactorRule:
         tree: cst.Module,
         mappings: dict[str, str],
         changes: list[str],
+        policy_context: t.Infra.PolicyContext,
+        class_families: t.Infra.ClassFamilyMap,
     ) -> cst.Module:
-        transformer = FlextInfraRefactorClassNestingTransformer(mappings=mappings)
+        transformer = FlextInfraRefactorClassNestingTransformer(
+            mappings=mappings,
+            policy_context=policy_context,
+            class_families=class_families,
+        )
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
@@ -798,8 +850,14 @@ class ClassNestingRefactorRule:
         tree: cst.Module,
         mappings: dict[str, str],
         changes: list[str],
+        policy_context: t.Infra.PolicyContext,
+        helper_families: t.Infra.ClassFamilyMap,
     ) -> cst.Module:
-        transformer = HelperConsolidationTransformer(helper_mappings=mappings)
+        transformer = HelperConsolidationTransformer(
+            helper_mappings=mappings,
+            policy_context=policy_context,
+            helper_families=helper_families,
+        )
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
@@ -812,8 +870,14 @@ class ClassNestingRefactorRule:
         tree: cst.Module,
         mappings: dict[str, str],
         changes: list[str],
+        policy_context: t.Infra.PolicyContext,
+        class_families: t.Infra.ClassFamilyMap,
     ) -> cst.Module:
-        transformer = NestedClassPropagationTransformer(class_renames=mappings)
+        transformer = NestedClassPropagationTransformer(
+            class_renames=mappings,
+            policy_context=policy_context,
+            class_families=class_families,
+        )
         wrapped_tree = MetadataWrapper(tree)
         updated_tree = wrapped_tree.visit(transformer)
         if updated_tree.code != tree.code:
@@ -821,6 +885,38 @@ class ClassNestingRefactorRule:
                 f"Applied NestedClassPropagationTransformer ({len(mappings)} renames)"
             )
         return updated_tree
+
+    def _policy_context_from_document(self) -> t.Infra.PolicyContext:
+        policy_doc = self._load_policy_document()
+        policy_entries = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            policy_doc.get("policy_matrix")
+        )
+        policy_context: dict[str, object] = {}
+        for entry in policy_entries:
+            family_name = entry.get("family_name")
+            if not isinstance(family_name, str):
+                continue
+            policy_context[family_name] = entry
+        return policy_context
+
+    def _families_for_scope(
+        self,
+        *,
+        entries: list[_MappingEntry],
+        symbol_key: str,
+    ) -> dict[str, str]:
+        families: dict[str, str] = {}
+        for entry in entries:
+            symbol = entry.get(symbol_key)
+            current_file = entry.get(c.Infra.ReportKeys.CURRENT_FILE)
+            if not isinstance(symbol, str) or not isinstance(current_file, str):
+                continue
+            families[symbol] = (
+                refactor_utilities.FlextInfraRefactorUtilities.module_family_from_path(
+                    current_file
+                )
+            )
+        return families
 
 
 __all__ = ["ClassNestingRefactorRule"]

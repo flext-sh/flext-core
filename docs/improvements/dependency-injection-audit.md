@@ -223,7 +223,7 @@ ______________________________________________________________________
 
 ### External References
 
-- ⚠️ Link to CLAUDE.md could be more specific (which section?)
+- ⚠️ Link to AGENTS.md could be more specific (which section?)
 - ✅ Examples reference is generic but works
 
 ______________________________________________________________________

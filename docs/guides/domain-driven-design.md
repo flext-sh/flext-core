@@ -1016,7 +1016,7 @@ def add_to_cart(cart, item):
 - Error Handling Guide - Domain error handling patterns
 - Clean Architecture - Architecture patterns and layers
 - API Reference: FlextModels - Complete models API
-- **FLEXT CLAUDE.md**: Development patterns and standards
+- **FLEXT AGENTS.md**: Development patterns and standards
 
 ______________________________________________________________________
 

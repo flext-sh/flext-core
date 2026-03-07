@@ -38,7 +38,7 @@ Comprehensive guide to error handling strategies in FLEXT-Core using the railway
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
+- Follow root governance in `AGENTS.md`.
 - Keep examples aligned with strict typing and `FlextResult[T]` flows.
 - Keep guide links local to `docs/guides/` and architecture references in `docs/architecture/`.
 
@@ -614,7 +614,7 @@ This approach makes error handling explicit, composable, and maintainable.
 - Service Patterns - Error handling in domain services
 - Dependency Injection Advanced - Error handling with DI
 - API Reference: FlextResult - Complete API documentation
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ______________________________________________________________________
 

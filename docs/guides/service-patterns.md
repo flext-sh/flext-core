@@ -41,7 +41,7 @@ explicit execution (V1) to zero-ceremony patterns (V2).
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
+- Follow root governance in `AGENTS.md`.
 - Keep service examples returning `FlextResult[T]` and matching layer boundaries.
 - Keep runtime/DI guidance aligned with `dependency-injection-advanced.md`.
 
@@ -346,7 +346,7 @@ ______________________________________________________________________
 - Railway-Oriented Programming - Result composition patterns
 - Error Handling Guide - Comprehensive error handling
 - API Reference: FlextService - Complete service API
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ## References
 

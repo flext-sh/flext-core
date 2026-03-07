@@ -4,27 +4,11 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Mapping
-from typing import TypedDict, override
+from typing import override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
-
-
-class FamilyPolicy(TypedDict, total=False):
-    enable_helper_consolidation: bool
-    allow_helper_call_rewrite: bool
-    require_signature_validation: bool
-    required_parameters: list[str] | tuple[str, ...]
-    forbidden_parameters: list[str] | tuple[str, ...]
-    allow_positional_only_params: bool
-    allow_keyword_only_params: bool
-    allow_vararg: bool
-    allow_kwarg: bool
-    allowed_targets: list[str] | tuple[str, ...]
-    forbidden_targets: list[str] | tuple[str, ...]
-
-
-type PolicyContext = Mapping[str, FamilyPolicy]
+from flext_infra import t
 
 
 class HelperConsolidationTransformer(cst.CSTTransformer):
@@ -33,7 +17,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
     def __init__(
         self,
         helper_mappings: dict[str, str],
-        policy_context: PolicyContext | None = None,
+        policy_context: t.Infra.PolicyContext | None = None,
         helper_families: Mapping[str, str] | None = None,
     ) -> None:
         """Initialize with helper-to-namespace mappings and optional policy context."""
@@ -284,20 +268,25 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
                 return False
         return True
 
-    def _policy_for_helper(self, helper_name: str) -> FamilyPolicy | None:
+    def _policy_for_helper(
+        self, helper_name: str
+    ) -> dict[str, t.ContainerValue] | None:
         if self._policy_context is None:
             return None
         family = self._helper_families.get(helper_name)
         if family is None:
             return None
-        policy = self._policy_context.get(family)
-        if policy is None:
+        policy_raw = self._policy_context.get(family)
+        if not isinstance(policy_raw, dict):
             return None
-        return policy
+        try:
+            return TypeAdapter(dict[str, t.ContainerValue]).validate_python(policy_raw)
+        except ValidationError:
+            return None
 
     def _bool_from_policy(
         self,
-        policy: FamilyPolicy,
+        policy: dict[str, t.ContainerValue],
         key: str,
         *,
         default: bool,
@@ -307,7 +296,9 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
             return raw
         return default
 
-    def _tuple_from_policy(self, policy: FamilyPolicy, key: str) -> tuple[str, ...]:
+    def _tuple_from_policy(
+        self, policy: dict[str, t.ContainerValue], key: str
+    ) -> tuple[str, ...]:
         raw = policy.get(key)
         if isinstance(raw, str):
             return (raw,)
@@ -323,7 +314,9 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
                 return ()
         return ()
 
-    def _target_allowed(self, policy: FamilyPolicy, target_namespace: str) -> bool:
+    def _target_allowed(
+        self, policy: dict[str, t.ContainerValue], target_namespace: str
+    ) -> bool:
         allowed = self._tuple_from_policy(policy, "allowed_targets")
         if allowed and target_namespace not in allowed:
             return False

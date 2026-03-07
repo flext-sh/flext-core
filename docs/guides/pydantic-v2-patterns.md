@@ -33,7 +33,7 @@ This guide documents essential Pydantic v2 patterns used throughout the FLEXT ec
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
+- Follow root governance in `AGENTS.md`.
 - Keep all examples pure Pydantic v2 (`model_dump`, `model_validate`, `ConfigDict`).
 - Keep guidance consistent with `lib-pydantic-v2` and `lib-pydantic-settings` rules.
 
@@ -676,7 +676,7 @@ else:
 - Railway-Oriented Programming
 - Anti-Patterns and Best Practices
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.4/)
-- **FLEXT CLAUDE.md**: Development standards and patterns
+- **FLEXT AGENTS.md**: Development standards and patterns
 
 ______________________________________________________________________
 

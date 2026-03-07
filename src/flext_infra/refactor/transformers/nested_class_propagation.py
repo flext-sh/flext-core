@@ -3,20 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypedDict, override
+from typing import override
 
 import libcst as cst
 from libcst.metadata import ParentNodeProvider
+from pydantic import TypeAdapter, ValidationError
 
-
-class FamilyPolicy(TypedDict, total=False):
-    propagate_imports: bool
-    propagate_name_references: bool
-    propagate_attribute_references: bool
-    blocked_reference_prefixes: list[str] | tuple[str, ...]
-
-
-type PolicyContext = Mapping[str, FamilyPolicy]
+from flext_infra import t
 
 
 class NestedClassPropagationTransformer(cst.CSTTransformer):
@@ -27,7 +20,7 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
     def __init__(
         self,
         class_renames: dict[str, str],
-        policy_context: PolicyContext | None = None,
+        policy_context: t.Infra.PolicyContext | None = None,
         class_families: Mapping[str, str] | None = None,
     ) -> None:
         """Initialize with class rename mappings and optional policy context."""
@@ -210,16 +203,21 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
             return (value,)
         return tuple(value)
 
-    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy | None:
+    def _policy_for_symbol(
+        self, symbol_name: str
+    ) -> dict[str, t.ContainerValue] | None:
         if self._policy_context is None:
             return None
         family = self._class_families.get(symbol_name)
         if family is None:
             return None
-        policy = self._policy_context.get(family)
-        if policy is None:
+        policy_raw = self._policy_context.get(family)
+        if not isinstance(policy_raw, dict):
             return None
-        return policy
+        try:
+            return TypeAdapter(dict[str, t.ContainerValue]).validate_python(policy_raw)
+        except ValidationError:
+            return None
 
 
 __all__ = ["NestedClassPropagationTransformer"]

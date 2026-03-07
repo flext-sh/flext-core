@@ -56,7 +56,7 @@ class FlextTypes:
     # ║  Non-recursive aliases MUST use `X: TypeAlias = ...`           ║
     # ║  DO NOT convert to `type X = ...` (PEP 695).                   ║
     # ║  PEP 695 creates TypeAliasType → isinstance() CRASHES.         ║
-    # ║  See CLAUDE.md §3 AXIOMATIC rule. VIOLATION = REJECTION.       ║
+    # ║  See AGENTS.md §3 AXIOMATIC rule. VIOLATION = REJECTION.       ║
     # ║                                                                ║
     # ║  Recursive aliases (Serializable, ContainerValue, JsonValue)   ║
     # ║  MUST use `type` statement — they need forward references.     ║
