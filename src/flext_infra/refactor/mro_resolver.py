@@ -5,8 +5,7 @@ from __future__ import annotations
 import inspect
 from collections.abc import Mapping, Sequence
 
-from flext_infra import c, m
-from flext_infra.typings import t
+from flext_infra import c, m, t
 
 
 class FlextInfraRefactorMROError(RuntimeError):

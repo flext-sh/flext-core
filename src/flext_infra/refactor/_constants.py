@@ -71,6 +71,29 @@ class FlextInfraRefactorConstants:
         "missing_future_import",
     })
 
+    # -- MRO migrator constants ----------------------------------------------
+
+    MRO_TARGETS: ClassVar[frozenset[str]] = frozenset({"constants", "all"})
+    """Accepted target arguments for MRO migration runs."""
+
+    DEFAULT_CONSTANTS_CLASS: ClassVar[str] = "FlextConstants"
+    """Fallback constants class name when none exists in module."""
+
+    CONSTANTS_FILE_GLOB: ClassVar[str] = "constants.py"
+    """Constants module glob scanned by the migration scanner."""
+
+    CONSTANTS_CLASS_SUFFIX: ClassVar[str] = "Constants"
+    """Class-name suffix used to identify constants facades."""
+
+    FINAL_ANNOTATION_NAME: ClassVar[str] = "Final"
+    """Annotation marker used to detect module-level constants."""
+
+    CONSTANT_PATTERN_REGEX: ClassVar[str] = r"^_*[A-Z][A-Z0-9_]*$"
+    """Naming pattern for module-level constant candidates."""
+
+    DEFAULT_FACADE_ALIAS: ClassVar[str] = "c"
+    """Default facade alias inserted during import rewrite."""
+
     # -- Family / MRO constants ----------------------------------------------
 
     FAMILY_SUFFIXES: ClassVar[MappingProxyType[str, str]] = MappingProxyType({

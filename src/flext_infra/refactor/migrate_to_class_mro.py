@@ -2,37 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
 
-from flext_infra import c
+from flext_infra import c, m
 
 from .mro_migrator import (
-    MROFileMigration,
-    MROImportRewriter,
-    MROMigrationScanner,
-    MROMigrationTransformer,
-    MROMigrationValidator,
+    FlextInfraRefactorMROImportRewriter,
+    FlextInfraRefactorMROMigrationScanner,
+    FlextInfraRefactorMROMigrationTransformer,
+    FlextInfraRefactorMROMigrationValidator,
 )
 from .safety import FlextInfraRefactorSafetyManager
-
-
-@dataclass(frozen=True)
-class MROMigrationReport:
-    """Execution report for migrate-mro runs."""
-
-    workspace: str
-    target: str
-    dry_run: bool
-    files_scanned: int
-    files_with_candidates: int
-    migrations: tuple[MROFileMigration, ...] = field(default_factory=tuple)
-    rewrites: tuple[tuple[str, int], ...] = field(default_factory=tuple)
-    remaining_violations: int = 0
-    mro_failures: int = 0
-    stash_ref: str = ""
-    warnings: tuple[str, ...] = field(default_factory=tuple)
-    errors: tuple[str, ...] = field(default_factory=tuple)
 
 
 class FlextInfraRefactorMigrateToClassMRO:
@@ -43,12 +23,16 @@ class FlextInfraRefactorMigrateToClassMRO:
         self._workspace_root = workspace_root.resolve()
         self._safety = FlextInfraRefactorSafetyManager()
 
-    def run(self, *, target: str, apply_changes: bool) -> MROMigrationReport:
+    def run(
+        self, *, target: str, apply_changes: bool
+    ) -> m.Infra.Refactor.MROMigrationReport:
         """Run scan, transform, rewrite, and validation phases."""
         normalized_target = self._normalize_target(target=target)
-        scan_results, files_scanned = MROMigrationScanner.scan_workspace(
-            workspace_root=self._workspace_root,
-            target=normalized_target,
+        scan_results, files_scanned = (
+            FlextInfraRefactorMROMigrationScanner.scan_workspace(
+                workspace_root=self._workspace_root,
+                target=normalized_target,
+            )
         )
 
         warnings: list[str] = []
@@ -65,11 +49,13 @@ class FlextInfraRefactorMigrateToClassMRO:
                 stash_ref = stash_result.unwrap()
 
         moved_index: dict[str, dict[str, str]] = {}
-        migrations: list[MROFileMigration] = []
+        migrations: list[m.Infra.Refactor.MROFileMigration] = []
         for scan_result in scan_results:
             try:
                 updated_source, migration, symbol_alias_map = (
-                    MROMigrationTransformer.migrate_file(scan_result=scan_result)
+                    FlextInfraRefactorMROMigrationTransformer.migrate_file(
+                        scan_result=scan_result
+                    )
                 )
             except Exception as exc:  # pragma: no cover - defensive path
                 errors.append(f"{scan_result.file}: {exc}")
@@ -85,16 +71,24 @@ class FlextInfraRefactorMigrateToClassMRO:
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
 
-        rewrite_results = MROImportRewriter.rewrite_workspace(
+        rewrite_results = FlextInfraRefactorMROImportRewriter.rewrite_workspace(
             workspace_root=self._workspace_root,
             moved_index=moved_index,
             apply_changes=apply_changes,
         )
-        rewrites = tuple((item.file, item.replacements) for item in rewrite_results)
+        rewrites = tuple(
+            m.Infra.Refactor.MRORewriteResult(
+                file=item.file,
+                replacements=item.replacements,
+            )
+            for item in rewrite_results
+        )
 
-        remaining_violations, mro_failures = MROMigrationValidator.validate(
-            workspace_root=self._workspace_root,
-            target=normalized_target,
+        remaining_violations, mro_failures = (
+            FlextInfraRefactorMROMigrationValidator.validate(
+                workspace_root=self._workspace_root,
+                target=normalized_target,
+            )
         )
 
         if apply_changes and stash_ref:
@@ -102,7 +96,7 @@ class FlextInfraRefactorMigrateToClassMRO:
                 f"Rollback available with: git stash apply --index {stash_ref}"
             )
 
-        return MROMigrationReport(
+        return m.Infra.Refactor.MROMigrationReport(
             workspace=str(self._workspace_root),
             target=normalized_target,
             dry_run=not apply_changes,
@@ -118,7 +112,7 @@ class FlextInfraRefactorMigrateToClassMRO:
         )
 
     @staticmethod
-    def render_text(report: MROMigrationReport) -> str:
+    def render_text(report: m.Infra.Refactor.MROMigrationReport) -> str:
         """Render migration report in CLI-friendly plain text."""
         lines = [
             f"Workspace: {report.workspace}",
@@ -149,4 +143,4 @@ class FlextInfraRefactorMigrateToClassMRO:
         return "all"
 
 
-__all__ = ["FlextInfraRefactorMigrateToClassMRO", "MROMigrationReport"]
+__all__ = ["FlextInfraRefactorMigrateToClassMRO"]

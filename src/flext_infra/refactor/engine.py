@@ -255,6 +255,13 @@ class FlextInfraRefactorEngine:
             output.error(f"Config error: {config_result.error}")
             sys.exit(1)
 
+        rule_filters: list[str] = []
+        if args.rules:
+            rule_filters = [
+                item.strip() for item in args.rules.split(",") if item.strip()
+            ]
+            engine.set_rule_filters(rule_filters)
+
         rules_result = engine.load_rules()
         if not rules_result.is_success:
             output.error(f"Rules error: {rules_result.error}")
@@ -263,15 +270,6 @@ class FlextInfraRefactorEngine:
         if args.list_rules:
             FlextInfraRefactorEngine.print_rules_table(engine.list_rules())
             sys.exit(0)
-
-        if args.rules:
-            rule_filters = [item.strip() for item in args.rules.split(",")]
-            engine.set_rule_filters(rule_filters)
-            engine.rules = []
-            rules_result = engine.load_rules()
-            if not rules_result.is_success:
-                output.error(f"Rules error: {rules_result.error}")
-                sys.exit(1)
 
         if args.analyze_violations:
             files_to_analyze: list[Path] = []
@@ -447,17 +445,11 @@ class FlextInfraRefactorEngine:
             return
         output.info("Hottest files:")
         for entry in analysis.top_files[:10]:
-            file_name = None
-            total = None
-            if isinstance(entry, dict):
-                mapped_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                    entry
-                )
-                file_name = mapped_entry.get(c.Infra.ReportKeys.FILE)
-                total = mapped_entry.get(c.Infra.ReportKeys.TOTAL)
-            else:
-                file_name = getattr(entry, c.Infra.ReportKeys.FILE, None)
-                total = getattr(entry, c.Infra.ReportKeys.TOTAL, None)
+            mapped_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                entry
+            )
+            file_name = mapped_entry.get(c.Infra.ReportKeys.FILE)
+            total = mapped_entry.get(c.Infra.ReportKeys.TOTAL)
             if isinstance(file_name, str) and isinstance(total, int):
                 output.info(f"  - {file_name}: {total}")
 
@@ -595,6 +587,14 @@ class FlextInfraRefactorEngine:
                     if not typed_rule_def.get(c.Infra.ReportKeys.ENABLED, True):
                         continue
 
+                    rule_id = str(typed_rule_def[c.Infra.ReportKeys.ID]).strip()
+                    rule_id_lower = rule_id.lower()
+                    matches_active_filters = not self.rule_filters or any(
+                        fnmatch.fnmatch(rule_id_lower, active_filter.lower())
+                        or active_filter.lower() in rule_id_lower
+                        for active_filter in self.rule_filters
+                    )
+
                     fix_action = (
                         str(
                             typed_rule_def.get(
@@ -606,7 +606,22 @@ class FlextInfraRefactorEngine:
                         .lower()
                     )
                     if fix_action == "nest_classes":
+                        if self.rule_filters:
+                            requested_class_nesting = any(
+                                token in active_filter.lower()
+                                for active_filter in self.rule_filters
+                                for token in (
+                                    "class-nesting",
+                                    "class_nesting",
+                                    "nest_classes",
+                                )
+                            )
+                            if not requested_class_nesting:
+                                continue
                         loaded_file_rules.append(ClassNestingRefactorRule())
+                        continue
+
+                    if not matches_active_filters:
                         continue
 
                     rule_validation = self._validate_rule_definition(typed_rule_def)
@@ -625,11 +640,7 @@ class FlextInfraRefactorEngine:
                         )
                         continue
 
-                    if self.rule_filters:
-                        if any(rule.matches_filter(item) for item in self.rule_filters):
-                            loaded_rules.append(rule)
-                    else:
-                        loaded_rules.append(rule)
+                    loaded_rules.append(rule)
 
             if unknown_rules:
                 unknown = ", ".join(sorted(unknown_rules))
@@ -669,21 +680,22 @@ class FlextInfraRefactorEngine:
             all_changes: list[str] = []
             file_rule_modified = False
 
-            for file_rule in self.file_rules:
-                file_rule_result = file_rule.apply(file_path, dry_run=True)
-                if not file_rule_result.success:
-                    return m.Infra.Refactor.Result(
-                        file_path=file_path,
-                        success=False,
-                        modified=False,
-                        error=file_rule_result.error,
-                        changes=file_rule_result.changes,
-                        refactored_code=None,
-                    )
-                if file_rule_result.modified and file_rule_result.refactored_code:
-                    source = file_rule_result.refactored_code
-                    file_rule_modified = True
-                all_changes.extend(file_rule_result.changes)
+            if not self.rule_filters:
+                for file_rule in self.file_rules:
+                    file_rule_result = file_rule.apply(file_path, dry_run=True)
+                    if not file_rule_result.success:
+                        return m.Infra.Refactor.Result(
+                            file_path=file_path,
+                            success=False,
+                            modified=False,
+                            error=file_rule_result.error,
+                            changes=file_rule_result.changes,
+                            refactored_code=None,
+                        )
+                    if file_rule_result.modified and file_rule_result.refactored_code:
+                        source = file_rule_result.refactored_code
+                        file_rule_modified = True
+                    all_changes.extend(file_rule_result.changes)
 
             tree = cst.parse_module(source)
 

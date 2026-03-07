@@ -14,12 +14,9 @@ import libcst as cst
 import yaml
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import m, t
+from flext_infra import c, m, t
 from flext_infra._utilities.refactor import FlextInfraUtilitiesRefactor
-from flext_infra.constants import FlextInfraConstants
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
-
-c: type[FlextInfraConstants] = FlextInfraConstants
 
 
 def _dotted_name(expr: cst.BaseExpression) -> str:

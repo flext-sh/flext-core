@@ -9,7 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import libcst as cst
+
+from flext_infra import c
+from flext_infra.discovery import FlextInfraDiscoveryService
 
 
 class FlextInfraUtilitiesRefactor:
@@ -83,6 +88,82 @@ class FlextInfraUtilitiesRefactor:
         if isinstance(asname.name, cst.Name):
             return asname.name.value
         return None
+
+    @staticmethod
+    def discover_project_roots(*, workspace_root: Path) -> list[Path]:
+        """Discover project roots under a workspace.
+
+        Uses ``FlextInfraDiscoveryService`` and falls back to the
+        workspace root itself when it contains a ``src/`` directory.
+
+        Args:
+            workspace_root: Top-level workspace directory.
+
+        Returns:
+            List of resolved project root paths.
+
+        """
+        discovery = FlextInfraDiscoveryService()
+        projects = discovery.discover_projects(workspace_root)
+        roots: list[Path] = []
+        if projects.is_success:
+            roots = [project.path for project in projects.unwrap()]
+        if (
+            len(roots) == 0
+            and (workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir()
+        ):
+            roots = [workspace_root]
+        return roots
+
+    @staticmethod
+    def iter_python_files(
+        *,
+        workspace_root: Path,
+        include_tests: bool = True,
+    ) -> list[Path]:
+        """Iterate Python files across all projects in a workspace.
+
+        Args:
+            workspace_root: Top-level workspace directory.
+            include_tests: Whether to include files under ``tests/``.
+
+        Returns:
+            Sorted list of ``.py`` file paths.
+
+        """
+        roots = FlextInfraUtilitiesRefactor.discover_project_roots(
+            workspace_root=workspace_root,
+        )
+        files: list[Path] = []
+        for project_root in roots:
+            src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
+            if src_dir.is_dir():
+                files.extend(sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)))
+            if include_tests:
+                tests_dir = project_root / c.Infra.Directories.TESTS
+                if tests_dir.is_dir():
+                    files.extend(
+                        sorted(tests_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                    )
+        return files
+
+    @staticmethod
+    def module_path(*, file_path: Path, project_root: Path) -> str:
+        """Compute dotted module path relative to a project root.
+
+        Strips the ``src/`` directory component and file extension.
+
+        Args:
+            file_path: Absolute path to a Python file.
+            project_root: Root directory of the project.
+
+        Returns:
+            Dotted module path (e.g., ``"flext_infra.refactor.engine"``).
+
+        """
+        rel = file_path.relative_to(project_root)
+        parts = [part for part in rel.with_suffix("").parts if part != "src"]
+        return ".".join(parts)
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]

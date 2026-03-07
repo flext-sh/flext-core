@@ -137,6 +137,7 @@ __all__ = [
     "__version__",
     "__version_info__",
     "c",
+    "cleanup_submodule_namespace",
     "d",
     "e",
     "h",

@@ -310,6 +310,48 @@ class FlextInfraRefactorModels:
 
         file: str = Field(min_length=1, description="Matched file path")
 
+    class MROConstantCandidate(FlextModels.ArbitraryTypesModel):
+        """A single module-level Final constant candidate for MRO migration."""
+
+        model_config = ConfigDict(frozen=True)
+
+        symbol: str = Field(min_length=1, description="Constant symbol name")
+        line: int = Field(ge=1, description="Source line number")
+
+    class MROFileScan(FlextModels.ArbitraryTypesModel):
+        """Scan result for one constants module candidate file."""
+
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Absolute file path")
+        module: str = Field(min_length=1, description="Import module path")
+        constants_class: str = Field(
+            default="", description="First constants class name"
+        )
+        candidates: tuple[FlextInfraRefactorModels.MROConstantCandidate, ...] = Field(
+            default_factory=tuple,
+            description="Module-level Final constant candidates",
+        )
+
+    class MROImportedSymbol(FlextModels.ArbitraryTypesModel):
+        """A relocated symbol with its facade alias for import rewriting."""
+
+        model_config = ConfigDict(frozen=True)
+
+        symbol: str = Field(min_length=1, description="New symbol name in facade")
+        facade_name: str = Field(
+            min_length=1, description="Facade alias or import name"
+        )
+
+    class MROFacadeImport(FlextModels.ArbitraryTypesModel):
+        """An import statement to add for facade access."""
+
+        model_config = ConfigDict(frozen=True)
+
+        module: str = Field(min_length=1, description="Import module path")
+        import_name: str = Field(min_length=1, description="Imported symbol name")
+        as_name: str | None = Field(default=None, description="Optional alias")
+
     class MROScanCandidate(FlextModels.ArbitraryTypesModel):
         """One module-level symbol candidate detected for MRO migration."""
 

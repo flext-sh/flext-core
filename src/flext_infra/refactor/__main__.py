@@ -9,7 +9,9 @@ from pathlib import Path
 from flext_infra import output
 
 from .engine import FlextInfraRefactorEngine
-from .migrate_to_class_mro import FlextInfraRefactorMigrateToClassMRO
+from .migrate_to_class_mro import (
+    FlextInfraRefactorMigrateToClassMRO,
+)
 
 
 def main() -> int:
@@ -22,6 +24,7 @@ def main() -> int:
 
 
 def _run_migrate_to_mro(*, argv: list[str]) -> int:
+
     parser = argparse.ArgumentParser(
         prog="flext_infra refactor migrate-mro",
         description=(

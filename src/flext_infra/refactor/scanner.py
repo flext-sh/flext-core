@@ -10,8 +10,7 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraCommandRunner, c, t
-from flext_infra.models import FlextInfraModels as m
+from flext_infra import FlextInfraCommandRunner, c, m, t
 
 
 class TopLevelClassCollector(cst.CSTVisitor):
