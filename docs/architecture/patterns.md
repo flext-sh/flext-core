@@ -462,7 +462,7 @@ Use these patterns to build maintainable, scalable FLEXT-Core applications.
 - Railway-Oriented Programming - Result composition patterns
 - Service Patterns Guide - Domain service implementation
 - Dependency Injection Advanced - DI container patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ```
 ```

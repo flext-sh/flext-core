@@ -843,7 +843,7 @@ ______________________________________________________________________
 - Configuration Guide - Configuration best practices
 - Clean Architecture - Architecture patterns
 - Development Standards - Development standards
-- **FLEXT CLAUDE.md**: Architecture principles and zero-tolerance standards
+- **FLEXT AGENTS.md**: Architecture principles and zero-tolerance standards
 
 ______________________________________________________________________
 

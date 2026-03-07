@@ -10,6 +10,7 @@ from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import FlextInfraJsonService, c, m, t
+from flext_infra.refactor import _utilities as refactor_utilities
 from flext_infra.refactor.transformers.class_nesting import (
     FlextInfraRefactorClassNestingTransformer,
 )
@@ -29,33 +30,39 @@ type _PostCheckPayload = dict[str, str | list[str]]
 type _PreCheckViolation = dict[str, str]
 
 
-def _entry_list(value: str | list[_MappingEntry] | None) -> list[_MappingEntry]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    msg = "class nesting entries must be a list"
-    raise ValueError(msg)
+class FlextInfraRefactorClassNestingRuleUtilities:
+    """Typed helpers used by class nesting rule and policy gates."""
 
+    @staticmethod
+    def entry_list(value: str | list[_MappingEntry] | None) -> list[_MappingEntry]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        msg = "class nesting entries must be a list"
+        raise ValueError(msg)
 
-def _string_list(value: t.ContainerValue | None) -> list[str]:
-    if value is None:
-        return []
-    try:
-        return TypeAdapter(list[str]).validate_python(value)
-    except ValidationError:
-        msg = "expected list[str] value"
-        raise ValueError(msg) from None
+    @staticmethod
+    def string_list(value: t.ContainerValue | None) -> list[str]:
+        if value is None:
+            return []
+        try:
+            return TypeAdapter(list[str]).validate_python(value)
+        except ValidationError:
+            msg = "expected list[str] value"
+            raise ValueError(msg) from None
 
-
-def _mapping_list(value: t.ContainerValue | None) -> list[dict[str, t.ContainerValue]]:
-    if value is None:
-        return []
-    try:
-        return TypeAdapter(list[dict[str, t.ContainerValue]]).validate_python(value)
-    except ValidationError:
-        msg = "expected list[dict[str, ContainerValue]] value"
-        raise ValueError(msg) from None
+    @staticmethod
+    def mapping_list(
+        value: t.ContainerValue | None,
+    ) -> list[dict[str, t.ContainerValue]]:
+        if value is None:
+            return []
+        try:
+            return TypeAdapter(list[dict[str, t.ContainerValue]]).validate_python(value)
+        except ValidationError:
+            msg = "expected list[dict[str, ContainerValue]] value"
+            raise ValueError(msg) from None
 
 
 class PreCheckGate:
@@ -81,7 +88,11 @@ class PreCheckGate:
         if not symbol or not target_namespace or not current_file:
             return True, None
 
-        module_family = self._module_family_from_path(current_file)
+        module_family = (
+            refactor_utilities.FlextInfraUtilitiesRefactor.module_family_from_path(
+                current_file
+            )
+        )
         if module_family == "other_private":
             return True, None
         policy = self._policy_by_family.get(module_family)
@@ -98,7 +109,9 @@ class PreCheckGate:
             if helper_symbol
             else c.Infra.ReportKeys.CLASS_NESTING
         )
-        allowed_operations = _string_list(policy.get("allowed_operations"))
+        allowed_operations = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            policy.get("allowed_operations")
+        )
         if operation not in allowed_operations:
             return False, {
                 c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
@@ -107,7 +120,9 @@ class PreCheckGate:
                 c.Infra.ReportKeys.SUGGESTED_FIX: f"allow {operation} in policy for {module_family}",
             }
 
-        forbidden_operations = _string_list(policy.get("forbidden_operations"))
+        forbidden_operations = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            policy.get("forbidden_operations")
+        )
         if operation in forbidden_operations:
             return False, {
                 c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
@@ -116,7 +131,7 @@ class PreCheckGate:
                 c.Infra.ReportKeys.SUGGESTED_FIX: f"remove {operation} from forbidden_operations for {module_family}",
             }
 
-        forbidden_targets = _string_list(
+        forbidden_targets = FlextInfraRefactorClassNestingRuleUtilities.string_list(
             policy.get(c.Infra.ReportKeys.FORBIDDEN_TARGETS)
         )
         if any(
@@ -146,20 +161,30 @@ class PreCheckGate:
             return {}
         if not self._schema_valid(loaded):
             return {}
-        policy_matrix = _mapping_list(loaded.get("policy_matrix"))
+        policy_matrix = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            loaded.get("policy_matrix")
+        )
 
         by_family: dict[str, _PolicyFamily] = {}
         for raw in policy_matrix:
             family_name = raw.get("family_name")
             if not isinstance(family_name, str):
                 continue
-            forbidden_targets = _string_list(
+            forbidden_targets = FlextInfraRefactorClassNestingRuleUtilities.string_list(
                 raw.get(c.Infra.ReportKeys.FORBIDDEN_TARGETS)
             )
 
-            allowed_operations = _string_list(raw.get("allowed_operations"))
+            allowed_operations = (
+                FlextInfraRefactorClassNestingRuleUtilities.string_list(
+                    raw.get("allowed_operations")
+                )
+            )
 
-            forbidden_operations = _string_list(raw.get("forbidden_operations"))
+            forbidden_operations = (
+                FlextInfraRefactorClassNestingRuleUtilities.string_list(
+                    raw.get("forbidden_operations")
+                )
+            )
 
             validation_requirements = raw.get("validation_requirements")
             by_family[family_name] = {
@@ -182,7 +207,9 @@ class PreCheckGate:
         except ValidationError:
             return False
 
-        top_required = _string_list(schema.get("required", []))
+        top_required = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            schema.get("required", [])
+        )
         if not self._has_required_fields(loaded, top_required):
             return False
 
@@ -206,15 +233,23 @@ class PreCheckGate:
         except ValidationError:
             return False
 
-        policy_entry_required = _string_list(policy_entry.get("required", []))
-        class_rule_required = _string_list(class_rule.get("required", []))
+        policy_entry_required = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            policy_entry.get("required", [])
+        )
+        class_rule_required = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            class_rule.get("required", [])
+        )
 
-        policy_matrix = _mapping_list(loaded.get("policy_matrix"))
+        policy_matrix = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            loaded.get("policy_matrix")
+        )
         for entry in policy_matrix:
             if not self._has_required_fields(entry, policy_entry_required):
                 return False
 
-        rules = _mapping_list(loaded.get(c.Infra.ReportKeys.RULES))
+        rules = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            loaded.get(c.Infra.ReportKeys.RULES)
+        )
         for rule in rules:
             if not self._has_required_fields(rule, class_rule_required):
                 return False
@@ -229,20 +264,6 @@ class PreCheckGate:
         if not isinstance(entry, dict):
             return False
         return all(key in entry for key in required_fields)
-
-    def _module_family_from_path(self, path: str) -> str:
-        normalized = path.replace("\\", "/")
-        if "_models" in normalized:
-            return "_models"
-        if "_utilities" in normalized:
-            return "_utilities"
-        if "_dispatcher" in normalized:
-            return "_dispatcher"
-        if "_decorators" in normalized:
-            return "_decorators"
-        if "_runtime" in normalized:
-            return "_runtime"
-        return "other_private"
 
     def _target_matches(self, target_namespace: str, pattern: str) -> bool:
         if pattern.endswith(".*"):
@@ -296,6 +317,13 @@ class ClassNestingRefactorRule:
                 file_path,
                 confidence_threshold,
             )
+            class_nesting_policy_context, class_nesting_families = (
+                self._class_nesting_context(
+                    config=mappings,
+                    file_path=file_path,
+                    confidence_threshold=confidence_threshold,
+                )
+            )
 
             precheck_violations = self._run_precheck(
                 mappings,
@@ -313,7 +341,13 @@ class ClassNestingRefactorRule:
                 )
 
             changes: list[str] = []
-            tree = self._apply_class_nesting(tree, class_mappings, changes)
+            tree = self._apply_class_nesting(
+                tree,
+                class_mappings,
+                changes,
+                class_nesting_policy_context,
+                class_nesting_families,
+            )
             tree = self._apply_helper_consolidation(tree, helper_mappings, changes)
             tree = self._apply_nested_class_propagation(tree, class_renames, changes)
 
@@ -385,13 +419,15 @@ class ClassNestingRefactorRule:
         class_nesting_raw = loaded.get(c.Infra.ReportKeys.CLASS_NESTING)
         if isinstance(class_nesting_raw, list):
             config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
-                _mapping_list(class_nesting_raw)
+                FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+                    class_nesting_raw
+                )
             )
 
         helper_raw = loaded.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
         if isinstance(helper_raw, list):
             config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
-                _mapping_list(helper_raw)
+                FlextInfraRefactorClassNestingRuleUtilities.mapping_list(helper_raw)
             )
 
         return config
@@ -422,7 +458,9 @@ class ClassNestingRefactorRule:
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_source_file(
-            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.CLASS_NESTING)
+            ),
             file_path,
             confidence_threshold,
         ):
@@ -440,12 +478,16 @@ class ClassNestingRefactorRule:
     ) -> list[str]:
         violations: list[str] = []
         entries = self._entries_for_source_file(
-            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.CLASS_NESTING)
+            ),
             file_path,
             confidence_threshold,
         )
         helper_entries = self._entries_for_source_file(
-            _entry_list(config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)),
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
+            ),
             file_path,
             confidence_threshold,
         )
@@ -471,7 +513,9 @@ class ClassNestingRefactorRule:
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_source_file(
-            _entry_list(config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)),
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
+            ),
             file_path,
             confidence_threshold,
         ):
@@ -489,7 +533,9 @@ class ClassNestingRefactorRule:
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_scope(
-            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.CLASS_NESTING)
+            ),
             file_path,
             confidence_threshold,
         ):
@@ -606,7 +652,9 @@ class ClassNestingRefactorRule:
             "quality_gates": ["lsp_diagnostics_clean"],
         }
         class_entries = self._entries_for_source_file(
-            _entry_list(config.get(c.Infra.ReportKeys.CLASS_NESTING)),
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.CLASS_NESTING)
+            ),
             file_path,
             confidence_threshold,
         )
@@ -619,20 +667,26 @@ class ClassNestingRefactorRule:
 
         payload[c.Infra.ReportKeys.SOURCE_SYMBOL] = source_symbol
         policy_doc = self._load_policy_document()
-        rules = _mapping_list(policy_doc.get(c.Infra.ReportKeys.RULES))
+        rules = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            policy_doc.get(c.Infra.ReportKeys.RULES)
+        )
         for rule in rules:
             if rule.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "") != source_symbol:
                 continue
 
-            payload["expected_base_chain"] = _string_list(
-                rule.get("expected_base_chain")
+            payload["expected_base_chain"] = (
+                FlextInfraRefactorClassNestingRuleUtilities.string_list(
+                    rule.get("expected_base_chain")
+                )
             )
 
             post_checks_raw = rule.get(c.Infra.ReportKeys.POST_CHECKS, [])
             post_checks: list[str] = []
             if not isinstance(post_checks_raw, list):
                 continue
-            checks = _mapping_list(post_checks_raw)
+            checks = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+                post_checks_raw
+            )
             for check in checks:
                 check_type = check.get("type")
                 if isinstance(check_type, str):
@@ -675,7 +729,9 @@ class ClassNestingRefactorRule:
         except ValidationError:
             return False
 
-        top_required = _string_list(schema.get("required", []))
+        top_required = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            schema.get("required", [])
+        )
         if not self._has_required_fields(loaded, top_required):
             return False
 
@@ -699,14 +755,22 @@ class ClassNestingRefactorRule:
         except ValidationError:
             return False
 
-        policy_entry_required = _string_list(policy_entry.get("required", []))
-        class_rule_required = _string_list(class_rule.get("required", []))
+        policy_entry_required = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            policy_entry.get("required", [])
+        )
+        class_rule_required = FlextInfraRefactorClassNestingRuleUtilities.string_list(
+            class_rule.get("required", [])
+        )
 
-        for entry in _mapping_list(loaded.get("policy_matrix")):
+        for entry in FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            loaded.get("policy_matrix")
+        ):
             if not self._has_required_fields(entry, policy_entry_required):
                 return False
 
-        for rule in _mapping_list(loaded.get(c.Infra.ReportKeys.RULES)):
+        for rule in FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            loaded.get(c.Infra.ReportKeys.RULES)
+        ):
             if not self._has_required_fields(rule, class_rule_required):
                 return False
 
@@ -784,14 +848,61 @@ class ClassNestingRefactorRule:
         tree: cst.Module,
         mappings: dict[str, str],
         changes: list[str],
+        policy_context: t.Infra.PolicyContext,
+        class_families: t.Infra.ClassFamilyMap,
     ) -> cst.Module:
-        transformer = FlextInfraRefactorClassNestingTransformer(mappings=mappings)
+        transformer = FlextInfraRefactorClassNestingTransformer(
+            mappings=mappings,
+            policy_context=policy_context,
+            class_families=class_families,
+        )
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
                 f"Applied FlextInfraRefactorClassNestingTransformer ({len(mappings)} mappings)"
             )
         return updated_tree
+
+    def _class_nesting_context(
+        self,
+        *,
+        config: _RuleConfig,
+        file_path: Path,
+        confidence_threshold: str,
+    ) -> tuple[t.Infra.PolicyContext, t.Infra.ClassFamilyMap]:
+        policy_doc = self._load_policy_document()
+        policy_entries = FlextInfraRefactorClassNestingRuleUtilities.mapping_list(
+            policy_doc.get("policy_matrix")
+        )
+        policy_context: dict[str, object] = {}
+        for entry in policy_entries:
+            family_name = entry.get("family_name")
+            if not isinstance(family_name, str):
+                continue
+            policy_context[family_name] = (
+                m.Infra.Refactor.ClassNestingPolicy.model_validate(entry)
+            )
+
+        families: dict[str, str] = {}
+        entries = self._entries_for_source_file(
+            FlextInfraRefactorClassNestingRuleUtilities.entry_list(
+                config.get(c.Infra.ReportKeys.CLASS_NESTING)
+            ),
+            file_path,
+            confidence_threshold,
+        )
+        for entry in entries:
+            loose_name = entry.get(c.Infra.ReportKeys.LOOSE_NAME)
+            current_file = entry.get(c.Infra.ReportKeys.CURRENT_FILE)
+            if not isinstance(loose_name, str) or not isinstance(current_file, str):
+                continue
+            families[loose_name] = (
+                refactor_utilities.FlextInfraUtilitiesRefactor.module_family_from_path(
+                    current_file
+                )
+            )
+
+        return policy_context, families
 
     def _apply_helper_consolidation(
         self,

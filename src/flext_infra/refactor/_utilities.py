@@ -12,12 +12,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c
+from flext_infra import c, m, t
 from flext_infra.discovery import FlextInfraDiscoveryService
 
 
-class FlextInfraUtilitiesRefactor:
+class FlextInfraRefactorUtilities:
     """CST/refactor helpers for code analysis.
 
     Usage via namespace::
@@ -44,7 +45,7 @@ class FlextInfraUtilitiesRefactor:
         if isinstance(expr, cst.Name):
             return expr.value
         if isinstance(expr, cst.Attribute):
-            root = FlextInfraUtilitiesRefactor.dotted_name(expr.value)
+            root = FlextInfraRefactorUtilities.dotted_name(expr.value)
             if not root:
                 return ""
             return f"{root}.{expr.attr.value}"
@@ -67,9 +68,9 @@ class FlextInfraUtilitiesRefactor:
         if isinstance(expr, cst.Name):
             return expr.value
         if isinstance(expr, cst.Attribute):
-            return FlextInfraUtilitiesRefactor.root_name(expr.value)
+            return FlextInfraRefactorUtilities.root_name(expr.value)
         if isinstance(expr, cst.Call):
-            return FlextInfraUtilitiesRefactor.root_name(expr.func)
+            return FlextInfraRefactorUtilities.root_name(expr.func)
         return ""
 
     @staticmethod
@@ -131,7 +132,7 @@ class FlextInfraUtilitiesRefactor:
             Sorted list of ``.py`` file paths.
 
         """
-        roots = FlextInfraUtilitiesRefactor.discover_project_roots(
+        roots = FlextInfraRefactorUtilities.discover_project_roots(
             workspace_root=workspace_root,
         )
         files: list[Path] = []
@@ -165,5 +166,95 @@ class FlextInfraUtilitiesRefactor:
         parts = [part for part in rel.with_suffix("").parts if part != "src"]
         return ".".join(parts)
 
+    @staticmethod
+    def module_family_from_path(path: str) -> str:
+        """Infer refactor policy family from a file path."""
+        normalized = path.replace("\\", "/")
+        if "_models" in normalized:
+            return "_models"
+        if "_utilities" in normalized:
+            return "_utilities"
+        if "_dispatcher" in normalized:
+            return "_dispatcher"
+        if "_decorators" in normalized:
+            return "_decorators"
+        if "_runtime" in normalized:
+            return "_runtime"
+        return "other_private"
 
-__all__ = ["FlextInfraUtilitiesRefactor"]
+    @staticmethod
+    def policy_for_symbol(
+        *,
+        symbol_name: str,
+        policy_context: t.Infra.PolicyContext,
+        class_families: t.Infra.ClassFamilyMap,
+    ) -> m.Infra.Refactor.ClassNestingPolicy:
+        """Resolve strict family policy for a symbol."""
+        family = class_families.get(symbol_name)
+        if family is None:
+            msg = f"missing class family mapping for symbol: {symbol_name}"
+            raise ValueError(msg)
+        policy = policy_context.get(family)
+        if policy is None:
+            msg = f"missing policy for family: {family}"
+            raise ValueError(msg)
+        try:
+            return TypeAdapter(m.Infra.Refactor.ClassNestingPolicy).validate_python(
+                policy
+            )
+        except ValidationError:
+            msg = f"invalid policy type for family: {family}"
+            raise ValueError(msg) from None
+
+    @staticmethod
+    def policy_bool(*, policy: m.Infra.Refactor.ClassNestingPolicy, key: str) -> bool:
+        """Fetch strict boolean policy value."""
+        raw = getattr(policy, key, None)
+        if isinstance(raw, bool):
+            return raw
+        msg = f"policy key {key!r} must be bool"
+        raise ValueError(msg)
+
+    @staticmethod
+    def policy_string_collection(
+        *, policy: m.Infra.Refactor.ClassNestingPolicy, key: str
+    ) -> tuple[str, ...]:
+        """Fetch a strict string collection policy value."""
+        raw = getattr(policy, key, None)
+        if isinstance(raw, tuple):
+            try:
+                return TypeAdapter(tuple[str, ...]).validate_python(raw)
+            except ValidationError:
+                msg = f"policy key {key!r} must contain only strings"
+                raise ValueError(msg) from None
+        if isinstance(raw, list):
+            try:
+                items = TypeAdapter(list[str]).validate_python(raw)
+            except ValidationError:
+                msg = f"policy key {key!r} must contain only strings"
+                raise ValueError(msg) from None
+            return tuple(items)
+        msg = f"policy key {key!r} must be list[str] or tuple[str, ...]"
+        raise ValueError(msg)
+
+    @staticmethod
+    def target_allowed(
+        *, policy: m.Infra.Refactor.ClassNestingPolicy, target_namespace: str
+    ) -> bool:
+        """Validate target namespace against allowed/forbidden policy lists."""
+        allowed = FlextInfraRefactorUtilities.policy_string_collection(
+            policy=policy,
+            key="allowed_targets",
+        )
+        if allowed and target_namespace not in allowed:
+            return False
+        forbidden = FlextInfraRefactorUtilities.policy_string_collection(
+            policy=policy,
+            key="forbidden_targets",
+        )
+        return target_namespace not in forbidden
+
+
+__all__ = [
+    "FlextInfraRefactorUtilities",
+]

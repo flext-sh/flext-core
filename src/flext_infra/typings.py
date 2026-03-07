@@ -5,7 +5,7 @@ Infra-specific type aliases live inside ``FlextInfraTypes`` so they are
 accessed via ``t.Infra.Payload``, ``t.Infra.PayloadMap``, etc.
 
 Non-recursive aliases MUST use ``X: TypeAlias = ...`` (isinstance-safe).
-See CLAUDE.md §3 AXIOMATIC rule.
+See AGENTS.md §3 AXIOMATIC rule.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 from flext_core import FlextTypes
+from flext_infra.refactor._typings import FlextInfraRectorTypes
 
 
 class FlextInfraTypes(FlextTypes):
@@ -60,6 +61,12 @@ class FlextInfraTypes(FlextTypes):
 
         MutableStrMap: TypeAlias = MutableMapping[str, str]
         """Mutable string-to-string mapping for accumulation patterns."""
+
+        ClassFamilyMap: TypeAlias = Mapping[str, str]
+        """Class/helper symbol to family mapping used by refactor transformers."""
+
+        PolicyContext: TypeAlias = Mapping[str, object]
+        """Policy-family mapping used as typed context for refactor rules."""
 
         ContainerDict: TypeAlias = dict[str, FlextTypes.ContainerValue]
         """Dict with string keys and container values (project reports, etc.)."""
@@ -128,6 +135,9 @@ class FlextInfraTypes(FlextTypes):
 
         ExpectedBase: TypeAlias = type | str
         """Expected MRO base: a class or its qualified name."""
+
+        class Refactor(FlextInfraRectorTypes):
+            pass
 
 
 t = FlextInfraTypes

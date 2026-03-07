@@ -23,7 +23,7 @@ FLEXT provides a comprehensive structured logging system built on `structlog` wi
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
+- Follow root governance in `AGENTS.md`.
 - Prefer structured examples that preserve context keys and correlation IDs.
 - Keep cross-links in sync with guide and API reference sections.
 

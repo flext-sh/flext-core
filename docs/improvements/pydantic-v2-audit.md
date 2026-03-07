@@ -454,7 +454,7 @@ Checked all referenced guides:
 
 - ✅ Railway-Oriented Programming - EXISTS
 - ✅ Anti-Patterns and Best Practices - EXISTS
-- ✅ FLEXT CLAUDE.md - EXISTS
+- ✅ FLEXT AGENTS.md - EXISTS
 
 ### External References ✅
 

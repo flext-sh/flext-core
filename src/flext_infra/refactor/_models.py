@@ -196,6 +196,23 @@ class FlextInfraRefactorModels:
             description="Violation counts per file",
         )
 
+    class ClassNestingPolicy(FlextModels.ArbitraryTypesModel):
+        """Strict policy contract for class-nesting transformers."""
+
+        enable_class_nesting: bool = Field(description="Enable nesting transform")
+        allow_namespace_creation: bool = Field(
+            description="Allow creating missing namespace class"
+        )
+        allow_existing_namespace_merge: bool = Field(
+            description="Allow merge into existing namespace class"
+        )
+        allowed_targets: tuple[str, ...] = Field(
+            description="Allowed target namespaces"
+        )
+        forbidden_targets: tuple[str, ...] = Field(
+            description="Forbidden target namespaces"
+        )
+
     class HelperClassification(FlextModels.ArbitraryTypesModel):
         """Classification result for a helper function."""
 
@@ -470,21 +487,21 @@ class FlextInfraRefactorModels:
                 default_factory=dict, description="Symbol-to-alias mapping"
             )
 
-    # -- Parsing models for raw tool/scanner output --------------------------
+        # -- Parsing models for raw tool/scanner output --------------------------
 
-    class Parsers:
-        """Models for parsing raw tool output (scanner JSON, YAML, etc.)."""
+        class Parsers:
+            """Models for parsing raw tool output (scanner JSON, YAML, etc.)."""
 
-        class LooseClassViolation(FlextModels.ArbitraryTypesModel):
-            """Parsing model for raw scanner output (subset of fields)."""
+            class LooseClassViolation(FlextModels.ArbitraryTypesModel):
+                """Parsing model for raw scanner output (subset of fields)."""
 
-            model_config = ConfigDict(extra="ignore", frozen=True)
+                model_config = ConfigDict(extra="ignore", frozen=True)
 
-            file: str = Field(default="", description="Source file path")
-            line: int = Field(default=1, ge=0, description="Line number")
-            class_name: str = Field(default="", description="Class name")
-            confidence: str = Field(default="low", description="Confidence level")
-            expected_prefix: str = Field(default="", description="Expected prefix")
+                file: str = Field(default="", description="Source file path")
+                line: int = Field(default=1, ge=0, description="Line number")
+                class_name: str = Field(default="", description="Class name")
+                confidence: str = Field(default="low", description="Confidence level")
+                expected_prefix: str = Field(default="", description="Expected prefix")
 
 
 __all__ = ["FlextInfraRefactorModels"]

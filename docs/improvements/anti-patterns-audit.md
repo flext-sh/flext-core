@@ -273,7 +273,7 @@ Layer 0: constants.py, typings.py, protocols.py
 
 **Verification**: ✅ ACCURATE
 
-- Layer hierarchy documented in CLAUDE.md and enforced
+- Layer hierarchy documented in AGENTS.md and enforced
 - Internal library code uses internal imports (correct)
 - External ecosystem MUST use root imports (documented)
 - No circular dependencies found
@@ -499,13 +499,13 @@ Checked all referenced guides:
 - ✅ Railway-Oriented Programming - EXISTS
 - ❌ Clean Architecture - MISSING (should create)
 - ❌ Development Standards - MISSING (should create)
-- ✅ FLEXT CLAUDE.md - EXISTS
+- ✅ FLEXT AGENTS.md - EXISTS
 
 **Recommendation**: Create missing guides referenced in "See Also" section.
 
 ### External References ✅
 
-- ✅ CLAUDE.md references - Accurate
+- ✅ AGENTS.md references - Accurate
 - ✅ Version reference (0.9.9) - Current
 
 ______________________________________________________________________

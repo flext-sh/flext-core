@@ -951,7 +951,7 @@ Layer 0: FlextConstants, t
 - Architecture Overview - System architecture
 - API Reference: FlextContainer - Complete container API
 - API Reference: FlextDispatcher - Dispatcher reliability API
-- **FLEXT CLAUDE.md**: Development workflow and patterns
+- **FLEXT AGENTS.md**: Development workflow and patterns
 
 ______________________________________________________________________
 

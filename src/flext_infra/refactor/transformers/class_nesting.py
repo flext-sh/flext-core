@@ -3,21 +3,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Mapping
-from typing import TypedDict, override
+from collections.abc import Sequence
+from typing import override
 
 import libcst as cst
 
-
-class FamilyPolicy(TypedDict):
-    enable_class_nesting: bool
-    allow_namespace_creation: bool
-    allow_existing_namespace_merge: bool
-    allowed_targets: list[str] | tuple[str, ...]
-    forbidden_targets: list[str] | tuple[str, ...]
-
-
-type PolicyContext = Mapping[str, FamilyPolicy]
+from flext_infra import m, t
+from flext_infra.refactor._utilities import FlextInfraRefactorUtilities
 
 
 class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
@@ -26,10 +18,9 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
     def __init__(
         self,
         mappings: dict[str, str],
-        policy_context: PolicyContext,
-        class_families: Mapping[str, str],
+        policy_context: t.Infra.PolicyContext,
+        class_families: t.Infra.ClassFamilyMap,
     ) -> None:
-        """Initialize with class-to-namespace mappings and strict policy context."""
         self._mappings = mappings
         self._policy_context = policy_context
         self._class_families = class_families
@@ -60,7 +51,6 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
     ) -> cst.ClassDef | cst.RemovalSentinel:
         is_top_level_class = self._class_depth == 1
         self._class_depth -= 1
-
         if not is_top_level_class:
             return updated_node
 
@@ -79,34 +69,26 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
         self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
         _ = original_node
-        if not self._collected_nested:
+        if len(self._collected_nested) == 0:
             return updated_node
 
         module_body = list(updated_node.body)
         for namespace, nested_classes in self._collected_nested.items():
             if not self._can_operate_for_namespace(
-                nested_classes,
-                namespace,
-                "allow_namespace_creation",
+                nested_classes=nested_classes,
+                target_namespace=namespace,
+                operation_key="allow_namespace_creation",
             ):
                 continue
 
-            namespace_index = None
-            if namespace in self._existing_namespaces:
-                namespace_index = next(
-                    (
-                        index
-                        for index, statement in enumerate(module_body)
-                        if isinstance(statement, cst.ClassDef)
-                        and statement.name.value == namespace
-                    ),
-                    None,
-                )
+            namespace_index = self._namespace_index(
+                module_body=module_body, namespace=namespace
+            )
 
             if namespace_index is not None and not self._can_operate_for_namespace(
-                nested_classes,
-                namespace,
-                "allow_existing_namespace_merge",
+                nested_classes=nested_classes,
+                target_namespace=namespace,
+                operation_key="allow_existing_namespace_merge",
             ):
                 continue
 
@@ -134,16 +116,13 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
                 for class_def in nested_classes
                 if class_def.name.value not in existing_nested_names
             ]
-            if not classes_to_insert:
+            if len(classes_to_insert) == 0:
                 continue
 
             namespace_body = [
                 statement
                 for statement in namespace_class.body.body
-                if not (
-                    isinstance(statement, cst.SimpleStatementLine)
-                    and self._is_pass_only(statement)
-                )
+                if not self._is_pass_only_statement(statement)
             ]
             namespace_body.extend(classes_to_insert)
             module_body[namespace_index] = namespace_class.with_changes(
@@ -152,65 +131,81 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
 
         return updated_node.with_changes(body=tuple(module_body))
 
-    def _is_pass_only(self, statement: cst.SimpleStatementLine) -> bool:
-        return len(statement.body) == 1 and isinstance(statement.body[0], cst.Pass)
+    def _namespace_index(
+        self,
+        *,
+        module_body: Sequence[cst.CSTNode],
+        namespace: str,
+    ) -> int | None:
+        if namespace not in self._existing_namespaces:
+            return None
+        for index, statement in enumerate(module_body):
+            if (
+                isinstance(statement, cst.ClassDef)
+                and statement.name.value == namespace
+            ):
+                return index
+        return None
+
+    def _is_pass_only_statement(self, statement: cst.CSTNode) -> bool:
+        return (
+            isinstance(statement, cst.SimpleStatementLine)
+            and len(statement.body) == 1
+            and isinstance(statement.body[0], cst.Pass)
+        )
+
+    def _policy_for_symbol(
+        self,
+        *,
+        symbol_name: str,
+    ) -> m.Infra.Refactor.ClassNestingPolicy:
+        return FlextInfraRefactorUtilities.policy_for_symbol(
+            symbol_name=symbol_name,
+            policy_context=self._policy_context,
+            class_families=self._class_families,
+        )
+
+    def _policy_flag(
+        self,
+        *,
+        policy: m.Infra.Refactor.ClassNestingPolicy,
+        key: str,
+    ) -> bool:
+        return FlextInfraRefactorUtilities.policy_bool(policy=policy, key=key)
+
+    def _target_allowed(
+        self,
+        *,
+        policy: m.Infra.Refactor.ClassNestingPolicy,
+        target_namespace: str,
+    ) -> bool:
+        return FlextInfraRefactorUtilities.target_allowed(
+            policy=policy,
+            target_namespace=target_namespace,
+        )
 
     def _is_nesting_allowed(self, class_name: str, target_namespace: str) -> bool:
-        policy = self._policy_for_symbol(class_name)
-        if not self._bool_from_policy(policy, "enable_class_nesting"):
+        policy = self._policy_for_symbol(symbol_name=class_name)
+        if not self._policy_flag(policy=policy, key="enable_class_nesting"):
             return False
-        return self._target_allowed(policy, target_namespace)
+        return self._target_allowed(policy=policy, target_namespace=target_namespace)
 
     def _can_operate_for_namespace(
         self,
+        *,
         nested_classes: list[cst.ClassDef],
         target_namespace: str,
         operation_key: str,
     ) -> bool:
         for class_def in nested_classes:
-            policy = self._policy_for_symbol(class_def.name.value)
-            if not self._bool_from_policy(policy, operation_key):
+            policy = self._policy_for_symbol(symbol_name=class_def.name.value)
+            if not self._policy_flag(policy=policy, key=operation_key):
                 return False
-            if not self._target_allowed(policy, target_namespace):
+            if not self._target_allowed(
+                policy=policy, target_namespace=target_namespace
+            ):
                 return False
         return True
-
-    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy:
-        family = self._class_families.get(symbol_name)
-        if family is None:
-            msg = f"missing class family mapping for symbol: {symbol_name}"
-            raise ValueError(msg)
-        policy = self._policy_context.get(family)
-        if policy is None:
-            msg = f"missing policy for family: {family}"
-            raise ValueError(msg)
-        return policy
-
-    def _bool_from_policy(
-        self,
-        policy: FamilyPolicy,
-        key: str,
-    ) -> bool:
-        raw = policy.get(key)
-        if isinstance(raw, bool):
-            return raw
-        msg = f"policy key {key!r} must be bool"
-        raise ValueError(msg)
-
-    def _target_allowed(self, policy: FamilyPolicy, target_namespace: str) -> bool:
-        allowed = self._string_collection(policy.get("allowed_targets"))
-        if allowed and target_namespace not in allowed:
-            return False
-
-        forbidden = self._string_collection(policy.get("forbidden_targets"))
-        return target_namespace not in forbidden
-
-    def _string_collection(
-        self,
-        value: list[str] | tuple[str, ...],
-    ) -> tuple[str, ...]:
-        """Extract a tuple of strings from a policy value."""
-        return tuple(value)
 
 
 __all__ = ["FlextInfraRefactorClassNestingTransformer"]

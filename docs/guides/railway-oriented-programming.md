@@ -1063,7 +1063,7 @@ except Exception:
 - Service Patterns - Railway pattern in domain services
 - API Reference: FlextResult - Complete API documentation
 - API Reference: FlextDecorators - Decorator composition patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ______________________________________________________________________
 

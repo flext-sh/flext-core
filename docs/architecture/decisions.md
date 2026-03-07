@@ -454,7 +454,7 @@ For new ADRs:
 - CQRS Architecture - Handler and dispatcher implementation
 - Architecture Patterns - Common implementation patterns
 - Getting Started Guide - Practical implementation
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ## Viewing Decisions
 
