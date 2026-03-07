@@ -7,16 +7,7 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
-
-from flext_infra import FlextInfraCommandRunner, c, m, p, t
-
-
-def _string_list(value: t.ContainerValue | None) -> list[str]:
-    try:
-        return TypeAdapter(list[str]).validate_python(value)
-    except ValidationError:
-        return []
+from flext_infra import FlextInfraCommandRunner, c, m, p, t, u
 
 
 class PostCheckGate:
@@ -41,15 +32,19 @@ class PostCheckGate:
             return True, []
 
         file_path = result.file_path
-        post_checks = _string_list(expected.get(c.Infra.ReportKeys.POST_CHECKS))
-        quality_gates = _string_list(expected.get("quality_gates"))
+        post_checks = u.Infra.Refactor.string_list(
+            expected.get(c.Infra.ReportKeys.POST_CHECKS)
+        )
+        quality_gates = u.Infra.Refactor.string_list(expected.get("quality_gates"))
 
         if self._check_enabled("imports_resolve", post_checks):
             errors.extend(self._validate_imports(file_path))
 
         source_symbol_raw = expected.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "")
         source_symbol = source_symbol_raw if isinstance(source_symbol_raw, str) else ""
-        expected_chain = _string_list(expected.get("expected_base_chain"))
+        expected_chain = u.Infra.Refactor.string_list(
+            expected.get("expected_base_chain")
+        )
         if (
             source_symbol
             and expected_chain

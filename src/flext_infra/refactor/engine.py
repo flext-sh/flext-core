@@ -16,8 +16,7 @@ import yaml
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, output, t
-from flext_infra.json_io import FlextInfraJsonService
+from flext_infra import FlextInfraJsonService, c, m, output, t
 from flext_infra.refactor.analysis import (
     FlextInfraRefactorViolationAnalyzer,
 )

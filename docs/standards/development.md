@@ -1,7 +1,6 @@
 # Development Standards
 
 <!-- TOC START -->
-
 - [🎯 Mission & Authority](#mission-authority)
 - [📋 Quality Imperatives](#quality-imperatives)
   - [Zero Tolerance Standards](#zero-tolerance-standards)
@@ -33,7 +32,6 @@
   - [Target Metrics (1.0.0 Release)](#target-metrics-100-release)
   - [Coverage by Layer](#coverage-by-layer)
 - [🔗 Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

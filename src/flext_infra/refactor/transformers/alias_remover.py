@@ -7,6 +7,8 @@ from typing import override
 
 import libcst as cst
 
+from flext_infra import c, m, p, t, u
+
 
 class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
     """Remove module-level ``Name = Name`` aliases with allowlist support."""

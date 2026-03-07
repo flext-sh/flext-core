@@ -7,13 +7,11 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-
 - [Quick Diagnosis](#quick-diagnosis)
   - [Health Check Commands](#health-check-commands)
   - [System Status](#system-status)
 - [Common Issues](#common-issues)
   - [1. Import Errors](#1-import-errors)
-  - [r](#r)
   - [2. Type Checking Errors](#2-type-checking-errors)
   - [3. Test Failures](#3-test-failures)
   - [4. Configuration Issues](#4-configuration-issues)
@@ -40,7 +38,6 @@
 - [Prevention](#prevention)
   - [Best Practices](#best-practices)
 - [Resources](#resources)
-
 <!-- TOC END -->
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.

@@ -1,7 +1,6 @@
 # Logging Guide
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Canonical Rules](#canonical-rules)
 - [3-Tier Context System](#3-tier-context-system)
@@ -14,7 +13,6 @@
 - [Example: Request Handler Pattern](#example-request-handler-pattern)
 - [Auto-Configuration](#auto-configuration)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 ## Overview

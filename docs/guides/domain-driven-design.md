@@ -1,7 +1,6 @@
 # Domain-Driven Design with FlextModels
 
 <!-- TOC START -->
-
 - [Core Concepts](#core-concepts)
   - [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
   - [FlextModels Architecture](#flextmodels-architecture)
@@ -27,7 +26,6 @@
 - [Key Takeaways](#key-takeaways)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation

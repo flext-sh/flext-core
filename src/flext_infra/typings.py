@@ -129,6 +129,12 @@ class FlextInfraTypes(FlextTypes):
         ExpectedBase: TypeAlias = type | str
         """Expected MRO base: a class or its qualified name."""
 
+        PolicyContext: TypeAlias = Mapping[str, ContainerDict]
+        """Class-nesting policy matrix keyed by module family."""
+
+        ClassFamilyMap: TypeAlias = Mapping[str, str]
+        """Mapping from symbol name to resolved module family."""
+
 
 t = FlextInfraTypes
 

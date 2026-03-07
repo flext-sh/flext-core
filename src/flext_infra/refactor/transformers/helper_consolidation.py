@@ -7,8 +7,11 @@ from collections.abc import Mapping
 from typing import override
 
 import libcst as cst
-from pydantic import TypeAdapter, ValidationError
-from flext_infra import t
+
+from flext_infra import m, t
+from flext_infra.refactor.transformers.policy import (
+    FlextInfraRefactorTransformerPolicyUtilities,
+)
 
 
 class HelperConsolidationTransformer(cst.CSTTransformer):
@@ -197,49 +200,37 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         policy = self._policy_for_helper(helper_name)
         if policy is None:
             return True
-        if not self._bool_from_policy(
-            policy, "allow_helper_call_rewrite", default=False
-        ):
+        if not policy.allow_helper_call_rewrite:
             return False
-        return self._target_allowed(policy, target_namespace)
+        return FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
+            policy=policy,
+            target_namespace=target_namespace,
+        )
 
     def _is_helper_move_allowed(self, helper_name: str, target_namespace: str) -> bool:
         policy = self._policy_for_helper(helper_name)
         if policy is None:
             return True
-        if not self._bool_from_policy(
-            policy,
-            "enable_helper_consolidation",
-            default=False,
-        ):
+        if not policy.enable_helper_consolidation:
             return False
-        return self._target_allowed(policy, target_namespace)
+        return FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
+            policy=policy,
+            target_namespace=target_namespace,
+        )
 
     def _signature_allowed(self, function_node: cst.FunctionDef) -> bool:
         policy = self._policy_for_helper(function_node.name.value)
         if policy is None:
             return True
-        if not self._bool_from_policy(
-            policy,
-            "require_signature_validation",
-            default=True,
-        ):
+        if not policy.require_signature_validation:
             return True
 
-        required = self._tuple_from_policy(policy, "required_parameters")
-        forbidden = self._tuple_from_policy(policy, "forbidden_parameters")
-        allow_vararg = self._bool_from_policy(policy, "allow_vararg", default=True)
-        allow_kwarg = self._bool_from_policy(policy, "allow_kwarg", default=True)
-        allow_positional_only = self._bool_from_policy(
-            policy,
-            "allow_positional_only_params",
-            default=True,
-        )
-        allow_keyword_only = self._bool_from_policy(
-            policy,
-            "allow_keyword_only_params",
-            default=True,
-        )
+        required = tuple(policy.required_parameters)
+        forbidden = tuple(policy.forbidden_parameters)
+        allow_vararg = policy.allow_vararg
+        allow_kwarg = policy.allow_kwarg
+        allow_positional_only = policy.allow_positional_only_params
+        allow_keyword_only = policy.allow_keyword_only_params
 
         seen_parameters: set[str] = set()
         parameters = function_node.params
@@ -270,59 +261,12 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
 
     def _policy_for_helper(
         self, helper_name: str
-    ) -> dict[str, t.ContainerValue] | None:
-        if self._policy_context is None:
-            return None
-        family = self._helper_families.get(helper_name)
-        if family is None:
-            return None
-        policy_raw = self._policy_context.get(family)
-        if not isinstance(policy_raw, dict):
-            return None
-        try:
-            return TypeAdapter(dict[str, t.ContainerValue]).validate_python(policy_raw)
-        except ValidationError:
-            return None
-
-    def _bool_from_policy(
-        self,
-        policy: dict[str, t.ContainerValue],
-        key: str,
-        *,
-        default: bool,
-    ) -> bool:
-        raw = policy.get(key)
-        if isinstance(raw, bool):
-            return raw
-        return default
-
-    def _tuple_from_policy(
-        self, policy: dict[str, t.ContainerValue], key: str
-    ) -> tuple[str, ...]:
-        raw = policy.get(key)
-        if isinstance(raw, str):
-            return (raw,)
-        if isinstance(raw, list):
-            try:
-                return tuple(TypeAdapter(list[str]).validate_python(raw))
-            except ValidationError:
-                return ()
-        if isinstance(raw, tuple):
-            try:
-                return TypeAdapter(tuple[str, ...]).validate_python(raw)
-            except ValidationError:
-                return ()
-        return ()
-
-    def _target_allowed(
-        self, policy: dict[str, t.ContainerValue], target_namespace: str
-    ) -> bool:
-        allowed = self._tuple_from_policy(policy, "allowed_targets")
-        if allowed and target_namespace not in allowed:
-            return False
-
-        forbidden = self._tuple_from_policy(policy, "forbidden_targets")
-        return target_namespace not in forbidden
+    ) -> m.Infra.Refactor.ClassNestingPolicy | None:
+        return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
+            policy_context=self._policy_context,
+            symbol_families=self._helper_families,
+            symbol_name=helper_name,
+        )
 
 
 __all__ = ["HelperConsolidationTransformer"]

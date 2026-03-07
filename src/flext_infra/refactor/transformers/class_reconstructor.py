@@ -9,7 +9,7 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m
+from flext_infra import c, m, t
 
 
 class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
@@ -17,7 +17,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
     def __init__(
         self,
-        order_config: list[dict[str, object]],
+        order_config: list[t.Infra.RuleConfig],
         on_change: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize with rule order config and optional change callback."""

@@ -7,9 +7,11 @@ from typing import override
 
 import libcst as cst
 from libcst.metadata import ParentNodeProvider
-from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import t
+from flext_infra import m, t
+from flext_infra.refactor.transformers.policy import (
+    FlextInfraRefactorTransformerPolicyUtilities,
+)
 
 
 class NestedClassPropagationTransformer(cst.CSTTransformer):
@@ -177,47 +179,29 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         policy = self._policy_for_symbol(symbol_name)
         if policy is None:
             return True
-        raw = policy.get(policy_key)
-        if isinstance(raw, bool):
-            return raw
+        if policy_key == "propagate_imports":
+            return policy.propagate_imports
+        if policy_key == "propagate_name_references":
+            return policy.propagate_name_references
+        if policy_key == "propagate_attribute_references":
+            return policy.propagate_attribute_references
         return False
 
     def _blocked_by_prefix(self, symbol_name: str) -> bool:
         policy = self._policy_for_symbol(symbol_name)
         if policy is None:
             return False
-
-        blocked_prefixes = self._string_collection(
-            policy.get("blocked_reference_prefixes"),
-        )
+        blocked_prefixes = tuple(policy.blocked_reference_prefixes)
         return any(symbol_name.startswith(prefix) for prefix in blocked_prefixes)
-
-    def _string_collection(
-        self,
-        value: str | list[str] | tuple[str, ...] | None,
-    ) -> tuple[str, ...]:
-        """Extract a tuple of strings from a policy value."""
-        if value is None:
-            return ()
-        if isinstance(value, str):
-            return (value,)
-        return tuple(value)
 
     def _policy_for_symbol(
         self, symbol_name: str
-    ) -> dict[str, t.ContainerValue] | None:
-        if self._policy_context is None:
-            return None
-        family = self._class_families.get(symbol_name)
-        if family is None:
-            return None
-        policy_raw = self._policy_context.get(family)
-        if not isinstance(policy_raw, dict):
-            return None
-        try:
-            return TypeAdapter(dict[str, t.ContainerValue]).validate_python(policy_raw)
-        except ValidationError:
-            return None
+    ) -> m.Infra.Refactor.ClassNestingPolicy | None:
+        return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
+            policy_context=self._policy_context,
+            symbol_families=self._class_families,
+            symbol_name=symbol_name,
+        )
 
 
 __all__ = ["NestedClassPropagationTransformer"]

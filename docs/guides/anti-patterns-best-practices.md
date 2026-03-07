@@ -1,7 +1,6 @@
 # Anti-Patterns and Best Practices
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Error Handling Anti-Patterns](#error-handling-anti-patterns)
   - [Anti-Pattern 1: Using Exceptions for Business Logic](#anti-pattern-1-using-exceptions-for-business-logic)
@@ -33,7 +32,6 @@
   - [Configuration](#configuration)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions

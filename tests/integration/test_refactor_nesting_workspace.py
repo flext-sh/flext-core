@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
+from flext_infra import t
 from flext_infra.refactor.dependency_analyzer import DependencyAnalyzer
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
@@ -84,12 +85,12 @@ class UtilityHelper:
 
         # Scan all projects
         scanner = FlextInfraRefactorLooseClassScanner()
-        all_violations: list[dict[str, object]] = []
+        all_violations: list[t.Infra.ContainerDict] = []
 
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             all_violations.extend(
-                cast("list[dict[str, object]]", result.get("violations", []))
+                cast("list[t.Infra.ContainerDict]", result.get("violations", []))
             )
 
         # Should find violations in all projects

@@ -14,7 +14,7 @@ import libcst as cst
 import yaml
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m, t, u
+from flext_infra import c, m, p, t, u
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
 

@@ -7,6 +7,8 @@ from typing import override
 
 import libcst as cst
 
+from flext_infra import c, m, p, t, u
+
 
 class FlextInfraRefactorLazyImportFixer(cst.CSTTransformer):
     """Hoist function-local imports to module top while preserving ordering."""

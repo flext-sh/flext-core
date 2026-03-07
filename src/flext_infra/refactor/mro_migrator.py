@@ -8,16 +8,15 @@ from pathlib import Path
 
 import libcst as cst
 
-from flext_infra import c, m, u
+from flext_infra import FlextInfraTemplateEngine, c, m, u
 from flext_infra.refactor.transformers.mro_private_inline import (
     FlextInfraRefactorMROPrivateInlineTransformer,
 )
 from flext_infra.refactor.transformers.mro_reference_rewriter import (
     FlextInfraRefactorMROReferenceRewriter,
 )
-from flext_infra.templates import FlextInfraTemplateEngine
 
-_CONSTANT_PATTERN = re.compile(c.Infra.Refactor.CONSTANT_PATTERN_REGEX)
+CONSTANT_PATTERN = re.compile(r"^_?[A-Z][A-Z0-9_]*$")
 
 
 class FlextInfraRefactorMROMigrationScanner:
@@ -67,7 +66,7 @@ class FlextInfraRefactorMROMigrationScanner:
                 continue
             if not isinstance(stmt.target, ast.Name):
                 continue
-            if not _CONSTANT_PATTERN.match(stmt.target.id):
+            if not CONSTANT_PATTERN.match(stmt.target.id):
                 continue
             if not cls._is_final_annotation(annotation=stmt.annotation):
                 continue

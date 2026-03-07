@@ -6,17 +6,9 @@ from pathlib import Path
 from typing import override
 
 import libcst as cst
-from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c
+from flext_infra import c, u
 from flext_infra.refactor.rule import FlextInfraRefactorRule
-
-
-def _string_list(value: object) -> list[str]:
-    try:
-        return TypeAdapter(list[str]).validate_python(value)
-    except ValidationError:
-        return []
 
 
 class DictToMappingTransformer(cst.CSTTransformer):
@@ -331,7 +323,7 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
 
         if fix_action == "remove_redundant_casts":
             raw_types = self.config.get("redundant_type_targets", [])
-            removable_types = set(_string_list(raw_types))
+            removable_types = set(u.Infra.Refactor.string_list(raw_types))
             cast_remover = RedundantCastRemover(removable_types=removable_types)
             updated = tree.visit(cast_remover)
             return updated, cast_remover.changes

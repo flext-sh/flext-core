@@ -7,7 +7,6 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-
 - [Prerequisites](#prerequisites)
 - [Development Environment Setup](#development-environment-setup)
   - [1. Clone the Repository](#1-clone-the-repository)
@@ -47,7 +46,6 @@
   - [Common Issues](#common-issues)
 - [Resources](#resources)
 - [Support](#support)
-
 <!-- TOC END -->
 
 This guide covers setting up a development environment for FLEXT contributions and understanding the development workflow.

@@ -9,7 +9,7 @@ import libcst as cst
 from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m
+from flext_infra import c, m, t
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.import_modernizer import (
     FlextInfraRefactorImportModernizer,
@@ -23,10 +23,10 @@ def _parse_forbidden_rules(
     value: object,
 ) -> list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]:
     try:
-        raw_items = TypeAdapter(list[dict[str, object]]).validate_python(value)
+        raw_items = TypeAdapter(list[t.Infra.RuleConfig]).validate_python(value)
     except ValidationError:
         return []
-    normalized: list[dict[str, object]] = [
+    normalized: list[t.Infra.RuleConfig] = [
         {
             "module": item_mapping.get("module", ""),
             "symbol_mapping": item_mapping.get("symbol_mapping", {}),

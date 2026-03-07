@@ -12,9 +12,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c
-from flext_infra.discovery import FlextInfraDiscoveryService
+from flext_infra import FlextInfraDiscoveryService, c, t
 
 
 class FlextInfraUtilitiesRefactor:
@@ -164,6 +164,63 @@ class FlextInfraUtilitiesRefactor:
         rel = file_path.relative_to(project_root)
         parts = [part for part in rel.with_suffix("").parts if part != "src"]
         return ".".join(parts)
+
+    @staticmethod
+    def module_family_from_path(path: str) -> str:
+        """Resolve module family key from a source file path."""
+        normalized = path.replace("\\", "/")
+        if "_models" in normalized:
+            return "_models"
+        if "_utilities" in normalized:
+            return "_utilities"
+        if "_dispatcher" in normalized:
+            return "_dispatcher"
+        if "_decorators" in normalized:
+            return "_decorators"
+        if "_runtime" in normalized:
+            return "_runtime"
+        return "other_private"
+
+    @staticmethod
+    def entry_list(value: t.Infra.InfraValue | None) -> list[dict[str, str]]:
+        """Normalize class-nesting config entries to a strict list."""
+        if value is None:
+            return []
+        try:
+            return TypeAdapter(list[dict[str, str]]).validate_python(value)
+        except ValidationError:
+            msg = "class nesting entries must be a list"
+            raise ValueError(msg) from None
+
+    @staticmethod
+    def string_list(value: t.ContainerValue | None) -> list[str]:
+        """Normalize policy fields that should contain string collections."""
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, list):
+            items: list[str] = []
+            for item in value:
+                if not isinstance(item, str):
+                    msg = "expected list[str] value"
+                    raise ValueError(msg)
+                items.append(item)
+            return items
+        msg = "expected list[str] value"
+        raise ValueError(msg)
+
+    @staticmethod
+    def mapping_list(
+        value: t.ContainerValue | None,
+    ) -> list[dict[str, t.ContainerValue]]:
+        """Normalize policy fields that should contain mapping collections."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+        msg = "expected list[dict[str, ContainerValue]] value"
+        raise ValueError(msg)
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]

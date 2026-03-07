@@ -1,7 +1,6 @@
 # CQRS Architecture
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [FlextHandlers](#flexthandlers)
   - [Current Implementation (V1)](#current-implementation-v1)
@@ -14,8 +13,8 @@
   - [Dispatch Flow](#dispatch-flow)
   - [Handler Registration](#handler-registration)
 - [Integration with FlextService](#integration-with-flextservice)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1)](#current-state-v1)
+- [Modernization Roadmap - Phase Overview](#modernization-roadmap-phase-overview)
+  - [Current State (V1) - Phase Overview](#current-state-v1-phase-overview)
   - [Planned Phases](#planned-phases)
   - [Phase 1: FlextMixins.CQRS](#phase-1-flextmixinscqrs)
   - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
@@ -23,8 +22,8 @@
   - [V1 Handler (Current Production)](#v1-handler-current-production)
   - [V2 Handler (Target - Phase 3+)](#v2-handler-target-phase-3)
   - [Migration Path](#migration-path)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1) vs Target (V2)](#current-state-v1-vs-target-v2)
+- [Modernization Roadmap - Detailed Strategy](#modernization-roadmap-detailed-strategy)
+  - [Current State (V1) vs Target (V2) - Detailed](#current-state-v1-vs-target-v2-detailed)
   - [Timeline](#timeline)
   - [Problems Addressed](#problems-addressed)
   - [Solution Strategy](#solution-strategy)
@@ -40,7 +39,6 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07

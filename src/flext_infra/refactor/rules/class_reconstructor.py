@@ -8,6 +8,7 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
+from flext_infra import t
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.class_reconstructor import (
     FlextInfraRefactorClassReconstructor,
@@ -29,7 +30,7 @@ class FlextInfraRefactorClassReconstructorRule(FlextInfraRefactorRule):
         )
 
         try:
-            order_config = TypeAdapter(list[dict[str, object]]).validate_python(
+            order_config = TypeAdapter(list[t.Infra.RuleConfig]).validate_python(
                 order_config_raw
             )
         except ValidationError:

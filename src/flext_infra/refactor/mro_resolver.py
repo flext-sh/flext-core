@@ -8,12 +8,6 @@ from collections.abc import Mapping, Sequence
 from flext_infra import c, m, t
 
 
-class FlextInfraRefactorMROError(RuntimeError):
-    """Raised when MRO resolution violates policy constraints."""
-
-    pass
-
-
 class FlextInfraRefactorMROResolver:
     """MRO resolver for c/t/p/m/u facade families."""
 
@@ -101,7 +95,7 @@ class FlextInfraRefactorMROResolver:
             raw_chain = family_chains.get(family)
             if raw_chain is None:
                 msg = f"Missing expected family chain for {family!r}."
-                raise FlextInfraRefactorMROError(msg)
+                raise ValueError(msg)
             normalized[family] = tuple(raw_chain)
         return normalized
 
@@ -133,14 +127,14 @@ class FlextInfraRefactorMROResolver:
                 f"family={family} has fewer direct bases than expected: "
                 f"expected={expected_names!r} direct={direct_base_names!r}"
             )
-            raise FlextInfraRefactorMROError(msg)
+            raise ValueError(msg)
 
         if direct_base_names[: len(expected_names)] != expected_names:
             msg = (
                 f"family={family} direct base order violates policy: "
                 f"expected={expected_names!r} direct={direct_base_names!r}"
             )
-            raise FlextInfraRefactorMROError(msg)
+            raise ValueError(msg)
 
         mro_types = inspect.getmro(facade_class)
         mro_names = tuple(entry.__name__ for entry in mro_types)
@@ -152,7 +146,7 @@ class FlextInfraRefactorMROResolver:
                 f"family={family} missing expected bases in MRO: "
                 f"missing={missing!r} mro={mro_names!r}"
             )
-            raise FlextInfraRefactorMROError(msg)
+            raise ValueError(msg)
 
         previous_index = -1
         for base_name in expected_names:
@@ -162,7 +156,7 @@ class FlextInfraRefactorMROResolver:
                     f"family={family} MRO order is not C3-coherent for expected chain: "
                     f"expected={expected_names!r} mro={mro_names!r}"
                 )
-                raise FlextInfraRefactorMROError(msg)
+                raise ValueError(msg)
             previous_index = current_index
 
     @classmethod
@@ -191,7 +185,7 @@ class FlextInfraRefactorMROResolver:
                 f"missing={tuple(missing_namespaces)!r} "
                 f"accessible={accessible_namespaces!r}"
             )
-            raise FlextInfraRefactorMROError(msg)
+            raise ValueError(msg)
 
     @classmethod
     def _collect_accessible_namespaces(
@@ -245,6 +239,5 @@ class FlextInfraRefactorMROResolver:
 
 
 __all__ = [
-    "FlextInfraRefactorMROError",
     "FlextInfraRefactorMROResolver",
 ]

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import libcst as cst
 
-from flext_infra import c, t
+from flext_infra import c, m, p, t, u
 
 
 class FlextInfraRefactorRule:

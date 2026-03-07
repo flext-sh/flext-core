@@ -10,7 +10,7 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraCommandRunner, c, m, t
+from flext_infra import FlextInfraCommandRunner, c, m, p, t
 
 
 class TopLevelClassCollector(cst.CSTVisitor):
@@ -189,7 +189,7 @@ class FlextInfraRefactorLooseClassScanner:
             "--json",
             str(project_root / c.Infra.Paths.DEFAULT_SRC_DIR),
         ]
-        runner = FlextInfraCommandRunner()
+        runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         result = runner.capture(cmd)
         if result.is_failure:
             return {}
