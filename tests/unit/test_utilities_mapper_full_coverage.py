@@ -276,8 +276,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
 
 
 def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
-    assert mapper.at({"a": 1}, 0, default=5) == 5
-    assert _at_obj(ExplodingLenList([1]), 0, default=7) == 7
+    assert mapper.at({"a": 1}, 0, default=5).value == 5
+    assert cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value == 7
 
     model = SampleModel(port=8081)
     assert mapper.take(model, "port") == 8081
@@ -801,9 +801,9 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
 
 
 def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) -> None:
-    assert mapper.at({"a": 1}, "a") == 1
-    assert mapper.at([9, 8], 0) == 9
-    assert mapper.at([9, 8], 5, default=7) == 7
+    assert mapper.at({"a": 1}, "a").value == 1
+    assert mapper.at([9, 8], 0).value == 9
+    assert mapper.at([9, 8], 5, default=7).value == 7
 
     assert mapper.take({"a": 1}, "a", default=0) == 1
     assert mapper.take({"a": "x"}, "a", as_type=int, default=0) == 0
@@ -822,8 +822,8 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
     assert mapper.as_("maybe", bool, default=False) is False
     assert mapper.as_(None, int, default=3) == 3
 
-    assert mapper.or_(None, None, 1, default=2) == 1
-    assert mapper.or_(None, None, default=2) == 2
+    assert mapper.or_(None, None, 1, default=2).value == 1
+    assert mapper.or_(None, None, default=2).value == 2
     assert mapper.flat([[1, 2], [3]]) == [1, 2, 3]
 
     assert mapper._extract_field_value({"x": 1}, "x") == 1

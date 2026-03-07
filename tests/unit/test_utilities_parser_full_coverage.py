@@ -136,7 +136,10 @@ def test_parser_pipeline_and_pattern_branches(
     monkeypatch.setattr(
         parser,
         "_handle_pipeline_edge_cases",
-        lambda *_args, **_kwargs: None,
+        lambda *_args, **_kwargs: r[str].fail(
+            "Continue pipeline",
+            error_code="PIPELINE_CONTINUE",
+        ),
     )
     none_text = parser.apply_regex_pipeline(None, [("a", "b")])
     assert none_text.is_failure
@@ -209,7 +212,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
 ) -> None:
     parser = u.Parser()
 
-    assert parser._parse_find_first([1, 2], lambda v: v > 5) is None
+    assert parser._parse_find_first([1, 2], lambda v: v > 5).is_failure
     assert parser._parse_normalize_compare("x", 1) is False
     assert parser._parse_normalize_str(123, case="lower") == "123"
     assert parser._parse_normalize_str("abc", case="upper") == "ABC"
@@ -224,9 +227,9 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     )
     assert model_result is not None
 
-    assert parser._coerce_to_int([]) is None
-    assert parser._coerce_to_float("bad") is None
-    assert parser._coerce_to_bool("maybe") is None
+    assert parser._coerce_to_int([]).is_failure
+    assert parser._coerce_to_float("bad").is_failure
+    assert parser._coerce_to_bool("maybe").is_failure
     bool_from_int = parser._coerce_to_bool(0)
     assert bool_from_int is not None and bool_from_int.is_success
     assert parser._coerce_to_str(42).is_success
@@ -418,7 +421,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
 def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     parser = u.Parser()
 
-    assert parser._coerce_to_float([]) is None
+    assert parser._coerce_to_float([]).is_failure
 
     class _ValueEnum(StrEnum):
         FIRST = "v-1"

@@ -52,7 +52,7 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
 
     not_found = u.Collection.find({"a": 1}, lambda value: value == 2)
-    assert not_found is None
+    assert not_found.is_failure
 
     nested = u.Collection._merge_deep_single_key(
         cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
@@ -137,8 +137,8 @@ def test_process_outer_exception_and_coercion_branches() -> None:
     enum_list = u.Collection.coerce_list_to_enum(_Color)([_Color.BLUE])
     assert enum_list == [_Color.BLUE]
 
-    assert u.Collection.first([], default=9) == 9
-    assert u.Collection.last([], default=8) == 8
+    assert u.Collection.first([], default=9).value == 9
+    assert u.Collection.last([], default=8).value == 8
 
 
 def test_parse_mapping_outer_exception() -> None:

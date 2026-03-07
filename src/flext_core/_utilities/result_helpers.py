@@ -55,11 +55,13 @@ class ResultHelpers:
         return not bool(value)
 
     @staticmethod
-    def or_(*values: T | None, default: T | None = None) -> T | None:
+    def or_(*values: T | None, default: T | None = None) -> r[T]:
         for value in values:
             if value is not None:
-                return value
-        return default
+                return r[T].ok(value)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail("No non-None value found")
 
     @staticmethod
     def starts(value: str, prefix: str, *prefixes: str) -> bool:
@@ -71,19 +73,23 @@ class ResultHelpers:
         *,
         default: T | None = None,
         catch: type[Exception] | tuple[type[Exception], ...] = Exception,
-    ) -> T | None:
+    ) -> r[T]:
         try:
-            return func()
+            return r[T].ok(func())
         except Exception as exc:
             if isinstance(exc, catch):
-                return default
+                if default is not None:
+                    return r[T].ok(default)
+                return r[T].fail(str(exc))
             raise
 
     @staticmethod
-    def val(result: p.Result[T], *, default: T | None = None) -> T | None:
+    def val(result: p.Result[T], *, default: T | None = None) -> r[T]:
         if result.is_success:
-            return result.value
-        return default
+            return r[T].ok(result.value)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail(result.error or "Failed to extract result value")
 
     @staticmethod
     def vals(

@@ -880,7 +880,11 @@ class TestuCollectionFind:
             scenario.items,
             cast("Any", scenario.predicate),
         )
-        assert result == scenario.expected_result
+        if scenario.expected_result is None:
+            assert result.is_failure
+        else:
+            assert result.is_success
+            assert result.value == scenario.expected_result
 
 
 class TestuCollectionFilter:

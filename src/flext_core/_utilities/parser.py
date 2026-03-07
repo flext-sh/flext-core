@@ -58,7 +58,7 @@ class FlextUtilitiesParser:
         self.logger = FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def _coerce_to_bool(value: t.ContainerValue) -> r[bool] | None:
+    def _coerce_to_bool(value: t.ContainerValue) -> r[bool]:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.is_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -69,32 +69,34 @@ class FlextUtilitiesParser:
                 return r[bool].ok(value=True)
             if normalized_val in {"false", "0", "no", "off"}:
                 return r[bool].ok(False)
-            return None
+            return r[bool].fail(f"Cannot coerce '{value}' to bool")
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float(value: t.ContainerValue) -> r[float] | None:
+    def _coerce_to_float(value: t.ContainerValue) -> r[float]:
         """Coerce value to float. Returns None if not coercible."""
         if value.__class__ in {str, int}:
-            coerced_result = r[float].create_from_callable(
+            return r[float].create_from_callable(
                 lambda: float(str(value)),
+                error_code="FLOAT_COERCE_ERROR",
             )
-            if coerced_result.is_success:
-                return coerced_result
-            return None
-        return None
+        return r[float].fail(
+            f"Cannot coerce {value.__class__.__name__} to float",
+            error_code="FLOAT_COERCE_TYPE_ERROR",
+        )
 
     @staticmethod
-    def _coerce_to_int(value: t.ContainerValue) -> r[int] | None:
+    def _coerce_to_int(value: t.ContainerValue) -> r[int]:
         """Coerce value to int. Returns None if not coercible."""
         if value.__class__ in {str, float}:
-            coerced_result = r[int].create_from_callable(
+            return r[int].create_from_callable(
                 lambda: int(float(str(value))),
+                error_code="INT_COERCE_ERROR",
             )
-            if coerced_result.is_success:
-                return coerced_result
-            return None
-        return None
+        return r[int].fail(
+            f"Cannot coerce {value.__class__.__name__} to int",
+            error_code="INT_COERCE_TYPE_ERROR",
+        )
 
     @staticmethod
     def _coerce_to_str(value: t.ContainerValue) -> r[str]:
@@ -230,10 +232,13 @@ class FlextUtilitiesParser:
         target: type[T],
         *,
         case_insensitive: bool,
-    ) -> r[T] | None:
+    ) -> r[T]:
         """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
         if StrEnum not in target.__mro__:
-            return None
+            return r[T].fail(
+                f"Target {target.__name__} is not a StrEnum",
+                error_code="TARGET_NOT_ENUM",
+            )
         members_proxy = target.__members__ if hasattr(target, "__members__") else {}
         # Convert to dict for easier iteration
         members: Mapping[str, T] = dict(members_proxy)
@@ -276,14 +281,14 @@ class FlextUtilitiesParser:
     def _parse_find_first[T](
         items: list[T],
         predicate: Callable[[T], bool],
-    ) -> T | None:
+    ) -> r[T]:
         """Find first item matching predicate (avoids circular import)."""
         for item in items:
             # Type narrowing: item is T
             item_typed: T = item
             if predicate(item_typed):
-                return item_typed
-        return None
+                return r[T].ok(item_typed)
+        return r[T].fail("No matching item found")
 
     # =========================================================================
     # PARSE METHODS - Universal type parsing
@@ -407,10 +412,13 @@ class FlextUtilitiesParser:
         default: T | None,
         default_factory: Callable[[], T] | None,
         field_prefix: str,
-    ) -> r[T] | None:
+    ) -> r[T]:
         """Helper: Try enum parsing, return None if not enum."""
         if not issubclass(target, StrEnum):
-            return None
+            return r[T].fail(
+                f"{field_prefix}Target is not a StrEnum",
+                error_code="TARGET_NOT_ENUM",
+            )
         members = TypeAdapter(dict[str, T]).validate_python(target.__members__)
         value_str = str(value)
 
@@ -452,10 +460,13 @@ class FlextUtilitiesParser:
         strict: bool,
         default: T | None,
         default_factory: Callable[[], T] | None,
-    ) -> r[T] | None:
+    ) -> r[T]:
         """Helper: Try model parsing, return None if not model."""
         if not issubclass(target, BaseModel):
-            return None
+            return r[T].fail(
+                f"{field_prefix}Target is not a BaseModel",
+                error_code="TARGET_NOT_MODEL",
+            )
 
         model_result = FlextUtilitiesParser._parse_model(
             value,
@@ -479,27 +490,24 @@ class FlextUtilitiesParser:
         default: float | str | bool | None,
         default_factory: Callable[[], int | float | str | bool] | None,
         field_prefix: str,
-    ) -> r[int] | r[float] | r[str] | r[bool] | None:
+    ) -> r[int] | r[float] | r[str] | r[bool]:
         """Helper: Try primitive coercion."""
         # Only coerce primitive types
         if not FlextUtilitiesParser._is_primitive_type(target):
-            return None
+            return r[int].fail(
+                f"{field_prefix}Target is not primitive",
+                error_code="TARGET_NOT_PRIMITIVE",
+            )
         try:
             # Dispatch to concrete primitive coercion - each branch returns directly
             if target is int:
-                int_result = FlextUtilitiesParser._coerce_to_int(value)
-                if int_result is not None:
-                    return int_result
-            elif target is float:
-                float_result = FlextUtilitiesParser._coerce_to_float(value)
-                if float_result is not None:
-                    return float_result
-            elif target is str:
+                return FlextUtilitiesParser._coerce_to_int(value)
+            if target is float:
+                return FlextUtilitiesParser._coerce_to_float(value)
+            if target is str:
                 return FlextUtilitiesParser._coerce_to_str(value)
-            elif target is bool:
-                bool_result = FlextUtilitiesParser._coerce_to_bool(value)
-                if bool_result is not None:
-                    return bool_result
+            if target is bool:
+                return FlextUtilitiesParser._coerce_to_bool(value)
         except (ValueError, TypeError) as e:
             target_name = getattr(target, "__name__", "type")
             # For error case, return failure wrapped in appropriate type
@@ -523,7 +531,10 @@ class FlextUtilitiesParser:
                 return r[bool].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-        return None
+        return r[int].fail(
+            f"{field_prefix}Unsupported primitive target: {target.__name__}",
+            error_code="UNSUPPORTED_PRIMITIVE_TARGET",
+        )
 
     @staticmethod
     def _parse_with_default[T](
@@ -986,36 +997,34 @@ class FlextUtilitiesParser:
         if isinstance(value, target):
             return r.ok(value)
 
-        enum_result = FlextUtilitiesParser._parse_try_enum(
-            value,
-            target,
-            case_insensitive=case_insensitive,
-            default=default,
-            default_factory=default_factory,
-            field_prefix=field_prefix,
-        )
-        if enum_result is not None:
-            return enum_result
+        if issubclass(target, StrEnum):
+            return FlextUtilitiesParser._parse_try_enum(
+                value,
+                target,
+                case_insensitive=case_insensitive,
+                default=default,
+                default_factory=default_factory,
+                field_prefix=field_prefix,
+            )
 
-        model_result = FlextUtilitiesParser._parse_try_model(
-            value,
-            target,
-            field_prefix,
-            strict=strict,
-            default=default,
-            default_factory=default_factory,
-        )
-        if model_result is not None:
-            return model_result
+        if issubclass(target, BaseModel):
+            return FlextUtilitiesParser._parse_try_model(
+                value,
+                target,
+                field_prefix,
+                strict=strict,
+                default=default,
+                default_factory=default_factory,
+            )
 
-        primitive_result = FlextUtilitiesParser._parse_try_primitive(
-            value,
-            target,
-            default=None,
-            default_factory=None,
-            field_prefix=field_prefix,
-        )
-        if primitive_result is not None:
+        if FlextUtilitiesParser._is_primitive_type(target):
+            primitive_result = FlextUtilitiesParser._parse_try_primitive(
+                value,
+                target,
+                default=None,
+                default_factory=None,
+                field_prefix=field_prefix,
+            )
             if primitive_result.is_success:
                 validated_primitive = TypeAdapter(target).validate_python(
                     primitive_result.value,
@@ -1077,7 +1086,7 @@ class FlextUtilitiesParser:
 
         # Handle edge cases
         edge_result = self._handle_pipeline_edge_cases(text, patterns)
-        if edge_result is not None:
+        if edge_result.is_success or edge_result.error_code != "PIPELINE_CONTINUE":
             return edge_result
 
         # Ensure text is not None before processing
@@ -1202,7 +1211,7 @@ class FlextUtilitiesParser:
         else:
             key = obj.__class__.__name__
 
-        return key if isinstance(key, str) else str(key)
+        return key
 
     def normalize_whitespace(
         self,
@@ -1636,7 +1645,7 @@ class FlextUtilitiesParser:
         self,
         text: str | None,
         patterns: list[tuple[str, str] | tuple[str, str, int]],
-    ) -> r[str] | None:
+    ) -> r[str]:
         """Handle edge cases for regex pipeline application.
 
         Returns:
@@ -1666,7 +1675,7 @@ class FlextUtilitiesParser:
             return r[str].ok(text)
 
         # No edge case, continue processing
-        return None
+        return r[str].fail("Continue pipeline", error_code="PIPELINE_CONTINUE")
 
     def _process_all_patterns(
         self,

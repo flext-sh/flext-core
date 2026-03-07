@@ -688,7 +688,7 @@ class FlextUtilitiesCollection:
     def find(
         items: list[T] | tuple[T, ...] | dict[str, T],
         predicate: _Predicate[T],
-    ) -> T | None:
+    ) -> r[T]:
         """Find first item matching predicate with generic type support.
 
         Returns first item where predicate returns True, or None.
@@ -697,13 +697,13 @@ class FlextUtilitiesCollection:
             for item in items:
                 result: bool = predicate(item)  # Explicit type for result
                 if result:
-                    return item
-            return None
+                    return r[T].ok(item)
+            return r[T].fail("No matching item found")
         for v in items.values():
             matched: bool = predicate(v)  # Explicit type for matched
             if matched:
-                return v
-        return None
+                return r[T].ok(v)
+        return r[T].fail("No matching item found")
 
     # ========================================================================
     # Additional Collection Convenience Methods
@@ -714,7 +714,7 @@ class FlextUtilitiesCollection:
         items: Sequence[T],
         predicate: _Predicate[T] | None = None,
         default: T | None = None,
-    ) -> T | None:
+    ) -> r[T]:
         """Get first item (optionally matching predicate).
 
         Args:
@@ -731,11 +731,13 @@ class FlextUtilitiesCollection:
         """
         for item in items:
             if predicate is None:
-                return item
+                return r[T].ok(item)
             result: bool = predicate(item)
             if result:
-                return item
-        return default
+                return r[T].ok(item)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail("No first item found")
 
     @staticmethod
     def flatten(items: Sequence[Sequence[T]]) -> list[T]:
@@ -800,7 +802,7 @@ class FlextUtilitiesCollection:
         items: Sequence[T],
         predicate: _Predicate[T] | None = None,
         default: T | None = None,
-    ) -> T | None:
+    ) -> r[T]:
         """Get last item (optionally matching predicate).
 
         Args:
@@ -817,11 +819,13 @@ class FlextUtilitiesCollection:
         """
         for item in reversed(items):
             if predicate is None:
-                return item
+                return r[T].ok(item)
             result: bool = predicate(item)
             if result:
-                return item
-        return default
+                return r[T].ok(item)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail("No last item found")
 
     # =========================================================================
     # Public overloaded map function - inlined implementations

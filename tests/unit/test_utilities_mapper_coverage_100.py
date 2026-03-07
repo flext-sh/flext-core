@@ -131,15 +131,15 @@ class TestuMapperAccessors:
     def test_at_list(self) -> None:
         """Test at list."""
         items = [10, 20, 30]
-        assert u.Mapper.at(items, 1) == 20
-        assert u.Mapper.at(items, 5) is None
-        assert u.Mapper.at(items, 5, default=0) == 0
+        assert u.Mapper.at(items, 1).value == 20
+        assert u.Mapper.at(items, 5).is_failure
+        assert u.Mapper.at(items, 5, default=0).value == 0
 
     def test_at_dict(self) -> None:
         """Test at dict."""
         items = {"a": 10}
-        assert u.Mapper.at(items, "a") == 10
-        assert u.Mapper.at(items, "b") is None
+        assert u.Mapper.at(items, "a").value == 10
+        assert u.Mapper.at(items, "b").is_failure
 
     def test_take_extraction(self) -> None:
         """Test take value extraction."""
@@ -191,8 +191,8 @@ class TestuMapperUtils:
 
     def test_or_fallback(self) -> None:
         """Test or_ fallback."""
-        assert u.Mapper.or_(None, 1, 2) == 1
-        assert u.Mapper.or_(None, None, default=3) == 3
+        assert u.Mapper.or_(None, 1, 2).value == 1
+        assert u.Mapper.or_(None, None, default=3).value == 3
 
     def test_flat(self) -> None:
         """Test flat."""

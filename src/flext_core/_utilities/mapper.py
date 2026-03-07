@@ -1325,7 +1325,7 @@ class FlextUtilitiesMapper:
         index: int | str,
         *,
         default: T | None = None,
-    ) -> T | None:
+    ) -> r[T]:
         """Get item at index/key (mnemonic: at = get at position).
 
         Generic replacement for: items[index] with safe access
@@ -1346,13 +1346,19 @@ class FlextUtilitiesMapper:
         try:
             if isinstance(items, Mapping):
                 if isinstance(index, str) and index in items:
-                    return items[index]
-                return default
+                    return r[T].ok(items[index])
+                if default is not None:
+                    return r[T].ok(default)
+                return r[T].fail(f"Key '{index}' not found")
             if isinstance(index, int) and 0 <= index < len(items):
-                return items[index]
-            return default
+                return r[T].ok(items[index])
+            if default is not None:
+                return r[T].ok(default)
+            return r[T].fail(f"Index '{index}' out of bounds")
         except (IndexError, KeyError, TypeError):
-            return default
+            if default is not None:
+                return r[T].ok(default)
+            return r[T].fail("Failed to access item at index/key")
 
     @staticmethod
     def build(
@@ -2515,7 +2521,7 @@ class FlextUtilitiesMapper:
     def or_[T](
         *values: T | None,
         default: T | None = None,
-    ) -> T | None:
+    ) -> r[T]:
         """Return first non-None value (mnemonic: or_ = fallback chain).
 
         Generic replacement for: value1 or value2 or default patterns
@@ -2533,8 +2539,10 @@ class FlextUtilitiesMapper:
         """
         for value in values:
             if value is not None:
-                return value
-        return default
+                return r[T].ok(value)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail("No non-None value found")
 
     @staticmethod
     def pick(
