@@ -1,13 +1,14 @@
 # Class Policy v2
 
-
 <!-- TOC START -->
+
 - [Declaracao de Regras v2](#declaracao-de-regras-v2)
 - [Matriz por Familia](#matriz-por-familia)
 - [Exemplos por Familia](#exemplos-por-familia)
 - [Casos de Excecao](#casos-de-excecao)
 - [Nao Simplificar `_private`](#nao-simplificar-private)
 - [MRO por Projeto](#mro-por-projeto)
+
 <!-- TOC END -->
 
 ## Declaracao de Regras v2

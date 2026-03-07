@@ -7,7 +7,8 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_infra import FlextInfraCommandRunner, c, m, p, t, u
+from flext_infra import c, m, p, t, u
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class PostCheckGate:
@@ -36,7 +37,6 @@ class PostCheckGate:
             expected.get(c.Infra.ReportKeys.POST_CHECKS)
         )
         quality_gates = u.Infra.Refactor.string_list(expected.get("quality_gates"))
-
         if self._check_enabled("imports_resolve", post_checks):
             errors.extend(self._validate_imports(file_path))
 
@@ -65,7 +65,7 @@ class PostCheckGate:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = ast.parse(source)
         except (OSError, UnicodeDecodeError, SyntaxError) as exc:
-            return [f"parse_error:{exc}"]
+            return [f"parse_error:{file_path}:{exc}"]
 
         unresolved: list[str] = [
             f"line_{node.lineno}:invalid_import_from"
@@ -86,7 +86,7 @@ class PostCheckGate:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = ast.parse(source)
         except (OSError, UnicodeDecodeError, SyntaxError) as exc:
-            return [f"mro_parse_error:{exc}"]
+            return [f"mro_parse_error:{file_path}:{exc}"]
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef) and node.name == class_name:
@@ -95,7 +95,11 @@ class PostCheckGate:
                 expected_prefix = list(expected_bases)[: len(actual_clean)]
                 if actual_clean != expected_prefix:
                     return [
-                        f"mro_mismatch:{class_name}:expected={expected_prefix}:actual={actual_clean}"
+                        (
+                            f"mro_mismatch:{class_name}:"
+                            f"expected={expected_prefix}:"
+                            f"actual={actual_clean}"
+                        )
                     ]
                 return []
         return [f"class_not_found:{class_name}"]
@@ -106,8 +110,7 @@ class PostCheckGate:
             [sys.executable, "-m", "py_compile", str(file_path)],
         )
         if result.is_failure:
-            output = (result.error or "").strip()
-            return [f"lsp_diagnostics_clean_failed:{output}"]
+            return [f"lsp_diagnostics_clean_failed:{result.error or ''}"]
         return []
 
     def _base_name(self, base: ast.expr) -> str:

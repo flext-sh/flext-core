@@ -11,7 +11,8 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraCommandRunner, c, m, p, t, u
+from flext_core import r
+from flext_infra import c, m, u
 
 
 @dataclass(frozen=True)
@@ -36,40 +37,35 @@ class ImportCollector(cst.CSTVisitor):
     @override
     def visit_Import(self, node: cst.Import) -> None:
         for alias in node.names:
-            module_root = self._module_root(alias.name)
-            if module_root:
-                self.imported_modules.add(module_root)
+            root = self._module_root(alias.name)
+            if root:
+                self.imported_modules.add(root)
 
     @override
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
-        if node.module is None:
+        if node.module is None or node.relative:
             return
-        if node.relative:
-            return
-
-        module_root = self._module_root(node.module)
-        if module_root:
-            self.imported_modules.add(module_root)
-
+        root = self._module_root(node.module)
+        if root:
+            self.imported_modules.add(root)
         if isinstance(node.names, cst.ImportStar):
             return
-
         for alias in node.names:
-            symbol = self._imported_symbol(alias.name)
-            if symbol:
-                self.imported_symbols.add(symbol)
+            sym = self._imported_symbol(alias.name)
+            if sym:
+                self.imported_symbols.add(sym)
 
     def _module_root(self, node: cst.BaseExpression) -> str | None:
         if isinstance(node, cst.Name):
             return node.value
         if isinstance(node, cst.Attribute):
             parts: list[str] = []
-            current: cst.BaseExpression | None = node
-            while isinstance(current, cst.Attribute):
-                parts.append(current.attr.value)
-                current = current.value
-            if isinstance(current, cst.Name):
-                parts.append(current.value)
+            cur: cst.BaseExpression | None = node
+            while isinstance(cur, cst.Attribute):
+                parts.append(cur.attr.value)
+                cur = cur.value
+            if isinstance(cur, cst.Name):
+                parts.append(cur.value)
                 return parts[-1]
         return None
 
@@ -89,144 +85,129 @@ class DependencyAnalyzer:
         self._workspace_root = workspace_root.resolve()
         self._stdlib_roots = set(sys.stdlib_module_names)
         self._projects = self._discover_projects()
-        self._package_to_project = self._build_package_index(self._projects)
+        self._pkg_index = self._build_package_index(self._projects)
         self._graph_cache: dict[str, list[str]] | None = None
 
-    def build_import_graph(self) -> dict[str, list[str]]:
+    def build_import_graph(self) -> r[dict[str, list[str]]]:
         """Build and cache the inter-project import graph."""
         if self._graph_cache is not None:
-            return self._graph_cache
+            return r[dict[str, list[str]]].ok(self._graph_cache)
 
-        graph: dict[str, set[str]] = {project.name: set() for project in self._projects}
-
+        graph: dict[str, set[str]] = {p.name: set() for p in self._projects}
         for project in self._projects:
             files = self._find_import_candidate_files(project)
-            for file_path in files:
-                file_data = self._parse_imports(file_path)
-                for module_root in file_data.imported_modules:
-                    if module_root in self._stdlib_roots:
+            for fp in files:
+                parsed = self._parse_imports(fp)
+                if parsed.is_failure:
+                    continue
+                for mod_root in parsed.value.imported_modules:
+                    if mod_root in self._stdlib_roots:
                         continue
-                    imported_project = self._package_to_project.get(module_root)
-                    if imported_project is None or imported_project == project.name:
-                        continue
-                    graph[project.name].add(imported_project)
+                    dep = self._pkg_index.get(mod_root)
+                    if dep and dep != project.name:
+                        graph[project.name].add(dep)
 
-        ordered_graph = {
-            project_name: sorted(imports)
-            for project_name, imports in sorted(graph.items())
-        }
-        self._graph_cache = ordered_graph
-        return ordered_graph
+        ordered = {k: sorted(v) for k, v in sorted(graph.items())}
+        self._graph_cache = ordered
+        return r[dict[str, list[str]]].ok(ordered)
 
-    def find_consumers(self, class_name: str) -> list[Path]:
+    def find_consumers(self, class_name: str) -> r[list[Path]]:
         """Find all files importing the given class name."""
         consumers: set[Path] = set()
-
         for project in self._projects:
-            files = self._find_import_candidate_files(project)
-            for file_path in files:
-                file_data = self._parse_imports(file_path)
-                if class_name in file_data.imported_symbols:
-                    consumers.add(file_path)
+            for fp in self._find_import_candidate_files(project):
+                parsed = self._parse_imports(fp)
+                if parsed.is_failure:
+                    continue
+                if class_name in parsed.value.imported_symbols:
+                    consumers.add(fp)
+        return r[list[Path]].ok(sorted(consumers))
 
-        return sorted(consumers)
-
-    def determine_transformation_order(self) -> list[str]:
-        """Return topologically sorted project order for safe transformations."""
-        graph = self.build_import_graph()
+    def determine_transformation_order(self) -> r[list[str]]:
+        """Return topologically sorted project order."""
+        graph_result = self.build_import_graph()
+        if graph_result.is_failure:
+            return r[list[str]].fail(graph_result.error or "graph build failed")
+        graph = graph_result.value
         if not graph:
-            return []
-
-        sorter = TopologicalSorter(graph)
+            return r[list[str]].ok([])
         try:
-            return list(sorter.static_order())
+            return r[list[str]].ok(list(TopologicalSorter(graph).static_order()))
         except CycleError:
-            return sorted(graph)
+            return r[list[str]].ok(sorted(graph))
+
+    # ── private helpers ─────────────────────────────────────────
 
     def _discover_projects(self) -> list[_ProjectInfo]:
         projects: list[_ProjectInfo] = []
-
         for candidate in sorted(self._workspace_root.iterdir()):
             if not candidate.is_dir() or candidate.name.startswith("."):
                 continue
-
-            src_path = candidate / c.Infra.Paths.DEFAULT_SRC_DIR
-            if not src_path.is_dir():
+            src = candidate / c.Infra.Paths.DEFAULT_SRC_DIR
+            if not src.is_dir():
                 continue
-
-            package_roots = self._discover_package_roots(src_path)
             projects.append(
                 _ProjectInfo(
                     name=candidate.name,
                     path=candidate,
-                    src_path=src_path,
-                    package_roots=package_roots,
+                    src_path=src,
+                    package_roots=self._discover_package_roots(src),
                 )
             )
-
         return projects
 
     def _discover_package_roots(self, src_path: Path) -> set[str]:
-        package_roots: set[str] = set()
-
-        for path in src_path.iterdir():
-            if path.name.startswith("."):
+        roots: set[str] = set()
+        for p in src_path.iterdir():
+            if p.name.startswith("."):
                 continue
-            if path.is_dir() and (path / c.Infra.Files.INIT_PY).is_file():
-                package_roots.add(path.name)
+            if p.is_dir() and (p / c.Infra.Files.INIT_PY).is_file():
+                roots.add(p.name)
             elif (
-                path.is_file()
-                and path.suffix == c.Infra.Extensions.PYTHON
-                and path.stem != "__init__"
+                p.is_file()
+                and p.suffix == c.Infra.Extensions.PYTHON
+                and p.stem != "__init__"
             ):
-                package_roots.add(path.stem)
+                roots.add(p.stem)
+        return roots
 
-        return package_roots
-
-    def _build_package_index(
-        self,
-        projects: list[_ProjectInfo],
-    ) -> dict[str, str]:
-        package_to_project: dict[str, str] = {}
-
-        for project in projects:
-            for package_root in project.package_roots:
-                package_to_project.setdefault(package_root, project.name)
-
-        return package_to_project
+    def _build_package_index(self, projects: list[_ProjectInfo]) -> dict[str, str]:
+        idx: dict[str, str] = {}
+        for proj in projects:
+            for pkg in proj.package_roots:
+                idx.setdefault(pkg, proj.name)
+        return idx
 
     def _find_import_candidate_files(self, project: _ProjectInfo) -> list[Path]:
-        ast_grep_files = self._scan_import_files_with_ast_grep(project.src_path)
-        if ast_grep_files:
-            return sorted(ast_grep_files)
-
+        grep_files = self._scan_import_files_with_ast_grep(project.src_path)
+        if grep_files.is_success and grep_files.value:
+            return sorted(grep_files.value)
         return sorted(self._iter_python_files(project.src_path))
 
     def _iter_python_files(self, src_path: Path) -> list[Path]:
-        files: list[Path] = []
-        for file_path in src_path.rglob(c.Infra.Extensions.PYTHON_GLOB):
-            if "__pycache__" in file_path.parts:
-                continue
-            files.append(file_path)
-        return files
+        return [
+            fp
+            for fp in src_path.rglob(c.Infra.Extensions.PYTHON_GLOB)
+            if "__pycache__" not in fp.parts
+        ]
 
-    def _scan_import_files_with_ast_grep(self, src_path: Path) -> set[Path]:
+    def _scan_import_files_with_ast_grep(self, src_path: Path) -> r[set[Path]]:
         files: set[Path] = set()
-
         for pattern in ("import $MODULE", "from $MODULE import $$$"):
-            payload = self._run_ast_grep(src_path, pattern)
-            for entry in payload:
-                file_path = Path(entry.file)
-                if not file_path.is_absolute():
-                    file_path = (src_path / file_path).resolve()
-                if file_path.suffix == c.Infra.Extensions.PYTHON:
-                    files.add(file_path)
-
-        return files
+            result = self._run_ast_grep(src_path, pattern)
+            if result.is_failure:
+                return r[set[Path]].fail(result.error or "ast-grep failed")
+            for entry in result.value:
+                fp = Path(entry.file)
+                if not fp.is_absolute():
+                    fp = (src_path / fp).resolve()
+                if fp.suffix == c.Infra.Extensions.PYTHON:
+                    files.add(fp)
+        return r[set[Path]].ok(files)
 
     def _run_ast_grep(
         self, src_path: Path, pattern: str
-    ) -> list[m.Infra.Refactor.AstGrepMatch]:
+    ) -> r[list[m.Infra.Refactor.AstGrepMatch]]:
         cmd = [
             "sg",
             "--pattern",
@@ -236,34 +217,36 @@ class DependencyAnalyzer:
             "--json",
             str(src_path),
         ]
-        runner = FlextInfraCommandRunner()
-        result = runner.capture(cmd)
-        if result.is_failure:
-            return []
-
-        raw_output = result.value.strip()
-        if not raw_output:
-            return []
-
-        try:
-            return TypeAdapter(list[m.Infra.Refactor.AstGrepMatch]).validate_json(
-                raw_output
+        capture = u.Infra.Refactor.capture_output(cmd)
+        if capture.is_failure:
+            return r[list[m.Infra.Refactor.AstGrepMatch]].fail(
+                capture.error or "capture failed"
             )
-        except ValidationError:
-            return []
-
-    def _parse_imports(self, file_path: Path) -> _FileImportData:
+        if not capture.value:
+            return r[list[m.Infra.Refactor.AstGrepMatch]].ok([])
         try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            module = cst.parse_module(source)
-            collector = ImportCollector()
-            module.visit(collector)
-            return _FileImportData(
-                imported_modules=collector.imported_modules,
-                imported_symbols=collector.imported_symbols,
+            return r[list[m.Infra.Refactor.AstGrepMatch]].ok(
+                TypeAdapter(list[m.Infra.Refactor.AstGrepMatch]).validate_json(
+                    capture.value
+                )
             )
-        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
-            return _FileImportData(imported_modules=set(), imported_symbols=set())
+        except ValidationError as exc:
+            return r[list[m.Infra.Refactor.AstGrepMatch]].fail(str(exc))
+
+    def _parse_imports(self, file_path: Path) -> r[_FileImportData]:
+        try:
+            src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = cst.parse_module(src)
+            col = ImportCollector()
+            tree.visit(col)
+            return r[_FileImportData].ok(
+                _FileImportData(
+                    imported_modules=col.imported_modules,
+                    imported_symbols=col.imported_symbols,
+                )
+            )
+        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError) as exc:
+            return r[_FileImportData].fail(f"{file_path}: {exc}")
 
 
 __all__ = ["DependencyAnalyzer"]

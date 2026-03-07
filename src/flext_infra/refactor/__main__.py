@@ -6,8 +6,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from flext_infra import output
-
 from .engine import FlextInfraRefactorEngine
 from .migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
@@ -56,7 +54,7 @@ def _run_migrate_to_mro(*, argv: list[str]) -> int:
     print(FlextInfraRefactorMigrateToClassMRO.render_text(report), end="")  # noqa: T201  # JUSTIFIED: CLI text output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     if len(report.errors) > 0:
         for error in report.errors:
-            output.error(error)
+            _ = sys.stderr.write(f"ERROR: {error}\n")
         return 1
     return 0
 

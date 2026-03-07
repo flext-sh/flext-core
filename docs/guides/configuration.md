@@ -7,6 +7,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Configuration Sources](#configuration-sources)
 - [Basic Configuration](#basic-configuration)
@@ -33,6 +34,7 @@
 - [Examples](#examples)
   - [Complete Configuration Example](#complete-configuration-example)
 - [Reference](#reference)
+
 <!-- TOC END -->
 
 This guide covers how to configure FLEXT for your specific environment and requirements.

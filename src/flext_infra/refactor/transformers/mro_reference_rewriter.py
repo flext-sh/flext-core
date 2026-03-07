@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 from typing import override
 
-from flext_infra import c, m, p, t, u
+from flext_infra import c, m
 
 
 class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):

@@ -1,6 +1,7 @@
 # Documentation Templates
 
 <!-- TOC START -->
+
 - [Feature Guide Template](#feature-guide-template)
 - [Overview - Feature Guide Template](#overview-feature-guide-template)
 - [Basic Usage - Feature Guide Template](#basic-usage-feature-guide-template)
@@ -32,7 +33,7 @@
 - [[Another Category] - Troubleshooting Template](#another-category-troubleshooting-template)
   - [Issue: [Problem Description] - Troubleshooting Template (Category 2)](#issue-problem-description-troubleshooting-template-category-2)
 - [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
-- [ADR-[Number]: [Title]](#adr-number-title)
+- [ADR-\[Number\]: [Title]](#adr-number-title)
   - [Problem - ADR Template](#problem-adr-template)
   - [Decision - ADR Template](#decision-adr-template)
   - [Rationale - ADR Template](#rationale-adr-template)
@@ -83,6 +84,7 @@
 - [Tips for Using Templates](#tips-for-using-templates)
 - [Example: Using the Feature Guide Template](#example-using-the-feature-guide-template)
 - [Maintenance](#maintenance)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

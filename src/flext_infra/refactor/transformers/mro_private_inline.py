@@ -6,8 +6,6 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c, m, p, t, u
-
 
 class FlextInfraRefactorMROPrivateInlineTransformer(cst.CSTTransformer):
     """Inline configured private-name values after migration."""

@@ -7,8 +7,6 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c, m, p, t, u
-
 
 class FlextInfraRefactorImportBypassRemover(cst.CSTTransformer):
     """Replace import bypass try/except blocks with the primary import."""

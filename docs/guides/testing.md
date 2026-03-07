@@ -7,6 +7,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Test Structure](#test-structure)
 - [Test Categories](#test-categories)
@@ -40,6 +41,7 @@
 - [Troubleshooting](#troubleshooting)
   - [Common Test Issues](#common-test-issues)
 - [Resources](#resources)
+
 <!-- TOC END -->
 
 This guide covers testing strategies, best practices, and procedures for FLEXT applications and libraries.

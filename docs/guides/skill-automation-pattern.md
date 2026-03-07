@@ -7,6 +7,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Goal](#goal)
 - [Required Outputs](#required-outputs)
 - [Standard Skill Contract](#standard-skill-contract)
@@ -15,6 +16,7 @@
 - [Example (Current Pattern)](#example-current-pattern)
 - [Verification Commands](#verification-commands)
 - [Adoption Rule](#adoption-rule)
+
 <!-- TOC END -->
 
 This guide defines the standard way to create reusable automation skills in this repository.

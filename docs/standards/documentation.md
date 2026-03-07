@@ -1,6 +1,7 @@
 # Documentation Standards
 
 <!-- TOC START -->
+
 - [Documentation Structure](#documentation-structure)
   - [Every Feature Needs](#every-feature-needs)
 - [Overview](#overview)
@@ -80,6 +81,7 @@
   - [Spelling](#spelling)
 - [Examples of Excellent Documentation](#examples-of-excellent-documentation)
 - [Summary](#summary)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

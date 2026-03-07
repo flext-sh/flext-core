@@ -7,6 +7,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Quick Diagnosis](#quick-diagnosis)
   - [Health Check Commands](#health-check-commands)
   - [System Status](#system-status)
@@ -38,6 +39,7 @@
 - [Prevention](#prevention)
   - [Best Practices](#best-practices)
 - [Resources](#resources)
+
 <!-- TOC END -->
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.

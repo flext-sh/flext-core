@@ -8,8 +8,6 @@ from typing import override
 import libcst as cst
 from libcst.metadata import QualifiedNameProvider, QualifiedNameSource
 
-from flext_infra import c, m, p, t, u
-
 
 class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
     """Propagate import/symbol renames safely using CST + import metadata."""

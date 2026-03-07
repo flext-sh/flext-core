@@ -1,6 +1,7 @@
 # Service Patterns Guide
 
 <!-- TOC START -->
+
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Execution Patterns](#execution-patterns)
@@ -25,6 +26,7 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [References](#references)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services

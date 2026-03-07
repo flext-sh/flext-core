@@ -9,12 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraDiscoveryService, c, t
+from flext_core import r
+from flext_infra import c, t
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class FlextInfraUtilitiesRefactor:
@@ -26,6 +29,11 @@ class FlextInfraUtilitiesRefactor:
 
         name = u.Infra.Refactor.dotted_name(cst_expr)
     """
+
+    @staticmethod
+    def capture_output(cmd: Sequence[str]) -> r[str]:
+        """Run *cmd* and return stripped stdout as ``r[str]``."""
+        return FlextInfraCommandRunner().capture(cmd)
 
     @staticmethod
     def dotted_name(expr: cst.BaseExpression) -> str:
@@ -91,23 +99,20 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def discover_project_roots(*, workspace_root: Path) -> list[Path]:
-        """Discover project roots under a workspace.
-
-        Uses ``FlextInfraDiscoveryService`` and falls back to the
-        workspace root itself when it contains a ``src/`` directory.
-
-        Args:
-            workspace_root: Top-level workspace directory.
-
-        Returns:
-            List of resolved project root paths.
-
-        """
-        discovery = FlextInfraDiscoveryService()
-        projects = discovery.discover_projects(workspace_root)
+        """Discover project roots under a workspace."""
         roots: list[Path] = []
-        if projects.is_success:
-            roots = [project.path for project in projects.unwrap()]
+        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            if not (entry / c.Infra.Git.DIR).exists():
+                continue
+            if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
+                continue
+            has_pyproject = (entry / c.Infra.Files.PYPROJECT_FILENAME).exists()
+            has_gomod = (entry / c.Infra.Files.GO_MOD).exists()
+            if not has_pyproject and not has_gomod:
+                continue
+            roots.append(entry)
         if (
             len(roots) == 0
             and (workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir()
@@ -204,7 +209,7 @@ class FlextInfraUtilitiesRefactor:
             for item in value:
                 if not isinstance(item, str):
                     msg = "expected list[str] value"
-                    raise ValueError(msg)
+                    raise TypeError(msg)
                 items.append(item)
             return items
         msg = "expected list[str] value"

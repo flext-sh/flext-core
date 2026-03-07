@@ -1,6 +1,7 @@
 # Pydantic v2 Patterns Guide - Audit Report
 
 <!-- TOC START -->
+
 - [Audit Summary](#audit-summary)
   - [✅ Guide Accuracy: 10/10](#guide-accuracy-1010)
   - [✅ Verified Against Source Code](#verified-against-source-code)
@@ -32,6 +33,7 @@
 - [Accuracy Assessment](#accuracy-assessment)
 - [Completeness Assessment](#completeness-assessment)
 - [Conclusion](#conclusion)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

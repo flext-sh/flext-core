@@ -23,6 +23,7 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
         policy_context: t.Infra.PolicyContext,
         class_families: Mapping[str, str],
     ) -> None:
+        """Store mappings and policy context used during class nesting."""
         self._mappings = mappings
         self._policy_context = policy_context
         self._class_families = class_families

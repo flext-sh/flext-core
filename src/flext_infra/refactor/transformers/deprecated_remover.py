@@ -7,8 +7,6 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c, m, p, t, u
-
 
 class FlextInfraRefactorDeprecatedRemover(cst.CSTTransformer):
     """Remove classes marked as deprecated by name or warning usage."""

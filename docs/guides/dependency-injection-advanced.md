@@ -1,6 +1,7 @@
 # Advanced Dependency Injection with FlextContainer
 
 <!-- TOC START -->
+
 - [Core Concepts](#core-concepts)
   - [Service Locator Pattern](#service-locator-pattern)
   - [Singleton Pattern](#singleton-pattern)
@@ -44,6 +45,7 @@
 - [Key Takeaways](#key-takeaways)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Type-Safety**: Full Generic Support

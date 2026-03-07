@@ -8,7 +8,7 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c, m, p, t, u
+from flext_infra import c
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.alias_remover import (
     FlextInfraRefactorAliasRemover,

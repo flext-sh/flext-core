@@ -9,7 +9,7 @@ import yaml
 from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraJsonService, c, m, t, u
+from flext_infra import c, m, t, u
 from flext_infra.refactor.transformers.class_nesting import (
     FlextInfraRefactorClassNestingTransformer,
 )
@@ -144,9 +144,10 @@ class PreCheckGate:
         return by_family
 
     def _schema_valid(self, loaded: t.Infra.ContainerDict) -> bool:
-        schema_raw = FlextInfraJsonService().load(self._schema_path)
-        if schema_raw is None:
+        schema_result = u.Infra.Io.read_json(self._schema_path)
+        if schema_result.is_failure:
             return False
+        schema_raw = schema_result.value
         try:
             schema = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
                 schema_raw
@@ -237,6 +238,8 @@ class ClassNestingRefactorRule:
         self._policy_path = Path(__file__).with_name("class-policy-v2.yml")
         self._pre_check_gate = PreCheckGate()
         self._post_check_gate = PostCheckGate()
+        self._cached_config: t.Infra.RuleConfig | None = None
+        self._cached_policy_context: t.Infra.PolicyContext | None = None
 
     def apply(
         self, file_path: Path, *, dry_run: bool = False
@@ -335,7 +338,7 @@ class ClassNestingRefactorRule:
             result_code = tree.code
             modified = result_code != source
 
-            if modified:
+            if modified and not dry_run:
                 post_payload = self._build_postcheck_payload(
                     mappings,
                     file_path,
@@ -382,6 +385,9 @@ class ClassNestingRefactorRule:
             )
 
     def _load_config(self) -> t.Infra.RuleConfig:
+        if self._cached_config is not None:
+            return self._cached_config
+
         raw = self._config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         loaded_raw = yaml.safe_load(raw)
         try:
@@ -409,13 +415,14 @@ class ClassNestingRefactorRule:
                 u.Infra.Refactor.mapping_list(helper_raw)
             )
 
+        self._cached_config = config
         return config
 
     def _confidence_threshold(self, config: t.Infra.RuleConfig) -> str:
         raw = config.get("confidence_threshold", c.Infra.Severity.LOW)
         if not isinstance(raw, str):
             msg = "confidence_threshold must be a string"
-            raise ValueError(msg)
+            raise TypeError(msg)
         candidate = raw.strip().lower()
         if candidate in c.Infra.Refactor.CONFIDENCE_RANKS:
             return candidate
@@ -617,8 +624,8 @@ class ClassNestingRefactorRule:
         config: t.Infra.RuleConfig,
         file_path: Path,
         confidence_threshold: str,
-    ) -> dict[str, str | list[str]]:
-        payload: dict[str, str | list[str]] = {
+    ) -> t.Infra.ContainerDict:
+        payload: t.Infra.ContainerDict = {
             c.Infra.ReportKeys.SOURCE_SYMBOL: "",
             "expected_base_chain": [],
             c.Infra.ReportKeys.POST_CHECKS: ["imports_resolve", "mro_valid"],
@@ -684,9 +691,10 @@ class ClassNestingRefactorRule:
 
     def _policy_document_schema_valid(self, loaded: t.Infra.ContainerDict) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
-        schema_raw = FlextInfraJsonService().load(schema_path)
-        if schema_raw is None:
+        schema_result = u.Infra.Io.read_json(schema_path)
+        if schema_result.is_failure:
             return False
+        schema_raw = schema_result.value
         try:
             schema = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
                 schema_raw
@@ -864,6 +872,9 @@ class ClassNestingRefactorRule:
         return updated_tree
 
     def _policy_context_from_document(self) -> t.Infra.PolicyContext:
+        if self._cached_policy_context is not None:
+            return self._cached_policy_context
+
         policy_doc = self._load_policy_document()
         policy_entries = u.Infra.Refactor.mapping_list(policy_doc.get("policy_matrix"))
         policy_context: dict[str, t.Infra.ContainerDict] = {}
@@ -872,6 +883,7 @@ class ClassNestingRefactorRule:
             if not isinstance(family_name, str):
                 continue
             policy_context[family_name] = entry
+        self._cached_policy_context = policy_context
         return policy_context
 
     def _families_for_scope(

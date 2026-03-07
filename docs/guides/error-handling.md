@@ -1,6 +1,7 @@
 # Error Handling Guide
 
 <!-- TOC START -->
+
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Core Concepts](#core-concepts)
@@ -28,6 +29,7 @@
 - [Summary](#summary)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Railway-Oriented Programming

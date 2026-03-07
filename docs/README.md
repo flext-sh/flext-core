@@ -1,6 +1,7 @@
 # FLEXT-Core Documentation
 
 <!-- TOC START -->
+
 - [Scope and Compatibility](#scope-and-compatibility)
 - [Navigation](#navigation)
 - [🔧 Quality Assurance](#quality-assurance)
@@ -8,6 +9,7 @@
 - [Core Concepts](#core-concepts)
 - [Style Expectations](#style-expectations)
 - [Support](#support)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

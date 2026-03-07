@@ -785,6 +785,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return self.value
         return default
 
+    def value_or[D](self, default: D) -> T_co | D:
+        return self.unwrap_or(default)
+
     @override
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection.
