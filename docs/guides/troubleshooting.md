@@ -13,7 +13,6 @@
   - [System Status](#system-status)
 - [Common Issues](#common-issues)
   - [1. Import Errors](#1-import-errors)
-  - [r](#r)
   - [2. Type Checking Errors](#2-type-checking-errors)
   - [3. Test Failures](#3-test-failures)
   - [4. Configuration Issues](#4-configuration-issues)

@@ -15,7 +15,7 @@ from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra._utilities.toml import FlextInfraUtilitiesToml
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
-from flext_infra.refactor._utilities import FlextInfraRefactorUtilities
+from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
 
 
 class FlextInfraUtilities(FlextUtilities):
@@ -53,7 +53,7 @@ class FlextInfraUtilities(FlextUtilities):
         class Codegen(FlextInfraUtilitiesCodegen):
             """Code generation and AST helpers — real inheritance."""
 
-        class Refactor(FlextInfraRefactorUtilities):
+        class Refactor(FlextInfraUtilitiesRefactor):
             """CST/refactor analysis helpers — real inheritance."""
 
         class Toml(FlextInfraUtilitiesToml):

@@ -4,27 +4,14 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Mapping
-from typing import TypedDict, override
+from typing import override
 
 import libcst as cst
-from pydantic import TypeAdapter, ValidationError
 
-
-class FamilyPolicy(TypedDict, total=False):
-    enable_helper_consolidation: bool
-    allow_helper_call_rewrite: bool
-    require_signature_validation: bool
-    required_parameters: list[str] | tuple[str, ...]
-    forbidden_parameters: list[str] | tuple[str, ...]
-    allow_positional_only_params: bool
-    allow_keyword_only_params: bool
-    allow_vararg: bool
-    allow_kwarg: bool
-    allowed_targets: list[str] | tuple[str, ...]
-    forbidden_targets: list[str] | tuple[str, ...]
-
-
-type PolicyContext = Mapping[str, FamilyPolicy]
+from flext_infra import m, t
+from flext_infra.refactor.transformers.policy import (
+    FlextInfraRefactorTransformerPolicyUtilities,
+)
 
 
 class HelperConsolidationTransformer(cst.CSTTransformer):
@@ -33,7 +20,7 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
     def __init__(
         self,
         helper_mappings: dict[str, str],
-        policy_context: PolicyContext | None = None,
+        policy_context: t.Infra.PolicyContext | None = None,
         helper_families: Mapping[str, str] | None = None,
     ) -> None:
         """Initialize with helper-to-namespace mappings and optional policy context."""
@@ -213,49 +200,37 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         policy = self._policy_for_helper(helper_name)
         if policy is None:
             return True
-        if not self._bool_from_policy(
-            policy, "allow_helper_call_rewrite", default=False
-        ):
+        if not policy.allow_helper_call_rewrite:
             return False
-        return self._target_allowed(policy, target_namespace)
+        return FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
+            policy=policy,
+            target_namespace=target_namespace,
+        )
 
     def _is_helper_move_allowed(self, helper_name: str, target_namespace: str) -> bool:
         policy = self._policy_for_helper(helper_name)
         if policy is None:
             return True
-        if not self._bool_from_policy(
-            policy,
-            "enable_helper_consolidation",
-            default=False,
-        ):
+        if not policy.enable_helper_consolidation:
             return False
-        return self._target_allowed(policy, target_namespace)
+        return FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
+            policy=policy,
+            target_namespace=target_namespace,
+        )
 
     def _signature_allowed(self, function_node: cst.FunctionDef) -> bool:
         policy = self._policy_for_helper(function_node.name.value)
         if policy is None:
             return True
-        if not self._bool_from_policy(
-            policy,
-            "require_signature_validation",
-            default=True,
-        ):
+        if not policy.require_signature_validation:
             return True
 
-        required = self._tuple_from_policy(policy, "required_parameters")
-        forbidden = self._tuple_from_policy(policy, "forbidden_parameters")
-        allow_vararg = self._bool_from_policy(policy, "allow_vararg", default=True)
-        allow_kwarg = self._bool_from_policy(policy, "allow_kwarg", default=True)
-        allow_positional_only = self._bool_from_policy(
-            policy,
-            "allow_positional_only_params",
-            default=True,
-        )
-        allow_keyword_only = self._bool_from_policy(
-            policy,
-            "allow_keyword_only_params",
-            default=True,
-        )
+        required = tuple(policy.required_parameters)
+        forbidden = tuple(policy.forbidden_parameters)
+        allow_vararg = policy.allow_vararg
+        allow_kwarg = policy.allow_kwarg
+        allow_positional_only = policy.allow_positional_only_params
+        allow_keyword_only = policy.allow_keyword_only_params
 
         seen_parameters: set[str] = set()
         parameters = function_node.params
@@ -284,52 +259,14 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
                 return False
         return True
 
-    def _policy_for_helper(self, helper_name: str) -> FamilyPolicy | None:
-        if self._policy_context is None:
-            return None
-        family = self._helper_families.get(helper_name)
-        if family is None:
-            return None
-        policy = self._policy_context.get(family)
-        if policy is None:
-            return None
-        return policy
-
-    def _bool_from_policy(
-        self,
-        policy: FamilyPolicy,
-        key: str,
-        *,
-        default: bool,
-    ) -> bool:
-        raw = policy.get(key)
-        if isinstance(raw, bool):
-            return raw
-        return default
-
-    def _tuple_from_policy(self, policy: FamilyPolicy, key: str) -> tuple[str, ...]:
-        raw = policy.get(key)
-        if isinstance(raw, str):
-            return (raw,)
-        if isinstance(raw, list):
-            try:
-                return tuple(TypeAdapter(list[str]).validate_python(raw))
-            except ValidationError:
-                return ()
-        if isinstance(raw, tuple):
-            try:
-                return TypeAdapter(tuple[str, ...]).validate_python(raw)
-            except ValidationError:
-                return ()
-        return ()
-
-    def _target_allowed(self, policy: FamilyPolicy, target_namespace: str) -> bool:
-        allowed = self._tuple_from_policy(policy, "allowed_targets")
-        if allowed and target_namespace not in allowed:
-            return False
-
-        forbidden = self._tuple_from_policy(policy, "forbidden_targets")
-        return target_namespace not in forbidden
+    def _policy_for_helper(
+        self, helper_name: str
+    ) -> m.Infra.Refactor.ClassNestingPolicy | None:
+        return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
+            policy_context=self._policy_context,
+            symbol_families=self._helper_families,
+            symbol_name=helper_name,
+        )
 
 
 __all__ = ["HelperConsolidationTransformer"]

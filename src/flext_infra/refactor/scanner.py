@@ -10,7 +10,8 @@ from typing import override
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import FlextInfraCommandRunner, c, m, t
+from flext_core import r
+from flext_infra import c, m, t, u
 
 
 class TopLevelClassCollector(cst.CSTVisitor):
@@ -39,147 +40,139 @@ class TopLevelClassCollector(cst.CSTVisitor):
 class FlextInfraRefactorLooseClassScanner:
     """Scan a project tree and report top-level classes lacking namespace prefixes."""
 
-    def scan(self, project_root: Path) -> t.ConfigurationMapping:
+    def scan(self, project_root: Path) -> r[t.ConfigurationMapping]:
         """Scan *project_root*/src and return a violation report dict."""
-        python_files = self._discover_python_files(project_root)
-        ast_grep_index = self._scan_with_ast_grep(project_root)
+        files_result = self._discover_python_files(project_root)
+        if files_result.is_failure:
+            return r[t.ConfigurationMapping].fail(
+                files_result.error or "discovery failed"
+            )
+
+        grep_result = self._scan_with_ast_grep(project_root)
+        grep_index = grep_result.value if grep_result.is_success else {}
 
         violations: list[m.Infra.Refactor.LooseClassViolation] = []
         targets_found = dict.fromkeys(c.Infra.Refactor.REQUIRED_CLASS_TARGETS, False)
         classes_scanned = 0
 
-        for file_path in python_files:
-            class_occurrences = self._scan_file_with_libcst(file_path)
-            classes_scanned += len(class_occurrences)
-            ast_grep_hits = ast_grep_index.get(file_path, {})
+        for fp in files_result.value:
+            parsed = self._scan_file_with_libcst(fp)
+            if parsed.is_failure:
+                continue
+            classes_scanned += len(parsed.value)
 
-            rel_path = self._relative_module_path(project_root, file_path)
-            if rel_path is None:
+            rel = self._relative_module_path(project_root, fp)
+            if rel.is_failure:
                 continue
 
-            for occurrence in class_occurrences:
-                violation = self._build_violation(rel_path, occurrence, ast_grep_hits)
-                if violation is None:
+            for occ in parsed.value:
+                viol = self._build_violation(rel.value, occ, grep_index.get(fp, {}))
+                if viol is None:
                     continue
-                violations.append(violation)
-                if violation.class_name in targets_found:
-                    targets_found[violation.class_name] = True
+                violations.append(viol)
+                if viol.class_name in targets_found:
+                    targets_found[viol.class_name] = True
 
-        counters = Counter(item.confidence for item in violations)
-
-        return {
+        counters = Counter(v.confidence for v in violations)
+        return r[t.ConfigurationMapping].ok({
             "rule": c.Infra.ReportKeys.CLASS_NESTING,
-            "files_scanned": len(python_files),
+            "files_scanned": len(files_result.value),
             "classes_scanned": classes_scanned,
             c.Infra.ReportKeys.VIOLATIONS_COUNT: len(violations),
             "confidence_counts": dict(counters),
             "required_targets": targets_found,
-            c.Infra.ReportKeys.VIOLATIONS: [item.model_dump() for item in violations],
-        }
+            c.Infra.ReportKeys.VIOLATIONS: [v.model_dump() for v in violations],
+        })
+
+    # ── private helpers ─────────────────────────────────────────
 
     def _build_violation(
         self,
         rel_path: Path,
-        occurrence: m.Infra.Refactor.ClassOccurrence,
-        ast_grep_hits: Mapping[str, int],
+        occ: m.Infra.Refactor.ClassOccurrence,
+        grep_hits: Mapping[str, int],
     ) -> m.Infra.Refactor.LooseClassViolation | None:
-        if not occurrence.is_top_level:
+        if not occ.is_top_level:
             return None
-
-        expected_prefix = self._expected_prefix_for_module(rel_path)
-        if expected_prefix and occurrence.name.startswith(expected_prefix):
+        prefix = self._expected_prefix_for_module(rel_path)
+        if prefix and occ.name.startswith(prefix):
             return None
 
         confidence = self._confidence_from_location(rel_path)
         score = c.Infra.Refactor.CONFIDENCE_TO_SCORE[confidence]
-        line = occurrence.line
-        if occurrence.name in ast_grep_hits:
+        line = occ.line
+        if occ.name in grep_hits:
             score = min(score + 0.02, 0.99)
-            line = ast_grep_hits[occurrence.name]
-
-        reason = (
-            "top_level_class_in_private_directory"
-            if self._has_private_directory(rel_path)
-            else "top_level_class_without_namespace_prefix"
-        )
+            line = grep_hits[occ.name]
 
         return m.Infra.Refactor.LooseClassViolation(
             file=rel_path.as_posix(),
             line=max(line, 1),
-            class_name=occurrence.name,
-            expected_prefix=expected_prefix,
+            class_name=occ.name,
+            expected_prefix=prefix,
             rule=c.Infra.ReportKeys.CLASS_NESTING,
-            reason=reason,
+            reason=(
+                "top_level_class_in_private_directory"
+                if self._has_private_directory(rel_path)
+                else "top_level_class_without_namespace_prefix"
+            ),
             confidence=confidence,
             score=round(score, 2),
         )
 
     def _confidence_from_location(self, rel_path: Path) -> str:
-        parent_parts = rel_path.parent.parts[1:]
-        if any(part.startswith("_") for part in parent_parts):
+        parts = rel_path.parent.parts[1:]
+        if any(p.startswith("_") for p in parts):
             return "high"
-        if parent_parts:
-            return "medium"
-        return c.Infra.Severity.LOW
+        return "medium" if parts else c.Infra.Severity.LOW
 
-    def _discover_python_files(self, project_root: Path) -> list[Path]:
-        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
-        if not src_dir.is_dir():
-            return []
-
-        files: list[Path] = []
-        for file_path in sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
-            if (
-                file_path.name.startswith("__")
-                and file_path.name != c.Infra.Files.INIT_PY
-            ):
-                continue
-            if "__pycache__" in file_path.parts:
-                continue
-            files.append(file_path)
-        return files
+    def _discover_python_files(self, project_root: Path) -> r[list[Path]]:
+        src = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
+        if not src.is_dir():
+            return r[list[Path]].fail(f"src not found: {src}")
+        return r[list[Path]].ok([
+            fp
+            for fp in sorted(src.rglob(c.Infra.Extensions.PYTHON_GLOB))
+            if "__pycache__" not in fp.parts
+            and not (fp.name.startswith("__") and fp.name != c.Infra.Files.INIT_PY)
+        ])
 
     def _expected_prefix_for_module(self, rel_path: Path) -> str:
         parts = rel_path.parts
         if len(parts) < c.Infra.Refactor.MIN_PATH_DEPTH:
             return ""
-
-        project_part = parts[0]
-        project_prefix = self._pascal_case(project_part.split("_", maxsplit=1)[0])
-        directories = "".join(self._pascal_case(part) for part in parts[1:-1])
-        module = self._pascal_case(rel_path.stem)
-        return f"{project_prefix}{directories}{module}"
+        pc = self._pascal_case
+        proj = pc(parts[0].split("_", maxsplit=1)[0])
+        dirs = "".join(pc(p) for p in parts[1:-1])
+        return f"{proj}{dirs}{pc(rel_path.stem)}"
 
     def _has_private_directory(self, rel_path: Path) -> bool:
-        return any(part.startswith("_") for part in rel_path.parent.parts[1:])
+        return any(p.startswith("_") for p in rel_path.parent.parts[1:])
 
     def _pascal_case(self, value: str) -> str:
-        normalized = c.Infra.Refactor.CLASS_PATTERN.sub(" ", value.replace("_", " "))
-        return "".join(word.capitalize() for word in normalized.split())
+        norm = c.Infra.Refactor.CLASS_PATTERN.sub(" ", value.replace("_", " "))
+        return "".join(w.capitalize() for w in norm.split())
 
-    def _relative_module_path(self, project_root: Path, file_path: Path) -> Path | None:
-        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
+    def _relative_module_path(self, project_root: Path, file_path: Path) -> r[Path]:
+        src = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         try:
-            return file_path.relative_to(src_dir)
-        except ValueError:
-            return None
+            return r[Path].ok(file_path.relative_to(src))
+        except ValueError as exc:
+            return r[Path].fail(str(exc))
 
     def _scan_file_with_libcst(
-        self,
-        file_path: Path,
-    ) -> list[m.Infra.Refactor.ClassOccurrence]:
+        self, file_path: Path
+    ) -> r[list[m.Infra.Refactor.ClassOccurrence]]:
         try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            module = cst.parse_module(source)
-            collector = TopLevelClassCollector()
-            module.visit(collector)
-            return collector.classes
-        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
-            return []
+            src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = cst.parse_module(src)
+            col = TopLevelClassCollector()
+            tree.visit(col)
+            return r[list[m.Infra.Refactor.ClassOccurrence]].ok(col.classes)
+        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError) as exc:
+            return r[list[m.Infra.Refactor.ClassOccurrence]].fail(f"{file_path}: {exc}")
 
-    def _scan_with_ast_grep(
-        self, project_root: Path
-    ) -> Mapping[Path, Mapping[str, int]]:
+    def _scan_with_ast_grep(self, project_root: Path) -> r[dict[Path, dict[str, int]]]:
         cmd = [
             "sg",
             "--pattern",
@@ -189,43 +182,36 @@ class FlextInfraRefactorLooseClassScanner:
             "--json",
             str(project_root / c.Infra.Paths.DEFAULT_SRC_DIR),
         ]
-        runner = FlextInfraCommandRunner()
-        result = runner.capture(cmd)
-        if result.is_failure:
-            return {}
-
-        payload = result.value.strip()
-        if not payload:
-            return {}
+        capture = u.Infra.Refactor.capture_output(cmd)
+        if capture.is_failure:
+            return r[dict[Path, dict[str, int]]].fail(
+                capture.error or "ast-grep failed"
+            )
+        if not capture.value:
+            return r[dict[Path, dict[str, int]]].ok({})
 
         try:
             entries = TypeAdapter(list[m.Infra.Refactor.AstGrepEntry]).validate_json(
-                payload
+                capture.value
             )
-        except ValidationError:
-            return {}
+        except ValidationError as exc:
+            return r[dict[Path, dict[str, int]]].fail(str(exc))
 
-        index: dict[Path, dict[str, int]] = {}
-        for entry in entries:
-            name_entry = entry.meta_variables.single.get("NAME")
-            if name_entry is None:
+        idx: dict[Path, dict[str, int]] = {}
+        for e in entries:
+            ne = e.meta_variables.single.get("NAME")
+            if ne is None:
                 continue
-            class_name = name_entry.text
-
             line = 1
-            if entry.range is not None and entry.range.start is not None:
-                line_raw = entry.range.start.line
-                if line_raw is not None and line_raw > 0:
-                    line = line_raw
-
-            file_path = Path(entry.file)
-            if not file_path.is_absolute():
-                file_path = (project_root / file_path).resolve()
-            names = index.setdefault(file_path, {})
-            if class_name not in names:
-                names[class_name] = line
-
-        return index
+            if e.range and e.range.start:
+                ln = e.range.start.line
+                if ln and ln > 0:
+                    line = ln
+            fp = Path(e.file)
+            if not fp.is_absolute():
+                fp = (project_root / fp).resolve()
+            idx.setdefault(fp, {}).setdefault(ne.text, line)
+        return r[dict[Path, dict[str, int]]].ok(idx)
 
 
 __all__ = [

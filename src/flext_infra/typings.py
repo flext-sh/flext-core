@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 from flext_core import FlextTypes
-from flext_infra.refactor._typings import FlextInfraRectorTypes
 
 
 class FlextInfraTypes(FlextTypes):
@@ -61,12 +60,6 @@ class FlextInfraTypes(FlextTypes):
 
         MutableStrMap: TypeAlias = MutableMapping[str, str]
         """Mutable string-to-string mapping for accumulation patterns."""
-
-        ClassFamilyMap: TypeAlias = Mapping[str, str]
-        """Class/helper symbol to family mapping used by refactor transformers."""
-
-        PolicyContext: TypeAlias = Mapping[str, object]
-        """Policy-family mapping used as typed context for refactor rules."""
 
         ContainerDict: TypeAlias = dict[str, FlextTypes.ContainerValue]
         """Dict with string keys and container values (project reports, etc.)."""
@@ -136,8 +129,11 @@ class FlextInfraTypes(FlextTypes):
         ExpectedBase: TypeAlias = type | str
         """Expected MRO base: a class or its qualified name."""
 
-        class Refactor(FlextInfraRectorTypes):
-            pass
+        PolicyContext: TypeAlias = Mapping[str, ContainerDict]
+        """Class-nesting policy matrix keyed by module family."""
+
+        ClassFamilyMap: TypeAlias = Mapping[str, str]
+        """Mapping from symbol name to resolved module family."""
 
 
 t = FlextInfraTypes

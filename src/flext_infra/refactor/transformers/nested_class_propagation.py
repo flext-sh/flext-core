@@ -3,20 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypedDict, override
+from typing import override
 
 import libcst as cst
 from libcst.metadata import ParentNodeProvider
 
-
-class FamilyPolicy(TypedDict, total=False):
-    propagate_imports: bool
-    propagate_name_references: bool
-    propagate_attribute_references: bool
-    blocked_reference_prefixes: list[str] | tuple[str, ...]
-
-
-type PolicyContext = Mapping[str, FamilyPolicy]
+from flext_infra import m, t
+from flext_infra.refactor.transformers.policy import (
+    FlextInfraRefactorTransformerPolicyUtilities,
+)
 
 
 class NestedClassPropagationTransformer(cst.CSTTransformer):
@@ -27,7 +22,7 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
     def __init__(
         self,
         class_renames: dict[str, str],
-        policy_context: PolicyContext | None = None,
+        policy_context: t.Infra.PolicyContext | None = None,
         class_families: Mapping[str, str] | None = None,
     ) -> None:
         """Initialize with class rename mappings and optional policy context."""
@@ -184,42 +179,29 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         policy = self._policy_for_symbol(symbol_name)
         if policy is None:
             return True
-        raw = policy.get(policy_key)
-        if isinstance(raw, bool):
-            return raw
+        if policy_key == "propagate_imports":
+            return policy.propagate_imports
+        if policy_key == "propagate_name_references":
+            return policy.propagate_name_references
+        if policy_key == "propagate_attribute_references":
+            return policy.propagate_attribute_references
         return False
 
     def _blocked_by_prefix(self, symbol_name: str) -> bool:
         policy = self._policy_for_symbol(symbol_name)
         if policy is None:
             return False
-
-        blocked_prefixes = self._string_collection(
-            policy.get("blocked_reference_prefixes"),
-        )
+        blocked_prefixes = tuple(policy.blocked_reference_prefixes)
         return any(symbol_name.startswith(prefix) for prefix in blocked_prefixes)
 
-    def _string_collection(
-        self,
-        value: str | list[str] | tuple[str, ...] | None,
-    ) -> tuple[str, ...]:
-        """Extract a tuple of strings from a policy value."""
-        if value is None:
-            return ()
-        if isinstance(value, str):
-            return (value,)
-        return tuple(value)
-
-    def _policy_for_symbol(self, symbol_name: str) -> FamilyPolicy | None:
-        if self._policy_context is None:
-            return None
-        family = self._class_families.get(symbol_name)
-        if family is None:
-            return None
-        policy = self._policy_context.get(family)
-        if policy is None:
-            return None
-        return policy
+    def _policy_for_symbol(
+        self, symbol_name: str
+    ) -> m.Infra.Refactor.ClassNestingPolicy | None:
+        return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
+            policy_context=self._policy_context,
+            symbol_families=self._class_families,
+            symbol_name=symbol_name,
+        )
 
 
 __all__ = ["NestedClassPropagationTransformer"]

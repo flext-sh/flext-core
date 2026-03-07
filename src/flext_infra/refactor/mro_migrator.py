@@ -15,9 +15,8 @@ from flext_infra.refactor.transformers.mro_private_inline import (
 from flext_infra.refactor.transformers.mro_reference_rewriter import (
     FlextInfraRefactorMROReferenceRewriter,
 )
-from flext_infra.templates import FlextInfraTemplateEngine
 
-_CONSTANT_PATTERN = re.compile(c.Infra.Refactor.CONSTANT_PATTERN_REGEX)
+CONSTANT_PATTERN = re.compile(r"^_?[A-Z][A-Z0-9_]*$")
 
 
 class FlextInfraRefactorMROMigrationScanner:
@@ -67,7 +66,7 @@ class FlextInfraRefactorMROMigrationScanner:
                 continue
             if not isinstance(stmt.target, ast.Name):
                 continue
-            if not _CONSTANT_PATTERN.match(stmt.target.id):
+            if not CONSTANT_PATTERN.match(stmt.target.id):
                 continue
             if not cls._is_final_annotation(annotation=stmt.annotation):
                 continue
@@ -330,17 +329,10 @@ class FlextInfraRefactorMROMigrationTransformer:
         moved_by_symbol: dict[str, cst.AnnAssign],
         ordered_symbols: list[str],
     ) -> tuple[cst.ClassDef, dict[str, str]]:
-        template_result = FlextInfraTemplateEngine().render(
-            c.Infra.Refactor.MRO_CLASS_TEMPLATE,
-            class_name=class_name,
+        class_template = cst.ClassDef(
+            name=cst.Name(class_name),
+            body=cst.IndentedBlock(body=()),
         )
-        if template_result.is_failure:
-            msg = template_result.error or f"unable to render class {class_name}"
-            raise ValueError(msg)
-        class_template = cst.parse_statement(template_result.unwrap())
-        if not isinstance(class_template, cst.ClassDef):
-            msg = f"unable to create class {class_name}"
-            raise TypeError(msg)
 
         class_body: list[cst.BaseStatement] = []
         symbol_map: dict[str, str] = {}

@@ -21,11 +21,11 @@ if TYPE_CHECKING:
     from flext_infra.refactor.rules.legacy_removal import (
         FlextInfraRefactorLegacyRemovalRule,
     )
-    from flext_infra.refactor.rules.mro_redundancy_checker import (
-        FlextInfraRefactorMRORedundancyChecker,
-    )
     from flext_infra.refactor.rules.mro_class_migration import (
         FlextInfraRefactorMROClassMigrationRule,
+    )
+    from flext_infra.refactor.rules.mro_redundancy_checker import (
+        FlextInfraRefactorMRORedundancyChecker,
     )
     from flext_infra.refactor.rules.pattern_corrections import (
         FlextInfraRefactorPatternCorrectionsRule,

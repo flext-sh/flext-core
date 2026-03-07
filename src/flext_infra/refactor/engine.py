@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import fnmatch
+import json
 import re
 import sys
 from collections.abc import Mapping
@@ -16,8 +17,7 @@ import yaml
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, output, t
-from flext_infra.json_io import FlextInfraJsonService
+from flext_infra import c, m, t, u
 from flext_infra.refactor.analysis import (
     FlextInfraRefactorViolationAnalyzer,
 )
@@ -49,6 +49,27 @@ from flext_infra.refactor.rules.symbol_propagation import (
     FlextInfraRefactorSymbolPropagationRule,
 )
 from flext_infra.refactor.safety import FlextInfraRefactorSafetyManager
+
+
+class _RefactorCliOutput:
+    @staticmethod
+    def info(message: str) -> None:
+        _ = sys.stdout.write(f"{message}\n")
+
+    @staticmethod
+    def error(message: str) -> None:
+        _ = sys.stderr.write(f"ERROR: {message}\n")
+
+    @staticmethod
+    def header(message: str) -> None:
+        _ = sys.stdout.write(f"\n{message}\n")
+
+    @staticmethod
+    def debug(message: str) -> None:
+        _ = sys.stdout.write(f"DEBUG: {message}\n")
+
+
+output = _RefactorCliOutput()
 
 
 class FlextInfraRefactorEngine:
@@ -299,7 +320,7 @@ class FlextInfraRefactorEngine:
             )
             FlextInfraRefactorEngine.print_violation_summary(analysis)
             if args.analysis_output is not None:
-                FlextInfraJsonService().dump(
+                _ = u.Infra.Io.write_json(
                     args.analysis_output,
                     analysis.model_dump(mode="json"),
                     ensure_ascii=True,
@@ -463,13 +484,16 @@ class FlextInfraRefactorEngine:
     ) -> bool:
         """Write impact map file in JSON format."""
         impact_map = FlextInfraRefactorEngine.build_impact_map(results)
-        json_svc = FlextInfraJsonService()
-        if json_svc.dump(output_path, impact_map, ensure_ascii=True):
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = json.dumps(impact_map, ensure_ascii=True, indent=2) + "\n"
+            _ = output_path.write_text(payload, encoding=c.Infra.Encoding.DEFAULT)
             output.info(f"Impact map written: {output_path}")
             output.info(f"Impact map entries: {len(impact_map)}")
             return True
-        output.error(f"Failed to write impact map {output_path}")
-        return False
+        except OSError:
+            output.error(f"Failed to write impact map {output_path}")
+            return False
 
     def collect_project_files(
         self,

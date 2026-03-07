@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
@@ -142,10 +144,5 @@ def test_migrate_to_mro_rejects_unknown_target(tmp_path: Path) -> None:
 
     migrator = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root)
 
-    try:
+    with pytest.raises(ValueError, match="unsupported target"):
         _ = migrator.run(target="typings", apply_changes=False)
-    except ValueError as exc:
-        assert "unsupported target" in str(exc)
-    else:  # pragma: no cover - defensive assertion
-        msg = "expected ValueError for unsupported target"
-        raise AssertionError(msg)

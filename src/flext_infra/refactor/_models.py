@@ -9,6 +9,7 @@ import libcst as cst
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels
+from flext_infra import t
 
 
 class FlextInfraRefactorModels:
@@ -179,6 +180,93 @@ class FlextInfraRefactorModels:
             description="Rewrite scope",
         )
 
+    class ClassNestingPolicy(FlextModels.ArbitraryTypesModel):
+        """Validated policy contract used by class-nesting transformers."""
+
+        model_config = ConfigDict(extra="ignore", frozen=True)
+
+        family_name: str = Field(min_length=1, description="Module family name")
+        allowed_operations: list[str] = Field(
+            default_factory=list,
+            description="Enabled operation identifiers for this family",
+        )
+        forbidden_operations: list[str] = Field(
+            default_factory=list,
+            description="Disabled operation identifiers for this family",
+        )
+        forbidden_targets: list[str] = Field(
+            default_factory=list,
+            description="Target namespaces forbidden for this family",
+        )
+        enable_class_nesting: bool = Field(
+            default=True,
+            description="Allow moving top-level classes under a namespace",
+        )
+        allow_namespace_creation: bool = Field(
+            default=True,
+            description="Allow creating a target namespace when absent",
+        )
+        allow_existing_namespace_merge: bool = Field(
+            default=True,
+            description="Allow merging nested classes into existing namespace",
+        )
+        enable_helper_consolidation: bool = Field(
+            default=True,
+            description="Allow consolidating helper functions into namespaces",
+        )
+        allow_helper_call_rewrite: bool = Field(
+            default=True,
+            description="Allow rewriting helper call sites to namespaced calls",
+        )
+        require_signature_validation: bool = Field(
+            default=False,
+            description="Require signature checks before helper migration",
+        )
+        required_parameters: list[str] = Field(
+            default_factory=list,
+            description="Function parameters that must exist in helper signatures",
+        )
+        forbidden_parameters: list[str] = Field(
+            default_factory=list,
+            description="Function parameters that must not exist in helper signatures",
+        )
+        allow_vararg: bool = Field(
+            default=True,
+            description="Allow variadic positional parameter usage",
+        )
+        allow_kwarg: bool = Field(
+            default=True,
+            description="Allow variadic keyword parameter usage",
+        )
+        allow_positional_only_params: bool = Field(
+            default=True,
+            description="Allow positional-only parameters",
+        )
+        allow_keyword_only_params: bool = Field(
+            default=True,
+            description="Allow keyword-only parameters",
+        )
+        propagate_imports: bool = Field(
+            default=True,
+            description="Allow propagating import rewrite rules",
+        )
+        propagate_name_references: bool = Field(
+            default=True,
+            description="Allow propagating direct name reference rewrites",
+        )
+        propagate_attribute_references: bool = Field(
+            default=True,
+            description="Allow propagating attribute reference rewrites",
+        )
+        blocked_reference_prefixes: list[str] = Field(
+            default_factory=list,
+            description="Name prefixes blocked from rewrite propagation",
+        )
+        allowed_targets: list[str] = Field(
+            default_factory=list,
+            description="Explicitly allowed target namespaces",
+        )
+
     class ClassNestingReport(FlextModels.ArbitraryTypesModel):
         """Aggregated class-nesting analysis report."""
 
@@ -276,10 +364,10 @@ class FlextInfraRefactorModels:
             default_factory=list, description="Top hotspot files"
         )
         files_scanned: int = Field(ge=0, description="Files scanned")
-        helper_classification: dict[str, object] = Field(
+        helper_classification: t.Infra.ContainerDict = Field(
             description="Helper classification summary"
         )
-        class_nesting: dict[str, object] = Field(
+        class_nesting: t.Infra.ContainerDict = Field(
             description="Class nesting analysis summary"
         )
 

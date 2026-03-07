@@ -14,6 +14,7 @@ import libcst as cst
 import yaml
 from pydantic import TypeAdapter, ValidationError
 
+from flext_core import r
 from flext_infra import c, m, t, u
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
@@ -95,14 +96,18 @@ class FlextInfraRefactorClassNestingAnalyzer:
             )
 
         scanner = FlextInfraRefactorLooseClassScanner()
-        mapping_index = cls._load_mapping_index()
+        mapping_result = cls._load_mapping_index()
+        empty: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMappingEntry] = {}
+        mapping_index = mapping_result.value if mapping_result.is_success else empty
         confidence_counts: Counter[str] = Counter()
         per_file_counts: Counter[str] = Counter()
         violations: list[m.Infra.Refactor.ClassNestingViolation] = []
 
         for project_root, target_files in grouped_targets.items():
             scan_result = scanner.scan(project_root)
-            raw_violations = scan_result.get(c.Infra.ReportKeys.VIOLATIONS, [])
+            if scan_result.is_failure:
+                continue
+            raw_violations = scan_result.value.get(c.Infra.ReportKeys.VIOLATIONS, [])
             try:
                 parsed_violations = TypeAdapter(
                     list[m.Infra.Refactor.LooseClassViolation]
@@ -193,43 +198,71 @@ class FlextInfraRefactorClassNestingAnalyzer:
     @classmethod
     def _load_mapping_index(
         cls,
-    ) -> Mapping[tuple[str, str], m.Infra.Refactor.ClassNestingMappingEntry]:
+    ) -> r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMappingEntry]]:
         mapping_path = (
             Path(__file__).resolve().parent / c.Infra.Refactor.MAPPINGS_RELATIVE_PATH
         )
         try:
-            raw_content = mapping_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            parsed = yaml.safe_load(raw_content)
-        except (OSError, yaml.YAMLError):
-            return {}
+            raw = mapping_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            parsed = yaml.safe_load(raw)
+        except (OSError, yaml.YAMLError) as exc:
+            return r[
+                dict[
+                    tuple[str, str],
+                    m.Infra.Refactor.ClassNestingMappingEntry,
+                ]
+            ].fail(str(exc))
 
         try:
             typed_doc = TypeAdapter(dict[str, t.ContainerValue]).validate_python(parsed)
-        except ValidationError:
-            return {}
-        raw_class_nesting = typed_doc.get(c.Infra.ReportKeys.CLASS_NESTING)
-        if not isinstance(raw_class_nesting, list):
-            return {}
+        except ValidationError as exc:
+            return r[
+                dict[
+                    tuple[str, str],
+                    m.Infra.Refactor.ClassNestingMappingEntry,
+                ]
+            ].fail(str(exc))
+
+        raw_nesting = typed_doc.get(c.Infra.ReportKeys.CLASS_NESTING)
+        if not isinstance(raw_nesting, list):
+            return r[
+                dict[
+                    tuple[str, str],
+                    m.Infra.Refactor.ClassNestingMappingEntry,
+                ]
+            ].ok({})
+
         try:
             entries = TypeAdapter(
                 list[m.Infra.Refactor.ClassNestingMappingRecord]
-            ).validate_python(raw_class_nesting)
-        except ValidationError:
-            return {}
+            ).validate_python(raw_nesting)
+        except ValidationError as exc:
+            return r[
+                dict[
+                    tuple[str, str],
+                    m.Infra.Refactor.ClassNestingMappingEntry,
+                ]
+            ].fail(str(exc))
 
-        index: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMappingEntry] = {}
+        index: dict[
+            tuple[str, str],
+            m.Infra.Refactor.ClassNestingMappingEntry,
+        ] = {}
         for entry in entries:
-            rewrite_scope = cls._normalize_rewrite_scope(entry.rewrite_scope)
-            normalized_file = cls._normalize_module_path(entry.current_file)
-            index[normalized_file, entry.loose_name] = (
-                m.Infra.Refactor.ClassNestingMappingEntry(
-                    target_namespace=entry.target_namespace,
-                    confidence=entry.confidence,
-                    rewrite_scope=rewrite_scope,
-                )
+            scope = cls._normalize_rewrite_scope(entry.rewrite_scope)
+            norm = cls._normalize_module_path(entry.current_file)
+            index[norm, entry.loose_name] = m.Infra.Refactor.ClassNestingMappingEntry(
+                target_namespace=entry.target_namespace,
+                confidence=entry.confidence,
+                rewrite_scope=scope,
             )
 
-        return index
+        return r[
+            dict[
+                tuple[str, str],
+                m.Infra.Refactor.ClassNestingMappingEntry,
+            ]
+        ].ok(index)
 
     @classmethod
     def _normalize_module_path(cls, raw_path: str) -> str:

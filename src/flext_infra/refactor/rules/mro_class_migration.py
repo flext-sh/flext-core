@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import ast
-import re
 from pathlib import Path
 from typing import override
 
 import libcst as cst
 
 from flext_infra import c, m
-from flext_infra.refactor.mro_migrator import FlextInfraRefactorMROMigrationTransformer
+from flext_infra.refactor.mro_migrator import (
+    CONSTANT_PATTERN,
+    FlextInfraRefactorMROMigrationTransformer,
+)
 from flext_infra.refactor.rule import FlextInfraRefactorRule
-
-_CONSTANT_PATTERN = re.compile(c.Infra.Refactor.CONSTANT_PATTERN_REGEX)
 
 
 class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
@@ -86,7 +86,7 @@ def _first_constants_class_name(tree: ast.Module) -> str:
 
 
 def _is_constant_candidate(symbol: str) -> bool:
-    return _CONSTANT_PATTERN.match(symbol) is not None
+    return CONSTANT_PATTERN.match(symbol) is not None
 
 
 def _is_final_annotation(annotation: ast.expr) -> bool:

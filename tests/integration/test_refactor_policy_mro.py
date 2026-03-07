@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from flext_infra.refactor.mro_resolver import (
-    FlextInfraRefactorMROError,
     FlextInfraRefactorMROResolver,
 )
 
@@ -139,6 +138,6 @@ def test_mro_resolver_rejects_wrong_order() -> None:
                 "u": ["FlextLdapUtilities", "FlextCliUtilities"],
             },
         )
-    except FlextInfraRefactorMROError:
+    except ValueError:
         raised = True
     assert raised

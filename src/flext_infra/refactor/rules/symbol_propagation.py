@@ -10,25 +10,11 @@ import libcst as cst
 from libcst.metadata import MetadataWrapper, QualifiedNameProvider
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import m
+from flext_infra import m, u
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.symbol_propagator import (
     FlextInfraRefactorSymbolPropagator,
 )
-
-
-def _string_list(value: object) -> list[str]:
-    try:
-        return TypeAdapter(list[str]).validate_python(value)
-    except ValidationError:
-        return []
-
-
-def _string_mapping(value: object) -> dict[str, str]:
-    try:
-        return TypeAdapter(dict[str, str]).validate_python(value)
-    except ValidationError:
-        return {}
 
 
 class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
@@ -44,9 +30,19 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
         module_renames_raw = self.config.get("module_renames", {})
         symbol_renames_raw = self.config.get("import_symbol_renames", {})
 
-        target_modules = set(_string_list(target_modules_raw))
-        module_renames = _string_mapping(module_renames_raw)
-        symbol_renames = _string_mapping(symbol_renames_raw)
+        target_modules = set(u.Infra.Refactor.string_list(target_modules_raw))
+        try:
+            module_renames = TypeAdapter(dict[str, str]).validate_python(
+                module_renames_raw
+            )
+        except ValidationError:
+            module_renames: dict[str, str] = {}
+        try:
+            symbol_renames = TypeAdapter(dict[str, str]).validate_python(
+                symbol_renames_raw
+            )
+        except ValidationError:
+            symbol_renames: dict[str, str] = {}
 
         if not target_modules and not module_renames and not symbol_renames:
             return tree, []

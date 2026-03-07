@@ -9,16 +9,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, m, t
-from flext_infra.discovery import FlextInfraDiscoveryService
+from flext_core import r
+from flext_infra import c, t
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
-class FlextInfraRefactorUtilities:
+class FlextInfraUtilitiesRefactor:
     """CST/refactor helpers for code analysis.
 
     Usage via namespace::
@@ -27,6 +29,11 @@ class FlextInfraRefactorUtilities:
 
         name = u.Infra.Refactor.dotted_name(cst_expr)
     """
+
+    @staticmethod
+    def capture_output(cmd: Sequence[str]) -> r[str]:
+        """Run *cmd* and return stripped stdout as ``r[str]``."""
+        return FlextInfraCommandRunner().capture(cmd)
 
     @staticmethod
     def dotted_name(expr: cst.BaseExpression) -> str:
@@ -45,7 +52,7 @@ class FlextInfraRefactorUtilities:
         if isinstance(expr, cst.Name):
             return expr.value
         if isinstance(expr, cst.Attribute):
-            root = FlextInfraRefactorUtilities.dotted_name(expr.value)
+            root = FlextInfraUtilitiesRefactor.dotted_name(expr.value)
             if not root:
                 return ""
             return f"{root}.{expr.attr.value}"
@@ -68,9 +75,9 @@ class FlextInfraRefactorUtilities:
         if isinstance(expr, cst.Name):
             return expr.value
         if isinstance(expr, cst.Attribute):
-            return FlextInfraRefactorUtilities.root_name(expr.value)
+            return FlextInfraUtilitiesRefactor.root_name(expr.value)
         if isinstance(expr, cst.Call):
-            return FlextInfraRefactorUtilities.root_name(expr.func)
+            return FlextInfraUtilitiesRefactor.root_name(expr.func)
         return ""
 
     @staticmethod
@@ -92,23 +99,20 @@ class FlextInfraRefactorUtilities:
 
     @staticmethod
     def discover_project_roots(*, workspace_root: Path) -> list[Path]:
-        """Discover project roots under a workspace.
-
-        Uses ``FlextInfraDiscoveryService`` and falls back to the
-        workspace root itself when it contains a ``src/`` directory.
-
-        Args:
-            workspace_root: Top-level workspace directory.
-
-        Returns:
-            List of resolved project root paths.
-
-        """
-        discovery = FlextInfraDiscoveryService()
-        projects = discovery.discover_projects(workspace_root)
+        """Discover project roots under a workspace."""
         roots: list[Path] = []
-        if projects.is_success:
-            roots = [project.path for project in projects.unwrap()]
+        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            if not (entry / c.Infra.Git.DIR).exists():
+                continue
+            if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
+                continue
+            has_pyproject = (entry / c.Infra.Files.PYPROJECT_FILENAME).exists()
+            has_gomod = (entry / c.Infra.Files.GO_MOD).exists()
+            if not has_pyproject and not has_gomod:
+                continue
+            roots.append(entry)
         if (
             len(roots) == 0
             and (workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir()
@@ -132,7 +136,7 @@ class FlextInfraRefactorUtilities:
             Sorted list of ``.py`` file paths.
 
         """
-        roots = FlextInfraRefactorUtilities.discover_project_roots(
+        roots = FlextInfraUtilitiesRefactor.discover_project_roots(
             workspace_root=workspace_root,
         )
         files: list[Path] = []
@@ -168,7 +172,7 @@ class FlextInfraRefactorUtilities:
 
     @staticmethod
     def module_family_from_path(path: str) -> str:
-        """Infer refactor policy family from a file path."""
+        """Resolve module family key from a source file path."""
         normalized = path.replace("\\", "/")
         if "_models" in normalized:
             return "_models"
@@ -183,78 +187,45 @@ class FlextInfraRefactorUtilities:
         return "other_private"
 
     @staticmethod
-    def policy_for_symbol(
-        *,
-        symbol_name: str,
-        policy_context: t.Infra.PolicyContext,
-        class_families: t.Infra.ClassFamilyMap,
-    ) -> m.Infra.Refactor.ClassNestingPolicy:
-        """Resolve strict family policy for a symbol."""
-        family = class_families.get(symbol_name)
-        if family is None:
-            msg = f"missing class family mapping for symbol: {symbol_name}"
-            raise ValueError(msg)
-        policy = policy_context.get(family)
-        if policy is None:
-            msg = f"missing policy for family: {family}"
-            raise ValueError(msg)
+    def entry_list(value: t.Infra.InfraValue | None) -> list[dict[str, str]]:
+        """Normalize class-nesting config entries to a strict list."""
+        if value is None:
+            return []
         try:
-            return TypeAdapter(m.Infra.Refactor.ClassNestingPolicy).validate_python(
-                policy
-            )
+            return TypeAdapter(list[dict[str, str]]).validate_python(value)
         except ValidationError:
-            msg = f"invalid policy type for family: {family}"
+            msg = "class nesting entries must be a list"
             raise ValueError(msg) from None
 
     @staticmethod
-    def policy_bool(*, policy: m.Infra.Refactor.ClassNestingPolicy, key: str) -> bool:
-        """Fetch strict boolean policy value."""
-        raw = getattr(policy, key, None)
-        if isinstance(raw, bool):
-            return raw
-        msg = f"policy key {key!r} must be bool"
+    def string_list(value: t.ContainerValue | None) -> list[str]:
+        """Normalize policy fields that should contain string collections."""
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, list):
+            items: list[str] = []
+            for item in value:
+                if not isinstance(item, str):
+                    msg = "expected list[str] value"
+                    raise TypeError(msg)
+                items.append(item)
+            return items
+        msg = "expected list[str] value"
         raise ValueError(msg)
 
     @staticmethod
-    def policy_string_collection(
-        *, policy: m.Infra.Refactor.ClassNestingPolicy, key: str
-    ) -> tuple[str, ...]:
-        """Fetch a strict string collection policy value."""
-        raw = getattr(policy, key, None)
-        if isinstance(raw, tuple):
-            try:
-                return TypeAdapter(tuple[str, ...]).validate_python(raw)
-            except ValidationError:
-                msg = f"policy key {key!r} must contain only strings"
-                raise ValueError(msg) from None
-        if isinstance(raw, list):
-            try:
-                items = TypeAdapter(list[str]).validate_python(raw)
-            except ValidationError:
-                msg = f"policy key {key!r} must contain only strings"
-                raise ValueError(msg) from None
-            return tuple(items)
-        msg = f"policy key {key!r} must be list[str] or tuple[str, ...]"
+    def mapping_list(
+        value: t.ContainerValue | None,
+    ) -> list[dict[str, t.ContainerValue]]:
+        """Normalize policy fields that should contain mapping collections."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+        msg = "expected list[dict[str, ContainerValue]] value"
         raise ValueError(msg)
 
-    @staticmethod
-    def target_allowed(
-        *, policy: m.Infra.Refactor.ClassNestingPolicy, target_namespace: str
-    ) -> bool:
-        """Validate target namespace against allowed/forbidden policy lists."""
-        allowed = FlextInfraRefactorUtilities.policy_string_collection(
-            policy=policy,
-            key="allowed_targets",
-        )
-        if allowed and target_namespace not in allowed:
-            return False
-        forbidden = FlextInfraRefactorUtilities.policy_string_collection(
-            policy=policy,
-            key="forbidden_targets",
-        )
-        return target_namespace not in forbidden
 
-
-__all__ = [
-    "FlextInfraRefactorUtilities",
-]
+__all__ = ["FlextInfraUtilitiesRefactor"]
