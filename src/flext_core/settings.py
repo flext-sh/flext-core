@@ -229,7 +229,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: t.ContainerValue) -> Self:
+    def __new__(cls, **_kwargs: t.Scalar | None) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -250,7 +250,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.ContainerValue) -> None:
+    def __init__(self, **kwargs: t.Scalar | None) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,

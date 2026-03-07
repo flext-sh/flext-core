@@ -54,7 +54,7 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert normalized["a"] == 1
     assert isinstance(normalized["b"], str)
 
-    assert u.Model._normalize_to_pydantic_value(None) is None
+    assert u.Model._normalize_to_pydantic_value(None) == ""
     assert u.Model._normalize_to_pydantic_value(True) is True
     assert u.Model._normalize_to_pydantic_value(1) == 1
     assert u.Model._normalize_to_pydantic_value("x") == "x"
@@ -62,5 +62,5 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert isinstance(list_value, list)
     assert list_value[0] == 1
     assert isinstance(list_value[1], str)
-    assert list_value[2] is None
+    assert list_value[2] == ""
     assert isinstance(u.Model._normalize_to_pydantic_value(_Cfg(x=1)), str)

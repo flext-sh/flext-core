@@ -504,9 +504,9 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def create_settings_config(
         env_prefix: str,
-        env_file: str | None = None,
+        env_file: str = c.Platform.ENV_FILE_DEFAULT,
         env_nested_delimiter: str = "__",
-    ) -> Mapping[str, t.Scalar | None]:
+    ) -> Mapping[str, t.Scalar]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration

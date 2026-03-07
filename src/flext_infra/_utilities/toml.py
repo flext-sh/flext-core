@@ -8,10 +8,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-
-from flext_core import t, u
-from flext_infra.typings import FlextInfraTypes
+from flext_core import u
+from flext_infra import t
 
 
 class FlextInfraUtilitiesToml:
@@ -27,19 +25,15 @@ class FlextInfraUtilitiesToml:
     @staticmethod
     def as_toml_mapping(
         value: t.ContainerValue,
-    ) -> FlextInfraTypes.Infra.ContainerMap | None:
+    ) -> t.Infra.ContainerDict | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
-        if not isinstance(value, MutableMapping):
+        if not isinstance(value, dict):
             return None
-
-        converted: FlextInfraTypes.Infra.ContainerMap = {}
-        for key, item in value.items():
-            if not isinstance(key, str):
-                return None
+        for item in value.values():
             if not u.is_general_value_type(item):
                 return None
-            converted[key] = item
-        return converted
+        result: t.Infra.ContainerDict = value
+        return result
 
 
 __all__ = ["FlextInfraUtilitiesToml"]

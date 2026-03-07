@@ -85,10 +85,6 @@ class FlextInfraTypes(FlextTypes):
         PathLike: TypeAlias = str | Path
         """Flexible path representation (str or Path)."""
 
-        # -- TOML types ----------------------------------------------
-        ContainerMap: TypeAlias = MutableMapping[str, FlextTypes.ContainerValue]
-        """Container mutable mapping used for table synchronization and writes."""
-
         # -- Dependency detection types -------------------------------
         InfraValue: TypeAlias = FlextTypes.ContainerValue
         """Recursive infrastructure value: primitive, nested list/mapping, or null."""

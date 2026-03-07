@@ -27,7 +27,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, m, p, t, u
+from flext_core import FlextExceptions, c, m, p, t, u
 
 
 class _Assertions:
@@ -782,7 +782,11 @@ class TestFlextUtilitiesConfiguration:
                 eq=TestConfigConstants.SettingsConfig.ENV_PREFIX,
                 msg="env_prefix must match",
             )
-            _Assertions.that(config["env_file"], none=True, msg="env_file must be None")
+            _Assertions.that(
+                config["env_file"],
+                eq=c.Platform.ENV_FILE_DEFAULT,
+                msg="env_file must match default",
+            )
             _Assertions.that(
                 config["env_nested_delimiter"],
                 eq=TestConfigConstants.SettingsConfig.ENV_NESTED_DELIMITER_DEFAULT,

@@ -953,7 +953,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def extract_mapping_or_none(
         value: t.ContainerValue,
-    ) -> m.ConfigMap | None:
+    ) -> r[m.ConfigMap]:
         """Extract a mapping from a value or return None.
 
         Used for type narrowing when a generic parameter could be a Mapping
@@ -964,7 +964,7 @@ class FlextUtilitiesGuards:
             value: Value that may or may not be a Mapping
 
         Returns:
-            The value as ConfigurationMapping if it's a Mapping, None otherwise
+            r[m.ConfigMap] containing mapping on success, failure otherwise
 
         """
         if (
@@ -973,8 +973,8 @@ class FlextUtilitiesGuards:
         ) and FlextUtilitiesGuards.is_configuration_mapping(
             value,
         ):
-            return value
-        return None
+            return r[m.ConfigMap].ok(value)
+        return r[m.ConfigMap].fail("Value is not a configuration mapping")
 
     @staticmethod
     def guard(

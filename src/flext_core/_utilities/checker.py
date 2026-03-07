@@ -14,7 +14,7 @@ import inspect
 from collections.abc import Callable, Mapping
 from typing import get_origin, get_type_hints
 
-from flext_core import FlextRuntime, c, p, t
+from flext_core import FlextRuntime, c, p, r, t
 
 
 class FlextUtilitiesChecker:
@@ -199,9 +199,10 @@ class FlextUtilitiesChecker:
             return None
         handle_method: Callable[..., object] = handle_method_raw
 
-        signature = cls._get_method_signature(handle_method)
-        if signature is None:
+        signature_result = cls._get_method_signature(handle_method)
+        if signature_result.is_failure:
             return None
+        signature = signature_result.value
 
         type_hints = cls._get_type_hints_safe(handle_method, handler_class)
 
@@ -257,14 +258,14 @@ class FlextUtilitiesChecker:
     def _get_method_signature(
         cls,
         handle_method: Callable[..., object],
-    ) -> inspect.Signature | None:
+    ) -> r[inspect.Signature]:
         """Extract signature from handle method."""
         try:
             # HandlerCallable is always callable per type definition
             # Pass directly - inspect.signature accepts any callable
-            return inspect.signature(handle_method)
+            return r[inspect.Signature].ok(inspect.signature(handle_method))
         except (TypeError, ValueError):
-            return None
+            return r[inspect.Signature].fail("Invalid handle method signature")
 
     @classmethod
     def _get_type_hints_safe(

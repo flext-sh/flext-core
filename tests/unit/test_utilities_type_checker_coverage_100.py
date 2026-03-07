@@ -358,16 +358,17 @@ class TestuTypeChecker:
         signature = u.Checker._get_method_signature(
             cast("t.HandlerCallable", test_func),
         )
-        assert signature is not None
-        assert len(signature.parameters) == 1
-        assert "x" in signature.parameters
+        assert signature.is_success
+        signature_value = signature.value
+        assert len(signature_value.parameters) == 1
+        assert "x" in signature_value.parameters
 
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
         signature = u.Checker._get_method_signature(
             cast("t.HandlerCallable", "not callable"),
         )
-        assert signature is None
+        assert signature.is_failure
 
     def test_get_type_hints_safe_valid_method(self) -> None:
         """Test _get_type_hints_safe with valid method."""

@@ -474,6 +474,37 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
     def _as_str(value: t.ContainerValue, default: str = "") -> str:
         return value if isinstance(value, str) else default
 
+    @staticmethod
+    def _nested_mapping(
+        data: dict[str, t.ContainerValue], *keys: str
+    ) -> dict[str, t.ContainerValue]:
+        """Walk a chain of string keys, returning the nested Mapping or {}."""
+        current: t.ContainerValue = data
+        for key in keys:
+            if not isinstance(current, Mapping):
+                return {}
+            child: t.ContainerValue = current.get(key)
+            if child is None:
+                return {}
+            current = child
+        if not isinstance(current, Mapping):
+            return {}
+        return dict(current)
+
+    @classmethod
+    def _nested_int(
+        cls,
+        data: dict[str, t.ContainerValue],
+        *keys: str,
+        default: int = 0,
+    ) -> int:
+        """Walk keys into nested mappings, returning an int leaf or *default*."""
+        target = cls._nested_mapping(data, *keys[:-1])
+        raw: t.ContainerValue = target.get(keys[-1])
+        if raw is None:
+            return default
+        return cls._as_int(raw, default)
+
     def _run(
         self,
         cmd: list[str],
@@ -843,45 +874,33 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 )
                 if isinstance(raw, dict):
                     raw_errors: t.ContainerValue = raw.get("errors", [])
-                    parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
-                        issues=[
-                            m.Infra.Check.Parsers.ParsedIssue(
-                                file=self._as_str(err.get("path", "?"), "?"),
-                                line=self._as_int(err.get("line", 0)),
-                                column=self._as_int(err.get("column", 0)),
-                                code=self._as_str(err.get("name", "")),
-                                message=self._as_str(err.get("description", "")),
-                                severity=self._as_str(
-                                    err.get("severity", c.Infra.Toml.ERROR),
-                                    c.Infra.Toml.ERROR,
-                                ),
-                            )
-                            for err in (
-                                raw_errors if isinstance(raw_errors, list) else []
-                            )
-                            if isinstance(err, Mapping)
-                        ]
-                    )
+                    error_items: list[Mapping[str, t.ContainerValue]] = [
+                        item
+                        for item in (raw_errors if isinstance(raw_errors, list) else [])
+                        if isinstance(item, Mapping)
+                    ]
                 elif isinstance(raw, list):
-                    parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
-                        issues=[
-                            m.Infra.Check.Parsers.ParsedIssue(
-                                file=self._as_str(err.get("path", "?"), "?"),
-                                line=self._as_int(err.get("line", 0)),
-                                column=self._as_int(err.get("column", 0)),
-                                code=self._as_str(err.get("name", "")),
-                                message=self._as_str(err.get("description", "")),
-                                severity=self._as_str(
-                                    err.get("severity", c.Infra.Toml.ERROR),
-                                    c.Infra.Toml.ERROR,
-                                ),
-                            )
-                            for err in raw
-                            if isinstance(err, Mapping)
-                        ]
-                    )
+                    error_items = [item for item in raw if isinstance(item, Mapping)]
                 else:
-                    parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch()
+                    error_items = []
+
+                parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
+                    issues=[
+                        m.Infra.Check.Parsers.ParsedIssue(
+                            file=self._as_str(d.get("path"), "?"),
+                            line=self._as_int(d.get("line"), 0),
+                            column=self._as_int(d.get("column"), 0),
+                            code=self._as_str(d.get("name"), ""),
+                            message=self._as_str(d.get("description"), ""),
+                            severity=self._as_str(
+                                d.get("severity"),
+                                c.Infra.Toml.ERROR,
+                            ),
+                        )
+                        for err in error_items
+                        for d in [dict(err)]
+                    ]
+                )
                 issues.extend(
                     m.Infra.Check.Issue(
                         file=err.file,
@@ -952,54 +971,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 issues=[
                     m.Infra.Check.Parsers.ParsedIssue(
                         file=str(diag.get("file", "?")),
-                        line=(
-                            int(
-                                (
-                                    (
-                                        diag.get("range")
-                                        if isinstance(diag.get("range"), Mapping)
-                                        else {}
-                                    ).get("start")
-                                    if isinstance(
-                                        (
-                                            diag.get("range")
-                                            if isinstance(
-                                                diag.get("range"),
-                                                Mapping,
-                                            )
-                                            else {}
-                                        ).get("start"),
-                                        Mapping,
-                                    )
-                                    else {}
-                                ).get("line", 0)
-                            )
-                            + 1
-                        ),
-                        column=(
-                            int(
-                                (
-                                    (
-                                        diag.get("range")
-                                        if isinstance(diag.get("range"), Mapping)
-                                        else {}
-                                    ).get("start")
-                                    if isinstance(
-                                        (
-                                            diag.get("range")
-                                            if isinstance(
-                                                diag.get("range"),
-                                                Mapping,
-                                            )
-                                            else {}
-                                        ).get("start"),
-                                        Mapping,
-                                    )
-                                    else {}
-                                ).get("character", 0)
-                            )
-                            + 1
-                        ),
+                        line=self._nested_int(diag, "range", "start", "line") + 1,
+                        column=self._nested_int(diag, "range", "start", "character")
+                        + 1,
                         code=str(diag.get("rule", "")),
                         message=str(diag.get("message", "")),
                         severity=str(diag.get("severity", c.Infra.Toml.ERROR)),
@@ -1121,20 +1095,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     issues=[
                         m.Infra.Check.Parsers.ParsedIssue(
                             file=str(entry.get("filename", "?")),
-                            line=int(
-                                (
-                                    entry.get("location")
-                                    if isinstance(entry.get("location"), Mapping)
-                                    else {}
-                                ).get("row", 0)
-                            ),
-                            column=int(
-                                (
-                                    entry.get("location")
-                                    if isinstance(entry.get("location"), Mapping)
-                                    else {}
-                                ).get("column", 0)
-                            ),
+                            line=self._nested_int(dict(entry), "location", "row"),
+                            column=self._nested_int(dict(entry), "location", "column"),
                             code=str(entry.get("code", "")),
                             message=str(entry.get("message", "")),
                             severity=c.Infra.Toml.ERROR,

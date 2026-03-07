@@ -212,10 +212,14 @@ def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_extract_mapping_or_none_branches() -> None:
-    assert u.extract_mapping_or_none({"k": "v"}) == {"k": "v"}
+    mapping_result = u.extract_mapping_or_none({"k": "v"})
+    assert mapping_result.is_success
+    assert mapping_result.value == {"k": "v"}
     # Source accepts int keys in dicts as configuration_mapping
-    assert u.extract_mapping_or_none(cast("t.ContainerValue", {1: "v"})) == {1: "v"}
-    assert u.extract_mapping_or_none([1, 2, 3]) is None
+    mapping_non_str_keys = u.extract_mapping_or_none(cast("t.ContainerValue", {1: "v"}))
+    assert mapping_non_str_keys.is_success
+    assert mapping_non_str_keys.value == {1: "v"}
+    assert u.extract_mapping_or_none([1, 2, 3]).is_failure
 
 
 def test_guard_in_has_empty_none_helpers() -> None:

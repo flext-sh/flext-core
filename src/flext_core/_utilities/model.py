@@ -36,14 +36,14 @@ class FlextUtilitiesModel:
 
     """
 
-    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.Primitives | None]] = TypeAdapter(
-        t.Primitives | None
+    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.Primitives]] = TypeAdapter(
+        t.Primitives
     )
 
     @staticmethod
     def _normalize_to_pydantic_value(
         value: t.ContainerValue,
-    ) -> t.Scalar | list[t.Primitives | None] | None:
+    ) -> t.Scalar | list[t.Primitives]:
         """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
@@ -57,11 +57,11 @@ class FlextUtilitiesModel:
         """
         match value:
             case None:
-                return None
+                return ""
             case bool() | int() | float() | str():
                 return value
             case list() as items:
-                normalized_items: list[t.Primitives | None] = []
+                normalized_items: list[t.Primitives] = []
                 for item in items:
                     try:
                         normalized_items.append(
@@ -73,7 +73,7 @@ class FlextUtilitiesModel:
                         normalized_items.append(str(item))
                 return normalized_items
             case tuple() as items:
-                normalized_tuple_items: list[t.Primitives | None] = []
+                normalized_tuple_items: list[t.Primitives] = []
                 for item in items:
                     try:
                         normalized_tuple_items.append(
@@ -286,7 +286,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_pydantic_dict(
         data: m.ConfigMap | None,
-    ) -> Mapping[str, t.Scalar | list[t.Primitives | None] | None]:
+    ) -> Mapping[str, t.Scalar | list[t.Primitives]]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
         Normalizes ContainerValue values to the restricted PydanticConfigValue type
@@ -308,8 +308,9 @@ class FlextUtilitiesModel:
 
         """
         if not data:
-            return {}
-        result = {}
+            empty_result: dict[str, t.Scalar | list[t.Primitives]] = {}
+            return empty_result
+        result: dict[str, t.Scalar | list[t.Primitives]] = {}
         for key, value in data.items():
             result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
         return result

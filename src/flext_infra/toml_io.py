@@ -33,7 +33,7 @@ class FlextInfraTomlService(s[bool]):
         super().__init__()
 
     @staticmethod
-    def build_table(data: t.Infra.ContainerMap) -> Table:
+    def build_table(data: t.Infra.ContainerDict) -> Table:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
@@ -53,8 +53,6 @@ class FlextInfraTomlService(s[bool]):
 
         Compares as strings for lists.
         """
-        if isinstance(current, list) and isinstance(expected, list):
-            return [str(x) for x in current] != [str(x) for x in expected]
         return str(current) != str(expected)
 
     @override
@@ -62,7 +60,7 @@ class FlextInfraTomlService(s[bool]):
         """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> r[t.Infra.ContainerMap]:
+    def read(self, path: Path) -> r[t.Infra.ContainerDict]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
@@ -73,15 +71,15 @@ class FlextInfraTomlService(s[bool]):
 
         """
         if not path.exists():
-            return r[t.Infra.ContainerMap].ok({})
+            return r[t.Infra.ContainerDict].ok({})
         try:
             data_raw = tomllib.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
-            data: t.Infra.ContainerMap = data_raw
-            return r[t.Infra.ContainerMap].ok(data)
+            data: t.Infra.ContainerDict = data_raw
+            return r[t.Infra.ContainerDict].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[t.Infra.ContainerMap].fail(f"TOML read error: {exc}")
+            return r[t.Infra.ContainerDict].fail(f"TOML read error: {exc}")
 
     def read_document(self, path: Path) -> r[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
@@ -109,8 +107,8 @@ class FlextInfraTomlService(s[bool]):
 
     def sync_mapping(
         self,
-        target: t.Infra.ContainerMap,
-        canonical: t.Infra.ContainerMap,
+        target: t.Infra.ContainerDict,
+        canonical: t.Infra.ContainerDict,
         *,
         prune_extras: bool,
         prefix: str,
@@ -163,7 +161,7 @@ class FlextInfraTomlService(s[bool]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | t.Infra.ContainerMap,
+        payload: tomlkit.TOMLDocument | t.Infra.ContainerDict,
     ) -> r[bool]:
         """Write a TOML payload to a file.
 
