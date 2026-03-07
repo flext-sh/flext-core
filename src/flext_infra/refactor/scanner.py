@@ -48,25 +48,31 @@ class FlextInfraRefactorLooseClassScanner:
                 files_result.error or "discovery failed"
             )
 
+        discovered_files: list[Path] = files_result.value
+
         grep_result = self._scan_with_ast_grep(project_root)
-        grep_index = grep_result.value if grep_result.is_success else {}
+        grep_index: dict[Path, dict[str, int]] = (
+            grep_result.value if grep_result.is_success else {}
+        )
 
         violations: list[m.Infra.Refactor.LooseClassViolation] = []
         targets_found = dict.fromkeys(c.Infra.Refactor.REQUIRED_CLASS_TARGETS, False)
         classes_scanned = 0
 
-        for fp in files_result.value:
+        for fp in discovered_files:
             parsed = self._scan_file_with_libcst(fp)
             if parsed.is_failure:
                 continue
-            classes_scanned += len(parsed.value)
+            occurrences: list[m.Infra.Refactor.ClassOccurrence] = parsed.value
+            classes_scanned += len(occurrences)
 
             rel = self._relative_module_path(project_root, fp)
             if rel.is_failure:
                 continue
+            rel_path: Path = rel.value
 
-            for occ in parsed.value:
-                viol = self._build_violation(rel.value, occ, grep_index.get(fp, {}))
+            for occ in occurrences:
+                viol = self._build_violation(rel_path, occ, grep_index.get(fp, {}))
                 if viol is None:
                     continue
                 violations.append(viol)
@@ -76,12 +82,12 @@ class FlextInfraRefactorLooseClassScanner:
         counters = Counter(v.confidence for v in violations)
         return r[t.ConfigurationMapping].ok({
             "rule": c.Infra.ReportKeys.CLASS_NESTING,
-            "files_scanned": len(files_result.value),
+            "files_scanned": len(discovered_files),
             "classes_scanned": classes_scanned,
             c.Infra.ReportKeys.VIOLATIONS_COUNT: len(violations),
             "confidence_counts": dict(counters),
             "required_targets": targets_found,
-            c.Infra.ReportKeys.VIOLATIONS: [v.model_dump() for v in violations],
+            c.Infra.ReportKeys.VIOLATIONS: violations,
         })
 
     # ── private helpers ─────────────────────────────────────────
@@ -191,26 +197,24 @@ class FlextInfraRefactorLooseClassScanner:
             return r[dict[Path, dict[str, int]]].ok({})
 
         try:
-            entries = TypeAdapter(list[m.Infra.Refactor.AstGrepEntry]).validate_json(
-                capture.value
-            )
+            entries = TypeAdapter(
+                list[m.Infra.Refactor.AstGrepMatchEnvelope]
+            ).validate_json(capture.value)
         except ValidationError as exc:
             return r[dict[Path, dict[str, int]]].fail(str(exc))
 
         idx: dict[Path, dict[str, int]] = {}
-        for e in entries:
-            ne = e.meta_variables.single.get("NAME")
-            if ne is None:
+        for entry in entries:
+            name = entry.symbol_name
+            if name is None:
                 continue
             line = 1
-            if e.range and e.range.start:
-                ln = e.range.start.line
-                if ln and ln > 0:
-                    line = ln
-            fp = Path(e.file)
+            if entry.start_line is not None and entry.start_line > 0:
+                line = entry.start_line
+            fp = Path(entry.file)
             if not fp.is_absolute():
                 fp = (project_root / fp).resolve()
-            idx.setdefault(fp, {}).setdefault(ne.text, line)
+            idx.setdefault(fp, {}).setdefault(name, line)
         return r[dict[Path, dict[str, int]]].ok(idx)
 
 

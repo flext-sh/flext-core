@@ -206,7 +206,6 @@ class FlextUtilities:
     normalize = staticmethod(FlextUtilitiesConversion.normalize)
     to_str = staticmethod(FlextUtilitiesConversion.to_str)
     to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
-    to_general_value_type = staticmethod(FlextUtilitiesConversion.to_general_value_type)
     to_flexible_value = staticmethod(FlextUtilitiesConversion.to_flexible_value)
 
     # Deprecation
@@ -236,7 +235,6 @@ class FlextUtilities:
     )
     create_enum = staticmethod(FlextUtilitiesEnum.create_enum)
     get_enum_values = staticmethod(FlextUtilitiesEnum.get_enum_values)
-    is_enum_member = staticmethod(FlextUtilitiesEnum.is_member)
     is_member = staticmethod(FlextUtilitiesEnum.is_member)
     is_subset = staticmethod(FlextUtilitiesEnum.is_subset)
     members = staticmethod(FlextUtilitiesEnum.members)
@@ -465,13 +463,13 @@ class FlextUtilities:
     err = staticmethod(FlextUtilitiesResultHelpers.err)
 
     @staticmethod
-    def fail[U](
+    def fail(
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigurationMapping | None = None,
-    ) -> r[U]:
+    ) -> r[t.ContainerValue]:
         """Create failed result with optional code and data."""
-        return r.fail(
+        return r[t.ContainerValue].fail(
             error, error_code=error_code, error_data=error_data or MappingProxyType({})
         )
 
@@ -483,7 +481,6 @@ class FlextUtilities:
         return r[T].ok(value)
 
     or_ = staticmethod(FlextUtilitiesResultHelpers.or_)
-    result_val = staticmethod(FlextUtilitiesResultHelpers.val)
     starts = staticmethod(FlextUtilitiesResultHelpers.starts)
     try_ = staticmethod(FlextUtilitiesResultHelpers.try_)
     val = staticmethod(FlextUtilitiesResultHelpers.val)

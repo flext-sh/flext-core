@@ -207,7 +207,7 @@ class DependencyAnalyzer:
 
     def _run_ast_grep(
         self, src_path: Path, pattern: str
-    ) -> r[list[m.Infra.Refactor.AstGrepMatch]]:
+    ) -> r[list[m.Infra.Refactor.AstGrepMatchEnvelope]]:
         cmd = [
             "sg",
             "--pattern",
@@ -219,19 +219,19 @@ class DependencyAnalyzer:
         ]
         capture = u.Infra.Refactor.capture_output(cmd)
         if capture.is_failure:
-            return r[list[m.Infra.Refactor.AstGrepMatch]].fail(
+            return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(
                 capture.error or "capture failed"
             )
         if not capture.value:
-            return r[list[m.Infra.Refactor.AstGrepMatch]].ok([])
+            return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok([])
         try:
-            return r[list[m.Infra.Refactor.AstGrepMatch]].ok(
-                TypeAdapter(list[m.Infra.Refactor.AstGrepMatch]).validate_json(
+            return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok(
+                TypeAdapter(list[m.Infra.Refactor.AstGrepMatchEnvelope]).validate_json(
                     capture.value
                 )
             )
         except ValidationError as exc:
-            return r[list[m.Infra.Refactor.AstGrepMatch]].fail(str(exc))
+            return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(str(exc))
 
     def _parse_imports(self, file_path: Path) -> r[_FileImportData]:
         try:

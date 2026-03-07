@@ -50,12 +50,14 @@ class FlextUtilitiesArgs:
     _enum_type_adapter: TypeAdapter[type[StrEnum]] = TypeAdapter(type[StrEnum])
 
     @staticmethod
-    def _validate_enum_type(candidate: type[Enum] | str) -> type[StrEnum] | None:
+    def _validate_enum_type(candidate: type[Enum] | str) -> r[type[StrEnum]]:
         """Validate that candidate is a StrEnum subclass."""
         try:
-            return FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate)
+            return r[type[StrEnum]].ok(
+                FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate),
+            )
         except ValidationError:
-            return None
+            return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing
@@ -94,15 +96,15 @@ class FlextUtilitiesArgs:
 
             # Check if it's a StrEnum
             validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
-            if validated_hint is not None:
-                enum_params[name] = validated_hint
+            if validated_hint.is_success:
+                enum_params[name] = validated_hint.value
 
             # Check Union types (str | Status) - Python 3.10+ uses UnionType
             elif origin is UnionType:
                 for arg in get_args(current_hint):
                     validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
-                    if validated_arg is not None:
-                        enum_params[name] = validated_arg
+                    if validated_arg.is_success:
+                        enum_params[name] = validated_arg.value
                         break
 
         return enum_params

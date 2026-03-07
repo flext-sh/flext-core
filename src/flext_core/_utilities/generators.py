@@ -21,6 +21,7 @@ from typing import TypeGuard
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, c, m, t
+from flext_core.result import FlextResult as r
 
 
 class FlextUtilitiesGenerators:
@@ -41,7 +42,7 @@ class FlextUtilitiesGenerators:
             return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod
-    def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:
+    def _determine_prefix(kind: str | None, prefix: str | None) -> r[str]:
         """Determine actual prefix from kind or custom prefix.
 
         Args:
@@ -49,14 +50,14 @@ class FlextUtilitiesGenerators:
             prefix: Custom prefix (overrides kind).
 
         Returns:
-            Actual prefix string or None.
+            Actual prefix string wrapped in FlextResult.
 
         """
         if prefix is not None:
-            return prefix
+            return r[str].ok(prefix)
 
         if kind is None:
-            return None
+            return r[str].fail("No kind provided for prefix resolution")
 
         kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
@@ -69,7 +70,10 @@ class FlextUtilitiesGenerators:
             "query": "qry",
             # "aggregate": None,  # Requires prefix parameter - removed to avoid dict type error
         }
-        return kind_prefix_map.get(kind)
+        resolved_prefix = kind_prefix_map.get(kind)
+        if resolved_prefix is None:
+            return r[str].fail(f"Unsupported generator kind: {kind}")
+        return r[str].ok(resolved_prefix)
 
     @staticmethod
     def _enrich_context_fields(
@@ -388,7 +392,10 @@ class FlextUtilitiesGenerators:
             Generated ID string.
 
         """
-        actual_prefix = FlextUtilitiesGenerators._determine_prefix(kind, prefix)
+        actual_prefix_result = FlextUtilitiesGenerators._determine_prefix(kind, prefix)
+        actual_prefix = (
+            actual_prefix_result.value if actual_prefix_result.is_success else None
+        )
 
         # Handle UUID/ULID/id special cases
         if FlextUtilitiesGenerators._should_generate_uuid(kind, actual_prefix):

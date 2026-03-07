@@ -22,8 +22,7 @@ from flext_infra import c, m
 class FlextInfraCommandRunner(s[m.Infra.Core.CommandOutput]):
     """Infrastructure service for subprocess execution.
 
-    Provides r-wrapped command execution, replacing the bare
-    ``run_checked`` and ``run_capture`` functions from ``scripts/libs/subprocess.py``.
+    Provides canonical r-wrapped command execution interfaces.
 
     Structurally satisfies ``InfraProtocols.CommandRunner``.
     """
@@ -40,8 +39,6 @@ class FlextInfraCommandRunner(s[m.Infra.Core.CommandOutput]):
         env: Mapping[str, str] | None = None,
     ) -> r[str]:
         """Run a command and capture its stdout.
-
-        Equivalent to the legacy ``run_capture`` function.
 
         Args:
             cmd: Command line arguments as a sequence.

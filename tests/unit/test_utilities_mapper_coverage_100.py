@@ -224,9 +224,11 @@ class TestuMapperConversions:
 
     def test_ensure_str_or_none(self) -> None:
         """Test ensure_str_or_none."""
-        assert u.Mapper.ensure_str_or_none("s") == "s"
-        assert u.Mapper.ensure_str_or_none(1) is None
-        assert u.Mapper.ensure_str_or_none(None) is None
+        str_result = u.Mapper.ensure_str_or_none("s")
+        assert str_result.is_success
+        assert str_result.value == "s"
+        assert u.Mapper.ensure_str_or_none(1).is_failure
+        assert u.Mapper.ensure_str_or_none(None).is_failure
 
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value."""

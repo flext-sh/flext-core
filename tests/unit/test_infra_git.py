@@ -9,6 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from flext_core import r
 from flext_infra import FlextInfraGitService
 
@@ -97,157 +99,25 @@ class TestFlextInfraGitService:
     def test_default_runner_initialization(self) -> None:
         """Test service initializes with default runner."""
         service = FlextInfraGitService()
-        assert service._runner is not None
+        result = service.execute()
+        assert result.is_success
 
 
-class TestSmartCheckout:
-    """Tests for FlextInfraGitService.smart_checkout."""
+class TestRemovedCompatibilityMethods:
+    """Removed compatibility methods are not callable anymore."""
 
-    def test_empty_branch_is_noop(self, tmp_path: Path) -> None:
-        """Empty branch name returns ok immediately."""
+    def test_removed_methods_raise_attribute_error(self) -> None:
+        """Removed fallback helper methods are absent from git service."""
         service = FlextInfraGitService(runner=Mock())
-        result = service.smart_checkout(tmp_path, "")
-        assert result.is_success
 
-    def test_already_on_branch(self, tmp_path: Path) -> None:
-        """No checkout when already on the target branch."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("feature")
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.smart_checkout(tmp_path, "feature")
-
-        assert result.is_success
-        runner.run_checked.assert_not_called()
-
-    def test_simple_checkout_succeeds(self, tmp_path: Path) -> None:
-        """Simple checkout works when branch exists."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("main")
-        runner.run_checked.return_value = r[bool].ok(True)
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.smart_checkout(tmp_path, "feature")
-
-        assert result.is_success
-
-    def test_force_create_on_local_changes(self, tmp_path: Path) -> None:
-        """Fallback to -B when local changes would be overwritten."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("main")
-        runner.run_checked.side_effect = [
-            r[bool].fail("error: local changes would be overwritten"),
-            r[bool].ok(True),
-        ]
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.smart_checkout(tmp_path, "feature")
-
-        assert result.is_success
-
-    def test_fetch_and_track(self, tmp_path: Path) -> None:
-        """Fallback to fetch+track when branch absent locally."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("main")
-        runner.run_checked.side_effect = [
-            r[bool].fail("error: pathspec 'feature' did not match"),
-            r[bool].ok(True),  # fetch succeeds
-            r[bool].ok(True),  # checkout -B with track
-        ]
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.smart_checkout(tmp_path, "feature")
-
-        assert result.is_success
-
-
-class TestCheckpoint:
-    """Tests for FlextInfraGitService.checkpoint."""
-
-    def test_no_changes_is_noop(self, tmp_path: Path) -> None:
-        """No commit when there are no changes."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("")
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.checkpoint(tmp_path, "main")
-
-        assert result.is_success
-        runner.run_checked.assert_not_called()
-
-    def test_full_flow(self, tmp_path: Path) -> None:
-        """Full add+commit+push flow works."""
-        runner = Mock()
-        runner.capture.side_effect = [
-            r[str].ok("M file.py"),  # has_changes -> porcelain
-            r[str].ok("file.py"),  # diff_names
-        ]
-        runner.run_checked.side_effect = [
-            r[bool].ok(True),  # add
-            r[bool].ok(True),  # commit
-            r[bool].ok(True),  # push
-        ]
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.checkpoint(tmp_path, "main")
-
-        assert result.is_success
-
-    def test_push_failure_triggers_rebase(self, tmp_path: Path) -> None:
-        """Push failure triggers rebase + retry."""
-        runner = Mock()
-        runner.capture.side_effect = [
-            r[str].ok("M file.py"),  # has_changes
-            r[str].ok("file.py"),  # diff_names
-        ]
-        runner.run_checked.side_effect = [
-            r[bool].ok(True),  # add
-            r[bool].ok(True),  # commit
-            r[bool].fail("rejected"),  # push fails
-            r[bool].ok(True),  # pull --rebase
-            r[bool].ok(True),  # push retry
-        ]
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.checkpoint(tmp_path, "main")
-
-        assert result.is_success
-
-    def test_changes_check_failure(self, tmp_path: Path) -> None:
-        """Failure checking changes propagates error."""
-        runner = Mock()
-        runner.capture.return_value = r[str].fail("git status failed")
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.checkpoint(tmp_path, "main")
-
-        assert result.is_failure
-
-
-class TestCreateTagIfMissing:
-    """Tests for FlextInfraGitService.create_tag_if_missing."""
-
-    def test_tag_exists_returns_ok(self, tmp_path: Path) -> None:
-        """No-op when tag already exists."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("v1.0.0")
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.create_tag_if_missing(tmp_path, "v1.0.0")
-
-        assert result.is_success
-
-    def test_creates_tag_when_missing(self, tmp_path: Path) -> None:
-        """Creates tag when it doesn't exist."""
-        runner = Mock()
-        runner.capture.return_value = r[str].ok("")
-        runner.run_checked.return_value = r[bool].ok(True)
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.create_tag_if_missing(tmp_path, "v2.0.0")
-
-        assert result.is_success
-        runner.run_checked.assert_called_once()
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "smart_checkout")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "checkpoint")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "create_tag_if_missing")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "collect_changes")
 
 
 class TestPreviousTag:
@@ -300,34 +170,3 @@ class TestPushRelease:
 
         assert result.is_success
         assert runner.run_checked.call_count == 2
-
-
-class TestCollectChanges:
-    """Tests for FlextInfraGitService.collect_changes."""
-
-    def test_with_previous(self, tmp_path: Path) -> None:
-        """Builds correct revision range with previous tag."""
-        runner = Mock()
-        runner.capture.side_effect = [
-            r[str].ok("v2.0.0"),  # tag_exists
-            r[str].ok("- abc123 fix (dev)"),  # log
-        ]
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.collect_changes(tmp_path, "v2.0.0", "v1.0.0")
-
-        assert result.is_success
-        assert "abc123" in result.value
-
-    def test_without_previous(self, tmp_path: Path) -> None:
-        """Uses tag only when no previous."""
-        runner = Mock()
-        runner.capture.side_effect = [
-            r[str].ok("v1.0.0"),  # tag_exists
-            r[str].ok("- abc123 init (dev)"),  # log
-        ]
-        service = FlextInfraGitService(runner=runner)
-
-        result = service.collect_changes(tmp_path, "v1.0.0")
-
-        assert result.is_success

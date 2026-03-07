@@ -11,35 +11,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraJsonService
+from flext_infra import m, u
 from flext_infra.constants import c
-from flext_infra.docs.shared import (
-    FlextInfraDocScope,
-    FlextInfraDocsShared,
-)
+from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
-
-
-class ValidateReport(BaseModel):
-    """Structured validation report for a scope."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    scope: str = Field(..., description="Scope name.")
-    result: str = Field(..., description="Validation result status.")
-    message: str = Field(..., description="Human-readable result message.")
-    missing_adr_skills: list[str] = Field(
-        default_factory=list,
-        description="List of missing ADR skills.",
-    )
-    todo_written: bool = Field(
-        default=False,
-        description="Whether TODOS.md was written.",
-    )
 
 
 class FlextInfraDocValidator:
@@ -59,7 +38,11 @@ class FlextInfraDocValidator:
         return "adr" in text
 
     @staticmethod
-    def _maybe_write_todo(scope: FlextInfraDocScope, *, apply_mode: bool) -> bool:
+    def _maybe_write_todo(
+        scope: m.Infra.Docs.FlextInfraDocScope,
+        *,
+        apply_mode: bool,
+    ) -> bool:
         """Write a TODOS.md file for the scope if apply mode is enabled."""
         if scope.name == c.Infra.ReportKeys.ROOT or not apply_mode:
             return False
@@ -81,7 +64,7 @@ class FlextInfraDocValidator:
         output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         check: str = "all",
         apply: bool = False,
-    ) -> r[list[ValidateReport]]:
+    ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         """Run documentation validation across project scopes.
 
         Args:
@@ -96,21 +79,25 @@ class FlextInfraDocValidator:
             FlextResult with list of ValidateReport objects.
 
         """
-        scopes_result: r[list[FlextInfraDocScope]] = FlextInfraDocsShared.build_scopes(
-            root=root,
-            project=project,
-            projects=projects,
-            output_dir=output_dir,
+        scopes_result: r[list[m.Infra.Docs.FlextInfraDocScope]] = (
+            FlextInfraDocsShared.build_scopes(
+                root=root,
+                project=project,
+                projects=projects,
+                output_dir=output_dir,
+            )
         )
         if scopes_result.is_failure:
-            return r[list[ValidateReport]].fail(scopes_result.error or "scope error")
+            return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
+                scopes_result.error or "scope error"
+            )
 
-        reports: list[ValidateReport] = []
+        reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
             report = self._validate_scope(scope, check=check, apply_mode=apply)
             reports.append(report)
 
-        return r[list[ValidateReport]].ok(reports)
+        return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
     def _run_adr_skill_check(self, root: Path) -> tuple[int, list[str]]:
         """Run ADR skill check and return exit code with missing skill names."""
@@ -118,15 +105,22 @@ class FlextInfraDocValidator:
         required: list[str] = []
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
-            payload = FlextInfraJsonService().load(config)
-            if payload is None:
+            payload_result = u.Infra.Io.read_json(config)
+            if payload_result.is_failure:
                 return 1, []
-            docs_validation = payload.get("docs_validation", {})
-            configured = docs_validation.get("required_skills", [])
-            if isinstance(configured, list):
-                required = [
-                    item for item in configured if isinstance(item, str) and item
-                ]
+            payload = payload_result.value
+            docs_validation = payload.get("docs_validation")
+            if isinstance(docs_validation, dict):
+                configured = docs_validation.get("required_skills")
+                if isinstance(configured, list):
+                    try:
+                        required_items = TypeAdapter(list[str]).validate_python(
+                            configured,
+                            strict=True,
+                        )
+                        required = [item for item in required_items if item]
+                    except ValidationError:
+                        required = []
         if not required:
             required = ["rules-docs", "scripts-maintenance", "readme-standardization"]
 
@@ -139,11 +133,11 @@ class FlextInfraDocValidator:
 
     def _validate_scope(
         self,
-        scope: FlextInfraDocScope,
+        scope: m.Infra.Docs.FlextInfraDocScope,
         *,
         check: str,
         apply_mode: bool,
-    ) -> ValidateReport:
+    ) -> m.Infra.Docs.DocsPhaseReport:
         """Run validation for a single project scope."""
         status = c.Infra.Status.OK
         message = "validation passed"
@@ -165,7 +159,7 @@ class FlextInfraDocValidator:
 
         wrote_todo = self._maybe_write_todo(scope, apply_mode=apply_mode)
 
-        _ = FlextInfraDocsShared.write_json(
+        _ = u.Infra.Io.write_json(
             scope.report_dir / "validate-summary.json",
             {
                 c.Infra.ReportKeys.SUMMARY: {
@@ -199,13 +193,15 @@ class FlextInfraDocValidator:
             reason=message,
         )
 
-        return ValidateReport(
+        return m.Infra.Docs.DocsPhaseReport(
+            phase="validate",
             scope=scope.name,
             result=status,
             message=message,
             missing_adr_skills=missing_adr_skills,
             todo_written=wrote_todo,
+            passed=status == c.Infra.Status.OK,
         )
 
 
-__all__ = ["FlextInfraDocValidator", "ValidateReport"]
+__all__ = ["FlextInfraDocValidator"]

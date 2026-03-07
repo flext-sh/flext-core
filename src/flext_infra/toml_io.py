@@ -33,7 +33,7 @@ class FlextInfraTomlService(s[bool]):
         super().__init__()
 
     @staticmethod
-    def build_table(data: t.Infra.TomlMap) -> Table:
+    def build_table(data: t.Infra.ContainerMap) -> Table:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
@@ -62,7 +62,7 @@ class FlextInfraTomlService(s[bool]):
         """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> r[t.Infra.TomlMap]:
+    def read(self, path: Path) -> r[t.Infra.ContainerMap]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
@@ -73,15 +73,15 @@ class FlextInfraTomlService(s[bool]):
 
         """
         if not path.exists():
-            return r[t.Infra.TomlMap].ok({})
+            return r[t.Infra.ContainerMap].ok({})
         try:
             data_raw = tomllib.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
-            data: t.Infra.TomlMap = data_raw
-            return r[t.Infra.TomlMap].ok(data)
+            data: t.Infra.ContainerMap = data_raw
+            return r[t.Infra.ContainerMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[t.Infra.TomlMap].fail(f"TOML read error: {exc}")
+            return r[t.Infra.ContainerMap].fail(f"TOML read error: {exc}")
 
     def read_document(self, path: Path) -> r[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
@@ -109,8 +109,8 @@ class FlextInfraTomlService(s[bool]):
 
     def sync_mapping(
         self,
-        target: t.Infra.TomlMutableMap,
-        canonical: t.Infra.TomlMap,
+        target: t.Infra.ContainerMap,
+        canonical: t.Infra.ContainerMap,
         *,
         prune_extras: bool,
         prefix: str,
@@ -163,7 +163,7 @@ class FlextInfraTomlService(s[bool]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | t.Infra.TomlMutableMap,
+        payload: tomlkit.TOMLDocument | t.Infra.ContainerMap,
     ) -> r[bool]:
         """Write a TOML payload to a file.
 

@@ -344,10 +344,13 @@ class FlextUtilitiesMapper:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
             return current
-        convert_func = FlextUtilitiesMapper._get_callable_from_dict(ops, "convert")
-        if convert_func is None:
+        convert_func_result = FlextUtilitiesMapper._get_callable_from_dict(
+            ops,
+            "convert",
+        )
+        if convert_func_result.is_failure:
             return current
-        convert_callable_raw = convert_func
+        convert_callable_raw = convert_func_result.value
 
         convert_default = ops.get("convert_default")
         fallback = convert_default
@@ -476,10 +479,13 @@ class FlextUtilitiesMapper:
         """Helper: Apply filter operation."""
         if "filter" not in ops:
             return current
-        filter_pred_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "filter")
-        if filter_pred_raw is None:
+        filter_pred_result = FlextUtilitiesMapper._get_callable_from_dict(
+            ops,
+            "filter",
+        )
+        if filter_pred_result.is_failure:
             return current
-        filter_pred_callable = filter_pred_raw
+        filter_pred_callable = filter_pred_result.value
 
         def filter_pred(value: t.ContainerValue) -> bool:
             return bool(filter_pred_callable(value))
@@ -562,10 +568,10 @@ class FlextUtilitiesMapper:
         """Helper: Apply map operation."""
         if "map" not in ops:
             return current
-        map_func_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "map")
-        if map_func_raw is None:
+        map_func_result = FlextUtilitiesMapper._get_callable_from_dict(ops, "map")
+        if map_func_result.is_failure:
             return current
-        map_callable = map_func_raw
+        map_callable = map_func_result.value
 
         def map_func(value: t.ContainerValue) -> t.ContainerValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
@@ -628,10 +634,13 @@ class FlextUtilitiesMapper:
         """Helper: Apply process operation."""
         if "process" not in ops:
             return current
-        process_func_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "process")
-        if process_func_raw is None:
+        process_func_result = FlextUtilitiesMapper._get_callable_from_dict(
+            ops,
+            "process",
+        )
+        if process_func_result.is_failure:
             return current
-        process_callable = process_func_raw
+        process_callable = process_func_result.value
 
         def process_func(value: t.ContainerValue) -> t.ContainerValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
@@ -1019,11 +1028,11 @@ class FlextUtilitiesMapper:
     def _get_callable_from_dict(
         ops: Mapping[str, t.ContainerValue],
         key: str,
-    ) -> _MapperCallable | None:
+    ) -> r[_MapperCallable]:
         value: t.ContainerValue | _MapperCallable | None = ops.get(key)
         if callable(value):
-            return value
-        return None
+            return r[_MapperCallable].ok(value)
+        return r[_MapperCallable].fail(f"Operation '{key}' is not callable")
 
     @staticmethod
     def _get_raw(
@@ -1845,8 +1854,8 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
-    def ensure_str_or_none(value: t.ContainerValue) -> str | None:
-        """Ensure value is a string or None.
+    def ensure_str_or_none(value: t.ContainerValue) -> r[str]:
+        """Ensure value is a string result.
 
         **Generic replacement for**: value if isinstance(value, str) else None
 
@@ -1854,18 +1863,20 @@ class FlextUtilitiesMapper:
             value: Value to check/convert
 
         Returns:
-            String value or None
+            r[str]: ok(str) when value is str, fail otherwise
 
         Example:
             >>> FlextUtilitiesMapper.ensure_str_or_none("hello")
-            'hello'
+            r.ok("hello")
             >>> FlextUtilitiesMapper.ensure_str_or_none(123)
-            None
+            r.fail("Value is not a string")
             >>> FlextUtilitiesMapper.ensure_str_or_none(None)
-            None
+            r.fail("Value is not a string")
 
         """
-        return value if isinstance(value, str) else None
+        if isinstance(value, str):
+            return r[str].ok(value)
+        return r[str].fail("Value is not a string")
 
     @staticmethod
     def extract(

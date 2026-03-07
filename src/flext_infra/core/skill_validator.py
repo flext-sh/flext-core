@@ -165,8 +165,9 @@ class FlextInfraSkillValidator:
                         skill_name,
                     )
                     if baseline_path.exists():
-                        bl_data = self._json.load(baseline_path)
-                        if bl_data is not None:
+                        bl_data_result = self._json.read(baseline_path)
+                        if bl_data_result.is_success:
+                            bl_data = bl_data_result.value
                             bl_counts_raw = bl_data.get("counts", {})
                             if isinstance(bl_counts_raw, dict):
                                 bl_counts = {
@@ -245,7 +246,8 @@ class FlextInfraSkillValidator:
             line = raw_line.strip()
             if not line:
                 continue
-            if self._json.is_json(line):
+            parsed_line_result = self._json.parse(line)
+            if parsed_line_result.is_success:
                 count += 1
         return count
 
@@ -289,8 +291,9 @@ class FlextInfraSkillValidator:
             line = raw_line.strip()
             if not line:
                 continue
-            payload = self._json.loads(line)
-            if isinstance(payload, dict):
+            payload_result = self._json.parse(line)
+            if payload_result.is_success and isinstance(payload_result.value, dict):
+                payload = payload_result.value
                 maybe = payload.get("violation_count", payload.get("count", 0))
                 if isinstance(maybe, int):
                     count += maybe

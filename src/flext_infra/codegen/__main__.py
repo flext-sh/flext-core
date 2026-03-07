@@ -15,12 +15,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
-from typing import Any, cast
 
 from flext_core import FlextRuntime
-from flext_infra import FlextInfraJsonService, c, output
+from flext_infra import c, output
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.codegen.constants_quality_gate import (
     FlextInfraCodegenConstantsQualityGate,
@@ -205,7 +205,7 @@ def _handle_census(args: argparse.Namespace) -> int:
             "total_violations": sum(rpt.total for rpt in reports),
             "total_fixable": sum(rpt.fixable for rpt in reports),
         }
-        print(FlextInfraJsonService().dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+        print(json.dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         total_v = sum(rpt.total for rpt in reports)
         total_f = sum(rpt.fixable for rpt in reports)
@@ -298,7 +298,7 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
                 "total_fixable": sum(r.fixable for r in reports_after),
             },
         }
-        print(FlextInfraJsonService().dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+        print(json.dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         before_v = sum(r.total for r in reports_before)
         after_v = sum(r.total for r in reports_after)
@@ -324,7 +324,7 @@ def _handle_constants_quality_gate(args: argparse.Namespace) -> int:
     report = gate.run()
 
     if args.output_format == "json":
-        print(FlextInfraJsonService().dumps(cast("Any", report), ensure_ascii=True))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
+        print(json.dumps(report, ensure_ascii=True))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         print(FlextInfraCodegenConstantsQualityGate.render_text(report), end="")  # noqa: T201  # JUSTIFIED: CLI text output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
 

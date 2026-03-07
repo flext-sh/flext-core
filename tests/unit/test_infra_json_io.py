@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from pydantic import BaseModel
 
 from flext_infra import FlextInfraJsonService
@@ -152,3 +153,18 @@ class TestFlextInfraJsonService:
         result = service.write(json_file, {"key": "value"})
         assert result.is_success
         assert result.value is True
+
+    def test_removed_direct_api_methods_raise_attribute_error(self) -> None:
+        """Direct-return compatibility methods are no longer available."""
+        service = FlextInfraJsonService()
+
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "load")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "dump")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "loads")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "dumps")
+        with pytest.raises(AttributeError):
+            _ = getattr(service, "is_json")

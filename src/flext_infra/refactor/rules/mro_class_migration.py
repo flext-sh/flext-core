@@ -36,7 +36,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         except SyntaxError:
             return tree, []
 
-        candidates: list[m.Infra.Refactor.MROConstantCandidate] = []
+        candidates: list[m.Infra.Refactor.MROSymbolCandidate] = []
         for stmt in module_ast.body:
             if not isinstance(stmt, ast.AnnAssign):
                 continue
@@ -47,7 +47,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
             if not _is_final_annotation(stmt.annotation):
                 continue
             candidates.append(
-                m.Infra.Refactor.MROConstantCandidate(
+                m.Infra.Refactor.MROSymbolCandidate(
                     symbol=stmt.target.id,
                     line=stmt.lineno,
                 )
@@ -57,7 +57,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
             return tree, []
 
         constants_class = _first_constants_class_name(module_ast)
-        scan_result = m.Infra.Refactor.MROFileScan(
+        scan_result = m.Infra.Refactor.MROScanReport(
             file=str(_file_path),
             module="",
             constants_class=constants_class,
@@ -71,9 +71,8 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         if len(migration.moved_symbols) == 0 or updated_source == source:
             return tree, []
         updated_module = cst.parse_module(updated_source)
-        return updated_module, [
-            f"migrated constants into facade class: {', '.join(migration.moved_symbols)}"
-        ]
+        syms = ", ".join(migration.moved_symbols)
+        return updated_module, [f"migrated constants into facade class: {syms}"]
 
 
 def _first_constants_class_name(tree: ast.Module) -> str:

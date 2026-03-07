@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 
+from flext_core import t, u
 from flext_infra.typings import FlextInfraTypes
 
 
@@ -25,13 +26,20 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def as_toml_mapping(
-        value: object,
-    ) -> FlextInfraTypes.Infra.TomlMutableMap | None:
+        value: t.ContainerValue,
+    ) -> FlextInfraTypes.Infra.ContainerMap | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
-        if isinstance(value, MutableMapping):
-            result: FlextInfraTypes.Infra.TomlMutableMap = value
-            return result
-        return None
+        if not isinstance(value, MutableMapping):
+            return None
+
+        converted: FlextInfraTypes.Infra.ContainerMap = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                return None
+            if not u.is_general_value_type(item):
+                return None
+            converted[key] = item
+        return converted
 
 
 __all__ = ["FlextInfraUtilitiesToml"]

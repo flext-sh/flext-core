@@ -15,6 +15,7 @@ from flext_infra.check._models import FlextInfraCheckModels
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.core._models import FlextInfraCoreModels
 from flext_infra.deps._models import FlextInfraDepsModels
+from flext_infra.docs._models import FlextInfraDocsModels
 from flext_infra.github._models import FlextInfraGithubModels
 from flext_infra.refactor._models import FlextInfraRefactorModels
 from flext_infra.release._models import FlextInfraReleaseModels
@@ -61,6 +62,11 @@ class FlextInfraModels(FlextModels):
 
         class Deps(FlextInfraDepsModels):
             """Deps domain models via MRO."""
+
+        # -- Docs domain (via MRO) ------------------------------------------------
+
+        class Docs(FlextInfraDocsModels):
+            """Docs domain models via MRO."""
 
         # -- Check domain (via MRO) -----------------------------------------------
 

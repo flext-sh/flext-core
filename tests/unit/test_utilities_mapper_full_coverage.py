@@ -11,9 +11,10 @@ from typing import cast, override
 import pytest
 from pydantic import BaseModel
 
-from flext_core import c, m, p, r, t
-from flext_core._utilities.cache import FlextUtilitiesCache as Cache
-from flext_core._utilities.mapper import FlextUtilitiesMapper as Mapper
+from flext_core import c, m, p, r, t, u
+
+Cache = u.Cache
+Mapper = u.Mapper.__mro__[1]
 
 
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
@@ -168,7 +169,8 @@ def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
     )
     assert mapper._get_str_from_dict({"k": 2}, "k", default="") == "2"
     assert mapper._get_str_from_dict({"k": None}, "k", default="d") == "d"
-    assert mapper._get_callable_from_dict({"x": 1}, "x") is None
+    callable_result = mapper._get_callable_from_dict({"x": 1}, "x")
+    assert callable_result.is_failure
     assert Mapper().logger is not None
 
 
@@ -754,7 +756,8 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
     assert mapper.ensure(None) == []
     assert mapper.ensure("x") == ["x"]
     assert mapper.ensure([1, 2]) == ["1", "2"]
-    assert mapper.ensure_str_or_none("x") == "x"
+    str_result = mapper.ensure_str_or_none("x")
+    assert str_result.is_success and str_result.value == "x"
 
     class DumpOnly(BaseModel):
         a: int = 1

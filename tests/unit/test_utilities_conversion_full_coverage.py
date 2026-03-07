@@ -43,39 +43,25 @@ def test_conversion_string_and_join_paths() -> None:
     assert u.Conversion.join(["A", "B"], case="lower") == "a b"
 
 
-def test_to_general_value_type_branches() -> None:
-    assert u.Conversion.to_general_value_type(None) is None
-    model = _Model(value=1)
-    assert (
-        u.Conversion.to_general_value_type(
-            cast("StrictJsonValue", cast("object", model)),
-        )
-        == model
-    )
-    # to_general_value_type is identity — returns value as-is
-    obj = object()
-    assert u.Conversion.to_general_value_type(cast("StrictJsonValue", obj)) is obj
-
-
 def test_to_flexible_value_and_safe_list_branches() -> None:
-    assert u.Conversion.to_flexible_value(None) is None
-    assert (
-        u.Conversion.to_flexible_value(
-            cast("StrictJsonValue", cast("object", _Model(value=1))),
-        )
-        is None
+    none_result = u.Conversion.to_flexible_value(None)
+    assert none_result.is_failure
+
+    model_result = u.Conversion.to_flexible_value(
+        cast("StrictJsonValue", cast("object", _Model(value=1))),
     )
+    assert model_result.is_failure
 
     mapping_value: Mapping[str, t.ContainerValue] = {"x": 1}
-    assert (
-        u.Conversion.to_flexible_value(cast("StrictJsonValue", mapping_value)) is None
+    mapping_result = u.Conversion.to_flexible_value(
+        cast("StrictJsonValue", mapping_value),
     )
-    assert (
-        u.Conversion.to_flexible_value(
-            cast("StrictJsonValue", cast("object", datetime.now(UTC))),
-        )
-        is not None
+    assert mapping_result.is_failure
+
+    datetime_result = u.Conversion.to_flexible_value(
+        cast("StrictJsonValue", cast("object", datetime.now(UTC))),
     )
+    assert datetime_result.is_success
 
     assert u.Conversion.to_str_list_safe(None) == []
     assert u.Conversion.to_str_list_safe("abc") == ["abc"]
@@ -83,6 +69,6 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
 
 
 def test_to_flexible_value_fallback_none_branch_for_unsupported_type() -> None:
-    # Source falls back to str(value) for unsupported types (not None)
     result = u.Conversion.to_flexible_value(cast("StrictJsonValue", (lambda: None)))
-    assert isinstance(result, str)
+    assert result.is_success
+    assert isinstance(result.value, str)

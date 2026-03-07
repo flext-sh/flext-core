@@ -6,14 +6,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import libcst as cst
-from pydantic import ConfigDict, Field
+from pydantic import AliasPath, ConfigDict, Field
 
 from flext_core import FlextModels
-from flext_infra import t
 
 
 class FlextInfraRefactorModels:
-    """Models for the refactor engine and related tools."""
+    """Models for the refactor engine and related tools.
+
+    Canonical base policy:
+    - ``FrozenStrictModel`` for configuration/policy contracts.
+    - ``ArbitraryTypesModel`` for mutable engine/report/result payloads.
+    """
 
     class Result(FlextModels.ArbitraryTypesModel):
         """Result of applying refactor rules to a single file."""
@@ -110,50 +114,32 @@ class FlextInfraRefactorModels:
             description="Family letter to MRO chain mapping"
         )
 
-    class Suggestion(FlextModels.ArbitraryTypesModel):
-        """A single refactoring suggestion from analysis."""
+    class RefactorRecommendation(FlextModels.ArbitraryTypesModel):
+        """Unified recommendation contract for suggestions and manual review."""
 
         model_config = ConfigDict(frozen=True)
 
         file: str = Field(min_length=1, description="Source file path")
         name: str = Field(min_length=1, description="Symbol name")
         kind: str = Field(description="Symbol kind (function, class, etc.)")
-        target: str = Field(description="Suggested target location")
-        reason: str = Field(default="", description="Reason for suggestion")
+        target: str = Field(default="", description="Suggested target location")
+        reason: str = Field(default="", description="Reason for recommendation")
+        manual_review: bool = Field(
+            default=False,
+            description="Whether manual follow-up is required",
+        )
 
-    class ManualReviewItem(FlextModels.ArbitraryTypesModel):
-        """An item flagged for manual review during analysis."""
+    class ClassNestingMapping(FlextModels.ArbitraryTypesModel):
+        """Unified mapping contract for class-nesting rewrite planning."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config = ConfigDict(extra="ignore", frozen=True)
 
-        file: str = Field(min_length=1, description="Source file path")
-        name: str = Field(min_length=1, description="Symbol name")
-        kind: str = Field(description="Symbol kind (function, class, etc.)")
-        reason: str = Field(description="Reason for manual review")
-
-    class ClassNestingMappingEntry(FlextModels.ArbitraryTypesModel):
-        """Mapping metadata for class-nesting rewrite planning."""
-
-        model_config = ConfigDict(frozen=True)
-
+        loose_name: str = Field(default="", description="Original loose class name")
+        current_file: str = Field(default="", description="File containing class")
         target_namespace: str = Field(
             min_length=1,
             description="Target namespace class name",
         )
-        confidence: str = Field(min_length=1, description="Confidence level")
-        rewrite_scope: str = Field(
-            min_length=1,
-            description="Rewrite scope (file/project/workspace)",
-        )
-
-    class ClassNestingMappingRecord(FlextModels.ArbitraryTypesModel):
-        """Resolved mapping record for class nesting rewrite input."""
-
-        model_config = ConfigDict(extra="ignore", frozen=True)
-
-        loose_name: str = Field(min_length=1, description="Original loose class name")
-        current_file: str = Field(min_length=1, description="File containing class")
-        target_namespace: str = Field(min_length=1, description="Target namespace")
         target_name: str = Field(default="", description="Target class name")
         confidence: str = Field(min_length=1, description="Confidence level")
         reason: str = Field(default="", description="Optional mapping rationale")
@@ -180,7 +166,7 @@ class FlextInfraRefactorModels:
             description="Rewrite scope",
         )
 
-    class ClassNestingPolicy(FlextModels.ArbitraryTypesModel):
+    class ClassNestingPolicy(FlextModels.FrozenStrictModel):
         """Validated policy contract used by class-nesting transformers."""
 
         model_config = ConfigDict(extra="ignore", frozen=True)
@@ -284,23 +270,6 @@ class FlextInfraRefactorModels:
             description="Violation counts per file",
         )
 
-    class ClassNestingPolicy(FlextModels.ArbitraryTypesModel):
-        """Strict policy contract for class-nesting transformers."""
-
-        enable_class_nesting: bool = Field(description="Enable nesting transform")
-        allow_namespace_creation: bool = Field(
-            description="Allow creating missing namespace class"
-        )
-        allow_existing_namespace_merge: bool = Field(
-            description="Allow merge into existing namespace class"
-        )
-        allowed_targets: tuple[str, ...] = Field(
-            description="Allowed target namespaces"
-        )
-        forbidden_targets: tuple[str, ...] = Field(
-            description="Forbidden target namespaces"
-        )
-
     class HelperClassification(FlextModels.ArbitraryTypesModel):
         """Classification result for a helper function."""
 
@@ -339,18 +308,18 @@ class FlextInfraRefactorModels:
             description="Manual-review candidates",
         )
 
-    class ViolationTopFile(FlextModels.ArbitraryTypesModel):
-        """One ranked file entry in violation analysis output."""
-
-        file: str = Field(min_length=1, description="File path")
-        total: int = Field(ge=0, description="Total violations in file")
-        counts: dict[str, int] = Field(
-            default_factory=dict,
-            description="Per-pattern counts",
-        )
-
     class ViolationAnalysisReport(FlextModels.ArbitraryTypesModel):
         """Full violation analysis report for refactor diagnostics."""
+
+        class TopFileSection(FlextModels.ArbitraryTypesModel):
+            """One ranked hotspot entry in violation analysis output."""
+
+            file: str = Field(min_length=1, description="File path")
+            total: int = Field(ge=0, description="Total violations in file")
+            counts: dict[str, int] = Field(
+                default_factory=dict,
+                description="Per-pattern counts",
+            )
 
         totals: dict[str, int] = Field(
             default_factory=dict,
@@ -360,70 +329,60 @@ class FlextInfraRefactorModels:
             default_factory=dict,
             description="Per-file per-pattern counts",
         )
-        top_files: list[dict[str, str | int | dict[str, int]]] = Field(
-            default_factory=list, description="Top hotspot files"
+        top_files: list[
+            FlextInfraRefactorModels.ViolationAnalysisReport.TopFileSection
+        ] = Field(
+            default_factory=list,
+            description="Top hotspot files",
         )
         files_scanned: int = Field(ge=0, description="Files scanned")
-        helper_classification: t.Infra.ContainerDict = Field(
-            description="Helper classification summary"
+        helper_classification: FlextInfraRefactorModels.HelperClassificationReport = (
+            Field(description="Helper classification summary")
         )
-        class_nesting: t.Infra.ContainerDict = Field(
+        class_nesting: FlextInfraRefactorModels.ClassNestingReport = Field(
             description="Class nesting analysis summary"
         )
 
-    class AstGrepNameEntry(FlextModels.ArbitraryTypesModel):
-        """A single name entry from ast-grep meta-variables."""
+    class AstGrepMatchEnvelope(FlextModels.ArbitraryTypesModel):
+        """Compact ast-grep envelope carrying file, symbol and location."""
 
-        text: str = Field(min_length=1, description="Captured text value")
-
-    class AstGrepStart(FlextModels.ArbitraryTypesModel):
-        """Start position from an ast-grep match range."""
-
-        line: int | None = Field(default=None, description="Line number")
-
-    class AstGrepRange(FlextModels.ArbitraryTypesModel):
-        """Range information from an ast-grep match."""
-
-        start: FlextInfraRefactorModels.AstGrepStart | None = Field(
-            default=None,
-            description="Start position",
-        )
-
-    class AstGrepMetaVariables(FlextModels.ArbitraryTypesModel):
-        """Meta-variable captures from an ast-grep match."""
-
-        single: dict[str, FlextInfraRefactorModels.AstGrepNameEntry] = Field(
-            default_factory=dict,
-            description="Single-capture meta-variables",
-        )
-
-    class AstGrepEntry(FlextModels.ArbitraryTypesModel):
-        """A single ast-grep match entry from JSON output."""
+        model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
         file: str = Field(min_length=1, description="Matched file path")
-        meta_variables: FlextInfraRefactorModels.AstGrepMetaVariables = Field(
-            alias="metaVariables",
-            description="Captured meta-variables",
-        )
-        range: FlextInfraRefactorModels.AstGrepRange | None = Field(
+        symbol_name: str | None = Field(
             default=None,
-            description="Match range",
+            validation_alias=AliasPath("metaVariables", "single", "NAME", "text"),
+            description="Captured symbol name from ast-grep metadata",
+        )
+        start_line: int | None = Field(
+            default=None,
+            validation_alias=AliasPath("range", "start", "line"),
+            description="Start line from ast-grep range",
         )
 
-    class AstGrepMatch(FlextModels.ArbitraryTypesModel):
-        """A single ast-grep match entry (file-only variant)."""
-
-        file: str = Field(min_length=1, description="Matched file path")
-
-    class MROConstantCandidate(FlextModels.ArbitraryTypesModel):
-        """A single module-level Final constant candidate for MRO migration."""
+    class MROSymbolCandidate(FlextModels.ArbitraryTypesModel):
+        """Unified symbol candidate used by MRO scan and rewrites."""
 
         model_config = ConfigDict(frozen=True)
 
-        symbol: str = Field(min_length=1, description="Constant symbol name")
+        symbol: str = Field(min_length=1, description="Symbol name")
         line: int = Field(ge=1, description="Source line number")
+        kind: str = Field(default="constant", description="constant|typevar|typealias")
+        class_name: str = Field(default="", description="Target class name")
+        facade_name: str = Field(default="", description="Facade alias/import name")
 
-    class MROFileScan(FlextModels.ArbitraryTypesModel):
+    class MROImportRewrite(FlextModels.ArbitraryTypesModel):
+        """Unified import rewrite payload for MRO reference updates."""
+
+        model_config = ConfigDict(frozen=True)
+
+        module: str = Field(min_length=1, description="Import module path")
+        import_name: str = Field(min_length=1, description="Imported symbol name")
+        as_name: str | None = Field(default=None, description="Optional alias")
+        symbol: str = Field(default="", description="Resolved symbol in facade")
+        facade_name: str = Field(default="", description="Facade alias/import name")
+
+    class MROScanReport(FlextModels.ArbitraryTypesModel):
         """Scan result for one constants module candidate file."""
 
         model_config = ConfigDict(frozen=True)
@@ -433,39 +392,10 @@ class FlextInfraRefactorModels:
         constants_class: str = Field(
             default="", description="First constants class name"
         )
-        candidates: tuple[FlextInfraRefactorModels.MROConstantCandidate, ...] = Field(
+        candidates: tuple[FlextInfraRefactorModels.MROSymbolCandidate, ...] = Field(
             default_factory=tuple,
-            description="Module-level Final constant candidates",
+            description="Module-level symbol candidates",
         )
-
-    class MROImportedSymbol(FlextModels.ArbitraryTypesModel):
-        """A relocated symbol with its facade alias for import rewriting."""
-
-        model_config = ConfigDict(frozen=True)
-
-        symbol: str = Field(min_length=1, description="New symbol name in facade")
-        facade_name: str = Field(
-            min_length=1, description="Facade alias or import name"
-        )
-
-    class MROFacadeImport(FlextModels.ArbitraryTypesModel):
-        """An import statement to add for facade access."""
-
-        model_config = ConfigDict(frozen=True)
-
-        module: str = Field(min_length=1, description="Import module path")
-        import_name: str = Field(min_length=1, description="Imported symbol name")
-        as_name: str | None = Field(default=None, description="Optional alias")
-
-    class MROScanCandidate(FlextModels.ArbitraryTypesModel):
-        """One module-level symbol candidate detected for MRO migration."""
-
-        file: str = Field(min_length=1, description="Absolute file path")
-        module: str = Field(min_length=1, description="Import module path")
-        symbol: str = Field(min_length=1, description="Symbol name")
-        line: int = Field(ge=1, description="Source line number")
-        kind: str = Field(min_length=1, description="constant|typevar|typealias")
-        class_name: str = Field(min_length=1, description="Target class name")
 
     class MROFileMigration(FlextModels.ArbitraryTypesModel):
         """Migration summary for one transformed file."""
@@ -518,10 +448,19 @@ class FlextInfraRefactorModels:
     class RuleConfigs:
         """Configuration schemas parsed by refactor rules at runtime."""
 
-        class MethodOrderRule(FlextModels.ArbitraryTypesModel):
+        class MethodOrderRule(FlextModels.FrozenStrictModel):
             """A declarative method ordering rule for class reconstruction."""
 
             model_config = ConfigDict(extra="ignore")
+
+            class PatternRule(FlextModels.FrozenStrictModel):
+                """Structured matcher entry for method pattern rules."""
+
+                regex: str = Field(default="", description="Regex matcher")
+                decorators: list[str] = Field(
+                    default_factory=list,
+                    description="Required decorators for this pattern",
+                )
 
             category: str | None = Field(default=None, description="Method category")
             visibility: str | None = Field(
@@ -535,7 +474,7 @@ class FlextInfraRefactorModels:
                 default_factory=list,
                 description="Decorators to match",
             )
-            patterns: list[str | dict[str, str | list[str]]] = Field(
+            patterns: list[str | PatternRule] = Field(
                 default_factory=list,
                 description="Pattern rules",
             )
@@ -544,7 +483,7 @@ class FlextInfraRefactorModels:
                 description="Explicit method order",
             )
 
-        class SignatureMigration(FlextModels.ArbitraryTypesModel):
+        class SignatureMigration(FlextModels.FrozenStrictModel):
             """Declarative signature migration rule for callsite propagation."""
 
             id: str = Field(default="signature-migration", description="Migration ID")
@@ -567,29 +506,13 @@ class FlextInfraRefactorModels:
                 default_factory=dict, description="Keywords to add"
             )
 
-        class ImportModernizerRuleConfig(FlextModels.ArbitraryTypesModel):
+        class ImportModernizerRuleConfig(FlextModels.FrozenStrictModel):
             """Configuration for a single import modernizer rule."""
 
             module: str = Field(default="", description="Module path to modernize")
             symbol_mapping: dict[str, str] = Field(
                 default_factory=dict, description="Symbol-to-alias mapping"
             )
-
-        # -- Parsing models for raw tool/scanner output --------------------------
-
-        class Parsers:
-            """Models for parsing raw tool output (scanner JSON, YAML, etc.)."""
-
-            class LooseClassViolation(FlextModels.ArbitraryTypesModel):
-                """Parsing model for raw scanner output (subset of fields)."""
-
-                model_config = ConfigDict(extra="ignore", frozen=True)
-
-                file: str = Field(default="", description="Source file path")
-                line: int = Field(default=1, ge=0, description="Line number")
-                class_name: str = Field(default="", description="Class name")
-                confidence: str = Field(default="low", description="Confidence level")
-                expected_prefix: str = Field(default="", description="Expected prefix")
 
 
 __all__ = ["FlextInfraRefactorModels"]

@@ -19,13 +19,13 @@ from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
-    FlextInfraJsonService,
     FlextInfraProjectSelector,
     FlextInfraReportingService,
     FlextInfraVersioningService,
     c,
     m,
     t,
+    u,
 )
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -130,7 +130,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             "failures": failures,
             "records": records,
         }
-        FlextInfraJsonService().write(
+        u.Infra.Io.write_json(
             output_dir / "build-report.json",
             report,
             sort_keys=True,
@@ -416,7 +416,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
 
     def _collect_changes(self, root: Path, previous: str, tag: str) -> r[str]:
         """Collect Git commit messages between two tags."""
-        return FlextInfraGitService().collect_changes(root, tag, previous)
+        rev = f"{previous}..{tag}" if previous else tag
+        return FlextInfraGitService().log(root, rev)
 
     def _create_branches(
         self,
@@ -442,8 +443,14 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         return r[bool].ok(True)
 
     def _create_tag(self, root: Path, tag: str) -> r[bool]:
-        """Create an annotated Git tag if it doesn't exist."""
-        return FlextInfraGitService().create_tag_if_missing(root, tag)
+        """Create an annotated Git tag if it does not already exist."""
+        git = FlextInfraGitService()
+        exists_result = git.tag_exists(root, tag)
+        if exists_result.is_failure:
+            return r[bool].fail(exists_result.error or "tag check failed")
+        if exists_result.value:
+            return r[bool].ok(True)
+        return git.create_tag(root, tag, f"release: {tag}")
 
     # ------------------------------------------------------------------
     # Internal helpers

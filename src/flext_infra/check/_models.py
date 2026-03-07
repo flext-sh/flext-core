@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field, computed_field, model_serializer
 
 from flext_core import FlextModels
 from flext_infra.constants import FlextInfraConstants as c
@@ -78,17 +78,35 @@ class FlextInfraCheckModels:
             """Total issue count across all gates."""
             return sum(len(v.issues) for v in self.gates.values())
 
-    class RunCommandResult(FlextModels.FrozenStrictModel):
-        """Subprocess execution result."""
-
-        stdout: str = Field(description="Captured standard output")
-        stderr: str = Field(description="Captured standard error")
-        returncode: int = Field(description="Process exit code")
-
     # -- Tool-specific JSON parsing models ---------------------------------
 
     class Parsers:
         """Models for parsing tool-specific JSON output."""
+
+        class ParsedIssue(FlextModels.ArbitraryTypesModel):
+            """Canonical parsed issue normalized from tool-specific payloads."""
+
+            model_config = ConfigDict(extra="ignore")
+
+            file: str = Field(default="?", description="Source file path")
+            line: int = Field(default=0, description="Line number")
+            column: int = Field(default=0, description="Column number")
+            code: str = Field(default="", description="Rule or error code")
+            message: str = Field(default="", description="Issue description")
+            severity: str = Field(
+                default=c.Infra.Toml.ERROR,
+                description="Severity level",
+            )
+
+        class ParsedIssueBatch(FlextModels.ArbitraryTypesModel):
+            """Collection wrapper for normalized parsed issues."""
+
+            model_config = ConfigDict(extra="ignore")
+
+            issues: list[FlextInfraCheckModels.Parsers.ParsedIssue] = Field(
+                default_factory=list,
+                description="Normalized parsed issues",
+            )
 
         class RuffLintLocation(FlextModels.ArbitraryTypesModel):
             """Location block inside a Ruff lint JSON entry."""
@@ -242,95 +260,100 @@ class FlextInfraCheckModels:
     class Sarif:
         """SARIF 2.1.0 report models."""
 
-        class MessageText(FlextModels.FrozenStrictModel):
-            """SARIF message with text content."""
-
-            text: str = Field(description="Message text")
-
-        class RuleDescriptor(FlextModels.FrozenStrictModel):
-            """SARIF rule descriptor with short description."""
+        class Rule(FlextModels.FrozenStrictModel):
+            """Compact SARIF rule descriptor."""
 
             id: str = Field(description="Rule identifier")
-            short_description: FlextInfraCheckModels.Sarif.MessageText = Field(
-                alias="shortDescription",
-                description="Rule short description",
-            )
+            short_description: str = Field(description="Rule short description")
 
-        class ArtifactLocation(FlextModels.FrozenStrictModel):
-            """SARIF artifact location with URI."""
+            @model_serializer(mode="plain")
+            def _serialize(self):
+                return {
+                    "id": self.id,
+                    "shortDescription": {"text": self.short_description},
+                }
+
+        class Location(FlextModels.FrozenStrictModel):
+            """Compact SARIF location source span."""
 
             uri: str = Field(description="Artifact URI")
+            start_line: int = Field(description="Start line (1-based)")
+            start_column: int = Field(description="Start column (1-based)")
             uri_base_id: str = Field(
-                alias="uriBaseId",
                 default="%SRCROOT%",
                 description="URI base identifier",
             )
 
-        class Region(FlextModels.FrozenStrictModel):
-            """SARIF region with start line/column."""
-
-            start_line: int = Field(description="Start line (1-based)")
-            start_column: int = Field(description="Start column (1-based)")
-
-        class PhysicalLocation(FlextModels.FrozenStrictModel):
-            """SARIF physical location combining artifact and region."""
-
-            artifact_location: FlextInfraCheckModels.Sarif.ArtifactLocation = Field(
-                alias="artifactLocation", description="Artifact location"
-            )
-            region: FlextInfraCheckModels.Sarif.Region = Field(
-                description="Source region"
-            )
-
-        class Location(FlextModels.FrozenStrictModel):
-            """SARIF location wrapper."""
-
-            physical_location: FlextInfraCheckModels.Sarif.PhysicalLocation = Field(
-                alias="physicalLocation", description="Physical location"
-            )
+            @model_serializer(mode="plain")
+            def _serialize(self):
+                return {
+                    "physicalLocation": {
+                        "artifactLocation": {
+                            "uri": self.uri,
+                            "uriBaseId": self.uri_base_id,
+                        },
+                        "region": {
+                            "startLine": self.start_line,
+                            "startColumn": self.start_column,
+                        },
+                    },
+                }
 
         class Result(FlextModels.FrozenStrictModel):
             """SARIF result entry."""
 
             rule_id: str = Field(description="Rule identifier")
             level: str = Field(description="Result level (error/warning)")
-            message: FlextInfraCheckModels.Sarif.MessageText = Field(
-                description="Result message"
-            )
+            message: str = Field(description="Result message")
             locations: list[FlextInfraCheckModels.Sarif.Location] = Field(
                 description="Result locations"
             )
 
-        class ToolDriver(FlextModels.FrozenStrictModel):
-            """SARIF tool driver metadata."""
-
-            name: str = Field(description="Tool name")
-            information_uri: str = Field(
-                default="",
-                description="Tool documentation URL",
-            )
-            rules: list[FlextInfraCheckModels.Sarif.RuleDescriptor] = Field(
-                default_factory=list,
-                description="Rule descriptors",
-            )
-
-        class Tool(FlextModels.FrozenStrictModel):
-            """SARIF tool wrapper."""
-
-            driver: FlextInfraCheckModels.Sarif.ToolDriver = Field(
-                description="Tool driver"
-            )
+            @model_serializer(mode="plain")
+            def _serialize(self):
+                return {
+                    "ruleId": self.rule_id,
+                    "level": self.level,
+                    "message": {"text": self.message},
+                    "locations": [
+                        location.model_dump(by_alias=True)
+                        for location in self.locations
+                    ],
+                }
 
         class Run(FlextModels.FrozenStrictModel):
             """SARIF run entry."""
 
-            tool: FlextInfraCheckModels.Sarif.Tool = Field(
-                description="Tool information"
+            tool_name: str = Field(description="Tool name")
+            information_uri: str = Field(
+                default="",
+                description="Tool documentation URL",
+            )
+            rules: list[FlextInfraCheckModels.Sarif.Rule] = Field(
+                default_factory=list,
+                description="Rule descriptors",
             )
             results: list[FlextInfraCheckModels.Sarif.Result] = Field(
                 default_factory=list,
                 description="Run results",
             )
+
+            @model_serializer(mode="plain")
+            def _serialize(self):
+                return {
+                    "tool": {
+                        "driver": {
+                            "name": self.tool_name,
+                            "informationUri": self.information_uri,
+                            "rules": [
+                                rule.model_dump(by_alias=True) for rule in self.rules
+                            ],
+                        }
+                    },
+                    "results": [
+                        result.model_dump(by_alias=True) for result in self.results
+                    ],
+                }
 
         class Report(FlextModels.ArbitraryTypesModel):
             """Complete SARIF 2.1.0 report."""

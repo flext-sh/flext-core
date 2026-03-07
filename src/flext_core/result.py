@@ -786,6 +786,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return default
 
     def value_or[D](self, default: D) -> T_co | D:
+        """Return success value or provided default on failure."""
         return self.unwrap_or(default)
 
     @override

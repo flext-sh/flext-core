@@ -13,38 +13,12 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_core import FlextLogger, r, t
-from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine
+from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, m, u
 from flext_infra.constants import c
-from flext_infra.docs.shared import (
-    FlextInfraDocScope,
-    FlextInfraDocsShared,
-)
+from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
-
-
-class FixItem(BaseModel):
-    """Per-file summary of applied fixes."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    file: str = Field(..., description="File path relative to scope.")
-    links: int = Field(default=0, description="Number of link fixes applied.")
-    toc: int = Field(default=0, description="Number of TOC updates applied.")
-
-
-class FixReport(BaseModel):
-    """Structured fix report for a scope."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    scope: str = Field(..., description="Scope name.")
-    changed_files: int = Field(default=0, description="Number of files changed.")
-    applied: bool = Field(default=False, description="Whether changes were applied.")
-    items: list[FixItem] = Field(default_factory=list, description="List of fix items.")
 
 
 class FlextInfraDocFixer:
@@ -87,7 +61,7 @@ class FlextInfraDocFixer:
         projects: str | None = None,
         output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         apply: bool = False,
-    ) -> r[list[FixReport]]:
+    ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         """Run documentation fixes across project scopes.
 
         Args:
@@ -108,14 +82,16 @@ class FlextInfraDocFixer:
             output_dir=output_dir,
         )
         if scopes_result.is_failure:
-            return r[list[FixReport]].fail(scopes_result.error or "scope error")
+            return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
+                scopes_result.error or "scope error"
+            )
 
-        reports: list[FixReport] = []
+        reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
             report = self._fix_scope(scope, apply=apply)
             reports.append(report)
 
-        return r[list[FixReport]].ok(reports)
+        return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
     def _build_toc(self, content: str) -> str:
         """Generate a TOC block from ## and ### headings in content."""
@@ -134,14 +110,26 @@ class FlextInfraDocFixer:
             + f"\n{FlextInfraTemplateEngine.TOC_END}"
         )
 
-    def _fix_scope(self, scope: FlextInfraDocScope, *, apply: bool) -> FixReport:
+    def _fix_scope(
+        self,
+        scope: m.Infra.Docs.FlextInfraDocScope,
+        *,
+        apply: bool,
+    ) -> m.Infra.Docs.DocsPhaseReport:
         """Run link and TOC fixes across all markdown files in scope."""
-        items: list[FixItem] = []
+        items: list[m.Infra.Docs.DocsPhaseItem] = []
         for md in FlextInfraDocsShared.iter_markdown_files(scope.path):
             item = self._process_file(md, apply=apply)
             if item.links or item.toc:
                 rel = md.relative_to(scope.path).as_posix()
-                items.append(FixItem(file=rel, links=item.links, toc=item.toc))
+                items.append(
+                    m.Infra.Docs.DocsPhaseItem(
+                        phase="fix",
+                        file=rel,
+                        links=item.links,
+                        toc=item.toc,
+                    )
+                )
 
         changes_payload: list[Mapping[str, t.ContainerValue]] = [
             {
@@ -159,7 +147,7 @@ class FlextInfraDocFixer:
             },
             "changes": changes_payload,
         }
-        _ = FlextInfraDocsShared.write_json(
+        _ = u.Infra.Io.write_json(
             scope.report_dir / "fix-summary.json",
             payload,
         )
@@ -188,14 +176,23 @@ class FlextInfraDocFixer:
             reason=f"changes:{len(items)}",
         )
 
-        return FixReport(
+        return m.Infra.Docs.DocsPhaseReport(
+            phase="fix",
             scope=scope.name,
             changed_files=len(items),
             applied=apply,
             items=items,
+            result=status,
+            reason=f"changes:{len(items)}",
+            passed=apply or not items,
         )
 
-    def _process_file(self, md_file: Path, *, apply: bool) -> FixItem:
+    def _process_file(
+        self,
+        md_file: Path,
+        *,
+        apply: bool,
+    ) -> m.Infra.Docs.DocsPhaseItem:
         """Fix links and TOC in a single markdown file."""
         original = md_file.read_text(
             encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
@@ -215,7 +212,12 @@ class FlextInfraDocFixer:
         updated, toc_changed = self._update_toc(updated)
         if apply and (link_count > 0 or toc_changed > 0) and updated != original:
             _ = md_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
-        return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
+        return m.Infra.Docs.DocsPhaseItem(
+            phase="fix",
+            file=md_file.as_posix(),
+            links=link_count,
+            toc=toc_changed,
+        )
 
     def _update_toc(self, content: str) -> tuple[str, int]:
         """Insert or replace the TOC in content, returning (updated, changed)."""
@@ -244,4 +246,4 @@ class FlextInfraDocFixer:
         return toc + "\n\n" + content, 1
 
 
-__all__ = ["FixItem", "FixReport", "FlextInfraDocFixer"]
+__all__ = ["FlextInfraDocFixer"]

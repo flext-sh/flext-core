@@ -13,8 +13,6 @@ from operator import itemgetter
 from pathlib import Path
 
 import libcst as cst
-import yaml
-from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, m, t, u
@@ -190,8 +188,10 @@ class FlextInfraRefactorEngine:
         for result in results:
             if not result.success:
                 impact_map.append({
-                    c.Infra.Toml.PROJECT: FlextInfraRefactorEngine._project_name_from_path(
-                        result.file_path
+                    c.Infra.Toml.PROJECT: (
+                        FlextInfraRefactorEngine._project_name_from_path(
+                            result.file_path
+                        )
                     ),
                     c.Infra.ReportKeys.FILE: str(result.file_path),
                     "kind": "failure",
@@ -414,7 +414,10 @@ class FlextInfraRefactorEngine:
         output.info("-" * len(header))
         for rule in rules:
             status = "✓" if rule[c.Infra.ReportKeys.ENABLED] else "✗"
-            line = f"{rule['id']:<{id_width}} {rule['name']:<{name_width}} {rule['severity']:<10} {status}"
+            rid = f"{rule['id']:<{id_width}}"
+            rname = f"{rule['name']:<{name_width}}"
+            rsev = f"{rule['severity']:<10}"
+            line = f"{rid} {rname} {rsev} {status}"
             output.info(line)
             if rule["description"]:
                 output.info(f"  - {rule['description']}")
@@ -469,13 +472,7 @@ class FlextInfraRefactorEngine:
             return
         output.info("Hottest files:")
         for entry in analysis.top_files[:10]:
-            mapped_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                entry
-            )
-            file_name = mapped_entry.get(c.Infra.ReportKeys.FILE)
-            total = mapped_entry.get(c.Infra.ReportKeys.TOTAL)
-            if isinstance(file_name, str) and isinstance(total, int):
-                output.info(f"  - {file_name}: {total}")
+            output.info(f"  - {entry.file}: {entry.total}")
 
     @staticmethod
     def write_impact_map(
@@ -508,9 +505,8 @@ class FlextInfraRefactorEngine:
         existing_roots = [root for root in candidate_roots if root.exists()]
 
         if not existing_roots:
-            output.error(
-                f"No configured scan directories in {project_path}: {', '.join(scan_dirs)}"
-            )
+            dirs = ", ".join(scan_dirs)
+            output.error(f"No configured scan directories in {project_path}: {dirs}")
             return []
 
         ignore_items, extension_items = self._extract_engine_file_filters(
@@ -569,18 +565,11 @@ class FlextInfraRefactorEngine:
     def load_config(self) -> r[t.ConfigurationMapping]:
         """Load YAML configuration for this engine instance."""
         try:
-            content = self.config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            loaded_raw = yaml.safe_load(content)
-            if loaded_raw is None:
-                self.config = {}
-            else:
-                typed_config = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                    loaded_raw
-                )
-                self.config = dict(typed_config)
+            loaded = u.Infra.Yaml.safe_load_yaml(self.config_path)
+            self.config = dict(loaded)
             output.info(f"Loaded config from {self.config_path}")
             return r[t.ConfigurationMapping].ok(self.config)
-        except (OSError, ValidationError, yaml.YAMLError) as exc:
+        except (OSError, TypeError) as exc:
             return r[t.ConfigurationMapping].fail(f"Failed to load config: {exc}")
 
     def load_rules(self) -> r[list[FlextInfraRefactorRule]]:
@@ -595,16 +584,9 @@ class FlextInfraRefactorEngine:
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 output.info(f"Loading rules from {rule_file.name}")
-                rule_config_raw = yaml.safe_load(
-                    rule_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                )
-                if not isinstance(rule_config_raw, Mapping):
-                    continue
                 try:
-                    rule_config = TypeAdapter(
-                        dict[str, t.ContainerValue]
-                    ).validate_python(rule_config_raw)
-                except ValidationError:
+                    rule_config = dict(u.Infra.Yaml.safe_load_yaml(rule_file))
+                except (OSError, TypeError):
                     continue
                 typed_rules = self._coerce_rule_definitions(
                     rule_config.get(c.Infra.ReportKeys.RULES)

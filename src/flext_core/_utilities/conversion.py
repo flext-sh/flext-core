@@ -14,11 +14,10 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
-from flext_core import t
+from flext_core import r, t
 
-type StrictJsonScalar = t.Scalar | None
 type StrictJsonValue = (
-    StrictJsonScalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
+    t.Scalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue] | None
 )
 
 
@@ -26,7 +25,7 @@ class _StrictJsonScalarModel(BaseModel):
     """Strict scalar wrapper for narrow value validation."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
-    value: StrictJsonScalar
+    value: t.Scalar
 
 
 class FlextUtilitiesConversion:
@@ -45,8 +44,8 @@ class FlextUtilitiesConversion:
     _strict_json_list_adapter: TypeAdapter[list[StrictJsonValue]] = TypeAdapter(
         list[StrictJsonValue],
     )
-    _strict_json_scalar_adapter: TypeAdapter[StrictJsonScalar] = TypeAdapter(
-        StrictJsonScalar,
+    _strict_json_scalar_adapter: TypeAdapter[t.Scalar] = TypeAdapter(
+        t.Scalar,
     )
     _float_adapter = TypeAdapter(float)
     _str_adapter = TypeAdapter(str)
@@ -207,7 +206,7 @@ class FlextUtilitiesConversion:
         return str_value
 
     @staticmethod
-    def to_flexible_value(value: StrictJsonValue) -> StrictJsonScalar | None:
+    def to_flexible_value(value: StrictJsonValue) -> r[t.Scalar]:
         """Convert strict value to strict scalar if compatible.
 
         Strict scalar is a subset of strict value that excludes
@@ -217,29 +216,24 @@ class FlextUtilitiesConversion:
             value: strict value to convert
 
         Returns:
-            strict scalar or None if not compatible
+            FlextResult containing strict scalar value or failure
 
         """
         # Strict scalar = str | int | float | bool | datetime | None
         #                | Sequence[scalar] | Mapping[str, scalar]
         # where scalar = str | int | float | bool | datetime | None
         if value is None:
-            return None
+            return r[t.Scalar].fail("None is not a scalar-compatible value")
         if isinstance(value, (BaseModel, Mapping, list, tuple, set, frozenset)):
-            return None
+            return r[t.Scalar].fail("Value is not a scalar-compatible type")
         if isinstance(value, datetime) and hasattr(value, "isoformat"):
             isoformat_method = value.isoformat
             if callable(isoformat_method):
-                return str(value)
+                return r[t.Scalar].ok(str(value))
         try:
-            return _StrictJsonScalarModel(value=value).value
+            return r[t.Scalar].ok(_StrictJsonScalarModel(value=value).value)
         except ValidationError:
-            return str(value)
-
-    @staticmethod
-    def to_general_value_type(value: StrictJsonValue) -> StrictJsonValue:
-        """Return strict value without compatibility coercion."""
-        return value
+            return r[t.Scalar].ok(str(value))
 
     @staticmethod
     def to_str(value: StrictJsonValue, *, default: str | None = None) -> str:

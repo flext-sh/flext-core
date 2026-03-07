@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
 from flext_core import r, t
 from flext_infra import (
@@ -22,17 +22,6 @@ from flext_infra import (
     m,
 )
 from flext_infra.constants import c
-
-
-class FlextInfraDocScope(BaseModel):
-    """Documentation scope targeting a project or workspace root."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    name: str = Field(min_length=1, description="Scope name (project or 'root')")
-    path: Path = Field(description="Absolute path to the scope root")
-    report_dir: Path = Field(description="Report output directory for this scope")
-
 
 _discovery = FlextInfraDiscoveryService()
 _json_svc = FlextInfraJsonService()
@@ -71,11 +60,11 @@ class FlextInfraDocsShared:
         project: str | None,
         projects: str | None,
         output_dir: str,
-    ) -> r[list[FlextInfraDocScope]]:
+    ) -> r[list[m.Infra.Docs.FlextInfraDocScope]]:
         """Build DocScope objects for workspace root and each selected project."""
         try:
-            scopes: list[FlextInfraDocScope] = [
-                FlextInfraDocScope(
+            scopes: list[m.Infra.Docs.FlextInfraDocScope] = [
+                m.Infra.Docs.FlextInfraDocScope(
                     name=c.Infra.ReportKeys.ROOT,
                     path=root,
                     report_dir=(root / output_dir).resolve(),
@@ -94,15 +83,17 @@ class FlextInfraDocsShared:
                 ):
                     continue
                 scopes.append(
-                    FlextInfraDocScope(
+                    m.Infra.Docs.FlextInfraDocScope(
                         name=name,
                         path=path,
                         report_dir=(path / output_dir).resolve(),
                     ),
                 )
-            return r[list[FlextInfraDocScope]].ok(scopes)
+            return r[list[m.Infra.Docs.FlextInfraDocScope]].ok(scopes)
         except (OSError, TypeError, ValueError) as exc:
-            return r[list[FlextInfraDocScope]].fail(f"scope resolution failed: {exc}")
+            return r[list[m.Infra.Docs.FlextInfraDocScope]].fail(
+                f"scope resolution failed: {exc}"
+            )
 
     @staticmethod
     def iter_markdown_files(root: Path) -> list[Path]:
@@ -141,6 +132,5 @@ class FlextInfraDocsShared:
 
 
 __all__ = [
-    "FlextInfraDocScope",
     "FlextInfraDocsShared",
 ]

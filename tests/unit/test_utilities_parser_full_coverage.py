@@ -11,7 +11,6 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import c, m, r, t, u
-from flext_core._utilities.parser import FlextUtilitiesParser
 
 
 class _LenRaises(UserString):
@@ -158,12 +157,10 @@ def test_parser_pipeline_and_pattern_branches(
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
 
-    assert (
-        u.Parser()._extract_key_from_str_conversion(
-            cast("t.ContainerValue", cast("object", _StrRaises())),
-        )
-        is None
+    str_conversion_result = u.Parser()._extract_key_from_str_conversion(
+        cast("t.ContainerValue", cast("object", _StrRaises())),
     )
+    assert str_conversion_result.is_failure
 
     class _OddNoStr:
         @override
@@ -259,7 +256,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert primitive_str is not None and primitive_str.is_success
 
     monkeypatch.setattr(
-        FlextUtilitiesParser,
+        u.Parser.__mro__[1],
         "_coerce_to_float",
         staticmethod(lambda _v: (_ for _ in ()).throw(ValueError("boom"))),
     )
@@ -267,7 +264,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert failed_float is not None and failed_float.is_failure
 
     monkeypatch.setattr(
-        FlextUtilitiesParser,
+        u.Parser.__mro__[1],
         "_coerce_to_bool",
         staticmethod(lambda _v: (_ for _ in ()).throw(TypeError("boom"))),
     )
@@ -347,16 +344,16 @@ def test_parser_convert_and_norm_branches(
     assert mapping_result is True
     assert config_map_result is True
 
-    original_norm_list = FlextUtilitiesParser.norm_list
+    original_norm_list = u.Parser.norm_list
     monkeypatch.setattr(
-        FlextUtilitiesParser,
+        u.Parser.__mro__[1],
         "norm_list",
         staticmethod(lambda *_args, **_kwargs: {"k": "v"}),
     )
     try:
         assert parser.norm_in("v", ["x"], case="lower") is False
     finally:
-        monkeypatch.setattr(FlextUtilitiesParser, "norm_list", original_norm_list)
+        monkeypatch.setattr(u.Parser.__mro__[1], "norm_list", original_norm_list)
 
 
 def test_parser_success_and_edge_paths_cover_major_branches() -> None:
@@ -394,8 +391,8 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     attrs = parser._extract_key_from_attributes(
         cast("t.ContainerValue", cast("object", type("Obj", (), {"id": "x1"})())),
     )
-    assert mapped == "n1"
-    assert attrs == "x1"
+    assert mapped.is_success and mapped.value == "n1"
+    assert attrs.is_success and attrs.value == "x1"
 
     split = parser._process_escape_splitting("a\\,b,c", ",", "\\")
     assert split.is_success
@@ -437,7 +434,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert enum_by_member_value is not None and enum_by_member_value.is_success
 
     monkeypatch.setattr(
-        FlextUtilitiesParser,
+        u.Parser.__mro__[1],
         "_coerce_to_int",
         staticmethod(lambda _v: (_ for _ in ()).throw(ValueError("boom"))),
     )
@@ -445,7 +442,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert failed_int is not None and failed_int.is_failure
 
     monkeypatch.setattr(
-        FlextUtilitiesParser,
+        u.Parser.__mro__[1],
         "_coerce_to_str",
         staticmethod(lambda _v: (_ for _ in ()).throw(TypeError("boom"))),
     )

@@ -71,15 +71,11 @@ class FlextUtilitiesReliability:
         candidate: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
         value: t.ContainerValue,
     ) -> t.ContainerValue:
-        resolved: t.ContainerValue | object
-        if FlextUtilitiesReliability._is_match_mapper(candidate):
-            resolved = candidate(value)
-        else:
-            resolved = candidate
+        resolved_value = candidate(value) if callable(candidate) else candidate
         try:
-            return TypeAdapter(t.ContainerValue).validate_python(resolved)
+            return TypeAdapter(t.ContainerValue).validate_python(resolved_value)
         except ValidationError:
-            return str(resolved)
+            return str(resolved_value)
 
     @staticmethod
     def calculate_delay(
@@ -368,7 +364,7 @@ class FlextUtilitiesReliability:
         default: t.ContainerValue
         | Callable[[t.ContainerValue], t.ContainerValue]
         | None = None,
-    ) -> t.ContainerValue | None:
+    ) -> r[t.ContainerValue]:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:
@@ -411,26 +407,34 @@ class FlextUtilitiesReliability:
         input_value: t.ContainerValue = value
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
-                return FlextUtilitiesReliability._resolve_match_output(result, value)
+                return r[t.ContainerValue].ok(
+                    FlextUtilitiesReliability._resolve_match_output(result, value),
+                )
             if pattern == input_value:
-                return FlextUtilitiesReliability._resolve_match_output(
-                    result,
-                    input_value,
+                return r[t.ContainerValue].ok(
+                    FlextUtilitiesReliability._resolve_match_output(
+                        result,
+                        input_value,
+                    ),
                 )
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
                     pred_result = pattern(input_value)
                     if pred_result:
-                        return FlextUtilitiesReliability._resolve_match_output(
-                            result,
-                            input_value,
+                        return r[t.ContainerValue].ok(
+                            FlextUtilitiesReliability._resolve_match_output(
+                                result,
+                                input_value,
+                            ),
                         )
                 except (ValueError, TypeError, AttributeError):
                     pass
         # Default handling
         if default is not None:
-            return FlextUtilitiesReliability._resolve_match_output(default, input_value)
-        return None
+            return r[t.ContainerValue].ok(
+                FlextUtilitiesReliability._resolve_match_output(default, input_value),
+            )
+        return r[t.ContainerValue].fail("No match found and no default provided")
 
     # ========================================================================
     # Compose methods (pipe, chain, flow) - Functional composition patterns

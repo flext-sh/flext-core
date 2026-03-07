@@ -91,12 +91,14 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _validate_str(value: t.Scalar | StrEnum) -> str | None:
+    def _validate_str(value: t.Scalar | StrEnum) -> r[str]:
         """Validate strict string input for parsing paths."""
         try:
-            return FlextUtilitiesEnum._strict_str_adapter.validate_python(value)
+            return r[str].ok(
+                FlextUtilitiesEnum._strict_str_adapter.validate_python(value),
+            )
         except ValidationError:
-            return None
+            return r[str].fail("Value is not a valid string input")
 
     # ─────────────────────────────────────────────────────────────
     # DRY UTILITIES: Reduce constant declarations
@@ -356,9 +358,9 @@ class FlextUtilitiesEnum:
         """
         if mode == "is_member":
             by_name_value = FlextUtilitiesEnum._validate_str(value)
-            if by_name and by_name_value is not None:
+            if by_name and by_name_value.is_success:
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
-                    by_name_value,
+                    by_name_value.value,
                     enum_cls,
                 )
                 return is_member_result
@@ -372,8 +374,8 @@ class FlextUtilitiesEnum:
             if isinstance(value, enum_cls):
                 return FlextUtilitiesEnum._parse(enum_cls, value)
             validated_value = FlextUtilitiesEnum._validate_str(value)
-            if validated_value is not None:
-                return FlextUtilitiesEnum._parse(enum_cls, validated_value)
+            if validated_value.is_success:
+                return FlextUtilitiesEnum._parse(enum_cls, validated_value.value)
             # For other types, convert to string
             return FlextUtilitiesEnum._parse(enum_cls, str(value))
         if mode == "coerce":
@@ -385,9 +387,9 @@ class FlextUtilitiesEnum:
                 # Direct return after isinstance narrowing
                 return value
             validated_value = FlextUtilitiesEnum._validate_str(value)
-            if validated_value is not None:
+            if validated_value.is_success:
                 # Type narrowing: isinstance check ensures value is str
-                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, validated_value)
+                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, validated_value.value)
                 return coerced
             # For other types, convert to string
             # Type narrowing: str(value) is str, which is valid for coerce

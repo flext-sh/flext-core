@@ -112,7 +112,7 @@ class FlextUtilitiesConfiguration:
         return getattr(logging, default_log_level, logging.INFO)
 
     @staticmethod
-    def resolve_env_file() -> str | None:
+    def resolve_env_file() -> str:
         """Resolve .env file path from FLEXT_ENV_FILE environment variable.
 
         Business Rule: Environment File Resolution
@@ -137,7 +137,7 @@ class FlextUtilitiesConfiguration:
         - Pydantic ignores missing env_file gracefully (no error raised)
 
         Returns:
-            str | None: Path to .env file or None if not found
+            str: Path to .env file (custom, discovered, or default ".env")
 
         Example:
             # In namespace config classes (e.g., FlextLdapSettings)
@@ -905,7 +905,7 @@ class FlextUtilitiesConfiguration:
         )
 
     @staticmethod
-    def validate_config_class(config_class: type) -> tuple[bool, str | None]:
+    def validate_config_class(config_class: type) -> r[bool]:
         """Validate that a configuration class is properly configured.
 
         Business Rule: Pydantic v2 Configuration Class Validation
@@ -928,18 +928,11 @@ class FlextUtilitiesConfiguration:
         - Catches Pydantic validation errors early
         - Prevents runtime failures in production
 
-        Return Pattern:
-        - Returns tuple (bool, str | None) instead of FlextResult
-        - This is intentional for simple yes/no validation
-        - Error message provides context for debugging
-
         Args:
             config_class: Configuration class to validate (Pydantic BaseSettings)
 
         Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-                - (True, None) if valid
-                - (False, error_message) if invalid
+            r[bool]: ok(True) if valid, fail(error_message) if invalid
 
         """
         try:
@@ -948,15 +941,15 @@ class FlextUtilitiesConfiguration:
             # Check model_config existence
             class_name = getattr(config_class, "__name__", "UnknownClass")
             if not hasattr(config_class, "model_config"):
-                return (False, f"{class_name} must define model_config")
+                return r[bool].fail(f"{class_name} must define model_config")
 
             # Try to instantiate to ensure it's valid
             _ = config_class()
 
-            return (True, None)
+            return r[bool].ok(True)
 
         except (TypeError, ValueError, AttributeError) as e:
-            return (False, f"Configuration class validation failed: {e!s}")
+            return r[bool].fail(f"Configuration class validation failed: {e!s}")
 
 
 __all__ = [

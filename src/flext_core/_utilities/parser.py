@@ -159,7 +159,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _extract_key_from_attributes(
         obj: t.ContainerValue,
-    ) -> str | None:
+    ) -> r[str]:
         """Extract key from object attributes (Strategy 3).
 
         Args:
@@ -173,11 +173,11 @@ class FlextUtilitiesParser:
             if hasattr(obj, attr):
                 attr_value = getattr(obj, attr)
                 if isinstance(attr_value, str):
-                    return attr_value
-        return None
+                    return r[str].ok(attr_value)
+        return r[str].fail("No key attribute found")
 
     @staticmethod
-    def _extract_key_from_mapping(obj: t.ContainerValue) -> str | None:
+    def _extract_key_from_mapping(obj: t.ContainerValue) -> r[str]:
         """Extract key from mapping object (Strategy 2).
 
         Args:
@@ -192,18 +192,18 @@ class FlextUtilitiesParser:
                 t.ConfigurationMapping,
             ).validate_python(obj)
         except ValidationError:
-            return None
+            return r[str].fail("Object is not a valid mapping")
         for key in ("name", "id"):
             if key in mapping_data:
                 value = mapping_data[key]
                 if isinstance(value, str):
-                    return value
-        return None
+                    return r[str].ok(value)
+        return r[str].fail("No key field found in mapping")
 
     @staticmethod
     def _extract_key_from_str_conversion(
         obj: t.ContainerValue,
-    ) -> str | None:
+    ) -> r[str]:
         """Extract key from string conversion (Strategy 5).
 
         Args:
@@ -215,11 +215,11 @@ class FlextUtilitiesParser:
         """
         str_result = r[str].create_from_callable(lambda: str(obj))
         if str_result.is_failure:
-            return None
+            return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
         if str_repr and str_repr != f"<{obj.__class__.__name__} object>":
-            return str_repr
-        return None
+            return r[str].ok(str_repr)
+        return r[str].fail("String conversion did not yield a usable key")
 
     @staticmethod
     def _is_primitive_type(target: type) -> bool:
@@ -239,7 +239,7 @@ class FlextUtilitiesParser:
                 f"Target {target.__name__} is not a StrEnum",
                 error_code="TARGET_NOT_ENUM",
             )
-        members_proxy = target.__members__ if hasattr(target, "__members__") else {}
+        members_proxy: Mapping[str, T] = target.__members__
         # Convert to dict for easier iteration
         members: Mapping[str, T] = dict(members_proxy)
 
@@ -273,7 +273,7 @@ class FlextUtilitiesParser:
                 return r.ok(member_instance)
 
         target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
-        return r.fail(
+        return r[T].fail(
             f"Cannot parse '{value}' as {target_name}",
         )
 
@@ -325,7 +325,7 @@ class FlextUtilitiesParser:
                 t.ConfigurationMapping,
             ).validate_python(value)
         except ValidationError:
-            return r.fail(
+            return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )
 
@@ -335,7 +335,7 @@ class FlextUtilitiesParser:
             value_dict_data[key] = FlextUtilitiesParser._to_json_value(v)
         scalar_data: dict[str, t.JsonValue] = {}
         for dict_key, dict_value in value_dict_data.items():
-            if dict_value is None or dict_value.__class__ in {
+            if dict_value.__class__ in {
                 str,
                 int,
                 float,
@@ -348,7 +348,7 @@ class FlextUtilitiesParser:
         try:
             return r.ok(target.model_validate(scalar_data, strict=strict))
         except (ValidationError, TypeError, ValueError) as exc:
-            return r.fail(f"Model parse failed: {exc}")
+            return r[TModel].fail(f"Model parse failed: {exc}")
 
     @staticmethod
     def _parse_normalize_compare(a: t.ContainerValue, b: t.ContainerValue) -> bool:
@@ -547,7 +547,7 @@ class FlextUtilitiesParser:
             return r.ok(default)
         if default_factory is not None:
             return r.ok(default_factory())
-        return r.fail(error_msg)
+        return r[T].fail(error_msg)
 
     @staticmethod
     def _safe_text_length(text: t.ContainerValue) -> str | int:
@@ -557,8 +557,9 @@ class FlextUtilitiesParser:
             if text_length_result.is_success:
                 return text_length_result.value
             return "unknown"
+        text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
         try:
-            text_value: str | bytes = TypeAdapter(str | bytes).validate_python(text)
+            text_value: str | bytes = text_adapter.validate_python(text)
         except ValidationError:
             return "unknown"
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
@@ -568,8 +569,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _to_json_value(value: t.ContainerValue) -> t.JsonValue:
-        if value is None or isinstance(value, t.Primitives):
+        if isinstance(value, t.Primitives):
             return value
+        if value is None:
+            return str(value)
         if isinstance(value, (list, tuple)):
             return str(value)
         if isinstance(value, Mapping):
@@ -992,7 +995,7 @@ class FlextUtilitiesParser:
                 return r.ok(default)
             if default_factory is not None:
                 return r.ok(default_factory())
-            return r.fail(field_prefix or "Value is None")
+            return r[T].fail(field_prefix or "Value is None")
 
         if isinstance(value, target):
             return r.ok(value)
@@ -1197,16 +1200,16 @@ class FlextUtilitiesParser:
         elif isinstance(obj, Mapping):
             # After isinstance, obj is Mapping - use directly
             mapping_key = self._extract_key_from_mapping(obj)
-            key = mapping_key if mapping_key is not None else obj.__class__.__name__
+            key = mapping_key.value_or(obj.__class__.__name__)
         # Strategy 3: Try 'name' or 'id' attribute on instances
-        elif (attr_key := self._extract_key_from_attributes(obj)) is not None:
-            key = attr_key
+        elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
+            key = attr_key.value
         # Strategy 4: Try object class name
         elif hasattr(obj, "__class__"):
             key = obj.__class__.__name__
         # Strategy 5: Try str conversion
-        elif (str_key := self._extract_key_from_str_conversion(obj)) is not None:
-            key = str_key
+        elif (str_key := self._extract_key_from_str_conversion(obj)).is_success:
+            key = str_key.value
         # Final fallback: type name
         else:
             key = obj.__class__.__name__

@@ -12,41 +12,12 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine
+from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, m, u
 from flext_infra.constants import c
-from flext_infra.docs.shared import (
-    FlextInfraDocScope,
-    FlextInfraDocsShared,
-)
+from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
-
-
-class GeneratedFile(BaseModel):
-    """Record of a single generated file."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    path: str = Field(..., description="File path.")
-    written: bool = Field(default=False, description="Whether file was written.")
-
-
-class GenerateReport(BaseModel):
-    """Structured generation report for a scope."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    scope: str = Field(..., description="Scope name.")
-    generated: int = Field(default=0, description="Number of files generated.")
-    applied: bool = Field(default=False, description="Whether generation was applied.")
-    source: str = Field(..., description="Source of generated content.")
-    files: list[GeneratedFile] = Field(
-        default_factory=list,
-        description="List of generated files.",
-    )
 
 
 class FlextInfraDocGenerator:
@@ -84,16 +55,16 @@ class FlextInfraDocGenerator:
         content: str,
         *,
         apply: bool,
-    ) -> GeneratedFile:
+    ) -> m.Infra.Docs.GeneratedFile:
         """Write content to path only when changed and apply is True."""
         exists = path.exists()
         current = path.read_text(encoding=c.Infra.Encoding.DEFAULT) if exists else ""
         if current == content:
-            return GeneratedFile(path=path.as_posix(), written=False)
+            return m.Infra.Docs.GeneratedFile(path=path.as_posix(), written=False)
         if apply:
             path.parent.mkdir(parents=True, exist_ok=True)
             _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
-        return GeneratedFile(path=path.as_posix(), written=apply)
+        return m.Infra.Docs.GeneratedFile(path=path.as_posix(), written=apply)
 
     def generate(
         self,
@@ -103,7 +74,7 @@ class FlextInfraDocGenerator:
         projects: str | None = None,
         output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         apply: bool = False,
-    ) -> r[list[GenerateReport]]:
+    ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         """Generate docs across project scopes.
 
         Args:
@@ -124,14 +95,16 @@ class FlextInfraDocGenerator:
             output_dir=output_dir,
         )
         if scopes_result.is_failure:
-            return r[list[GenerateReport]].fail(scopes_result.error or "scope error")
+            return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
+                scopes_result.error or "scope error"
+            )
 
-        reports: list[GenerateReport] = []
+        reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
             report = self._generate_scope(scope, apply=apply, workspace_root=root)
             reports.append(report)
 
-        return r[list[GenerateReport]].ok(reports)
+        return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
     def _build_toc(self, content: str) -> str:
         """Build a markdown TOC from level-2 and level-3 headings."""
@@ -152,16 +125,16 @@ class FlextInfraDocGenerator:
 
     def _generate_project_guides(
         self,
-        scope: FlextInfraDocScope,
+        scope: m.Infra.Docs.FlextInfraDocScope,
         workspace_root: Path,
         *,
         apply: bool,
-    ) -> list[GeneratedFile]:
+    ) -> list[m.Infra.Docs.GeneratedFile]:
         """Copy workspace guides into a project, injecting the project name."""
         source_dir = workspace_root / "docs/guides"
         if not source_dir.exists():
             return []
-        files: list[GeneratedFile] = []
+        files: list[m.Infra.Docs.GeneratedFile] = []
         for source in sorted(source_dir.glob("*.md")):
             rendered = self._project_guide_content(
                 content=source.read_text(encoding=c.Infra.Encoding.DEFAULT),
@@ -179,10 +152,10 @@ class FlextInfraDocGenerator:
 
     def _generate_project_mkdocs(
         self,
-        scope: FlextInfraDocScope,
+        scope: m.Infra.Docs.FlextInfraDocScope,
         *,
         apply: bool,
-    ) -> list[GeneratedFile]:
+    ) -> list[m.Infra.Docs.GeneratedFile]:
         """Generate mkdocs.yml for projects that do not have one yet."""
         mkdocs_path = scope.path / "mkdocs.yml"
         if mkdocs_path.exists():
@@ -220,10 +193,10 @@ class FlextInfraDocGenerator:
 
     def _generate_root_docs(
         self,
-        scope: FlextInfraDocScope,
+        scope: m.Infra.Docs.FlextInfraDocScope,
         *,
         apply: bool,
-    ) -> list[GeneratedFile]:
+    ) -> list[m.Infra.Docs.GeneratedFile]:
         """Generate placeholder docs at the workspace root."""
         changelog = self._update_toc(
             "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n",
@@ -254,11 +227,11 @@ class FlextInfraDocGenerator:
 
     def _generate_scope(
         self,
-        scope: FlextInfraDocScope,
+        scope: m.Infra.Docs.FlextInfraDocScope,
         *,
         apply: bool,
         workspace_root: Path,
-    ) -> GenerateReport:
+    ) -> m.Infra.Docs.DocsPhaseReport:
         """Generate docs for a single scope and write reports."""
         if scope.name == c.Infra.ReportKeys.ROOT:
             files = self._generate_root_docs(scope=scope, apply=apply)
@@ -273,7 +246,7 @@ class FlextInfraDocGenerator:
             source = "workspace-docs-guides"
 
         generated = sum(1 for item in files if item.written)
-        _ = FlextInfraDocsShared.write_json(
+        _ = u.Infra.Io.write_json(
             scope.report_dir / "generate-summary.json",
             {
                 c.Infra.ReportKeys.SUMMARY: {
@@ -308,12 +281,23 @@ class FlextInfraDocGenerator:
             reason=reason,
         )
 
-        return GenerateReport(
+        return m.Infra.Docs.DocsPhaseReport(
+            phase="generate",
             scope=scope.name,
             generated=generated,
             applied=apply,
             source=source,
-            files=files,
+            items=[
+                m.Infra.Docs.DocsPhaseItem(
+                    phase="generate",
+                    path=file.path,
+                    written=file.written,
+                )
+                for file in files
+            ],
+            result=result,
+            reason=reason,
+            passed=apply,
         )
 
     def _project_guide_content(
@@ -371,4 +355,4 @@ class FlextInfraDocGenerator:
         return toc + "\n\n" + content.rstrip() + "\n"
 
 
-__all__ = ["FlextInfraDocGenerator", "GenerateReport", "GeneratedFile"]
+__all__ = ["FlextInfraDocGenerator"]

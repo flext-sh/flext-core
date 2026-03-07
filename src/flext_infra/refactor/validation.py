@@ -7,16 +7,14 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_infra import c, m, p, t, u
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra import c, m, t, u
 
 
 class PostCheckGate:
     """Validate refactor results against policy expectations."""
 
     def __init__(self) -> None:
-        """Initialize gate with a command runner."""
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        """Initialize gate."""
 
     def validate(
         self,
@@ -106,9 +104,8 @@ class PostCheckGate:
 
     def _validate_types(self, file_path: Path) -> list[str]:
         """Check that the file compiles without syntax errors."""
-        result = self._runner.capture(
-            [sys.executable, "-m", "py_compile", str(file_path)],
-        )
+        cmd = [sys.executable, "-m", "py_compile", str(file_path)]
+        result = u.Infra.Refactor.capture_output(cmd)
         if result.is_failure:
             return [f"lsp_diagnostics_clean_failed:{result.error or ''}"]
         return []

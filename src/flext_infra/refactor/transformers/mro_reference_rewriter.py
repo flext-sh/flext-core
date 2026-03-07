@@ -14,7 +14,7 @@ class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):
     def __init__(
         self,
         *,
-        imported_symbols: dict[str, m.Infra.Refactor.MROImportedSymbol],
+        imported_symbols: dict[str, m.Infra.Refactor.MROImportRewrite],
         module_aliases: dict[str, str],
         module_facades: dict[str, str],
         moved_index: dict[str, dict[str, str]],

@@ -115,12 +115,40 @@ class FlextInfraPrWorkspaceManager:
         return workspace_root.name if repo_root == workspace_root else repo_root.name
 
     def checkout_branch(self, repo_root: Path, branch: str) -> r[bool]:
-        """Checkout or create a branch — delegates to the git service."""
-        return self._git.smart_checkout(repo_root, branch)
+        """Checkout a branch with canonical git contract only."""
+        if not branch:
+            return r[bool].ok(True)
+        return self._git.checkout(repo_root, branch)
 
     def checkpoint(self, repo_root: Path, branch: str) -> r[bool]:
-        """Commit and push pending changes — delegates to the git service."""
-        return self._git.checkpoint(repo_root, branch)
+        """Commit and push pending changes without fallback strategies."""
+        changes_result = self._git.has_changes(repo_root)
+        if changes_result.is_failure:
+            return r[bool].fail(changes_result.error or "changes check failed")
+        if not changes_result.value:
+            return r[bool].ok(True)
+
+        add_result = self._git.add(repo_root)
+        if add_result.is_failure:
+            return r[bool].fail(add_result.error or "git add failed")
+
+        staged_result = self._git.diff_names(repo_root, cached=True)
+        if staged_result.is_success and not staged_result.value.strip():
+            return r[bool].ok(True)
+
+        commit_result = self._git.commit(
+            repo_root,
+            "chore: checkpoint pending changes",
+        )
+        if commit_result.is_failure:
+            return r[bool].fail(commit_result.error or "git commit failed")
+
+        return self._git.push(
+            repo_root,
+            remote=c.Infra.Git.ORIGIN if branch else "",
+            branch=branch,
+            set_upstream=bool(branch),
+        )
 
     def has_changes(self, repo_root: Path) -> r[bool]:
         """Check if the repository has uncommitted changes."""

@@ -12,7 +12,6 @@ from pydantic import Field
 from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
-    FlextInfraJsonService,
     FlextInfraPatterns,
     FlextInfraProjectSelector,
     FlextInfraTomlService,
@@ -20,6 +19,7 @@ from flext_infra import (
     m,
     p,
     t,
+    u,
 )
 
 
@@ -51,18 +51,18 @@ class FlextInfraDependencyDetectionModels(m):
     class DeptryIssueGroups(m.ArbitraryTypesModel):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-        dep001: list[t.Infra.IssueMap] = Field(default_factory=list)
-        dep002: list[t.Infra.IssueMap] = Field(default_factory=list)
-        dep003: list[t.Infra.IssueMap] = Field(default_factory=list)
-        dep004: list[t.Infra.IssueMap] = Field(default_factory=list)
+        dep001: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
+        dep002: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
+        dep003: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
+        dep004: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
 
     class DeptryReport(m.ArbitraryTypesModel):
         """Deptry analysis report with missing, unused, transitive, and dev-in-runtime issues."""
 
-        missing: list[t.Infra.InfraValue] = Field(default_factory=list)
-        unused: list[t.Infra.InfraValue] = Field(default_factory=list)
-        transitive: list[t.Infra.InfraValue] = Field(default_factory=list)
-        dev_in_runtime: list[t.Infra.InfraValue] = Field(default_factory=list)
+        missing: list[t.ContainerValue] = Field(default_factory=list)
+        unused: list[t.ContainerValue] = Field(default_factory=list)
+        transitive: list[t.ContainerValue] = Field(default_factory=list)
+        dev_in_runtime: list[t.ContainerValue] = Field(default_factory=list)
         raw_count: int = Field(default=0, ge=0)
 
     class ProjectDependencyReport(m.ArbitraryTypesModel):
@@ -168,7 +168,7 @@ class FlextInfraDependencyDetectionService:
         read_result = self._toml.read(pyproject)
         if read_result.is_failure:
             return []
-        data: t.Infra.TomlMap = read_result.value
+        data: t.Infra.ContainerDict = read_result.value
         if not data:
             return []
 
@@ -277,7 +277,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.InfraValue] = {}
-        toml_data: t.Infra.TomlMap = result.value
+        toml_data: t.Infra.ContainerDict = result.value
         for key, value in toml_data.items():
             converted = _to_infra_value(value)
             if converted is not None or value is None:
@@ -346,13 +346,15 @@ class FlextInfraDependencyDetectionService:
         issues: list[t.Infra.IssueMap] = []
         if out_file.exists():
             raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            empty_list: list[object] = []
-            loaded = (
-                FlextInfraJsonService().loads(raw, empty_list) if raw.strip() else []
+            loaded_result = u.Infra.Io.parse(raw) if raw.strip() else None
+            loaded_payload: t.ContainerValue = (
+                loaded_result.value
+                if loaded_result is not None and loaded_result.is_success
+                else []
             )
-            if isinstance(loaded, list):
+            if isinstance(loaded_payload, list):
                 normalized_issues: list[t.Infra.IssueMap] = []
-                for item in loaded:
+                for item in loaded_payload:
                     if not isinstance(item, dict):
                         continue
                     converted_issue: dict[str, t.Infra.InfraValue] = {}

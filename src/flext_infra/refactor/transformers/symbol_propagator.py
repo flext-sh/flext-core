@@ -45,7 +45,8 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
             )
             next_node = next_node.with_changes(module=next_module)
             self._record_change(
-                f"Renamed import module: {module_name} -> {self._module_renames[module_name]}"
+                f"Renamed import module: {module_name}"
+                f" -> {self._module_renames[module_name]}"
             )
             module_name = self._module_renames[module_name]
 
@@ -79,7 +80,9 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
                 self._local_name_renames[imported_name] = renamed_symbol
 
             self._record_change(
-                f"Renamed imported symbol: {imported_name} -> {renamed_symbol} (local={local_name})"
+                f"Renamed imported symbol:"
+                f" {imported_name} -> {renamed_symbol}"
+                f" (local={local_name})"
             )
 
         if not changed:

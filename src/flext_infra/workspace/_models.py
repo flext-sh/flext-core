@@ -11,7 +11,12 @@ from flext_core import FlextModels
 
 
 class FlextInfraWorkspaceModels:
-    """Models for workspace discovery, sync, and migration."""
+    """Models for workspace discovery, sync, and migration.
+
+    Canonical base policy:
+    - ``ArbitraryTypesModel`` for mutable discovery and migration payloads.
+    - ``FrozenStrictModel`` reserved for immutable workspace config contracts.
+    """
 
     class ProjectInfo(FlextModels.ArbitraryTypesModel):
         """Discovered project metadata for workspace operations."""

@@ -16,16 +16,18 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import cast
 
+from pydantic import TypeAdapter, ValidationError
+
 from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
-    FlextInfraJsonService,
     FlextInfraVersioningService,
     c,
     output,
     p,
     t,
+    u,
 )
 
 
@@ -189,7 +191,7 @@ class FlextInfraPrManager:
         if selector == head:
             pr_result = self.open_pr_for_head(repo_root, head)
             if pr_result.is_success and not pr_result.unwrap():
-                return r[Mapping[str, t.Scalar]].ok({
+                return r[Mapping[str, t.ContainerValue]].ok({
                     c.Infra.ReportKeys.STATUS: "no-open-pr"
                 })
 
@@ -229,7 +231,9 @@ class FlextInfraPrManager:
                     result = self._runner.run(command, cwd=repo_root)
 
         if result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(result.error or "merge failed")
+            return r[Mapping[str, t.ContainerValue]].fail(
+                result.error or "merge failed"
+            )
 
         info: MutableMapping[str, t.ContainerValue] = {
             c.Infra.ReportKeys.STATUS: "merged"
@@ -275,16 +279,25 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].fail(
                 result.error or "failed to list PRs",
             )
-        payload = FlextInfraJsonService().loads(str(result.unwrap()))
-        if payload is None:
-            return r[Mapping[str, t.Scalar]].fail("invalid JSON")
-
-        if not payload:
+        payload_result = u.Infra.Io.parse(str(result.unwrap()))
+        if payload_result.is_failure:
+            return r[Mapping[str, t.Scalar]].fail(
+                payload_result.error or "invalid JSON"
+            )
+        payload = payload_result.value
+        if not isinstance(payload, list) or len(payload) == 0:
             return r[Mapping[str, t.Scalar]].ok({})
         first = payload[0]
         if not isinstance(first, dict):
             return r[Mapping[str, t.Scalar]].ok({})
-        return r[Mapping[str, t.Scalar]].ok(first)
+        try:
+            typed_first = TypeAdapter(dict[str, t.Scalar]).validate_python(
+                first,
+                strict=False,
+            )
+        except ValidationError:
+            return r[Mapping[str, t.Scalar]].ok({})
+        return r[Mapping[str, t.Scalar]].ok(typed_first)
 
     def status(
         self,
@@ -314,7 +327,7 @@ class FlextInfraPrManager:
             "base": base,
             "head": head,
         }
-        pr = cast("Mapping[str, t.Scalar]", pr_result.unwrap())  # type: ignore[redundant-cast]
+        pr = pr_result.unwrap()
         if not pr:
             info[c.Infra.ReportKeys.STATUS] = "no-open-pr"
         else:
@@ -369,7 +382,7 @@ class FlextInfraPrManager:
                 c.Infra.ReportKeys.STATUS: "no-release-tag"
             })
 
-        tag = cast("str", tag_result.unwrap())  # type: ignore[redundant-cast]
+        tag = tag_result.unwrap()
         view_result = self._runner.run(
             [c.Infra.Cli.GH, c.Infra.ReportKeys.RELEASE, c.Infra.Cli.GhCmd.VIEW, tag],
             cwd=repo_root,

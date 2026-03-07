@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 import libcst as cst
-import yaml
 from libcst.metadata import MetadataWrapper
-from pydantic import TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from flext_infra import c, m, t, u
 from flext_infra.refactor.transformers.class_nesting import (
@@ -26,12 +26,14 @@ class PreCheckGate:
     """Validate mapping entries against family-level policy before transforms."""
 
     def __init__(self, policy_path: Path | None = None) -> None:
-        """Initialize pre-check gate with optional policy path."""
+        """Initialize the gate with an optional path to class-policy YAML."""
         self._policy_path = policy_path or Path(__file__).with_name(
             "class-policy-v2.yml"
         )
         self._schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
-        self._policy_by_family = self._load_policy()
+        self._policy_by_family: dict[str, m.Infra.Refactor.ClassNestingPolicy] = (
+            self._load_policy()
+        )
 
     def validate_entry(
         self, entry: t.Infra.StrMap
@@ -54,7 +56,9 @@ class PreCheckGate:
                 c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
                 c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
                 c.Infra.ReportKeys.VIOLATION_TYPE: "unknown_module_family",
-                c.Infra.ReportKeys.SUGGESTED_FIX: f"declare explicit policy for {module_family}",
+                c.Infra.ReportKeys.SUGGESTED_FIX: (
+                    f"declare explicit policy for {module_family}"
+                ),
             }
 
         operation = (
@@ -62,122 +66,83 @@ class PreCheckGate:
             if helper_symbol
             else c.Infra.ReportKeys.CLASS_NESTING
         )
-        allowed_operations = u.Infra.Refactor.string_list(
-            policy.get("allowed_operations")
-        )
-        if operation not in allowed_operations:
+        if operation not in policy.allowed_operations:
             return False, {
                 c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
                 c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
                 c.Infra.ReportKeys.VIOLATION_TYPE: "operation_not_allowed",
-                c.Infra.ReportKeys.SUGGESTED_FIX: f"allow {operation} in policy for {module_family}",
+                c.Infra.ReportKeys.SUGGESTED_FIX: (
+                    f"allow {operation} in policy for {module_family}"
+                ),
             }
 
-        forbidden_operations = u.Infra.Refactor.string_list(
-            policy.get("forbidden_operations")
-        )
-        if operation in forbidden_operations:
+        if operation in policy.forbidden_operations:
             return False, {
                 c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
                 c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
                 c.Infra.ReportKeys.VIOLATION_TYPE: "operation_forbidden",
-                c.Infra.ReportKeys.SUGGESTED_FIX: f"remove {operation} from forbidden_operations for {module_family}",
+                c.Infra.ReportKeys.SUGGESTED_FIX: (
+                    f"remove {operation} from forbidden_operations for {module_family}"
+                ),
             }
 
-        forbidden_targets = u.Infra.Refactor.string_list(
-            policy.get(c.Infra.ReportKeys.FORBIDDEN_TARGETS)
-        )
         if any(
             self._target_matches(target_namespace, pattern)
-            for pattern in forbidden_targets
+            for pattern in policy.forbidden_targets
         ):
             return False, {
                 c.Infra.ReportKeys.RULE_ID: f"precheck:{symbol}",
                 c.Infra.ReportKeys.SOURCE_SYMBOL: symbol,
                 c.Infra.ReportKeys.VIOLATION_TYPE: "forbidden_target",
-                c.Infra.ReportKeys.SUGGESTED_FIX: f"choose allowed target for family {module_family}",
+                c.Infra.ReportKeys.SUGGESTED_FIX: (
+                    f"choose allowed target for family {module_family}"
+                ),
             }
         return True, None
 
-    def _load_policy(self) -> dict[str, t.Infra.ContainerDict]:
+    def _load_policy(
+        self,
+    ) -> dict[str, m.Infra.Refactor.ClassNestingPolicy]:
+        """Load and validate per-family policy from YAML."""
         try:
-            loaded_raw = yaml.safe_load(
-                self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            )
-        except (OSError, yaml.YAMLError):
+            loaded = u.Infra.Yaml.safe_load_yaml(self._policy_path)
+        except (OSError, TypeError):
             return {}
-        try:
-            loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                loaded_raw
-            )
-        except ValidationError:
-            return {}
-        if not self._schema_valid(loaded):
+        if not self._schema_valid(dict(loaded.items())):
             return {}
         policy_matrix = u.Infra.Refactor.mapping_list(loaded.get("policy_matrix"))
 
-        by_family: dict[str, t.Infra.ContainerDict] = {}
+        by_family: dict[str, m.Infra.Refactor.ClassNestingPolicy] = {}
         for raw in policy_matrix:
-            family_name = raw.get("family_name")
-            if not isinstance(family_name, str):
+            try:
+                policy = m.Infra.Refactor.ClassNestingPolicy.model_validate(raw)
+            except ValidationError:
                 continue
-            forbidden_targets = u.Infra.Refactor.string_list(
-                raw.get(c.Infra.ReportKeys.FORBIDDEN_TARGETS)
-            )
-
-            allowed_operations = u.Infra.Refactor.string_list(
-                raw.get("allowed_operations")
-            )
-
-            forbidden_operations = u.Infra.Refactor.string_list(
-                raw.get("forbidden_operations")
-            )
-
-            validation_requirements = raw.get("validation_requirements")
-            by_family[family_name] = {
-                "family_name": family_name,
-                "allowed_operations": allowed_operations,
-                "forbidden_operations": forbidden_operations,
-                c.Infra.ReportKeys.FORBIDDEN_TARGETS: forbidden_targets,
-                "validation_requirements": validation_requirements or {},
-            }
+            by_family[policy.family_name] = policy
         return by_family
 
-    def _schema_valid(self, loaded: t.Infra.ContainerDict) -> bool:
+    def _schema_valid(self, loaded: dict[str, t.ContainerValue]) -> bool:
         schema_result = u.Infra.Io.read_json(self._schema_path)
         if schema_result.is_failure:
             return False
-        schema_raw = schema_result.value
-        try:
-            schema = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                schema_raw
-            )
-        except ValidationError:
-            return False
-
+        raw_schema: Mapping[str, t.ContainerValue] = schema_result.value
+        schema: dict[str, t.ContainerValue] = dict(raw_schema.items())
         top_required = u.Infra.Refactor.string_list(schema.get("required", []))
         if not self._has_required_fields(loaded, top_required):
             return False
 
         definitions_raw = schema.get("definitions", {})
-        try:
-            definitions = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                definitions_raw
-            )
-        except ValidationError:
+        if not isinstance(definitions_raw, dict):
             return False
 
-        policy_entry_raw = definitions.get("policyEntry", {})
-        class_rule_raw = definitions.get("classRule", {})
-        try:
-            policy_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                policy_entry_raw
-            )
-            class_rule = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                class_rule_raw
-            )
-        except ValidationError:
+        policy_entry_raw = definitions_raw.get("policyEntry", {})
+        class_rule_raw = definitions_raw.get("classRule", {})
+        if not isinstance(policy_entry_raw, dict):
             return False
+        if not isinstance(class_rule_raw, dict):
+            return False
+        policy_entry = policy_entry_raw
+        class_rule = class_rule_raw
 
         policy_entry_required = u.Infra.Refactor.string_list(
             policy_entry.get("required", [])
@@ -388,15 +353,11 @@ class ClassNestingRefactorRule:
         if self._cached_config is not None:
             return self._cached_config
 
-        raw = self._config_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        loaded_raw = yaml.safe_load(raw)
         try:
-            loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                loaded_raw
-            )
-        except ValidationError:
+            loaded = u.Infra.Yaml.safe_load_yaml(self._config_path)
+        except (OSError, TypeError) as exc:
             msg = "invalid class nesting mapping config"
-            raise ValueError(msg) from None
+            raise ValueError(msg) from exc
 
         config: t.Infra.RuleConfig = {}
         confidence_threshold = loaded.get("confidence_threshold")
@@ -671,60 +632,42 @@ class ClassNestingRefactorRule:
 
     def _load_policy_document(self) -> t.Infra.ContainerDict:
         try:
-            loaded_raw = yaml.safe_load(
-                self._policy_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            )
-        except (OSError, yaml.YAMLError):
+            loaded = u.Infra.Yaml.safe_load_yaml(self._policy_path)
+        except (OSError, TypeError) as exc:
             msg = f"failed to read policy document: {self._policy_path}"
-            raise ValueError(msg) from None
-        try:
-            loaded = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                loaded_raw
-            )
-        except ValidationError:
-            msg = "policy document must be a mapping"
-            raise ValueError(msg) from None
-        if not self._policy_document_schema_valid(loaded):
+            raise ValueError(msg) from exc
+        loaded_dict = dict(loaded.items())
+        if not self._policy_document_schema_valid(loaded_dict):
             msg = "policy document failed schema validation"
             raise ValueError(msg)
-        return loaded
+        return loaded_dict
 
-    def _policy_document_schema_valid(self, loaded: t.Infra.ContainerDict) -> bool:
+    def _policy_document_schema_valid(
+        self, loaded: dict[str, t.ContainerValue]
+    ) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
         schema_result = u.Infra.Io.read_json(schema_path)
         if schema_result.is_failure:
             return False
-        schema_raw = schema_result.value
-        try:
-            schema = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                schema_raw
-            )
-        except ValidationError:
-            return False
+        raw_schema: Mapping[str, t.ContainerValue] = schema_result.value
+        schema: dict[str, t.ContainerValue] = dict(raw_schema.items())
 
         top_required = u.Infra.Refactor.string_list(schema.get("required", []))
         if not self._has_required_fields(loaded, top_required):
             return False
 
         definitions_raw = schema.get("definitions", {})
-        try:
-            definitions = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                definitions_raw
-            )
-        except ValidationError:
+        if not isinstance(definitions_raw, dict):
             return False
 
-        policy_entry_raw = definitions.get("policyEntry", {})
-        class_rule_raw = definitions.get("classRule", {})
-        try:
-            policy_entry = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                policy_entry_raw
-            )
-            class_rule = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                class_rule_raw
-            )
-        except ValidationError:
+        policy_entry_raw = definitions_raw.get("policyEntry", {})
+        class_rule_raw = definitions_raw.get("classRule", {})
+        if not isinstance(policy_entry_raw, dict):
             return False
+        if not isinstance(class_rule_raw, dict):
+            return False
+        policy_entry = policy_entry_raw
+        class_rule = class_rule_raw
 
         policy_entry_required = u.Infra.Refactor.string_list(
             policy_entry.get("required", [])
@@ -826,7 +769,9 @@ class ClassNestingRefactorRule:
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
-                f"Applied FlextInfraRefactorClassNestingTransformer ({len(mappings)} mappings)"
+                "Applied FlextInfraRefactorClass"
+                "NestingTransformer"
+                f" ({len(mappings)} mappings)"
             )
         return updated_tree
 
@@ -872,6 +817,7 @@ class ClassNestingRefactorRule:
         return updated_tree
 
     def _policy_context_from_document(self) -> t.Infra.PolicyContext:
+        """Load and cache per-family policy from YAML."""
         if self._cached_policy_context is not None:
             return self._cached_policy_context
 

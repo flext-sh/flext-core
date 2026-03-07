@@ -9,11 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
-
-from pydantic import BaseModel
 
 from flext_core import r, t
 from flext_infra.json_io import FlextInfraJsonService
@@ -51,7 +48,7 @@ class FlextInfraUtilitiesIo:
     @staticmethod
     def write_json(
         path: Path,
-        payload: BaseModel | t.ConfigurationMapping,
+        payload: t.ContainerValue,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -79,23 +76,25 @@ class FlextInfraUtilitiesIo:
         )
 
     @staticmethod
-    def as_toml_mapping(
-        value: object,
-    ) -> MutableMapping[str, object] | None:
-        """Check if value is a MutableMapping and return it, otherwise None.
+    def parse(text: str) -> r[t.ContainerValue]:
+        """Parse a JSON string via canonical infra JSON service."""
+        return FlextInfraJsonService().parse(text)
 
-        Helper for TOML serialization that detects nested table structures.
-
-        Args:
-            value: Value to check for mapping nature.
-
-        Returns:
-            The value as MutableMapping if it is one, otherwise None.
-
-        """
-        if isinstance(value, MutableMapping):
-            return cast("MutableMapping[str, object]", value)
-        return None
+    @staticmethod
+    def serialize(
+        data: t.ContainerValue,
+        *,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+        indent: int | None = 2,
+    ) -> r[str]:
+        """Serialize a JSON-compatible value via canonical infra JSON service."""
+        return FlextInfraJsonService().serialize(
+            data,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+            indent=indent,
+        )
 
 
 __all__ = ["FlextInfraUtilitiesIo"]

@@ -174,15 +174,11 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                             matched = True
                         continue
 
-                    regex_raw = pattern.get("regex")
-                    regex = regex_raw if isinstance(regex_raw, str) else None
+                    regex = pattern.regex
                     if regex and re.match(regex, method.name):
                         matched = True
 
-                    decorators_raw = pattern.get("decorators")
-                    pattern_decorators: list[str] = []
-                    if isinstance(decorators_raw, list):
-                        pattern_decorators = decorators_raw
+                    pattern_decorators = pattern.decorators
                     if pattern_decorators and decorators.intersection(
                         pattern_decorators
                     ):

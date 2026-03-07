@@ -11,11 +11,10 @@ from pathlib import Path
 from typing import override
 
 import libcst as cst
-import yaml
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, t, u
+from flext_infra import c, m, u
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
 
@@ -97,7 +96,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
 
         scanner = FlextInfraRefactorLooseClassScanner()
         mapping_result = cls._load_mapping_index()
-        empty: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMappingEntry] = {}
+        empty: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping] = {}
         mapping_index = mapping_result.value if mapping_result.is_success else empty
         confidence_counts: Counter[str] = Counter()
         per_file_counts: Counter[str] = Counter()
@@ -108,12 +107,13 @@ class FlextInfraRefactorClassNestingAnalyzer:
             if scan_result.is_failure:
                 continue
             raw_violations = scan_result.value.get(c.Infra.ReportKeys.VIOLATIONS, [])
-            try:
-                parsed_violations = TypeAdapter(
-                    list[m.Infra.Refactor.LooseClassViolation]
-                ).validate_python(raw_violations)
-            except ValidationError:
+            if not isinstance(raw_violations, list):
                 continue
+            parsed_violations: list[m.Infra.Refactor.LooseClassViolation] = [
+                v
+                for v in raw_violations
+                if isinstance(v, m.Infra.Refactor.LooseClassViolation)
+            ]
 
             for parsed_violation in parsed_violations:
                 normalized_file = cls._normalize_module_path(parsed_violation.file)
@@ -132,7 +132,9 @@ class FlextInfraRefactorClassNestingAnalyzer:
                 if mapped_entry is not None:
                     target_namespace = mapped_entry.target_namespace
                     confidence = mapped_entry.confidence
-                    rewrite_scope = mapped_entry.rewrite_scope
+                    rewrite_scope = cls._normalize_rewrite_scope(
+                        mapped_entry.rewrite_scope
+                    )
                 elif parsed_violation.expected_prefix:
                     target_namespace = parsed_violation.expected_prefix
 
@@ -152,7 +154,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
         return m.Infra.Refactor.ClassNestingReport(
             violations_count=len(violations),
             confidence_counts=dict(confidence_counts),
-            violations=[item.model_dump(mode="json") for item in violations],
+            violations=violations,
             per_file_counts=dict(per_file_counts),
         )
 
@@ -198,28 +200,17 @@ class FlextInfraRefactorClassNestingAnalyzer:
     @classmethod
     def _load_mapping_index(
         cls,
-    ) -> r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMappingEntry]]:
+    ) -> r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]]:
         mapping_path = (
             Path(__file__).resolve().parent / c.Infra.Refactor.MAPPINGS_RELATIVE_PATH
         )
         try:
-            raw = mapping_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            parsed = yaml.safe_load(raw)
-        except (OSError, yaml.YAMLError) as exc:
+            typed_doc = u.Infra.Yaml.safe_load_yaml(mapping_path)
+        except (OSError, TypeError) as exc:
             return r[
                 dict[
                     tuple[str, str],
-                    m.Infra.Refactor.ClassNestingMappingEntry,
-                ]
-            ].fail(str(exc))
-
-        try:
-            typed_doc = TypeAdapter(dict[str, t.ContainerValue]).validate_python(parsed)
-        except ValidationError as exc:
-            return r[
-                dict[
-                    tuple[str, str],
-                    m.Infra.Refactor.ClassNestingMappingEntry,
+                    m.Infra.Refactor.ClassNestingMapping,
                 ]
             ].fail(str(exc))
 
@@ -228,39 +219,43 @@ class FlextInfraRefactorClassNestingAnalyzer:
             return r[
                 dict[
                     tuple[str, str],
-                    m.Infra.Refactor.ClassNestingMappingEntry,
+                    m.Infra.Refactor.ClassNestingMapping,
                 ]
             ].ok({})
 
         try:
             entries = TypeAdapter(
-                list[m.Infra.Refactor.ClassNestingMappingRecord]
+                list[m.Infra.Refactor.ClassNestingMapping]
             ).validate_python(raw_nesting)
         except ValidationError as exc:
             return r[
                 dict[
                     tuple[str, str],
-                    m.Infra.Refactor.ClassNestingMappingEntry,
+                    m.Infra.Refactor.ClassNestingMapping,
                 ]
             ].fail(str(exc))
 
         index: dict[
             tuple[str, str],
-            m.Infra.Refactor.ClassNestingMappingEntry,
+            m.Infra.Refactor.ClassNestingMapping,
         ] = {}
         for entry in entries:
             scope = cls._normalize_rewrite_scope(entry.rewrite_scope)
             norm = cls._normalize_module_path(entry.current_file)
-            index[norm, entry.loose_name] = m.Infra.Refactor.ClassNestingMappingEntry(
+            index[norm, entry.loose_name] = m.Infra.Refactor.ClassNestingMapping(
+                loose_name=entry.loose_name,
+                current_file=entry.current_file,
                 target_namespace=entry.target_namespace,
                 confidence=entry.confidence,
                 rewrite_scope=scope,
+                target_name=entry.target_name,
+                reason=entry.reason,
             )
 
         return r[
             dict[
                 tuple[str, str],
-                m.Infra.Refactor.ClassNestingMappingEntry,
+                m.Infra.Refactor.ClassNestingMapping,
             ]
         ].ok(index)
 
@@ -343,7 +338,7 @@ class FlextInfraRefactorViolationAnalyzer:
         ranked_files.sort(key=itemgetter(1), reverse=True)
 
         hottest_files = [
-            m.Infra.Refactor.ViolationTopFile(
+            m.Infra.Refactor.ViolationAnalysisReport.TopFileSection(
                 file=file_name,
                 total=total,
                 counts=counts,
@@ -353,19 +348,17 @@ class FlextInfraRefactorViolationAnalyzer:
 
         helper_report = m.Infra.Refactor.HelperClassificationReport(
             totals=dict(helper_totals),
-            suggestions=[item.model_dump(mode="json") for item in helper_suggestions],
-            manual_review=[
-                item.model_dump(mode="json") for item in helper_manual_review
-            ],
+            suggestions=helper_suggestions,
+            manual_review=helper_manual_review,
         )
 
         return m.Infra.Refactor.ViolationAnalysisReport(
             totals=dict(totals),
             files=per_file,
-            top_files=[item.model_dump(mode="json") for item in hottest_files],
+            top_files=hottest_files,
             files_scanned=len(files),
-            helper_classification=helper_report.model_dump(mode="json"),
-            class_nesting=class_nesting.model_dump(mode="json"),
+            helper_classification=helper_report,
+            class_nesting=class_nesting,
         )
 
     @classmethod
@@ -491,10 +484,11 @@ class FlextInfraRefactorViolationAnalyzer:
                 for category in c.Infra.Refactor.CLASSIFICATION_PRIORITY
                 if category in matched_categories
             ]
+            cats = ", ".join(sorted(matched_categories))
             return (
                 ordered[0],
                 True,
-                f"Cross-cutting concerns detected: {', '.join(sorted(matched_categories))}",
+                f"Cross-cutting concerns detected: {cats}",
             )
 
         if len(matched_categories) == 1:

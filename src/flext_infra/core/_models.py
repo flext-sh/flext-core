@@ -8,7 +8,12 @@ from flext_core import FlextModels
 
 
 class FlextInfraCoreModels:
-    """Models for core infrastructure services (subprocess, validation)."""
+    """Models for core infrastructure services (subprocess, validation).
+
+    Canonical base policy:
+    - ``ArbitraryTypesModel`` for mutable report/result payloads.
+    - ``FrozenStrictModel`` reserved for immutable settings/config contracts.
+    """
 
     class CommandOutput(FlextModels.ArbitraryTypesModel):
         """Standardized subprocess output payload."""

@@ -728,9 +728,7 @@ class TestFlextInfraReleaseOrchestrator:
             "flext_infra.release.orchestrator.FlextInfraGitService"
         ) as mock_git_cls:
             mock_git_inst = mock_git_cls.return_value
-            mock_git_inst.collect_changes.return_value = r[str].ok(
-                "- abc1234 fix: bug (author)"
-            )
+            mock_git_inst.log.return_value = r[str].ok("- abc1234 fix: bug (author)")
             result = orchestrator._collect_changes(workspace_root, "v0.9.0", "v1.0.0")
             assert result.is_success
 
@@ -741,7 +739,7 @@ class TestFlextInfraReleaseOrchestrator:
             "flext_infra.release.orchestrator.FlextInfraGitService"
         ) as mock_git_cls:
             mock_git_inst = mock_git_cls.return_value
-            mock_git_inst.collect_changes.return_value = r[str].fail("git error")
+            mock_git_inst.log.return_value = r[str].fail("git error")
             result = orchestrator._collect_changes(workspace_root, "", "HEAD")
             assert result.is_failure
 
@@ -797,7 +795,8 @@ class TestFlextInfraReleaseOrchestrator:
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch("flext_infra.release.orchestrator.FlextInfraGitService") as mock_git:
             mock_git_inst = mock_git.return_value
-            mock_git_inst.create_tag_if_missing.return_value = r[bool].ok(True)
+            mock_git_inst.tag_exists.return_value = r[bool].ok(False)
+            mock_git_inst.create_tag.return_value = r[bool].ok(True)
             result = orchestrator._create_tag(workspace_root, "v1.0.0")
             assert result.is_success
 
@@ -806,7 +805,7 @@ class TestFlextInfraReleaseOrchestrator:
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch("flext_infra.release.orchestrator.FlextInfraGitService") as mock_git:
             mock_git_inst = mock_git.return_value
-            mock_git_inst.create_tag_if_missing.return_value = r[bool].ok(True)
+            mock_git_inst.tag_exists.return_value = r[bool].ok(True)
             result = orchestrator._create_tag(workspace_root, "v1.0.0")
             assert result.is_success
 
@@ -1334,7 +1333,7 @@ class TestFlextInfraReleaseOrchestratorChangeCollection:
         (workspace_root / ".git").mkdir()
         with patch("flext_infra.release.orchestrator.FlextInfraGitService") as mock_git:
             mock_git_instance = mock_git.return_value
-            mock_git_instance.collect_changes.return_value = r[str].ok(
+            mock_git_instance.log.return_value = r[str].ok(
                 "- abc1234 Fix bug (Alice)\n- def5678 Add feature (Bob)\n"
             )
             result = orchestrator._collect_changes(workspace_root, "v0.9.0", "v1.0.0")
