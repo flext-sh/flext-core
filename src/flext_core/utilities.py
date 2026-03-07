@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import overload
 
 from flext_core import FlextRuntime, p, r, t
 from flext_core._utilities.args import FlextUtilitiesArgs
@@ -307,66 +306,13 @@ class FlextUtilities:
     fields_multi = staticmethod(FlextUtilitiesMapper.fields_multi)
     filter_dict = staticmethod(FlextUtilitiesMapper.filter_dict)
 
-    # get - with overloads for proper type inference
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-    ) -> t.ContainerValue | None: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: str,
-    ) -> str: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: bool,
-    ) -> bool: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: int,
-    ) -> int: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: float,
-    ) -> float: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: t.ContainerValue | None,
-    ) -> t.ContainerValue | None: ...
-
     @staticmethod
     def get(
         data: p.AccessibleData,
         key: str,
         *,
         default: t.ContainerValue | None = None,
-    ) -> t.ContainerValue | None:
+    ) -> t.ContainerValue:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)
 

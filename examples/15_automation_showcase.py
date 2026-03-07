@@ -378,7 +378,7 @@ class AutomationService(s[m.ConfigMap]):
                 },
             )
             records = u.get(task_data, "records_processed", default=0) or 0
-            if u.guard(records, int, return_value=True) is None or records == 0:
+            if isinstance(u.guard(records, int, return_value=True), r) or records == 0:
                 msg = "No records to process"
                 raise ValueError(msg)
             return task_data

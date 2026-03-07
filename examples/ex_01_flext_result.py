@@ -163,12 +163,19 @@ class Ex01FlextResult(Examples):
         self.check("safe.success.unwrap_or", safe_ok.unwrap_or(0))
         self.check("safe.failure.error", safe_fail.error)
 
+        def func_fail() -> str | None:
+            msg = "callable failed"
+            raise RuntimeError(msg)
+
+        def func_none() -> str | None:
+            return None
+
         callable_ok = r[str].create_from_callable(lambda: "created")
         callable_fail = r[str].create_from_callable(
-            lambda: (_ for _ in ()).throw(RuntimeError("callable failed")),
+            func_fail,
             error_code="E_CALL",
         )
-        callable_none = r[str].create_from_callable(lambda: None, error_code="E_NONE")
+        callable_none = r[str].create_from_callable(func_none, error_code="E_NONE")
         self.check("create_from_callable.success", callable_ok.unwrap_or("fallback"))
         self.check("create_from_callable.failure.code", callable_fail.error_code)
         self.check("create_from_callable.none.error", callable_none.error)
@@ -197,7 +204,7 @@ class Ex01FlextResult(Examples):
 
         self.check("unwrap.success", success.unwrap())
         try:
-            failure.unwrap()
+            _ = failure.unwrap()
             self.check("unwrap.failure.raises", False)
         except RuntimeError as exc:
             self.check("unwrap.failure.raises", True)

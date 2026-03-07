@@ -270,7 +270,7 @@ class TestuTypeChecker:
     def test_check_object_type_compatibility_non_object(self) -> None:
         """Test _check_object_type_compatibility with non-object type."""
         result = u.Checker._check_object_type_compatibility(str)
-        assert result is None
+        assert result is False
 
     def test_check_dict_compatibility_both_dict(self) -> None:
         """Test _check_dict_compatibility with both types being dict."""
@@ -300,7 +300,7 @@ class TestuTypeChecker:
     def test_check_dict_compatibility_non_dict(self) -> None:
         """Test _check_dict_compatibility with non-dict types."""
         result = u.Checker._check_dict_compatibility(str, int, str, int)
-        assert result is None
+        assert result is False
 
     def test_extract_generic_message_types_flext_handlers(self) -> None:
         """Test _extract_generic_message_types with h base."""
@@ -330,23 +330,25 @@ class TestuTypeChecker:
 
     def test_extract_message_type_from_handle_with_annotation(self) -> None:
         """Test _extract_message_type_from_handle with type annotation."""
-        types = u.Checker._extract_message_type_from_handle(
+        message_type_result = u.Checker._extract_message_type_from_handle(
             ExplicitTypeHandler,
         )
-        assert types is str
+        assert message_type_result.is_success
+        assert message_type_result.value is str
 
     def test_extract_message_type_from_handle_no_handle_method(self) -> None:
         """Test _extract_message_type_from_handle without handle method."""
-        types = u.Checker._extract_message_type_from_handle(NoHandleMethod)
-        assert types is None
+        message_type_result = u.Checker._extract_message_type_from_handle(
+            NoHandleMethod
+        )
+        assert message_type_result.is_failure
 
     def test_extract_message_type_from_handle_non_callable(self) -> None:
         """Test _extract_message_type_from_handle with non-callable handle."""
-        types = u.Checker._extract_message_type_from_handle(
+        message_type_result = u.Checker._extract_message_type_from_handle(
             NonCallableHandle,
         )
-        # Should return None or handle gracefully
-        assert types is None or isinstance(types, str)
+        assert message_type_result.is_failure
 
     def test_get_method_signature_valid_callable(self) -> None:
         """Test _get_method_signature with valid callable."""

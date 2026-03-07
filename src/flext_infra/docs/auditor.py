@@ -34,13 +34,13 @@ class FlextInfraDocAuditor:
     """
 
     @staticmethod
-    def _is_external(target: str) -> bool:
+    def is_external(target: str) -> bool:
         """Return True when target points outside the repository."""
         lower = target.strip().lower().lstrip("<")
         return lower.startswith(("http://", "https://", "mailto:", "tel:", "data:"))
 
     @staticmethod
-    def _load_audit_budgets(root: Path) -> tuple[int | None, Mapping[str, int]]:
+    def load_audit_budgets(root: Path) -> tuple[int | None, Mapping[str, int]]:
         """Load audit issue budgets from architecture config."""
         config_path: Path | None = None
         for candidate in [root, *root.parents]:
@@ -81,7 +81,7 @@ class FlextInfraDocAuditor:
         return None, by_scope
 
     @staticmethod
-    def _normalize_link(target: str) -> str:
+    def normalize_link(target: str) -> str:
         """Strip fragment and query-string from a markdown link target."""
         value = target.strip()
         if value.startswith("<") and value.endswith(">"):
@@ -89,7 +89,7 @@ class FlextInfraDocAuditor:
         return value.split("#", maxsplit=1)[0].split("?", maxsplit=1)[0]
 
     @staticmethod
-    def _should_skip_target(raw: str, target: str) -> bool:
+    def should_skip_target(raw: str, target: str) -> bool:
         """Return whether link text should be ignored as a non-path target."""
         if target.startswith("http"):
             return False
@@ -98,7 +98,7 @@ class FlextInfraDocAuditor:
         return bool(" " in raw and ".md" not in raw and "/" not in raw)
 
     @staticmethod
-    def _to_markdown(
+    def to_markdown(
         scope: m.Infra.Docs.FlextInfraDocScope,
         issues: list[m.Infra.Docs.AuditIssue],
     ) -> list[str]:
@@ -153,10 +153,10 @@ class FlextInfraDocAuditor:
                 scopes_result.error or "scope error"
             )
 
-        default_budget, by_scope_budget = self._load_audit_budgets(root)
+        default_budget, by_scope_budget = self.load_audit_budgets(root)
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
-            report = self._audit_scope(
+            report = self.audit_scope(
                 scope,
                 check=check,
                 strict=strict,
@@ -167,7 +167,7 @@ class FlextInfraDocAuditor:
 
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
-    def _audit_scope(
+    def audit_scope(
         self,
         scope: m.Infra.Docs.FlextInfraDocScope,
         *,
@@ -183,9 +183,9 @@ class FlextInfraDocAuditor:
 
         issues: list[m.Infra.Docs.AuditIssue] = []
         if "links" in checks:
-            issues.extend(self._broken_link_issues(scope))
+            issues.extend(self.broken_link_issues(scope))
         if "forbidden-terms" in checks:
-            issues.extend(self._forbidden_term_issues(scope))
+            issues.extend(self.forbidden_term_issues(scope))
 
         # Write reports
         summary: Mapping[str, t.ContainerValue] = {
@@ -214,7 +214,7 @@ class FlextInfraDocAuditor:
         )
         _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "audit-report.md",
-            self._to_markdown(scope, issues),
+            self.to_markdown(scope, issues),
         )
 
         # Determine pass/fail
@@ -256,7 +256,7 @@ class FlextInfraDocAuditor:
             message=f"issues: {len(issues)}",
         )
 
-    def _broken_link_issues(
+    def broken_link_issues(
         self,
         scope: m.Infra.Docs.FlextInfraDocScope,
     ) -> list[m.Infra.Docs.AuditIssue]:
@@ -277,14 +277,10 @@ class FlextInfraDocAuditor:
                     continue
                 clean_line = FlextInfraPatterns.INLINE_CODE_RE.sub("", line)
                 for raw in FlextInfraPatterns.MARKDOWN_LINK_URL_RE.findall(clean_line):
-                    target = self._normalize_link(raw)
-                    if (
-                        not target
-                        or target.startswith("#")
-                        or self._is_external(target)
-                    ):
+                    target = self.normalize_link(raw)
+                    if not target or target.startswith("#") or self.is_external(target):
                         continue
-                    if self._should_skip_target(raw, target):
+                    if self.should_skip_target(raw, target):
                         continue
                     path = (md_file.parent / target).resolve()
                     if not path.exists():
@@ -298,7 +294,7 @@ class FlextInfraDocAuditor:
                         )
         return issues
 
-    def _forbidden_term_issues(
+    def forbidden_term_issues(
         self,
         scope: m.Infra.Docs.FlextInfraDocScope,
     ) -> list[m.Infra.Docs.AuditIssue]:

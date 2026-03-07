@@ -145,12 +145,12 @@ class TestDiscoverProjects:
     def test_success(self, tmp_path: Path) -> None:
         """Test discovering projects successfully."""
         service = FlextInfraDependencyDetectionService()
-        service._selector = Mock()
+        service.selector = Mock()
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
         (proj.path / "pyproject.toml").write_text("")
-        service._selector.resolve_projects.return_value = r[list[t.Any]].ok([proj])
+        service.selector.resolve_projects.return_value = r[list[t.Any]].ok([proj])
         result = service.discover_projects(tmp_path)
         assert result.is_success
         assert len(result.value) == 1
@@ -158,19 +158,19 @@ class TestDiscoverProjects:
     def test_failure(self, tmp_path: Path) -> None:
         """Test discovery failure."""
         service = FlextInfraDependencyDetectionService()
-        service._selector = Mock()
-        service._selector.resolve_projects.return_value = r[list[t.Any]].fail("failed")
+        service.selector = Mock()
+        service.selector.resolve_projects.return_value = r[list[t.Any]].fail("failed")
         result = service.discover_projects(tmp_path)
         assert result.is_failure
 
     def test_filters_without_pyproject(self, tmp_path: Path) -> None:
         """Test projects without pyproject.toml are filtered out."""
         service = FlextInfraDependencyDetectionService()
-        service._selector = Mock()
+        service.selector = Mock()
         proj = Mock()
         proj.path = tmp_path / "no-pyproject"
         proj.path.mkdir()
-        service._selector.resolve_projects.return_value = r[list[t.Any]].ok([proj])
+        service.selector.resolve_projects.return_value = r[list[t.Any]].ok([proj])
         result = service.discover_projects(tmp_path)
         assert result.is_success
         assert len(result.value) == 0
@@ -182,7 +182,7 @@ class TestRunDeptry:
     def test_success_with_issues(self, tmp_path: Path) -> None:
         """Test deptry run with JSON output."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
@@ -196,7 +196,7 @@ class TestRunDeptry:
         )
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
         assert result.is_success
         issues, exit_code = result.value
@@ -217,20 +217,20 @@ class TestRunDeptry:
     def test_runner_failure(self, tmp_path: Path) -> None:
         """Test deptry runner failure."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-        service._runner.run_raw.return_value = r[Mock].fail("deptry crash")
+        service.runner.run_raw.return_value = r[Mock].fail("deptry crash")
         result = service.run_deptry(project, venv_bin)
         assert result.is_failure
 
     def test_invalid_json_output(self, tmp_path: Path) -> None:
         """Test deptry with invalid JSON in output file."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
@@ -241,7 +241,7 @@ class TestRunDeptry:
         out_file.write_text("not valid json")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
         assert result.is_success
         assert result.value == ([], 0)
@@ -249,7 +249,7 @@ class TestRunDeptry:
     def test_empty_json_output(self, tmp_path: Path) -> None:
         """Test deptry with empty JSON output file."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
@@ -260,7 +260,7 @@ class TestRunDeptry:
         out_file.write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
         assert result.is_success
         assert result.value == ([], 0)
@@ -268,7 +268,7 @@ class TestRunDeptry:
     def test_with_extend_exclude(self, tmp_path: Path) -> None:
         """Test deptry with extend_exclude option."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
@@ -276,14 +276,14 @@ class TestRunDeptry:
         (project / "pyproject.toml").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, extend_exclude=["tests", "docs"])
         assert result.is_success
 
     def test_cleanup_temp_file(self, tmp_path: Path) -> None:
         """Test deptry cleans up temp JSON file when no explicit path given."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
@@ -295,7 +295,7 @@ class TestRunDeptry:
         default_out.write_text("[]")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin)
         assert result.is_success
         # File should be cleaned up (no explicit json_output_path)
@@ -317,7 +317,7 @@ class TestRunPipCheck:
     def test_success_with_output(self, tmp_path: Path) -> None:
         """Test pip check with conflict output."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
@@ -325,7 +325,7 @@ class TestRunPipCheck:
         cmd_out = Mock(
             exit_code=1, stdout="pkg1 has requirement\npkg2 conflict\n", stderr=""
         )
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
         assert result.is_success
         lines, exit_code = result.value
@@ -335,24 +335,24 @@ class TestRunPipCheck:
     def test_runner_failure(self, tmp_path: Path) -> None:
         """Test pip check runner failure."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
-        service._runner.run_raw.return_value = r[Mock].fail("pip failed")
+        service.runner.run_raw.return_value = r[Mock].fail("pip failed")
         result = service.run_pip_check(tmp_path, venv_bin)
         assert result.is_failure
 
     def test_success_no_issues(self, tmp_path: Path) -> None:
         """Test pip check with no issues."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
         assert result.is_success
         lines, exit_code = result.value
@@ -461,8 +461,8 @@ class TestLoadDependencyLimits:
     def test_success(self) -> None:
         """Test loading limits successfully."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "key": "value",
             "num": 42,
         })
@@ -473,16 +473,16 @@ class TestLoadDependencyLimits:
     def test_failure_returns_empty(self) -> None:
         """Test loading failure returns empty dict."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].fail("not found")
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].fail("not found")
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         assert result == {}
 
     def test_unconvertible_values_skipped(self) -> None:
         """Test unconvertible values are skipped."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "good": "val",
             "bad": set(),
         })
@@ -493,8 +493,8 @@ class TestLoadDependencyLimits:
     def test_none_value_preserved(self) -> None:
         """Test None value is preserved."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({"key": None})
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({"key": None})
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         assert "key" in result
         assert result["key"] is None
@@ -515,18 +515,18 @@ class TestRunMypyStubHints:
     def test_runner_failure(self, tmp_path: Path) -> None:
         """Test mypy runner failure."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-        service._runner.run_raw.return_value = r[Mock].fail("mypy crash")
+        service.runner.run_raw.return_value = r[Mock].fail("mypy crash")
         result = service.run_mypy_stub_hints(tmp_path, venv_bin)
         assert result.is_failure
 
     def test_parses_hints(self, tmp_path: Path) -> None:
         """Test mypy output parsing for hinted packages."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
@@ -536,7 +536,7 @@ class TestRunMypyStubHints:
             stdout='note: hint: "pip install types-pyyaml"',
             stderr='error: Library stubs not installed for "requests"',
         )
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_mypy_stub_hints(tmp_path, venv_bin)
         assert result.is_success
 
@@ -586,8 +586,8 @@ class TestGetCurrentTypingsFromPyproject:
     def test_poetry_group_typings(self, tmp_path: Path) -> None:
         """Test extracting typings from poetry group."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "tool": {
                 "poetry": {
                     "group": {
@@ -608,8 +608,8 @@ class TestGetCurrentTypingsFromPyproject:
     def test_pep621_optional_deps_list(self, tmp_path: Path) -> None:
         """Test extracting typings from PEP 621 optional-dependencies list."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "project": {
                 "optional-dependencies": {
                     "typings": [
@@ -626,8 +626,8 @@ class TestGetCurrentTypingsFromPyproject:
     def test_pep621_optional_deps_mapping(self, tmp_path: Path) -> None:
         """Test extracting typings from PEP 621 optional-dependencies mapping."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "project": {
                 "optional-dependencies": {
                     "typings": {"types-pyyaml": ">=6.0"},
@@ -640,16 +640,16 @@ class TestGetCurrentTypingsFromPyproject:
     def test_read_failure(self, tmp_path: Path) -> None:
         """Test read failure returns empty list."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].fail("not found")
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].fail("not found")
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert result == []
 
     def test_empty_data(self, tmp_path: Path) -> None:
         """Test empty data returns empty list."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({})
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({})
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert result == []
 
@@ -660,18 +660,18 @@ class TestGetRequiredTypings:
     def test_full_flow(self, tmp_path: Path) -> None:
         """Test full typing requirements flow."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._runner = Mock()
+        service.toml = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
         # Mock mypy output
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
         # Mock toml reads
-        service._toml.read.side_effect = [
+        service.toml.read.side_effect = [
             # load_dependency_limits
             r[dict[str, t.Any]].ok({}),
             # get_current_typings_from_pyproject
@@ -686,11 +686,11 @@ class TestGetRequiredTypings:
     def test_no_mypy(self, tmp_path: Path) -> None:
         """Test with include_mypy=False."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
+        service.toml = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
 
-        service._toml.read.side_effect = [
+        service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({}),
             r[dict[str, t.Any]].ok({}),
         ]
@@ -701,14 +701,14 @@ class TestGetRequiredTypings:
     def test_mypy_failure(self, tmp_path: Path) -> None:
         """Test mypy failure propagates."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._runner = Mock()
+        service.toml = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
-        service._runner.run_raw.return_value = r[Mock].fail("mypy crash")
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({})
+        service.runner.run_raw.return_value = r[Mock].fail("mypy crash")
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({})
 
         result = service.get_required_typings(tmp_path, venv_bin)
         assert result.is_failure
@@ -716,16 +716,16 @@ class TestGetRequiredTypings:
     def test_with_exclude_set(self, tmp_path: Path) -> None:
         """Test excluded packages are removed from required set."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._runner = Mock()
+        service.toml = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
-        service._toml.read.side_effect = [
+        service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({
                 "typing_libraries": {
                     "exclude": ["types-excluded"],
@@ -740,16 +740,16 @@ class TestGetRequiredTypings:
     def test_with_python_version(self, tmp_path: Path) -> None:
         """Test python version is extracted from limits."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._runner = Mock()
+        service.toml = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
-        service._toml.read.side_effect = [
+        service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({"python": {"version": "3.13"}}),
             r[dict[str, t.Any]].ok({}),
         ]
@@ -794,7 +794,7 @@ class TestDetectionUncoveredLines:
     def test_run_deptry_with_non_dict_issue(self, tmp_path: Path) -> None:
         """Test run_deptry handles non-dict issues (lines 418-420)."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
@@ -805,7 +805,7 @@ class TestDetectionUncoveredLines:
         out_file.write_text(json.dumps(["not_a_dict", {"error": {"code": "DEP001"}}]))
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
         assert result.is_success
         issues, _ = result.value
@@ -814,13 +814,13 @@ class TestDetectionUncoveredLines:
     def test_run_pip_check_with_empty_output(self, tmp_path: Path) -> None:
         """Test run_pip_check with empty output (line 455)."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
         assert result.is_success
         lines, exit_code = result.value
@@ -850,24 +850,24 @@ class TestDetectionUncoveredLines:
     ) -> None:
         """Test get_current_typings_from_pyproject with no data (line 511)."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({})
+        service.toml = Mock()
+        service.toml.read.return_value = r[dict[str, t.Any]].ok({})
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert result == []
 
     def test_get_required_typings_with_limits_applied(self, tmp_path: Path) -> None:
         """Test get_required_typings with limits applied (line 524)."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._runner = Mock()
+        service.toml = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
-        service._toml.read.side_effect = [
+        service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({"python": {"version": "3.13"}}),
             r[dict[str, t.Any]].ok({}),
         ]
@@ -879,33 +879,33 @@ class TestDetectionUncoveredLines:
     def test_run_mypy_stub_hints_with_timeout(self, tmp_path: Path) -> None:
         """Test run_mypy_stub_hints with custom timeout (line 535)."""
         service = FlextInfraDependencyDetectionService()
-        service._runner = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
         result = service.run_mypy_stub_hints(tmp_path, venv_bin, timeout=600)
         assert result.is_success
-        service._runner.run_raw.assert_called_once()
-        call_kwargs = service._runner.run_raw.call_args[1]
+        service.runner.run_raw.assert_called_once()
+        call_kwargs = service.runner.run_raw.call_args[1]
         assert call_kwargs["timeout"] == 600
 
     def test_get_required_typings_with_missing_modules(self, tmp_path: Path) -> None:
         """Test get_required_typings with missing modules (lines 418-420)."""
         service = FlextInfraDependencyDetectionService()
-        service._toml = Mock()
-        service._runner = Mock()
+        service.toml = Mock()
+        service.runner = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
 
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
-        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
-        service._toml.read.side_effect = [
+        service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({}),  # limits file
             r[dict[str, t.Any]].ok({}),  # pyproject
         ]

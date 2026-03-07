@@ -12,8 +12,12 @@ from unittest.mock import Mock
 import pytest
 
 from flext_core import r
-from flext_infra.docs.builder import BuildReport, FlextInfraDocBuilder
-from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
+from flext_infra import m
+from flext_infra.docs.builder import FlextInfraDocBuilder
+from flext_infra.docs.shared import FlextInfraDocsShared
+
+BuildReport = m.Infra.Docs.DocsPhaseReport
+FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
 
 
 class TestFlextInfraDocBuilder:
@@ -92,6 +96,7 @@ class TestFlextInfraDocBuilder:
         """Test BuildReport result field accepts valid values."""
         for status in ["OK", "FAIL", "SKIP"]:
             report = BuildReport(
+                phase="build",
                 scope="test",
                 result=status,
                 reason="Test reason",
@@ -102,6 +107,7 @@ class TestFlextInfraDocBuilder:
     def test_build_report_site_dir_field(self) -> None:
         """Test BuildReport site_dir field."""
         report = BuildReport(
+            phase="build",
             scope="test",
             result="OK",
             reason="Build successful",
@@ -176,6 +182,7 @@ class TestFlextInfraDocBuilder:
             report_dir=report_dir,
         )
         report = BuildReport(
+            phase="build",
             scope="test",
             result="OK",
             reason="Build succeeded",

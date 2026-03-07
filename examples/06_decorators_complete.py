@@ -247,8 +247,16 @@ def main() -> None:
 
     if result.is_success:
         data = result.value
-        decorators = data.get("decorators_demonstrated")
-        categories = data.get("decorator_categories")
+        decorators = (
+            data.root.get("decorators_demonstrated")
+            if isinstance(data.root, dict)
+            else None
+        )
+        categories = (
+            data.root.get("decorator_categories")
+            if isinstance(data.root, dict)
+            else None
+        )
         if (
             decorators is not None
             and categories is not None

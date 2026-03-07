@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraJsonService, c, m
+from flext_infra import FlextInfraJsonService, c, m, t
 
 
 class FlextInfraInventoryService:
@@ -58,21 +58,21 @@ class FlextInfraInventoryService:
                 )
 
             now = datetime.now(UTC).isoformat()
-            inventory = m.Infra.Core.ScriptsInventorySnapshot(
-                generated_at=now,
-                repo_root=str(root),
-                total_scripts=len(scripts),
-                scripts=scripts,
-            )
-            wiring = m.Infra.Core.ScriptsWiringSnapshot(
-                generated_at=now,
-                root_makefile=[c.Infra.Files.MAKEFILE_FILENAME],
-                unwired_scripts=[],
-            )
-            external = m.Infra.Core.ExternalScriptsSnapshot(
-                generated_at=now,
-                candidates=[],
-            )
+            inventory: t.Infra.ContainerDict = {
+                "generated_at": now,
+                "repo_root": str(root),
+                "total_scripts": len(scripts),
+                "scripts": scripts,
+            }
+            wiring: t.Infra.ContainerDict = {
+                "generated_at": now,
+                "root_makefile": [c.Infra.Files.MAKEFILE_FILENAME],
+                "unwired_scripts": [],
+            }
+            external: t.Infra.ContainerDict = {
+                "generated_at": now,
+                "candidates": [],
+            }
 
             reports_dir = output_dir or (root / c.Infra.Reporting.REPORTS_DIR_NAME)
             written: list[str] = []

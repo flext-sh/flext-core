@@ -287,7 +287,7 @@ def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
     assert mapper.take({"port": None}, "port", default="x") == "x"
     assert (
         mapper.take(cast("Mapping[str, t.ContainerValue]", cast("object", 123)), 2)
-        is None
+        == ""
     )
 
     assert mapper.as_(12, str) == "12"
@@ -521,7 +521,7 @@ def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
             "missing",
             required=True,
         )
-        == ""
+        is None
     )
     assert mapper.field({}, "missing", ops={"ensure": "str"}) == ""
 
@@ -679,8 +679,10 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
         "no": NegativePredicate(),
         "yes": EqualOnePredicate(),
     }
-    assert mapper.find_callable(predicates, 1) == "yes"
-    assert mapper.find_callable({"no": lambda value: value < 0}, 1) is None
+    found_callable = mapper.find_callable(predicates, 1)
+    assert found_callable.is_success and found_callable.value == "yes"
+    not_found_callable = mapper.find_callable({"no": lambda value: value < 0}, 1)
+    assert not_found_callable.is_failure
 
 
 def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:

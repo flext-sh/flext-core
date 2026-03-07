@@ -678,13 +678,33 @@ class FlextProtocols:
             """List all registered services."""
             ...
 
+        @overload
         def register(
             self,
             name: str,
             impl: t.RegisterableService,
             *,
             kind: Literal["service", "factory", "resource"] = "service",
-        ) -> r[bool]:
+            _chain: Literal[True],
+        ) -> Self: ...
+
+        @overload
+        def register(
+            self,
+            name: str,
+            impl: t.RegisterableService,
+            *,
+            kind: Literal["service", "factory", "resource"] = "service",
+        ) -> None: ...
+
+        def register(
+            self,
+            name: str,
+            impl: t.RegisterableService,
+            *,
+            kind: Literal["service", "factory", "resource"] = "service",
+            _chain: bool = False,
+        ) -> Self | None:
             """Register an implementation by kind."""
             ...
 
@@ -1179,57 +1199,159 @@ class FlextProtocols:
             available via __getattr__ at runtime.
             """
 
+            @overload
+            def critical(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                _return_result: Literal[True],
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool]: ...
+
+            @overload
             def critical(
                 self,
                 msg: str | t.ContainerValue,
                 *args: t.ContainerValue,
                 **kw: t.ContainerValue | Exception,
-            ) -> r[bool]:
+            ) -> None: ...
+
+            def critical(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool] | None:
                 """Log critical message."""
                 ...
+
+            @overload
+            def debug(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue | Exception,
+                _return_result: Literal[True],
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool]: ...
+
+            @overload
+            def debug(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue | Exception,
+                **kw: t.ContainerValue | Exception,
+            ) -> None: ...
 
             def debug(
                 self,
                 msg: str | t.ContainerValue,
                 *args: t.ContainerValue | Exception,
                 **kw: t.ContainerValue | Exception,
-            ) -> r[bool]:
+            ) -> r[bool] | None:
                 """Log debug message."""
                 ...
+
+            @overload
+            def error(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                _return_result: Literal[True],
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool]: ...
+
+            @overload
+            def error(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
+            ) -> None: ...
 
             def error(
                 self,
                 msg: str | t.ContainerValue,
                 *args: t.ContainerValue,
                 **kw: t.ContainerValue | Exception,
-            ) -> r[bool]:
+            ) -> r[bool] | None:
                 """Log error message."""
                 ...
+
+            @overload
+            def exception(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                _return_result: Literal[True],
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool]: ...
+
+            @overload
+            def exception(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
+            ) -> None: ...
 
             def exception(
                 self,
                 msg: str | t.ContainerValue,
                 *args: t.ContainerValue,
                 **kw: t.ContainerValue | Exception,
-            ) -> r[bool]:
+            ) -> r[bool] | None:
                 """Log exception with traceback."""
                 ...
+
+            @overload
+            def info(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                _return_result: Literal[True],
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool]: ...
+
+            @overload
+            def info(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
+            ) -> None: ...
 
             def info(
                 self,
                 msg: str | t.ContainerValue,
                 *args: t.ContainerValue,
                 **kw: t.ContainerValue | Exception,
-            ) -> r[bool]:
+            ) -> r[bool] | None:
                 """Log info message."""
                 ...
+
+            @overload
+            def warning(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                _return_result: Literal[True],
+                **kw: t.ContainerValue | Exception,
+            ) -> r[bool]: ...
+
+            @overload
+            def warning(
+                self,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
+            ) -> None: ...
 
             def warning(
                 self,
                 msg: str | t.ContainerValue,
                 *args: t.ContainerValue,
                 **kw: t.ContainerValue | Exception,
-            ) -> r[bool]:
+            ) -> r[bool] | None:
                 """Log warning message."""
                 ...
 

@@ -71,31 +71,30 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
 def test_extract_message_type_from_parameter_branches() -> None:
     param = inspect.Parameter("message", inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
-    assert (
-        u.Checker._extract_message_type_from_parameter(
-            param,
-            cast("dict[str, t.ContainerValue]", {"message": None}),
-            "message",
-        )
-        is None
+    none_hint = u.Checker._extract_message_type_from_parameter(
+        param,
+        cast("dict[str, t.ContainerValue]", {"message": None}),
+        "message",
     )
-    assert (
-        u.Checker._extract_message_type_from_parameter(
-            param,
-            {"message": "abc"},
-            "message",
-        )
-        == "abc"
+    assert none_hint.is_failure
+
+    str_hint = u.Checker._extract_message_type_from_parameter(
+        param,
+        {"message": "abc"},
+        "message",
     )
-    assert u.Checker._extract_message_type_from_parameter(
+    assert str_hint.is_success and str_hint.value == "abc"
+
+    generic_hint = u.Checker._extract_message_type_from_parameter(
         param,
         {"message": str(list[int])},
         "message",
-    ) == str(list[int])
+    )
+    assert generic_hint.is_success and generic_hint.value == str(list[int])
 
 
 def test_extract_message_type_from_handle_with_only_self() -> None:
-    assert u.Checker._extract_message_type_from_handle(_OnlySelfHandler) is None
+    assert u.Checker._extract_message_type_from_handle(_OnlySelfHandler).is_failure
 
 
 def test_object_dict_and_type_error_fallback_paths() -> None:
@@ -107,12 +106,11 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
         is True
     )
 
-    # Non-object type returns None
     class _FakeObjectName:
         __name__ = "object"
 
     fake_object = cast("t.TypeOriginSpecifier", _FakeObjectName())
-    assert u.Checker._check_object_type_compatibility(fake_object) is None
+    assert u.Checker._check_object_type_compatibility(fake_object) is False
 
     class _DictChild(UserDict[str, str]):
         pass
@@ -123,7 +121,7 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
         cast("t.TypeOriginSpecifier", dict),
         cast("t.TypeOriginSpecifier", _DictChild),
     )
-    assert dict_match is None
+    assert dict_match is False
 
     assert (
         u.Checker._handle_type_or_origin_check(
@@ -150,40 +148,42 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation=list[int],
     )
-    assert u.Checker._extract_message_type_from_parameter(
+    typed_hint = u.Checker._extract_message_type_from_parameter(
         param_typed,
         {},
         "message",
-    ) == str(list[int])
+    )
+    assert typed_hint.is_success and typed_hint.value == str(list[int])
 
     param_empty = inspect.Parameter(
         "message",
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation=inspect.Signature.empty,
     )
-    assert (
-        u.Checker._extract_message_type_from_parameter(param_empty, {}, "message")
-        is None
+    empty_hint = u.Checker._extract_message_type_from_parameter(
+        param_empty, {}, "message"
     )
+    assert empty_hint.is_failure
 
     param_str = inspect.Parameter(
         "message",
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation="MyType",
     )
-    assert (
-        u.Checker._extract_message_type_from_parameter(param_str, {}, "message")
-        == "MyType"
+    string_hint = u.Checker._extract_message_type_from_parameter(
+        param_str, {}, "message"
     )
+    assert string_hint.is_success and string_hint.value == "MyType"
 
     param_type = inspect.Parameter(
         "message",
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation=int,
     )
-    assert (
-        u.Checker._extract_message_type_from_parameter(param_type, {}, "message") is int
+    type_hint = u.Checker._extract_message_type_from_parameter(
+        param_type, {}, "message"
     )
+    assert type_hint.is_success and type_hint.value is int
 
     class _ExpectedDict(UserDict[str, str]):
         pass
@@ -198,5 +198,5 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
             cast("t.TypeOriginSpecifier", _ExpectedDict),
             cast("t.TypeOriginSpecifier", object),
         )
-        is None
+        is False
     )

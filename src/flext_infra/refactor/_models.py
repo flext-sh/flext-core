@@ -114,21 +114,6 @@ class FlextInfraRefactorModels:
             description="Family letter to MRO chain mapping"
         )
 
-    class RefactorRecommendation(FlextModels.ArbitraryTypesModel):
-        """Unified recommendation contract for suggestions and manual review."""
-
-        model_config = ConfigDict(frozen=True)
-
-        file: str = Field(min_length=1, description="Source file path")
-        name: str = Field(min_length=1, description="Symbol name")
-        kind: str = Field(description="Symbol kind (function, class, etc.)")
-        target: str = Field(default="", description="Suggested target location")
-        reason: str = Field(default="", description="Reason for recommendation")
-        manual_review: bool = Field(
-            default=False,
-            description="Whether manual follow-up is required",
-        )
-
     class ClassNestingMapping(FlextModels.ArbitraryTypesModel):
         """Unified mapping contract for class-nesting rewrite planning."""
 

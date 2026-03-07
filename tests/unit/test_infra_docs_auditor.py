@@ -13,8 +13,12 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import r
-from flext_infra.docs.auditor import AuditIssue, AuditReport, FlextInfraDocAuditor, main
-from flext_infra.docs.shared import FlextInfraDocScope
+from flext_infra import m
+from flext_infra.docs.auditor import FlextInfraDocAuditor, main
+
+AuditIssue = m.Infra.Docs.AuditIssue
+AuditReport = m.Infra.Docs.DocsPhaseReport
+FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
 
 
 class TestFlextInfraDocAuditor:
@@ -59,8 +63,8 @@ class TestFlextInfraDocAuditor:
         if result.is_success and result.value:
             report = result.value[0]
             assert hasattr(report, "scope")
-            assert hasattr(report, "issues")
-            assert isinstance(report.issues, list)
+            assert hasattr(report, "items")
+            assert isinstance(report.items, list)
 
     def test_audit_issue_structure(self) -> None:
         """Test AuditIssue model structure."""
@@ -127,109 +131,109 @@ class TestFlextInfraDocAuditor:
 
     def test_normalize_link_with_fragment(self) -> None:
         """Test _normalize_link strips fragment identifier."""
-        result = FlextInfraDocAuditor._normalize_link("path/to/file.md#section")
+        result = FlextInfraDocAuditor.normalize_link("path/to/file.md#section")
         assert result == "path/to/file.md"
 
     def test_normalize_link_with_query_string(self) -> None:
         """Test _normalize_link strips query string."""
-        result = FlextInfraDocAuditor._normalize_link("path/to/file.md?param=value")
+        result = FlextInfraDocAuditor.normalize_link("path/to/file.md?param=value")
         assert result == "path/to/file.md"
 
     def test_normalize_link_with_angle_brackets(self) -> None:
         """Test _normalize_link removes angle brackets."""
-        result = FlextInfraDocAuditor._normalize_link("<path/to/file.md>")
+        result = FlextInfraDocAuditor.normalize_link("<path/to/file.md>")
         assert result == "path/to/file.md"
 
     def test_normalize_link_with_whitespace(self) -> None:
         """Test _normalize_link strips whitespace."""
-        result = FlextInfraDocAuditor._normalize_link("  path/to/file.md  ")
+        result = FlextInfraDocAuditor.normalize_link("  path/to/file.md  ")
         assert result == "path/to/file.md"
 
     def test_normalize_link_complex(self) -> None:
         """Test _normalize_link with fragment and query."""
-        result = FlextInfraDocAuditor._normalize_link(
+        result = FlextInfraDocAuditor.normalize_link(
             "<path/to/file.md#section?param=value>"
         )
         assert result == "path/to/file.md"
 
     def test_should_skip_target_http_url(self) -> None:
         """Test _should_skip_target returns False for http URLs."""
-        result = FlextInfraDocAuditor._should_skip_target(
+        result = FlextInfraDocAuditor.should_skip_target(
             "[link](http://example.com)", "http://example.com"
         )
         assert result is False
 
     def test_should_skip_target_https_url(self) -> None:
         """Test _should_skip_target returns False for https URLs."""
-        result = FlextInfraDocAuditor._should_skip_target(
+        result = FlextInfraDocAuditor.should_skip_target(
             "[link](https://example.com)", "https://example.com"
         )
         assert result is False
 
     def test_should_skip_target_comma_no_md(self) -> None:
         """Test _should_skip_target skips comma-separated non-paths."""
-        result = FlextInfraDocAuditor._should_skip_target("[a, b]", "a")
+        result = FlextInfraDocAuditor.should_skip_target("[a, b]", "a")
         assert result is True
 
     def test_should_skip_target_space_no_md(self) -> None:
         """Test _should_skip_target skips space-separated non-paths."""
-        result = FlextInfraDocAuditor._should_skip_target("[a b]", "a")
+        result = FlextInfraDocAuditor.should_skip_target("[a b]", "a")
         assert result is True
 
     def test_should_skip_target_md_file_not_skipped(self) -> None:
         """Test _should_skip_target does not skip .md files."""
-        result = FlextInfraDocAuditor._should_skip_target("[a, b.md]", "a")
+        result = FlextInfraDocAuditor.should_skip_target("[a, b.md]", "a")
         assert result is False
 
     def test_should_skip_target_path_not_skipped(self) -> None:
         """Test _should_skip_target does not skip paths with slashes."""
-        result = FlextInfraDocAuditor._should_skip_target("[a/b]", "a/b")
+        result = FlextInfraDocAuditor.should_skip_target("[a/b]", "a/b")
         assert result is False
 
     def test_is_external_http(self) -> None:
         """Test _is_external returns True for http URLs."""
-        result = FlextInfraDocAuditor._is_external("http://example.com")
+        result = FlextInfraDocAuditor.is_external("http://example.com")
         assert result is True
 
     def test_is_external_https(self) -> None:
         """Test _is_external returns True for https URLs."""
-        result = FlextInfraDocAuditor._is_external("https://example.com")
+        result = FlextInfraDocAuditor.is_external("https://example.com")
         assert result is True
 
     def test_is_external_mailto(self) -> None:
         """Test _is_external returns True for mailto links."""
-        result = FlextInfraDocAuditor._is_external("mailto:test@example.com")
+        result = FlextInfraDocAuditor.is_external("mailto:test@example.com")
         assert result is True
 
     def test_is_external_tel(self) -> None:
         """Test _is_external returns True for tel links."""
-        result = FlextInfraDocAuditor._is_external("tel:+1234567890")
+        result = FlextInfraDocAuditor.is_external("tel:+1234567890")
         assert result is True
 
     def test_is_external_data_uri(self) -> None:
         """Test _is_external returns True for data URIs."""
-        result = FlextInfraDocAuditor._is_external("data:text/plain;base64,SGVsbG8=")
+        result = FlextInfraDocAuditor.is_external("data:text/plain;base64,SGVsbG8=")
         assert result is True
 
     def test_is_external_local_path(self) -> None:
         """Test _is_external returns False for local paths."""
-        result = FlextInfraDocAuditor._is_external("path/to/file.md")
+        result = FlextInfraDocAuditor.is_external("path/to/file.md")
         assert result is False
 
     def test_is_external_with_angle_brackets(self) -> None:
         """Test _is_external handles angle brackets."""
-        result = FlextInfraDocAuditor._is_external("<http://example.com>")
+        result = FlextInfraDocAuditor.is_external("<http://example.com>")
         assert result is True
 
     def test_is_external_case_insensitive(self) -> None:
         """Test _is_external is case insensitive."""
-        result = FlextInfraDocAuditor._is_external("HTTPS://EXAMPLE.COM")
+        result = FlextInfraDocAuditor.is_external("HTTPS://EXAMPLE.COM")
         assert result is True
 
     def test_to_markdown_empty_issues(self) -> None:
         """Test _to_markdown with no issues."""
         scope = FlextInfraDocScope(name="test", path=Path(), report_dir=Path())
-        result = FlextInfraDocAuditor._to_markdown(scope, [])
+        result = FlextInfraDocAuditor.to_markdown(scope, [])
         assert isinstance(result, list)
         assert "# Docs Audit Report" in result
 
@@ -242,13 +246,13 @@ class TestFlextInfraDocAuditor:
             severity="high",
             message="Link not found",
         )
-        result = FlextInfraDocAuditor._to_markdown(scope, [issue])
+        result = FlextInfraDocAuditor.to_markdown(scope, [issue])
         assert isinstance(result, list)
         assert any("README.md" in line for line in result)
 
     def test_load_audit_budgets_no_config(self, tmp_path: Path) -> None:
         """Test _load_audit_budgets returns defaults when no config."""
-        default, by_scope = FlextInfraDocAuditor._load_audit_budgets(tmp_path)
+        default, by_scope = FlextInfraDocAuditor.load_audit_budgets(tmp_path)
         assert default is None
         assert by_scope == {}
 
@@ -266,7 +270,7 @@ class TestFlextInfraDocAuditor:
             }
         }
         config_file.write_text(json.dumps(config_data))
-        default, by_scope = FlextInfraDocAuditor._load_audit_budgets(tmp_path)
+        default, by_scope = FlextInfraDocAuditor.load_audit_budgets(tmp_path)
         assert default == 5
         assert by_scope.get("test-project") == 3
 
@@ -276,8 +280,9 @@ class TestFlextInfraDocAuditor:
         arch_dir.mkdir(parents=True, exist_ok=True)
         config_file = arch_dir / "architecture_config.json"
         config_file.write_text("{invalid json}")
-        with pytest.raises(Exception):
-            FlextInfraDocAuditor._load_audit_budgets(tmp_path)
+        default, by_scope = FlextInfraDocAuditor.load_audit_budgets(tmp_path)
+        assert default is None
+        assert by_scope == {}
 
     def test_broken_link_issues_empty_scope(self, tmp_path: Path) -> None:
         """Test _broken_link_issues with no markdown files."""
@@ -285,7 +290,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
 
     def test_broken_link_issues_with_valid_links(self, tmp_path: Path) -> None:
@@ -298,7 +303,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
 
     def test_broken_link_issues_with_external_links(self, tmp_path: Path) -> None:
@@ -311,7 +316,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
 
     def test_broken_link_issues_with_fragments(self, tmp_path: Path) -> None:
@@ -324,7 +329,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
 
     def test_broken_link_issues_in_code_blocks(self, tmp_path: Path) -> None:
@@ -337,7 +342,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
 
     def test_forbidden_term_issues_empty_scope(self, tmp_path: Path) -> None:
@@ -346,7 +351,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._forbidden_term_issues(scope)
+        issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
 
     def test_forbidden_term_issues_root_scope(self, tmp_path: Path) -> None:
@@ -359,7 +364,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="root", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._forbidden_term_issues(scope)
+        issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
 
     def test_forbidden_term_issues_project_scope(self, tmp_path: Path) -> None:
@@ -372,7 +377,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="flext-core", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._forbidden_term_issues(scope)
+        issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
 
     def test_audit_scope_with_links_check(self, tmp_path: Path) -> None:
@@ -381,7 +386,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        report = auditor._audit_scope(
+        report = auditor.audit_scope(
             scope,
             check="links",
             strict=True,
@@ -397,7 +402,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        report = auditor._audit_scope(
+        report = auditor.audit_scope(
             scope,
             check="forbidden-terms",
             strict=True,
@@ -413,7 +418,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        report = auditor._audit_scope(
+        report = auditor.audit_scope(
             scope,
             check="all",
             strict=True,
@@ -428,7 +433,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        report = auditor._audit_scope(
+        report = auditor.audit_scope(
             scope,
             check="all",
             strict=False,
@@ -443,7 +448,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        report = auditor._audit_scope(
+        report = auditor.audit_scope(
             scope,
             check="all",
             strict=True,
@@ -458,7 +463,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        report = auditor._audit_scope(
+        report = auditor.audit_scope(
             scope,
             check="all",
             strict=True,
@@ -481,7 +486,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="root", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._forbidden_term_issues(scope)
+        issues = auditor.forbidden_term_issues(scope)
         # Should skip README.md since it's not in docs/
         assert isinstance(issues, list)
 
@@ -496,7 +501,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="other-project", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._forbidden_term_issues(scope)
+        issues = auditor.forbidden_term_issues(scope)
         # Should skip because scope doesn't start with 'flext-'
         assert isinstance(issues, list)
 
@@ -513,7 +518,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         # Should not report external links as broken
         assert isinstance(issues, list)
 
@@ -530,7 +535,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         # Should not report fragment-only links
         assert isinstance(issues, list)
 
@@ -551,7 +556,7 @@ class TestFlextInfraDocAuditor:
             }
         }
         config_file.write_text(json.dumps(config_data))
-        default, by_scope = FlextInfraDocAuditor._load_audit_budgets(tmp_path)
+        default, by_scope = FlextInfraDocAuditor.load_audit_budgets(tmp_path)
         assert default == 5
         assert by_scope.get("test-project") == 3
 
@@ -572,8 +577,9 @@ class TestFlextInfraDocAuditor:
         When any report has passed=False, main should return 1.
         """
         failed_report = AuditReport(
+            phase="audit",
             scope="test",
-            issues=[],
+            items=[],
             checks=["links"],
             strict=True,
             passed=False,
@@ -590,8 +596,9 @@ class TestFlextInfraDocAuditor:
         When all reports have passed=True, main should return 0.
         """
         passed_report = AuditReport(
+            phase="audit",
             scope="test",
-            issues=[],
+            items=[],
             checks=["links"],
             strict=True,
             passed=True,
@@ -608,8 +615,9 @@ class TestFlextInfraDocAuditor:
         Test that main() properly parses all CLI arguments.
         """
         passed_report = AuditReport(
+            phase="audit",
             scope="test",
-            issues=[],
+            items=[],
             checks=["links"],
             strict=False,
             passed=True,
@@ -667,7 +675,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         # Should not report because _should_skip_target returns True
         assert isinstance(issues, list)
 
@@ -685,7 +693,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         # Should report the broken link
         assert len(issues) > 0
         assert any("missing.md" in issue.message for issue in issues)
@@ -706,7 +714,7 @@ class TestFlextInfraDocAuditor:
             }
         }
         config_file.write_text(json.dumps(config_data))
-        default, by_scope = FlextInfraDocAuditor._load_audit_budgets(tmp_path)
+        default, by_scope = FlextInfraDocAuditor.load_audit_budgets(tmp_path)
         assert default is None
         assert by_scope.get("test-project") == 3
 
@@ -716,8 +724,9 @@ class TestFlextInfraDocAuditor:
         When the module is run as __main__, it should raise SystemExit.
         """
         passed_report = AuditReport(
+            phase="audit",
             scope="test",
-            issues=[],
+            items=[],
             checks=["links"],
             strict=True,
             passed=True,
@@ -746,7 +755,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         # Should not report because _should_skip_target returns True for space-separated text
         assert isinstance(issues, list)
 
@@ -759,8 +768,9 @@ class TestFlextInfraDocAuditor:
         # that main() function works correctly when called directly
 
         passed_report = AuditReport(
+            phase="audit",
             scope="test",
-            issues=[],
+            items=[],
             checks=["links"],
             strict=True,
             passed=True,
@@ -787,7 +797,7 @@ class TestFlextInfraDocAuditor:
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        issues = auditor._broken_link_issues(scope)
+        issues = auditor.broken_link_issues(scope)
         # Should not report because _should_skip_target returns True for 'some text'
         assert isinstance(issues, list)
         # Verify no issues were reported for this link

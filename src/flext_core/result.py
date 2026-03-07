@@ -177,7 +177,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return FlextResult[V].fail(
                     "Callable returned None", error_code=error_code
                 )
-            return cls.ok(value)
+            return FlextResult[V].ok(value)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             logging.getLogger(__name__).debug("Callable execution failed", exc_info=e)
             return FlextResult[V].fail(str(e), error_code=error_code, exception=e)

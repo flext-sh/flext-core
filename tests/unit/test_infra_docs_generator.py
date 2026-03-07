@@ -11,12 +11,13 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.docs.generator import (
-    FlextInfraDocGenerator,
-    GeneratedFile,
-    GenerateReport,
-)
-from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
+from flext_infra import m
+from flext_infra.docs.generator import FlextInfraDocGenerator
+from flext_infra.docs.shared import FlextInfraDocsShared
+
+GeneratedFile = m.Infra.Docs.GeneratedFile
+GenerateReport = m.Infra.Docs.DocsPhaseReport
+FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
 
 
 class TestFlextInfraDocGenerator:
@@ -64,7 +65,7 @@ class TestFlextInfraDocGenerator:
             assert hasattr(report, "generated")
             assert hasattr(report, "applied")
             assert hasattr(report, "source")
-            assert hasattr(report, "files")
+            assert hasattr(report, "items")
 
     def test_generated_file_structure(self) -> None:
         """Test GeneratedFile model structure."""
@@ -119,6 +120,7 @@ class TestFlextInfraDocGenerator:
     def test_generate_report_generated_count(self) -> None:
         """Test GenerateReport generated field."""
         report = GenerateReport(
+            phase="generate",
             scope="test",
             generated=5,
             applied=True,
@@ -129,6 +131,7 @@ class TestFlextInfraDocGenerator:
     def test_generate_report_applied_field(self) -> None:
         """Test GenerateReport applied field."""
         report = GenerateReport(
+            phase="generate",
             scope="test",
             generated=0,
             applied=False,
@@ -139,6 +142,7 @@ class TestFlextInfraDocGenerator:
     def test_generate_report_source_field(self) -> None:
         """Test GenerateReport source field."""
         report = GenerateReport(
+            phase="generate",
             scope="test",
             generated=0,
             applied=False,
@@ -148,19 +152,22 @@ class TestFlextInfraDocGenerator:
 
     def test_generate_report_files_list(self) -> None:
         """Test GenerateReport files list."""
-        files = [
-            GeneratedFile(path="file1.md", written=True),
-            GeneratedFile(path="file2.md", written=False),
+        items = [
+            m.Infra.Docs.DocsPhaseItem(phase="generate", path="file1.md", written=True),
+            m.Infra.Docs.DocsPhaseItem(
+                phase="generate", path="file2.md", written=False
+            ),
         ]
         report = GenerateReport(
+            phase="generate",
             scope="test",
             generated=2,
             applied=True,
             source="test-source",
-            files=files,
+            items=items,
         )
-        assert len(report.files) == 2
-        assert report.files[0].path == "file1.md"
+        assert len(report.items) == 2
+        assert report.items[0].path == "file1.md"
 
     def test_generated_file_written_field(self) -> None:
         """Test GeneratedFile written field."""

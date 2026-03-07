@@ -11,8 +11,12 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
-from flext_infra.docs.validator import FlextInfraDocValidator, ValidateReport
+from flext_infra import m
+from flext_infra.docs.shared import FlextInfraDocsShared
+from flext_infra.docs.validator import FlextInfraDocValidator
+
+ValidateReport = m.Infra.Docs.DocsPhaseReport
+FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
 
 
 class TestFlextInfraDocValidator:
@@ -69,6 +73,7 @@ class TestFlextInfraDocValidator:
     def test_validate_report_missing_adr_skills_field(self) -> None:
         """Test ValidateReport missing_adr_skills field."""
         report = ValidateReport(
+            phase="validate",
             scope="test",
             result="FAIL",
             message="Missing skills",
@@ -80,6 +85,7 @@ class TestFlextInfraDocValidator:
     def test_validate_report_todo_written_field(self) -> None:
         """Test ValidateReport todo_written field."""
         report = ValidateReport(
+            phase="validate",
             scope="test",
             result="PASS",
             message="Validation passed",
@@ -134,6 +140,7 @@ class TestFlextInfraDocValidator:
         """Test ValidateReport result field accepts valid values."""
         for status in ["PASS", "FAIL", "WARN"]:
             report = ValidateReport(
+                phase="validate",
                 scope="test",
                 result=status,
                 message="Test message",
@@ -143,6 +150,7 @@ class TestFlextInfraDocValidator:
     def test_validate_report_message_field(self) -> None:
         """Test ValidateReport message field."""
         report = ValidateReport(
+            phase="validate",
             scope="test",
             result="PASS",
             message="All validations passed successfully",

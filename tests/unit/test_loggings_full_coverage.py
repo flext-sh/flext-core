@@ -281,6 +281,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
         lambda *_args, **_kwargs: (_ for _ in ()).throw(AttributeError("no info")),
     )
     failed = logger_boom._log("INFO", "msg")
+    assert failed is not None
     assert failed.is_failure
 
     logger.log("INFO", "message", {"k": "v"})

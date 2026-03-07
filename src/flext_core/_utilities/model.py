@@ -63,6 +63,9 @@ class FlextUtilitiesModel:
             case list() as items:
                 normalized_items: list[t.Primitives] = []
                 for item in items:
+                    if item is None:
+                        normalized_items.append("")
+                        continue
                     try:
                         normalized_items.append(
                             FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
@@ -75,6 +78,9 @@ class FlextUtilitiesModel:
             case tuple() as items:
                 normalized_tuple_items: list[t.Primitives] = []
                 for item in items:
+                    if item is None:
+                        normalized_tuple_items.append("")
+                        continue
                     try:
                         normalized_tuple_items.append(
                             FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
@@ -311,7 +317,7 @@ class FlextUtilitiesModel:
             empty_result: dict[str, t.Scalar | list[t.Primitives]] = {}
             return empty_result
         result: dict[str, t.Scalar | list[t.Primitives]] = {}
-        for key, value in data.items():
+        for key, value in data.root.items():
             result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
         return result
 

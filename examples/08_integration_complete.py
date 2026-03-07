@@ -35,6 +35,7 @@ from flext_core import (
     m,
     r,
     s,
+    t,
     u,
 )
 
@@ -253,8 +254,12 @@ def main() -> None:
 
     if result.is_success:
         data = result.value
-        components = data["components_integrated"]
-        total = data["total_components"]
+
+        root_data: dict[str, t.ContainerValue] = (
+            data.root if isinstance(data.root, dict) else {}
+        )
+        components = root_data.get("components_integrated", [])
+        total = root_data.get("total_components", 0)
         if (
             isinstance(components, Sequence)
             and not isinstance(components, str | bytes | bytearray)

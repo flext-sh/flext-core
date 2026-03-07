@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Literal, Self, TypeGuard, override
+from typing import Literal, Self, TypeGuard, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -779,6 +779,25 @@ class FlextContainer(p.DI):
             + list(self._resources.keys())
         )
 
+    @overload
+    def register(
+        self,
+        name: str,
+        impl: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+        *,
+        kind: Literal["service", "factory", "resource"] = "service",
+        _chain: Literal[True],
+    ) -> Self: ...
+
+    @overload
+    def register(
+        self,
+        name: str,
+        impl: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+        *,
+        kind: Literal["service", "factory", "resource"] = "service",
+    ) -> None: ...
+
     @override
     def register(
         self,
@@ -786,7 +805,8 @@ class FlextContainer(p.DI):
         impl: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
         *,
         kind: Literal["service", "factory", "resource"] = "service",
-    ) -> Self:
+        _chain: bool = False,
+    ) -> Self | None:
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts service values for registration,
@@ -807,15 +827,15 @@ class FlextContainer(p.DI):
 
         """
         if not name:
-            return self
+            return self if _chain else None
         if kind == "service" and not self._is_registerable_service(impl):
-            return self
+            return self if _chain else None
         try:
             if kind == "service":
                 if not self._is_registerable_service(impl):
-                    return self
+                    return self if _chain else None
                 if hasattr(self._di_services, name):
-                    return self
+                    return self if _chain else None
                 registration = m.ServiceRegistration(
                     name=name,
                     service=impl,
@@ -829,13 +849,13 @@ class FlextContainer(p.DI):
                 )
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
-                return self
+                return self if _chain else None
 
             if kind == "factory":
                 if not self._is_factory_callable(impl):
-                    return self
+                    return self if _chain else None
                 if hasattr(self._di_services, name):
-                    return self
+                    return self if _chain else None
 
                 factory_fn: t.FactoryCallable = impl
 
@@ -863,12 +883,12 @@ class FlextContainer(p.DI):
                 )
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
-                return self
+                return self if _chain else None
 
             if not self._is_resource_callable(impl):
-                return self
+                return self if _chain else None
             if hasattr(self._di_resources, name):
-                return self
+                return self if _chain else None
             registration = m.ResourceRegistration(
                 name=name,
                 factory=impl,
@@ -881,10 +901,10 @@ class FlextContainer(p.DI):
             )
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
-            return self
+            return self if _chain else None
         except Exception as e:
             _ = e
-            return self
+            return self if _chain else None
 
     def register_core_services(self) -> None:
         """Auto-register core services for easy DI access.

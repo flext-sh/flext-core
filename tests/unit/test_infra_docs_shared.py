@@ -12,12 +12,12 @@ from pathlib import Path
 
 import pytest
 
+from flext_infra import m
 from flext_infra.constants import c
-from flext_infra.docs.auditor import AuditReport
-from flext_infra.docs.shared import (
-    FlextInfraDocScope,
-    FlextInfraDocsShared,
-)
+from flext_infra.docs.shared import FlextInfraDocsShared
+
+AuditReport = m.Infra.Docs.DocsPhaseReport
+FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
 
 
 class TestFlextInfraDocScope:
@@ -242,7 +242,7 @@ class TestFlextInfraDocsShared:
         """Test write_json with Pydantic model."""
         json_file = tmp_path / "test.json"
         report = AuditReport(
-            scope="test", issues=[], checks=[], strict=False, passed=True
+            phase="audit", scope="test", items=[], checks=[], strict=False, passed=True
         )
         result = FlextInfraDocsShared.write_json(json_file, report)
         assert result.is_success or result.is_failure

@@ -103,7 +103,7 @@ class _ContainerStub:
         result = self.get(name)
         if result.is_failure:
             return r[t.Container].fail(result.error or "missing")
-        value = result.value
+        value: t.Container = result.value
         if isinstance(value, type_cls):
             return r[t.Container].ok(value)
         return r[t.Container].fail("wrong-type")

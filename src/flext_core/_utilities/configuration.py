@@ -188,7 +188,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_attr(
         obj: p.HasModelDump | object,
         parameter: str,
-    ) -> tuple[bool, t.Scalar | m.ConfigMap | None]:
+    ) -> tuple[bool, t.ContainerValue]:
         """Try to get attribute value from object via hasattr/getattr.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -219,7 +219,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_dict_like(
         obj: Mapping[str, t.ContainerValue],
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue | None]:
+    ) -> tuple[bool, t.ContainerValue]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -255,7 +255,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_duck_model_dump(
         obj: object,
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue | None]:
+    ) -> tuple[bool, t.ContainerValue]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
@@ -276,7 +276,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue | None]:
+    ) -> tuple[bool, t.ContainerValue]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -490,6 +490,10 @@ class FlextUtilitiesConfiguration:
         for name, value in registrations.items():
             try:
                 register_result = container.register(name, value)
+                if not isinstance(register_result, p.ResultLike):
+                    return r[int].fail(
+                        f"Bulk registration failed at {name}: register returned non-result",
+                    )
                 if register_result.is_failure:
                     return r[int].fail(
                         f"Bulk registration failed at {name}: {register_result.error}",
@@ -731,6 +735,8 @@ class FlextUtilitiesConfiguration:
         try:
             _ = _cache
             register_result = container.register(name, factory, kind="factory")
+            if not isinstance(register_result, p.ResultLike):
+                return r[bool].fail("Factory registration failed")
             if register_result.is_failure:
                 return r[bool].fail(
                     register_result.error or "Factory registration failed",
@@ -760,6 +766,8 @@ class FlextUtilitiesConfiguration:
         """
         try:
             register_result = container.register(name, instance)
+            if not isinstance(register_result, p.ResultLike):
+                return r[bool].fail("Registration failed")
             if register_result.is_failure:
                 return r[bool].fail(
                     register_result.error or "Registration failed",

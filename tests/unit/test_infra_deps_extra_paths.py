@@ -12,10 +12,10 @@ from flext_core import r
 from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.deps.extra_paths import (
     FlextInfraExtraPathsManager,
-    _path_dep_paths_pep621,
-    _path_dep_paths_poetry,
     get_dep_paths,
     main,
+    path_dep_paths_pep621,
+    path_dep_paths_poetry,
     sync_extra_paths,
     sync_one,
 )
@@ -32,18 +32,18 @@ class TestFlextInfraExtraPathsManager:
     def test_manager_has_required_services(self) -> None:
         """Test manager has required internal services."""
         manager = FlextInfraExtraPathsManager()
-        assert hasattr(manager, "_resolver")
-        assert hasattr(manager, "_toml")
+        assert hasattr(manager, "resolver")
+        assert hasattr(manager, "toml")
 
 
 class TestPathDepPathsPep621:
-    """Test _path_dep_paths_pep621 function."""
+    """Test path_dep_paths_pep621 function."""
 
     def test_pep621_empty_doc(self) -> None:
         """Test with empty TOML document."""
         doc = tomlkit.document()
 
-        result = _path_dep_paths_pep621(doc)
+        result = path_dep_paths_pep621(doc)
         assert result == []
 
     def test_pep621_no_project(self) -> None:
@@ -51,7 +51,7 @@ class TestPathDepPathsPep621:
         doc = tomlkit.document()
         doc["other"] = dict[str, object]()
 
-        result = _path_dep_paths_pep621(doc)
+        result = path_dep_paths_pep621(doc)
         assert result == []
 
     def test_pep621_no_dependencies(self) -> None:
@@ -59,7 +59,7 @@ class TestPathDepPathsPep621:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
 
-        result = _path_dep_paths_pep621(doc)
+        result = path_dep_paths_pep621(doc)
         assert result == []
 
     def test_pep621_with_file_deps(self) -> None:
@@ -72,7 +72,7 @@ class TestPathDepPathsPep621:
             ]
         }
 
-        result = _path_dep_paths_pep621(doc)
+        result = path_dep_paths_pep621(doc)
         assert any("flext-core" in p for p in result)
         assert any("flext-api" in p for p in result)
 
@@ -85,7 +85,7 @@ class TestPathDepPathsPep621:
             ]
         }
 
-        result = _path_dep_paths_pep621(doc)
+        result = path_dep_paths_pep621(doc)
         assert any("flext-core" in p for p in result)
 
     def test_pep621_mixed_deps(self) -> None:
@@ -99,19 +99,19 @@ class TestPathDepPathsPep621:
             ]
         }
 
-        result = _path_dep_paths_pep621(doc)
+        result = path_dep_paths_pep621(doc)
         assert any("flext-core" in p for p in result)
         assert len(result) == 1
 
 
 class TestPathDepPathsPoetry:
-    """Test _path_dep_paths_poetry function."""
+    """Test path_dep_paths_poetry function."""
 
     def test_poetry_empty_doc(self) -> None:
         """Test with empty TOML document."""
         doc = tomlkit.document()
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert result == []
 
     def test_poetry_no_tool(self) -> None:
@@ -119,7 +119,7 @@ class TestPathDepPathsPoetry:
         doc = tomlkit.document()
         doc["project"] = dict[str, object]()
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert result == []
 
     def test_poetry_no_poetry_section(self) -> None:
@@ -127,7 +127,7 @@ class TestPathDepPathsPoetry:
         doc = tomlkit.document()
         doc["tool"] = {"other": dict[str, object]()}
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert result == []
 
     def test_poetry_no_dependencies(self) -> None:
@@ -135,7 +135,7 @@ class TestPathDepPathsPoetry:
         doc = tomlkit.document()
         doc["tool"] = {"poetry": {"name": "test"}}
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert result == []
 
     def test_poetry_with_path_deps(self) -> None:
@@ -150,7 +150,7 @@ class TestPathDepPathsPoetry:
             }
         }
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert any("flext-core" in p for p in result)
         assert any("flext-api" in p for p in result)
 
@@ -165,7 +165,7 @@ class TestPathDepPathsPoetry:
             }
         }
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert any("flext-core" in p for p in result)
 
     def test_poetry_mixed_deps(self) -> None:
@@ -181,7 +181,7 @@ class TestPathDepPathsPoetry:
             }
         }
 
-        result = _path_dep_paths_poetry(doc)
+        result = path_dep_paths_poetry(doc)
         assert any("flext-core" in p for p in result)
         assert len(result) == 1
 
@@ -272,7 +272,7 @@ class TestSyncOne:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_one(pyproject)
         assert result.is_success
         assert result.value is False
@@ -282,7 +282,7 @@ class TestSyncOne:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["tool"] = {"other": dict[str, object]()}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_one(pyproject)
         assert result.is_success
         assert result.value is False
@@ -296,7 +296,7 @@ class TestSyncOne:
                 "extraPaths": ["src"],
             }
         }
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_one(pyproject, is_root=True)
         assert result.is_success
 
@@ -308,7 +308,7 @@ class TestSyncOne:
             "pyright": {"extraPaths": list[str]()},
             "mypy": {"mypy_path": ["src"]},
         }
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_one(pyproject, is_root=True)
         assert result.is_success
 
@@ -320,7 +320,7 @@ class TestSyncOne:
             "pyright": {"extraPaths": list[str]()},
             "pyrefly": {"search-path": ["."]},
         }
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_one(pyproject, is_root=False)
         assert result.is_success
 
@@ -331,7 +331,7 @@ class TestSyncOne:
         doc["tool"] = {
             "pyright": {"extraPaths": ["old"]},
         }
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_one(pyproject, dry_run=True, is_root=True)
         assert result.is_success
         content = pyproject.read_text()
@@ -344,7 +344,7 @@ class TestSyncOne:
         doc["tool"] = {
             "pyright": {"extraPaths": ["old"]},
         }
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         with patch(
             "flext_infra.deps.extra_paths.FlextInfraTomlService"
         ) as mock_toml_class:
@@ -362,7 +362,7 @@ class TestSyncOne:
         pyproject = proj_dir / "pyproject.toml"
         doc = tomlkit.document()
         doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_extra_paths(project_dirs=[proj_dir])
         assert result.is_success
 
@@ -372,7 +372,7 @@ class TestSyncOne:
             pyproject = tmp_path / "pyproject.toml"
             doc = tomlkit.document()
             doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
-            pyproject.write_text(tomlkit.dumps(doc))
+            pyproject.write_text(doc.as_string())
             result = sync_extra_paths()
             assert result.is_success
 
@@ -389,7 +389,7 @@ class TestSyncOne:
         pyproject = proj_dir / "pyproject.toml"
         doc = tomlkit.document()
         doc["tool"] = {"pyright": {"extraPaths": ["old"]}}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         result = sync_extra_paths(dry_run=True, project_dirs=[proj_dir])
         assert result.is_success
         content = pyproject.read_text()
@@ -416,7 +416,7 @@ class TestMain:
             pyproject = tmp_path / "pyproject.toml"
             doc = tomlkit.document()
             doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
-            pyproject.write_text(tomlkit.dumps(doc))
+            pyproject.write_text(doc.as_string())
             with patch("sys.argv", ["extra_paths.py"]):
                 result = main()
                 assert result == 0
@@ -427,7 +427,7 @@ class TestMain:
             pyproject = tmp_path / "pyproject.toml"
             doc = tomlkit.document()
             doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
-            pyproject.write_text(tomlkit.dumps(doc))
+            pyproject.write_text(doc.as_string())
             with patch("sys.argv", ["extra_paths.py", "--dry-run"]):
                 result = main()
                 assert result == 0
@@ -439,7 +439,7 @@ class TestMain:
         pyproject = proj_dir / "pyproject.toml"
         doc = tomlkit.document()
         doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(doc.as_string())
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             with patch("sys.argv", ["extra_paths.py", "--project", "proj"]):
                 result = main()
@@ -453,7 +453,7 @@ class TestMain:
             pyproject = proj_dir / "pyproject.toml"
             doc = tomlkit.document()
             doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
-            pyproject.write_text(tomlkit.dumps(doc))
+            pyproject.write_text(doc.as_string())
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             with patch(
                 "sys.argv",
@@ -645,22 +645,22 @@ def test_sync_one_write_failure(
 
 
 def test_path_dep_paths_pep621_with_file_prefix(tmp_path: Path) -> None:
-    """Test _path_dep_paths_pep621 with file: prefix."""
+    """Test path_dep_paths_pep621 with file: prefix."""
     doc = tomlkit.document()
     doc["project"] = {"dependencies": ["flext-core @ file://flext-core"]}
 
-    result = _path_dep_paths_pep621(doc)
+    result = path_dep_paths_pep621(doc)
     assert any("flext-core" in p for p in result)
 
 
 def test_path_dep_paths_poetry_with_path(tmp_path: Path) -> None:
-    """Test _path_dep_paths_poetry with path dependency."""
+    """Test path_dep_paths_poetry with path dependency."""
     doc = tomlkit.document()
     doc["tool"] = {
         "poetry": {"dependencies": {"flext-core": {"path": "../flext-core"}}}
     }
 
-    result = _path_dep_paths_poetry(doc)
+    result = path_dep_paths_poetry(doc)
     assert any("flext-core" in p for p in result)
 
 

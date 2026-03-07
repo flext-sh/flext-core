@@ -4,16 +4,65 @@ from __future__ import annotations
 
 import argparse
 import os
-from collections.abc import Iterable, Mapping, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 
 import tomlkit
+from pydantic import TypeAdapter, ValidationError
 from tomlkit.items import Array, Item, Table
+from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, t
 from flext_infra import FlextInfraCommandRunner, c, p
 
 _logger = FlextLogger(__name__)
+
+_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.ContainerValue])
+_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.ContainerValue])
+
+
+def _normalize_container_value(
+    value: t.ContainerValue
+    | Item
+    | TOMLDocument
+    | Mapping[str, t.ContainerValue]
+    | None,
+) -> t.ContainerValue | None:
+    """Normalize TOML items/documents to a concrete container value."""
+    normalized: t.ContainerValue | Item | Mapping[str, t.ContainerValue] | None = value
+    if isinstance(value, (TOMLDocument, Item)):
+        normalized = value.unwrap()
+    if isinstance(normalized, Item):
+        return None
+    return normalized
+
+
+def _as_container_dict(
+    value: t.ContainerValue
+    | Item
+    | TOMLDocument
+    | Mapping[str, t.ContainerValue]
+    | None,
+) -> dict[str, t.ContainerValue]:
+    """Validate and normalize mapping-like values to typed container dict."""
+    normalized = _normalize_container_value(value)
+    if normalized is None:
+        return {}
+    try:
+        return _CONTAINER_DICT_ADAPTER.validate_python(normalized)
+    except ValidationError:
+        return {}
+
+
+def _as_container_list(value: t.ContainerValue | Item | None) -> list[t.ContainerValue]:
+    """Validate and normalize list-like values to typed container list."""
+    normalized = _normalize_container_value(value)
+    if normalized is None:
+        return []
+    try:
+        return _CONTAINER_LIST_ADAPTER.validate_python(normalized)
+    except ValidationError:
+        return []
 
 
 def _workspace_root(start: Path) -> Path:
@@ -79,30 +128,17 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
 
 def _unwrap_item(value: t.ContainerValue | Item | None) -> t.ContainerValue | None:
     """Unwrap a tomlkit Item to get the underlying value."""
-    if isinstance(value, Item):
-        unwrapped = value.unwrap()
-        return unwrapped if not isinstance(unwrapped, Item) else None
-    return value
+    return _normalize_container_value(value)
 
 
 def _as_string_list(value: t.ContainerValue | Item | None) -> list[str]:
     """Convert TOML value to list of strings."""
-    if value is None or isinstance(value, (str, Mapping)):
+    normalized = _normalize_container_value(value)
+    if normalized is None or isinstance(normalized, str):
         return []
-    if isinstance(value, Item):
-        # Unwrap Item to get the underlying value
-        value = value.unwrap()
-        if value is None or isinstance(value, (str, Mapping)):
-            return []
-        if not isinstance(value, Iterable):
-            return []
-    if not isinstance(value, Iterable):
-        return []
-    items: list[str] = []
-    for raw in value:
-        normalized = raw.unwrap() if isinstance(raw, Item) else raw
-        items.append(str(normalized))
-    return items
+    if isinstance(normalized, Sequence) and not isinstance(normalized, Mapping):
+        return [str(raw) for raw in normalized]
+    return [str(raw) for raw in _as_container_list(normalized)]
 
 
 def _array(items: list[str]) -> Array:
@@ -422,12 +458,31 @@ class EnsurePyrightConfigPhase:
             doc[c.Infra.Toml.TOOL] = tool
 
         pyright = _ensure_table(tool, c.Infra.Toml.PYRIGHT)
+        expected_envs: list[dict[str, str]] = [
+            {
+                "root": c.Infra.Paths.DEFAULT_SRC_DIR,
+                "reportPrivateUsage": "error",
+            },
+            {
+                "root": c.Infra.Directories.TESTS,
+                "reportPrivateUsage": "none",
+            },
+        ]
 
         if is_root:
-            # Root has extensive config (140+ keys); only verify strict mode exists
+            # Root has extensive config (140+ keys); keep it intact and enforce key guardrails
             if _unwrap_item(pyright.get("typeCheckingMode")) != c.Infra.Modes.STRICT:
                 pyright["typeCheckingMode"] = c.Infra.Modes.STRICT
                 changes.append("tool.pyright.typeCheckingMode set to strict")
+            current_envs_raw = _unwrap_item(pyright.get("executionEnvironments"))
+            current_envs = (
+                current_envs_raw if isinstance(current_envs_raw, list) else []
+            )
+            if current_envs != expected_envs:
+                pyright["executionEnvironments"] = expected_envs
+                changes.append(
+                    "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
+                )
             return changes
 
         # Sub-projects: ensure minimal strict settings
@@ -435,6 +490,14 @@ class EnsurePyrightConfigPhase:
             if _unwrap_item(pyright.get(key)) != value:
                 pyright[key] = value
                 changes.append(f"tool.pyright.{key} set to {value}")
+
+        current_envs_raw = _unwrap_item(pyright.get("executionEnvironments"))
+        current_envs = current_envs_raw if isinstance(current_envs_raw, list) else []
+        if current_envs != expected_envs:
+            pyright["executionEnvironments"] = expected_envs
+            changes.append(
+                "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
+            )
 
         return changes
 

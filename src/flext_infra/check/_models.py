@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import ConfigDict, Field, computed_field, model_serializer
 
-from flext_core import FlextModels
+from flext_core import FlextModels, t
 from flext_infra.constants import FlextInfraConstants as c
 
 
@@ -40,7 +40,7 @@ class FlextInfraCheckModels:
             description="Gate result model"
         )
         issues: list[FlextInfraCheckModels.Issue] = Field(
-            default_factory=list,
+            default_factory=lambda: list[FlextInfraCheckModels.Issue](),
             description="Detected issues",
         )
         raw_output: str = Field(default="", description="Raw tool output")
@@ -52,7 +52,7 @@ class FlextInfraCheckModels:
         project: str = Field(min_length=1, description="Project name")
         passed: bool = Field(description="Gate execution status")
         errors: list[str] = Field(
-            default_factory=list,
+            default_factory=lambda: list[str](),
             description="Gate error messages",
         )
         duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
@@ -62,7 +62,7 @@ class FlextInfraCheckModels:
 
         project: str = Field(description="Project name")
         gates: dict[str, FlextInfraCheckModels.GateExecution] = Field(
-            default_factory=dict,
+            default_factory=lambda: dict[str, FlextInfraCheckModels.GateExecution](),
             description="Gate name to execution mapping",
         )
 
@@ -78,36 +78,6 @@ class FlextInfraCheckModels:
             """Total issue count across all gates."""
             return sum(len(v.issues) for v in self.gates.values())
 
-    # -- Tool-specific JSON parsing models ---------------------------------
-
-    class Parsers:
-        """Models for parsing tool-specific JSON output."""
-
-        class ParsedIssue(FlextModels.ArbitraryTypesModel):
-            """Canonical parsed issue normalized from tool-specific payloads."""
-
-            model_config = ConfigDict(extra="ignore")
-
-            file: str = Field(default="?", description="Source file path")
-            line: int = Field(default=0, description="Line number")
-            column: int = Field(default=0, description="Column number")
-            code: str = Field(default="", description="Rule or error code")
-            message: str = Field(default="", description="Issue description")
-            severity: str = Field(
-                default=c.Infra.Toml.ERROR,
-                description="Severity level",
-            )
-
-        class ParsedIssueBatch(FlextModels.ArbitraryTypesModel):
-            """Collection wrapper for normalized parsed issues."""
-
-            model_config = ConfigDict(extra="ignore")
-
-            issues: list[FlextInfraCheckModels.Parsers.ParsedIssue] = Field(
-                default_factory=list,
-                description="Normalized parsed issues",
-            )
-
     # -- SARIF 2.1.0 report models -----------------------------------------
 
     class Sarif:
@@ -120,7 +90,7 @@ class FlextInfraCheckModels:
             short_description: str = Field(description="Rule short description")
 
             @model_serializer(mode="plain")
-            def _serialize(self):
+            def _serialize(self) -> dict[str, t.ContainerValue]:
                 return {
                     "id": self.id,
                     "shortDescription": {"text": self.short_description},
@@ -138,7 +108,7 @@ class FlextInfraCheckModels:
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self):
+            def _serialize(self) -> dict[str, t.ContainerValue]:
                 return {
                     "physicalLocation": {
                         "artifactLocation": {
@@ -163,7 +133,7 @@ class FlextInfraCheckModels:
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self):
+            def _serialize(self) -> dict[str, t.ContainerValue]:
                 return {
                     "ruleId": self.rule_id,
                     "level": self.level,
@@ -183,16 +153,16 @@ class FlextInfraCheckModels:
                 description="Tool documentation URL",
             )
             rules: list[FlextInfraCheckModels.Sarif.Rule] = Field(
-                default_factory=list,
+                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Rule](),
                 description="Rule descriptors",
             )
             results: list[FlextInfraCheckModels.Sarif.Result] = Field(
-                default_factory=list,
+                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Result](),
                 description="Run results",
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self):
+            def _serialize(self) -> dict[str, t.ContainerValue]:
                 return {
                     "tool": {
                         "driver": {
@@ -220,7 +190,7 @@ class FlextInfraCheckModels:
             )
             version: str = Field(default="2.1.0", description="SARIF version")
             runs: list[FlextInfraCheckModels.Sarif.Run] = Field(
-                default_factory=list,
+                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Run](),
                 description="SARIF runs",
             )
 

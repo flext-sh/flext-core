@@ -53,7 +53,7 @@ class UserProfile:
     def activate(self) -> r[None]:
         """Railway pattern for business operations - no None returns."""
         if self.status == c.Domain.Status.ACTIVE:
-            return r.fail("Already active")
+            return r[None].fail("Already active")
         return r.ok(None)
 
 
@@ -157,7 +157,7 @@ class UserService:
             )
             self.operation_count += 1
 
-            self.logger.info(  # Using mixin logger
+            _ = self.logger.info(  # Using mixin logger
                 "Creating user",
                 correlation_id=correlation_id,
                 operation_count=self.operation_count,
@@ -179,7 +179,7 @@ class UserService:
         """Create logging function for final result - advanced functional pattern."""
 
         def log_result(user: UserProfile) -> UserProfile:
-            self.logger.info(
+            _ = self.logger.info(
                 "User created successfully",
                 user_id=user.unique_id,
                 correlation_id=correlation_id,
@@ -191,7 +191,7 @@ class UserService:
 
     def _log_success(self, user: UserProfile) -> UserProfile:
         """Log success and return user (railway pattern)."""
-        self.logger.debug(f"User {user.name} activated successfully")
+        _ = self.logger.debug(f"User {user.name} activated successfully")
         return user
 
     def _validate_and_transform(
@@ -254,7 +254,7 @@ def demonstrate_exceptions() -> None:
     )
 
     def create_error_result(msg: str, field: str, value: str) -> r[str]:
-        return r.fail(
+        return r[str].fail(
             e.ValidationError(
                 msg,
                 field=field,
@@ -373,7 +373,9 @@ def main() -> None:
 
     with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
+        _ = logger.info(
+            "Starting demonstration", correlation_id=str(correlation_id or "")
+        )
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
         user_data: m.ConfigMap = m.ConfigMap(
@@ -391,7 +393,7 @@ def main() -> None:
         execute_service_operations(service, user_data)
         execute_demonstrations(service, user_data)
 
-        logger.info("Comprehensive demonstration completed successfully")
+        _ = logger.info("Comprehensive demonstration completed successfully")
 
 
 if __name__ == "__main__":

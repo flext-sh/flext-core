@@ -51,18 +51,34 @@ class FlextInfraDependencyDetectionModels(m):
     class DeptryIssueGroups(m.ArbitraryTypesModel):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-        dep001: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
-        dep002: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
-        dep003: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
-        dep004: list[Mapping[str, t.ContainerValue]] = Field(default_factory=list)
+        dep001: list[t.Infra.IssueMap] = Field(
+            default_factory=lambda: list[t.Infra.IssueMap](),
+        )
+        dep002: list[t.Infra.IssueMap] = Field(
+            default_factory=lambda: list[t.Infra.IssueMap](),
+        )
+        dep003: list[t.Infra.IssueMap] = Field(
+            default_factory=lambda: list[t.Infra.IssueMap](),
+        )
+        dep004: list[t.Infra.IssueMap] = Field(
+            default_factory=lambda: list[t.Infra.IssueMap](),
+        )
 
     class DeptryReport(m.ArbitraryTypesModel):
         """Deptry analysis report with missing, unused, transitive, and dev-in-runtime issues."""
 
-        missing: list[t.ContainerValue] = Field(default_factory=list)
-        unused: list[t.ContainerValue] = Field(default_factory=list)
-        transitive: list[t.ContainerValue] = Field(default_factory=list)
-        dev_in_runtime: list[t.ContainerValue] = Field(default_factory=list)
+        missing: list[str | None] = Field(
+            default_factory=lambda: list[str | None](),
+        )
+        unused: list[str | None] = Field(
+            default_factory=lambda: list[str | None](),
+        )
+        transitive: list[str | None] = Field(
+            default_factory=lambda: list[str | None](),
+        )
+        dev_in_runtime: list[str | None] = Field(
+            default_factory=lambda: list[str | None](),
+        )
         raw_count: int = Field(default=0, ge=0)
 
     class ProjectDependencyReport(m.ArbitraryTypesModel):
@@ -96,9 +112,9 @@ class FlextInfraDependencyDetectionService:
 
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
-        self._selector = FlextInfraProjectSelector()
-        self._toml = FlextInfraTomlService()
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self.selector = FlextInfraProjectSelector()
+        self.toml = FlextInfraTomlService()
+        self.runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
     def classify_issues(
@@ -128,17 +144,18 @@ class FlextInfraDependencyDetectionService:
     ) -> dm.ProjectDependencyReport:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
+
+        def _module_name(item: t.Infra.IssueMap) -> str | None:
+            val = item.get(c.Infra.Toml.MODULE)
+            return str(val) if val is not None else None
+
         return dm.ProjectDependencyReport(
             project=project_name,
             deptry=dm.DeptryReport(
-                missing=[item.get(c.Infra.Toml.MODULE) for item in classified.dep001],
-                unused=[item.get(c.Infra.Toml.MODULE) for item in classified.dep002],
-                transitive=[
-                    item.get(c.Infra.Toml.MODULE) for item in classified.dep003
-                ],
-                dev_in_runtime=[
-                    item.get(c.Infra.Toml.MODULE) for item in classified.dep004
-                ],
+                missing=[_module_name(item) for item in classified.dep001],
+                unused=[_module_name(item) for item in classified.dep002],
+                transitive=[_module_name(item) for item in classified.dep003],
+                dev_in_runtime=[_module_name(item) for item in classified.dep004],
                 raw_count=len(deptry_issues),
             ),
         )
@@ -150,7 +167,7 @@ class FlextInfraDependencyDetectionService:
     ) -> r[list[Path]]:
         """Discover projects with pyproject.toml in workspace."""
         names = projects_filter or []
-        result = self._selector.resolve_projects(workspace_root, names)
+        result = self.selector.resolve_projects(workspace_root, names)
         if result.is_failure:
             return r[list[Path]].fail(result.error or "project resolution failed")
 
@@ -165,7 +182,7 @@ class FlextInfraDependencyDetectionService:
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
         """Extract currently declared typing packages from project pyproject.toml."""
         pyproject = project_path / c.Infra.Files.PYPROJECT_FILENAME
-        read_result = self._toml.read(pyproject)
+        read_result = self.toml.read(pyproject)
         if read_result.is_failure:
             return []
         data: t.Infra.ContainerDict = read_result.value
@@ -273,7 +290,7 @@ class FlextInfraDependencyDetectionService:
         path = limits_path or (
             Path(__file__).resolve().parent / "dependency_limits.toml"
         )
-        result = self._toml.read(path)
+        result = self.toml.read(path)
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.InfraValue] = {}
@@ -335,7 +352,7 @@ class FlextInfraDependencyDetectionService:
             for excluded in extend_exclude:
                 cmd.extend(["--extend-exclude", excluded])
 
-        result = self._runner.run_raw(
+        result = self.runner.run_raw(
             cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM
         )
         if result.is_failure:
@@ -399,7 +416,7 @@ class FlextInfraDependencyDetectionService:
             "VIRTUAL_ENV": str(venv_bin.parent),
             "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
         }
-        result = self._runner.run_raw(
+        result = self.runner.run_raw(
             cmd,
             cwd=project_path,
             timeout=timeout,
@@ -435,7 +452,7 @@ class FlextInfraDependencyDetectionService:
             return r[tuple[list[str], int]].ok(([], 0))
 
         env = {**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)}
-        result = self._runner.run_raw(
+        result = self.runner.run_raw(
             [str(pip), c.Infra.Verbs.CHECK],
             cwd=workspace_root,
             timeout=c.Infra.Timeouts.SHORT,

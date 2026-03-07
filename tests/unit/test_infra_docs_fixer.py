@@ -11,8 +11,13 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.docs.fixer import FixItem, FixReport, FlextInfraDocFixer
-from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
+from flext_infra import m
+from flext_infra.docs.fixer import FlextInfraDocFixer
+from flext_infra.docs.shared import FlextInfraDocsShared
+
+FixItem = m.Infra.Docs.DocsPhaseItem
+FixReport = m.Infra.Docs.DocsPhaseReport
+FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
 
 
 class TestFlextInfraDocFixer:
@@ -70,7 +75,7 @@ class TestFlextInfraDocFixer:
 
     def test_fix_item_structure(self) -> None:
         """Test FixItem model structure."""
-        item = FixItem(file="README.md", links=2, toc=1)
+        item = FixItem(phase="fix", file="README.md", links=2, toc=1)
         assert item.file == "README.md"
         assert item.links == 2
         assert item.toc == 1
@@ -121,21 +126,23 @@ class TestFlextInfraDocFixer:
 
     def test_fix_report_changed_files_count(self) -> None:
         """Test FixReport changed_files field."""
-        report = FixReport(scope="test", changed_files=5, applied=True)
+        report = FixReport(phase="fix", scope="test", changed_files=5, applied=True)
         assert report.changed_files == 5
 
     def test_fix_report_applied_field(self) -> None:
         """Test FixReport applied field."""
-        report = FixReport(scope="test", changed_files=0, applied=False)
+        report = FixReport(phase="fix", scope="test", changed_files=0, applied=False)
         assert report.applied is False
 
     def test_fix_report_items_list(self) -> None:
         """Test FixReport items list."""
         items = [
-            FixItem(file="file1.md", links=1, toc=0),
-            FixItem(file="file2.md", links=0, toc=1),
+            FixItem(phase="fix", file="file1.md", links=1, toc=0),
+            FixItem(phase="fix", file="file2.md", links=0, toc=1),
         ]
-        report = FixReport(scope="test", changed_files=2, applied=True, items=items)
+        report = FixReport(
+            phase="fix", scope="test", changed_files=2, applied=True, items=items
+        )
         assert len(report.items) == 2
         assert report.items[0].file == "file1.md"
 

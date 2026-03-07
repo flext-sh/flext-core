@@ -299,14 +299,12 @@ class FlextContext(FlextRuntime):
             return r[bool].fail("Key must be a non-empty string")
         if value is None:
             return r[bool].fail("Value cannot be None")
-        if (
-            u.guard(
-                value,
-                (str, int, float, bool, list, dict, m.ConfigMap),
-                return_value=True,
-            )
-            is None
-        ):
+        guarded_value = u.guard(
+            value,
+            (str, int, float, bool, list, dict, m.ConfigMap),
+            return_value=True,
+        )
+        if isinstance(guarded_value, r):
             return r[bool].fail("Value must be serializable")
         return r[bool].ok(value=True)
 

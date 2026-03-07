@@ -1412,7 +1412,7 @@ class TestWorkspaceCheckerRunCommand:
             result = checker._run(["echo", "test"], tmp_path)
 
             assert result.stdout == "output"
-            assert result.returncode == 0
+            assert result.exit_code == 0
 
     def test_run_command_failure(self, tmp_path: Path) -> None:
         """Test _run handles command execution failure."""
@@ -1427,7 +1427,7 @@ class TestWorkspaceCheckerRunCommand:
 
             result = checker._run(["false"], tmp_path)
 
-            assert result.returncode == 1
+            assert result.exit_code == 1
             assert "execution failed" in result.stderr
 
 

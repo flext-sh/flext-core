@@ -241,6 +241,10 @@ def test_guard_in_has_empty_none_helpers() -> None:
     assert u.guard("x", validator=_always_false, default="d") == "d"
     assert u.guard("x", validator=_raise_error, default="d") == "d"
 
+    failure_result = u.guard("x", validator=_always_false, return_value=True)
+    assert isinstance(failure_result, r)
+    assert failure_result.is_failure
+
     assert u.in_("a", ["a", "b"])
     assert not u.in_([], ("a", "b"))
     assert not u.in_("a", 42)

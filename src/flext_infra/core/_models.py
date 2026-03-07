@@ -91,38 +91,5 @@ class FlextInfraCoreModels:
             description="Written report file paths",
         )
 
-    class ScriptsInventorySnapshot(FlextModels.ArbitraryTypesModel):
-        """Inventory snapshot payload persisted to reports."""
-
-        generated_at: str = Field(min_length=1, description="ISO timestamp")
-        repo_root: str = Field(min_length=1, description="Workspace root path")
-        total_scripts: int = Field(ge=0, description="Total discovered scripts")
-        scripts: list[str] = Field(
-            default_factory=list,
-            description="Discovered script paths",
-        )
-
-    class ScriptsWiringSnapshot(FlextModels.ArbitraryTypesModel):
-        """Script wiring report payload persisted to reports."""
-
-        generated_at: str = Field(min_length=1, description="ISO timestamp")
-        root_makefile: list[str] = Field(
-            default_factory=list,
-            description="Top-level makefile entries",
-        )
-        unwired_scripts: list[str] = Field(
-            default_factory=list,
-            description="Scripts not wired to automation",
-        )
-
-    class ExternalScriptsSnapshot(FlextModels.ArbitraryTypesModel):
-        """External script candidate payload persisted to reports."""
-
-        generated_at: str = Field(min_length=1, description="ISO timestamp")
-        candidates: list[str] = Field(
-            default_factory=list,
-            description="External script candidates",
-        )
-
 
 __all__ = ["FlextInfraCoreModels"]

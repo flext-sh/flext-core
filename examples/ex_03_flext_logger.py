@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextContainer, FlextLogger, FlextRuntime, c, u
+from flext_core import FlextContainer, FlextLogger, FlextRuntime, c, t
 
 FlextRuntime.configure_structlog()
 
 _RESULTS: list[str] = []
 
 
-def _check(label: str, value: object) -> None:
+def _check(label: str, value: t.ContainerValue) -> None:
     _RESULTS.append(f"{label}: {_ser(value)}")
 
 
@@ -22,7 +23,7 @@ def _section(name: str) -> None:
     _RESULTS.append(f"[{name}]")
 
 
-def _ser(v: object) -> str:
+def _ser(v: t.ContainerValue) -> str:
     if v is None:
         return "None"
     if isinstance(v, bool):
@@ -31,17 +32,13 @@ def _ser(v: object) -> str:
         return str(v)
     if isinstance(v, str):
         return repr(v)
-    if u.is_list(v):
-        return "[" + ", ".join(_ser(x) for x in v) + "]"
-    if u.is_dict_like(v):
-        pairs = ", ".join(
-            f"{_ser(k)}: {_ser(val)}"
-            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
-        return "{" + pairs + "}"
+    if isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray)):
+        return "list"
+    if isinstance(v, Mapping):
+        return "dict"
     if isinstance(v, type):
         return v.__name__
-    return type(v).__name__
+    return repr(v)
 
 
 def _verify() -> None:
@@ -84,6 +81,7 @@ def demo_global_context() -> None:
     _section("global_context")
 
     logger = FlextLogger.create_module_logger("examples.ex_03.global")
+    result_logger = logger.with_result()
     _check(
         "bind_global_context.ok",
         FlextLogger.bind_global_context(
@@ -91,7 +89,7 @@ def demo_global_context() -> None:
             correlation_id="g-001",
         ).is_success,
     )
-    _check("global.info.ok", logger.info("global bound").is_success)
+    _check("global.info.ok", result_logger.info("global bound").is_success)
     _check(
         "unbind_global_context.ok",
         FlextLogger.unbind_global_context("correlation_id").is_success,
@@ -104,6 +102,7 @@ def demo_scoped_context() -> None:
     _section("scoped_context")
 
     logger = FlextLogger.create_module_logger("examples.ex_03.scope")
+    result_logger = logger.with_result()
     application_scope = c.Context.SCOPE_APPLICATION
     request_scope = c.Context.SCOPE_REQUEST
     operation_scope = c.Context.SCOPE_OPERATION
@@ -122,7 +121,8 @@ def demo_scoped_context() -> None:
     )
     with FlextLogger.scoped_context(request_scope, tenant="acme"):
         _check(
-            "scoped_context.info.ok", logger.info("inside scoped context").is_success
+            "scoped_context.info.ok",
+            result_logger.info("inside scoped context").is_success,
         )
 
     _check(
@@ -140,11 +140,12 @@ def demo_level_context() -> None:
     _section("level_context")
 
     logger = FlextLogger.create_module_logger("examples.ex_03.level")
+    result_logger = logger.with_result()
     _check(
         "bind_context_for_level.ok",
         FlextLogger.bind_context_for_level("INFO", level_tag="l1").is_success,
     )
-    _check("level.info.ok", logger.info("info with level context").is_success)
+    _check("level.info.ok", result_logger.info("info with level context").is_success)
     _check(
         "unbind_context_for_level.ok",
         FlextLogger.unbind_context_for_level("INFO", "level_tag").is_success,
@@ -157,11 +158,15 @@ def demo_container_integration() -> None:
 
     container = FlextContainer()
     logger = FlextLogger.for_container(container, level="DEBUG", worker="w-1")
+    result_logger = logger.with_result()
     _check("for_container.type", type(logger).__name__)
-    _check("for_container.debug.ok", logger.debug("for_container debug").is_success)
+    _check(
+        "for_container.debug.ok", result_logger.debug("for_container debug").is_success
+    )
     with FlextLogger.with_container_context(container, level="INFO", feature="demo"):
         _check(
-            "with_container_context.info.ok", logger.info("container scope").is_success
+            "with_container_context.info.ok",
+            result_logger.info("container scope").is_success,
         )
 
 
@@ -185,13 +190,13 @@ def demo_instance_methods() -> None:
     adapter = safe.with_result()
     _check("with_result.type", type(adapter).__name__)
 
-    _check("trace.ok", safe.trace("trace value=%s", 1, key="t").is_success)
-    _check("debug.ok", safe.debug("debug value=%s", 2, key="d").is_success)
-    _check("info.ok", safe.info("info value=%s", 3, key="i").is_success)
-    _check("warning.ok", safe.warning("warn value=%s", 4, key="w").is_success)
-    _check("error.ok", safe.error("error value=%s", 6, key="e").is_success)
-    _check("critical.ok", safe.critical("critical value=%s", 7, key="c").is_success)
-    _check("log.ok", safe.log("INFO", "log value=%s", 8, key="l").is_success)
+    _check("trace.ok", adapter.trace("trace value=%s", 1, key="t").is_success)
+    _check("debug.ok", adapter.debug("debug value=%s", 2, key="d").is_success)
+    _check("info.ok", adapter.info("info value=%s", 3, key="i").is_success)
+    _check("warning.ok", adapter.warning("warn value=%s", 4, key="w").is_success)
+    _check("error.ok", adapter.error("error value=%s", 6, key="e").is_success)
+    _check("critical.ok", adapter.critical("critical value=%s", 7, key="c").is_success)
+    _check("log.ok", safe.log("INFO", "log value=%s", 8, key="l") is None)
 
     try:
         boom_msg = "boom"
@@ -208,7 +213,7 @@ def demo_instance_methods() -> None:
         _check("build_exception_context.type", type(context_map).__name__)
         _check(
             "exception.ok",
-            safe.exception(
+            adapter.exception(
                 "exception path",
                 exception=err,
                 exc_info=True,
@@ -222,8 +227,12 @@ def demo_performance_tracker() -> None:
     _section("performance_tracker")
 
     logger = FlextLogger.create_module_logger("examples.ex_03.performance")
+    result_logger = logger.with_result()
     with FlextLogger.PerformanceTracker(logger, "op.example"):
-        _check("performance_tracker.body.ok", logger.info("within tracker").is_success)
+        _check(
+            "performance_tracker.body.ok",
+            result_logger.info("within tracker").is_success,
+        )
 
 
 def demo_result_adapter() -> None:

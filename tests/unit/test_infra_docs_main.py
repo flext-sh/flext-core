@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from flext_core import r
+from flext_infra import m
 from flext_infra.docs.__main__ import (
     _run_audit,
     _run_build,
@@ -19,7 +20,8 @@ from flext_infra.docs.__main__ import (
     _run_validate,
     main,
 )
-from flext_infra.docs.auditor import AuditReport
+
+AuditReport = m.Infra.Docs.DocsPhaseReport
 
 
 class TestRunAudit:
@@ -41,7 +43,12 @@ class TestRunAudit:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             report = AuditReport(
-                scope="root", issues=[], checks=["links"], strict=True, passed=True
+                phase="audit",
+                scope="root",
+                items=[],
+                checks=["links"],
+                strict=True,
+                passed=True,
             )
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([report])
 
@@ -66,7 +73,12 @@ class TestRunAudit:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             report = AuditReport(
-                scope="root", issues=[], checks=["links"], strict=True, passed=False
+                phase="audit",
+                scope="root",
+                items=[],
+                checks=["links"],
+                strict=True,
+                passed=False,
             )
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([report])
 

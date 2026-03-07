@@ -248,7 +248,7 @@ class FlextUtilitiesConversion:
 
         """
         if value is None:
-            return default or ""
+            return default if default is not None else ""
         if isinstance(value, str):
             return str(value)
         try:
@@ -278,7 +278,7 @@ class FlextUtilitiesConversion:
 
         """
         if value is None:
-            return default or []
+            return default if default is not None else []
         value_class = value.__class__
         if value_class is str:
             return [str(value)]

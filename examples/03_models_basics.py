@@ -266,7 +266,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
 
     # Test field validators
     try:
-        F.IdentifiableMixin(unique_id="")
+        _invalid_identifiable = F.IdentifiableMixin(unique_id="")
     except ValueError as e:
         print(f"✅ Field validation: {e}")
 
@@ -281,7 +281,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
 
     # Test audit consistency
     try:
-        F.VersionableMixin(version=0)
+        _invalid_versionable = F.VersionableMixin(version=0)
     except ValueError as e:
         print(f"✅ Version validation: {e}")
 
@@ -326,7 +326,7 @@ class Money(m.Value):
     def add(self, other: Money) -> r[Money]:
         """Railway pattern for currency-aware addition."""
         if self.currency != other.currency:
-            return r.fail("Currency mismatch")
+            return r[Money].fail("Currency mismatch")
         return r.ok(
             Money(amount=self.amount + other.amount, currency=self.currency),
         )
@@ -397,18 +397,18 @@ class Order(m.AggregateRoot):
     def add_item(self, item: OrderItem) -> r[Order]:
         """Railway pattern for item addition with domain rules."""
         if self.status != c.Domain.OrderStatus.PENDING:
-            return r.fail("Cannot modify non-pending order")
+            return r[Order].fail("Cannot modify non-pending order")
         if any(existing.product_id == item.product_id for existing in self.items):
-            return r.fail("Product already in order")
+            return r[Order].fail("Product already in order")
         self.items.append(item)
         return r.ok(self)
 
     def confirm(self) -> r[Order]:
         """Railway pattern for order confirmation."""
         if not self.items:
-            return r.fail("Cannot confirm empty order")
+            return r[Order].fail("Cannot confirm empty order")
         if self.status != c.Domain.OrderStatus.PENDING:
-            return r.fail("Order already processed")
+            return r[Order].fail("Order already processed")
         self.status = c.Domain.OrderStatus.CONFIRMED
         return r.ok(self)
 

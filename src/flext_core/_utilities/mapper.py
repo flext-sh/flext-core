@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from functools import partial
 from pathlib import Path
 from typing import Protocol, overload
 
@@ -384,7 +385,7 @@ class FlextUtilitiesMapper:
                     convert_callable(value),
                 ),
             )
-            if converted_result.is_success and converted_result.value is not None:
+            if converted_result.is_success:
                 return converted_result.value
             return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
 
@@ -551,9 +552,21 @@ class FlextUtilitiesMapper:
                 grouped[key].append(item)
             return grouped
         if callable(group_spec_raw):
+            group_callable_result = FlextUtilitiesMapper._get_callable_from_dict(
+                ops,
+                "group",
+            )
+            if group_callable_result.is_failure:
+                return current
+            group_callable = group_callable_result.value
             grouped_callable: dict[str, list[t.ContainerValue]] = {}
             for item in current_list:
-                key = str(group_spec_raw(item))
+                key_result = r[t.ContainerValue].create_from_callable(
+                    partial(group_callable, item),
+                )
+                if key_result.is_failure:
+                    continue
+                key = str(key_result.value)
                 if key not in grouped_callable:
                     grouped_callable[key] = []
                 grouped_callable[key].append(item)
@@ -671,7 +684,7 @@ class FlextUtilitiesMapper:
         process_result = r[t.ContainerValue].create_from_callable(_process_current)
         if process_result.is_failure:
             return default if on_error == "stop" else current
-        return process_result.value if process_result.value is not None else current
+        return process_result.value
 
     @staticmethod
     def _build_apply_slice(
@@ -747,7 +760,13 @@ class FlextUtilitiesMapper:
                 else tuple(sorted_list_key)
             )
         if callable(sort_spec_raw):
-            sort_callable = sort_spec_raw
+            sort_callable_result = FlextUtilitiesMapper._get_callable_from_dict(
+                ops,
+                "sort",
+            )
+            if sort_callable_result.is_failure:
+                return current
+            sort_callable = sort_callable_result.value
 
             def sort_key(item: t.ContainerValue) -> str:
                 return str(sort_callable(item))
@@ -834,7 +853,7 @@ class FlextUtilitiesMapper:
             if on_error == "stop":
                 return default
             return current
-        return transform_result.value if transform_result.value is not None else current
+        return transform_result.value
 
     @staticmethod
     def _build_apply_unique(
@@ -874,7 +893,7 @@ class FlextUtilitiesMapper:
     def _extract_field_value(
         item: t.ContainerValue,
         field_name: str,
-    ) -> t.ContainerValue | None:
+    ) -> t.ContainerValue:
         """Extract field value from item (dict or object).
 
         Helper method to improve type inference for pyrefly.
@@ -901,7 +920,7 @@ class FlextUtilitiesMapper:
     def _extract_get_value(
         current: t.ContainerValue | BaseModel,
         key_part: str,
-    ) -> tuple[t.ContainerValue | None, bool]:
+    ) -> tuple[t.ContainerValue, bool]:
         """Helper: Get raw value from dict/object/model."""
         if isinstance(current, Mapping):
             current_mapping: m.ConfigMap = (
@@ -940,7 +959,7 @@ class FlextUtilitiesMapper:
     def _extract_handle_array_index(
         current: t.ContainerValue,
         array_match: str,
-    ) -> tuple[t.ContainerValue | None, str | None]:
+    ) -> tuple[t.ContainerValue, t.ContainerValue]:
         """Helper: Handle array indexing with support for negative indices."""
         if current.__class__ not in {list, tuple}:
             return None, "Not a sequence"
@@ -962,14 +981,14 @@ class FlextUtilitiesMapper:
     # =========================================================================
 
     @staticmethod
-    def _extract_parse_array_index(part: str) -> tuple[str, str | None]:
+    def _extract_parse_array_index(part: str) -> tuple[str, str]:
         """Helper: Parse array index from path part (e.g., "items[0]")."""
         if "[" in part and part.endswith("]"):
             bracket_pos = part.index("[")
             array_match = part[bracket_pos + 1 : -1]
             key_part = part[:bracket_pos]
             return key_part, array_match
-        return part, None
+        return part, ""
 
     @staticmethod
     def _extract_transform_options(
@@ -1001,17 +1020,13 @@ class FlextUtilitiesMapper:
             # Build StringMapping from validated dict - all keys/values confirmed as str
             map_keys_dict = {str(k): str(v) for k, v in map_keys_val.items()}
         filter_keys_val = transform_opts.get("filter_keys")
-        filter_keys_set: set[str] | None = (
-            {str(key) for key in filter_keys_val}
-            if isinstance(filter_keys_val, set)
-            else None
-        )
+        filter_keys_set: set[str] | None = None
+        if isinstance(filter_keys_val, set):
+            filter_keys_set = set(map(str, filter_keys_val))
         exclude_keys_val = transform_opts.get("exclude_keys")
-        exclude_keys_set: set[str] | None = (
-            {str(key) for key in exclude_keys_val}
-            if isinstance(exclude_keys_val, set)
-            else None
-        )
+        exclude_keys_set: set[str] | None = None
+        if isinstance(exclude_keys_val, set):
+            exclude_keys_set = set(map(str, exclude_keys_val))
         to_json_val = transform_opts.get("to_json")
         to_json_bool = to_json_val if isinstance(to_json_val, bool) else False
         return (
@@ -1098,7 +1113,7 @@ class FlextUtilitiesMapper:
                     root=FlextUtilitiesMapper._narrow_to_configuration_dict(value),
                 ),
             )
-            if coerced_result.is_success and coerced_result.value is not None:
+            if coerced_result.is_success:
                 return coerced_result.value
             error_msg = f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {coerced_result.error}"
             raise TypeError(error_msg)
@@ -1235,43 +1250,13 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
-    @overload
-    def as_(
-        value: t.ContainerValue,
-        target: type[int],
-        *,
-        default: int | None = None,
-        strict: bool = False,
-    ) -> int | None: ...
-
-    @staticmethod
-    @overload
-    def as_(
-        value: t.ContainerValue,
-        target: type[float],
-        *,
-        default: float | None = None,
-        strict: bool = False,
-    ) -> float | None: ...
-
-    @staticmethod
-    @overload
-    def as_(
-        value: t.ContainerValue,
-        target: type[str],
-        *,
-        default: str | None = None,
-        strict: bool = False,
-    ) -> str | None: ...
-
-    @staticmethod
     def as_(
         value: t.ContainerValue,
         target: type,
         *,
         default: t.ContainerValue | None = None,
         strict: bool = False,
-    ) -> t.ContainerValue | None:
+    ) -> t.ContainerValue:
         """Type conversion with guard (mnemonic: as_ = convert to type).
 
          Generic replacement for: type check +  patterns
@@ -1886,7 +1871,7 @@ class FlextUtilitiesMapper:
         default: t.ContainerValue | None = None,
         required: bool = False,
         separator: str = ".",
-    ) -> r[t.ContainerValue | None]:
+    ) -> r[t.ContainerValue]:
         """Safe nested data extraction with dot notation.
 
         Business Rule: Extracts nested values using dot notation paths.
@@ -1926,14 +1911,14 @@ class FlextUtilitiesMapper:
             for i, part in enumerate(parts):
                 if current is None:
                     if required:
-                        return r[t.ContainerValue | None].fail(
+                        return r[t.ContainerValue].fail(
                             f"Path '{separator.join(parts[:i])}' is None",
                         )
                     if default is None:
-                        return r[t.ContainerValue | None].fail(
+                        return r[t.ContainerValue].fail(
                             f"Path '{separator.join(parts[:i])}' is None and default is None",
                         )
-                    return r[t.ContainerValue | None].ok(default)
+                    return r[t.ContainerValue].ok(default)
 
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
                     part,
@@ -1947,52 +1932,52 @@ class FlextUtilitiesMapper:
                 if not found:
                     path_context = separator.join(parts[:i])
                     if required:
-                        return r[t.ContainerValue | None].fail(
+                        return r[t.ContainerValue].fail(
                             f"Key '{key_part}' not found at '{path_context}'",
                         )
                     if default is None:
-                        return r[t.ContainerValue | None].fail(
+                        return r[t.ContainerValue].fail(
                             f"Key '{key_part}' not found at '{path_context}' and default is None",
                         )
-                    return r[t.ContainerValue | None].ok(default)
+                    return r[t.ContainerValue].ok(default)
 
                 current = value
 
                 # Handle array index
-                if array_match is not None:
+                if array_match:
                     value, error = FlextUtilitiesMapper._extract_handle_array_index(
                         current,
                         array_match,
                     )
                     if error:
                         if required:
-                            return r[t.ContainerValue | None].fail(
+                            return r[t.ContainerValue].fail(
                                 f"Array error at '{key_part}': {error}",
                             )
                         if default is None:
-                            return r[t.ContainerValue | None].fail(
+                            return r[t.ContainerValue].fail(
                                 f"Array error at '{key_part}': {error} and default is None",
                             )
-                        return r[t.ContainerValue | None].ok(default)
+                        return r[t.ContainerValue].ok(default)
                     current = value
 
             if current is None:
                 if required:
-                    return r[t.ContainerValue | None].fail("Extracted value is None")
+                    return r[t.ContainerValue].fail("Extracted value is None")
                 if default is None:
-                    return r[t.ContainerValue | None].fail(
+                    return r[t.ContainerValue].fail(
                         "Extracted value is None and default is None",
                     )
-                return r[t.ContainerValue | None].ok(default)
+                return r[t.ContainerValue].ok(default)
 
             # Type narrowing: use TypeGuard to ensure current is ContainerValue
             if FlextUtilitiesGuards.is_general_value_type(current):
-                return r[t.ContainerValue | None].ok(current)
+                return r[t.ContainerValue].ok(current)
             # Fallback: convert to string representation for non-ContainerValue
-            return r[t.ContainerValue | None].ok(str(current))
+            return r[t.ContainerValue].ok(str(current))
 
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
-            return r[t.ContainerValue | None].fail(f"Extract failed: {e}")
+            return r[t.ContainerValue].fail(f"Extract failed: {e}")
 
     # =========================================================================
     # FIELDS METHODS - Multi-field extraction
@@ -2006,7 +1991,7 @@ class FlextUtilitiesMapper:
         default: t.ContainerValue | None = None,
         required: bool = False,
         ops: Mapping[str, t.ContainerValue] | None = None,
-    ) -> t.ContainerValue | None:
+    ) -> t.ContainerValue:
         """Extract single field from source with optional DSL processing.
 
         FLEXT Pattern: Simplified single-field extraction (split from overloaded fields).
@@ -2026,12 +2011,24 @@ class FlextUtilitiesMapper:
             age = FlextUtilitiesMapper.field(user, "age", default=0)
 
         """
-        # Get raw value first
-        raw_value: t.ContainerValue | None = FlextUtilitiesMapper.get(source, name)
-        # Use default if raw value is None
-        value: t.ContainerValue | None = raw_value if raw_value is not None else default
-        if value is None and required:
-            return None
+        has_value = False
+        if isinstance(source, Mapping):
+            has_value = name in source
+        elif hasattr(source, name):
+            has_value = True
+
+        if not has_value:
+            if required:
+                return None
+            value: t.ContainerValue = default if default is not None else ""
+        else:
+            raw_value: t.ContainerValue = FlextUtilitiesMapper.get(
+                source,
+                name,
+                default=default,
+            )
+            value = raw_value if raw_value is not None else default
+
         if ops is not None:
             # Apply DSL operations to value
             value_for_build: t.ContainerValue = (
@@ -2175,7 +2172,7 @@ class FlextUtilitiesMapper:
     def find_callable[T](
         callables: Mapping[str, _Predicate[T]],
         value: T,
-    ) -> str | None:
+    ) -> r[str]:
         """Find first matching callable key from dict of predicates.
 
         Iterates through mapping of named predicates and returns the key of
@@ -2210,8 +2207,8 @@ class FlextUtilitiesMapper:
                 build_predicate_call(predicate),
             )
             if predicate_result.is_success and predicate_result.value:
-                return name
-        return None
+                return r[str].ok(name)
+        return r[str].fail("No callable predicate matched")
 
     @staticmethod
     def flat[T](
@@ -2242,64 +2239,12 @@ class FlextUtilitiesMapper:
     # =========================================================================
 
     @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-    ) -> t.ContainerValue | None: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: str,
-    ) -> str: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: bool,
-    ) -> bool: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: int,
-    ) -> int: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: float,
-    ) -> float: ...
-
-    @staticmethod
-    @overload
-    def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: t.ContainerValue | None,
-    ) -> t.ContainerValue | None: ...
-
-    @staticmethod
     def get(
         data: p.AccessibleData,
         key: str,
         *,
         default: t.ContainerValue | None = None,
-    ) -> t.ContainerValue | None:
+    ) -> t.ContainerValue:
         """Unified get function for dict/object access with default.
 
         Generic replacement for: get(), get_str(), get_list()
@@ -2313,7 +2258,7 @@ class FlextUtilitiesMapper:
             default: Default value if not found
                 - str (e.g., "") -> returns str (generalized from get_str)
                 - list[T] (e.g., []) -> returns list[T] (generalized from get_list)
-                - Other -> returns T | None
+                - Other -> returns T
 
         Returns:
             Extracted value or default (type inferred from default)
@@ -2587,7 +2532,7 @@ class FlextUtilitiesMapper:
         items: Sequence[Mapping[str, object]],
         key: str,
         default: t.ContainerValue | None = None,
-    ) -> list[t.ContainerValue | None]:
+    ) -> list[t.ContainerValue]:
         """Extract single key from sequence of mappings.
 
         Generic replacement for: [item.get(key) for item in items]
@@ -2608,7 +2553,7 @@ class FlextUtilitiesMapper:
             # [25, 30, 0]
 
         """
-        values: list[t.ContainerValue | None] = []
+        values: list[t.ContainerValue] = []
         for item in items:
             raw_value = item.get(key, default)
             if raw_value is None:
@@ -2805,7 +2750,7 @@ class FlextUtilitiesMapper:
         as_type: type | None = None,
         default: t.ContainerValue | None = None,
         from_start: bool = True,
-    ) -> t.ContainerValue | None: ...
+    ) -> t.ContainerValue: ...
 
     @staticmethod
     @overload
@@ -2840,7 +2785,7 @@ class FlextUtilitiesMapper:
         as_type: type | None = None,
         default: t.ContainerValue | None = None,
         from_start: bool = True,
-    ) -> t.ConfigurationMapping | list[t.ContainerValue] | t.ContainerValue | None:
+    ) -> t.ConfigurationMapping | list[t.ContainerValue] | t.ContainerValue:
         """Unified take function (generalized from take_n).
 
         Generic replacement for: list slicing, dict slicing
@@ -2883,13 +2828,13 @@ class FlextUtilitiesMapper:
                 data = data_or_items
             else:
                 # Fallback: not accessible, return default
-                return default
+                return default if default is not None else ""
             key = key_or_n
             value = FlextUtilitiesMapper.get(data, key, default=default)
             if value is None:
-                return default
+                return default if default is not None else ""
             if as_type is not None and not isinstance(value, as_type):
-                return default
+                return default if default is not None else ""
             return value
 
         # Slice mode: take N items from list/dict
@@ -2906,9 +2851,7 @@ class FlextUtilitiesMapper:
                 for item in data_or_items
             ]
             return items_list[:n] if from_start else items_list[-n:]
-        # Fallback for unsupported types: return None
-        # Slice operations only make sense for collections
-        return None
+        return default if default is not None else ""
 
     @staticmethod
     def transform(

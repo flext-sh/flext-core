@@ -562,7 +562,7 @@ class FlextUtilitiesGuards:
         | str,
         context_name: str,
         error_msg: str | None,
-    ) -> str | None:
+    ) -> str:
         if isinstance(condition, type):
             if FlextUtilitiesGuards.is_general_value_type(value):
                 return FlextUtilitiesGuards._guard_check_type(
@@ -626,7 +626,7 @@ class FlextUtilitiesGuards:
         condition: Callable[[T], bool],
         context_name: str,
         error_msg: str | None,
-    ) -> str | None:
+    ) -> str:
         try:
             if not bool(condition(value)):
                 if error_msg is None:
@@ -641,7 +641,7 @@ class FlextUtilitiesGuards:
             if error_msg is None:
                 return f"{context_name} guard check raised: {e}"
             return error_msg
-        return None
+        return ""
 
     @staticmethod
     def _guard_check_string_shortcut(
@@ -649,11 +649,11 @@ class FlextUtilitiesGuards:
         condition: str,
         context_name: str,
         error_msg: str | None,
-    ) -> str | None:
+    ) -> str:
         shortcut_lower = condition.lower()
         if shortcut_lower == "non_empty":
             if isinstance(value, (str, list, dict)) and bool(value):
-                return None
+                return ""
             return error_msg or f"{context_name} must be non-empty"
         if shortcut_lower == "positive":
             if (
@@ -661,7 +661,7 @@ class FlextUtilitiesGuards:
                 and not isinstance(value, bool)
                 and value > 0
             ):
-                return None
+                return ""
             return error_msg or f"{context_name} must be positive number"
         if shortcut_lower == "non_negative":
             if (
@@ -669,11 +669,11 @@ class FlextUtilitiesGuards:
                 and not isinstance(value, bool)
                 and value >= 0
             ):
-                return None
+                return ""
             return error_msg or f"{context_name} must be non-negative number"
         if shortcut_lower == "dict":
             if hasattr(value, "items") and value.__class__ not in {str, bytes}:
-                return None
+                return ""
             return error_msg or f"{context_name} must be dict-like"
         if shortcut_lower == "list":
             if (
@@ -681,23 +681,23 @@ class FlextUtilitiesGuards:
                 and value.__class__ not in {str, bytes}
                 and not hasattr(value, "items")
             ):
-                return None
+                return ""
             return error_msg or f"{context_name} must be list-like"
         if shortcut_lower == "string":
             if isinstance(value, str):
-                return None
+                return ""
             return error_msg or f"{context_name} must be string"
         if shortcut_lower == "int":
             if isinstance(value, int) and not isinstance(value, bool):
-                return None
+                return ""
             return error_msg or f"{context_name} must be int"
         if shortcut_lower == "float":
             if isinstance(value, int | float) and not isinstance(value, bool):
-                return None
+                return ""
             return error_msg or f"{context_name} must be float"
         if shortcut_lower == "bool":
             if isinstance(value, bool):
-                return None
+                return ""
             return error_msg or f"{context_name} must be bool"
         return error_msg or f"{context_name} unknown guard shortcut: {condition}"
 
@@ -707,7 +707,7 @@ class FlextUtilitiesGuards:
         condition: type | tuple[type, ...],
         context_name: str,
         error_msg: str | None,
-    ) -> str | None:
+    ) -> str:
         type_match = isinstance(value, condition)
         if not type_match:
             if error_msg is None:
@@ -718,7 +718,7 @@ class FlextUtilitiesGuards:
                 )
                 return f"{context_name} must be {type_name}, got {value.__class__.__name__}"
             return error_msg
-        return None
+        return ""
 
     @staticmethod
     def _guard_check_validator(
@@ -726,7 +726,7 @@ class FlextUtilitiesGuards:
         condition: p.ValidatorSpec,
         context_name: str,
         error_msg: str | None,
-    ) -> str | None:
+    ) -> str:
         if not condition(value):
             if error_msg is None:
                 desc = (
@@ -736,7 +736,7 @@ class FlextUtilitiesGuards:
                 )
                 return f"{context_name} failed {desc} check"
             return error_msg
-        return None
+        return ""
 
     @staticmethod
     def _guard_handle_failure[T](
@@ -744,12 +744,14 @@ class FlextUtilitiesGuards:
         *,
         return_value: bool,
         default: T | None,
-    ) -> r[T] | T | None:
+    ) -> r[T] | T:
         if return_value:
-            return default
+            if default is not None:
+                return default
+            return r[T].fail(error_message)
         if default is not None:
-            return r.ok(default)
-        return r.fail(error_message)
+            return r[T].ok(default)
+        return r[T].fail(error_message)
 
     @staticmethod
     def _is_type_tuple(value: object) -> TypeGuard[tuple[type, ...]]:
@@ -986,7 +988,7 @@ class FlextUtilitiesGuards:
         *,
         default: t.ContainerValue | None = None,
         return_value: bool = False,
-    ) -> t.ContainerValue | bool | None:
+    ) -> t.ContainerValue | bool | r[t.ContainerValue]:
         guarded_value: t.ContainerValue = value
         try:
             if isinstance(validator, type):
@@ -1006,9 +1008,21 @@ class FlextUtilitiesGuards:
                     return guarded_value if return_value else True
             elif value:
                 return guarded_value if return_value else True
-            return default
+            if default is not None:
+                return default
+            return (
+                r[t.ContainerValue].fail("Guard validation failed")
+                if return_value
+                else False
+            )
         except (TypeError, ValueError, AttributeError):
-            return default
+            if default is not None:
+                return default
+            return (
+                r[t.ContainerValue].fail("Guard validation raised an exception")
+                if return_value
+                else False
+            )
 
     @staticmethod
     def guard_result[T](
@@ -1020,7 +1034,7 @@ class FlextUtilitiesGuards:
         context: str | None = None,
         default: T | None = None,
         return_value: bool = False,
-    ) -> r[T] | T | None:
+    ) -> r[T] | T:
         context_name = context or "Value"
         if len(conditions) == 0:
             if bool(value):
@@ -1039,7 +1053,7 @@ class FlextUtilitiesGuards:
                 context_name,
                 error_message,
             )
-            if condition_error is not None:
+            if condition_error:
                 return FlextUtilitiesGuards._guard_handle_failure(
                     condition_error,
                     return_value=return_value,

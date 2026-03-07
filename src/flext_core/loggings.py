@@ -19,7 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Self, override
+from typing import ClassVar, Literal, Self, overload, override
 
 from structlog.typing import Context
 
@@ -873,13 +873,30 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         return context_dict
 
+    @overload
+    def critical(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
+    def critical(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> None: ...
+
     @override
     def critical(
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
@@ -893,13 +910,30 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
 
+    @overload
+    def debug(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue | Exception,
+        _return_result: Literal[True],
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
+    def debug(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue | Exception,
+        **kw: t.ContainerValue | Exception,
+    ) -> None: ...
+
     @override
     def debug(
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
@@ -913,13 +947,30 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
 
+    @overload
+    def error(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
+    def error(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> None: ...
+
     @override
     def error(
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
@@ -933,13 +984,30 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
 
+    @overload
+    def exception(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
+    def exception(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> None: ...
+
     @override
     def exception(
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only).
 
         Business Rule: Logs an exception with conditional stack trace inclusion based
@@ -999,13 +1067,30 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             FlextLogger._report_internal_logging_failure("exception", exc)
             return r[bool].fail(f"Exception logging failed: {exc}")
 
+    @overload
+    def info(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
+    def info(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> None: ...
+
     @override
     def info(
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Log info message - Logger.Log implementation.
 
         Business Rule: Logs an info-level message with optional context. Uses _log
@@ -1019,13 +1104,32 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
 
+    @overload
+    def log(
+        self,
+        level: str,
+        message: str,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **context: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
     def log(
         self,
         level: str,
         message: str,
         *args: t.ContainerValue,
         **context: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> None: ...
+
+    def log(
+        self,
+        level: str,
+        message: str,
+        *args: t.ContainerValue,
+        **context: t.ContainerValue | Exception,
+    ) -> r[bool] | None:
         """Log message with specified level - Logger.Log implementation.
 
         Business Rule: Logs a message with specified level, converting level string
@@ -1063,12 +1167,29 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # LOGGING METHODS - DELEGATE TO FlextRuntime.structlog()
     # =============================================================================
 
+    @overload
+    def trace(
+        self,
+        message: str,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **kwargs: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
     def trace(
         self,
         message: str,
         *args: t.ContainerValue,
         **kwargs: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> None: ...
+
+    def trace(
+        self,
+        message: str,
+        *args: t.ContainerValue,
+        **kwargs: t.ContainerValue | Exception,
+    ) -> r[bool] | None:
         """Log trace message - Logger.Log implementation."""
         try:
             try:
@@ -1100,13 +1221,30 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         )
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
+    @overload
+    def warning(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        _return_result: Literal[True],
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool]: ...
+
+    @overload
+    def warning(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> None: ...
+
     @override
     def warning(
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation.
 
         Business Rule: Logs a warning-level message with optional context. Uses _log
@@ -1138,7 +1276,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: t.ContainerValue,
         **context: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
 
         Business Rule: Internal method that consolidates all log level methods (debug,
@@ -1185,7 +1323,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
         **kw: t.ContainerValue | Exception,
-    ) -> r[bool]:
+    ) -> r[bool] | None:
         message = str(msg)
         filtered_args: tuple[t.ContainerValue, ...] = tuple(
             arg

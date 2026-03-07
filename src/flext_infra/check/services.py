@@ -505,6 +505,22 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             return default
         return cls._as_int(raw, default)
 
+    @classmethod
+    def _result_exit_code(cls, result: p.Infra.CommandOutput) -> int:
+        """Extract exit code from command output payloads and test doubles."""
+        try:
+            payload = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                vars(result)
+            )
+        except (TypeError, ValidationError, AttributeError):
+            return 1
+        code = payload.get("exit_code")
+        if code is None:
+            code = payload.get("returncode")
+        if code is None:
+            return 1
+        return cls._as_int(code, 1)
+
     def _run(
         self,
         cmd: list[str],
@@ -562,45 +578,32 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         issues: list[m.Infra.Check.Issue] = []
         bandit_data: dict[str, t.ContainerValue] = {}
         try:
-            bandit_data = TypeAdapter(dict[str, t.ContainerValue]).validate_json(
-                result.stdout or "{}"
-            )
+            parsed = self._json.parse(result.stdout or "{}")
+            if parsed.is_success and isinstance(parsed.value, Mapping):
+                bandit_data = self._to_mapping(parsed.value)
             raw_results: list[dict[str, t.ContainerValue]] = self._to_mapping_list(
                 bandit_data.get("results", [])
             )
-            parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
-                issues=[
-                    m.Infra.Check.Parsers.ParsedIssue(
-                        file=self._as_str(raw_item.get("filename", "?"), "?"),
-                        line=self._as_int(raw_item.get("line_number", 0)),
-                        column=0,
-                        code=self._as_str(raw_item.get("test_id", "")),
-                        message=self._as_str(raw_item.get("issue_text", "")),
-                        severity=self._as_str(
-                            raw_item.get("issue_severity", "MEDIUM"),
-                            "MEDIUM",
-                        ).lower(),
-                    )
-                    for raw_item in raw_results
-                ]
-            )
             issues.extend(
                 m.Infra.Check.Issue(
-                    file=finding.file,
-                    line=finding.line,
-                    column=finding.column,
-                    code=finding.code,
-                    message=finding.message,
-                    severity=finding.severity,
+                    file=self._as_str(raw_item.get("filename", "?"), "?"),
+                    line=self._as_int(raw_item.get("line_number", 0)),
+                    column=0,
+                    code=self._as_str(raw_item.get("test_id", "")),
+                    message=self._as_str(raw_item.get("issue_text", "")),
+                    severity=self._as_str(
+                        raw_item.get("issue_severity", "MEDIUM"),
+                        "MEDIUM",
+                    ).lower(),
                 )
-                for finding in parsed_batch.issues
+                for raw_item in raw_results
             )
         except (TypeError, ValidationError):
             pass
         return self._build_gate_result(
             gate=c.Infra.Gates.SECURITY,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,
@@ -641,7 +644,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     message=match.group("msg"),
                 ),
             )
-        if vet_result.exit_code != 0 and not issues:
+        if self._result_exit_code(vet_result) != 0 and not issues:
             issues.append(
                 m.Infra.Check.Issue(
                     file=".",
@@ -729,7 +732,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     message=match.group("msg"),
                 ),
             )
-        if result.exit_code != 0 and not issues:
+        if self._result_exit_code(result) != 0 and not issues:
             issues.append(
                 m.Infra.Check.Issue(
                     file=".",
@@ -745,7 +748,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return self._build_gate_result(
             gate=c.Infra.Gates.MARKDOWN,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,
@@ -809,26 +812,19 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             except ValidationError:
                 continue
             try:
-                parsed = m.Infra.Check.Parsers.ParsedIssue(
-                    file=self._as_str(line_data.get("file", "?"), "?"),
-                    line=self._as_int(line_data.get("line", 0)),
-                    column=self._as_int(line_data.get("column", 0)),
-                    code=self._as_str(line_data.get("code", "")),
-                    message=self._as_str(line_data.get("message", "")),
-                    severity=self._as_str(
-                        line_data.get("severity", c.Infra.Toml.ERROR),
-                        c.Infra.Toml.ERROR,
-                    ),
+                severity = self._as_str(
+                    line_data.get("severity", c.Infra.Toml.ERROR),
+                    c.Infra.Toml.ERROR,
                 )
-                if parsed.severity in {"error", "warning", "note"}:
+                if severity in {"error", "warning", "note"}:
                     issues.append(
                         m.Infra.Check.Issue(
-                            file=parsed.file,
-                            line=parsed.line,
-                            column=parsed.column,
-                            code=parsed.code,
-                            message=parsed.message,
-                            severity=parsed.severity,
+                            file=self._as_str(line_data.get("file", "?"), "?"),
+                            line=self._as_int(line_data.get("line", 0)),
+                            column=self._as_int(line_data.get("column", 0)),
+                            code=self._as_str(line_data.get("code", "")),
+                            message=self._as_str(line_data.get("message", "")),
+                            severity=severity,
                         ),
                     )
             except ValidationError:
@@ -837,7 +833,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return self._build_gate_result(
             gate=c.Infra.Gates.MYPY,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,
@@ -869,53 +865,36 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         if json_file.exists():
             try:
                 raw_text = json_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                raw: t.ContainerValue = TypeAdapter(t.ContainerValue).validate_json(
-                    raw_text
-                )
-                if isinstance(raw, dict):
-                    raw_errors: t.ContainerValue = raw.get("errors", [])
-                    error_items: list[Mapping[str, t.ContainerValue]] = [
-                        item
-                        for item in (raw_errors if isinstance(raw_errors, list) else [])
-                        if isinstance(item, Mapping)
-                    ]
-                elif isinstance(raw, list):
-                    error_items = [item for item in raw if isinstance(item, Mapping)]
+                parsed = self._json.parse(raw_text)
+                if parsed.is_success and isinstance(parsed.value, Mapping):
+                    parsed_map = self._to_mapping(parsed.value)
+                    error_items: list[dict[str, t.ContainerValue]] = (
+                        self._to_mapping_list(parsed_map.get("errors", []))
+                    )
+                elif parsed.is_success and isinstance(parsed.value, list):
+                    error_items = self._to_mapping_list(parsed.value)
                 else:
                     error_items = []
 
-                parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
-                    issues=[
-                        m.Infra.Check.Parsers.ParsedIssue(
-                            file=self._as_str(d.get("path"), "?"),
-                            line=self._as_int(d.get("line"), 0),
-                            column=self._as_int(d.get("column"), 0),
-                            code=self._as_str(d.get("name"), ""),
-                            message=self._as_str(d.get("description"), ""),
-                            severity=self._as_str(
-                                d.get("severity"),
-                                c.Infra.Toml.ERROR,
-                            ),
-                        )
-                        for err in error_items
-                        for d in [dict(err)]
-                    ]
-                )
                 issues.extend(
                     m.Infra.Check.Issue(
-                        file=err.file,
-                        line=err.line,
-                        column=err.column,
-                        code=err.code,
-                        message=err.message,
-                        severity=err.severity,
+                        file=self._as_str(d.get("path"), "?"),
+                        line=self._as_int(d.get("line"), 0),
+                        column=self._as_int(d.get("column"), 0),
+                        code=self._as_str(d.get("name"), ""),
+                        message=self._as_str(d.get("description"), ""),
+                        severity=self._as_str(
+                            d.get("severity"),
+                            c.Infra.Toml.ERROR,
+                        ),
                     )
-                    for err in parsed_batch.issues
+                    for err in error_items
+                    for d in [dict(err)]
                 )
             except (TypeError, ValidationError):
                 pass
 
-        if not issues and result.exit_code != 0:
+        if not issues and self._result_exit_code(result) != 0:
             match = re.search(r"(\d+)\s+errors?", result.stderr + result.stdout)
             if match:
                 count = int(match.group(1))
@@ -932,7 +911,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return self._build_gate_result(
             gate=c.Infra.Gates.PYREFLY,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,
@@ -967,31 +946,16 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             raw_diagnostics: list[dict[str, t.ContainerValue]] = self._to_mapping_list(
                 pyright_data.get("generalDiagnostics", [])
             )
-            parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
-                issues=[
-                    m.Infra.Check.Parsers.ParsedIssue(
-                        file=str(diag.get("file", "?")),
-                        line=self._nested_int(diag, "range", "start", "line") + 1,
-                        column=self._nested_int(diag, "range", "start", "character")
-                        + 1,
-                        code=str(diag.get("rule", "")),
-                        message=str(diag.get("message", "")),
-                        severity=str(diag.get("severity", c.Infra.Toml.ERROR)),
-                    )
-                    for diag in raw_diagnostics
-                    if isinstance(diag, Mapping)
-                ]
-            )
             issues.extend(
                 m.Infra.Check.Issue(
-                    file=diag.file,
-                    line=diag.line,
-                    column=diag.column,
-                    code=diag.code,
-                    message=diag.message,
-                    severity=diag.severity,
+                    file=str(diag.get("file", "?")),
+                    line=self._nested_int(diag, "range", "start", "line") + 1,
+                    column=self._nested_int(diag, "range", "start", "character") + 1,
+                    code=str(diag.get("rule", "")),
+                    message=str(diag.get("message", "")),
+                    severity=str(diag.get("severity", c.Infra.Toml.ERROR)),
                 )
-                for diag in parsed_batch.issues
+                for diag in raw_diagnostics
             )
         except (TypeError, ValidationError):
             pass
@@ -999,7 +963,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return self._build_gate_result(
             gate=c.Infra.Gates.PYRIGHT,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,
@@ -1022,7 +986,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             project_dir,
         )
         issues: list[m.Infra.Check.Issue] = []
-        if result.exit_code != 0 and result.stdout.strip():
+        if self._result_exit_code(result) != 0 and result.stdout.strip():
             seen: set[str] = set()
             for line in result.stdout.strip().splitlines():
                 path = line.strip()
@@ -1061,7 +1025,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return self._build_gate_result(
             gate=c.Infra.Gates.FORMAT,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,
@@ -1091,36 +1055,23 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         try:
             if isinstance(ruff_data, list):
-                parsed_batch = m.Infra.Check.Parsers.ParsedIssueBatch(
-                    issues=[
-                        m.Infra.Check.Parsers.ParsedIssue(
-                            file=str(entry.get("filename", "?")),
-                            line=self._nested_int(dict(entry), "location", "row"),
-                            column=self._nested_int(dict(entry), "location", "column"),
-                            code=str(entry.get("code", "")),
-                            message=str(entry.get("message", "")),
-                            severity=c.Infra.Toml.ERROR,
-                        )
-                        for entry in ruff_data
-                        if isinstance(entry, Mapping)
-                    ]
-                )
                 issues.extend(
                     m.Infra.Check.Issue(
-                        file=parsed.file,
-                        line=parsed.line,
-                        column=parsed.column,
-                        code=parsed.code,
-                        message=parsed.message,
+                        file=str(entry.get("filename", "?")),
+                        line=self._nested_int(dict(entry), "location", "row"),
+                        column=self._nested_int(dict(entry), "location", "column"),
+                        code=str(entry.get("code", "")),
+                        message=str(entry.get("message", "")),
                     )
-                    for parsed in parsed_batch.issues
+                    for entry in ruff_data
+                    if isinstance(entry, Mapping)
                 )
         except (TypeError, ValidationError):
             pass
         return self._build_gate_result(
             gate=c.Infra.Gates.LINT,
             project=project_dir.name,
-            passed=result.exit_code == 0,
+            passed=self._result_exit_code(result) == 0,
             issues=issues,
             duration=time.monotonic() - started,
             raw_output=result.stderr,

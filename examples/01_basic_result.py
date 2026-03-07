@@ -137,8 +137,9 @@ class RailwayService(s[DemonstrationResult]):
             r[int].ok(c.ZERO + 3),  # 3
         ]
 
-        traversed = r.traverse(results, lambda r: r)
-        print(f".traverse(): {len(traversed.value)} results")
+        traversed = r.traverse(results, lambda r_val: r_val)
+        traversed_val = traversed.value
+        print(f".traverse(): {len(traversed_val)} results")
 
         # Filter with predicate using c threshold
         test_value = c.Validation.FILTER_THRESHOLD + c.Validation.MIN_AGE  # 10
@@ -152,7 +153,7 @@ class RailwayService(s[DemonstrationResult]):
         """Demonstrate error recovery patterns with advanced functional composition."""
         print("\n=== Error Recovery ===")
 
-        failure: r[str] = r.fail("Primary operation failed")
+        failure: r[str] = r[str].fail("Primary operation failed")
 
         # Alternative (transform error) using functional approach
         def recover_message(error: str) -> str:
@@ -182,7 +183,7 @@ class RailwayService(s[DemonstrationResult]):
                 error_code=c.Errors.VALIDATION_ERROR,
             )
         except e.ValidationError as exc:
-            result: r[str] = r.fail(exc.message, error_code=exc.error_code)
+            result: r[str] = r[str].fail(exc.message, error_code=exc.error_code)
             print(f"✅ ValidationError integration: {result.error_code}")
 
     @staticmethod
@@ -195,7 +196,7 @@ class RailwayService(s[DemonstrationResult]):
         print(f"✅ .ok(): {success.value}")
 
         # Failure result with centralized error code
-        failure: r[str] = r.fail(
+        failure: r[str] = r[str].fail(
             "Validation failed",
             error_code=c.Errors.VALIDATION_ERROR,
         )
@@ -297,8 +298,10 @@ class RailwayService(s[DemonstrationResult]):
         print("\n=== Value Extraction ===")
 
         # Use example data from constants with centralized t
-        success = r.ok({"name": "John", "email": "john@example.com"})
-        failure: r[str] = r.fail("Not found")
+        success = r[dict[str, str]].ok(
+            {"name": "John", "email": "john@example.com"},
+        )
+        failure: r[str] = r[str].fail("Not found")
 
         # Value extraction patterns
         user_data = success.value
@@ -314,7 +317,7 @@ class RailwayService(s[DemonstrationResult]):
             demo()
             return r.ok(True)
         except Exception as e:
-            return r.fail(f"Demonstration failed: {e}")
+            return r[bool].fail(f"Demonstration failed: {e}")
 
     @override
     def execute(self) -> r[DemonstrationResult]:
@@ -362,7 +365,7 @@ class RailwayService(s[DemonstrationResult]):
 
         # Execute demonstrations with advanced traverse pattern (DRY)
         results = [RailwayService._execute_demo(demo) for demo in demonstrations]
-        return r.traverse(results, lambda result: result).map(lambda _: None)
+        return r[bool].traverse(results, lambda result: result).map(lambda _: None)
 
 
 def main() -> None:
