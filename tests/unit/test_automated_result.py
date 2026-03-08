@@ -65,12 +65,12 @@ class TestAutomatedFlextResult:
             instance = fixture_factory.create_test_result_instance()
             result = self._execute_result_operation(instance, test_scenario["input"])
             if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     result,
                     f"FlextResult operation failed: {test_scenario['description']}",
                 )
             else:
-                assertion_helpers.assert_flext_result_failure(
+                _ = assertion_helpers.assert_flext_result_failure(
                     result,
                     f"FlextResult operation should fail: {test_scenario['description']}",
                 )
@@ -84,7 +84,7 @@ class TestAutomatedFlextResult:
         """Test type safety compliance for result."""
         instance = fixture_factory.create_test_result_instance()
         result = self._execute_result_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextResult type safety test"
         )
 
@@ -111,7 +111,7 @@ class TestAutomatedFlextResult:
             return self._execute_result_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextResult performance test exceeded timeout"
         )
 
@@ -119,14 +119,14 @@ class TestAutomatedFlextResult:
         """Test resource management and cleanup for result."""
         instance = fixture_factory.create_test_result_instance()
         result = self._execute_result_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextResult resource test"
         )
         instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextResult cleanup failed"
                 )
 

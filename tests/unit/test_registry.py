@@ -298,9 +298,9 @@ class TestFlextRegistry:
             if test_case.duplicate_registration:
                 result = registry.register_handler(handler)
         if test_case.should_succeed:
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
         else:
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
                 u.Tests.Result.assert_failure_with_error(
                     result, test_case.error_pattern
@@ -318,7 +318,7 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_success(
+        _ = u.Tests.Result.assert_success(
             result
         ) if test_case.should_succeed else u.Tests.Result.assert_failure(result)
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -335,7 +335,7 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_success(
+        _ = u.Tests.Result.assert_success(
             result
         ) if test_case.should_succeed else u.Tests.Result.assert_failure(result)
         assert result.value is not None
@@ -352,7 +352,7 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_success(
+        _ = u.Tests.Result.assert_success(
             result
         ) if test_case.should_succeed else u.Tests.Result.assert_failure(result)
         assert result.value is not None
@@ -406,14 +406,14 @@ class TestFlextRegistry:
                     cast("object", None),
                 )
             )
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             u.Tests.Result.assert_failure_with_error(
                 result, "Handler must expose message_type"
             )
         else:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
             assert isinstance(result.value, m.HandlerRegistrationDetails)
 
     def test_registry_initialization(self) -> None:
@@ -427,7 +427,7 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         assert isinstance(result.value, m.HandlerRegistrationDetails)
 
     @pytest.mark.parametrize(

@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import libcst as cst
-from pydantic import TypeAdapter
 
 from flext_infra import c, m, u
 from flext_infra.refactor.transformers.mro_private_inline import (
@@ -19,11 +18,6 @@ from flext_infra.refactor.transformers.mro_reference_rewriter import (
 )
 
 CONSTANT_PATTERN = re.compile(r"^_?[A-Z][A-Z0-9_]*$")
-SCAN_DIRECTORIES = ("src", "examples", "scripts", "tests")
-CONSTANTS_FILE_NAMES = frozenset({"constants.py", "_constants.py"})
-CONSTANTS_DIRECTORY = "constants"
-TYPINGS_FILE_NAMES = frozenset({"typings.py", "_typings.py"})
-TYPINGS_DIRECTORY = "typings"
 TYPE_CANDIDATE_PATTERN = re.compile(r"^_?[A-Za-z][A-Za-z0-9_]*$")
 
 
@@ -33,6 +27,71 @@ class _MROTargetSpec:
     file_names: frozenset[str]
     package_directory: str
     class_suffix: str
+
+
+def _new_symbol_candidate(
+    *, symbol: str, line: int, kind: str = "constant"
+) -> m.Infra.Refactor.MROSymbolCandidate:
+    candidate = m.Infra.Refactor.MROSymbolCandidate()
+    candidate.symbol = symbol
+    candidate.line = line
+    candidate.kind = kind
+    candidate.class_name = ""
+    candidate.facade_name = ""
+    return candidate
+
+
+def _new_scan_report(
+    *,
+    file: str,
+    module: str,
+    constants_class: str,
+    facade_alias: str,
+    candidates: tuple[m.Infra.Refactor.MROSymbolCandidate, ...],
+) -> m.Infra.Refactor.MROScanReport:
+    report = m.Infra.Refactor.MROScanReport()
+    report.file = file
+    report.module = module
+    report.constants_class = constants_class
+    report.facade_alias = facade_alias
+    report.candidates = candidates
+    return report
+
+
+def _new_file_migration(
+    *,
+    file: str,
+    module: str,
+    moved_symbols: tuple[str, ...],
+    created_classes: tuple[str, ...],
+) -> m.Infra.Refactor.MROFileMigration:
+    migration = m.Infra.Refactor.MROFileMigration()
+    migration.file = file
+    migration.module = module
+    migration.moved_symbols = moved_symbols
+    migration.created_classes = created_classes
+    return migration
+
+
+def _new_import_rewrite(
+    *, module: str, import_name: str, as_name: str | None, symbol: str, facade_name: str
+) -> m.Infra.Refactor.MROImportRewrite:
+    rewrite = m.Infra.Refactor.MROImportRewrite()
+    rewrite.module = module
+    rewrite.import_name = import_name
+    rewrite.as_name = as_name
+    rewrite.symbol = symbol
+    rewrite.facade_name = facade_name
+    return rewrite
+
+
+def _new_rewrite_result(
+    *, file: str, replacements: int
+) -> m.Infra.Refactor.MRORewriteResult:
+    result = m.Infra.Refactor.MRORewriteResult()
+    result.file = file
+    result.replacements = replacements
+    return result
 
 
 class FlextInfraRefactorMROMigrationScanner:
@@ -80,7 +139,7 @@ class FlextInfraRefactorMROMigrationScanner:
         except (OSError, SyntaxError):
             return None
         constants_class = cls._facade_class_name(tree=tree, target_spec=target_spec)
-        if constants_class == "":
+        if not constants_class:
             return None
         module = cls._module_path(file_path=file_path, project_root=project_root)
         candidates: list[m.Infra.Refactor.MROSymbolCandidate] = []
@@ -90,13 +149,13 @@ class FlextInfraRefactorMROMigrationScanner:
             )
             if candidate is not None:
                 candidates.append(candidate)
-        return TypeAdapter(m.Infra.Refactor.MROScanReport).validate_python({
-            "file": str(file_path),
-            "module": module,
-            "constants_class": constants_class,
-            "facade_alias": target_spec.family_alias,
-            "candidates": tuple(candidates),
-        })
+        return _new_scan_report(
+            file=str(file_path),
+            module=module,
+            constants_class=constants_class,
+            facade_alias=target_spec.family_alias,
+            candidates=tuple(candidates),
+        )
 
     @staticmethod
     def _candidate_from_statement(
@@ -108,6 +167,10 @@ class FlextInfraRefactorMROMigrationScanner:
                     stmt=stmt
                 )
             )
+        if target_spec.family_alias == "p":
+            return FlextInfraRefactorMROMigrationScanner._protocol_candidate_from_statement(
+                stmt=stmt
+            )
         if isinstance(stmt, ast.AnnAssign):
             if not isinstance(stmt.target, ast.Name):
                 return None
@@ -117,10 +180,7 @@ class FlextInfraRefactorMROMigrationScanner:
                 annotation=stmt.annotation
             ):
                 return None
-            return TypeAdapter(m.Infra.Refactor.MROSymbolCandidate).validate_python({
-                "symbol": stmt.target.id,
-                "line": stmt.lineno,
-            })
+            return _new_symbol_candidate(symbol=stmt.target.id, line=stmt.lineno)
         if isinstance(stmt, ast.Assign):
             if len(stmt.targets) != 1:
                 return None
@@ -129,10 +189,7 @@ class FlextInfraRefactorMROMigrationScanner:
                 return None
             if not CONSTANT_PATTERN.match(target.id):
                 return None
-            return TypeAdapter(m.Infra.Refactor.MROSymbolCandidate).validate_python({
-                "symbol": target.id,
-                "line": stmt.lineno,
-            })
+            return _new_symbol_candidate(symbol=target.id, line=stmt.lineno)
         return None
 
     @staticmethod
@@ -141,31 +198,63 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _target_specs(*, target: str) -> tuple[_MROTargetSpec, ...]:
+        ref_c: type[c.Infra.Refactor] = c.Infra.Refactor
         constants_spec = _MROTargetSpec(
             family_alias="c",
-            file_names=CONSTANTS_FILE_NAMES,
-            package_directory=CONSTANTS_DIRECTORY,
-            class_suffix=c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX,
+            file_names=ref_c.MRO_CONSTANTS_FILE_NAMES,
+            package_directory=ref_c.MRO_CONSTANTS_DIRECTORY,
+            class_suffix=ref_c.CONSTANTS_CLASS_SUFFIX,
         )
         typings_spec = _MROTargetSpec(
             family_alias="t",
-            file_names=TYPINGS_FILE_NAMES,
-            package_directory=TYPINGS_DIRECTORY,
+            file_names=ref_c.MRO_TYPINGS_FILE_NAMES,
+            package_directory=ref_c.MRO_TYPINGS_DIRECTORY,
             class_suffix="Types",
+        )
+        protocols_spec = _MROTargetSpec(
+            family_alias="p",
+            file_names=ref_c.MRO_PROTOCOLS_FILE_NAMES,
+            package_directory=ref_c.MRO_PROTOCOLS_DIRECTORY,
+            class_suffix="Protocols",
+        )
+        models_spec = _MROTargetSpec(
+            family_alias="m",
+            file_names=ref_c.MRO_MODELS_FILE_NAMES,
+            package_directory=ref_c.MRO_MODELS_DIRECTORY,
+            class_suffix="Models",
+        )
+        utilities_spec = _MROTargetSpec(
+            family_alias="u",
+            file_names=ref_c.MRO_UTILITIES_FILE_NAMES,
+            package_directory=ref_c.MRO_UTILITIES_DIRECTORY,
+            class_suffix="Utilities",
         )
         if target == "constants":
             return (constants_spec,)
         if target == "typings":
             return (typings_spec,)
-        return (constants_spec, typings_spec)
+        if target == "protocols":
+            return (protocols_spec,)
+        if target == "models":
+            return (models_spec,)
+        if target == "utilities":
+            return (utilities_spec,)
+        return (
+            constants_spec,
+            typings_spec,
+            protocols_spec,
+            models_spec,
+            utilities_spec,
+        )
 
     @staticmethod
     def _iter_constants_files(*, project_root: Path) -> list[Path]:
+        ref_c: type[c.Infra.Refactor] = c.Infra.Refactor
         constants_spec = _MROTargetSpec(
             family_alias="c",
-            file_names=CONSTANTS_FILE_NAMES,
-            package_directory=CONSTANTS_DIRECTORY,
-            class_suffix=c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX,
+            file_names=ref_c.MRO_CONSTANTS_FILE_NAMES,
+            package_directory=ref_c.MRO_CONSTANTS_DIRECTORY,
+            class_suffix=ref_c.CONSTANTS_CLASS_SUFFIX,
         )
         return FlextInfraRefactorMROMigrationScanner._iter_target_files(
             project_root=project_root,
@@ -176,9 +265,10 @@ class FlextInfraRefactorMROMigrationScanner:
     def _iter_target_files(
         *, project_root: Path, target_spec: _MROTargetSpec
     ) -> list[Path]:
+        ref_c: type[c.Infra.Refactor] = c.Infra.Refactor
         candidates: set[Path] = set()
-        for directory_name in SCAN_DIRECTORIES:
-            root = project_root / directory_name
+        for directory_name in ref_c.MRO_SCAN_DIRECTORIES:
+            root: Path = project_root / directory_name
             if not root.is_dir():
                 continue
             for file_path in root.rglob(c.Infra.Extensions.PYTHON_GLOB):
@@ -224,15 +314,15 @@ class FlextInfraRefactorMROMigrationScanner:
     def _typing_candidate_from_statement(
         *, stmt: ast.stmt
     ) -> m.Infra.Refactor.MROSymbolCandidate | None:
-        if isinstance(stmt, ast.TypeAlias) and isinstance(stmt.name, ast.Name):
+        if isinstance(stmt, ast.TypeAlias):
             symbol = stmt.name.id
             if TYPE_CANDIDATE_PATTERN.match(symbol) is None:
                 return None
-            return TypeAdapter(m.Infra.Refactor.MROSymbolCandidate).validate_python({
-                "symbol": symbol,
-                "line": stmt.lineno,
-                "kind": "typealias",
-            })
+            return _new_symbol_candidate(
+                symbol=symbol,
+                line=stmt.lineno,
+                kind="typealias",
+            )
         if isinstance(stmt, ast.AnnAssign):
             if not isinstance(stmt.target, ast.Name):
                 return None
@@ -243,11 +333,11 @@ class FlextInfraRefactorMROMigrationScanner:
                 annotation=stmt.annotation
             ):
                 return None
-            return TypeAdapter(m.Infra.Refactor.MROSymbolCandidate).validate_python({
-                "symbol": symbol,
-                "line": stmt.lineno,
-                "kind": "typealias",
-            })
+            return _new_symbol_candidate(
+                symbol=symbol,
+                line=stmt.lineno,
+                kind="typealias",
+            )
         if isinstance(stmt, ast.Assign):
             if len(stmt.targets) != 1 or not isinstance(stmt.targets[0], ast.Name):
                 return None
@@ -258,12 +348,45 @@ class FlextInfraRefactorMROMigrationScanner:
                 expr=stmt.value
             ):
                 return None
-            return TypeAdapter(m.Infra.Refactor.MROSymbolCandidate).validate_python({
-                "symbol": symbol,
-                "line": stmt.lineno,
-                "kind": "typevar",
-            })
+            return _new_symbol_candidate(
+                symbol=symbol,
+                line=stmt.lineno,
+                kind="typevar",
+            )
         return None
+
+    @staticmethod
+    def _protocol_candidate_from_statement(
+        *, stmt: ast.stmt
+    ) -> m.Infra.Refactor.MROSymbolCandidate | None:
+        if not isinstance(stmt, ast.ClassDef):
+            return None
+        has_protocol_base = False
+        for base_expr in stmt.bases:
+            if isinstance(base_expr, ast.Name) and base_expr.id == "Protocol":
+                has_protocol_base = True
+                break
+            if isinstance(base_expr, ast.Attribute) and base_expr.attr == "Protocol":
+                has_protocol_base = True
+                break
+            if isinstance(base_expr, ast.Subscript):
+                root_expr = base_expr.value
+                if isinstance(root_expr, ast.Name) and root_expr.id == "Protocol":
+                    has_protocol_base = True
+                    break
+                if (
+                    isinstance(root_expr, ast.Attribute)
+                    and root_expr.attr == "Protocol"
+                ):
+                    has_protocol_base = True
+                    break
+        if not has_protocol_base:
+            return None
+        return _new_symbol_candidate(
+            symbol=stmt.name,
+            line=stmt.lineno,
+            kind="protocol",
+        )
 
     @staticmethod
     def _is_final_annotation(*, annotation: ast.expr) -> bool:
@@ -318,7 +441,7 @@ class FlextInfraRefactorMROMigrationTransformer:
         source = Path(scan_result.file).read_text(encoding=c.Infra.Encoding.DEFAULT)
         module = cst.parse_module(source)
         candidate_symbols = {candidate.symbol for candidate in scan_result.candidates}
-        moved_statements: list[tuple[str, cst.BaseSmallStatement]] = []
+        moved_statements: list[tuple[str, cst.CSTNode]] = []
         retained_module_body: list[cst.CSTNode] = []
         for stmt in module.body:
             moved = FlextInfraRefactorMROMigrationTransformer._extract_moved_statement(
@@ -331,12 +454,12 @@ class FlextInfraRefactorMROMigrationTransformer:
         if len(moved_statements) == 0:
             return (
                 source,
-                TypeAdapter(m.Infra.Refactor.MROFileMigration).validate_python({
-                    "file": scan_result.file,
-                    "module": scan_result.module,
-                    "moved_symbols": (),
-                    "created_classes": (),
-                }),
+                _new_file_migration(
+                    file=scan_result.file,
+                    module=scan_result.module,
+                    moved_symbols=(),
+                    created_classes=(),
+                ),
                 {},
             )
         moved_by_symbol = dict(moved_statements)
@@ -391,18 +514,23 @@ class FlextInfraRefactorMROMigrationTransformer:
             replacement_values=replacement_values
         )
         updated_module = updated_module.visit(inline_transformer)
-        migration = TypeAdapter(m.Infra.Refactor.MROFileMigration).validate_python({
-            "file": scan_result.file,
-            "module": scan_result.module,
-            "moved_symbols": tuple(ordered_symbols),
-            "created_classes": created_classes,
-        })
+        migration = _new_file_migration(
+            file=scan_result.file,
+            module=scan_result.module,
+            moved_symbols=tuple(ordered_symbols),
+            created_classes=created_classes,
+        )
         return (updated_module.code, migration, symbol_map)
 
     @staticmethod
     def _extract_moved_statement(
         *, statement: cst.CSTNode, candidate_symbols: set[str]
-    ) -> tuple[str, cst.BaseSmallStatement] | None:
+    ) -> tuple[str, cst.CSTNode] | None:
+        if isinstance(statement, cst.ClassDef):
+            symbol = statement.name.value
+            if symbol in candidate_symbols:
+                return (symbol, statement)
+            return None
         if not isinstance(statement, cst.SimpleStatementLine):
             return None
         if len(statement.body) != 1:
@@ -429,7 +557,7 @@ class FlextInfraRefactorMROMigrationTransformer:
     def _migrate_constants_class(
         *,
         class_def: cst.ClassDef,
-        moved_by_symbol: dict[str, cst.BaseSmallStatement],
+        moved_by_symbol: dict[str, cst.CSTNode],
         ordered_symbols: list[str],
     ) -> tuple[cst.ClassDef, dict[str, str]]:
         retained_class_body: list[cst.CSTNode] = []
@@ -464,12 +592,12 @@ class FlextInfraRefactorMROMigrationTransformer:
             added_targets.add(target)
             symbol_map[symbol] = target
             replacement_value = alias_replacement_values.get(target)
-            moved_stmt = FlextInfraRefactorMROMigrationTransformer._retarget_statement(
+            moved_node = FlextInfraRefactorMROMigrationTransformer._retarget_statement(
                 statement=moved_by_symbol[symbol],
                 target_name=target,
                 replacement_value=replacement_value,
             )
-            moved_lines.append(cst.SimpleStatementLine(body=[moved_stmt]))
+            moved_lines.append(moved_node)
         cleaned_body = [
             statement
             for statement in retained_class_body
@@ -499,7 +627,7 @@ class FlextInfraRefactorMROMigrationTransformer:
     def _create_constants_class(
         *,
         class_name: str,
-        moved_by_symbol: dict[str, cst.BaseSmallStatement],
+        moved_by_symbol: dict[str, cst.CSTNode],
         ordered_symbols: list[str],
     ) -> tuple[cst.ClassDef, dict[str, str]]:
         class_template = cst.ClassDef(
@@ -512,12 +640,13 @@ class FlextInfraRefactorMROMigrationTransformer:
                 symbol=symbol
             )
             symbol_map[symbol] = target
-            moved_stmt = FlextInfraRefactorMROMigrationTransformer._retarget_statement(
+            moved_node = FlextInfraRefactorMROMigrationTransformer._retarget_statement(
                 statement=moved_by_symbol[symbol],
                 target_name=target,
                 replacement_value=None,
             )
-            class_body.append(cst.SimpleStatementLine(body=[moved_stmt]))
+            if isinstance(moved_node, cst.BaseStatement):
+                class_body.append(moved_node)
         return (
             class_template.with_changes(
                 body=class_template.body.with_changes(body=tuple(class_body))
@@ -554,9 +683,7 @@ class FlextInfraRefactorMROMigrationTransformer:
         return stripped or symbol
 
     @staticmethod
-    def _statement_value(
-        *, statement: cst.BaseSmallStatement
-    ) -> cst.BaseExpression | None:
+    def _statement_value(*, statement: cst.CSTNode) -> cst.BaseExpression | None:
         if isinstance(statement, cst.AnnAssign):
             return statement.value
         if isinstance(statement, cst.Assign):
@@ -566,21 +693,35 @@ class FlextInfraRefactorMROMigrationTransformer:
     @staticmethod
     def _retarget_statement(
         *,
-        statement: cst.BaseSmallStatement,
+        statement: cst.CSTNode,
         target_name: str,
         replacement_value: cst.BaseExpression | None,
-    ) -> cst.BaseSmallStatement:
+    ) -> cst.CSTNode:
+        if isinstance(statement, cst.ClassDef):
+            if statement.name.value == target_name:
+                return statement
+            return statement.with_changes(name=cst.Name(target_name))
         if isinstance(statement, cst.AnnAssign):
             if replacement_value is not None:
-                return statement.with_changes(
-                    target=cst.Name(target_name), value=replacement_value
+                return cst.SimpleStatementLine(
+                    body=[
+                        statement.with_changes(
+                            target=cst.Name(target_name), value=replacement_value
+                        )
+                    ]
                 )
-            return statement.with_changes(target=cst.Name(target_name))
+            return cst.SimpleStatementLine(
+                body=[statement.with_changes(target=cst.Name(target_name))]
+            )
         if isinstance(statement, cst.Assign):
             assign_value = replacement_value or statement.value
-            return statement.with_changes(
-                targets=(cst.AssignTarget(target=cst.Name(target_name)),),
-                value=assign_value,
+            return cst.SimpleStatementLine(
+                body=[
+                    statement.with_changes(
+                        targets=(cst.AssignTarget(target=cst.Name(target_name)),),
+                        value=assign_value,
+                    )
+                ]
             )
         msg = "unsupported constant statement type"
         raise ValueError(msg)
@@ -595,6 +736,7 @@ class FlextInfraRefactorMROImportRewriter:
         *,
         workspace_root: Path,
         moved_index: dict[str, dict[str, str]],
+        module_facade_aliases: dict[str, str],
         apply_changes: bool,
     ) -> list[m.Infra.Refactor.MRORewriteResult]:
         """Rewrite references across all project Python files."""
@@ -605,6 +747,7 @@ class FlextInfraRefactorMROImportRewriter:
             rewritten = cls.rewrite_file(
                 file_path=file_path,
                 moved_index=moved_index,
+                module_facade_aliases=module_facade_aliases,
                 apply_changes=apply_changes,
             )
             if rewritten is not None and rewritten.replacements > 0:
@@ -613,7 +756,11 @@ class FlextInfraRefactorMROImportRewriter:
 
     @staticmethod
     def rewrite_file(
-        *, file_path: Path, moved_index: dict[str, dict[str, str]], apply_changes: bool
+        *,
+        file_path: Path,
+        moved_index: dict[str, dict[str, str]],
+        module_facade_aliases: dict[str, str],
+        apply_changes: bool,
     ) -> m.Infra.Refactor.MRORewriteResult | None:
         """Rewrite one file according to moved constant symbol mappings."""
         try:
@@ -636,19 +783,20 @@ class FlextInfraRefactorMROImportRewriter:
                     continue
                 kept_names: list[ast.alias] = []
                 for alias in stmt.names:
-                    if alias.name == c.Infra.Refactor.DEFAULT_FACADE_ALIAS:
+                    default_facade_alias = module_facade_aliases.get(
+                        module_name, c.Infra.Refactor.DEFAULT_FACADE_ALIAS
+                    )
+                    if alias.name == default_facade_alias:
                         facade_local_name = alias.asname or alias.name
                         facade_aliases[facade_local_name] = module_name
                         module_facade_alias[module_name] = facade_local_name
-                        facade_import = TypeAdapter(
-                            m.Infra.Refactor.MROImportRewrite
-                        ).validate_python({
-                            "module": module_name,
-                            "import_name": c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
-                            "as_name": alias.asname,
-                            "symbol": "",
-                            "facade_name": facade_local_name,
-                        })
+                        facade_import = _new_import_rewrite(
+                            module=module_name,
+                            import_name=default_facade_alias,
+                            as_name=alias.asname,
+                            symbol="",
+                            facade_name=facade_local_name,
+                        )
                         facade_key = f"{facade_import.module}:{facade_import.import_name}:{facade_import.as_name or ''}"
                         facade_imports_needed.add(facade_key)
                         facade_import_objects[facade_key] = facade_import
@@ -659,35 +807,30 @@ class FlextInfraRefactorMROImportRewriter:
                     if new_symbol is None:
                         kept_names.append(alias)
                         continue
-                    imported_symbols[alias.asname or alias.name] = TypeAdapter(
-                        m.Infra.Refactor.MROImportRewrite
-                    ).validate_python({
-                        "module": module_name,
-                        "import_name": c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
-                        "as_name": None,
-                        "symbol": new_symbol,
-                        "facade_name": module_facade_alias.get(
-                            module_name, c.Infra.Refactor.DEFAULT_FACADE_ALIAS
+                    imported_symbols[alias.asname or alias.name] = _new_import_rewrite(
+                        module=module_name,
+                        import_name=default_facade_alias,
+                        as_name=None,
+                        symbol=new_symbol,
+                        facade_name=module_facade_alias.get(
+                            module_name, default_facade_alias
                         ),
-                    })
-                    facade_import = TypeAdapter(
-                        m.Infra.Refactor.MROImportRewrite
-                    ).validate_python({
-                        "module": module_name,
-                        "import_name": c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
-                        "as_name": None
+                    )
+                    facade_import = _new_import_rewrite(
+                        module=module_name,
+                        import_name=default_facade_alias,
+                        as_name=None
                         if module_name not in module_facade_alias
                         else (
                             None
-                            if module_facade_alias[module_name]
-                            == c.Infra.Refactor.DEFAULT_FACADE_ALIAS
+                            if module_facade_alias[module_name] == default_facade_alias
                             else module_facade_alias[module_name]
                         ),
-                        "symbol": "",
-                        "facade_name": module_facade_alias.get(
-                            module_name, c.Infra.Refactor.DEFAULT_FACADE_ALIAS
+                        symbol="",
+                        facade_name=module_facade_alias.get(
+                            module_name, default_facade_alias
                         ),
-                    })
+                    )
                     facade_key = f"{facade_import.module}:{facade_import.import_name}:{facade_import.as_name or ''}"
                     facade_imports_needed.add(facade_key)
                     facade_import_objects[facade_key] = facade_import
@@ -745,11 +888,11 @@ class FlextInfraRefactorMROImportRewriter:
             return None
         rendered = ast.unparse(ast.fix_missing_locations(rewritten))
         if apply_changes and rendered != source:
-            u.write_file(file_path, f"{rendered}\n", encoding=c.Infra.Encoding.DEFAULT)
-        return TypeAdapter(m.Infra.Refactor.MRORewriteResult).validate_python({
-            "file": str(file_path),
-            "replacements": rewriter.replacements,
-        })
+            _ = file_path.write_text(f"{rendered}\n", encoding=c.Infra.Encoding.DEFAULT)
+        return _new_rewrite_result(
+            file=str(file_path),
+            replacements=rewriter.replacements,
+        )
 
     @staticmethod
     def _iter_workspace_python_files(*, workspace_root: Path) -> list[Path]:

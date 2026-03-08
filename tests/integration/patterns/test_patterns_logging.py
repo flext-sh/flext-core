@@ -212,7 +212,7 @@ class TestFlextLogger:
         assert hasattr(bound_logger, "debug")
         result = bound_logger.info("Test message with bound context")
         _ = (
-            assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(result),
             "Bound logger should work for logging",
         )
 
@@ -231,7 +231,7 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
         result = logger.info("Compatibility test message")
         _ = (
-            assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(result),
             "Logger should work with standard patterns",
         )
 
@@ -250,7 +250,7 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
         result = logger.info("Module-level logger test message")
         _ = (
-            assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(result),
             "Module-level logger should work",
         )
 
@@ -339,7 +339,7 @@ class TestFlextLoggerUsage:
         ]
         for i, result in enumerate(results):
             _ = (
-                assertion_helpers.assert_flext_result_success(result),
+                _ = assertion_helpers.assert_flext_result_success(result),
                 f"Log entry {i + 1} should succeed",
             )
 
@@ -359,7 +359,7 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "debug")
         result = perf_logger.info("Performance test message")
         _ = (
-            assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(result),
             "Performance logging should succeed",
         )
         result2 = perf_logger.debug("Performance debug message")
@@ -442,7 +442,7 @@ class TestFlextLoggerIntegration:
                 user_id="user-123",
             )
             _ = (
-                assertion_helpers.assert_flext_result_success(result),
+                _ = assertion_helpers.assert_flext_result_success(result),
                 "Exception logging should succeed",
             )
 
@@ -473,6 +473,6 @@ class TestFlextLoggerIntegration:
             success=True,
         )
         _ = (
-            assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(result),
             "Logging should succeed",
         )

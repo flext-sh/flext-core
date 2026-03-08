@@ -68,12 +68,12 @@ class TestAutomatedFlextDispatcher:
                 instance, test_scenario["input"]
             )
             if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     result,
                     f"FlextDispatcher operation failed: {test_scenario['description']}",
                 )
             else:
-                assertion_helpers.assert_flext_result_failure(
+                _ = assertion_helpers.assert_flext_result_failure(
                     result,
                     f"FlextDispatcher operation should fail: {test_scenario['description']}",
                 )
@@ -87,7 +87,7 @@ class TestAutomatedFlextDispatcher:
         """Test type safety compliance for dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
         result = self._execute_dispatcher_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextDispatcher type safety test"
         )
 
@@ -116,7 +116,7 @@ class TestAutomatedFlextDispatcher:
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextDispatcher performance test exceeded timeout"
         )
 
@@ -124,14 +124,14 @@ class TestAutomatedFlextDispatcher:
         """Test resource management and cleanup for dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
         result = self._execute_dispatcher_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextDispatcher resource test"
         )
         instance_obj: Any = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextDispatcher cleanup failed"
                 )
 

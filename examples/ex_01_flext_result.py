@@ -86,7 +86,7 @@ class Ex01FlextResult(Examples):
         io_value = ok_value.to_io()
         self.check("to_io.success.type", type(io_value).__name__)
         try:
-            fail_value.to_io()
+            _ = fail_value.to_io()
             self.check("to_io.failure.raises", False)
         except e.ValidationError as exc:
             self.check("to_io.failure.raises", True)
@@ -184,7 +184,7 @@ class Ex01FlextResult(Examples):
         self.check("prop.failure.error_data", failure.error_data)
         self.check("unwrap.success", success.unwrap())
         try:
-            failure.unwrap()
+            _ = failure.unwrap()
             self.check("unwrap.failure.raises", False)
         except RuntimeError as exc:
             self.check("unwrap.failure.raises", True)

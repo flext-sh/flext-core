@@ -501,7 +501,7 @@ class TestRealWiringScenarios:
 
         scoped = container.scoped(resources={"test_resource": resource_factory})
         result = scoped.get("test_resource")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, dict)
         assert result.value == {"resource": True}
         assert lifecycle["created"] is True

@@ -27,7 +27,7 @@ class TestFlextTestsUtilitiesResult:
         """Test assert_success with failed result."""
         result: r[str] = r[str].fail("error")
         with pytest.raises(AssertionError, match="Expected success but got failure"):
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
 
     def test_assert_failure_passes(self) -> None:
         """Test assert_failure with failed result."""
@@ -39,7 +39,7 @@ class TestFlextTestsUtilitiesResult:
         """Test assert_failure with successful result."""
         result = r[str].ok("success")
         with pytest.raises(AssertionError, match="Expected failure but got success"):
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
 
     def test_assert_failure_with_expected_error(self) -> None:
         """Test assert_failure with expected error substring."""
@@ -51,7 +51,7 @@ class TestFlextTestsUtilitiesResult:
         """Test assert_failure when expected error doesn't match."""
         result: r[str] = r[str].fail("validation error occurred")
         with pytest.raises(AssertionError, match="Expected error containing"):
-            u.Tests.Result.assert_failure(result, "not found")
+            _ = u.Tests.Result.assert_failure(result, "not found")
 
     def test_assert_success_with_value(self) -> None:
         """Test assert_success_with_value with matching value."""
@@ -123,19 +123,19 @@ class TestFlextTestsUtilitiesFactory:
     def test_create_result_success(self) -> None:
         """Test create_result with value."""
         result = u.Tests.Factory.create_result("test_value")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test_value"
 
     def test_create_result_failure(self) -> None:
         """Test create_result with error."""
         result: r[str] = u.Tests.Factory.create_result(None, error="test error")
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "test error"
 
     def test_create_result_no_args(self) -> None:
         """Test create_result with no arguments returns failure."""
         result: r[str] = u.Tests.Factory.create_result(None)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "No value or error provided"
 
     def test_create_test_data(self) -> None:
@@ -152,21 +152,21 @@ class TestFlextTestsUtilitiesResultCompat:
     def test_assert_result_success_passes(self) -> None:
         """Test assert_result_success with successful result."""
         result = r[str].ok("success")
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_assert_result_success_fails(self) -> None:
         """Test assert_result_success with failed result."""
         result: r[str] = r[str].fail("error")
         with pytest.raises(AssertionError, match="Expected success but got failure"):
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
 
     def test_assert_result_failure_passes(self) -> None:
         """Test assert_result_failure with failed result."""
         result: r[str] = r[str].fail("error")
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
 
     def test_assert_result_failure_fails(self) -> None:
         """Test assert_result_failure with successful result."""
         result = r[str].ok("success")
         with pytest.raises(AssertionError, match="Expected failure but got success"):
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from flext_core import FlextRuntime, p, r, t, u
+from flext_core import FlextRuntime, p, r, t
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker

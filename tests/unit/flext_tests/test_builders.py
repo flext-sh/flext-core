@@ -190,7 +190,7 @@ class TestFlextTestsBuilders:
         builder.add("result", result_ok=42)
         data = _as_builder_dict(builder.build())
         result = cast("r[int]", cast("object", data["result"]))
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_add_with_result_fail(self) -> None:
@@ -199,7 +199,7 @@ class TestFlextTestsBuilders:
         builder.add("error", result_fail="Failed", result_code="E001")
         data = _as_builder_dict(builder.build())
         result = cast("r[t.ContainerValue]", cast("object", data["error"]))
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
     def test_add_with_items_and_map(self) -> None:
@@ -362,7 +362,7 @@ class TestFlextTestsBuilders:
         builder.add("x", 1)
         result_raw = builder.to_result()
         result = _as_builder_result(result_raw)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data["x"] == 1
 
@@ -372,7 +372,7 @@ class TestFlextTestsBuilders:
         result = _as_builder_result(
             builder.to_result(error="Failed", error_code="E001")
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
     def test_to_result_with_unwrap(self) -> None:
@@ -395,7 +395,7 @@ class TestFlextTestsBuilders:
             )
         )
         result = _as_builder_result(result_raw)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_copy_builder(self) -> None:
         """Test copy_builder() creates independent copy."""
@@ -461,14 +461,14 @@ class TestFlextTestsBuilders:
     def test_tests_result_ok(self) -> None:
         """Test tb.Tests.Result.ok()."""
         result = tb.Tests.Result.ok(42)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
         result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error", code="E001")
         result = result_raw
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_tests_result_batch_ok(self) -> None:
         """Test tb.Tests.Result.batch_ok()."""
@@ -530,7 +530,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         result_raw = builder.to_result(error_code="E001")
         result = _as_builder_result(result_raw)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_batch_params_validation_scenarios_not_empty(self) -> None:
         """Test BatchParams validates scenarios is not empty."""
@@ -568,7 +568,7 @@ class TestFlextTestsBuilders:
         builder.add("x", 1)
         result_raw = builder.to_result(unwrap=False)
         result = _as_builder_result(result_raw)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_merge_from_uses_merge_utility(self) -> None:
         """Test merge_from() uses u.merge() utility."""
@@ -595,14 +595,14 @@ class TestFlextTestsBuilders:
     def test_result_ok_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.ok() delegates to tt.res()."""
         result = tb.Tests.Result.ok(42)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_result_fail_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error")
         result = result_raw
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_result_batch_ok_delegates_to_tt_results(self) -> None:
         """Test tb.Tests.Result.batch_ok() delegates to tt.results()."""
@@ -684,4 +684,4 @@ class TestFlextTestsBuilders:
     def test_operation_execute_service_delegates_to_tu_factory(self) -> None:
         """Test tb.Tests.Operation.execute_service() delegates to tu.Tests.Factory."""
         result = tb.Tests.Operation.execute_service()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)

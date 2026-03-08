@@ -285,7 +285,7 @@ class TestPattern1V1Explicit:
         """V1: Execute and unwrap on success for various cases."""
         service = case.create_user_service()
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         user = result.value
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
@@ -296,7 +296,7 @@ class TestPattern1V1Explicit:
         """V1: Execute and check failure for various invalid cases."""
         service = case.create_user_service()
         result = service.execute()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         expected = case.expected_error
@@ -339,7 +339,7 @@ class TestPattern2V2Property:
     def test_v2_property_execute_still_available(self, case: ServiceTestCase) -> None:
         """V2 Property: .execute() still works for railway pattern."""
         result = case.create_user_service().execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         user = result.value
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
@@ -352,7 +352,7 @@ class TestPattern3RailwayV1:
     def test_v1_railway_complex_pipeline(self, case: RailwayTestCase) -> None:
         """V1 Railway: Full composition pipeline with various operations."""
         result = case.execute_v1_pipeline()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         if "get_status" in case.operations:
             assert result.value == "sent"
         elif "get_email" in case.operations:
@@ -376,7 +376,7 @@ class TestPattern4RailwayV2Property:
         assert isinstance(user_result, User)
         assert user_result.unique_id == "123"
         result = _make(GetUserService, user_id="123").execute().map(lambda u: u.email)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "user123@example.com"
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
@@ -435,7 +435,7 @@ class TestPattern5MonadicComposition:
                 )
             )
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_monadic_complex_pipeline(self) -> None:
         """Monadic: Complex pipeline with multiple operations."""

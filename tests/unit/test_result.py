@@ -221,7 +221,7 @@ class Testr:
             if is_success:
                 u.Tests.Result.assert_success_with_value(filtered, value)
             else:
-                u.Tests.Result.assert_failure(filtered)
+                _ = u.Tests.Result.assert_failure(filtered)
         elif op_type == ResultOperationType.RAILWAY_COMPOSITION:
             assert isinstance(value, int)
             res1 = r[int].ok(value)
@@ -315,7 +315,7 @@ class Testr:
             assert error is None
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
             assert is_success is False
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             assert error == failure_errors[i]
 
     def test_result_none_handling_limits(self) -> None:
@@ -340,7 +340,7 @@ class Testr:
         divide_func = cast("p.VariadicCallable[int]", divide)
         divide_wrapped: p.VariadicCallable[r[int]] = r.safe(divide_func)
         result: r[int] = divide_wrapped(10, 2)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 5
         result_fail: r[int] = divide_wrapped(10, 0)
         assert result_fail.is_failure
@@ -407,7 +407,7 @@ class Testr:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
         result = r.traverse(items, lambda x: r[int].ok(x * 2))
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == [2, 4, 6]
 
     def test_traverse_failure(self) -> None:
@@ -416,7 +416,7 @@ class Testr:
         result = r.traverse(
             items, lambda x: r[int].fail("error") if x == 2 else r[int].ok(x)
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "error"
 
     def test_accumulate_errors_all_success(self) -> None:
@@ -443,7 +443,7 @@ class Testr:
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
             fail_fast=True,
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "error"
 
     def test_traverse_fail_fast_false(self) -> None:
@@ -454,7 +454,7 @@ class Testr:
             lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
             fail_fast=False,
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "error_2" in str(result.error)
         assert "error_3" in str(result.error)
@@ -477,7 +477,7 @@ class Testr:
             resource.clear()
 
         result = r.with_resource(factory, op, cleanup)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
         assert len(resource_created) == 1
         assert len(resource_cleaned) == 1
@@ -589,7 +589,7 @@ class Testr:
             return "success"
 
         result = r.create_from_callable(func)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_create_from_callable_none(self) -> None:
@@ -599,7 +599,7 @@ class Testr:
             return None
 
         result = r.create_from_callable(func)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Callable returned None" in error_msg
@@ -612,7 +612,7 @@ class Testr:
             raise ValueError(error_msg)
 
         result = r.create_from_callable(func)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Callable failed" in error_msg

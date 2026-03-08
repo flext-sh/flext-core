@@ -154,14 +154,14 @@ class TestFlextTestsDocker:
     def test_mark_container_dirty(self, docker_manager: FlextTestsDocker) -> None:
         """Test marking container as dirty."""
         result = docker_manager.mark_container_dirty("test_container")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert "test_container" in docker_manager._dirty_containers
 
     def test_mark_container_clean(self, docker_manager: FlextTestsDocker) -> None:
         """Test marking container as clean."""
         docker_manager._dirty_containers.add("test_container")
         result = docker_manager.mark_container_clean("test_container")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert "test_container" not in docker_manager._dirty_containers
 
     def test_is_container_dirty(self, docker_manager: FlextTestsDocker) -> None:
@@ -208,7 +208,7 @@ class TestFlextTestsDocker:
     ) -> None:
         """Test starting non-existent container."""
         result = docker_manager.start_existing_container("nonexistent_container")
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "not found" in str(result.error).lower()
 
     def test_get_container_info_not_found(
@@ -216,13 +216,13 @@ class TestFlextTestsDocker:
     ) -> None:
         """Test getting info for non-existent container."""
         result = docker_manager.get_container_info("nonexistent_container")
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "not found" in str(result.error).lower()
 
     def test_get_container_status_alias(self, docker_manager: FlextTestsDocker) -> None:
         """Test get_container_status is alias for get_container_info."""
         result = docker_manager.get_container_status("nonexistent")
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_wait_for_port_ready_immediate(
         self, docker_manager: FlextTestsDocker
@@ -231,7 +231,7 @@ class TestFlextTestsDocker:
         result = docker_manager.wait_for_port_ready(
             c.Network.LOOPBACK_IP, 59999, max_wait=1
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_start_compose_stack_returns_result(
@@ -247,7 +247,7 @@ class TestFlextTestsDocker:
         """Test cleanup with no dirty containers."""
         docker_manager._dirty_containers.clear()
         result = docker_manager.cleanup_dirty_containers()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
 

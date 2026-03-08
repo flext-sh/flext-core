@@ -231,7 +231,7 @@ class TestExceptionIntegration:
             raise FlextExceptions.ValidationError(error_msg, field="email")
         except FlextExceptions.ValidationError as e:
             result = FlextResult[bool].fail(str(e))
-            assertion_helpers.assert_flext_result_failure(result)
+            _ = assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None and "Test error" in result.error
 
     def test_exception_in_railway_pattern(self) -> None:
@@ -256,7 +256,7 @@ class TestExceptionIntegration:
             )
         except FlextExceptions.ValidationError as e:
             result = FlextResult[bool].fail(f"Error in user creation: {e}")
-            assertion_helpers.assert_flext_result_failure(result)
+            _ = assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None and "Validation failed" in result.error
 
 

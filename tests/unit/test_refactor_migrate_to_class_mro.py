@@ -115,7 +115,86 @@ def test_migrate_to_mro_rejects_unknown_target(tmp_path: Path) -> None:
     project_root.mkdir(parents=True)
     migrator = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root)
     with pytest.raises(ValueError, match="unsupported target"):
-        _ = migrator.run(target="typings", apply_changes=False)
+        _ = migrator.run(target="unknown", apply_changes=False)
+
+
+def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> None:
+    project_root = tmp_path / "sample"
+    src_pkg = project_root / "src" / "sample_pkg"
+    src_pkg.mkdir(parents=True)
+    (project_root / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n", encoding="utf-8"
+    )
+    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    (src_pkg / "typings.py").write_text(
+        "from __future__ import annotations\nfrom typing import TypeAlias\n\nValueType: TypeAlias = str | int\n\nclass SampleTypes:\n    pass\n\nt = SampleTypes\n",
+        encoding="utf-8",
+    )
+    (src_pkg / "consumer.py").write_text(
+        "from sample_pkg.typings import ValueType\n\nvalue: ValueType = 1\n",
+        encoding="utf-8",
+    )
+    report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
+        target="typings", apply_changes=True
+    )
+    typings_source = (src_pkg / "typings.py").read_text(encoding="utf-8")
+    consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
+    assert report.errors == ()
+    assert (
+        "ValueType: TypeAlias = str | int"
+        not in typings_source.split("class SampleTypes:", maxsplit=1)[0]
+    )
+    assert (
+        "ValueType: TypeAlias = str | int"
+        in typings_source.split("class SampleTypes:", maxsplit=1)[1]
+    )
+    assert "from sample_pkg.typings import t" in consumer_source
+    assert "value: t.ValueType = 1" in consumer_source
+
+
+def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> None:
+    project_root = tmp_path / "sample"
+    src_pkg = project_root / "src" / "sample_pkg"
+    src_pkg.mkdir(parents=True)
+    (project_root / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n", encoding="utf-8"
+    )
+    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    (src_pkg / "protocols.py").write_text(
+        "from __future__ import annotations\n"
+        "from typing import Protocol\n\n"
+        "class SampleProtocols:\n"
+        "    pass\n\n"
+        "class GreeterProtocol(Protocol):\n"
+        "    def greet(self) -> str:\n"
+        "        ...\n\n"
+        "p = SampleProtocols\n",
+        encoding="utf-8",
+    )
+    (src_pkg / "consumer.py").write_text(
+        "from sample_pkg.protocols import GreeterProtocol\n\n"
+        "def call_greet(protocol: GreeterProtocol) -> str:\n"
+        "    return protocol.greet()\n",
+        encoding="utf-8",
+    )
+    report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
+        target="protocols", apply_changes=True
+    )
+    protocols_source = (src_pkg / "protocols.py").read_text(encoding="utf-8")
+    consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
+    assert report.errors == ()
+    assert (
+        "class GreeterProtocol(Protocol):"
+        not in protocols_source.split("class SampleProtocols:", maxsplit=1)[0]
+    )
+    assert (
+        "class GreeterProtocol(Protocol):"
+        in protocols_source.split("class SampleProtocols:", maxsplit=1)[1]
+    )
+    assert "from sample_pkg.protocols import p" in consumer_source
+    assert "def call_greet(protocol: p.GreeterProtocol) -> str:" in consumer_source
 
 
 def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -> None:

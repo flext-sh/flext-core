@@ -159,7 +159,7 @@ class TestFlextModelsAggregateRoot:
         result = account.add_domain_event(
             "MoneyDeposited", m.ConfigMap(root={"amount": 100})
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_aggregate_root_domain_event_validation(self) -> None:
         """Test domain event validation."""
@@ -169,7 +169,7 @@ class TestFlextModelsAggregateRoot:
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
         result = order.add_domain_event("OrderPlaced", m.ConfigMap(root={}))
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_aggregate_root_uncommitted_events(self) -> None:
         """Test uncommitted events tracking."""
@@ -181,7 +181,7 @@ class TestFlextModelsAggregateRoot:
         result = order.add_domain_event(
             "OrderCreated", m.ConfigMap(root={"timestamp": "2025-01-01"})
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert len(order.domain_events) > 0
 
 

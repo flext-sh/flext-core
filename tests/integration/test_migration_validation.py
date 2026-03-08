@@ -56,7 +56,7 @@ class TestMigrationScenario1:
             return FlextResult[dict[str, str]].ok(user_data)
 
         result = process_user("user_123")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"id": "user_123", "name": "Alice"}
         assert result.value["id"] == "user_123"
         assert result.value["name"] == "Alice"
@@ -136,7 +136,7 @@ class TestMigrationScenario4:
 
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["username"] == "alice"
 
 
@@ -234,13 +234,13 @@ class TestMigrationComplexity:
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["processed"] is True
 
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
         result = FlextResult[str].ok("test")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
         container = FlextContainer()
         assert container is not None

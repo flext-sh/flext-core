@@ -324,7 +324,7 @@ class TestFlextTestsFactoriesModernAPI:
         assert service.amount is None
         assert service.enabled is None
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"service_type": "test"}
 
     def test_svc_user(self) -> None:
@@ -332,7 +332,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("user")
         service = service_class()
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert "user_id" in result.value
         assert result.value["user_id"] == "test_123"
 
@@ -341,7 +341,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("user", default=True)
         service = service_class()
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["user_id"] == "default_123"
 
     def test_svc_complex_valid(self) -> None:
@@ -349,7 +349,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(name="Test", amount=100, enabled=True)
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"result": "success"}
 
     def test_svc_complex_empty_name(self) -> None:
@@ -357,7 +357,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(name="")
         result = service.execute()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Name is required" in result.error
 
     def test_svc_complex_negative_amount(self) -> None:
@@ -365,7 +365,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(amount=-10)
         result = service.execute()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Amount must be non-negative" in result.error
 
     def test_svc_complex_disabled_with_amount(self) -> None:
@@ -373,7 +373,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(enabled=False, amount=100)
         result = service.execute()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Cannot have amount when disabled" in result.error
 
     def test_svc_validate_business_rules_complex_valid(self) -> None:
@@ -381,7 +381,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(name="Test", amount=100, enabled=True)
         result = service.validate_business_rules()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_svc_validate_business_rules_complex_invalid(self) -> None:
@@ -389,7 +389,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(name="")
         result = service.validate_business_rules()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Name is required" in result.error
 
     def test_svc_validate_config_complex_valid(self) -> None:
@@ -397,7 +397,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(name="Test", amount=100)
         result = service.validate_config()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_svc_validate_config_name_too_long(self) -> None:
@@ -406,7 +406,7 @@ class TestFlextTestsFactoriesModernAPI:
         long_name = "a" * 51
         service = service_class(name=long_name)
         result = service.validate_config()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Name too long" in result.error
 
     def test_svc_validate_config_amount_too_large(self) -> None:
@@ -414,7 +414,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         service = service_class(amount=1001)
         result = service.validate_config()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Value too large" in result.error
 
     def test_svc_validate_config_non_complex(self) -> None:
@@ -422,7 +422,7 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("test")
         service = service_class()
         result = service.validate_config()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_svc_validate_business_rules_non_complex(self) -> None:
@@ -466,7 +466,7 @@ class TestsFlextTestsFactoriesModel:
         result = tt.model("user", as_result=True)
         assert isinstance(result, r)
         typed_result = cast("r[_BaseModel]", cast("object", result))
-        assertion_helpers.assert_flext_result_success(typed_result)
+        _ = assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, TestFactoriesHelpers.User)
 
     def test_model_as_dict(self) -> None:
@@ -570,7 +570,7 @@ class TestsFlextTestsFactoriesRes:
             cast("object", TestFactoriesHelpers.as_single_payload_result(result_raw)),
         )
         assert isinstance(result, r)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_res_fail(self) -> None:
@@ -578,14 +578,14 @@ class TestsFlextTestsFactoriesRes:
         result_raw = tt.res("fail", error="Error message")
         result = TestFactoriesHelpers.as_single_payload_result(result_raw)
         assert isinstance(result, r)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
 
     def test_res_fail_with_code(self) -> None:
         """Test failed result creation with error code."""
         result_raw = tt.res("fail", error="Error message", error_code="ERR001")
         result = TestFactoriesHelpers.as_single_payload_result(result_raw)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
 
     def test_res_from_value_success(self) -> None:
@@ -595,14 +595,14 @@ class TestsFlextTestsFactoriesRes:
             "r[int]",
             cast("object", TestFactoriesHelpers.as_single_payload_result(result_raw)),
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_res_from_value_none(self) -> None:
         """Test from_value with None value."""
         result_raw = tt.res("from_value", value=None, error_on_none="Value is required")
         result = TestFactoriesHelpers.as_single_payload_result(result_raw)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error or ""
         assert "required" in error_msg.lower()
 
@@ -663,7 +663,7 @@ class TestsFlextTestsFactoriesRes:
             "r[int]",
             cast("object", TestFactoriesHelpers.as_single_payload_result(result_raw)),
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 10
 
 
@@ -733,7 +733,7 @@ class TestsFlextTestsFactoriesList:
         assert isinstance(result_raw, r)
         result = cast("r[list[TestFactoriesHelpers.User]]", cast("object", result_raw))
         assert isinstance(result, r)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
 
 
@@ -806,7 +806,7 @@ class TestsFlextTestsFactoriesDict:
             "r[dict[str, TestFactoriesHelpers.User]]", cast("object", result_raw)
         )
         assert isinstance(result, r)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
 
 
@@ -901,6 +901,6 @@ class TestsFlextTestsFactoriesGeneric:
         result = tt.generic(ResultClass, kwargs={"value": "test"}, as_result=True)
         assert isinstance(result, r)
         typed_result = cast("r[ResultClass]", cast("object", result))
-        assertion_helpers.assert_flext_result_success(typed_result)
+        _ = assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, ResultClass)
         assert result.value.value == "test"

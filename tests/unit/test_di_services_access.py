@@ -196,7 +196,7 @@ class TestServicesIntegrationViaDI:
                 tm.that(app_name, eq="service_app", msg="Config must be accessible")
                 container_get_result: object = self.container.get("logger")
                 logger_result = cast("r[t.ContainerValue]", container_get_result)
-                u.Tests.Result.assert_success(logger_result)
+                _ = u.Tests.Result.assert_success(logger_result)
                 logger = cast("FlextLogger", logger_result.value)
                 tm.that(
                     logger,
@@ -208,7 +208,7 @@ class TestServicesIntegrationViaDI:
 
         service = ServiceWithDI()
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert "app: service_app" in result.value
 
     def test_services_injection_combined(self) -> None:

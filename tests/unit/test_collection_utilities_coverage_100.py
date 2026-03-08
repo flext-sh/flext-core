@@ -218,12 +218,12 @@ class TestuCollectionParseSequence:
         """Test parse_sequence with various scenarios."""
         result = u.Collection.parse_sequence(Status, scenario.values)
         if scenario.expected_success:
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
         else:
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
@@ -261,13 +261,13 @@ class TestuCollectionParseMapping:
         """Test parse_mapping with various scenarios."""
         result = u.Collection.parse_mapping(Status, scenario.mapping)
         if scenario.expected_success:
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, dict)
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg

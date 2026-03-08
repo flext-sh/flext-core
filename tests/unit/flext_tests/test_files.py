@@ -177,7 +177,7 @@ class TestFlextTestsFiles:
         manager = tf()
         non_existent = tmp_path / "non_existent.txt"
         result = manager.info(non_existent)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert isinstance(file_info, tf.FileInfo)
         assert file_info.exists is False
@@ -188,7 +188,7 @@ class TestFlextTestsFiles:
         content = "line1\nline2\nline3"
         file_path = manager.create(content, "test.txt")
         result = manager.info(file_path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert isinstance(file_info, tf.FileInfo)
         assert file_info.exists is True
@@ -203,7 +203,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         file_path = manager.create("", "empty.txt")
         result = manager.info(file_path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert isinstance(file_info, tf.FileInfo)
         assert file_info.exists is True
@@ -217,7 +217,7 @@ class TestFlextTestsFiles:
         content = "first line\nsecond line\nthird line"
         file_path = manager.create(content, "multiline.txt")
         result = manager.info(file_path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert file_info.lines == 3
         assert file_info.first_line == "first line"
@@ -421,7 +421,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create("hello world", "test.txt")
         result = manager.read(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "hello world"
 
     def test_read_binary_file(self, tmp_path: Path) -> None:
@@ -429,7 +429,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create(b"\x00\x01\x02", "data.bin", fmt="bin")
         result = manager.read(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == b"\x00\x01\x02"
 
     def test_read_json_file(self, tmp_path: Path) -> None:
@@ -438,7 +438,7 @@ class TestFlextTestsFilesNewApi:
         content: m.ConfigMap = m.ConfigMap(root={"key": "value", "number": 42})
         path = manager.create(content, "config.json")
         result = manager.read(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == content
 
     def test_read_yaml_file(self, tmp_path: Path) -> None:
@@ -447,7 +447,7 @@ class TestFlextTestsFilesNewApi:
         content: m.ConfigMap = m.ConfigMap(root={"name": "test", "enabled": True})
         path = manager.create(content, "config.yaml")
         result = manager.read(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == content
 
     def test_read_csv_file(self, tmp_path: Path) -> None:
@@ -456,7 +456,7 @@ class TestFlextTestsFilesNewApi:
         content = [["a", "b"], ["1", "2"]]
         path = manager.create(content, "data.csv")
         result = manager.read(path, has_headers=False)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert isinstance(data, list)
         assert len(data) == 2
@@ -467,7 +467,7 @@ class TestFlextTestsFilesNewApi:
         content = [["header1", "header2"], ["1", "2"], ["3", "4"]]
         path = manager.create(content, "data.csv", headers=None)
         result = manager.read(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert isinstance(data, list)
         assert len(data) == 2
@@ -477,7 +477,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = tmp_path / "nonexistent.txt"
         result = manager.read(path)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert (
             "not found" in result.error.lower() or "not exist" in result.error.lower()
@@ -488,7 +488,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create("plain text", "data.dat", fmt="text")
         result = manager.read(path, fmt="text")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "plain text"
 
     def test_compare_identical_content(self, tmp_path: Path) -> None:
@@ -497,7 +497,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("same content", "file1.txt")
         path2 = manager.create("same content", "file2.txt")
         result = manager.compare(path1, path2)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_different_content(self, tmp_path: Path) -> None:
@@ -506,7 +506,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("content A", "file1.txt")
         path2 = manager.create("content B", "file2.txt")
         result = manager.compare(path1, path2)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_compare_size_mode(self, tmp_path: Path) -> None:
@@ -515,7 +515,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("12345", "file1.txt")
         path2 = manager.create("abcde", "file2.txt")
         result = manager.compare(path1, path2, mode="size")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_size_mode_different(self, tmp_path: Path) -> None:
@@ -524,7 +524,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("short", "file1.txt")
         path2 = manager.create("much longer content", "file2.txt")
         result = manager.compare(path1, path2, mode="size")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_compare_hash_mode(self, tmp_path: Path) -> None:
@@ -533,7 +533,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("identical", "file1.txt")
         path2 = manager.create("identical", "file2.txt")
         result = manager.compare(path1, path2, mode="hash")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_lines_mode(self, tmp_path: Path) -> None:
@@ -542,7 +542,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("line1\nline2\nline3", "file1.txt")
         path2 = manager.create("line1\nline2\nline3", "file2.txt")
         result = manager.compare(path1, path2, mode="lines")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_lines_mode_different(self, tmp_path: Path) -> None:
@@ -551,7 +551,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("line1\nline2\nline3", "file1.txt")
         path2 = manager.create("a\nb\nc", "file2.txt")
         result = manager.compare(path1, path2, mode="lines")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_compare_ignore_whitespace(self, tmp_path: Path) -> None:
@@ -560,7 +560,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("hello world", "file1.txt")
         path2 = manager.create("hello  world", "file2.txt")
         result = manager.compare(path1, path2, ignore_ws=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_ignore_case(self, tmp_path: Path) -> None:
@@ -569,7 +569,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("Hello World", "file1.txt")
         path2 = manager.create("hello world", "file2.txt")
         result = manager.compare(path1, path2, ignore_case=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_pattern_match(self, tmp_path: Path) -> None:
@@ -578,7 +578,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("ERROR: something failed", "file1.txt")
         path2 = manager.create("ERROR: other failure", "file2.txt")
         result = manager.compare(path1, path2, pattern="ERROR")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_compare_pattern_no_match(self, tmp_path: Path) -> None:
@@ -587,7 +587,7 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("ERROR: something failed", "file1.txt")
         path2 = manager.create("Success: all good", "file2.txt")
         result = manager.compare(path1, path2, pattern="ERROR")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_compare_nonexistent_file(self, tmp_path: Path) -> None:
@@ -596,14 +596,14 @@ class TestFlextTestsFilesNewApi:
         path1 = manager.create("content", "file1.txt")
         path2 = tmp_path / "nonexistent.txt"
         result = manager.compare(path1, path2)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_info_existing_file(self, tmp_path: Path) -> None:
         """Test info() returns tf.FileInfo for existing file."""
         manager = tf(base_dir=tmp_path)
         path = manager.create("line1\nline2\nline3", "test.txt")
         result = manager.info(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.exists is True
         assert info.size > 0
@@ -616,7 +616,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = tmp_path / "nonexistent.txt"
         result = manager.info(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.exists is False
 
@@ -625,7 +625,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create("test content", "test.txt")
         result = manager.info(path, compute_hash=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.sha256 is not None
         assert len(info.sha256) == 64
@@ -635,7 +635,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create(m.ConfigMap(root={"key": "value"}), "config.json")
         result = manager.info(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.fmt == "json"
 
@@ -644,7 +644,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create("", "empty.txt")
         result = manager.info(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.exists is True
         assert info.size == 0
@@ -655,7 +655,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path = manager.create("x" * 1024, "test.txt")
         result = manager.info(path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.size_human != ""
 
@@ -771,7 +771,7 @@ class TestInfoWithContentMeta:
             m.ConfigMap(root={"key1": "value1", "key2": "value2"}), "config.json"
         )
         result = manager.info(path, parse_content=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
         assert info.content_meta.key_count == 2
@@ -784,7 +784,7 @@ class TestInfoWithContentMeta:
         path = tmp_path / "list.json"
         path.write_text(content)
         result = manager.info(path, parse_content=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
         assert info.content_meta.key_count is None
@@ -795,7 +795,7 @@ class TestInfoWithContentMeta:
         manager = tf(base_dir=tmp_path)
         path = manager.create(m.ConfigMap(root={"a": 1, "b": 2, "c": 3}), "config.yaml")
         result = manager.info(path, parse_content=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
         assert info.content_meta.key_count == 3
@@ -807,7 +807,7 @@ class TestInfoWithContentMeta:
         path = tmp_path / "data.csv"
         path.write_text(csv_content)
         result = manager.info(path, parse_content=True, detect_fmt=True)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
         assert info.content_meta.row_count == 3
@@ -825,7 +825,7 @@ class TestInfoWithContentMeta:
             m.ConfigMap(root={"name": "Alice", "age": 30}), "user.json"
         )
         result = manager.info(path, validate_model=SimpleModel)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
         assert info.content_meta.model_valid is True
@@ -842,7 +842,7 @@ class TestInfoWithContentMeta:
             m.ConfigMap(root={"other_field": "value"}), "invalid.json"
         )
         result = manager.info(path, validate_model=StrictModel)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
         assert info.content_meta.model_valid is False
@@ -968,7 +968,7 @@ class TestBatchOperations:
             {"file1.txt": "content1", "file2.txt": "content2", "file3.txt": "content3"},
             directory=tmp_path,
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
         assert batch_result.total == 3
         assert batch_result.success_count == 3
@@ -982,7 +982,7 @@ class TestBatchOperations:
             {"config1.json": {"key": "value1"}, "config2.json": {"key": "value2"}},
             directory=tmp_path,
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
         assert batch_result.success_count == 2
         config1 = tmp_path / "config1.json"
@@ -997,7 +997,7 @@ class TestBatchOperations:
         result = manager.batch(
             {"valid.txt": "content"}, directory=tmp_path, on_error="collect"
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
         assert batch_result.succeeded >= 1
 
@@ -1005,7 +1005,7 @@ class TestBatchOperations:
         """Test BatchResult model has correct structure."""
         manager = tf(base_dir=tmp_path)
         result = manager.batch({"file.txt": "content"}, directory=tmp_path)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
         assert hasattr(batch_result, "succeeded")
         assert hasattr(batch_result, "failed")

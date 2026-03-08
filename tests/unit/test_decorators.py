@@ -364,7 +364,7 @@ class TestFlextDecorators:
 
             result = failing_operation()
             assert isinstance(result, FlextResult)
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             assert result.error is not None
             assert "Operation failed" in result.error
 
@@ -452,7 +452,7 @@ class TestFlextDecorators:
 
             result = operation()
             assert isinstance(result, FlextResult)
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
 
     def test_railway_with_existing_result(self) -> None:
         """Test railway decorator with existing FlextResult."""
@@ -463,7 +463,7 @@ class TestFlextDecorators:
 
         result = returns_result()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         unwrapped = result.value
         if isinstance(unwrapped, FlextResult):
             assert unwrapped.value == "already_wrapped"
@@ -503,7 +503,7 @@ class TestFlextDecorators:
 
         result = stacked_operation()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_integration_retry_with_railway(self) -> None:
         """Test retry decorator with railway."""
@@ -521,7 +521,7 @@ class TestFlextDecorators:
 
         result = flaky_with_railway()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         assert attempts == 2
 
 

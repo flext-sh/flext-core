@@ -53,7 +53,14 @@ class FlextInfraRefactorConstants:
         "ensure_future_annotations"
     })
     FUTURE_CHECKS: ClassVar[frozenset[str]] = frozenset({"missing_future_import"})
-    MRO_TARGETS: ClassVar[frozenset[str]] = frozenset({"constants", "typings", "all"})
+    MRO_TARGETS: ClassVar[frozenset[str]] = frozenset({
+        "constants",
+        "typings",
+        "protocols",
+        "models",
+        "utilities",
+        "all",
+    })
     "Accepted target arguments for MRO migration runs."
     MRO_SCAN_DIRECTORIES: ClassVar[tuple[str, ...]] = (
         "src",
@@ -76,6 +83,33 @@ class FlextInfraRefactorConstants:
     "Canonical typings module file names."
     MRO_TYPINGS_DIRECTORY: ClassVar[str] = "typings"
     "Canonical typings package directory name."
+    MRO_PROTOCOLS_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "protocols.py",
+        "_protocols.py",
+    })
+    "Canonical protocols module file names."
+    MRO_PROTOCOLS_DIRECTORY: ClassVar[str] = "protocols"
+    "Canonical protocols package directory name."
+    MRO_MODELS_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "models.py",
+        "_models.py",
+    })
+    "Canonical models module file names."
+    MRO_MODELS_DIRECTORY: ClassVar[str] = "models"
+    "Canonical models package directory name."
+    MRO_UTILITIES_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "utilities.py",
+        "_utilities.py",
+    })
+    "Canonical utilities module file names."
+    MRO_UTILITIES_DIRECTORY: ClassVar[str] = "utilities"
+    "Canonical utilities package directory name."
+
+    SCAN_DIRECTORIES = ("src", "examples", "scripts", "tests")
+    CONSTANTS_FILE_NAMES = frozenset({"constants.py", "_constants.py"})
+    CONSTANTS_DIRECTORY = "constants"
+    TYPINGS_FILE_NAMES = frozenset({"typings.py", "_typings.py"})
+    TYPINGS_DIRECTORY = "typings"
     DEFAULT_CONSTANTS_CLASS: ClassVar[str] = "FlextConstants"
     "Fallback constants class name when none exists in module."
     DEFAULT_TYPES_CLASS: ClassVar[str] = "FlextTypes"
@@ -154,17 +188,31 @@ class FlextInfraRefactorConstants:
     "Relative path from the refactor package to the nesting mappings YAML."
     VIOLATION_PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = {
         "container_invariance": re.compile(
-            "\\bdict\\s*\\[\\s*str\\s*,\\s*t\\.(?:Container|ContainerValue)\\s*\\]"
+            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
         ),
-        "redundant_cast": re.compile("\\bcast\\s*\\(\\s*[\\\"'][^\\\"']+[\\\"']\\s*,"),
+        "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
         "direct_submodule_import": re.compile(
-            "\\bfrom\\s+flext_core\\.[\\w\\.]+\\s+import\\b"
+            r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
         ),
         "legacy_typing_mapping": re.compile(
-            "\\bfrom\\s+typing\\s+import\\s+.*\\bMapping\\b"
+            r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
         ),
         "runtime_alias_violation": re.compile(
-            "\\bfrom\\s+flext_core\\s+import\\s+(?!.*\\b(?:c|m|r|t|u|p|d|e|h|s|x)\\b).*"
+            r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
+        ),
+        "strenum_usage": re.compile(
+            r"\bclass\s+[A-Za-z_][A-Za-z0-9_]*\s*\(\s*(?:\w+\.)?StrEnum\s*\)"
+        ),
+        "literal_usage": re.compile(r"\bLiteral\s*\["),
+        "manual_mapping_constant": re.compile(
+            r"^\s*[A-Z][A-Z0-9_]*\s*(?::\s*[^=]+)?=\s*\{",
+            re.MULTILINE,
+        ),
+        "manual_typing_alias": re.compile(
+            r"(?m)^\s*(?:type\s+[A-Za-z_][A-Za-z0-9_]*\s*=|[A-Za-z_][A-Za-z0-9_]*\s*:\s*TypeAlias\s*=)"
+        ),
+        "compatibility_alias": re.compile(
+            r"(?m)^\s*[A-Za-z_][A-Za-z0-9_]*\s*=\s*[A-Za-z_][A-Za-z0-9_]*\s*$"
         ),
     }
     "Regex patterns for violation analysis."
@@ -204,6 +252,8 @@ class FlextInfraRefactorConstants:
     "Expected number of arguments for typing.cast calls."
     MIN_PATH_DEPTH: int = 2
     "Minimum relative path depth for module prefix detection."
+    TYPED_DICT_MIN_ARGS: int = 2
+    "Minimum positional args expected in TypedDict(name, fields, ...)."
 
     class MethodCategory:
         MAGIC: ClassVar[str] = "magic"

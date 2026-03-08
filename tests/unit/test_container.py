@@ -259,10 +259,10 @@ class TestFlextContainer:
         )
         clean_container.register("factory_service", factory, kind="factory")
         result1: r[t.RegisterableService] = clean_container.get("factory_service")
-        u.Tests.Result.assert_success(result1)
+        _ = u.Tests.Result.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
         result2: r[t.RegisterableService] = clean_container.get("factory_service")
-        u.Tests.Result.assert_success(result2)
+        _ = u.Tests.Result.assert_success(result2)
         tm.that(
             get_count(), eq=2, msg="Factory must be called twice after second get()"
         )
@@ -280,7 +280,7 @@ class TestFlextContainer:
             scenario.name, type_cls=scenario.expected_type
         )
         if scenario.should_pass:
-            u.Tests.Result.assert_success(typed_result)
+            _ = u.Tests.Result.assert_success(typed_result)
             tm.that(
                 str(typed_result.value),
                 eq=str(scenario.service),
@@ -292,13 +292,13 @@ class TestFlextContainer:
                 msg=f"Typed result must be instance of {scenario.expected_type.__name__}",
             )
         else:
-            u.Tests.Result.assert_failure(typed_result)
+            _ = u.Tests.Result.assert_failure(typed_result)
 
     def test_get_typed_wrong_type(self, clean_container: FlextContainer) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
         result = clean_container.get("string_service", type_cls=dict)
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: FlextContainer) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
@@ -384,7 +384,7 @@ class TestFlextContainer:
             msg=f"Container must have {name} before unregister",
         )
         unregister_result = container.unregister(name)
-        u.Tests.Result.assert_success(unregister_result)
+        _ = u.Tests.Result.assert_success(unregister_result)
         tm.that(
             container.has_service(name),
             eq=False,
@@ -514,14 +514,14 @@ class TestFlextContainer:
             )
         for name in required_services:
             result: r[t.RegisterableService] = container.get(name)
-            u.Tests.Result.assert_success(result)
+            _ = u.Tests.Result.assert_success(result)
         tm.that(
             len(container.list_services()),
             eq=3,
             msg="Container must have 3 services in full workflow",
         )
         unregister_result = container.unregister("cache")
-        u.Tests.Result.assert_success(unregister_result)
+        _ = u.Tests.Result.assert_success(unregister_result)
         tm.that(
             len(container.list_services()),
             eq=2,
@@ -544,7 +544,7 @@ class TestFlextContainer:
 
         container.register("failing", failing_factory, kind="factory")
         result: r[t.RegisterableService] = container.get("failing")
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
 
 
 __all__ = ["TestFlextContainer"]

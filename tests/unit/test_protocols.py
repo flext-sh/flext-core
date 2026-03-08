@@ -233,7 +233,7 @@ class TestFlextProtocols:
                 msg=f"Repository {method} must be callable",
             )
         find_result = repo.find_by_id("test_id")
-        u.Tests.Result.assert_success(find_result)
+        _ = u.Tests.Result.assert_success(find_result)
         tm.that(find_result.value, has="id", msg="Find result must contain id")
         tm.that(find_result.value, has="name", msg="Find result must contain name")
 
@@ -254,7 +254,7 @@ class TestFlextProtocols:
             callable(service.execute), eq=True, msg="Service execute must be callable"
         )
         result = service.execute()
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         tm.that(result.value, has="status", msg="Service result must contain status")
         tm.that(
             result.value["status"], eq="success", msg="Service status must be success"
@@ -278,7 +278,7 @@ class TestFlextProtocols:
         )
         command = m.ConfigMap(root={"name": "Test"})
         result = handler.handle(command)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         tm.that(result.value, has="user_id", msg="Handler result must contain user_id")
         tm.that(
             result.value["user_id"],
@@ -314,9 +314,9 @@ class TestFlextProtocols:
                 msg=f"AdvancedService {method} must be callable",
             )
         execute_result = service.execute()
-        u.Tests.Result.assert_success(execute_result)
+        _ = u.Tests.Result.assert_success(execute_result)
         handle_result = service.handle(m.ConfigMap(root={"command": "test"}))
-        u.Tests.Result.assert_success(handle_result)
+        _ = u.Tests.Result.assert_success(handle_result)
 
     def test_protocol_runtime_checkable(self) -> None:
         """Test that protocols support runtime checking."""

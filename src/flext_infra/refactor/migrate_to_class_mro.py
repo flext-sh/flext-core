@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra import c, m, u
+from flext_infra import c, m
 
 from .mro_migrator import (
     FlextInfraRefactorMROImportRewriter,
@@ -12,7 +12,6 @@ from .mro_migrator import (
     FlextInfraRefactorMROMigrationTransformer,
     FlextInfraRefactorMROMigrationValidator,
 )
-from .safety import FlextInfraRefactorSafetyManager
 
 
 class FlextInfraRefactorMigrateToClassMRO:
@@ -21,7 +20,6 @@ class FlextInfraRefactorMigrateToClassMRO:
     def __init__(self, *, workspace_root: Path) -> None:
         """Create migration service bound to a workspace root."""
         self._workspace_root = workspace_root.resolve()
-        self._safety = FlextInfraRefactorSafetyManager()
 
     def run(
         self, *, target: str, apply_changes: bool
@@ -36,15 +34,8 @@ class FlextInfraRefactorMigrateToClassMRO:
         warnings: list[str] = []
         errors: list[str] = []
         stash_ref = ""
-        if apply_changes:
-            stash_result = self._safety.create_pre_transformation_stash(
-                self._workspace_root
-            )
-            if stash_result.is_failure:
-                errors.append(stash_result.error or "failed to create rollback stash")
-            else:
-                stash_ref = stash_result.unwrap()
         moved_index: dict[str, dict[str, str]] = {}
+        module_facade_aliases: dict[str, str] = {}
         migrations: list[m.Infra.Refactor.MROFileMigration] = []
         for scan_result in scan_results:
             try:
@@ -60,46 +51,37 @@ class FlextInfraRefactorMigrateToClassMRO:
                 continue
             migrations.append(migration)
             moved_index[scan_result.module] = symbol_alias_map
+            module_facade_aliases[scan_result.module] = scan_result.facade_alias
             if apply_changes:
-                u.write_file(
-                    Path(scan_result.file),
-                    updated_source,
-                    encoding=c.Infra.Encoding.DEFAULT,
+                Path(scan_result.file).write_text(
+                    updated_source, encoding=c.Infra.Encoding.DEFAULT
                 )
         rewrite_results = FlextInfraRefactorMROImportRewriter.rewrite_workspace(
             workspace_root=self._workspace_root,
             moved_index=moved_index,
+            module_facade_aliases=module_facade_aliases,
             apply_changes=apply_changes,
         )
-        rewrites = tuple(
-            m.Infra.Refactor.MRORewriteResult(
-                file=item.file, replacements=item.replacements
-            )
-            for item in rewrite_results
-        )
+        rewrites = tuple(rewrite_results)
         remaining_violations, mro_failures = (
             FlextInfraRefactorMROMigrationValidator.validate(
                 workspace_root=self._workspace_root, target=normalized_target
             )
         )
-        if apply_changes and stash_ref:
-            warnings.append(
-                f"Rollback available with: git stash apply --index {stash_ref}"
-            )
-        return m.Infra.Refactor.MROMigrationReport(
-            workspace=str(self._workspace_root),
-            target=normalized_target,
-            dry_run=not apply_changes,
-            files_scanned=files_scanned,
-            files_with_candidates=len(scan_results),
-            migrations=tuple(migrations),
-            rewrites=rewrites,
-            remaining_violations=remaining_violations,
-            mro_failures=mro_failures,
-            stash_ref=stash_ref,
-            warnings=tuple(warnings),
-            errors=tuple(errors),
-        )
+        report = m.Infra.Refactor.MROMigrationReport()
+        report.workspace = str(self._workspace_root)
+        report.target = normalized_target
+        report.dry_run = not apply_changes
+        report.files_scanned = files_scanned
+        report.files_with_candidates = len(scan_results)
+        report.migrations = tuple(migrations)
+        report.rewrites = rewrites
+        report.remaining_violations = remaining_violations
+        report.mro_failures = mro_failures
+        report.stash_ref = stash_ref
+        report.warnings = tuple(warnings)
+        report.errors = tuple(errors)
+        return report
 
     @staticmethod
     def render_text(report: m.Infra.Refactor.MROMigrationReport) -> str:

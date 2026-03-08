@@ -81,7 +81,7 @@ class TestMapperBuildFlagsDict:
             mc.FLAGS_DELETE: mc.CAN_DELETE,
         }
         result = FlextUtilities.Mapper.build_flags_dict(flags, mapping)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {
             mc.CAN_READ: True,
             mc.CAN_WRITE: True,
@@ -96,7 +96,7 @@ class TestMapperBuildFlagsDict:
         result = FlextUtilities.Mapper.build_flags_dict(
             flags, mapping, default_value=True
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {mc.CAN_READ: True, mc.CAN_WRITE: True}
 
     def test_exception_handling(self) -> None:
@@ -114,7 +114,7 @@ class TestMapperBuildFlagsDict:
         bad_list_instance = BadList()
         bad_list_typed: list[str] = cast("list[str]", bad_list_instance)
         result = FlextUtilities.Mapper.build_flags_dict(bad_list_typed, {})
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to build flags dict" in str(result.error)
 
 
@@ -127,7 +127,7 @@ class TestMapperCollectActiveKeys:
         source = {mc.FLAGS_READ: True, mc.FLAGS_WRITE: True, mc.FLAGS_DELETE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w", mc.FLAGS_DELETE: "d"}
         result = FlextUtilities.Mapper.collect_active_keys(source, mapping)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert set(result.value) == {"r", "w"}
 
     def test_none_active(self) -> None:
@@ -136,7 +136,7 @@ class TestMapperCollectActiveKeys:
         source = {mc.FLAGS_READ: False, mc.FLAGS_WRITE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w"}
         result = FlextUtilities.Mapper.collect_active_keys(source, mapping)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
     def test_exception_handling(self) -> None:
@@ -153,7 +153,7 @@ class TestMapperCollectActiveKeys:
         result = FlextUtilities.Mapper.collect_active_keys(
             cast("Mapping[str, bool]", BadDictGet()), {"key": "output"}
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to collect active keys" in str(result.error)
 
 

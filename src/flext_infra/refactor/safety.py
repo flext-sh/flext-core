@@ -8,8 +8,8 @@ from typing import overload
 
 from flext_core import r
 from flext_infra import c, m, p, u
-from flext_infra.git import FlextInfraGitService
-from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra import FlextInfraGitService
+from flext_infra import FlextInfraCommandRunner
 
 
 class FlextInfraRefactorSafetyManager:

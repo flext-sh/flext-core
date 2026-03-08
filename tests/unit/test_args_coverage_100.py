@@ -290,7 +290,7 @@ class TestFlextUtilitiesArgs:
                 values.STATUS_ACTIVE
             )
             result = process(valid_status)
-            assertion_helpers.assert_flext_result_success(result)
+            _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value == values.STATUS_ACTIVE
 
         @staticmethod
@@ -329,12 +329,12 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios[scenario_name]
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             if scenario.expected_success:
-                u.Tests.Result.assert_success(result)
+                _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
                 if scenario.expected_status:
                     assert parsed["status"] == scenario.expected_status
             else:
-                u.Tests.Result.assert_failure(result)
+                _ = u.Tests.Result.assert_failure(result)
 
         def test_parse_kwargs_invalid_enum_value(self) -> None:
             """Test parse_kwargs with invalid enum value."""

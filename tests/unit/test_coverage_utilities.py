@@ -289,7 +289,7 @@ class Testu:
     def test_text_processor_truncate(self) -> None:
         """Test text truncation - returns FlextResult[str]."""
         result = u.Text.truncate_text("hello world", max_length=8)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) <= 8
         assert result.value.endswith("...")
 
@@ -351,7 +351,7 @@ class Testu:
                         else str(v)
                     )
             result = u.Cache.clear_object_cache(obj_dict)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
@@ -372,7 +372,7 @@ class Testu:
             return FlextResult[str].ok("success")
 
         result = u.Reliability.with_timeout(quick_op, 5.0)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_reliability_timeout_invalid(self) -> None:
@@ -382,7 +382,7 @@ class Testu:
             return FlextResult[str].ok("success")
 
         result = u.Reliability.with_timeout(op, -1.0)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""
@@ -391,7 +391,7 @@ class Testu:
             return FlextResult[str].ok("success")
 
         result: FlextResult[str] = u.Reliability.retry(op, max_attempts=3)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
@@ -400,7 +400,7 @@ class Testu:
         result: FlextResult[str] = u.Reliability.retry(
             flaky_op, max_attempts=3, delay_seconds=0.01
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert attempt_count[0] >= 2
 
     def test_type_checker_object_accepts_all(self) -> None:

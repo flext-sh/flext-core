@@ -184,7 +184,7 @@ def demonstrate_utilities() -> None:
             ])
         )
     )
-    result.map(print)
+    _ = result.map(print)
 
 
 def demonstrate_exceptions() -> None:
@@ -228,7 +228,7 @@ def demonstrate_exceptions() -> None:
         error_str = str(error)
         return r.ok(format_exception_message(error_str))
 
-    r.traverse(
+    _ = r.traverse(
         list(starmap(process_scenario, error_scenarios))
         + [process_exception("Standard exception")],
         identity,
@@ -252,7 +252,7 @@ def identity(x: r[str]) -> r[str]:
 
 def execute_validation_chain(user_data: m.ConfigMap) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
-    validate_transform_user(user_data).map(
+    _ = validate_transform_user(user_data).map(
         lambda user: (
             f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
         )
@@ -277,7 +277,7 @@ def execute_service_operations(service: UserService, user_data: m.ConfigMap) -> 
 
 def execute_demonstrations(service: UserService, user_data: m.ConfigMap) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
-    service.create_user(user_data).map(ignore_and_return_none)
+    _ = service.create_user(user_data).map(ignore_and_return_none)
     demonstrate_utilities()
     demonstrate_exceptions()
 

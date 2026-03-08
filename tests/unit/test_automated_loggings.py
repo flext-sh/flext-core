@@ -66,12 +66,12 @@ class TestAutomatedFlextLoggings:
             instance = fixture_factory.create_test_loggings_instance()
             result = self._execute_loggings_operation(instance, test_scenario["input"])
             if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     result,
                     f"FlextLoggings operation failed: {test_scenario['description']}",
                 )
             else:
-                assertion_helpers.assert_flext_result_failure(
+                _ = assertion_helpers.assert_flext_result_failure(
                     result,
                     f"FlextLoggings operation should fail: {test_scenario['description']}",
                 )
@@ -85,7 +85,7 @@ class TestAutomatedFlextLoggings:
         """Test type safety compliance for loggings."""
         instance = fixture_factory.create_test_loggings_instance()
         result = self._execute_loggings_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextLoggings type safety test"
         )
 
@@ -114,7 +114,7 @@ class TestAutomatedFlextLoggings:
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextLoggings performance test exceeded timeout"
         )
 
@@ -122,14 +122,14 @@ class TestAutomatedFlextLoggings:
         """Test resource management and cleanup for loggings."""
         instance = fixture_factory.create_test_loggings_instance()
         result = self._execute_loggings_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextLoggings resource test"
         )
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
             if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     cast("r[t.ContainerValue]", cleanup_result),
                     "FlextLoggings cleanup failed",
                 )

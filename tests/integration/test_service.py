@@ -297,7 +297,7 @@ class TestFlextServiceIntegration:
         """
         user_service = UserQueryService()
         result = user_service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     @pytest.mark.integration
@@ -311,7 +311,7 @@ class TestFlextServiceIntegration:
         user_service = UserQueryService()
         user_id = "test_user_123"
         result = user_service.get_user(user_id)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == f"User {user_id}"
@@ -338,7 +338,7 @@ class TestFlextServiceIntegration:
         )
         user_service.set_user_data(user_id, custom_user)
         result = user_service.get_user(user_id)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == "Custom User"
@@ -355,7 +355,7 @@ class TestFlextServiceIntegration:
         user_service = UserQueryService()
         user_service.set_failure_mode(should_fail=True)
         result = user_service.execute()
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "User service unavailable"
 
     @pytest.mark.integration
@@ -370,7 +370,7 @@ class TestFlextServiceIntegration:
         """
         notification_service = NotificationService()
         result = notification_service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "sent"
 
     @pytest.mark.integration
@@ -384,7 +384,7 @@ class TestFlextServiceIntegration:
         notification_service = NotificationService()
         email = "test@example.com"
         result = notification_service.send(email)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "sent"
         assert email in notification_service.sent_notifications
         assert notification_service.call_count == 1
@@ -402,7 +402,7 @@ class TestFlextServiceIntegration:
         notification_service = NotificationService()
         notification_service.set_failure_mode(should_fail=True)
         result = notification_service.send("test@example.com")
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
@@ -415,7 +415,7 @@ class TestFlextServiceIntegration:
         """
         lifecycle_service = LifecycleService()
         result = lifecycle_service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "ready"
         assert lifecycle_service.initialized is False
 
@@ -435,7 +435,7 @@ class TestFlextServiceIntegration:
             name="test_service", version="1.0.0", temp_dir=str(temp_directory)
         )
         result = lifecycle_service.initialize(service_config)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
         assert lifecycle_service.service_config is not None
@@ -479,7 +479,7 @@ class TestFlextServiceIntegration:
         )
         _ = lifecycle_service.initialize(service_config)
         result = lifecycle_service.shutdown()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "shutdown"
         assert lifecycle_service.shutdown_called is True
         assert lifecycle_service.health_check() is False

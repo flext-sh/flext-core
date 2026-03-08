@@ -75,7 +75,7 @@ class TestServiceBootstrap:
         test_service = {"test_key": "test_value"}
         runtime = ConcreteTestService._create_runtime(services=test_service)
         service_result = runtime.container.get("test_key")
-        u.Tests.Result.assert_success(service_result)
+        _ = u.Tests.Result.assert_success(service_result)
         assert hasattr(runtime, "container")
 
     def test_create_runtime_with_factories(self) -> None:
@@ -87,7 +87,7 @@ class TestServiceBootstrap:
         test_factories = {"test_factory": factory}
         runtime = ConcreteTestService._create_runtime(factories=test_factories)
         factory_result = runtime.container.get("test_factory")
-        u.Tests.Result.assert_success(factory_result)
+        _ = u.Tests.Result.assert_success(factory_result)
         assert hasattr(runtime, "container")
 
     def test_create_runtime_with_resources(self) -> None:
@@ -99,7 +99,7 @@ class TestServiceBootstrap:
         test_resources = {"test_resource": resource}
         runtime = ConcreteTestService._create_runtime(resources=test_resources)
         resource_result = runtime.container.get("test_resource")
-        u.Tests.Result.assert_success(resource_result)
+        _ = u.Tests.Result.assert_success(resource_result)
         assert hasattr(runtime, "container")
 
     def test_create_runtime_with_context(self) -> None:

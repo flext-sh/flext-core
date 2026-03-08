@@ -104,7 +104,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """
             result = operation()
             if expected_error is not None:
-                assertion_helpers.assert_flext_result_failure(
+                _ = assertion_helpers.assert_flext_result_failure(
                     result,
                     f"Expected failure for: {description}, got success",
                     error_contains=expected_error,
@@ -113,7 +113,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                     f"Expected error '{expected_error}' in '{result.error}' for: {description}"
                 )
             else:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     result, f"Expected success for: {description}, got: {result.error}"
                 )
                 if expected_value is not None:
@@ -226,7 +226,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            assertion_helpers.assert_flext_result_failure(
+            _ = assertion_helpers.assert_flext_result_failure(
                 result, description, error_contains=expected_error
             )
 
@@ -242,7 +242,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             """
             _ = (
-                assertion_helpers.assert_flext_result_success(result),
+                _ = assertion_helpers.assert_flext_result_success(result),
                 f"Expected success for: {description}, got: {result.error}",
             )
 
@@ -261,7 +261,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             """
             _ = (
-                assertion_helpers.assert_flext_result_success(result),
+                _ = assertion_helpers.assert_flext_result_success(result),
                 f"Expected success for: {description}, got: {result.error}",
             )
             assert result.value == expected_value, (

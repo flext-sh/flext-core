@@ -257,7 +257,7 @@ class TestuEnumParse:
             expected_typed: t.ContainerValue = expected_status_cast
             u.Tests.Result.assert_success_with_value(result_typed, expected_typed)
         else:
-            u.Tests.Result.assert_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None
@@ -296,7 +296,7 @@ class TestuEnumCoerceValidator:
             assert result == scenario.expected_status
         else:
             with pytest.raises(ValueError) as exc_info:
-                validator(value)
+                _ = validator(value)
             error_str = str(exc_info.value) if exc_info.value else ""
             assert (
                 scenario.expected_error is not None
@@ -329,7 +329,7 @@ class TestuEnumCoerceByNameValidator:
         """Test coerce_by_name_validator with invalid value."""
         validator = u.Enum.coerce_by_name_validator(Status)
         with pytest.raises(ValueError) as exc_info:
-            validator("invalid")
+            _ = validator("invalid")
         assert "Invalid Status" in str(exc_info.value)
 
 

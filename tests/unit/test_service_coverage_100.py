@@ -75,14 +75,14 @@ class TestService100Coverage:
         """Test execute method."""
         service = TestService()
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, TestDomainResult)
 
     def test_ok_method(self) -> None:
         """Test ok method."""
         service = TestService()
         result = service.ok(TestDomainResult("test"))
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value.value == "test"
 
     def test_result_property(self) -> None:

@@ -85,13 +85,13 @@ def test_create_from_callable_and_repr() -> None:
     """Exercise callable None/exception branches and repr formatting."""
     none_callable: Callable[[], int] = cast("Callable[[], int]", lambda: None)
     none_result = r[int].create_from_callable(none_callable)
-    u.Tests.Result.assert_failure(none_result)
+    _ = u.Tests.Result.assert_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
     error_callable: Callable[[], int] = cast(
         "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error"))
     )
     error_result = r[int].create_from_callable(error_callable)
-    u.Tests.Result.assert_failure(error_result)
+    _ = u.Tests.Result.assert_failure(error_result)
     assert "test error" in (error_result.error or "")
     success_result = r[int].create_from_callable(lambda: 7)
     assert repr(success_result) == "r.ok(7)"

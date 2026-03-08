@@ -66,12 +66,12 @@ class TestAutomatedFlextMixins:
             instance = fixture_factory.create_test_mixins_instance()
             result = self._execute_mixins_operation(instance, test_scenario["input"])
             if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     result,
                     f"FlextMixins operation failed: {test_scenario['description']}",
                 )
             else:
-                assertion_helpers.assert_flext_result_failure(
+                _ = assertion_helpers.assert_flext_result_failure(
                     result,
                     f"FlextMixins operation should fail: {test_scenario['description']}",
                 )
@@ -85,7 +85,7 @@ class TestAutomatedFlextMixins:
         """Test type safety compliance for mixins."""
         instance = fixture_factory.create_test_mixins_instance()
         result = self._execute_mixins_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextMixins type safety test"
         )
 
@@ -112,7 +112,7 @@ class TestAutomatedFlextMixins:
             return self._execute_mixins_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextMixins performance test exceeded timeout"
         )
 
@@ -120,14 +120,14 @@ class TestAutomatedFlextMixins:
         """Test resource management and cleanup for mixins."""
         instance = fixture_factory.create_test_mixins_instance()
         result = self._execute_mixins_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextMixins resource test"
         )
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
             if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     cast("r[t.ContainerValue]", cleanup_result),
                     "FlextMixins cleanup failed",
                 )

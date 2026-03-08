@@ -66,12 +66,12 @@ class TestAutomatedFlextContainer:
             instance = fixture_factory.create_test_container_instance()
             result = self._execute_container_operation(instance, test_scenario["input"])
             if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     result,
                     f"FlextContainer operation failed: {test_scenario['description']}",
                 )
             else:
-                assertion_helpers.assert_flext_result_failure(
+                _ = assertion_helpers.assert_flext_result_failure(
                     result,
                     f"FlextContainer operation should fail: {test_scenario['description']}",
                 )
@@ -85,7 +85,7 @@ class TestAutomatedFlextContainer:
         """Test type safety compliance for container."""
         instance = fixture_factory.create_test_container_instance()
         result = self._execute_container_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextContainer type safety test"
         )
 
@@ -114,7 +114,7 @@ class TestAutomatedFlextContainer:
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextContainer performance test exceeded timeout"
         )
 
@@ -122,14 +122,14 @@ class TestAutomatedFlextContainer:
         """Test resource management and cleanup for container."""
         instance = fixture_factory.create_test_container_instance()
         result = self._execute_container_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
+        _ = assertion_helpers.assert_flext_result_success(
             result, "FlextContainer resource test"
         )
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
             if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
+                _ = assertion_helpers.assert_flext_result_success(
                     cast("r[t.ContainerValue]", cleanup_result),
                     "FlextContainer cleanup failed",
                 )

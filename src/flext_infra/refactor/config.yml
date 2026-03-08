@@ -117,9 +117,6 @@ refactor_engine:
     - "__pycache__"
     - ".venv"
     - ".git"
-    - "tests"
-    - "conftest.py"
-    - "__init__.py"
 
   # Extensões de arquivo a processar
   file_extensions:

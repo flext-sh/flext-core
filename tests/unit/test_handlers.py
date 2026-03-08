@@ -255,7 +255,7 @@ class TestFlextHandlers:
             "data": "test_data",
         }
         result = handler._run_pipeline(dict_message, operation="command")
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_run_pipeline_mode_validation_error(self) -> None:
         """Test _run_pipeline with mismatched operation and handler mode."""
@@ -469,7 +469,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.validate("test_message")
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     @pytest.mark.parametrize(
         ("type_name", "message"),
@@ -485,7 +485,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         result = handler.validate(message)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_record_metric(self) -> None:
         """Test record_metric protocol method."""
@@ -494,7 +494,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.record_metric("test_metric", 42.0)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_push_context(self) -> None:
         """Test push_context protocol method."""
@@ -507,7 +507,7 @@ class TestFlextHandlers:
             "operation": "test",
         }
         result = handler.push_context(context_typed)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_pop_context(self) -> None:
         """Test pop_context protocol method."""
@@ -517,7 +517,7 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
         handler.push_context({"test": "data"})
         result = handler.pop_context()
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_pop_context_empty_stack(self) -> None:
         """Test pop_context when stack is empty."""
@@ -526,7 +526,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.pop_context()
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_message_with_none_raises_validation_error(self) -> None:
         """Test message validation with None value."""
@@ -535,7 +535,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         result = handler.validate(None)
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
         """Test Pydantic model validation."""
@@ -549,7 +549,7 @@ class TestFlextHandlers:
         handler = ValidationTestHandler(config=config)
         msg = TestMessage(value="test")
         result = handler.validate(msg)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_dataclass_message_validation(self) -> None:
         """Test dataclass message validation."""
@@ -565,7 +565,7 @@ class TestFlextHandlers:
         handler = ValidationTestHandler(config=config)
         msg = DataClassMessage(value="test", number=42)
         result = handler.validate(msg)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_slots_message_validation(self) -> None:
         """Test __slots__ message validation."""
@@ -583,7 +583,7 @@ class TestFlextHandlers:
         handler = ValidationTestHandler(config=config)
         msg = SlotsMessage(value="test", number=42)
         result = handler.validate(msg)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
 
 __all__ = ["TestFlextHandlers"]

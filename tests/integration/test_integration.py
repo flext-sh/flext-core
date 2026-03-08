@@ -63,7 +63,7 @@ class TestLibraryIntegration:
         """
         test_value = str(sample_data["string"])
         result = FlextResult[str].ok(test_value)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == test_value
         entity_id = u.generate()
         assert isinstance(entity_id, str)
@@ -116,7 +116,7 @@ class TestLibraryIntegration:
         """Test entity ID used in FlextResult."""
         entity_id = u.generate()
         result = FlextResult[str].ok(entity_id)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, str)
         assert len(result.value) == 36
         assert result.value.count("-") == 4

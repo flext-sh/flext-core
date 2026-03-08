@@ -30,14 +30,14 @@ class TestContext100Coverage:
         context.set("test_key", "test_value").value
         context.remove("test_key")
         result = context.get("test_key")
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
 
     def test_remove_nonexistent_key(self) -> None:
         """Test remove with nonexistent key (idempotent)."""
         context = FlextContext()
         context.remove("nonexistent_key")
         result = context.get("nonexistent_key")
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
 
     def test_clear_removes_all_data(self) -> None:
         """Test clear removes all data."""
@@ -47,8 +47,8 @@ class TestContext100Coverage:
         context.clear()
         result1 = context.get("key1")
         result2 = context.get("key2")
-        u.Tests.Result.assert_failure(result1)
-        u.Tests.Result.assert_failure(result2)
+        _ = u.Tests.Result.assert_failure(result1)
+        _ = u.Tests.Result.assert_failure(result2)
 
     def test_merge_with_dict(self) -> None:
         """Test merge with dictionary."""
@@ -65,8 +65,8 @@ class TestContext100Coverage:
         assert isinstance(merged, FlextContext)
         result2 = merged.get("key2")
         result3 = merged.get("key3")
-        u.Tests.Result.assert_success(result2)
-        u.Tests.Result.assert_success(result3)
+        _ = u.Tests.Result.assert_success(result2)
+        _ = u.Tests.Result.assert_success(result3)
 
     def test_merge_with_context(self) -> None:
         """Test merge with another context."""
@@ -78,8 +78,8 @@ class TestContext100Coverage:
         assert isinstance(merged, FlextContext)
         result1 = merged.get("key1")
         result2 = merged.get("key2")
-        u.Tests.Result.assert_success(result1)
-        u.Tests.Result.assert_success(result2)
+        _ = u.Tests.Result.assert_success(result1)
+        _ = u.Tests.Result.assert_success(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -88,11 +88,11 @@ class TestContext100Coverage:
         cloned = context1.clone()
         assert isinstance(cloned, FlextContext)
         result = cloned.get("key1")
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         assert result.value == "value1"
         context1.set("key1", "modified").value
         cloned_result = cloned.get("key1")
-        u.Tests.Result.assert_success(cloned_result)
+        _ = u.Tests.Result.assert_success(cloned_result)
         assert cloned_result.value == "value1"
 
     def test_validate_success(self) -> None:
@@ -100,7 +100,7 @@ class TestContext100Coverage:
         context = FlextContext()
         context.set("key1", "value1").value
         result = context.validate()
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""
@@ -127,7 +127,7 @@ class TestContext100Coverage:
         current_data["none_key"] = None
         scope_var.set(m.ConfigMap(root=current_data))
         result = context.get("none_key")
-        u.Tests.Result.assert_failure(result)
+        _ = u.Tests.Result.assert_failure(result)
         assert result.error is not None and "None value" in result.error
 
     def test_get_with_different_scope(self) -> None:
@@ -168,7 +168,7 @@ class TestContext100Coverage:
         context.set("key1", "value1", scope="user").value
         context.remove("key1", scope="user")
         result = context.get("key1", scope="user")
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_has_with_different_scope(self) -> None:
         """Test has with different scope."""

@@ -111,7 +111,7 @@ class TestServiceResultProperty:
         assert isinstance(service, GetUserService)
         result = service.execute()
         assert isinstance(result, FlextResult)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         user = result.value
         assert isinstance(user, User)
         assert user.user_id == case.input_value
@@ -121,7 +121,7 @@ class TestServiceResultProperty:
         service = FailingService.model_construct(error_message="Test failure")
         result = service.execute()
         assert isinstance(result, FlextResult)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Test failure" in str(result.error)
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
@@ -136,7 +136,7 @@ class TestServiceResultProperty:
             .map(lambda name: str(name).upper())
             .map(lambda name: f"Hello, {name}!")
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         greeting = result.value
         assert greeting == f"Hello, USER {case.input_value}!"
 
