@@ -3,23 +3,23 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar, Never, override
+from typing import ClassVar, Never, TypeAlias, override
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t
+from flext_tests import t
 
 
 class _ValidationLikeError(Exception):
     """Validation-like error for tests."""
 
+    def errors(self) -> list[dict[str, t.JsonValue]]:
+        return [{"loc": ["value"], "msg": "bad value"}]
 
-class TestCaseMap(RootModel[Mapping[str, t.ContainerValue]]):
-    pass
 
+TestCaseMap: TypeAlias = Mapping[str, t.Tests.ContainerValue]
 
-class InputPayloadMap(RootModel[dict[str, t.ContainerValue]]):
-    pass
+InputPayloadMap: TypeAlias = dict[str, t.Tests.ContainerValue]
 
 
 class _MsgWithCommandId(BaseModel):

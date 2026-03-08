@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import ClassVar, override
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextResult, c, h, m, t, x
 from flext_tests import FlextTestsUtilities, u
@@ -540,7 +541,7 @@ class TestFlextHandlers:
     def test_handlers_pydantic_model_validation(self) -> None:
         """Test Pydantic model validation."""
 
-        class TestMessage:
+        class TestMessage(BaseModel):
             value: str
 
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(

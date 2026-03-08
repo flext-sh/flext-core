@@ -180,6 +180,7 @@ class TestServicesIntegrationViaDI:
 
     def test_services_in_service_class(self) -> None:
         """Test services accessible in FlextService subclass."""
+        FlextContainer.reset_for_testing()
 
         class ServiceWithDI(s[str]):
             @classmethod
@@ -194,15 +195,12 @@ class TestServicesIntegrationViaDI:
             def execute(self) -> r[str]:
                 app_name = self.config.app_name
                 tm.that(app_name, eq="service_app", msg="Config must be accessible")
-                container_get_result: object = self.container.get("logger")
-                logger_result = cast("r[t.ContainerValue]", container_get_result)
+                logger_result = self.container.get("logger")
                 _ = u.Tests.Result.assert_success(logger_result)
-                logger = cast("FlextLogger", logger_result.value)
-                tm.that(
-                    logger,
-                    is_=FlextLogger,
-                    none=False,
-                    msg="Logger must be accessible via DI",
+                logger = logger_result.value
+                tm.that(logger, none=False, msg="Logger must be accessible via DI")
+                assert hasattr(logger, "info") and callable(getattr(logger, "info")), (
+                    "Logger must be accessible via DI"
                 )
                 return r[str].ok(f"app: {app_name}")
 

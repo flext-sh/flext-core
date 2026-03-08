@@ -1,43 +1,165 @@
-"""Base rule type for flext_infra.refactor."""
+"""Rule loader for flext_infra.refactor."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import fnmatch
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
-import libcst as cst
+from flext_core import r
+from flext_infra import c, m, t, u
+from flext_infra.refactor._types import FlextInfraRefactorRule
+from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
 
-from flext_infra import c, t
 
+class FlextInfraRefactorRuleLoader:
+    def __init__(self, config_path: Path) -> None:
+        self.config_path = config_path
 
-class FlextInfraRefactorRule:
-    """Base class for flext_infra refactor rules."""
+    def load_config(self) -> r[t.ConfigurationMapping]:
+        try:
+            loaded = u.Infra.Yaml.safe_load_yaml(self.config_path)
+            normalized = dict(loaded)
+            scope_raw = normalized.get("refactor_engine")
+            scope_map: t.ConfigurationMapping = (
+                dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
+            )
+            scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
+            normalized["refactor_engine"] = scope.model_dump(mode="python")
+            return r[t.ConfigurationMapping].ok(normalized)
+        except (OSError, TypeError, ValueError) as exc:
+            return r[t.ConfigurationMapping].fail(f"Failed to load config: {exc}")
 
-    def __init__(self, config: Mapping[str, t.ContainerValue]) -> None:
-        """Initialize rule metadata from rule config."""
-        self.config = dict(config)
-        rule_id = self.config.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)
-        self.rule_id = str(rule_id)
-        name_raw = self.config.get(c.Infra.Toml.NAME, self.rule_id)
-        self.name = str(name_raw)
-        description_raw = self.config.get("description", "")
-        self.description = description_raw if isinstance(description_raw, str) else ""
-        enabled_raw = self.config.get(c.Infra.ReportKeys.ENABLED, True)
-        self.enabled = bool(enabled_raw)
-        severity_raw = self.config.get("severity", c.Infra.Severity.WARNING)
-        self.severity = str(severity_raw)
+    def extract_engine_file_filters(
+        self, config: t.ConfigurationMapping
+    ) -> tuple[list[str], list[str]]:
+        scope = self._resolve_engine_config(config)
+        return (list(scope.ignore_patterns), list(scope.file_extensions))
 
-    def apply(
-        self, tree: cst.Module, _file_path: Path | None = None
-    ) -> tuple[cst.Module, list[str]]:
-        """Apply the rule to a CST module and return transformed tree plus changes."""
-        return (tree, [])
+    def extract_project_scan_dirs(self, config: t.ConfigurationMapping) -> list[str]:
+        scope = self._resolve_engine_config(config)
+        return list(scope.project_scan_dirs)
 
-    def matches_filter(self, filter_pattern: str) -> bool:
-        """Return whether the rule matches a case-insensitive filter string."""
-        pattern_lower = filter_pattern.lower()
-        return (
-            pattern_lower in (self.rule_id or "").lower()
-            or pattern_lower in (self.name or "").lower()
-            or pattern_lower in (self.description or "").lower()
+    @staticmethod
+    def discover_workspace_projects(workspace_root: Path) -> list[Path]:
+        projects: list[Path] = []
+        root_has_pyproject = (
+            workspace_root / c.Infra.Files.PYPROJECT_FILENAME
+        ).exists()
+        root_has_makefile = (workspace_root / c.Infra.Files.MAKEFILE_FILENAME).exists()
+        if root_has_pyproject and root_has_makefile:
+            projects.append(workspace_root)
+        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            if not (entry / c.Infra.Files.PYPROJECT_FILENAME).exists():
+                continue
+            if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
+                continue
+            projects.append(entry)
+        return projects
+
+    def load_rules(
+        self,
+        rule_filters: list[str],
+        validator: FlextInfraRefactorRuleDefinitionValidator,
+        build_rule: Callable[
+            [Mapping[str, t.ContainerValue]], FlextInfraRefactorRule | None
+        ],
+    ) -> r[tuple[list[FlextInfraRefactorRule], list]]:
+        from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
+
+        try:
+            rules_dir = self.config_path.parent / c.Infra.ReportKeys.RULES
+            loaded_rules: list[FlextInfraRefactorRule] = []
+            loaded_file_rules: list[ClassNestingRefactorRule] = [
+                ClassNestingRefactorRule()
+            ]
+            unknown_rules: list[str] = []
+            for rule_file in sorted(rules_dir.glob("*.yml")):
+                try:
+                    rule_config = dict(u.Infra.Yaml.safe_load_yaml(rule_file))
+                except (OSError, TypeError):
+                    continue
+                typed_rules = self._coerce_rule_definitions(
+                    rule_config.get(c.Infra.ReportKeys.RULES)
+                )
+                for typed_rule_def in typed_rules:
+                    if c.Infra.ReportKeys.ID not in typed_rule_def:
+                        continue
+                    if not typed_rule_def.get(c.Infra.ReportKeys.ENABLED, True):
+                        continue
+                    rule_id = str(typed_rule_def[c.Infra.ReportKeys.ID]).strip()
+                    rule_id_lower = rule_id.lower()
+                    matches_active_filters = not rule_filters or any(
+                        fnmatch.fnmatch(rule_id_lower, active_filter.lower())
+                        or active_filter.lower() in rule_id_lower
+                        for active_filter in rule_filters
+                    )
+                    fix_action = (
+                        str(
+                            typed_rule_def.get(
+                                c.Infra.ReportKeys.FIX_ACTION,
+                                typed_rule_def.get(c.Infra.ReportKeys.ACTION, ""),
+                            )
+                        )
+                        .strip()
+                        .lower()
+                    )
+                    if fix_action == "nest_classes":
+                        continue
+                    if not matches_active_filters:
+                        continue
+                    rule_validation = validator.validate_rule_definition(typed_rule_def)
+                    if rule_validation is not None:
+                        unknown_rules.append(rule_validation)
+                        continue
+                    rule = build_rule(typed_rule_def)
+                    if rule is None:
+                        unknown_rules.append(
+                            str(
+                                typed_rule_def.get(
+                                    c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN
+                                )
+                            )
+                        )
+                        continue
+                    loaded_rules.append(rule)
+            if unknown_rules:
+                unknown = ", ".join(sorted(unknown_rules))
+                return r[tuple[list[FlextInfraRefactorRule], list]].fail(
+                    f"Unknown rule mapping for: {unknown}"
+                )
+            return r[tuple[list[FlextInfraRefactorRule], list]].ok(
+                (loaded_rules, loaded_file_rules)
+            )
+        except Exception as exc:
+            return r[tuple[list[FlextInfraRefactorRule], list]].fail(
+                f"Failed to load rules: {exc}"
+            )
+
+    def _resolve_engine_config(
+        self, config: t.ConfigurationMapping
+    ) -> m.Infra.Refactor.EngineConfig:
+        scope_raw = config.get("refactor_engine")
+        scope_map: t.ConfigurationMapping = (
+            dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
         )
+        return m.Infra.Refactor.EngineConfig.model_validate(scope_map)
+
+    @staticmethod
+    def _coerce_rule_definitions(
+        value: t.ContainerValue | None,
+    ) -> list[Mapping[str, t.ContainerValue]]:
+        if not isinstance(value, list):
+            return []
+        definitions: list[Mapping[str, t.ContainerValue]] = []
+        for item in value:
+            if not isinstance(item, Mapping):
+                continue
+            normalized = {str(key): raw_value for key, raw_value in item.items()}
+            definitions.append(normalized)
+        return definitions
+
+
+__all__ = ["FlextInfraRefactorRule", "FlextInfraRefactorRuleLoader"]

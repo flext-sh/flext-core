@@ -16,6 +16,7 @@ from types import MappingProxyType, ModuleType
 from typing import ClassVar, Self, cast, override
 
 import pytest
+from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
 from flext_core import FlextRuntime, c, m, r, t, u
@@ -639,7 +640,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         trace_from_scalar
     )
 
-    class TraceModel:
+    class TraceModel(BaseModel):
         key: str = "value"
 
     trace_from_model = FlextRuntime.ensure_trace_context(TraceModel())
@@ -686,7 +687,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     FlextRuntime.ensure_structlog_configured()
     assert FlextRuntime.is_structlog_configured() is True
 
-    class BasicModel:
+    class BasicModel(BaseModel):
         value: int = 1
 
     assert FlextRuntime.is_base_model(BasicModel()) is True
@@ -918,8 +919,8 @@ def test_model_helpers_remaining_paths() -> None:
         def __init__(self, unique_id: str) -> None:
             self.unique_id = unique_id
 
-    class ValueModel:
-        a: int
+    class ValueModel(BaseModel):
+        a: int = 0
 
     left = Entity("u-1")
     right = Entity("u-1")

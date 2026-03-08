@@ -108,14 +108,14 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
         "flext_core.runtime.FlextRuntime.normalize_to_general_value",
         staticmethod(_normalize_stub),
     )
-    with pytest.raises(TypeError, match="Normalized BaseModel .* is not mapping-like"):
+    with pytest.raises(TypeError, match=r"Normalized BaseModel .* is not mapping-like"):
         u.Generators.ensure_dict(_GoodModel(value=5))
-    with pytest.raises(TypeError, match="Failed to convert Mapping"):
+    with pytest.raises(TypeError, match=r"Failed to convert Mapping"):
         u.Generators.ensure_dict(_BrokenMapping())
     assert u.Generators.ensure_dict(None, default={"x": "y"}) == {"x": "y"}
-    with pytest.raises(TypeError, match="Value cannot be None"):
+    with pytest.raises(TypeError, match=r"Value cannot be None"):
         u.Generators.ensure_dict(None)
-    with pytest.raises(TypeError, match="Cannot convert int to dict"):
+    with pytest.raises(TypeError, match=r"Cannot convert int to dict"):
         u.Generators.ensure_dict(123)
 
 

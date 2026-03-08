@@ -9,12 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.base import TestsFlextServiceBase
-from tests.constants import TestsFlextConstants
-from tests.models import TestsFlextModels
-from tests.protocols import TestsFlextProtocols
-from tests.typings import TestsFlextTypes
-from tests.utilities import TestsFlextUtilities
+from flext_core import e
+
+from .base import TestsFlextServiceBase
+from .constants import TestsFlextConstants, c
+from .models import TestsFlextModels, m
+from .protocols import TestsFlextProtocols, p
+from .typings import TestsFlextTypes
+from .utilities import TestsFlextUtilities, u
+
+t = TestsFlextTypes
 
 __all__ = [
     "TestsFlextConstants",
@@ -23,4 +27,10 @@ __all__ = [
     "TestsFlextServiceBase",
     "TestsFlextTypes",
     "TestsFlextUtilities",
+    "c",
+    "e",
+    "m",
+    "p",
+    "t",
+    "u",
 ]

@@ -44,7 +44,8 @@ def test_categories_clear_and_symbols_are_available() -> None:
     assert categories.categories == {}
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
-    assert isinstance(u.Collection.find([1], lambda value: value == 1), int)
+    result = u.Collection.find([1], lambda value: value == 1)
+    assert result.is_success and result.value == 1
 
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:
@@ -88,5 +89,8 @@ def test_options_merge_conflict_paths_and_empty_merge_options() -> None:
 def test_config_hash_from_mapping_and_non_hashable() -> None:
     loaded = _Config.from_mapping(m.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
-    with pytest.raises(TypeError, match="_Config objects are not hashable"):
-        hash(loaded)
+    with pytest.raises(TypeError, match="_Config objects are not hashable") as exc_info:
+        hash_val = hash(loaded)
+        assert False, f"expected to raise, got hash value {hash_val!r}"
+    assert exc_info.value is not None
+    assert "not hashable" in str(exc_info.value)

@@ -129,6 +129,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
             TypeError,
             AttributeError,
             RuntimeError,
+            BaseException,
         ) as e:
             logging.getLogger(__name__).debug(
                 f"{failure_prefix} during model validation", exc_info=e

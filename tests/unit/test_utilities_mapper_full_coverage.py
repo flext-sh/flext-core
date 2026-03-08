@@ -9,14 +9,19 @@ from pathlib import Path
 from typing import cast, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core import m, p, r, t, u
 
-from ._models import SampleModel
-
 Cache = u.Cache
 Mapper = u.Mapper
+
+
+class _PortModel(BaseModel):
+    """Model with port/nested for mapper take/extract tests."""
+
+    port: int = 0
+    nested: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
 
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
@@ -186,7 +191,7 @@ def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
     }
     assert mapper.convert_to_json_value(None) is None
 
-    class Model:
+    class Model(BaseModel):
         x: int
 
     model = Model(x=1)
@@ -272,7 +277,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
 def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
     assert mapper.at({"a": 1}, 0, default=5).value == 5
     assert cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value == 7
-    model = SampleModel(port=8081)
+    model = _PortModel(port=8081)
     assert mapper.take(model, "port") == 8081
     assert mapper.take(123, "port", default="d") == "d"
     assert mapper.take({"port": None}, "port", default="x") == "x"
@@ -793,7 +798,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
 def test_remaining_uncovered_branches(
     mapper: type[Mapper], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    model = SampleModel(port=9000, nested={"k": "v"})
+    model = _PortModel(port=9000, nested={"k": "v"})
     base_model_extract = mapper.extract(model, "nested.k")
     assert base_model_extract.is_success
     assert base_model_extract.value == "v"
@@ -807,7 +812,7 @@ def test_remaining_uncovered_branches(
     assert terminal_default.is_success
     assert terminal_default.value == "fallback"
 
-    class MaybeModel:
+    class MaybeModel(BaseModel):
         x: str | None = None
 
     assert mapper.take(MaybeModel(x=None), "x", default="d") == "d"
@@ -815,7 +820,7 @@ def test_remaining_uncovered_branches(
     assert mapper.agg([{"v": "x"}], "v") == 0
     assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"A": 1}
 
-    class GroupModel:
+    class GroupModel(BaseModel):
         kind: str | None = None
 
     grouped = mapper._build_apply_group([GroupModel(kind=None)], {"group": "kind"})

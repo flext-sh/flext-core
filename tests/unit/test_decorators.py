@@ -28,6 +28,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import (
     FlextContainer,
@@ -278,21 +279,15 @@ class TestFlextDecorators:
 
             assert process_data_missing() == "default"
         elif test_case.operation == DecoratorOperationType.INJECT_PROVIDED:
-            container = FlextContainer()
 
-            class TestServiceTyped:
+            class TestServiceTyped(BaseModel):
                 value: str
-
-            service_instance: TestServiceTyped = TestServiceTyped(
-                value="from_container"
-            )
-            _ = container.register("service", service_instance)
 
             @FlextDecorators.inject(service="service")
             def process(*, service: TestServiceTyped) -> str:
                 return service.value
 
-            explicit_service = TestServiceTyped(value="explicit")
+            explicit_service = TestServiceTyped.model_validate({"value": "explicit"})
             assert process(service=explicit_service) == "explicit"
 
     @pytest.mark.parametrize(
@@ -462,13 +457,9 @@ class TestFlextDecorators:
             return FlextResult[str].ok("already_wrapped")
 
         result = returns_result()
-        assert isinstance(result, FlextResult)
         _ = u.Tests.Result.assert_success(result)
         unwrapped = result.value
-        if isinstance(unwrapped, FlextResult):
-            assert unwrapped.value == "already_wrapped"
-        else:
-            assert unwrapped == "already_wrapped"
+        assert unwrapped.value == "already_wrapped"
 
     def test_retry_with_class_logger(self) -> None:
         """Test retry decorator with class logger.

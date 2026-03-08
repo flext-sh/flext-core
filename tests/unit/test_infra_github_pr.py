@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -837,21 +838,20 @@ class TestGithubInit:
 
     def test_lazy_import_pr_manager(self) -> None:
         """Test lazy import of FlextInfraPrManager."""
-        import flext_infra.github as github_module
-
+        github_module = importlib.import_module("flext_infra.github")
         manager = github_module.FlextInfraPrManager()
         assert isinstance(manager, FlextInfraPrManager)
 
     def test_getattr_invalid_attribute(self) -> None:
         """Test __getattr__ raises AttributeError for invalid attribute."""
-        import flext_infra.github as github_module
+        github_module = importlib.import_module("flext_infra.github")
 
-        with pytest.raises(AttributeError, match="module.*has no attribute"):
+        with pytest.raises(AttributeError, match=r"module.*has no attribute"):
             _ = github_module.NonexistentAttribute
 
     def test_dir_returns_all_exports(self) -> None:
         """Test __dir__ returns all exported attributes."""
-        import flext_infra.github as github_module
+        github_module = importlib.import_module("flext_infra.github")
 
         exports = dir(github_module)
         assert "FlextInfraPrManager" in exports

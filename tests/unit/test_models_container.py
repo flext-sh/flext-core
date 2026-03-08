@@ -336,14 +336,14 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_invalid_type(self) -> None:
         """Test normalize_to_metadata with invalid type raises TypeError."""
         with pytest.raises(
-            TypeError, match="metadata must be None, dict, or.*Metadata"
+            TypeError, match=r"metadata must be None, dict, or.*Metadata"
         ):
             u.Model.normalize_to_metadata("invalid_string")
         with pytest.raises(
-            TypeError, match="metadata must be None, dict, or.*Metadata"
+            TypeError, match=r"metadata must be None, dict, or.*Metadata"
         ):
             u.Model.normalize_to_metadata(123)
         with pytest.raises(
-            TypeError, match="metadata must be None, dict, or.*Metadata"
+            TypeError, match=r"metadata must be None, dict, or.*Metadata"
         ):
             _normalize_metadata_obj([1, 2, 3])

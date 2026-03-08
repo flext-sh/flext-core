@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections import UserDict as UserDictBase
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextConstants, FlextContext, m, t
 from flext_core._models.base import FlextModelFoundation
@@ -289,10 +289,10 @@ class TestContext100Coverage:
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
 
-        class TestModel:
+        class TestModel(BaseModel):
             field: str = "value"
 
-        model: TestModel = TestModel()
+        model = TestModel()
         export = FlextModelsContext.ContextExport.model_validate({"data": model})
         assert isinstance(export.data, dict)
         assert "field" in export.data
@@ -300,7 +300,7 @@ class TestContext100Coverage:
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-dict."""
         invalid_data: t.ContainerValue = 123
-        with pytest.raises(TypeError, match=".*must be a dict or Pydantic model.*"):
+        with pytest.raises(TypeError, match=r".*must be a dict or Pydantic model.*"):
             FlextModelsContext.ContextExport.model_validate({"data": invalid_data})
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
@@ -352,46 +352,51 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_data_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_data with BaseModel."""
 
-        class TestModel:
+        class TestModel(BaseModel):
             field: str = "value"
 
-        model: TestModel = TestModel()
+        model = TestModel()
         scope_data = FlextModelsContext.ContextScopeData.model_validate({"data": model})
         assert isinstance(scope_data.data, dict)
         assert "field" in scope_data.data
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
-        scope_data = FlextModelsContext.ContextScopeData(data={})
+        scope_data = FlextModelsContext.ContextScopeData(
+            scope_name="global", data={}
+        )
         assert isinstance(scope_data.data, dict)
         assert scope_data.data == {}
 
     def test_context_scope_data_validate_metadata_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_metadata with BaseModel."""
 
-        class TestModel:
+        class TestModel(BaseModel):
             field: str = "value"
 
-        model: TestModel = TestModel()
+        model = TestModel()
         scope_data = FlextModelsContext.ContextScopeData.model_validate({
-            "metadata": model
+            "scope_name": "global",
+            "metadata": model,
         })
         assert isinstance(scope_data.metadata, dict)
         assert "field" in scope_data.metadata
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
-        scope_data = FlextModelsContext.ContextScopeData(metadata={})
+        scope_data = FlextModelsContext.ContextScopeData(
+            scope_name="global", metadata={}
+        )
         assert isinstance(scope_data.metadata, dict)
         assert scope_data.metadata == {}
 
     def test_context_statistics_validate_operations_with_basemodel(self) -> None:
         """Test ContextStatistics._validate_operations with BaseModel."""
 
-        class TestModel:
+        class TestModel(BaseModel):
             field: str = "value"
 
-        model: TestModel = TestModel()
+        model = TestModel()
         stats = FlextModelsContext.ContextStatistics.model_validate({
             "operations": model
         })
@@ -410,10 +415,10 @@ class TestContext100Coverage:
     def test_context_metadata_validate_custom_fields_with_basemodel(self) -> None:
         """Test ContextMetadata._validate_custom_fields with BaseModel."""
 
-        class TestModel:
+        class TestModel(BaseModel):
             field: str = "value"
 
-        model: TestModel = TestModel()
+        model = TestModel()
         metadata = FlextModelsContext.ContextMetadata.model_validate({
             "custom_fields": model
         })

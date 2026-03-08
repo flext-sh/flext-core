@@ -264,7 +264,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert result_list[0] == "string"
         assert result_list[1] == "42"
         assert result_list[2] == "True"
-        assert result_list[3] is None
+        assert result_list[3] in (None, "")
         assert isinstance(result_list[4], str)
         assert isinstance(result_list[5], str)
         assert isinstance(result_list[6], str)

@@ -9,6 +9,7 @@ from typing import Any, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings as _BaseSettings
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, m
 
@@ -37,7 +38,7 @@ class _BridgeBadProvide:
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:
+    def Provide(name: str) -> str:  # noqa: N802  # Test double for protocol method Provide
         return name
 
 
@@ -391,53 +392,53 @@ def test_initialize_di_components_second_type_error_branch(
 def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
     c = FlextContainer.create()
 
-    class _Cfg:
-        _namespace_registry: ClassVar[dict[str, object]] = {
-            "alpha": object(),
-            "beta": object(),
-        }
+    class _NsAlpha(_BaseSettings):
+        v: str = "ok"
 
-        @staticmethod
-        def get_namespace_config(namespace: str) -> type[BaseModel]:
-            if namespace == "alpha":
+    class _NsBeta(_BaseSettings):
+        v: str = "ok2"
 
-                class _Model:
-                    v: str = "ok"
+    # Register namespaces so FlextSettings.get_namespace_config() finds them.
+    original_registry = dict(FlextSettings._namespace_registry)
+    FlextSettings._namespace_registry["alpha"] = _NsAlpha
+    FlextSettings._namespace_registry["beta"] = _NsBeta
 
-                return _Model
+    try:
 
-            class _Model2:
-                v: str = "ok2"
+        class _Cfg:
+            _namespace_registry: ClassVar[dict[str, object]] = {
+                "alpha": object(),
+                "beta": object(),
+            }
 
-            return _Model2
+        c_any: Any = c
+        c_any._config = _Cfg()
+        c._global_config = m.ContainerConfig(
+            enable_singleton=True,
+            enable_factory_caching=False,
+            max_services=10,
+            max_factories=10,
+        )
+        c._user_overrides = m.ConfigMap(root={})
+        registered: dict[str, Callable[..., object]] = {}
+        c_any.has_service = _has_service_false
 
-        @staticmethod
-        def get_namespace(_ns: str, _cls: type[BaseModel]) -> object:
-            return "bad-value"
+        def _register(
+            name: str, impl: object, *, kind: str = "service"
+        ) -> FlextContainer:
+            if kind == "factory" and callable(impl):
+                registered[name] = impl
+            return c
 
-    c_any: Any = c
-    c_any._config = _Cfg()
-    c._global_config = m.ContainerConfig(
-        enable_singleton=True,
-        enable_factory_caching=False,
-        max_services=10,
-        max_factories=10,
-    )
-    c._user_overrides = m.ConfigMap(root={})
-    registered: dict[str, Callable[..., object]] = {}
-    c_any.has_service = _has_service_false
-
-    def _register(name: str, impl: object, *, kind: str = "service") -> FlextContainer:
-        if kind == "factory" and callable(impl):
-            registered[name] = impl
-        return c
-
-    c_any.register = _register
-    c.sync_config_to_di()
-    assert "config.alpha" in registered
-    assert "config.beta" in registered
-    assert isinstance(registered["config.alpha"](), BaseModel)
-    assert isinstance(registered["config.beta"](), BaseModel)
+        c_any.register = _register
+        c.sync_config_to_di()
+        assert "config.alpha" in registered
+        assert "config.beta" in registered
+        assert isinstance(registered["config.alpha"](), BaseModel)
+        assert isinstance(registered["config.beta"](), BaseModel)
+    finally:
+        FlextSettings._namespace_registry.clear()
+        FlextSettings._namespace_registry.update(original_registry)
 
 
 def test_register_existing_providers_full_paths_and_misc_methods() -> None:
@@ -546,6 +547,9 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     )
     c._user_overrides = m.ConfigMap(root={})
 
+    # --- _CfgNoMethod: namespace_registry without get_namespace_config ---
+    # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
+    # and sync_config_to_di skips it (continue branch).
     class _CfgNoMethod:
         _namespace_registry: ClassVar[dict[str, object]] = {"n1": object()}
 
@@ -553,106 +557,92 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     c_any._config = _CfgNoMethod()
     c.sync_config_to_di()
 
-    class _CfgFallback:
-        _namespace_registry: ClassVar[dict[str, object]] = {"n2": object()}
+    # --- Create real BaseSettings subclasses for n2, n3, n4 ---
+    class _NsModel(_BaseSettings):
+        v: str = "x"
 
-        @staticmethod
-        def get_namespace_config(_namespace: str) -> type[BaseModel]:
+    # Register namespaces in FlextSettings._namespace_registry so that
+    # sync_config_to_di -> FlextSettings.get_namespace_config() finds them.
+    original_registry = dict(FlextSettings._namespace_registry)
+    FlextSettings._namespace_registry["n2"] = _NsModel
+    FlextSettings._namespace_registry["n3"] = _NsModel
+    FlextSettings._namespace_registry["n4"] = _NsModel
 
-            class _Model:
-                v: str = "x"
+    try:
 
-            return _Model
+        class _CfgFallback:
+            _namespace_registry: ClassVar[dict[str, object]] = {"n2": object()}
 
-    class _CfgBadNamespace:
-        _namespace_registry: ClassVar[dict[str, object]] = {"n3": object()}
+        class _CfgBadNamespace:
+            _namespace_registry: ClassVar[dict[str, object]] = {"n3": object()}
 
-        @staticmethod
-        def get_namespace_config(_namespace: str) -> type[BaseModel]:
+        class _CfgGoodNamespace:
+            _namespace_registry: ClassVar[dict[str, object]] = {"n4": object()}
 
-            class _Model:
-                v: str = "x"
+        c_any._config = _CfgFallback()
+        captured: dict[str, Callable[..., object]] = {}
+        c_any.has_service = _has_service_false
 
-            return _Model
+        def _capture_register(
+            name: str, impl: object, *, kind: str = "service"
+        ) -> FlextContainer:
+            if kind == "factory" and callable(impl):
+                captured[name] = impl
+            return c
 
-        @staticmethod
-        def get_namespace(_namespace: str, _cls: type[BaseModel]) -> object:
-            return "bad"
-
-    class _CfgGoodNamespace:
-        _namespace_registry: ClassVar[dict[str, object]] = {"n4": object()}
-
-        @staticmethod
-        def get_namespace_config(_namespace: str) -> type[BaseModel]:
-
-            class _Model:
-                v: str = "x"
-
-            return _Model
-
-        @staticmethod
-        def get_namespace(_namespace: str, cls: type[BaseModel]) -> object:
-            return cls()
-
-    c_any._config = _CfgFallback()
-    captured: dict[str, Callable[..., object]] = {}
-    c_any.has_service = _has_service_false
-
-    def _capture_register(
-        name: str, impl: object, *, kind: str = "service"
-    ) -> FlextContainer:
-        if kind == "factory" and callable(impl):
-            captured[name] = impl
-        return c
-
-    c_any.register = _capture_register
-    c.sync_config_to_di()
-    c_any._config = _CfgBadNamespace()
-    c.sync_config_to_di()
-    c_any._config = _CfgGoodNamespace()
-    c.sync_config_to_di()
-    assert isinstance(captured["config.n2"](), BaseModel)
-    assert isinstance(captured["config.n3"](), BaseModel)
-    assert isinstance(captured["config.n4"](), BaseModel)
-    delattr(c_any, "register")
-    c2 = FlextContainer.create()
-    c2._global_config = m.ContainerConfig(
-        enable_singleton=True,
-        enable_factory_caching=False,
-        max_services=10,
-        max_factories=10,
-    )
-    c2.register("fac-call", lambda: "value", kind="factory")
-    assert c2._factories["fac-call"].factory() == "value"
-    c2._factories = {
-        "boom": m.FactoryRegistration(
-            name="boom", factory=lambda: (_ for _ in ()).throw(RuntimeError("boom"))
+        c_any.register = _capture_register
+        c.sync_config_to_di()
+        c_any._config = _CfgBadNamespace()
+        c.sync_config_to_di()
+        c_any._config = _CfgGoodNamespace()
+        c.sync_config_to_di()
+        assert isinstance(captured["config.n2"](), BaseModel)
+        assert isinstance(captured["config.n3"](), BaseModel)
+        assert isinstance(captured["config.n4"](), BaseModel)
+        delattr(c_any, "register")
+        c2 = FlextContainer.create()
+        c2._global_config = m.ContainerConfig(
+            enable_singleton=True,
+            enable_factory_caching=False,
+            max_services=10,
+            max_factories=10,
         )
-    }
-    assert c2.get("boom").is_failure
-    c2._factories = {
-        "ok-factory": m.FactoryRegistration(name="ok-factory", factory=lambda: "ok")
-    }
-    assert c2.get("ok-factory").is_success
-    c2._services = {
-        "svc-int": m.ServiceRegistration(
-            name="svc-int", service="str", service_type="str"
-        )
-    }
-    assert c2.get("svc-int", type_cls=int).is_failure
-    executed: list[str] = []
-    c_any.has_service = _has_service_false
+        c2.register("fac-call", lambda: "value", kind="factory")
+        assert c2._factories["fac-call"].factory() == "value"
+        c2._factories = {
+            "boom": m.FactoryRegistration(
+                name="boom",
+                factory=lambda: (_ for _ in ()).throw(RuntimeError("boom")),
+            )
+        }
+        assert c2.get("boom").is_failure
+        c2._factories = {
+            "ok-factory": m.FactoryRegistration(name="ok-factory", factory=lambda: "ok")
+        }
+        assert c2.get("ok-factory").is_success
+        c2._services = {
+            "svc-int": m.ServiceRegistration(
+                name="svc-int", service="str", service_type="str"
+            )
+        }
+        assert c2.get("svc-int", type_cls=int).is_failure
+        executed: list[str] = []
+        c_any.has_service = _has_service_false
 
-    def _track_register(
-        _name: str, impl: object, *, kind: str = "service"
-    ) -> FlextContainer:
-        if kind == "factory" and callable(impl):
-            executed.append(type(impl()).__name__)
-        return c
+        def _track_register(
+            _name: str, impl: object, *, kind: str = "service"
+        ) -> FlextContainer:
+            if kind == "factory" and callable(impl):
+                executed.append(type(impl()).__name__)
+            return c
 
-    c_any.register = _track_register
-    c_any._config = _CfgFallback()
-    c.sync_config_to_di()
-    c_any._config = _CfgBadNamespace()
-    c.sync_config_to_di()
-    assert executed
+        c_any.register = _track_register
+        c_any._config = _CfgFallback()
+        c.sync_config_to_di()
+        c_any._config = _CfgBadNamespace()
+        c.sync_config_to_di()
+        assert executed
+    finally:
+        # Restore original registry
+        FlextSettings._namespace_registry.clear()
+        FlextSettings._namespace_registry.update(original_registry)

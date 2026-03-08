@@ -14,18 +14,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from enum import StrEnum
+from collections.abc import Callable
 from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels, m, p, t
+from flext_core import FlextModels, FlextTypes
+from flext_infra import FlextInfraModels
+from flext_tests import FlextTestsModels
 
-from .constants import TestsFlextConstants
 
-
-class TestsFlextModels:
+class TestsFlextModels(FlextTestsModels, FlextInfraModels):
     """Models for flext-core tests - uses composition with FlextTestsModels.
 
     Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextModels
@@ -42,23 +41,10 @@ class TestsFlextModels:
     - Generic models accessed via FlextTestsModels.Tests namespace
     """
 
-    AggregateRoot = FlextModels.AggregateRoot
-    DomainEvent = FlextModels.DomainEvent
-
-    # Type aliases for domain test input
-    type DomainInputValue = t.ContainerValue | p.HasModelDump
-    type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
-    type DomainExpectedResult = t.ContainerValue | type[t.ContainerValue]
-
-    class Core:
+    class Tests(FlextTestsModels.Tests):
         """flext-core-specific test models namespace."""
 
-        class ServiceTestType(StrEnum):
-            GET_USER = "get_user"
-            VALIDATE = "validate"
-            FAIL = "fail"
-
-        class User(m.Entity):
+        class User(FlextModels.Entity):
             """Shared user model for tests."""
 
             model_config = ConfigDict(frozen=False)
@@ -73,22 +59,22 @@ class TestsFlextModels:
 
             model_config = ConfigDict(frozen=True)
 
-            service_type: TestsFlextModels.Core.ServiceTestType
+            service_type: str
             input_value: str
             expected_success: bool = True
             expected_error: str | None = None
-            extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
+            extra_param: int = 3
             description: str = ""
 
-        class DomainTestEntity(m.Entity):
+        class DomainTestEntity(FlextModels.Entity):
             """Test entity for domain tests."""
 
             model_config = ConfigDict(frozen=False)
 
             name: str
-            value: t.ContainerValue
+            value: FlextTypes.ContainerValue
 
-        class DomainTestValue(m.Value):
+        class DomainTestValue(FlextModels.Value):
             """Test value object for domain tests."""
 
             model_config = ConfigDict(frozen=True)
@@ -167,104 +153,288 @@ class TestsFlextModels:
         class ParseOptions(FlextModels.CollectionsParseOptions):
             """Parse options - real inheritance."""
 
-    class ParseDelimitedCase(BaseModel):
-        """Test case for parse_delimited method."""
+        class ParseDelimitedCase(BaseModel):
+            """Test case for parse_delimited method."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-        text: str
-        delimiter: str
-        expected: list[str] | None = None
-        expected_error: str | None = None
-        options: FlextModels.CollectionsParseOptions | None = None
-        strip: bool = True
-        remove_empty: bool = True
-        validator: Callable[[str], bool] | None = None
-        use_legacy: bool = False
-        description: str = Field(default="", exclude=True)
+            text: str
+            delimiter: str
+            expected: list[str] | None = None
+            expected_error: str | None = None
+            options: FlextModels.CollectionsParseOptions | None = None
+            strip: bool = True
+            remove_empty: bool = True
+            validator: Callable[[str], bool] | None = None
+            use_legacy: bool = False
+            description: str = Field(default="", exclude=True)
 
-    class SplitEscapeCase(BaseModel):
-        """Test case for split_on_char_with_escape method."""
+        class SplitEscapeCase(BaseModel):
+            """Test case for split_on_char_with_escape method."""
 
-        model_config = ConfigDict(frozen=True)
+            model_config = ConfigDict(frozen=True)
 
-        text: str
-        split_char: str
-        escape_char: str = "\\"
-        expected: list[str] | None = None
-        expected_error: str | None = None
-        description: str = Field(default="", exclude=True)
+            text: str
+            split_char: str
+            escape_char: str = "\\"
+            expected: list[str] | None = None
+            expected_error: str | None = None
+            description: str = Field(default="", exclude=True)
 
-    class NormalizeWhitespaceCase(BaseModel):
-        """Test case for normalize_whitespace method."""
+        class NormalizeWhitespaceCase(BaseModel):
+            """Test case for normalize_whitespace method."""
 
-        model_config = ConfigDict(frozen=True)
+            model_config = ConfigDict(frozen=True)
 
-        text: str
-        pattern: str = r"\s+"
-        replacement: str = " "
-        expected: str | None = None
-        expected_error: str | None = None
-        description: str = Field(default="", exclude=True)
+            text: str
+            pattern: str = r"\s+"
+            replacement: str = " "
+            expected: str | None = None
+            expected_error: str | None = None
+            description: str = Field(default="", exclude=True)
 
-    class RegexPipelineCase(BaseModel):
-        """Test case for apply_regex_pipeline method."""
+        class RegexPipelineCase(BaseModel):
+            """Test case for apply_regex_pipeline method."""
 
-        model_config = ConfigDict(frozen=True)
+            model_config = ConfigDict(frozen=True)
 
-        text: str
-        patterns: list[tuple[str, str] | tuple[str, str, int]]
-        expected: str | None = None
-        expected_error: str | None = None
-        description: str = Field(default="", exclude=True)
+            text: str
+            patterns: list[tuple[str, str] | tuple[str, str, int]]
+            expected: str | None = None
+            expected_error: str | None = None
+            description: str = Field(default="", exclude=True)
 
-    class ObjectKeyCase(BaseModel):
-        """Test case for get_object_key method."""
+        class ObjectKeyCase(BaseModel):
+            """Test case for get_object_key method."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-        obj: t.ContainerValue
-        expected_contains: list[str] | None = None
-        expected_exact: str | None = None
-        description: str = Field(default="", exclude=True)
+            obj: FlextTypes.ContainerValue
+            expected_contains: list[str] | None = None
+            expected_exact: str | None = None
+            description: str = Field(default="", exclude=True)
+
+        class AutomatedTestScenario(BaseModel):
+            """Pydantic v2 model for automated test scenarios."""
+
+            model_config = ConfigDict(frozen=True)
+
+            description: str
+            input: FlextTypes.ConfigurationMapping
+            expected_success: bool
+
+        class StandardTestCaseModel(BaseModel):
+            """Standard operation case model for shared test utilities."""
+
+            description: str
+            input_data: FlextTypes.ConfigurationMapping
+            expected_result: FlextTypes.ContainerValue
+            expected_success: bool = True
+            error_contains: str | None = None
+
+        class UtilityEntityModel(FlextModels.Entity):
+            """Shared entity model for generic test fixtures."""
+
+            model_config = ConfigDict(frozen=False)
+
+            name: str
+            value: FlextTypes.ContainerValue
+
+        class UtilityValueModel(FlextModels.Value):
+            """Shared value model for generic test fixtures."""
+
+            model_config = ConfigDict(frozen=True)
+
+            value: FlextTypes.ContainerValue
+
+        class BddPhaseDict:
+            """BDD phase (given/when/then) configuration."""
+
+            description: str
+
+        class BddPhaseData:
+            """BDD phase data (given/when/then)."""
+
+            description: str
+            assertions: list[str]
+            setup_steps: list[str]
+
+        class MockScenarioData:
+            """Mock scenario test data."""
+
+            given: dict[str, str | int | bool]
+            when: dict[str, str | int | bool]
+            then: dict[str, str | int | bool]
+            tags: list[str]
+            priority: str
+
+        class NestedDataDict:
+            """Nested test data."""
+
+            key: str
+            value: str | int | bool
+            metadata: str
+
+        class FixtureDataDict:
+            """Test data for FlextTestBuilder."""
+
+            id: str
+            correlation_id: str
+            created_at: str
+            updated_at: str
+            name: str
+            email: str
+            environment: str
+            version: str
+            nested_data: dict[str, TestsFlextModels.Tests.NestedDataDict]
+
+        class FixtureCaseDict:
+            """Individual test case configuration."""
+
+            email: str
+            input: str
+
+        class SuccessCaseDict:
+            """Success test case."""
+
+            email: str
+            input: str
+
+        class FailureCaseDict:
+            """Failure test case."""
+
+            email: str
+            input: str
+
+        class SetupDataDict:
+            """Setup data for test suite."""
+
+            initialization_step: str
+            configuration_key: str
+            configuration_value: str
+            environment: str
+
+        class FixtureSuiteDict:
+            """Test suite configuration."""
+
+            suite_name: str
+            scenario_count: int
+            tags: list[str]
+            setup_data: dict[str, TestsFlextModels.Tests.SetupDataDict]
+
+        class UserDataFixtureDict:
+            """User fixture data."""
+
+            username: str
+            email: str
+            status: str
+
+        class RequestDataFixtureDict:
+            """Request fixture data."""
+
+            method: str
+            path: str
+            headers: dict[str, str]
+
+        class FixtureFixturesDict:
+            """Test fixtures configuration."""
+
+            user: dict[str, TestsFlextModels.Tests.UserDataFixtureDict]
+            request: dict[str, TestsFlextModels.Tests.RequestDataFixtureDict]
+
+        class UserProfileDict:
+            """User profile for property-based testing."""
+
+            id: str
+            name: str
+            email: str
+
+        class ConfigTestCaseDict:
+            """Configuration test case."""
+
+            domain: str
+            port: int
+            timeout: float
+            debug: bool
+
+        class PerformanceMetricsDict:
+            """Performance metrics from testing."""
+
+            total_operations: int
+            time_elapsed: float
+            ops_per_second: float
+            memory_peak_mb: float
+
+        class StressTestResultDict:
+            """Result from stress testing."""
+
+            iterations: int
+            success_count: int
+            failure_count: int
+            average_time_ms: float
+
+        class AsyncPayloadDict:
+            """Async event payload."""
+
+            data: str
+            status: str
+
+        class AsyncTestDataDict:
+            """Async test data."""
+
+            event_type: str
+            timestamp: str
+            payload: dict[str, TestsFlextModels.Tests.AsyncPayloadDict]
+
+        class UserPayloadDict:
+            """User command payload."""
+
+            username: str
+            email: str
+
+        class UpdateFieldDict:
+            """Individual update field."""
+
+            field_name: str
+            new_value: str | int | bool
+
+        class UpdatePayloadDict:
+            """Update command payload."""
+
+            target_user_id: str
+            updates: dict[str, TestsFlextModels.Tests.UpdateFieldDict]
+
+        class UserDataDict:
+            """User data response."""
+
+            id: str
+            username: str
+            email: str
+            status: str
+
+        class UpdateResultDict:
+            """Update operation result."""
+
+            user_id: str
+            updated_fields: list[str]
+            update_count: int
+
+        class CommandPayloadDict:
+            """Generic command payload."""
+
+            id: str
+            username: str
+            email: str
+
+    Core = Tests
 
 
-class AutomatedTestScenario(BaseModel):
-    """Pydantic v2 model for automated test scenarios."""
+m = TestsFlextModels
 
-    model_config = ConfigDict(frozen=True)
-
-    description: str
-    input: t.ConfigurationMapping
-    expected_success: bool
-
-
-class StandardTestCaseModel(BaseModel):
-    """Standard operation case model for shared test utilities."""
-
-    description: str
-    input_data: t.ConfigurationMapping
-    expected_result: t.ContainerValue
-    expected_success: bool = True
-    error_contains: str | None = None
-
-
-class UtilityEntityModel(m.Entity):
-    """Shared entity model for generic test fixtures."""
-
-    model_config = ConfigDict(frozen=False)
-
-    name: str
-    value: t.ContainerValue
-
-
-class UtilityValueModel(m.Value):
-    """Shared value model for generic test fixtures."""
-
-    model_config = ConfigDict(frozen=True)
-
-    value: t.ContainerValue
-
+AutomatedTestScenario = TestsFlextModels.Tests.AutomatedTestScenario
+StandardTestCaseModel = TestsFlextModels.Tests.StandardTestCaseModel
+UtilityEntityModel = TestsFlextModels.Tests.UtilityEntityModel
+UtilityValueModel = TestsFlextModels.Tests.UtilityValueModel
 
 __all__ = [
     "AutomatedTestScenario",
@@ -272,4 +442,5 @@ __all__ = [
     "TestsFlextModels",
     "UtilityEntityModel",
     "UtilityValueModel",
+    "m",
 ]

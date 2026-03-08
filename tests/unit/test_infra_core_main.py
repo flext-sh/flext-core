@@ -653,7 +653,7 @@ class TestCoreMainFlow:
     def test_main_entry_point_via_sys_exit(self) -> None:
         """Test __main__ entry point via sys.exit (line 242)."""
         result = subprocess.run(
-            ["python", "-m", "flext_infra.core", "--help"],
+            [sys.executable, "-m", "flext_infra.core", "--help"],
             capture_output=True,
             text=True,
             cwd="/home/marlonsc/flext/flext-core",

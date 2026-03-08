@@ -265,5 +265,5 @@ class TestFlextInfraNamespaceValidator:
         assert result.value.violations
         first = result.value.violations[0]
         assert (
-            re.search("^\\[NS-\\d{3}-\\d{3}\\] .+\\.py:\\d+ — .+$", first) is not None
+            re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None
         )

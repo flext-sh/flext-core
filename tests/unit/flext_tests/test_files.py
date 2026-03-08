@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from pydantic import BaseModel, cast
+from pydantic import BaseModel
 
 from flext_core import r
 from flext_tests import m, tf
@@ -824,7 +824,7 @@ class TestInfoWithContentMeta:
         path = manager.create(
             m.ConfigMap(root={"name": "Alice", "age": 30}), "user.json"
         )
-        result = manager.info(path, validate_model=cast(type[BaseModel], SimpleModel))
+        result = manager.info(path, validate_model=SimpleModel)
         _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -834,7 +834,7 @@ class TestInfoWithContentMeta:
     def test_info_validate_model_failure(self, tmp_path: Path) -> None:
         """Test info() with validate_model for invalid model."""
 
-        class StrictModel:
+        class StrictModel(BaseModel):
             required_field: str
 
         manager = tf(base_dir=tmp_path)
@@ -1045,7 +1045,7 @@ class TestCreateInStatic:
     def test_create_in_pydantic_model(self, tmp_path: Path) -> None:
         """Test create_in() for Pydantic model content."""
 
-        class UserModel:
+        class UserModel(BaseModel):
             name: str
             age: int
 

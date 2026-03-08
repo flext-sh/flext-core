@@ -57,7 +57,7 @@ class TestFlextTestsMatchers:
     def test_assert_result_failure_expected_error_not_found(self) -> None:
         """Test tm.fail() when expected error substring not found."""
         result: r[str] = r[str].fail("Database error")
-        with pytest.raises(AssertionError, match="Expected.*to contain 'connection'"):
+        with pytest.raises(AssertionError, match=r"Expected.*to contain 'connection'"):
             tm.fail(result, contains="connection")
 
     def test_assert_dict_contains_passes(self) -> None:
@@ -90,7 +90,7 @@ class TestFlextTestsMatchers:
     def test_assert_list_contains_missing_item(self) -> None:
         """Test tm.that() with item not in list."""
         items = ["item1", "item2"]
-        with pytest.raises(AssertionError, match="Expected.*to contain 'item3'"):
+        with pytest.raises(AssertionError, match=r"Expected.*to contain 'item3'"):
             tm.that(items, has="item3")
 
     def test_assert_valid_email_passes(self) -> None:

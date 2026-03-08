@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -160,7 +161,7 @@ def test_main_entry_point() -> None:
 def test_main_entry_point_via_sys_exit() -> None:
     """Test __main__ entry point via sys.exit (line 68)."""
     result = subprocess.run(
-        ["python", "-m", "flext_infra.codegen", "lazy-init", "--help"],
+        [sys.executable, "-m", "flext_infra.codegen", "lazy-init", "--help"],
         capture_output=True,
         text=True,
         cwd="/home/marlonsc/flext/flext-core",

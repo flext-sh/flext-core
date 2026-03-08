@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 from typing import cast
 from unittest.mock import Mock, patch
@@ -317,10 +318,11 @@ def test_main_calls_sys_exit(tmp_path: Path) -> None:
             mock_detector = Mock()
             mock_detector_class.return_value = mock_detector
             mock_detector.detect_mode.return_value = "monorepo"
-            with patch("sys.exit") as _mock_exit:
-                from flext_infra.workspace.__main__ import main as _main_func
+            with patch("sys.exit"):
+                main_mod = importlib.import_module("flext_infra.workspace.__main__")
+                main_func = getattr(main_mod, "main")
 
                 try:
-                    _main_func(argv=["detect", "--project-root", str(tmp_path)])
+                    main_func(argv=["detect", "--project-root", str(tmp_path)])
                 except SystemExit:
                     pass

@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
@@ -54,6 +55,7 @@ if TYPE_CHECKING:
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
     from flext_infra.discovery import FlextInfraDiscoveryService
     from flext_infra.dispatcher import FlextInfraDispatcher
+    from flext_infra.exceptions import FlextInfraExceptions, FlextInfraExceptions as e
     from flext_infra.git import FlextInfraGitService
     from flext_infra.github import (
         FlextInfraPrManager,
@@ -103,6 +105,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraDiscoveryService",
     ),
     "FlextInfraDispatcher": ("flext_infra.dispatcher", "FlextInfraDispatcher"),
+    "FlextInfraExceptions": ("flext_infra.exceptions", "FlextInfraExceptions"),
     "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
     "FlextInfraInventoryService": (
         "flext_infra.core.inventory",
@@ -164,6 +167,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         _CONTAINER_MODULE,
         "configure_flext_infra_dependencies",
     ),
+    "e": ("flext_infra.exceptions", "FlextInfraExceptions"),
     "get_flext_infra_container": (_CONTAINER_MODULE, "get_flext_infra_container"),
     "get_flext_infra_service": (_CONTAINER_MODULE, "get_flext_infra_service"),
     "m": ("flext_infra.models", "FlextInfraModels"),
@@ -183,6 +187,7 @@ __all__ = [
     "FlextInfraConstants",
     "FlextInfraDiscoveryService",
     "FlextInfraDispatcher",
+    "FlextInfraExceptions",
     "FlextInfraGitService",
     "FlextInfraInventoryService",
     "FlextInfraJsonService",
@@ -213,6 +218,7 @@ __all__ = [
     "__version_info__",
     "c",
     "configure_flext_infra_dependencies",
+    "e",
     "get_flext_infra_container",
     "get_flext_infra_service",
     "m",
@@ -223,7 +229,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport | ModuleType:
     """Lazy-load module attributes on first access (PEP 562)."""
     if name in _LAZY_SUBMODULES:
         module = importlib.import_module(f"{__name__}.{name}")

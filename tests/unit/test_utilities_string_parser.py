@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast, override
+from typing import cast
 
 import pytest
 

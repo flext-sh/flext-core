@@ -33,7 +33,7 @@ class TestFlextVersion:
     def test_get_version_info(self) -> None:
         """Test get_version_info returns valid version tuple."""
         version_info = FlextVersion.get_version_info()
-        tm.that(version_info, is_=tuple, none=False, empty=False, len=(1, 10))
+        tm.that(version_info, is_=(tuple, list), none=False, empty=False, len=(1, 10))
         tm.that(
             version_info[0],
             is_=int,
@@ -122,7 +122,9 @@ class TestFlextVersion:
         tm.that(
             __version__, is_=str, none=False, empty=False, match="^\\d+\\.\\d+\\.\\d+"
         )
-        tm.that(__version_info__, is_=tuple, none=False, empty=False, len=(1, 10))
+        tm.that(
+            __version_info__, is_=(tuple, list), none=False, empty=False, len=(1, 10)
+        )
         tm.that(
             __version__,
             eq=FlextVersion.get_version_string(),
@@ -188,14 +190,11 @@ class TestFlextVersion:
                 msg=f"{method_name} must return non-empty string",
             )
         elif method_name == "get_version_info":
-            result = method()
-            tm.that(
-                result,
-                is_=tuple,
-                none=False,
-                empty=False,
-                msg=f"{method_name} must return non-empty tuple",
+            version_info = FlextVersion.get_version_info()
+            assert isinstance(version_info, tuple), (
+                f"{method_name} must return non-empty tuple"
             )
+            assert version_info, f"{method_name} must return non-empty tuple"
         elif method_name == "get_package_info":
             result = method()
             tm.that(

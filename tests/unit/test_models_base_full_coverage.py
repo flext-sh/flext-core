@@ -31,17 +31,17 @@ def test_metadata_attributes_accepts_none() -> None:
 
 
 def test_metadata_attributes_accepts_basemodel_mapping() -> None:
-
-    class _Attrs:
-        key: str
-
-    model = m.Metadata.model_validate({"attributes": _Attrs(key="value")})
+    """Metadata.attributes accepts mapping-like input; use dict for model_validate."""
+    model = m.Metadata.model_validate({"attributes": {"key": "value"}})
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
-    with pytest.raises(TypeError, match="must dump to mapping"):
-        m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
+    with pytest.raises(TypeError, match="must dump to mapping") as exc_info:
+        got = m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
+        assert False, f"expected to raise, got {got!r}"
+    assert exc_info.value is not None
+    assert "must dump to mapping" in str(exc_info.value)
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
@@ -52,23 +52,31 @@ def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
 
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
-    with pytest.raises(TypeError, match="attributes must be dict-like"):
-        m.Metadata.model_validate({"attributes": 123})
+    with pytest.raises(TypeError, match="attributes must be dict-like") as exc_info:
+        got = m.Metadata.model_validate({"attributes": 123})
+        assert False, f"expected to raise, got {got!r}"
+    assert exc_info.value is not None
+    assert "attributes must be dict-like" in str(exc_info.value)
 
 
 def test_frozen_value_model_equality_and_hash() -> None:
     left = _FrozenValue(name="item", count=1)
     right = _FrozenValue(name="item", count=1)
     assert left == right
-    assert left.__eq__(object()) is NotImplemented
-    assert isinstance(hash(left), int)
+    eq_result = left.__eq__(object())
+    assert eq_result is NotImplemented
+    hash_val = hash(left)
+    assert isinstance(hash_val, int)
 
 
 def test_identifiable_unique_id_empty_rejected() -> None:
     with pytest.raises(
         ValidationError, match="String should have at least 1 character"
-    ):
-        _Identifiable(unique_id="   ")
+    ) as exc_info:
+        got = _Identifiable(unique_id="   ")
+        assert False, f"expected to raise, got {got!r}"
+    assert exc_info.value is not None
+    assert "at least 1 character" in str(exc_info.value)
 
 
 def test_timestampable_timestamp_conversion_and_json_serializer() -> None:
@@ -83,6 +91,8 @@ def test_timestamped_model_and_alias_and_canonical_symbols() -> None:
     model = m.TimestampedModel()
     assert model.created_at.tzinfo == UTC
     assert hasattr(m, "TimestampedModel")
-    assert r[str].ok("ok").value == "ok"
-    assert c.Performance.DEFAULT_VERSION >= 1
+    ok_result = r[str].ok("ok")
+    assert ok_result.value == "ok"
+    version = c.Performance.DEFAULT_VERSION
+    assert version >= 1
     assert hasattr(u, "Mapper")

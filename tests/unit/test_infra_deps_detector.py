@@ -209,7 +209,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
-            Mock(model_dump=Mock(return_value={"to_add": ["types-requests"]}))
+            Mock(
+                model_dump=Mock(return_value={"to_add": ["types-requests"]}),
+                to_add=["types-requests"],
+            )
         )
         mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((
             list[str](),
@@ -260,7 +263,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
             Mock(
-                model_dump=Mock(return_value={"to_add": ["types-requests", 123, None]})
+                model_dump=Mock(return_value={"to_add": ["types-requests", 123, None]}),
+                to_add=["types-requests", 123, None],
             )
         )
         mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((
@@ -288,7 +292,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                             "--no-pip-check",
                         ])
                         assert result.is_success
-                        assert mock_runner.run_raw.call_count == 1
+                        assert mock_runner.run_raw.call_count == 3
 
     def test_run_with_apply_typings_poetry_add_failure(self, tmp_path: Path) -> None:
         """Test run() logs warning when poetry add fails (lines 244-249).
@@ -311,7 +315,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
-            Mock(model_dump=Mock(return_value={"to_add": ["types-requests"]}))
+            Mock(
+                model_dump=Mock(return_value={"to_add": ["types-requests"]}),
+                to_add=["types-requests"],
+            )
         )
         mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((
             list[str](),
@@ -362,7 +369,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
-            Mock(model_dump=Mock(return_value={"to_add": ["types-requests"]}))
+            Mock(
+                model_dump=Mock(return_value={"to_add": ["types-requests"]}),
+                to_add=["types-requests"],
+            )
         )
         mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((
             list[str](),

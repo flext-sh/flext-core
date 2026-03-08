@@ -394,8 +394,12 @@ class FlextContainer(p.DI):
         """Type guard to narrow object to specific type T.
 
         Uses isinstance for type narrowing with MRO support.
+        Handles parameterized generics (e.g. dict[str, str]) by
+        extracting __origin__ before the isinstance check.
         """
-        return isinstance(value, type_cls) or type_cls in type(value).__mro__
+        origin = getattr(type_cls, "__origin__", None)
+        check_type: type[object] = origin if origin is not None else type_cls
+        return isinstance(value, check_type) or check_type in type(value).__mro__
 
     @staticmethod
     def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:

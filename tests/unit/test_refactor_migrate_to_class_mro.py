@@ -10,7 +10,7 @@ from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
 from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
-from flext_infra.refactor.mro_migrator import FlextInfraRefactorMROMigrationScanner
+from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROMigrationScanner
 
 
 def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) -> None:

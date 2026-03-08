@@ -22,7 +22,7 @@ from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
@@ -673,7 +673,7 @@ class TestuCollectionCoerceListValidator:
         """Test coerce_list_validator integration with Pydantic."""
         _ = u.Collection.coerce_list_validator(FixtureStatus)
 
-        class TestModel:
+        class TestModel(BaseModel):
             statuses: list[FixtureStatus] = Field(default_factory=list)
 
         model1 = TestModel.model_validate({"statuses": ["active", "pending"]})
@@ -757,7 +757,7 @@ class TestuCollectionCoerceDictValidator:
         """Test coerce_dict_validator integration with Pydantic."""
         _ = u.Collection.coerce_dict_validator(FixtureStatus)
 
-        class TestModel:
+        class TestModel(BaseModel):
             user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
 
         model1 = TestModel.model_validate({

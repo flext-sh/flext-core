@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 from typing import Final, TextIO
 
-from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
+from flext_infra import u
 
 
 def _should_use_color(stream: TextIO | None = None) -> bool:
@@ -23,7 +23,7 @@ def _should_use_color(stream: TextIO | None = None) -> bool:
 
     Delegates to ``u.Infra.Terminal.should_use_color()``.
     """
-    return FlextInfraUtilitiesTerminal.should_use_color(stream)
+    return u.Infra.Terminal.should_use_color(stream)
 
 
 def _should_use_unicode() -> bool:
@@ -31,7 +31,7 @@ def _should_use_unicode() -> bool:
 
     Delegates to ``u.Infra.Terminal.should_use_unicode()``.
     """
-    return FlextInfraUtilitiesTerminal.should_use_unicode()
+    return u.Infra.Terminal.should_use_unicode()
 
 
 _USE_COLOR: Final[bool] = _should_use_color()

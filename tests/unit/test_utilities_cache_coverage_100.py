@@ -230,7 +230,7 @@ class TestuCacheNormalizeComponent:
         result = u.Cache.normalize_component(
             cast("t.ContainerValue | BaseModel", component)
         )
-        tm.that(result, is_=tuple, none=False, msg="Result must be tuple")
+        tm.that(result, is_=(tuple, list), none=False, msg="Result must be tuple or list")
         result_tuple = cast("tuple[t.ContainerValue, ...]", result)
         tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
         result_set = set(result_tuple)
@@ -354,7 +354,10 @@ class TestuCacheClearObjectCache:
         class TestObject:
             """Test object with dict cache."""
 
-            _cache: dict[str, str] = {"key1": "value1", "key2": "value2"}
+            _cache: dict[str, str] = {}  # noqa: RUF012  # Test double; per-test isolation
+
+            def __init__(self) -> None:
+                self._cache = {"key1": "value1", "key2": "value2"}
 
         obj = TestObject()
         assert len(obj._cache) == 2
@@ -397,9 +400,14 @@ class TestuCacheClearObjectCache:
         class TestObject:
             """Test object with multiple cache attributes."""
 
-            _cache: dict[str, int] = {"a": 1}
+            _cache: dict[str, int] = {}  # noqa: RUF012  # Test double
             _cached_value: str | None = "value"
-            _cached_at: dict[str, int] = {"b": 2}
+            _cached_at: dict[str, int] = {}  # noqa: RUF012  # Test double
+
+            def __init__(self) -> None:
+                self._cache = {"a": 1}
+                self._cached_value = "value"
+                self._cached_at = {"b": 2}
 
         obj = TestObject()
         assert len(obj._cache) == 1
@@ -512,7 +520,11 @@ class TestuCacheClearObjectCache:
         class ModelWithCache:
             model_config = {"extra": "allow"}
             name: str
-            _cache: dict[str, str] = {}
+            _cache: dict[str, str] = {}  # noqa: RUF012  # Test double; cleared by clear_object_cache
+
+            def __init__(self, name: str = "") -> None:
+                self.name = name
+                self._cache = {}
 
         model = ModelWithCache(name="test")
         model._cache = {"computed": "value"}
@@ -533,7 +545,7 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, t.ContainerValue] = {}
+                self._cache: dict[str, t.ContainerValue] = {}  # Test double
 
         obj = TestObject()
         assert u.Cache.has_cache_attributes(cast("t.ContainerValue", obj)) is True

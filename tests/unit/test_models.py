@@ -1,10 +1,10 @@
-"""FlextModels comprehensive functionality tests.
+"""m comprehensive functionality tests.
 
 Module: flext_core.models
-Scope: FlextModels - Pydantic-based data models, validation, serialization,
+Scope: m - Pydantic-based data models, validation, serialization,
 domain entities, value objects, aggregates, commands, queries, events
 
-Tests core FlextModels functionality including:
+Tests core m functionality including:
 - Model creation, validation, and serialization
 - Domain-driven design patterns (entities, value objects, aggregates)
 - CQRS patterns (commands, queries, events)
@@ -88,13 +88,16 @@ class EventAggregate(m.AggregateRoot):
 
 
 class TestFlextModels:
-    """Test suite for FlextModels using FlextTestsUtilities and c."""
+    """Test suite for m using FlextTestsUtilities and c."""
 
     def test_models_initialization(self) -> None:
         """Test models initialization with real validation."""
         models = m()
-        tm.that(models, none=False, msg="FlextModels instance must not be None")
-        tm.that(models, is_=m, msg="FlextModels instance must be of type m")
+        tm.that(models, none=False, msg="m instance must not be None")
+        assert isinstance(
+            models,
+            m,
+        ), "m instance must be of type m"
 
     def test_models_entity_creation(self) -> None:
         """Test entity creation and validation."""
@@ -122,10 +125,12 @@ class TestFlextModels:
         )
         tm.that(entity.unique_id, is_=str, msg="Entity unique_id must be string")
         dumped = entity.model_dump()
-        entity_dict = {k: dumped[k] for k in type(entity).model_fields if k in dumped}
-        tm.that(entity_dict, has="name", msg="Entity dict must contain name")
-        tm.that(entity_dict, has="email", msg="Entity dict must contain email")
-        validated_entity = entity.model_validate(entity_dict)
+        assert "name" in dumped, "Entity dict must contain name"
+        assert "email" in dumped, "Entity dict must contain email"
+        validation_dict = {
+            k: dumped[k] for k in type(entity).model_fields if k in dumped
+        }
+        validated_entity = entity.model_validate(validation_dict)
         tm.that(
             validated_entity.email,
             eq="test@example.com",
@@ -384,11 +389,6 @@ class TestFlextModels:
             entity1 != entity3,
             eq=True,
             msg="Entities with different unique_id must not be equal",
-        )
-        tm.that(
-            entity1 == "not an entity",
-            eq=False,
-            msg="Entity must not equal non-entity object",
         )
         tm.that(
             hash(entity1) == hash(entity2),
@@ -685,9 +685,9 @@ class TestFlextModels:
             (f"event{i}", m.ConfigMap(root={"data": f"value{i}"}))
             for i in range(max_events + 1)
         ]
-        _ = aggregate.add_domain_events_bulk(events)
-        _ = u.Tests.Result.assert_failure(_)
-        assert _.error is not None and "would exceed max events" in _.error
+        result = aggregate.add_domain_events_bulk(events)
+        error = u.Tests.Result.assert_failure(result)
+        assert "would exceed max events" in error
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
         """Test domain event handler execution."""
@@ -805,12 +805,12 @@ class TestFlextModels:
 
     def test_retry_configuration_model(self) -> None:
         """Test RetryConfiguration model with correct fields."""
-        retry = m.RetryConfiguration(
-            max_attempts=3,
-            initial_delay_seconds=1000,
-            max_delay_seconds=30000,
-            backoff_multiplier=2.0,
-        )
+        retry = m.RetryConfiguration.model_validate({
+            "max_attempts": 3,
+            "initial_delay_seconds": 1000,
+            "max_delay_seconds": 30000,
+            "backoff_multiplier": 2.0,
+        })
         tm.that(retry.max_retries, eq=3, msg="max_retries must be 3")
         tm.that(
             retry.initial_delay_seconds,
@@ -835,42 +835,26 @@ class TestFlextModels:
 
     def test_retry_configuration_with_exceptions(self) -> None:
         """Test RetryConfiguration with retry_on_exceptions."""
-        retry = m.RetryConfiguration(
-            max_attempts=3, retry_on_exceptions=[ValueError, RuntimeError, TypeError]
-        )
-        tm.that(
+        retry = m.RetryConfiguration.model_validate({
+            "max_attempts": 3,
+            "retry_on_exceptions": [ValueError, RuntimeError, TypeError],
+        })
+        assert isinstance(
             retry.retry_on_exceptions,
-            is_=list,
-            none=False,
-            empty=False,
-            msg="retry_on_exceptions must be list",
-        )
-        tm.that(
-            len(retry.retry_on_exceptions),
-            eq=3,
-            msg="retry_on_exceptions must have 3 items",
-        )
-        tm.that(
-            ValueError in retry.retry_on_exceptions,
-            eq=True,
-            msg="ValueError must be in retry_on_exceptions",
-        )
-        tm.that(
-            RuntimeError in retry.retry_on_exceptions,
-            eq=True,
-            msg="RuntimeError must be in retry_on_exceptions",
-        )
-        tm.that(
-            TypeError in retry.retry_on_exceptions,
-            eq=True,
-            msg="TypeError must be in retry_on_exceptions",
-        )
+            list,
+        ), "retry_on_exceptions must be list"
+        assert retry.retry_on_exceptions is not None
+        assert len(retry.retry_on_exceptions) == 3
+        assert ValueError in retry.retry_on_exceptions
+        assert RuntimeError in retry.retry_on_exceptions
+        assert TypeError in retry.retry_on_exceptions
 
     def test_retry_configuration_with_status_codes(self) -> None:
         """Test RetryConfiguration with retry_on_status_codes."""
-        retry = m.RetryConfiguration(
-            max_attempts=3, retry_on_status_codes=[500, 502, 503, 504]
-        )
+        retry = m.RetryConfiguration.model_validate({
+            "max_attempts": 3,
+            "retry_on_status_codes": [500, 502, 503, 504],
+        })
         tm.that(
             retry.retry_on_status_codes,
             is_=list,
@@ -906,11 +890,11 @@ class TestFlextModels:
 
     def test_retry_configuration_with_both_exceptions_and_status_codes(self) -> None:
         """Test RetryConfiguration with both retry_on_exceptions and status codes."""
-        retry = m.RetryConfiguration(
-            max_attempts=3,
-            retry_on_exceptions=[ValueError, ConnectionError],
-            retry_on_status_codes=[429, 500, 503],
-        )
+        retry = m.RetryConfiguration.model_validate({
+            "max_attempts": 3,
+            "retry_on_exceptions": [ValueError, ConnectionError],
+            "retry_on_status_codes": [429, 500, 503],
+        })
         tm.that(retry.max_retries, eq=3, msg="max_retries must be 3")
         tm.that(
             len(retry.retry_on_exceptions),

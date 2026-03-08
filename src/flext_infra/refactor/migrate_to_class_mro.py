@@ -6,12 +6,12 @@ from pathlib import Path
 
 from flext_infra import c, m
 
-from .mro_migrator import (
+from .mro_migrator import FlextInfraRefactorMROMigrationTransformer
+from .mro_resolver import (
     FlextInfraRefactorMROImportRewriter,
     FlextInfraRefactorMROMigrationScanner,
-    FlextInfraRefactorMROMigrationTransformer,
-    FlextInfraRefactorMROMigrationValidator,
 )
+from .validation import FlextInfraRefactorMROMigrationValidator
 
 
 class FlextInfraRefactorMigrateToClassMRO:

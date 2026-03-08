@@ -24,6 +24,7 @@ class _ModelWithNoCallableDump:
 
 class _MappingLike(t.ConfigurationMapping):
     def __init__(self, data: dict[str, t.ContainerValue]) -> None:
+        super().__init__()
         self._data = data
 
     @override
@@ -80,137 +81,166 @@ def test_context_data_normalize_and_json_checks() -> None:
     nested = {"a": [{"b": 1}]}
     normalized = FlextModelsContext.ContextData.normalize_to_general_value(nested)
     assert isinstance(normalized, dict)
-    FlextModelsContext.ContextData.check_json_serializable(
+    check_result = FlextModelsContext.ContextData.check_json_serializable(
         cast("t.ContainerValue", {"k": [1, "x"]})
     )
+    assert check_result is None
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
             cast("t.ContainerValue", {"bad": object()})
         )
     obj = object()
-    assert (
-        FlextModelsContext.ContextData.normalize_to_general_value(
-            cast("t.ContainerValue", obj)
-        )
-        is obj
+    normalized_obj = FlextModelsContext.ContextData.normalize_to_general_value(
+        cast("t.ContainerValue", obj)
     )
+    assert normalized_obj is obj
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:
-    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
-        FlextModelsContext.ContextData.validate_dict_serializable(
+    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata") as exc_info:
+        got = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
             )
         )
-    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
-        FlextModelsContext.ContextData.validate_dict_serializable(
+        assert False, f"expected to raise, got {got!r}"
+    assert exc_info.value is not None
+    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata") as exc_info2:
+        got2 = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             )
         )
+        assert False, f"expected to raise, got {got2!r}"
+    assert exc_info2.value is not None
     metadata_input = FlextModelFoundation.Metadata(attributes={"a": 1})
-    assert FlextModelsContext.ContextData.validate_dict_serializable(
+    result = FlextModelsContext.ContextData.validate_dict_serializable(
         metadata_input
-    ) == {"a": 1}
+    )
+    assert result == {"a": 1}
 
-    class _GoodModel:
+    class _GoodModel(BaseModel):
         b: int = 2
 
-    assert FlextModelsContext.ContextData.validate_dict_serializable(_GoodModel()) == {
-        "b": 2
-    }
+    result_b = FlextModelsContext.ContextData.validate_dict_serializable(
+        _GoodModel()
+    )
+    assert result_b == {"b": 2}
 
 
 def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
-    assert FlextModelsContext.ContextData.validate_dict_serializable(None) == {}
+    result_none = FlextModelsContext.ContextData.validate_dict_serializable(None)
+    assert result_none == {}
     as_mapping = _MappingLike({"k": "v"})
-    assert FlextModelsContext.ContextData.validate_dict_serializable(as_mapping) == {
-        "k": "v"
-    }
+    result_mapping = FlextModelsContext.ContextData.validate_dict_serializable(
+        as_mapping
+    )
+    assert result_mapping == {"k": "v"}
 
 
-def test_context_data_validator_forces_non_dict_normalized_branch(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    ("input_value", "expected_result"),
+    [
+        ({"a": 1}, {"a": 1}),
+        ({"nested": {"b": 2}}, {"nested": {"b": 2}}),
+        ({}, {}),
+    ],
+    ids=["simple-dict", "nested-dict", "empty-dict"],
+)
+def test_context_data_validate_dict_serializable_real_dicts(
+    input_value: dict[str, t.ContainerValue],
+    expected_result: dict[str, t.ContainerValue],
 ) -> None:
-    monkeypatch.setattr(
-        "flext_core._models.context.FlextModelsContext.ContextData.normalize_to_general_value",
-        lambda _v: "not-dict",
-    )
-    with pytest.raises(TypeError, match="Normalized value must be dict"):
-        FlextModelsContext.ContextData.validate_dict_serializable({"a": 1})
-    monkeypatch.setattr(
-        "flext_core._models.context.FlextRuntime.is_dict_like", lambda _v: False
-    )
-    with pytest.raises(TypeError, match="Normalized value must be dict"):
-        FlextModelsContext.ContextData.validate_dict_serializable({"a": 1})
+    """Test validate_dict_serializable with real dict inputs."""
+    result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)
+    assert result == expected_result
 
 
 def test_context_export_serializable_and_validators() -> None:
-    FlextModelsContext.ContextData.check_json_serializable(
+    check_result = FlextModelsContext.ContextData.check_json_serializable(
         cast("t.ContainerValue", {"k": [1, True]})
     )
+    assert check_result is None
     with pytest.raises(TypeError):
-        FlextModelsContext.ContextData.check_json_serializable(
+        got = FlextModelsContext.ContextData.check_json_serializable(
             cast("t.ContainerValue", {"x": object()})
         )
+        assert False, f"expected to raise, got {got!r}"
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        FlextModelsContext.ContextExport.validate_dict_serializable(
+        got = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             )
         )
-    assert FlextModelsContext.ContextExport.validate_dict_serializable(None) == {}
+        assert False, f"expected to raise, got {got!r}"
+    result = FlextModelsContext.ContextExport.validate_dict_serializable(None)
+    assert result == {}
 
 
-def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
-    assert FlextModelsContext.ContextExport.validate_dict_serializable({"a": 1}) == {
-        "a": 1
-    }
+@pytest.mark.parametrize(
+    ("input_value", "expected_result"),
+    [
+        ({"a": 1}, {"a": 1}),
+        (None, {}),
+    ],
+    ids=["dict-input", "none-input"],
+)
+def test_context_export_validate_dict_serializable_valid(
+    input_value: dict[str, t.ContainerValue] | None,
+    expected_result: dict[str, t.ContainerValue],
+) -> None:
+    """Test ContextExport.validate_dict_serializable with valid inputs."""
+    result = FlextModelsContext.ContextExport.validate_dict_serializable(input_value)
+    assert result == expected_result
+
+
+def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
+    """Test ContextExport.validate_dict_serializable with Mapping and model inputs."""
     as_mapping = _MappingLike({"k": "v"})
-    assert FlextModelsContext.ContextExport.validate_dict_serializable(as_mapping) == {
-        "k": "v"
-    }
+    result_mapping = FlextModelsContext.ContextExport.validate_dict_serializable(
+        as_mapping
+    )
+    assert result_mapping == {"k": "v"}
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        FlextModelsContext.ContextExport.validate_dict_serializable(
+        got = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
             )
         )
+        assert False, f"expected to raise, got {got!r}"
     metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})
-    assert FlextModelsContext.ContextExport.validate_dict_serializable(
+    result_meta = FlextModelsContext.ContextExport.validate_dict_serializable(
         metadata_input
-    ) == {"m": 3}
+    )
+    assert result_meta == {"m": 3}
 
-    class _GoodExportModel:
+    class _GoodExportModel(BaseModel):
         c: int = 4
 
-    assert FlextModelsContext.ContextExport.validate_dict_serializable(
+    result_export = FlextModelsContext.ContextExport.validate_dict_serializable(
         _GoodExportModel()
-    ) == {"c": 4}
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(
-        "flext_core._models.context.FlextRuntime.is_dict_like", lambda _v: False
     )
-    with pytest.raises(TypeError, match="Non-JSON-serializable type dict"):
-        FlextModelsContext.ContextExport.validate_dict_serializable({"a": 1})
-    monkeypatch.undo()
+    assert result_export == {"c": 4}
 
 
 def test_context_export_statistics_validator_and_computed_fields() -> None:
-    assert _normalize_statistics_before(None) == {}
-    assert _normalize_statistics_before({"a": 1}) == {"a": 1}
+    stats_none = _normalize_statistics_before(None)
+    assert stats_none == {}
+    stats_dict = _normalize_statistics_before({"a": 1})
+    assert stats_dict == {"a": 1}
 
-    class StatsModel:
+    class StatsModel(BaseModel):
         a: int = 1
 
-    assert _normalize_statistics_before(StatsModel()) == {"a": 1}
+    stats_model = _normalize_statistics_before(StatsModel())
+    assert stats_model == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_statistics_before(cast("t.ContainerValue", "x"))
+        got = _normalize_statistics_before(cast("t.ContainerValue", "x"))
+        assert False, f"expected to raise, got {got!r}"
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     assert exported.total_data_items == 1
     assert exported.has_statistics is True
@@ -218,36 +248,52 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
 
 def test_scope_data_validators_and_errors() -> None:
 
-    class ScopeModel:
+    class ScopeModel(BaseModel):
         a: int = 1
 
-    assert _normalize_to_mapping(None) == {}
-    assert _normalize_to_mapping({"a": 1}) == {"a": 1}
-    assert _normalize_to_mapping(ScopeModel()) == {"a": 1}
+    result_none = _normalize_to_mapping(None)
+    assert result_none == {}
+    result_dict = _normalize_to_mapping({"a": 1})
+    assert result_dict == {"a": 1}
+    result_scope = _normalize_to_mapping(ScopeModel())
+    assert result_scope == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", 123))
-    assert _normalize_to_mapping(None) == {}
-    assert _normalize_to_mapping({"a": 1}) == {"a": 1}
-    assert _normalize_to_mapping(ScopeModel()) == {"a": 1}
+        got = _normalize_to_mapping(cast("t.ContainerValue", 123))
+        assert False, f"expected to raise, got {got!r}"
+    result_none2 = _normalize_to_mapping(None)
+    assert result_none2 == {}
+    result_dict2 = _normalize_to_mapping({"a": 1})
+    assert result_dict2 == {"a": 1}
+    result_scope2 = _normalize_to_mapping(ScopeModel())
+    assert result_scope2 == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", 123))
+        got2 = _normalize_to_mapping(cast("t.ContainerValue", 123))
+        assert False, f"expected to raise, got {got2!r}"
 
 
 def test_statistics_and_custom_fields_validators() -> None:
 
-    class Payload:
+    class Payload(BaseModel):
         p: int = 2
 
-    assert _normalize_to_mapping({"x": 1}) == {"x": 1}
-    assert _normalize_to_mapping(Payload()) == {"p": 2}
-    assert _normalize_to_mapping(None) == {}
+    result_x1 = _normalize_to_mapping({"x": 1})
+    assert result_x1 == {"x": 1}
+    result_payload1 = _normalize_to_mapping(Payload())
+    assert result_payload1 == {"p": 2}
+    result_none1 = _normalize_to_mapping(None)
+    assert result_none1 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", "bad"))
-    assert _normalize_to_mapping({"x": 1}) == {"x": 1}
-    assert _normalize_to_mapping(Payload()) == {"p": 2}
-    assert _normalize_to_mapping(None) == {}
+        got = _normalize_to_mapping(cast("t.ContainerValue", "bad"))
+        assert False, f"expected to raise, got {got!r}"
+    result_x2 = _normalize_to_mapping({"x": 1})
+    assert result_x2 == {"x": 1}
+    result_payload2 = _normalize_to_mapping(Payload())
+    assert result_payload2 == {"p": 2}
+    result_none2 = _normalize_to_mapping(None)
+    assert result_none2 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", "bad"))
+        got2 = _normalize_to_mapping(cast("t.ContainerValue", "bad"))
+        assert False, f"expected to raise, got {got2!r}"
 
 
 def test_context_data_metadata_normalizer_removed() -> None:

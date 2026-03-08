@@ -12,6 +12,7 @@ from flext_infra.refactor.pydantic_centralizer import (
 def test_centralizer_converts_typed_dict_factory_to_model(tmp_path: Path) -> None:
     src_file = tmp_path / "src" / "pkg" / "service.py"
     src_file.parent.mkdir(parents=True)
+    _ = (src_file.parent / "__init__.py").write_text("", encoding="utf-8")
     src_file.write_text(
         "from __future__ import annotations\n"
         "from typing import TypedDict\n\n"
@@ -36,7 +37,7 @@ def test_centralizer_converts_typed_dict_factory_to_model(tmp_path: Path) -> Non
     assert summary["parse_encoding_errors"] == 0
     assert summary["parse_io_errors"] == 0
     assert "Payload = TypedDict(" not in updated_source
-    assert "from _models import Payload" in updated_source
+    assert "from ._models import Payload" in updated_source
     assert "class Payload(BaseModel):" in generated_models
     assert "name: str | None = Field(default=None)" in generated_models
     assert "active: bool | None = Field(default=None)" in generated_models
@@ -66,6 +67,7 @@ def test_centralizer_does_not_touch_settings_module(tmp_path: Path) -> None:
 def test_centralizer_moves_manual_type_aliases_to_models_file(tmp_path: Path) -> None:
     src_file = tmp_path / "src" / "pkg" / "service.py"
     src_file.parent.mkdir(parents=True)
+    _ = (src_file.parent / "__init__.py").write_text("", encoding="utf-8")
     src_file.write_text(
         "from __future__ import annotations\n"
         "from typing import TypeAlias\n\n"
@@ -90,7 +92,7 @@ def test_centralizer_moves_manual_type_aliases_to_models_file(tmp_path: Path) ->
     assert summary["created_typings_files"] == 0
     assert "PayloadMap: TypeAlias = dict[str, str]" not in updated_source
     assert "ConfigSchema: TypeAlias = dict[str, int]" not in updated_source
-    assert "from _models import ConfigSchema, PayloadMap" in updated_source
+    assert "from ._models import ConfigSchema, PayloadMap" in updated_source
     assert "class PayloadMap(RootModel[dict[str, str]]):" in generated_models
     assert "class ConfigSchema(RootModel[dict[str, int]]):" in generated_models
 
@@ -100,6 +102,7 @@ def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
 ) -> None:
     typings_file = tmp_path / "src" / "pkg" / "typings.py"
     typings_file.parent.mkdir(parents=True)
+    _ = (typings_file.parent / "__init__.py").write_text("", encoding="utf-8")
     typings_file.write_text(
         "from __future__ import annotations\n"
         "from collections.abc import Mapping\n"
@@ -119,5 +122,5 @@ def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
 
     assert summary["moved_aliases"] == 1
     assert "ScalarMap: TypeAlias" not in updated_typings
-    assert "from _models import ScalarMap" in updated_typings
+    assert "from ._models import ScalarMap" in updated_typings
     assert "class ScalarMap(RootModel[Mapping[str, str]]):" in generated_models

@@ -9,7 +9,7 @@ from unittest.mock import patch
 import flext_infra
 from flext_infra.output import FlextInfraOutput, _should_use_color, _should_use_unicode
 
-ANSI_RE = re.compile("\\033\\[\\d+m")
+ANSI_RE = re.compile(r"\033\[\d+m")
 
 
 def _strip_ansi(text: str) -> str:

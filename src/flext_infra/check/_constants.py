@@ -9,6 +9,29 @@ from typing import Final
 class FlextInfraCheckConstants:
     """Check infrastructure constants."""
 
+    ALLOWED_GATES: Final[frozenset[str]] = frozenset({
+        "lint",
+        "format",
+        "pyrefly",
+        "mypy",
+        "pyright",
+        "security",
+        "markdown",
+        "go",
+    })
+    SARIF_TOOL_INFO: Final[dict[str, tuple[str, str]]] = {
+        "lint": ("Ruff Linter", "https://docs.astral.sh/ruff/"),
+        "format": ("Ruff Formatter", "https://docs.astral.sh/ruff/formatter/"),
+        "pyrefly": ("Pyrefly", "https://github.com/facebook/pyrefly"),
+        "mypy": ("Mypy", "https://mypy.readthedocs.io/"),
+        "pyright": ("Pyright", "https://github.com/microsoft/pyright"),
+        "security": ("Bandit", "https://bandit.readthedocs.io/"),
+        "markdown": (
+            "MarkdownLint",
+            "https://github.com/DavidAnson/markdownlint",
+        ),
+        "go": ("Go Vet", "https://pkg.go.dev/cmd/vet"),
+    }
     REQUIRED_EXCLUDES: Final[list[str]] = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
     RUFF_FORMAT_FILE_RE: Final[re.Pattern[str]] = re.compile(
         "^\\s*-->\\s*(.+?):\\d+:\\d+\\s*$"

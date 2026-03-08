@@ -147,9 +147,8 @@ class TestEnterprisePatterns:
         start_time = time.perf_counter()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            _ = (
-                _ = assertion_helpers.assert_flext_result_success(result),
-                f"Save operation {i} should succeed",
+            assertion_helpers.assert_flext_result_success(
+                result, f"Save operation {i} should succeed"
             )
         save_duration = time.perf_counter() - start_time
         assert save_duration < 1.0, (

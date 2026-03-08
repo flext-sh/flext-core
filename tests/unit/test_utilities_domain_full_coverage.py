@@ -48,7 +48,7 @@ class TestDomainHashValue:
 
         class EntityWithList:
             unique_id: str = "test"
-            tags: list[str] = ["a", "b"]
+            tags: list[str] = ["a", "b"]  # noqa: RUF012  # Test double; fixed value for hash test
 
         entity = EntityWithList()
         result = u.Domain.hash_value_object_by_value(entity)

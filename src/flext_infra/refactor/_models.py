@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -9,6 +10,14 @@ import libcst as cst
 from pydantic import AliasPath, ConfigDict, Field
 
 from flext_core import FlextModels
+
+
+@dataclass(frozen=True)
+class MROTargetSpec:
+    family_alias: str
+    file_names: frozenset[str]
+    package_directory: str
+    class_suffix: str
 
 
 class FlextInfraRefactorModels:
@@ -477,6 +486,22 @@ class FlextInfraRefactorModels:
         warnings: tuple[str, ...] = Field(default_factory=tuple, description="Warnings")
         errors: tuple[str, ...] = Field(default_factory=tuple, description="Errors")
 
+    class EngineConfig(FlextModels.FrozenStrictModel):
+        model_config = ConfigDict(extra="ignore", frozen=True)
+
+        project_scan_dirs: list[str] = Field(
+            default_factory=lambda: ["src", "tests", "scripts", "examples"],
+            description="Relative directories scanned for candidate files",
+        )
+        ignore_patterns: list[str] = Field(
+            default_factory=list,
+            description="Glob/file patterns ignored during scan",
+        )
+        file_extensions: list[str] = Field(
+            default_factory=list,
+            description="Allowed file extensions (empty = all by pattern)",
+        )
+
     class RuleConfigs:
         """Configuration schemas parsed by refactor rules at runtime."""
 
@@ -506,13 +531,8 @@ class FlextInfraRefactorModels:
                 default_factory=list,
                 description="Decorators to match",
             )
-            patterns: list[
-                str | FlextInfraRefactorModels.RuleConfigs.MethodOrderRule.PatternRule
-            ] = Field(
-                default_factory=lambda: list[
-                    str
-                    | FlextInfraRefactorModels.RuleConfigs.MethodOrderRule.PatternRule
-                ](),
+            patterns: list[str | PatternRule] = Field(
+                default_factory=list,
                 description="Pattern rules",
             )
             order: list[str] = Field(

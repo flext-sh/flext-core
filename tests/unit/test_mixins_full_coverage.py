@@ -251,9 +251,14 @@ def test_mixins_validation_and_protocol_paths() -> None:
         x.ProtocolValidation.is_service(
             cast("p.Service[t.ContainerValue]", cast("object", SimpleNamespace()))
         )
-        is True
+        is False
     )
-    assert x.ProtocolValidation.is_command_bus() is True
+    cmd_bus = SimpleNamespace(
+        dispatch=lambda *_a, **_k: None,
+        publish=lambda *_a, **_k: None,
+        register_handler=lambda *_a, **_k: None,
+    )
+    assert x.ProtocolValidation.is_command_bus(cmd_bus) is True
     unknown = x.ProtocolValidation.validate_protocol_compliance(
         cast(
             "p.Handler[t.ContainerValue, t.ContainerValue]",
@@ -261,10 +266,15 @@ def test_mixins_validation_and_protocol_paths() -> None:
         ),
         "Nope",
     )
+    service_like = SimpleNamespace(
+        execute=lambda *_a, **_k: None,
+        get_service_info=lambda *_a, **_k: None,
+        is_valid=lambda *_a, **_k: True,
+    )
     known = x.ProtocolValidation.validate_protocol_compliance(
         cast(
             "p.Handler[t.ContainerValue, t.ContainerValue]",
-            cast("object", SimpleNamespace()),
+            cast("object", service_like),
         ),
         "Service",
     )

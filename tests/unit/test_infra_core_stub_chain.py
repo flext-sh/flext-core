@@ -218,7 +218,7 @@ class TestFlextInfraStubSupplyChain:
                 is_success=True, value=Mock(stdout="note: hint: `types-requests`")
             ),
         ):
-            hints = self.run_mypy_hints(chain, project_dir)
+            hints = chain._run_mypy_hints(project_dir)
             assert "types-requests" in hints
 
     def test_run_mypy_hints_with_failed_run_returns_empty(self, tmp_path: Path) -> None:
@@ -227,7 +227,7 @@ class TestFlextInfraStubSupplyChain:
         project_dir = tmp_path
         runner = getattr(chain, "_runner")
         with patch.object(type(runner), "run", return_value=Mock(is_success=False)):
-            hints = self.run_mypy_hints(chain, project_dir)
+            hints = chain._run_mypy_hints(project_dir)
             assert hints == []
 
     def test_run_pyrefly_missing_extracts_imports(self, tmp_path: Path) -> None:
@@ -243,7 +243,7 @@ class TestFlextInfraStubSupplyChain:
                 value=Mock(stdout="Cannot find module `requests` [missing-import]"),
             ),
         ):
-            imports = self.run_pyrefly_missing(chain, project_dir)
+            imports = chain._run_pyrefly_missing(project_dir)
             assert "requests" in imports
 
     def test_run_pyrefly_missing_with_failed_run_returns_empty(
@@ -254,7 +254,7 @@ class TestFlextInfraStubSupplyChain:
         project_dir = tmp_path
         runner = getattr(chain, "_runner")
         with patch.object(type(runner), "run", return_value=Mock(is_success=False)):
-            imports = self.run_pyrefly_missing(chain, project_dir)
+            imports = chain._run_pyrefly_missing(project_dir)
             assert imports == []
 
     def test_is_internal_with_flext_prefix(self) -> None:

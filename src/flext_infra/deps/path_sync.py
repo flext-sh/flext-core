@@ -91,7 +91,8 @@ def _rewrite_pep621(
     deps_raw = project_raw.get(c.Infra.Toml.DEPENDENCIES, None)
     if not isinstance(deps_raw, list):
         return []
-    deps = _STRING_LIST_ADAPTER.validate_python(deps_raw)
+    deps_filtered = [x for x in deps_raw if isinstance(x, str)]
+    deps = _STRING_LIST_ADAPTER.validate_python(deps_filtered)
     changes: list[str] = []
     updated_deps: list[str] = []
     for item_raw in deps:

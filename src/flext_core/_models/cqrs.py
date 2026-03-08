@@ -109,7 +109,7 @@ class FlextModelsCqrs:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
-    class Query:
+    class Query(BaseModel):
         """Query model for CQRS query operations."""
 
         model_config = ConfigDict(
@@ -273,7 +273,7 @@ class FlextModelsCqrs:
             default=None, description="Handler metadata (Pydantic model)"
         )
 
-        class ConfigParams:
+        class ConfigParams(BaseModel):
             """Parameter object for handler configuration (reduces parameter count)."""
 
             model_config = ConfigDict(
@@ -352,7 +352,7 @@ class FlextModelsCqrs:
                 self._data.root["command_timeout"] = timeout
                 return self
 
-    class Event:
+    class Event(BaseModel):
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.
@@ -404,7 +404,7 @@ class FlextModelsCqrs:
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
 
-    class HandlerBatchRegistrationResult:
+    class HandlerBatchRegistrationResult(BaseModel):
         """Result of batch handler registration."""
 
         status: str

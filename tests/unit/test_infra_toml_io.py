@@ -304,8 +304,6 @@ class TestFlextInfraTomlService:
 
     def test_build_table_with_nested_mapping_dict(self) -> None:
         """Test build_table handles nested mappings."""
-        from flext_infra.toml_io import FlextInfraTomlService
-
         service = FlextInfraTomlService()
         nested: dict[str, t.ContainerValue] = {"key": {"nested": "value"}}
         result = service.build_table(nested)

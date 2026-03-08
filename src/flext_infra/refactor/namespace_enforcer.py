@@ -16,14 +16,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast  
+import ast
 import re
-from io import StringIO
 import token
 import tokenize
 from collections import defaultdict
 from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
+from io import StringIO
 from pathlib import Path
 from typing import ClassVar
 

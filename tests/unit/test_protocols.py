@@ -136,9 +136,7 @@ class TestFlextProtocols:
     def test_protocol_definition(self, scenario: ProtocolDefinitionScenario) -> None:
         """Test protocol definitions are accessible and valid."""
         protocol = getattr(p, scenario.protocol_name)
-        tm.that(
-            protocol, none=False, msg=f"Protocol {scenario.protocol_name} must exist"
-        )
+        assert protocol is not None, f"Protocol {scenario.protocol_name} must exist"
         tm.that(
             hasattr(protocol, "__protocol_attrs__")
             or hasattr(protocol, "__annotations__"),
@@ -160,7 +158,7 @@ class TestFlextProtocols:
                 msg=f"Protocol {proto_name} must be found in p (FlextProtocols)",
             )
             protocol = getattr(p, proto_name)
-            tm.that(protocol, none=False, msg=f"Protocol {proto_name} must not be None")
+            assert protocol is not None, f"Protocol {proto_name} must not be None"
 
     def test_result_protocol_implementation(self) -> None:
         """Test that a class can implement Result protocol."""

@@ -72,7 +72,7 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
 
 def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type({"a": 1})
-    assert u.Guards.is_handler_type(_Model())
+    assert u.Guards.is_handler_type(_Model.model_validate({"value": 1}))
     assert u.Guards.is_handler_type(cast("t.ContainerValue", _sample_handler))
 
     class _BaseModelSubclass:
@@ -132,7 +132,8 @@ def test_is_flexible_value_covers_all_branches() -> None:
     assert _is_flexible_value_obj({1: "bad_key"})
     assert not u.Guards.is_flexible_value({"k": {"nested": "bad"}})
     assert u.Guards.is_flexible_value({"k": "v"})
-    assert not _is_flexible_value_obj(set())
+    empty_set: set[int] = set()
+    assert not _is_flexible_value_obj(empty_set)
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
@@ -166,11 +167,12 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert u.is_type({"k": 1}, "mapping")
     assert u.is_type([1], "sequence_not_str")
     assert u.is_type([1], "sequence_not_str_bytes")
-    assert u.Guards.is_pydantic_model(_Model())
+    assert u.Guards.is_pydantic_model(_Model.model_validate({"value": 1}))
 
 
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
-    assert not _is_type_obj(set(), "string_non_empty")
+    value_set: set[int] = set()
+    assert not _is_type_obj(value_set, "string_non_empty")
     assert not u.is_type("x", "unknown_type_name")
     assert u.is_type(3, (int, float))
     assert u.is_type("x", str)
@@ -201,6 +203,7 @@ def test_extract_mapping_or_none_branches() -> None:
 
 
 def test_guard_in_has_empty_none_helpers() -> None:
+    assert not _return_false("x")
     assert u.guard("x", str)
     assert u.guard("x", validator=str, return_value=True) == "x"
     assert u.guard("x", validator=(str, int), return_value=True) == "x"

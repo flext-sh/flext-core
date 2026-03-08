@@ -23,6 +23,7 @@ from __future__ import annotations
 from collections.abc import Sized
 
 import pytest
+from pydantic import BaseModel, ValidationError
 from returns.io import IO, IOSuccess
 
 from flext_core import m, p, r
@@ -346,9 +347,8 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import ValidationError
 
-        class User:
+        class User(BaseModel):
             name: str
             age: int
 

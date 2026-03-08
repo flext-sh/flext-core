@@ -501,7 +501,7 @@ class FlextModelsContext:
             FlextModelsContext.ContextData.check_json_serializable(working_value)
             return dict(working_value)
 
-    class ContextScopeData:
+    class ContextScopeData(FlextModelFoundation.ArbitraryTypesModel):
         """Scope-specific data container for context management.
 
         Enhanced to support dict handling while
@@ -543,7 +543,7 @@ class FlextModelsContext:
             Mapping[str, t.ContainerValue], BeforeValidator(_normalize_to_mapping)
         ] = Field(default_factory=dict, description="Scope metadata")
 
-    class ContextStatistics(BaseModel, FlextModelFoundation.ArbitraryTypesModel):
+    class ContextStatistics(FlextModelFoundation.ArbitraryTypesModel):
         """Statistics tracking for context operations and metrics.
 
         Enhanced to replace dict-based metrics storage across

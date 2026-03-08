@@ -84,10 +84,8 @@ class TestFlextContainer:
     def test_container_initialization(self, clean_container: FlextContainer) -> None:
         """Test container initialization creates valid instance using fixtures."""
         tm.that(clean_container, none=False, msg="Container must not be None")
-        tm.that(
-            clean_container,
-            is_=FlextContainer,
-            msg="Container must be FlextContainer instance",
+        assert isinstance(clean_container, FlextContainer), (
+            "Container must be FlextContainer instance"
         )
 
     def test_container_singleton(self) -> None:
@@ -297,12 +295,12 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: FlextContainer) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result = clean_container.get("string_service", type_cls=dict)
+        result = clean_container.get("string_service", type_cls=dict[str, str])
         _ = u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: FlextContainer) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.get("nonexistent", type_cls=dict)
+        result = clean_container.get("nonexistent", type_cls=dict[str, str])
         u.Tests.Result.assert_result_failure_with_error(
             result, expected_error="not found"
         )

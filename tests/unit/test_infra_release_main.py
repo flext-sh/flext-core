@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
@@ -635,21 +636,21 @@ class TestReleaseInit:
 
     def test_lazy_import_orchestrator(self) -> None:
         """Test lazy import of FlextInfraReleaseOrchestrator."""
-        import flext_infra.release as release_module
+        release_module = importlib.import_module("flext_infra.release")
 
         orchestrator = release_module.FlextInfraReleaseOrchestrator()
         assert isinstance(orchestrator, FlextInfraReleaseOrchestrator)
 
     def test_getattr_invalid_attribute(self) -> None:
         """Test __getattr__ raises AttributeError for invalid attribute."""
-        import flext_infra.release as release_module
+        release_module = importlib.import_module("flext_infra.release")
 
-        with pytest.raises(AttributeError, match="module.*has no attribute"):
+        with pytest.raises(AttributeError, match=r"module.*has no attribute"):
             _ = release_module.NonexistentAttribute
 
     def test_dir_returns_all_exports(self) -> None:
         """Test __dir__ returns all exported attributes."""
-        import flext_infra.release as release_module
+        release_module = importlib.import_module("flext_infra.release")
 
         exports = dir(release_module)
         assert "FlextInfraReleaseOrchestrator" in exports
