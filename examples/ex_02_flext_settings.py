@@ -225,12 +225,12 @@ class Ex02FlextSettings(Examples):
         """Exercise namespace registration and retrieval."""
         self.section("namespace_system")
         FlextSettings.reset_for_testing()
-        tc = self._TestConfig
+        tc = Ex02FlextSettings._TestConfig
 
-        class _DecoratedNamespace(FlextSettings):
+        class _DecoratedNamespace(Ex02FlextSettings._TestConfig):
             service_name: str = "decorated"
 
-        class _RegisteredNamespace(FlextSettings):
+        class _RegisteredNamespace(Ex02FlextSettings._TestConfig):
             service_name: str = "registered"
 
         FlextSettings.register_namespace("decorated_ns", _DecoratedNamespace)

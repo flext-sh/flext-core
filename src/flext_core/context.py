@@ -1125,12 +1125,14 @@ class FlextContext(FlextRuntime):
         class Correlation:
             """Correlation variables for distributed tracing."""
 
-            CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = u.create_str_proxy(
-                c.Context.KEY_CORRELATION_ID,
-                default=None,
+            CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = (
+                u.Context.create_str_proxy(
+                    c.Context.KEY_CORRELATION_ID,
+                    default=None,
+                )
             )
             PARENT_CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = (
-                u.create_str_proxy(
+                u.Context.create_str_proxy(
                     c.Context.KEY_PARENT_CORRELATION_ID,
                     default=None,
                 )
@@ -1139,12 +1141,14 @@ class FlextContext(FlextRuntime):
         class Service:
             """Service context variables for identification."""
 
-            SERVICE_NAME: Final[m.StructlogProxyContextVar[str]] = u.create_str_proxy(
-                c.Context.KEY_SERVICE_NAME,
-                default=None,
+            SERVICE_NAME: Final[m.StructlogProxyContextVar[str]] = (
+                u.Context.create_str_proxy(
+                    c.Context.KEY_SERVICE_NAME,
+                    default=None,
+                )
             )
             SERVICE_VERSION: Final[m.StructlogProxyContextVar[str]] = (
-                u.create_str_proxy(
+                u.Context.create_str_proxy(
                     "service_version",
                     default=None,
                 )
@@ -1153,13 +1157,17 @@ class FlextContext(FlextRuntime):
         class Request:
             """Request context variables for metadata."""
 
-            USER_ID: Final[m.StructlogProxyContextVar[str]] = u.create_str_proxy(
-                c.Context.KEY_USER_ID,
-                default=None,
+            USER_ID: Final[m.StructlogProxyContextVar[str]] = (
+                u.Context.create_str_proxy(
+                    c.Context.KEY_USER_ID,
+                    default=None,
+                )
             )
-            REQUEST_ID: Final[m.StructlogProxyContextVar[str]] = u.create_str_proxy(
-                "request_id",
-                default=None,
+            REQUEST_ID: Final[m.StructlogProxyContextVar[str]] = (
+                u.Context.create_str_proxy(
+                    "request_id",
+                    default=None,
+                )
             )
             REQUEST_TIMESTAMP: Final[m.StructlogProxyContextVar[datetime]] = (
                 u.Context.create_datetime_proxy(
@@ -1171,9 +1179,11 @@ class FlextContext(FlextRuntime):
         class Performance:
             """Performance context variables for timing."""
 
-            OPERATION_NAME: Final[m.StructlogProxyContextVar[str]] = u.create_str_proxy(
-                c.Context.KEY_OPERATION_NAME,
-                default=None,
+            OPERATION_NAME: Final[m.StructlogProxyContextVar[str]] = (
+                u.Context.create_str_proxy(
+                    c.Context.KEY_OPERATION_NAME,
+                    default=None,
+                )
             )
             OPERATION_START_TIME: Final[m.StructlogProxyContextVar[datetime]] = (
                 u.Context.create_datetime_proxy("operation_start_time", default=None)

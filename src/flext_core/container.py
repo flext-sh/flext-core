@@ -485,6 +485,10 @@ class FlextContainer(p.DI):
         return callable(value)
 
     @staticmethod
+    def _is_object_mapping(value: object) -> TypeGuard[Mapping[object, object]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
     def _narrow_factory_result(value: t.RegisterableService) -> t.RegisterableService:
         return value
 
@@ -559,7 +563,7 @@ class FlextContainer(p.DI):
         return FlextLogger.create_module_logger(module_name or "flext_core")
 
     @overload
-    def get[T](
+    def get[T: t.RegisterableService](
         self,
         name: str,
         *,
@@ -575,7 +579,7 @@ class FlextContainer(p.DI):
     ) -> r[t.RegisterableService]: ...
 
     @override
-    def get[T](
+    def get[T: t.RegisterableService](
         self,
         name: str,
         *,
@@ -619,7 +623,8 @@ class FlextContainer(p.DI):
                     return r[T].fail(
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
                     )
-                return r[T].ok(service_for_check)
+                typed_service: T = service_for_check
+                return r[T].ok(typed_service)
             return r[t.RegisterableService].ok(service)
 
         # Try factory
@@ -645,7 +650,8 @@ class FlextContainer(p.DI):
                         return r[T].fail(
                             f"Factory '{name}' returned wrong type",
                         )
-                    return r[T].ok(resolved_for_check)
+                    typed_resolved: T = resolved_for_check
+                    return r[T].ok(typed_resolved)
                 return r[t.RegisterableService].ok(resolved)
             except Exception as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -668,7 +674,8 @@ class FlextContainer(p.DI):
                         return r[T].fail(
                             f"Resource '{name}' returned wrong type",
                         )
-                    return r[T].ok(resource_for_check)
+                    typed_resource: T = resource_for_check
+                    return r[T].ok(typed_resource)
                 return r[t.RegisterableService].ok(resolved)
             except Exception as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -740,8 +747,12 @@ class FlextContainer(p.DI):
         # Configure providers - override() returns OverridingContext for chaining
         # We call it for side effects (configuring the provider), not for the return value
         # override() may return None or OverridingContext - we don't need the return value
-        _ = config_provider.override(base_config_provider)
-        _ = config_provider.override(user_config_provider)
+        override_method = getattr(config_provider, "override", None)
+        if not callable(override_method):
+            error_msg = "Bridge config provider must support override()"
+            raise TypeError(error_msg)
+        override_method(base_config_provider)
+        override_method(user_config_provider)
         di_container.config = config_provider
         self._config_provider = config_provider
 
@@ -866,11 +877,11 @@ class FlextContainer(p.DI):
                         raise ValueError(msg)
                     return narrowed
 
-                registration = m.FactoryRegistration(
+                factory_reg = m.FactoryRegistration(
                     name=name,
                     factory=normalized_factory,
                 )
-                self._factories[name] = registration
+                self._factories[name] = factory_reg
                 provider = FlextRuntime.DependencyIntegration.register_factory(
                     self._di_services,
                     name,
@@ -885,11 +896,11 @@ class FlextContainer(p.DI):
                 return self
             if hasattr(self._di_resources, name):
                 return self
-            registration = m.ResourceRegistration(
+            resource_reg = m.ResourceRegistration(
                 name=name,
                 factory=impl,
             )
-            self._resources[name] = registration
+            self._resources[name] = resource_reg
             provider = FlextRuntime.DependencyIntegration.register_resource(
                 self._di_resources,
                 name,
@@ -1041,10 +1052,8 @@ class FlextContainer(p.DI):
         config_input = config  # Keep original for subproject check
         if config is not None:
             base_config: p.Config = config.model_copy(deep=True)
-        elif self.config is not None:
-            base_config = self.config.model_copy(deep=True)
         else:
-            base_config = self._get_default_config()
+            base_config = self.config.model_copy(deep=True)
 
         # Apply subproject suffix to app_name only when config is None
         if subproject and config_input is None:
@@ -1170,12 +1179,13 @@ class FlextContainer(p.DI):
         namespace_registry_raw = getattr(
             self._config.__class__, "_namespace_registry", None
         )
-        if not namespace_registry_raw or not isinstance(
-            namespace_registry_raw, Mapping
+        if not namespace_registry_raw or not self._is_object_mapping(
+            namespace_registry_raw
         ):
             return
+        namespace_registry = namespace_registry_raw
         namespaces: list[str] = [
-            key for key in namespace_registry_raw if isinstance(key, str)
+            key for key in namespace_registry if isinstance(key, str)
         ]
         if not namespaces:
             return
@@ -1184,11 +1194,7 @@ class FlextContainer(p.DI):
 
             # Get config class for this namespace from FlextSettings
             # Use getattr to safely access method if it exists
-            config_class = getattr(
-                self._config,
-                "get_namespace_config",
-                lambda _ns: None,
-            )(namespace)
+            config_class = FlextSettings.get_namespace_config(namespace)
             if config_class is None:
                 continue
             config_class_non_null: type[BaseModel] = config_class
@@ -1198,19 +1204,14 @@ class FlextContainer(p.DI):
                 config_cls: type[BaseModel] = config_class_non_null,
             ) -> BaseModel:
                 """Factory for creating namespace config instance."""
-                config_ref = self._config
-                result = getattr(
-                    config_ref,
-                    "get_namespace",
-                    lambda _ns, _cls: config_cls(),
-                )(ns, config_cls)
+                result = FlextSettings.get_global().get_namespace(ns, config_cls)
                 if FlextContainer._is_instance_of(result, BaseModel):
                     return result
                 return config_cls()
 
             # Only register if not already registered
             if not self.has_service(factory_name):
-                _ = self.register(
+                self.register(
                     factory_name,
                     _create_namespace_config,
                     kind="factory",

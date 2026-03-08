@@ -267,7 +267,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                         setattr(self, key, value)
             return
 
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)  # type: ignore[arg-type]
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         self._di_provider: t.Scalar | None = None

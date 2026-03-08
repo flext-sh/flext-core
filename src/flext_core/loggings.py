@@ -874,7 +874,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return context_dict
 
     @overload
-    def critical(
+    def critical(  # type: ignore[overload-overlap]
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
@@ -911,7 +911,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
 
     @overload
-    def debug(
+    def debug(  # type: ignore[overload-overlap]
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
@@ -948,7 +948,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
 
     @overload
-    def error(
+    def error(  # type: ignore[overload-overlap]
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
@@ -985,7 +985,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
 
     @overload
-    def exception(
+    def exception(  # type: ignore[overload-overlap]
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
@@ -1068,7 +1068,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return r[bool].fail(f"Exception logging failed: {exc}")
 
     @overload
-    def info(
+    def info(  # type: ignore[overload-overlap]
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
@@ -1105,7 +1105,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
 
     @overload
-    def log(
+    def log(  # type: ignore[overload-overlap]
         self,
         level: str,
         message: str,
@@ -1168,7 +1168,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # =============================================================================
 
     @overload
-    def trace(
+    def trace(  # type: ignore[overload-overlap]
         self,
         message: str,
         *args: t.ContainerValue,
@@ -1222,7 +1222,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
     @overload
-    def warning(
+    def warning(  # type: ignore[overload-overlap]
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,

@@ -652,7 +652,7 @@ class FlextProtocols:
             ...
 
         @overload
-        def get[T](
+        def get[T: t.RegisterableService](
             self,
             name: str,
             *,

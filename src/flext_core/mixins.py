@@ -394,7 +394,9 @@ class FlextMixins(FlextRuntime):
         )
 
         op_count_raw = u.get(stats, "operation_count", default=0)
-        stats["operation_count"] = int(op_count_raw) + 1
+        stats["operation_count"] = (
+            int(op_count_raw) if isinstance(op_count_raw, (int, float, str)) else 0
+        ) + 1
 
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
@@ -422,8 +424,16 @@ class FlextMixins(FlextRuntime):
                             "duration_ms",
                             default=0.0,
                         )
-                        total_dur = float(total_dur_raw)
-                        dur_ms = float(dur_ms_raw)
+                        total_dur = (
+                            float(total_dur_raw)
+                            if isinstance(total_dur_raw, (int, float, str))
+                            else 0.0
+                        )
+                        dur_ms = (
+                            float(dur_ms_raw)
+                            if isinstance(dur_ms_raw, (int, float, str))
+                            else 0.0
+                        )
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except (
                     ValueError,
@@ -440,14 +450,20 @@ class FlextMixins(FlextRuntime):
                         )
                     # Failure - increment error count
                     err_raw = u.get(stats, "error_count", default=0)
-                    stats["error_count"] = int(err_raw) + 1
+                    stats["error_count"] = (
+                        int(err_raw) if isinstance(err_raw, (int, float, str)) else 0
+                    ) + 1
                     raise
                 finally:
                     # Calculate success rate
                     op_raw = u.get(stats, "operation_count", default=1)
                     err_raw2 = u.get(stats, "error_count", default=0)
-                    op_count = int(op_raw)
-                    err_count = int(err_raw2)
+                    op_count = (
+                        int(op_raw) if isinstance(op_raw, (int, float, str)) else 1
+                    )
+                    err_count = (
+                        int(err_raw2) if isinstance(err_raw2, (int, float, str)) else 0
+                    )
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
                         total_raw = u.get(
@@ -455,7 +471,11 @@ class FlextMixins(FlextRuntime):
                             "total_duration_ms",
                             default=0.0,
                         )
-                        total_dur_final = float(total_raw)
+                        total_dur_final = (
+                            float(total_raw)
+                            if isinstance(total_raw, (int, float, str))
+                            else 0.0
+                        )
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     # Update metrics with final stats
                     metrics_map["error_count"] = stats["error_count"]
