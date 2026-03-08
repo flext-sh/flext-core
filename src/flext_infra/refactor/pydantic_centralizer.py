@@ -57,6 +57,7 @@ class FlextInfraRefactorPydanticCentralizer:
         "__init__.py",
     )
     _TYPED_DICT_MIN_ARGS: int = 2
+    _AUTO_APPLY_CLASS_KINDS: tuple[str, ...] = ("typed_dict", "typed_dict_factory")
 
     @staticmethod
     def _is_target_python(file_path: Path) -> bool:
@@ -99,7 +100,7 @@ class FlextInfraRefactorPydanticCentralizer:
             return True
         if base_name.startswith("FlextModels."):
             return True
-        return base_name.endswith("Model")
+        return False
 
     class _DisallowedModelBaseNormalizer(ast.NodeTransformer):
         @staticmethod
@@ -506,19 +507,27 @@ class FlextInfraRefactorPydanticCentralizer:
 
     @staticmethod
     def _normalize_disallowed_bases(file_path: Path, *, apply_changes: bool) -> bool:
-        source = file_path.read_text(encoding="utf-8")
-        tree = ast.parse(source)
-        normalizer = (
-            FlextInfraRefactorPydanticCentralizer._DisallowedModelBaseNormalizer()
-        )
-        normalized = normalizer.visit(tree)
-        ast.fix_missing_locations(normalized)
-        rewritten = ast.unparse(normalized)
-        if rewritten == source:
-            return False
-        if apply_changes:
-            file_path.write_text(rewritten + "\n", encoding="utf-8")
-        return True
+        _ = file_path
+        _ = apply_changes
+        return False
+
+    @staticmethod
+    def _can_apply_import_rewrite(file_path: Path) -> bool:
+        if (file_path.parent / "__init__.py").exists():
+            return True
+        return False
+
+    @staticmethod
+    def _filter_moves_for_necessity(
+        class_moves: list[_ClassMove], alias_moves: list[_AliasMove]
+    ) -> tuple[list[_ClassMove], list[_AliasMove]]:
+        filtered_classes = [
+            move
+            for move in class_moves
+            if move.kind
+            in FlextInfraRefactorPydanticCentralizer._AUTO_APPLY_CLASS_KINDS
+        ]
+        return (filtered_classes, alias_moves)
 
     @staticmethod
     def _scan_file_violations(file_path: Path) -> tuple[int, int]:
@@ -556,6 +565,8 @@ class FlextInfraRefactorPydanticCentralizer:
         detected_alias_violations = 0
         created_model_files = 0
         created_typings_files = 0
+        skipped_nonpackage_apply = 0
+        skipped_non_necessary_apply = 0
         failure_stats = _CentralizerFailureStats()
         for file_path in workspace_root.rglob("*.py"):
             if not FlextInfraRefactorPydanticCentralizer._is_target_python(file_path):
@@ -577,14 +588,26 @@ class FlextInfraRefactorPydanticCentralizer:
             class_moves, alias_moves = collected_moves
             if len(class_moves) == 0 and len(alias_moves) == 0:
                 continue
+            apply_class_moves = class_moves
+            apply_alias_moves = alias_moves
+            if apply_changes:
+                apply_class_moves, apply_alias_moves = (
+                    FlextInfraRefactorPydanticCentralizer._filter_moves_for_necessity(
+                        class_moves,
+                        alias_moves,
+                    )
+                )
+                if len(apply_class_moves) == 0 and len(apply_alias_moves) == 0:
+                    skipped_non_necessary_apply += 1
+                    continue
             dest_path = file_path.parent / "_models.py"
-            class_blocks = [m.source for m in class_moves]
-            class_names = [m.name for m in class_moves]
+            class_blocks = [m.source for m in apply_class_moves]
+            class_names = [m.name for m in apply_class_moves]
             alias_blocks = [
                 FlextInfraRefactorPydanticCentralizer._alias_as_root_model(a)
-                for a in alias_moves
+                for a in apply_alias_moves
             ]
-            alias_names = [a.name for a in alias_moves]
+            alias_names = [a.name for a in apply_alias_moves]
             if not dest_path.exists():
                 created_model_files += 1
             existing_dest = FlextInfraRefactorPydanticCentralizer._ensure_dest_header(
@@ -599,12 +622,17 @@ class FlextInfraRefactorPydanticCentralizer:
                 alias_names,
             )
             updated_source = FlextInfraRefactorPydanticCentralizer._rewrite_source(
-                file_path, class_moves, alias_moves
+                file_path, apply_class_moves, apply_alias_moves
             )
-            moved_classes += len(class_moves)
-            moved_aliases += len(alias_moves)
+            moved_classes += len(apply_class_moves)
+            moved_aliases += len(apply_alias_moves)
             touched_files += 1
             if apply_changes:
+                if not FlextInfraRefactorPydanticCentralizer._can_apply_import_rewrite(
+                    file_path
+                ):
+                    skipped_nonpackage_apply += 1
+                    continue
                 dest_path.write_text(updated_dest, encoding="utf-8")
                 file_path.write_text(updated_source, encoding="utf-8")
         if normalize_remaining:
@@ -635,6 +663,8 @@ class FlextInfraRefactorPydanticCentralizer:
             "detected_alias_violations": detected_alias_violations,
             "created_model_files": created_model_files,
             "created_typings_files": created_typings_files,
+            "skipped_nonpackage_apply": skipped_nonpackage_apply,
+            "skipped_non_necessary_apply": skipped_non_necessary_apply,
             "parse_syntax_errors": failure_stats.parse_syntax_errors,
             "parse_encoding_errors": failure_stats.parse_encoding_errors,
             "parse_io_errors": failure_stats.parse_io_errors,

@@ -104,6 +104,12 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
     _ = sys.stdout.write(f"parse_encoding_errors={summary['parse_encoding_errors']}\n")
     _ = sys.stdout.write(f"parse_io_errors={summary['parse_io_errors']}\n")
     _ = sys.stdout.write(f"created_typings_files={summary['created_typings_files']}\n")
+    _ = sys.stdout.write(
+        f"skipped_non_necessary_apply={summary.get('skipped_non_necessary_apply', 0)}\n"
+    )
+    _ = sys.stdout.write(
+        f"skipped_nonpackage_apply={summary['skipped_nonpackage_apply']}\n"
+    )
     _ = sys.stdout.write(f"workspace={workspace_path}\n")
     _ = sys.stdout.write(f"mode={('apply' if apply_changes else 'dry-run')}\n")
     return 0
@@ -262,6 +268,13 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     _ = sys.stdout.write(f"parse_io_errors={centralize_summary['parse_io_errors']}\n")
     _ = sys.stdout.write(
         f"created_typings_files={centralize_summary['created_typings_files']}\n"
+    )
+    _ = sys.stdout.write(
+        "skipped_non_necessary_apply="
+        f"{centralize_summary.get('skipped_non_necessary_apply', 0)}\n"
+    )
+    _ = sys.stdout.write(
+        f"skipped_nonpackage_apply={centralize_summary['skipped_nonpackage_apply']}\n"
     )
     _ = sys.stdout.write(
         f"mro_remaining_violations={mro_report.remaining_violations}\n"
