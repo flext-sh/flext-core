@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TypeVar, override
 
-from typings import override
-
 from flext_core import (
     FlextContainer,
     FlextContext,

@@ -166,7 +166,11 @@ class FlextService[TDomainResult](
         )
         config_type_raw = options.config_type
         config_type_val: type[FlextSettings] | None
-        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
+        if (
+            config_type_raw is not None
+            and isinstance(config_type_raw, type)
+            and issubclass(config_type_raw, FlextSettings)
+        ):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
@@ -288,6 +292,8 @@ class FlextService[TDomainResult](
         """Normalize and validate scoped services using Pydantic model."""
         del cls
         if services is None:
+            return None
+        if not isinstance(services, Mapping):
             return None
         normalized: dict[str, t.RegisterableService] = {}
         for name, service in services.items():

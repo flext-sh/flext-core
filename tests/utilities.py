@@ -241,8 +241,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            _ = (
-                _ = assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(
+                result,
                 f"Expected success for: {description}, got: {result.error}",
             )
 
@@ -260,8 +260,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            _ = (
-                _ = assertion_helpers.assert_flext_result_success(result),
+            _ = assertion_helpers.assert_flext_result_success(
+                result,
                 f"Expected success for: {description}, got: {result.error}",
             )
             assert result.value == expected_value, (

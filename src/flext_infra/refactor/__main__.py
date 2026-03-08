@@ -139,6 +139,7 @@ def _run_migrate_to_mro(*, argv: list[str]) -> int:
         apply_changes = False
     service = FlextInfraRefactorMigrateToClassMRO(workspace_root=workspace_path)
     report = service.run(target=args.target, apply_changes=apply_changes)
+    _ = sys.stdout.write(FlextInfraRefactorMigrateToClassMRO.render_text(report))
     if len(report.errors) > 0:
         for error in report.errors:
             _ = sys.stderr.write(f"ERROR: {error}\n")
@@ -174,7 +175,13 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
     enforcer = FlextInfraNamespaceEnforcer(workspace_root=workspace_path)
     report = enforcer.enforce(apply_changes=apply_changes)
     _ = sys.stdout.write(FlextInfraNamespaceEnforcer.render_text(report))
-    if report.total_facades_missing > 0 or report.total_loose_objects > 0:
+    has_violations = (
+        report.total_facades_missing > 0
+        or report.total_loose_objects > 0
+        or report.total_import_violations > 0
+        or report.total_runtime_alias_violations > 0
+    )
+    if has_violations:
         return 1
     return 0
 

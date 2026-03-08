@@ -23,8 +23,9 @@ from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
+from flext_core import FlextModels
 from flext_infra import c, u
 
 
@@ -34,7 +35,7 @@ from flext_infra import c, u
 class NamespaceEnforcementModels:
     """Domain models for namespace enforcement reports."""
 
-    class FacadeStatus(BaseModel):
+    class FacadeStatus(FlextModels.ArbitraryTypesModel):
         """Status of one facade family (c/t/p/m/u) in a project."""
 
         model_config = ConfigDict(frozen=True)
@@ -47,7 +48,7 @@ class NamespaceEnforcementModels:
             default=0, ge=0, description="Number of symbols inside"
         )
 
-    class LooseObjectViolation(BaseModel):
+    class LooseObjectViolation(FlextModels.ArbitraryTypesModel):
         """A detected loose object outside any namespace class."""
 
         model_config = ConfigDict(frozen=True)
@@ -58,7 +59,7 @@ class NamespaceEnforcementModels:
         kind: str = Field(description="class|function|constant|typealias")
         suggestion: str = Field(default="", description="Suggested target namespace")
 
-    class CyclicImportViolation(BaseModel):
+    class CyclicImportViolation(FlextModels.ArbitraryTypesModel):
         """A detected cyclic import chain."""
 
         model_config = ConfigDict(frozen=True)
@@ -68,7 +69,7 @@ class NamespaceEnforcementModels:
             default_factory=tuple, description="Files involved"
         )
 
-    class ImportAliasViolation(BaseModel):
+    class ImportAliasViolation(FlextModels.ArbitraryTypesModel):
         """A detected import not using the canonical facade alias."""
 
         model_config = ConfigDict(frozen=True)
@@ -78,7 +79,25 @@ class NamespaceEnforcementModels:
         current_import: str = Field(description="Current import statement")
         suggested_import: str = Field(description="Correct facade import")
 
-    class ProjectEnforcementReport(BaseModel):
+    class RuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
+        """A module missing or misusing a runtime alias (c = FlextConstants)."""
+
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+        line: int = Field(default=0, ge=0, description="Line number (0 if missing)")
+        kind: str = Field(description="missing|duplicate|wrong_class")
+        alias: str = Field(description="Expected alias letter")
+        detail: str = Field(default="", description="Explanation")
+
+    class MissingFutureAnnotationsViolation(FlextModels.ArbitraryTypesModel):
+        """A Python module missing `from __future__ import annotations`."""
+
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+
+    class ProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
         """Enforcement report for a single project."""
 
         project: str = Field(min_length=1, description="Project directory name")
@@ -92,12 +111,18 @@ class NamespaceEnforcementModels:
         import_violations: list[NamespaceEnforcementModels.ImportAliasViolation] = (
             Field(default_factory=list, description="Import alias violations")
         )
-        cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation] = Field(
-            default_factory=list, description="Cyclic import violations"
+        cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation] = (
+            Field(default_factory=list, description="Cyclic import violations")
         )
+        runtime_alias_violations: list[
+            NamespaceEnforcementModels.RuntimeAliasViolation
+        ] = Field(default_factory=list, description="Runtime alias violations")
+        future_violations: list[
+            NamespaceEnforcementModels.MissingFutureAnnotationsViolation
+        ] = Field(default_factory=list, description="Missing __future__ violations")
         files_scanned: int = Field(default=0, ge=0, description="Total files scanned")
 
-    class WorkspaceEnforcementReport(BaseModel):
+    class WorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
         """Full workspace enforcement report."""
 
         workspace: str = Field(min_length=1, description="Workspace root path")
@@ -113,6 +138,12 @@ class NamespaceEnforcementModels:
         )
         total_cyclic_imports: int = Field(
             default=0, ge=0, description="Cyclic import chains"
+        )
+        total_runtime_alias_violations: int = Field(
+            default=0, ge=0, description="Runtime alias violations"
+        )
+        total_future_violations: int = Field(
+            default=0, ge=0, description="Missing __future__ violations"
         )
         total_files_scanned: int = Field(
             default=0, ge=0, description="All files scanned"
@@ -540,6 +571,152 @@ class CyclicImportDetector:
 
 
 # ---------------------------------------------------------------------------
+# Runtime alias detector
+# ---------------------------------------------------------------------------
+class RuntimeAliasDetector:
+    """Detect missing or misused runtime alias assignments (c = Flext*Constants).
+
+    Per AGENTS.md §2: 'Namespace aliases are canonical public API surfaces'.
+    Per AGENTS.md §4: 'No double-assignment of facade aliases'.
+    Each facade module MUST have exactly one `alias = ClassName` at module bottom.
+    """
+
+    @classmethod
+    def scan_file(
+        cls,
+        *,
+        file_path: Path,
+        project_name: str,  # noqa: ARG003 — reserved for future class-name validation
+    ) -> list[NamespaceEnforcementModels.RuntimeAliasViolation]:
+        """Return runtime alias violations for one file."""
+        # Only check facade files inside src/ (not tests/constants.py etc.)
+        if file_path.name not in {
+            "constants.py",
+            "models.py",
+            "typings.py",
+            "protocols.py",
+            "utilities.py",
+        }:
+            return []
+        if file_path.name in _PROTECTED_FILES:
+            return []
+        # Only facade files live under src/ — skip tests/scripts/examples
+        if "src" not in file_path.parts:
+            return []
+        try:
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return []
+
+        violations: list[NamespaceEnforcementModels.RuntimeAliasViolation] = []
+        # Determine which alias letter this file should define
+        family = cls._family_for_file(file_name=file_path.name)
+        if not family:
+            return []
+
+        # Find all top-level `x = SomeName` where x is a single letter
+        alias_assignments: list[tuple[int, str, str]] = []  # (line, alias, value)
+        for stmt in tree.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+            for target in stmt.targets:
+                if not isinstance(target, ast.Name):
+                    continue
+                if len(target.id) == 1 and isinstance(stmt.value, ast.Name):
+                    alias_assignments.append((stmt.lineno, target.id, stmt.value.id))
+
+        expected_alias = family
+        matches = [a for a in alias_assignments if a[1] == expected_alias]
+        if len(matches) == 0:
+            violations.append(
+                NamespaceEnforcementModels.RuntimeAliasViolation(
+                    file=str(file_path),
+                    kind="missing",
+                    alias=expected_alias,
+                    detail=f"No '{expected_alias} = ...' assignment found",
+                )
+            )
+        elif len(matches) > 1:
+            violations.append(
+                NamespaceEnforcementModels.RuntimeAliasViolation(
+                    file=str(file_path),
+                    line=matches[1][0],
+                    kind="duplicate",
+                    alias=expected_alias,
+                    detail=f"Duplicate alias assignment at lines {', '.join(str(m[0]) for m in matches)}",
+                )
+            )
+
+        return violations
+
+    @staticmethod
+    def _family_for_file(*, file_name: str) -> str:
+        """Map file name to expected facade alias letter."""
+        mapping: dict[str, str] = {
+            "constants.py": "c",
+            "typings.py": "t",
+            "protocols.py": "p",
+            "models.py": "m",
+            "utilities.py": "u",
+        }
+        return mapping.get(file_name, "")
+
+
+# ---------------------------------------------------------------------------
+# Future annotations detector
+# ---------------------------------------------------------------------------
+class FutureAnnotationsDetector:
+    """Detect Python modules missing `from __future__ import annotations`.
+
+    Per AGENTS.md §3: 'from __future__ import annotations is mandatory in Python modules.'
+    """
+
+    @classmethod
+    def scan_file(
+        cls,
+        *,
+        file_path: Path,
+    ) -> list[NamespaceEnforcementModels.MissingFutureAnnotationsViolation]:
+        """Return violations if __future__ annotations is missing."""
+        if file_path.name == "py.typed":
+            return []
+        try:
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return []
+
+        # Empty files are OK
+        if len(tree.body) == 0:
+            return []
+        # Files with only a docstring are OK
+        if (
+            len(tree.body) == 1
+            and isinstance(tree.body[0], ast.Expr)
+            and isinstance(tree.body[0].value, ast.Constant)
+        ):
+            return []
+
+        for stmt in tree.body:
+            if (
+                isinstance(stmt, ast.ImportFrom)
+                and stmt.module == "__future__"
+                and any(alias.name == "annotations" for alias in stmt.names)
+            ):
+                return []
+            # Only look at the first few statements
+            if isinstance(stmt, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                break
+
+        return [
+            NamespaceEnforcementModels.MissingFutureAnnotationsViolation(
+                file=str(file_path),
+            )
+        ]
+
+
+# ---------------------------------------------------------------------------
 # Main orchestrator
 # ---------------------------------------------------------------------------
 class FlextInfraNamespaceEnforcer:
@@ -567,6 +744,8 @@ class FlextInfraNamespaceEnforcer:
         total_loose = 0
         total_import_v = 0
         total_cyclic = 0
+        total_alias_v = 0
+        total_future_v = 0
         total_files = 0
 
         for project_root in project_roots:
@@ -581,6 +760,8 @@ class FlextInfraNamespaceEnforcer:
             total_loose += len(report.loose_objects)
             total_import_v += len(report.import_violations)
             total_cyclic += len(report.cyclic_imports)
+            total_alias_v += len(report.runtime_alias_violations)
+            total_future_v += len(report.future_violations)
             total_files += report.files_scanned
 
         return NamespaceEnforcementModels.WorkspaceEnforcementReport(
@@ -590,6 +771,8 @@ class FlextInfraNamespaceEnforcer:
             total_loose_objects=total_loose,
             total_import_violations=total_import_v,
             total_cyclic_imports=total_cyclic,
+            total_runtime_alias_violations=total_alias_v,
+            total_future_violations=total_future_v,
             total_files_scanned=total_files,
         )
 
@@ -645,6 +828,45 @@ class FlextInfraNamespaceEnforcer:
         # 5. Detect cyclic imports
         cyclic_imports = CyclicImportDetector.scan_project(project_root=project_root)
 
+        # 6. Detect runtime alias violations
+        runtime_alias_violations: list[
+            NamespaceEnforcementModels.RuntimeAliasViolation
+        ] = []
+        for py_file in py_files:
+            runtime_alias_violations.extend(
+                RuntimeAliasDetector.scan_file(
+                    file_path=py_file, project_name=project_name
+                )
+            )
+
+        if apply_changes and len(runtime_alias_violations) > 0:
+            self._rewrite_runtime_alias_violations(py_files=py_files)
+            runtime_alias_violations = []
+            for py_file in py_files:
+                runtime_alias_violations.extend(
+                    RuntimeAliasDetector.scan_file(
+                        file_path=py_file,
+                        project_name=project_name,
+                    )
+                )
+
+        # 7. Detect missing __future__ annotations
+        future_violations: list[
+            NamespaceEnforcementModels.MissingFutureAnnotationsViolation
+        ] = []
+        for py_file in py_files:
+            future_violations.extend(
+                FutureAnnotationsDetector.scan_file(file_path=py_file)
+            )
+
+        if apply_changes and len(future_violations) > 0:
+            self._rewrite_missing_future_annotations(py_files=py_files)
+            future_violations = []
+            for py_file in py_files:
+                future_violations.extend(
+                    FutureAnnotationsDetector.scan_file(file_path=py_file)
+                )
+
         return NamespaceEnforcementModels.ProjectEnforcementReport(
             project=project_name,
             project_root=str(project_root),
@@ -652,6 +874,8 @@ class FlextInfraNamespaceEnforcer:
             loose_objects=loose_objects,
             import_violations=import_violations,
             cyclic_imports=cyclic_imports,
+            runtime_alias_violations=runtime_alias_violations,
+            future_violations=future_violations,
             files_scanned=len(py_files),
         )
 
@@ -766,50 +990,120 @@ class FlextInfraNamespaceEnforcer:
 
     @staticmethod
     def _rewrite_import_alias_violations(*, py_files: list[Path]) -> None:
+        """Rewrite deep imports to facade aliases using safe line-by-line regex.
+
+        CRITICAL: Does NOT use ast.unparse() which destroys formatting/comments.
+        Instead replaces only the matching import line, preserving all other content.
+        Also skips __init__.py files per AGENTS.md §4.
+        """
+        deep_import_re = re.compile(
+            r"^(\s*)from\s+(flext_core|flext_infra)\.\S+\s+import\s+.+$"
+        )
+        alias_map: dict[str, str] = {
+            "flext_core": "from flext_core import c, m, r, t, u, p",
+            "flext_infra": "from flext_infra import c, m, t, u, p",
+        }
         for file_path in py_files:
+            # __init__.py files ARE the facade — they must import submodules
+            if file_path.name == "__init__.py":
+                continue
+            try:
+                source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            except (OSError, UnicodeDecodeError):
+                continue
+            lines = source.splitlines(keepends=True)
+            changed = False
+            seen_replacements: set[str] = set()
+            new_lines: list[str] = []
+            for line in lines:
+                match = deep_import_re.match(line.rstrip())
+                if match:
+                    indent = match.group(1)
+                    pkg = match.group(2)
+                    replacement = alias_map.get(pkg)
+                    if replacement and replacement not in seen_replacements:
+                        new_lines.append(f"{indent}{replacement}\n")
+                        seen_replacements.add(replacement)
+                        changed = True
+                        continue
+                    if replacement and replacement in seen_replacements:
+                        # Duplicate deep import — drop the line
+                        changed = True
+                        continue
+                new_lines.append(line)
+            if changed:
+                file_path.write_text(
+                    "".join(new_lines), encoding=c.Infra.Encoding.DEFAULT
+                )
+
+    @staticmethod
+    def _rewrite_runtime_alias_violations(*, py_files: list[Path]) -> None:
+        expected_aliases: dict[str, tuple[str, str]] = {
+            "constants.py": ("c", "Constants"),
+            "typings.py": ("t", "Types"),
+            "protocols.py": ("p", "Protocols"),
+            "models.py": ("m", "Models"),
+            "utilities.py": ("u", "Utilities"),
+        }
+        for file_path in py_files:
+            expected = expected_aliases.get(file_path.name)
+            if expected is None:
+                continue
+            alias_name, expected_suffix = expected
             try:
                 source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
                 tree = ast.parse(source)
             except (OSError, SyntaxError, UnicodeDecodeError):
                 continue
-            changed = False
-            for stmt in tree.body:
-                if not isinstance(stmt, ast.ImportFrom):
-                    continue
-                if stmt.module is None:
-                    continue
-                if stmt.module.startswith("flext_core."):
-                    stmt.module = "flext_core"
-                    stmt.names = [
-                        ast.alias(name="c"),
-                        ast.alias(name="m"),
-                        ast.alias(name="r"),
-                        ast.alias(name="t"),
-                        ast.alias(name="u"),
-                        ast.alias(name="p"),
-                        ast.alias(name="d"),
-                        ast.alias(name="e"),
-                        ast.alias(name="h"),
-                        ast.alias(name="s"),
-                        ast.alias(name="x"),
-                    ]
-                    changed = True
-                    continue
-                if stmt.module.startswith("flext_infra."):
-                    stmt.module = "flext_infra"
-                    stmt.names = [
-                        ast.alias(name="c"),
-                        ast.alias(name="m"),
-                        ast.alias(name="t"),
-                        ast.alias(name="u"),
-                        ast.alias(name="p"),
-                    ]
-                    changed = True
-            if changed:
-                normalized = ast.unparse(tree)
-                file_path.write_text(
-                    f"{normalized}\n", encoding=c.Infra.Encoding.DEFAULT
-                )
+            class_candidates = [
+                node.name
+                for node in tree.body
+                if isinstance(node, ast.ClassDef)
+                and node.name.endswith(expected_suffix)
+            ]
+            if len(class_candidates) == 0:
+                continue
+            target_class = class_candidates[0]
+            lines = source.splitlines()
+            kept_lines = [
+                line
+                for line in lines
+                if not line.strip().startswith(f"{alias_name} = ")
+            ]
+            kept_source = "\n".join(kept_lines).rstrip()
+            rewritten = f"{kept_source}\n\n{alias_name} = {target_class}\n"
+            file_path.write_text(rewritten, encoding=c.Infra.Encoding.DEFAULT)
+
+    @staticmethod
+    def _rewrite_missing_future_annotations(*, py_files: list[Path]) -> None:
+        for file_path in py_files:
+            if file_path.name == "py.typed":
+                continue
+            try:
+                source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            except (OSError, UnicodeDecodeError):
+                continue
+            if "from __future__ import annotations" in source:
+                continue
+            lines = source.splitlines()
+            if len(lines) == 0:
+                continue
+            insert_idx = 0
+            if lines[0].startswith('"""') or lines[0].startswith("'''"):
+                quote = lines[0][:3]
+                for idx in range(1, len(lines)):
+                    if quote in lines[idx]:
+                        insert_idx = idx + 1
+                        break
+            new_lines = (
+                lines[:insert_idx]
+                + ["", "from __future__ import annotations", ""]
+                + lines[insert_idx:]
+            )
+            file_path.write_text(
+                "\n".join(new_lines).rstrip() + "\n",
+                encoding=c.Infra.Encoding.DEFAULT,
+            )
 
     @staticmethod
     def _collect_python_files(*, project_root: Path) -> list[Path]:
@@ -838,11 +1132,20 @@ class FlextInfraNamespaceEnforcer:
             f"Loose objects: {report.total_loose_objects}",
             f"Import violations: {report.total_import_violations}",
             f"Cyclic imports: {report.total_cyclic_imports}",
+            f"Runtime alias violations: {report.total_runtime_alias_violations}",
+            f"Missing __future__: {report.total_future_violations}",
             "",
         ]
         for proj in report.projects:
             missing = [s for s in proj.facade_statuses if not s.exists]
-            if not missing and not proj.loose_objects and not proj.import_violations:
+            has_violations = (
+                missing
+                or proj.loose_objects
+                or proj.import_violations
+                or proj.runtime_alias_violations
+                or proj.future_violations
+            )
+            if not has_violations:
                 continue
             lines.append(f"--- {proj.project} ---")
             if missing:
@@ -877,6 +1180,26 @@ class FlextInfraNamespaceEnforcer:
                 lines.extend(
                     f"    Cycle: {' -> '.join(ci.cycle)}" for ci in proj.cyclic_imports
                 )
+            if proj.runtime_alias_violations:
+                lines.append(
+                    f"  Runtime alias violations: {len(proj.runtime_alias_violations)}"
+                )
+                lines.extend(
+                    f"    {rv.file} [{rv.kind}] alias='{rv.alias}' {rv.detail}"
+                    for rv in proj.runtime_alias_violations
+                )
+            if proj.future_violations:
+                lines.append(
+                    f"  Missing __future__ annotations: {len(proj.future_violations)}"
+                )
+                lines.extend(
+                    f"    {fv.file}"
+                    for fv in proj.future_violations[:_MAX_RENDERED_LOOSE_OBJECTS]
+                )
+                if len(proj.future_violations) > _MAX_RENDERED_LOOSE_OBJECTS:
+                    lines.append(
+                        f"    ... and {len(proj.future_violations) - _MAX_RENDERED_LOOSE_OBJECTS} more"
+                    )
             lines.append("")
         return "\n".join(lines) + "\n"
 
@@ -884,8 +1207,10 @@ class FlextInfraNamespaceEnforcer:
 __all__ = [
     "CyclicImportDetector",
     "FlextInfraNamespaceEnforcer",
+    "FutureAnnotationsDetector",
     "ImportAliasDetector",
     "LooseObjectDetector",
     "NamespaceEnforcementModels",
     "NamespaceFacadeScanner",
+    "RuntimeAliasDetector",
 ]

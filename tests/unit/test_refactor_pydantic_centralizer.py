@@ -33,7 +33,7 @@ def test_centralizer_converts_typed_dict_factory_to_model(tmp_path: Path) -> Non
 
     assert summary["moved_classes"] == 1
     assert "Payload = TypedDict(" not in updated_source
-    assert "from ._models import Payload" in updated_source
+    assert "from _models import Payload" in updated_source
     assert "class Payload(BaseModel):" in generated_models
     assert "name: str | None = Field(default=None)" in generated_models
     assert "active: bool | None = Field(default=None)" in generated_models
@@ -87,7 +87,7 @@ def test_centralizer_moves_manual_type_aliases_to_typings_file(tmp_path: Path) -
     assert summary["created_typings_files"] == 1
     assert "PayloadMap: TypeAlias = dict[str, str]" not in updated_source
     assert "ConfigSchema: TypeAlias = dict[str, int]" not in updated_source
-    assert "from ._typings import ConfigSchema, PayloadMap" in updated_source
+    assert "from _typings import ConfigSchema, PayloadMap" in updated_source
     assert "PayloadMap: TypeAlias = dict[str, str]" in generated_typings
     assert "ConfigSchema: TypeAlias = dict[str, int]" in generated_typings
 
@@ -112,9 +112,11 @@ def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
     )
 
     updated_typings = typings_file.read_text(encoding="utf-8")
-    generated_models = (typings_file.parent / "_models.py").read_text(encoding="utf-8")
+    generated_typings = (typings_file.parent / "_typings.py").read_text(
+        encoding="utf-8"
+    )
 
     assert summary["moved_aliases"] == 1
     assert "ScalarMap: TypeAlias" not in updated_typings
-    assert "from ._models import ScalarMap" in updated_typings
-    assert "class ScalarMap(RootModel[Mapping[str, str]]):" in generated_models
+    assert "from _typings import ScalarMap" in updated_typings
+    assert "ScalarMap: TypeAlias = Mapping[str, str]" in generated_typings
