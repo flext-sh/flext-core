@@ -1,0 +1,35 @@
+[register_and_dispatch]
+constructor.type: 'FlextDispatcher'
+register(HandleProtocol).is_success: True
+register(DispatchMessageProtocol).is_success: True
+register(ExecuteProtocol).is_success: True
+register(callable).is_success: True
+dispatch(command).is_success: True
+dispatch(command).value: 'created:alice'
+dispatch(query).is_success: True
+dispatch(query).value: ConfigMap
+dispatch(execute).is_success: True
+dispatch(execute).value: 'deleted:alice'
+dispatch(callable).is_success: True
+dispatch(callable).value: 'pong:x'
+
+[auto_discovery]
+register(can_handle).is_success: True
+dispatch(auto_discovery).is_success: True
+dispatch(auto_discovery).value: 'auto:fallback'
+
+[error_cases]
+register(no_route_attrs).is_failure: True
+dispatch(no_handler).is_failure: True
+register(failing_callable).is_success: True
+dispatch(handler_returns_fail).is_failure: True
+
+[event_publishing]
+register(event_subscriber).is_success: True
+register(audit_subscriber).is_success: True
+publish(single).is_success: True
+publish(list).is_success: True
+subscriber.events: ['user:alice', 'user:bruno', 'user:carla']
+audit_subscriber.events: ['audit:alice', 'audit:bruno', 'audit:carla']
+publish(no_subscribers).is_success: True
+publish(no_subscribers).value: True

@@ -6,19 +6,14 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import logging
 import time
 
 import pytest
 
-from flext_core import FlextLogger
-from flext_core.constants import c
+from flext_core import FlextLogger, t
 from tests.test_utils import assertion_helpers
-
-# Alias for the LogLevel enum
-FlextLogLevel = c.Settings.LogLevel
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -34,7 +29,7 @@ class TestFlextContext:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: dict[str, t.GeneralValueType] = {}
+        context: dict[str, t.ContainerValue] = {}
 
         assert isinstance(context, dict)
         if len(context) != 0:
@@ -43,7 +38,7 @@ class TestFlextContext:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: dict[str, t.GeneralValueType] = {
+        context: dict[str, t.ContainerValue] = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -57,12 +52,12 @@ class TestFlextContext:
         if context["operation"] != "login":
             msg = f"Expected {'login'}, got {context['operation']}"
             raise AssertionError(msg)
-        assert context["duration_ms"] == 150.5
+        assert context["duration_ms"] == pytest.approx(150.5)
 
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
         # Test with partial context
-        context: dict[str, t.GeneralValueType] = {
+        context: dict[str, t.ContainerValue] = {
             "user_id": "123",
         }
 
@@ -73,7 +68,7 @@ class TestFlextContext:
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: dict[str, t.GeneralValueType] = {
+        context: dict[str, t.ContainerValue] = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -97,23 +92,23 @@ class TestFlextContext:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: dict[str, t.GeneralValueType] = {
+        context: dict[str, t.ContainerValue] = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
         }
 
-        if context["duration_ms"] != 250.0:
+        if context["duration_ms"] != pytest.approx(250.0):
             msg = f"Expected {250.0}, got {context['duration_ms']}"
             raise AssertionError(msg)
-        assert context["memory_mb"] == 128.5
-        if context["cpu_percent"] != 75.2:
+        assert context["memory_mb"] == pytest.approx(128.5)
+        if context["cpu_percent"] != pytest.approx(75.2):
             msg = f"Expected {75.2}, got {context['cpu_percent']}"
             raise AssertionError(msg)
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: dict[str, t.GeneralValueType] = {
+        context: dict[str, t.ContainerValue] = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",
@@ -262,7 +257,7 @@ class TestFlextLogger:
 
         # Validate bound logger can be used for logging
         result = bound_logger.info("Test message with bound context")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Bound logger should work for logging",
         )
@@ -285,7 +280,7 @@ class TestFlextLogger:
 
         # Validate logger works with standard logging patterns
         result = logger.info("Compatibility test message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Logger should work with standard patterns",
         )
@@ -308,7 +303,7 @@ class TestFlextLogger:
 
         # Validate logger can be used for logging
         result = logger.info("Module-level logger test message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Module-level logger should work",
         )
@@ -430,7 +425,7 @@ class TestFlextLoggerUsage:
 
         # Validate all logging operations succeeded
         for i, result in enumerate(results):
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 f"Log entry {i + 1} should succeed",
             )
@@ -457,7 +452,7 @@ class TestFlextLoggerUsage:
 
         # Validate performance logging succeeds
         result = perf_logger.info("Performance test message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Performance logging should succeed",
         )
@@ -565,7 +560,7 @@ class TestFlextLoggerIntegration:
             )
 
             # Validate logging succeeded
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging should succeed",
             )
@@ -613,7 +608,10 @@ class TestFlextLoggerIntegration:
         )
 
         # Validate logging succeeded
-        assertion_helpers.assert_flext_result_success(result), "Logging should succeed"
+        _ = (
+            assertion_helpers.assert_flext_result_success(result),
+            "Logging should succeed",
+        )
 
         # Validate logged values are correct
         # Note: Actual log content validation would require log capture

@@ -340,9 +340,9 @@ Domain events capture important state changes inside aggregates. FLEXT surfaces 
 
 ```python
 from flext_core import FlextResult
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import h
-from flext_core.models import FlextModels
+from flext_core import FlextDispatcher
+from flext_core import h
+from flext_core import FlextModels
 
 
 class InventoryAdjusted(FlextModels.DomainEvent):
@@ -1016,8 +1016,11 @@ def add_to_cart(cart, item):
 - Error Handling Guide - Domain error handling patterns
 - Clean Architecture - Architecture patterns and layers
 - API Reference: FlextModels - Complete models API
-- **FLEXT CLAUDE.md**: Development patterns and standards
+- **FLEXT AGENTS.md**: Development patterns and standards
 
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_models.py` for 200+ test cases demonstrating DDD patterns with FlextModels.
+
+```
+```

@@ -442,3 +442,6 @@ make validate
 ______________________________________________________________________
 
 **Ready to dive deeper?** Start with the Configuration Guide to learn how to configure FLEXT-Core for your application.
+
+```
+```

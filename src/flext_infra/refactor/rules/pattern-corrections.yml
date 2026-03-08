@@ -1,0 +1,21 @@
+# High-volume pattern corrections validated in flext-core.
+
+rules:
+  - id: fix-container-invariance-annotations
+    name: "Fix dict annotation invariance hotspots"
+    description: "Convert dict[...] annotations to Mapping[...] to reduce Container variance violations"
+    enabled: true
+    severity: error
+    fix_action: convert_dict_to_mapping_annotations
+    include_return_annotations: false
+
+  - id: remove-validated-redundant-casts
+    name: "Remove validated redundant casts"
+    description: "Remove cast() wrappers for pre-validated target types"
+    enabled: true
+    severity: warning
+    fix_action: remove_redundant_casts
+    redundant_type_targets:
+      - "m.ConfigMap"
+      - "type"
+      - "FlextRegistry.Summary"

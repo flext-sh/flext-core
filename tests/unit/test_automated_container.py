@@ -6,10 +6,12 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 
-from flext_core import r
-from flext_core.typings import t
+from flext_core import r, t
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -57,7 +59,8 @@ class TestAutomatedFlextContainer:
         ids=lambda case: case["description"],
     )
     def test_automated_container_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for container functionality."""
         try:
@@ -94,7 +97,8 @@ class TestAutomatedFlextContainer:
         # Test with correct types
         result = self._execute_container_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer type safety test"
+            result,
+            "FlextContainer type safety test",
         )
 
     def test_automated_container_error_handling(self) -> None:
@@ -102,7 +106,12 @@ class TestAutomatedFlextContainer:
         instance = fixture_factory.create_test_container_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
 
         for error_input in error_inputs:
             result = self._execute_container_operation(instance, error_input or {})
@@ -117,13 +126,15 @@ class TestAutomatedFlextContainer:
 
         def operation() -> object:
             return self._execute_container_operation(
-                instance, {"performance_test": True}
+                instance,
+                {"performance_test": True},
             )
 
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer performance test exceeded timeout"
+            result,
+            "FlextContainer performance test exceeded timeout",
         )
 
     def test_automated_container_resource_management(self) -> None:
@@ -133,20 +144,25 @@ class TestAutomatedFlextContainer:
         # Test normal operation
         result = self._execute_container_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer resource test"
+            result,
+            "FlextContainer resource test",
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        cleanup = getattr(instance, "cleanup", None)
+        if callable(cleanup):
+            cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextContainer cleanup failed"
+                    cast("r[t.ContainerValue]", cleanup_result),
+                    "FlextContainer cleanup failed",
                 )
 
     def _execute_container_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on container instance.
 
         This method should be customized based on the actual container API.
@@ -154,18 +170,21 @@ class TestAutomatedFlextContainer:
         """
         try:
             # Generic operation - adapt based on actual container interface
-            if hasattr(instance, "process"):
-                return instance.process(input_data)
-            if hasattr(instance, "execute"):
-                return instance.execute(input_data)
-            if hasattr(instance, "handle"):
-                return instance.handle(input_data)
+            process = getattr(instance, "process", None)
+            if callable(process):
+                return cast("r[t.ContainerValue]", process(dict(input_data)))
+            execute = getattr(instance, "execute", None)
+            if callable(execute):
+                return cast("r[t.ContainerValue]", execute(dict(input_data)))
+            handle = getattr(instance, "handle", None)
+            if callable(handle):
+                return cast("r[t.ContainerValue]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(instance)
+            return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextContainer operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextContainer operation failed: {e}")
 
     @pytest.fixture
-    def test_container_instance(self) -> t.GeneralValueType:
+    def test_container_instance(self) -> object:
         """Fixture for container test instance."""
         return fixture_factory.create_test_container_instance()

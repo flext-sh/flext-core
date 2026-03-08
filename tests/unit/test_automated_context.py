@@ -6,9 +6,12 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 
-from flext_core import FlextTypes as t, r
+from flext_core import FlextContext, r
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -56,7 +59,8 @@ class TestAutomatedFlextContext:
         ids=lambda case: case["description"],
     )
     def test_automated_context_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for context functionality."""
         try:
@@ -93,7 +97,8 @@ class TestAutomatedFlextContext:
         # Test with correct types
         result = self._execute_context_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContext type safety test"
+            result,
+            "FlextContext type safety test",
         )
 
     def test_automated_context_error_handling(self) -> None:
@@ -101,7 +106,12 @@ class TestAutomatedFlextContext:
         instance = fixture_factory.create_test_context_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs: list[Mapping[str, object] | None] = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
 
         for error_input in error_inputs:
             result = self._execute_context_operation(instance, error_input or {})
@@ -120,7 +130,8 @@ class TestAutomatedFlextContext:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContext performance test exceeded timeout"
+            result,
+            "FlextContext performance test exceeded timeout",
         )
 
     def test_automated_context_resource_management(self) -> None:
@@ -130,55 +141,59 @@ class TestAutomatedFlextContext:
         # Test normal operation
         result = self._execute_context_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContext resource test"
+            result,
+            "FlextContext resource test",
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
-            if cleanup_result:
+        cleanup_fn = getattr(instance, "cleanup", None)
+        if callable(cleanup_fn):
+            cleanup_result = cleanup_fn()
+            if isinstance(cleanup_result, r):
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextContext cleanup failed"
+                    cleanup_result,
+                    "FlextContext cleanup failed",
                 )
 
     def _execute_context_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: FlextContext,
+        input_data: Mapping[str, object],
+    ) -> r[object]:
         """Execute a test operation on context instance.
 
         Tests actual FlextContext API methods like set, get, validate, etc.
         """
         try:
-            # Test actual FlextContext methods
-            if not isinstance(instance, type):
-                # Instance is a FlextContext object, test its methods
-                if input_data.get("type_safe"):
-                    # Test type safety by setting and getting a value
-                    instance.set("test_key", "test_value")
-                    value = instance.get("test_key")
-                    return r[t.GeneralValueType].ok(value)
-                if input_data.get("validate"):
-                    # Test validate method
-                    result = instance.validate()
-                    return result if isinstance(result, r) else r[t.GeneralValueType].ok(result)
-                if input_data.get("performance_test"):
-                    # Test performance with a simple operation
-                    instance.set("perf_test", "data")
-                    _ = instance.get("perf_test")
-                    return r[t.GeneralValueType].ok("performance_test_ok")
-                if input_data.get("resource_test"):
-                    # Test resource management with merge/clone
-                    cloned = instance.clone()
-                    cloned.set("cloned_key", "cloned_value")
-                    return r[t.GeneralValueType].ok("resource_test_ok")
-                # Generic test - just validate the instance works
+            if input_data.get("type_safe"):
+                instance.set("test_key", "test_value")
+                value = instance.get("test_key")
+                return r[object].ok(value)
+            if input_data.get("validate"):
                 result = instance.validate()
-                return result if isinstance(result, r) else r[t.GeneralValueType].ok(result)
-            return r[t.GeneralValueType].fail("Invalid context instance type")
+                return (
+                    cast("r[object]", result)
+                    if isinstance(result, r)
+                    else r[object].ok(result)
+                )
+            if input_data.get("performance_test"):
+                instance.set("perf_test", "data")
+                _ = instance.get("perf_test")
+                return r[object].ok("performance_test_ok")
+            if input_data.get("resource_test"):
+                cloned = instance.clone()
+                cloned.set("cloned_key", "cloned_value")
+                return r[object].ok("resource_test_ok")
+            result = instance.validate()
+            return (
+                cast("r[object]", result)
+                if isinstance(result, r)
+                else r[object].ok(result)
+            )
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextContext operation failed: {e}")
+            return r[object].fail(f"FlextContext operation failed: {e}")
 
     @pytest.fixture
-    def test_context_instance(self) -> t.GeneralValueType:
+    def test_context_instance(self) -> FlextContext:
         """Fixture for context test instance."""
         return fixture_factory.create_test_context_instance()

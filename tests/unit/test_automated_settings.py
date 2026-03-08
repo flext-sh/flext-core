@@ -6,9 +6,11 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
-from flext_core import FlextTypes as t, r
+from flext_core import r, t
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -56,7 +58,8 @@ class TestAutomatedFlextSettings:
         ids=lambda case: case["description"],
     )
     def test_automated_settings_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for settings functionality."""
         try:
@@ -93,7 +96,8 @@ class TestAutomatedFlextSettings:
         # Test with correct types
         result = self._execute_settings_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextSettings type safety test"
+            result,
+            "FlextSettings type safety test",
         )
 
     def test_automated_settings_error_handling(self) -> None:
@@ -101,7 +105,12 @@ class TestAutomatedFlextSettings:
         instance = fixture_factory.create_test_settings_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
 
         for error_input in error_inputs:
             result = self._execute_settings_operation(instance, error_input or {})
@@ -116,13 +125,15 @@ class TestAutomatedFlextSettings:
 
         def operation() -> object:
             return self._execute_settings_operation(
-                instance, {"performance_test": True}
+                instance,
+                {"performance_test": True},
             )
 
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextSettings performance test exceeded timeout"
+            result,
+            "FlextSettings performance test exceeded timeout",
         )
 
     def test_automated_settings_resource_management(self) -> None:
@@ -132,20 +143,25 @@ class TestAutomatedFlextSettings:
         # Test normal operation
         result = self._execute_settings_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextSettings resource test"
+            result,
+            "FlextSettings resource test",
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: object = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextSettings cleanup failed"
+                    cleanup_result,
+                    "FlextSettings cleanup failed",
                 )
 
     def _execute_settings_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[bool]:
         """Execute a test operation on settings instance.
 
         This method should be customized based on the actual settings API.
@@ -153,13 +169,13 @@ class TestAutomatedFlextSettings:
         """
         try:
             # Generic operation - return instance as success
-            if isinstance(instance, dict):
-                return r[t.GeneralValueType].ok(instance)
-            return r[t.GeneralValueType].ok(instance)
+            _ = instance
+            _ = input_data
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextSettings operation failed: {e}")
+            return r[bool].fail(f"FlextSettings operation failed: {e}")
 
     @pytest.fixture
-    def test_settings_instance(self) -> t.GeneralValueType:
+    def test_settings_instance(self) -> object:
         """Fixture for settings test instance."""
         return fixture_factory.create_test_settings_instance()

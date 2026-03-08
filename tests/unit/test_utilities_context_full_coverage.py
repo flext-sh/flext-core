@@ -9,24 +9,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import cast
 from unittest.mock import MagicMock
 
-from flext_core import t, u
+from pydantic import BaseModel
+
+from flext_core import m, p, t, u
 
 
 class TestCreateStrProxy:
-    """Tests for u.Context.create_str_proxy()."""
+    """Tests for u.create_str_proxy()."""
 
     def test_create_str_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[str] with given key."""
-        proxy = u.Context.create_str_proxy("my_key")
+        proxy = u.create_str_proxy("my_key")
         assert proxy is not None
         assert proxy._key == "my_key"
 
     def test_create_str_proxy_with_default(self) -> None:
         """Creates proxy with default value."""
-        proxy = u.Context.create_str_proxy("my_key", default="fallback")
+        proxy = u.create_str_proxy("my_key", default="fallback")
         assert proxy._default == "fallback"
 
 
@@ -41,7 +44,7 @@ class TestCreateDatetimeProxy:
 
     def test_create_datetime_proxy_with_default(self) -> None:
         """Creates proxy with datetime default."""
-        now = datetime.now()
+        now = datetime.now(UTC)
         proxy = u.Context.create_datetime_proxy("start_time", default=now)
         assert proxy._default == now
 
@@ -57,20 +60,19 @@ class TestCreateDictProxy:
 
     def test_create_dict_proxy_with_default(self) -> None:
         """Creates proxy with dict default."""
-        default_val: dict[str, t.GeneralValueType] = {"key": "value"}
+        default_val = m.ConfigMap(root={"key": "value"})
         proxy = u.Context.create_dict_proxy("metadata", default=default_val)
         assert proxy._default == default_val
 
 
-class _FakeConfig:
+class _FakeConfig(BaseModel):
     """Fake config with model_copy support."""
 
-    def __init__(self, data: dict[str, object] | None = None) -> None:
-        self.data = data or {}
+    timeout: int = 10
 
-    def model_copy(self, update: dict[str, object] | None = None) -> _FakeConfig:
-        merged = {**self.data, **(update or {})}
-        return _FakeConfig(merged)
+    @property
+    def data(self) -> dict[str, object]:
+        return {"timeout": self.timeout}
 
 
 class _FakeRuntime:
@@ -80,7 +82,19 @@ class _FakeRuntime:
         self._dispatcher = object()
         self._registry = object()
         self._context = object()
-        self._config = _FakeConfig({"timeout": 10})
+        self._config = _FakeConfig(timeout=10)
+
+
+class _FakeContext:
+    def clone(self) -> _FakeContext:
+        return _FakeContext()
+
+    def set(self, key: str, value: t.ContainerValue) -> None:
+        _ = key, value
+
+    def get(self, key: str) -> object:
+        _ = key
+        return None
 
 
 class TestCloneRuntime:
@@ -101,8 +115,11 @@ class TestCloneRuntime:
     def test_clone_runtime_uses_provided_context(self) -> None:
         """When context is provided, cloned runtime uses it."""
         runtime = _FakeRuntime()
-        new_context = object()
-        cloned = u.Context.clone_runtime(runtime, context=new_context)
+        new_context = _FakeContext()
+        cloned = u.Context.clone_runtime(
+            runtime,
+            context=cast("p.Context", cast("object", new_context)),
+        )
         assert cloned._context is new_context
 
     def test_clone_runtime_copies_context_when_not_provided(self) -> None:
@@ -114,7 +131,10 @@ class TestCloneRuntime:
     def test_clone_runtime_applies_config_overrides(self) -> None:
         """When config_overrides provided, model_copy is called with them."""
         runtime = _FakeRuntime()
-        cloned = u.Context.clone_runtime(runtime, config_overrides={"timeout": 30})
+        cloned = u.Context.clone_runtime(
+            runtime,
+            config_overrides=m.ConfigMap(root={"timeout": 30}),
+        )
         assert isinstance(cloned._config, _FakeConfig)
         assert cloned._config.data["timeout"] == 30
 

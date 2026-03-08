@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from types import ModuleType
 
-from flext_core._models.container import FlextModelsContainer
-from flext_core.constants import c
+from flext_core import c, m
 
 
 class FactoryDecoratorsDiscovery:
@@ -26,9 +26,18 @@ class FactoryDecoratorsDiscovery:
     """
 
     @staticmethod
+    def has_factories(module: ModuleType) -> bool:
+        """Check if module has any factory-decorated functions."""
+        return any(
+            hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
+            for name in dir(module)
+            if not name.startswith("_") and callable(getattr(module, name, None))
+        )
+
+    @staticmethod
     def scan_module(
-        module: object,
-    ) -> list[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
+        module: ModuleType,
+    ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for functions decorated with @factory().
 
         Introspects the module to find all functions with factory configuration
@@ -41,19 +50,19 @@ class FactoryDecoratorsDiscovery:
             List of tuples (function_name, FactoryDecoratorConfig) sorted by name
 
         Example:
-            >>> from flext_core._decorators import FactoryDecoratorsDiscovery
+            >>> from flext_core import FactoryDecoratorsDiscovery
             >>> factories = FactoryDecoratorsDiscovery.scan_module(my_module)
             >>> for func_name, config in factories:
             ...     print(f"{func_name}: singleton={config.singleton}")
 
         """
-        factories: list[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]] = []
+        factories: list[tuple[str, m.FactoryDecoratorConfig]] = []
         for name in dir(module):
             if name.startswith("_"):
                 continue
             func = getattr(module, name, None)
             if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
-                config: FlextModelsContainer.FactoryDecoratorConfig = getattr(
+                config: m.FactoryDecoratorConfig = getattr(
                     func,
                     c.Discovery.FACTORY_ATTR,
                 )
@@ -61,29 +70,3 @@ class FactoryDecoratorsDiscovery:
 
         # Sort by name for consistent ordering
         return sorted(factories, key=operator.itemgetter(0))
-
-    @staticmethod
-    def has_factories(module: object) -> bool:
-        """Check if module has any factory-decorated functions.
-
-        Efficiently checks if a module contains any functions marked with
-        the @factory() decorator without scanning all items.
-
-        Args:
-            module: Module object to check for factories
-
-        Returns:
-            True if module has at least one factory, False otherwise
-
-        Example:
-            >>> from flext_core._decorators import FactoryDecoratorsDiscovery
-            >>> if FactoryDecoratorsDiscovery.has_factories(my_module):
-            ...     # Auto-register factories in container
-            ...     container.auto_register_factories(my_module)
-
-        """
-        return any(
-            hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
-            for name in dir(module)
-            if not name.startswith("_") and callable(getattr(module, name, None))
-        )

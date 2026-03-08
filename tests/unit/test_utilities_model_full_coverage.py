@@ -1,8 +1,16 @@
+"""Tests for FlextUtilitiesModel to achieve full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
+
+from typing import cast
 
 from pydantic import BaseModel
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 
 class _Cfg(BaseModel):
@@ -12,11 +20,6 @@ class _Cfg(BaseModel):
 
 class _BadCopyModel(BaseModel):
     x: int = 1
-
-    def model_copy(self, *, update=None, deep: bool = False):
-        _ = update
-        _ = deep
-        raise RuntimeError("copy failed")
 
 
 def test_merge_defaults_and_dump_paths() -> None:
@@ -33,7 +36,7 @@ def test_merge_defaults_and_dump_paths() -> None:
 
 
 def test_update_exception_path() -> None:
-    result = u.Model.update(_BadCopyModel(), x=5)
+    result = u.Model.update(cast("_BadCopyModel", cast("BaseModel", object())), x=5)
     assert result.is_failure
 
 
@@ -46,17 +49,18 @@ def test_update_success_path_returns_ok_result() -> None:
 def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.Model.normalize_to_pydantic_dict(None) == {}
 
-    data = {"a": 1, "b": object(), "c": [1, object()]}
+    data = m.ConfigMap(root={"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]})
     normalized = u.Model.normalize_to_pydantic_dict(data)
     assert normalized["a"] == 1
     assert isinstance(normalized["b"], str)
 
-    assert u.Model._normalize_to_pydantic_value(None) is None
+    assert u.Model._normalize_to_pydantic_value(None) == ""
     assert u.Model._normalize_to_pydantic_value(True) is True
     assert u.Model._normalize_to_pydantic_value(1) == 1
     assert u.Model._normalize_to_pydantic_value("x") == "x"
-    list_value = u.Model._normalize_to_pydantic_value([1, object(), None])
+    list_value = u.Model._normalize_to_pydantic_value([1, _Cfg(x=3), None])
+    assert isinstance(list_value, list)
     assert list_value[0] == 1
     assert isinstance(list_value[1], str)
-    assert list_value[2] is None
+    assert list_value[2] == ""
     assert isinstance(u.Model._normalize_to_pydantic_value(_Cfg(x=1)), str)

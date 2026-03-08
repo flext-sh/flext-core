@@ -1,0 +1,16 @@
+# Generic signature migration propagation. Keep entries declarative and explicit.
+
+rules:
+  - id: propagate-refactor-signature-migrations
+    name: "Propagate signature migrations"
+    description: "Propagate keyword/argument signature changes across the workspace"
+    enabled: true
+    severity: error
+    fix_action: propagate_signature_migrations
+    signature_migrations:
+      - id: migrate-project-root-to-workspace-root
+        enabled: true
+        target_qualified_names:
+          - "flext_infra.workspace.migrator.FlextInfraProjectMigrator.migrate"
+        keyword_renames:
+          project_root: "workspace_root"

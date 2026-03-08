@@ -23,9 +23,9 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextResult,
+    p,
     u,
 )
-from flext_core.protocols import p
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,7 +126,7 @@ class TestCoveragePush75Percent:
 
     def test_result_basic_fail(self) -> None:
         """Test basic FlextResult fail."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         assert r.is_failure
         assert r.error == "error"
 
@@ -168,39 +168,39 @@ class TestCoveragePush75Percent:
     def test_container_basic(self) -> None:
         """Test basic container operations."""
         c = FlextContainer()
-        r = c.with_service("test", "value")
+        r = c.register("test", "value")
         assert r is c
-        r2: FlextResult[str] = c.get("test")
+        r2 = c.get("test")
         assert r2.is_success
         assert r2.value == "value"
 
     def test_container_not_found(self) -> None:
         """Test container get not found."""
         c = FlextContainer()
-        r: FlextResult[object] = c.get("nonexistent")
+        r = c.get("nonexistent")
         assert r.is_failure
 
     def test_container_clear_all(self) -> None:
         """Test container clear_all."""
         c = FlextContainer()
-        c.with_service("test", "value")
+        c.register("test", "value")
         c.clear_all()
-        r: FlextResult[object] = c.get("test")
+        r = c.get("test")
         assert r.is_failure
 
     def test_container_unregister(self) -> None:
         """Test container unregister."""
         c = FlextContainer()
-        c.with_service("test", "value")
+        c.register("test", "value")
         c.unregister("test")
-        r: FlextResult[object] = c.get("test")
+        r = c.get("test")
         assert r.is_failure
 
     def test_container_register_multiple(self) -> None:
         """Test registering multiple services."""
         c = FlextContainer()
-        c.with_service("svc1", "val1")
-        c.with_service("svc2", "val2")
+        c.register("svc1", "val1")
+        c.register("svc2", "val2")
         assert c.get("svc1").value == "val1"
         assert c.get("svc2").value == "val2"
 
@@ -235,7 +235,7 @@ class TestCoveragePush75Percent:
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or with default."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         assert r.unwrap_or(42) == 42
         r2 = FlextResult[int].ok(10)
         assert r2.unwrap_or(42) == 10
@@ -244,12 +244,12 @@ class TestCoveragePush75Percent:
         """Test result as boolean."""
         success = FlextResult[int].ok(42)
         assert bool(success) is True
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
         assert bool(failure) is False
 
     def test_result_or_operator(self) -> None:
         """Test | operator for default."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         result = r | 42
         assert result == 42
 

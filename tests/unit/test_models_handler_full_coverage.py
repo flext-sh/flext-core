@@ -1,54 +1,44 @@
+"""Tests for Handler models full coverage."""
+
 from __future__ import annotations
 
-from flext_core import c, m, r, t, u
+import pytest
 
-
-handler_models = __import__(
-    "flext_core._models.handler", fromlist=["FlextModelsHandler"]
-)
-FlextModelsHandler = handler_models.FlextModelsHandler
+from flext_core import c, m, r, u
 
 
 def test_models_handler_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
-    req = m.Handler.RegistrationRequest(handler=lambda: None, handler_mode="command")
+    req = m.RegistrationRequest(
+        handler=lambda value: value,
+        handler_mode="command",
+    )
     assert req.handler_mode == "command"
 
-    try:
-        FlextModelsHandler.Registration(name="bad", handler=1)
-    except TypeError as exc:
-        assert "Handler must be callable" in str(exc)
-    else:
-        raise AssertionError("Expected TypeError")
+    with pytest.raises(TypeError, match="Handler must be callable"):
+        m.HandlerRegistration(name="bad", handler=1)
 
-    ctx = m.Handler.ExecutionContext.create_for_handler("h1", "command")
-    assert ctx.execution_time_ms == 0.0
+    ctx = m.HandlerExecutionContext.create_for_handler("h1", "command")
+    assert ctx.execution_time_ms == pytest.approx(0.0)
     state = ctx.metrics_state
-    assert isinstance(state, t.Dict)
-    ctx.set_metrics_state(t.Dict(root={"x": 1}))
+    assert isinstance(state, m.Dict)
+    ctx.set_metrics_state(m.Dict(root={"x": 1}))
     assert ctx.has_metrics is True
 
 
 def test_models_handler_uncovered_mode_and_reset_paths() -> None:
-    validate_mode = FlextModelsHandler.RegistrationRequest.__dict__["validate_mode"]
-    assert (
-        validate_mode.__func__(
-            FlextModelsHandler.RegistrationRequest,
-            "custom-mode",
-        )
-        == "custom-mode"
-    )
+    # validate_mode was a no-op and was removed; Literal type handles validation
 
     ctx = m.Handler.ExecutionContext.create_for_handler("h2", "query")
     assert ctx.is_running is False
     ctx.start_execution()
-    assert ctx.is_running is True
-    ctx.set_metrics_state(t.Dict(root={"count": 1}))
+    assert ctx.is_running
+    ctx.set_metrics_state(m.Dict(root={"count": 1}))
     ctx.reset()
     assert ctx.is_running is False
     assert ctx.has_metrics is False

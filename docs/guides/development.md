@@ -461,15 +461,19 @@ config = FlextNewlibSettings(new_setting="value")
 ### Common Issues
 
 1. **Import Errors**
+
    ```bash
    # Check PYTHONPATH
    export PYTHONPATH=src
 
    # Reinstall dependencies
    make clean && make setup
+
    ```
 
 ````
+
+```markdown
 
 2. **Test Failures**
 
@@ -479,16 +483,16 @@ config = FlextNewlibSettings(new_setting="value")
 
    # Check specific test
    pytest tests/unit/test_specific.py::test_function -v
-````
+```markdown
 
-3. **Build Issues**
+1. **Build Issues**
 
    ```bash
    # Clean and rebuild
    make clean-all
    make setup
    make build-all
-   ```
+````
 
 ## Resources
 
@@ -503,3 +507,6 @@ config = FlextNewlibSettings(new_setting="value")
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
 - **Email**: <dev@flext.com>
+
+```
+```

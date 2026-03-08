@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
+from typing import override
 
 from flext_core import (
     c,
@@ -55,7 +56,7 @@ class DemonstrationResult(m.Value):
     completed_at: str
 
 
-class RunDemonstrationCommand(m.Cqrs.Command):
+class RunDemonstrationCommand(m.Command):
     """Command to run demonstration."""
 
     operation: str = "demonstration"
@@ -72,52 +73,10 @@ class RunDemonstrationCommand(m.Cqrs.Command):
 class RailwayService(s[DemonstrationResult]):
     """Advanced service demonstrating railway patterns with comprehensive flext-core integration."""
 
-    def __init__(self, **kwargs: t.GeneralValueType) -> None:
+    def __init__(self, **kwargs: t.Container) -> None:
         """Initialize service."""
         super().__init__(**kwargs)
         # Dependencies created directly to avoid serialization issues in handlers
-
-    def execute(self) -> r[DemonstrationResult]:
-        """Execute comprehensive r demonstrations."""
-        print("Starting r comprehensive demonstration")
-
-        try:
-            # Chain all demonstrations using railway pattern
-            return (
-                self
-                ._run_demonstrations()
-                .flat_map(self._build_result_data)
-                .map(self._log_success)
-            )
-
-        except Exception as e:
-            return self._handle_execution_error(e)
-
-    def _run_demonstrations(self) -> r[None]:
-        """Run all demonstration methods using advanced functional composition."""
-        # Define demonstrations using collections.abc.Sequence for type safety
-        demonstrations: Sequence[Callable[[], None]] = (
-            self._demonstrate_factory_methods,
-            self._demonstrate_value_extraction,
-            self._demonstrate_railway_operations,
-            self._demonstrate_error_recovery,
-            self._demonstrate_advanced_combinators,
-            self._demonstrate_validation_patterns,
-            self._demonstrate_exception_integration,
-        )
-
-        # Execute demonstrations with advanced traverse pattern (DRY)
-        results = [RailwayService._execute_demo(demo) for demo in demonstrations]
-        return r.traverse(results, lambda result: result).map(lambda _: None)
-
-    @staticmethod
-    def _execute_demo(demo: Callable[[], None]) -> r[bool]:
-        """Execute demonstration and return success result."""
-        try:
-            demo()
-            return r.ok(True)
-        except Exception as e:
-            return r.fail(f"Demonstration failed: {e}")
 
     @staticmethod
     def _build_result_data(_: None) -> r[DemonstrationResult]:
@@ -136,19 +95,18 @@ class RailwayService(s[DemonstrationResult]):
 
         return r.ok(result_data)
 
-    def _log_success(self, data: DemonstrationResult) -> DemonstrationResult:
-        """Log success and return data using advanced logging patterns."""
-        self.logger.info("r demonstration completed successfully")
-        return data
+    @staticmethod
+    def _create_data_processor() -> Callable[
+        [DemonstrationResult],
+        DemonstrationResult,
+    ]:
+        """Create data processor using advanced patterns."""
 
-    def _handle_execution_error(self, error: Exception) -> r[DemonstrationResult]:
-        """Handle execution errors with proper typing."""
-        error_msg = f"Demonstration failed: {error}"
-        self.logger.error(error_msg)
-        return r[DemonstrationResult].fail(
-            error_msg,
-            error_code=c.Errors.EXCEPTION_ERROR,
-        )
+        def process_data(data: DemonstrationResult) -> DemonstrationResult:
+            # Add processing logic here
+            return data
+
+        return process_data
 
     @staticmethod
     def _create_user_validator() -> Callable[[str], r[User]]:
@@ -168,17 +126,65 @@ class RailwayService(s[DemonstrationResult]):
         return validate_user
 
     @staticmethod
-    def _create_data_processor() -> Callable[
-        [DemonstrationResult],
-        DemonstrationResult,
-    ]:
-        """Create data processor using advanced patterns."""
+    def _demonstrate_advanced_combinators() -> None:
+        """Advanced functional programming patterns."""
+        print("\n=== Advanced Combinators ===")
 
-        def process_data(data: DemonstrationResult) -> DemonstrationResult:
-            # Add processing logic here
-            return data
+        # Traverse multiple results with type safety
+        results = [
+            r[int].ok(c.ZERO + 1),  # 1
+            r[int].ok(c.ZERO + 2),  # 2
+            r[int].ok(c.ZERO + 3),  # 3
+        ]
 
-        return process_data
+        traversed = r.traverse(results, lambda r_val: r_val)
+        traversed_val = traversed.value
+        print(f".traverse(): {len(traversed_val)} results")
+
+        # Filter with predicate using c threshold
+        test_value = c.Validation.FILTER_THRESHOLD + c.Validation.MIN_AGE  # 10
+        filtered = (
+            r[int].ok(test_value).filter(lambda x: x > c.Validation.FILTER_THRESHOLD)
+        )
+        print(f".filter(>{c.Validation.FILTER_THRESHOLD}): {filtered.is_success}")
+
+    @staticmethod
+    def _demonstrate_error_recovery() -> None:
+        """Demonstrate error recovery patterns with advanced functional composition."""
+        print("\n=== Error Recovery ===")
+
+        failure: r[str] = r[str].fail("Primary operation failed")
+
+        # Alternative (transform error) using functional approach
+        def recover_message(error: str) -> str:
+            return f"Recovered from: {error}"
+
+        recovered = failure.map_error(recover_message)
+        print(f".map_error() transform: {recovered.error}")
+
+        # Lash (error recovery) with fallback
+        def provide_fallback(_error: str) -> r[str]:
+            return r.ok("Fallback value")
+
+        fallback = failure.lash(provide_fallback)
+        print(f".lash() recovery: {fallback.value}")
+
+    @staticmethod
+    def _demonstrate_exception_integration() -> None:
+        """Demonstrate structured exception integration with r."""
+        print("\n=== Exception Integration ===")
+
+        error_message = "Invalid data provided"
+        try:
+            raise e.ValidationError(
+                error_message,
+                field="email",
+                value="invalid-email",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        except e.ValidationError as exc:
+            result: r[str] = r[str].fail(exc.message, error_code=exc.error_code)
+            print(f"✅ ValidationError integration: {result.error_code}")
 
     @staticmethod
     def _demonstrate_factory_methods() -> None:
@@ -190,7 +196,7 @@ class RailwayService(s[DemonstrationResult]):
         print(f"✅ .ok(): {success.value}")
 
         # Failure result with centralized error code
-        failure: r[str] = r.fail(
+        failure: r[str] = r[str].fail(
             "Validation failed",
             error_code=c.Errors.VALIDATION_ERROR,
         )
@@ -203,22 +209,6 @@ class RailwayService(s[DemonstrationResult]):
 
         from_callable = r[int].create_from_callable(risky_operation)
         print(f"🔥 .create_from_callable(): {from_callable.error}")
-
-    @staticmethod
-    def _demonstrate_value_extraction() -> None:
-        """Demonstrate r value extraction with advanced patterns."""
-        print("\n=== Value Extraction ===")
-
-        # Use example data from constants with centralized t
-        success = r.ok({"name": "John", "email": "john@example.com"})
-        failure: r[str] = r.fail("Not found")
-
-        # Value extraction patterns
-        user_data = success.value
-        print(f".value success: {user_data[c.Mixins.FIELD_NAME]}")
-        print(f".unwrap_or() failure: {failure.unwrap_or('default')}")
-        print(f".value property: {user_data['email']}")
-        print(f".value: {success.value}")
 
     @staticmethod
     def _demonstrate_railway_operations() -> None:
@@ -259,49 +249,6 @@ class RailwayService(s[DemonstrationResult]):
             add_exclamation,
         )
         print(f".flow_through pipeline: {pipeline.value}")
-
-    @staticmethod
-    def _demonstrate_error_recovery() -> None:
-        """Demonstrate error recovery patterns with advanced functional composition."""
-        print("\n=== Error Recovery ===")
-
-        failure: r[str] = r.fail("Primary operation failed")
-
-        # Alternative (transform error) using functional approach
-        def recover_message(error: str) -> str:
-            return f"Recovered from: {error}"
-
-        recovered = failure.alt(recover_message)
-        print(f".alt() transform: {recovered.error}")
-
-        # Lash (error recovery) with fallback
-        def provide_fallback(_error: str) -> r[str]:
-            return r.ok("Fallback value")
-
-        fallback = failure.lash(provide_fallback)
-        print(f".lash() recovery: {fallback.value}")
-
-    @staticmethod
-    def _demonstrate_advanced_combinators() -> None:
-        """Advanced functional programming patterns."""
-        print("\n=== Advanced Combinators ===")
-
-        # Traverse multiple results with type safety
-        results = [
-            r[int].ok(c.ZERO + 1),  # 1
-            r[int].ok(c.ZERO + 2),  # 2
-            r[int].ok(c.ZERO + 3),  # 3
-        ]
-
-        traversed = r.traverse(results, lambda r: r)
-        print(f".traverse(): {len(traversed.value)} results")
-
-        # Filter with predicate using c threshold
-        test_value = c.Validation.FILTER_THRESHOLD + c.Validation.MIN_AGE  # 10
-        filtered = (
-            r[int].ok(test_value).filter(lambda x: x > c.Validation.FILTER_THRESHOLD)
-        )
-        print(f".filter(>{c.Validation.FILTER_THRESHOLD}): {filtered.is_success}")
 
     @staticmethod
     def _demonstrate_validation_patterns() -> None:
@@ -346,21 +293,79 @@ class RailwayService(s[DemonstrationResult]):
         print(f"Multiple validations: {all_valid.is_success}")
 
     @staticmethod
-    def _demonstrate_exception_integration() -> None:
-        """Demonstrate structured exception integration with r."""
-        print("\n=== Exception Integration ===")
+    def _demonstrate_value_extraction() -> None:
+        """Demonstrate r value extraction with advanced patterns."""
+        print("\n=== Value Extraction ===")
 
-        error_message = "Invalid data provided"
+        # Use example data from constants with centralized t
+        success = r[m.ConfigMap].ok(
+            m.ConfigMap(root={"name": "John", "email": "john@example.com"}),
+        )
+        failure: r[str] = r[str].fail("Not found")
+
+        # Value extraction patterns
+        user_data = success.value
+        print(f".value success: {user_data.get(c.Mixins.FIELD_NAME, '')}")
+        print(f".unwrap_or() failure: {failure.unwrap_or('default')}")
+        print(f".value property: {user_data.get('email', '')}")
+        print(f".value: {success.value}")
+
+    @staticmethod
+    def _execute_demo(demo: Callable[[], None]) -> r[bool]:
+        """Execute demonstration and return success result."""
         try:
-            raise e.ValidationError(
-                error_message,
-                field="email",
-                value="invalid-email",
-                error_code=c.Errors.VALIDATION_ERROR,
+            demo()
+            return r.ok(True)
+        except Exception as e:
+            return r[bool].fail(f"Demonstration failed: {e}")
+
+    @override
+    def execute(self) -> r[DemonstrationResult]:
+        """Execute comprehensive r demonstrations."""
+        print("Starting r comprehensive demonstration")
+
+        try:
+            # Chain all demonstrations using railway pattern
+            return (
+                self
+                ._run_demonstrations()
+                .flat_map(self._build_result_data)
+                .map(self._log_success)
             )
-        except e.ValidationError as exc:
-            result: r[str] = r.fail(exc.message, error_code=exc.error_code)
-            print(f"✅ ValidationError integration: {result.error_code}")
+
+        except Exception as e:
+            return self._handle_execution_error(e)
+
+    def _handle_execution_error(self, error: Exception) -> r[DemonstrationResult]:
+        """Handle execution errors with proper typing."""
+        error_msg = f"Demonstration failed: {error}"
+        self.logger.error(error_msg)
+        return r[DemonstrationResult].fail(
+            error_msg,
+            error_code=c.Errors.EXCEPTION_ERROR,
+        )
+
+    def _log_success(self, data: DemonstrationResult) -> DemonstrationResult:
+        """Log success and return data using advanced logging patterns."""
+        self.logger.info("r demonstration completed successfully")
+        return data
+
+    def _run_demonstrations(self) -> r[None]:
+        """Run all demonstration methods using advanced functional composition."""
+        # Define demonstrations using collections.abc.Sequence for type safety
+        demonstrations: Sequence[Callable[[], None]] = (
+            self._demonstrate_factory_methods,
+            self._demonstrate_value_extraction,
+            self._demonstrate_railway_operations,
+            self._demonstrate_error_recovery,
+            self._demonstrate_advanced_combinators,
+            self._demonstrate_validation_patterns,
+            self._demonstrate_exception_integration,
+        )
+
+        # Execute demonstrations with advanced traverse pattern (DRY)
+        results = [RailwayService._execute_demo(demo) for demo in demonstrations]
+        return r[bool].traverse(results, lambda result: result).map(lambda _: None)
 
 
 def main() -> None:
@@ -390,7 +395,7 @@ def main() -> None:
 
     print(f"\n{separator}")
     print("🎯 Railway patterns: .map(), .flat_map(), .flow_through()")
-    print("🎯 Error recovery: .alt(), .lash()")
+    print("🎯 Error recovery: .map_error(), .lash()")
     print("🎯 Advanced combinators: .traverse(), .filter()")
     print("🎯 Validation integration: u.Validation")
     print("🎯 Type safety: Centralized t with Python 3.13+")

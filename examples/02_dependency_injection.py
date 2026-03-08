@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -26,7 +27,6 @@ from flext_core import (
     m,
     r,
     s,
-    t,
     u,
 )
 
@@ -53,7 +53,7 @@ from flext_core import (
 class DatabaseService(m.ArbitraryTypesModel):
     """Database service using centralized types and railway pattern."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     config: m.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
@@ -63,13 +63,12 @@ class DatabaseService(m.ArbitraryTypesModel):
         if self.status == c.Cqrs.CommonStatus.ACTIVE:
             return r[bool].ok(value=True)
 
-        url = self.config.get("url", "")
-        if not isinstance(url, str) or not url:
+        url = str(self.config.get("url", ""))
+        if not url:
             return r[bool].fail(c.Errors.CONFIGURATION_ERROR)
 
-        timeout = self.config.get("timeout", 0)
-        if not isinstance(timeout, int):
-            return r[bool].fail(c.Errors.VALIDATION_ERROR)
+        timeout_text = str(self.config.get("timeout", 0))
+        timeout = int(timeout_text) if timeout_text.isdigit() else 0
 
         # Railway pattern with u validation (DRY)
         timeout_validation = u.validate_positive(timeout)
@@ -100,18 +99,20 @@ class DatabaseService(m.ArbitraryTypesModel):
                 c.Errors.VALIDATION_ERROR,
             )
 
-        result: m.ConfigMap = {
-            "id": u.generate_short_id(),
-            "name": "Alice",
-            "email": "alice@example.com",
-        }
+        result: m.ConfigMap = m.ConfigMap(
+            root={
+                "id": u.generate_short_id(),
+                "name": "Alice",
+                "email": "alice@example.com",
+            },
+        )
         return r[m.ConfigMap].ok(result)
 
 
 class CacheService(m.ArbitraryTypesModel):
     """Cache service using centralized types."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     config: m.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
@@ -146,13 +147,9 @@ class CacheService(m.ArbitraryTypesModel):
                 max_length=c.Validation.MAX_NAME_LENGTH,
             )
             .flat_map(
-                lambda _: (
-                    u.validate_length(
-                        value,
-                        max_length=c.Validation.MAX_NAME_LENGTH,
-                    )
-                    if isinstance(value, str)
-                    else r[str].ok("")
+                lambda _: u.validate_length(
+                    str(value),
+                    max_length=c.Validation.MAX_NAME_LENGTH,
                 ),
             )
             .map(lambda _: True)
@@ -162,7 +159,7 @@ class CacheService(m.ArbitraryTypesModel):
 class EmailService(m.ArbitraryTypesModel):
     """Email service using centralized types."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     config: m.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
@@ -201,6 +198,101 @@ class EmailService(m.ArbitraryTypesModel):
 class DependencyInjectionService(s[m.ConfigMap]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
+    @staticmethod
+    def _demonstrate_advanced_patterns(container: FlextContainer) -> None:
+        """Show advanced DI patterns."""
+        print("\n=== Advanced DI Patterns ===")
+
+        service_names = ["database", "cache", "email"]
+        services_count = 0
+        for name in service_names:
+            result = container.get(name)
+            if result.is_success:
+                services_count += 1
+        print(f"✅ Auto-wired services: {services_count}")
+
+        print(f"✅ Singleton: {FlextContainer() is FlextContainer()}")
+
+        original_count = len(container.list_services())
+        container.clear_all()
+        print(
+            f"✅ Container cleared: {original_count} → {len(container.list_services())}",
+        )
+
+        # Error handling
+        missing_result = container.get("non_existent")
+        typed_db_result = container.get("database", type_cls=DatabaseService)
+        invalid_query = (
+            typed_db_result.value.query("INVALID QUERY")
+            if typed_db_result.is_success
+            else r[m.ConfigMap].fail("database service unavailable")
+        )
+        print(
+            f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
+        )
+
+    @staticmethod
+    def _demonstrate_resolution(container: FlextContainer) -> None:
+        """Show dependency resolution patterns."""
+        print("\n=== Dependency Resolution ===")
+
+        database_result = container.get("database", type_cls=DatabaseService)
+        cache_result = container.get("cache", type_cls=CacheService)
+        email_result = container.get("email", type_cls=EmailService)
+
+        db_check = database_result.flat_map(lambda service: service.connect())
+        cache_check = cache_result.flat_map(
+            lambda service: service.set("test_key", "test_value")
+        )
+        email_check = email_result.flat_map(
+            lambda service: service.send("test@example.com", "Test", "Hello")
+        )
+
+        print(f"✅ database: {db_check.is_success}")
+        print(f"✅ cache: {cache_check.is_success}")
+        print(f"✅ email: {email_check.is_success}")
+
+    @staticmethod
+    def _setup_container() -> FlextContainer:
+        """Setup container with services."""
+        container = FlextContainer()
+
+        # Create services with centralized config mappings from t
+        db_config: m.ConfigMap = m.ConfigMap(
+            root={
+                "driver": "sqlite",
+                "url": "sqlite:///:memory:",
+                "timeout": c.Network.DEFAULT_TIMEOUT,
+            },
+        )
+        db_service = DatabaseService(config=db_config)
+        db_service.status = c.Cqrs.CommonStatus.ACTIVE
+
+        cache_config: m.ConfigMap = m.ConfigMap(
+            root={
+                "backend": "memory",
+                "ttl": c.Defaults.DEFAULT_CACHE_TTL,
+            },
+        )
+        cache_service = CacheService(config=cache_config)
+        cache_service.status = c.Cqrs.CommonStatus.ACTIVE
+
+        email_config: m.ConfigMap = m.ConfigMap(
+            root={
+                "host": "smtp.example.com",
+                "port": 587,
+            },
+        )
+        email_service = EmailService(config=email_config)
+        email_service.status = c.Cqrs.CommonStatus.ACTIVE
+
+        container.register("database", db_service)
+        container.register("cache", cache_service)
+        container.register("email", email_service)
+
+        return container
+
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute DI demonstrations."""
         self.logger.info("Starting dependency injection demonstration")
@@ -211,55 +303,23 @@ class DependencyInjectionService(s[m.ConfigMap]):
         self._demonstrate_resolution(container)
         self._demonstrate_advanced_patterns(container)
 
-        result_data: m.ConfigMap = {
-            "patterns_demonstrated": 5,
-            "services_registered": ["database", "cache", "email"],
-            "di_patterns": [
-                "service_registration",
-                "dependency_resolution",
-                "auto_wiring",
-                "lifecycle_management",
-                "error_handling",
-            ],
-            "completed_at": datetime.now(UTC).isoformat(),
-        }
+        result_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "patterns_demonstrated": 5,
+                "services_registered": ["database", "cache", "email"],
+                "di_patterns": [
+                    "service_registration",
+                    "dependency_resolution",
+                    "auto_wiring",
+                    "lifecycle_management",
+                    "error_handling",
+                ],
+                "completed_at": datetime.now(UTC).isoformat(),
+            },
+        )
 
         self.logger.info("Dependency injection demonstration completed")
         return r[m.ConfigMap].ok(result_data)
-
-    @staticmethod
-    def _setup_container() -> FlextContainer:
-        """Setup container with services."""
-        container = FlextContainer()
-
-        # Create services with centralized config mappings from t
-        db_config: m.ConfigMap = {
-            "driver": "sqlite",
-            "url": "sqlite:///:memory:",
-            "timeout": c.Network.DEFAULT_TIMEOUT,
-        }
-        db_service = DatabaseService(config=db_config)
-        db_service.status = c.Cqrs.CommonStatus.ACTIVE
-
-        cache_config: m.ConfigMap = {
-            "backend": "memory",
-            "ttl": c.Defaults.DEFAULT_CACHE_TTL,
-        }
-        cache_service = CacheService(config=cache_config)
-        cache_service.status = c.Cqrs.CommonStatus.ACTIVE
-
-        email_config: m.ConfigMap = {
-            "host": "smtp.example.com",
-            "port": 587,
-        }
-        email_service = EmailService(config=email_config)
-        email_service.status = c.Cqrs.CommonStatus.ACTIVE
-
-        _ = container.register("database", db_service)
-        _ = container.register("cache", cache_service)
-        _ = container.register("email", email_service)
-
-        return container
 
     def _demonstrate_registration(self, container: FlextContainer) -> None:
         """Show service registration patterns."""
@@ -276,69 +336,6 @@ class DependencyInjectionService(s[m.ConfigMap]):
             self.logger.info("✅ %s registered: %s", name, has_service)
 
         self.logger.info(f"📋 Services: {container.list_services()}")
-
-    @staticmethod
-    def _demonstrate_resolution(container: FlextContainer) -> None:
-        """Show dependency resolution patterns."""
-        print("\n=== Dependency Resolution ===")
-
-        def test_database(db: DatabaseService) -> r[bool]:
-            return db.connect()
-
-        def test_cache(cache: CacheService) -> r[bool]:
-            return cache.set("test_key", "test_value")
-
-        def test_email(email: EmailService) -> r[bool]:
-            return email.send("test@example.com", "Test", "Hello")
-
-        # Test each service with type narrowing
-        for service_name in ["database", "cache", "email"]:
-            result: r[t.GeneralValueType] = container.get(service_name)
-            if result.is_success:
-                service = result.value
-                if service_name == "database" and isinstance(service, DatabaseService):
-                    test_result = test_database(service)
-                elif service_name == "cache" and isinstance(service, CacheService):
-                    test_result = test_cache(service)
-                elif service_name == "email" and isinstance(service, EmailService):
-                    test_result = test_email(service)
-                else:
-                    test_result = r[bool].fail("Service type mismatch")
-                print(f"✅ {service_name}: {test_result.is_success}")
-            else:
-                print(f"❌ {service_name}: Failed to resolve")
-
-    @staticmethod
-    def _demonstrate_advanced_patterns(container: FlextContainer) -> None:
-        """Show advanced DI patterns."""
-        print("\n=== Advanced DI Patterns ===")
-
-        service_names = ["database", "cache", "email"]
-        services: dict[str, t.GeneralValueType] = {
-            name: container.get(name).value
-            for name in service_names
-            if container.get(name).is_success
-        }
-        print(f"✅ Auto-wired services: {len(services)}")
-
-        print(f"✅ Singleton: {FlextContainer() is FlextContainer()}")
-
-        original_count = len(container.list_services())
-        container.clear_all()
-        print(
-            f"✅ Container cleared: {original_count} → {len(container.list_services())}",
-        )
-
-        # Error handling
-        missing_result: r[t.GeneralValueType] = container.get("non_existent")
-        db_result: r[t.GeneralValueType] = container.get("database")
-        if db_result.is_success:
-            db_service = db_result.value
-            if isinstance(db_service, DatabaseService):
-                invalid_query = db_service.query("INVALID QUERY")
-                print(
-                    f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
-                )
 
 
 def main() -> None:
@@ -359,8 +356,8 @@ def main() -> None:
 
     # Global config singleton demonstration (containers are not global singletons)
     print("\n=== Global Config Pattern ===")
-    global_config = FlextSettings.get_global_instance()
-    another_ref = FlextSettings.get_global_instance()
+    global_config = FlextSettings.get_global()
+    another_ref = FlextSettings.get_global()
     print(f"✅ Global singleton: {global_config is another_ref}")
 
     print("=" * 60)

@@ -682,6 +682,8 @@ def test_parse_invalid_ldif():
    pytest
    ```
 
+````
+
 1. **Fixture Not Found**
 
    ```python
@@ -689,7 +691,7 @@ def test_parse_invalid_ldif():
    @pytest.fixture(scope="function")
    def my_fixture():
        return "value"
-   ```
+````
 
 1. **Test Timeout**
 
@@ -698,12 +700,14 @@ def test_parse_invalid_ldif():
    pytest --timeout=300
    ```
 
+````
+
 1. **Coverage Issues**
 
    ```bash
    # Check coverage configuration
    pytest --cov=src --cov-report=term-missing
-   ```
+````
 
 ## Resources
 
@@ -712,3 +716,6 @@ def test_parse_invalid_ldif():
 - FLEXT Quality Standards
 - Test Examples
 - CI/CD Configuration
+
+```
+```

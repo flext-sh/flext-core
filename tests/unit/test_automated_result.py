@@ -6,9 +6,11 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
-from flext_core import FlextTypes as t, r
+from flext_core import r, t
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -56,7 +58,8 @@ class TestAutomatedFlextResult:
         ids=lambda case: case["description"],
     )
     def test_automated_result_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for result functionality."""
         try:
@@ -93,7 +96,8 @@ class TestAutomatedFlextResult:
         # Test with correct types
         result = self._execute_result_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextResult type safety test"
+            result,
+            "FlextResult type safety test",
         )
 
     def test_automated_result_error_handling(self) -> None:
@@ -101,7 +105,12 @@ class TestAutomatedFlextResult:
         instance = fixture_factory.create_test_result_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
 
         for error_input in error_inputs:
             result = self._execute_result_operation(instance, error_input or {})
@@ -120,7 +129,8 @@ class TestAutomatedFlextResult:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextResult performance test exceeded timeout"
+            result,
+            "FlextResult performance test exceeded timeout",
         )
 
     def test_automated_result_resource_management(self) -> None:
@@ -130,20 +140,25 @@ class TestAutomatedFlextResult:
         # Test normal operation
         result = self._execute_result_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextResult resource test"
+            result,
+            "FlextResult resource test",
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: object = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextResult cleanup failed"
+                    cleanup_result,
+                    "FlextResult cleanup failed",
                 )
 
     def _execute_result_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[bool]:
         """Execute a test operation on result instance.
 
         This method should be customized based on the actual result API.
@@ -151,13 +166,13 @@ class TestAutomatedFlextResult:
         """
         try:
             # Generic operation - return instance as success
-            if isinstance(instance, dict):
-                return r[t.GeneralValueType].ok(instance)
-            return r[t.GeneralValueType].ok(instance)
+            _ = instance
+            _ = input_data
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextResult operation failed: {e}")
+            return r[bool].fail(f"FlextResult operation failed: {e}")
 
     @pytest.fixture
-    def test_result_instance(self) -> t.GeneralValueType:
+    def test_result_instance(self) -> object:
         """Fixture for result test instance."""
         return fixture_factory.create_test_result_instance()

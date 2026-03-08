@@ -19,8 +19,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core.container import FlextContainer
-from flext_core.typings import t
+from flext_core import FlextContainer, t
 
 
 class PerformanceBenchmark:
@@ -28,8 +27,8 @@ class PerformanceBenchmark:
 
     @staticmethod
     def measure_time(
-        func: Callable[[], t.GeneralValueType],
-    ) -> tuple[t.GeneralValueType, float]:
+        func: Callable[[], t.ContainerValue],
+    ) -> tuple[t.ContainerValue, float]:
         """Measure execution time of a function.
 
         Args:
@@ -113,10 +112,7 @@ class PerformanceBenchmark:
         )
         # Perform registrations separately
         [
-            container.register_factory(
-                f"factory_{i}",
-                make_factory(i),
-            )
+            container.register(f"factory_{i}", make_factory(i), kind="factory")
             for i in range(count)
         ]
         return elapsed
@@ -146,10 +142,7 @@ class PerformanceBenchmark:
         )
         # Perform registrations separately
         [
-            container.register_resource(
-                f"resource_{i}",
-                make_resource(i),
-            )
+            container.register(f"resource_{i}", make_resource(i), kind="resource")
             for i in range(count)
         ]
         return elapsed
@@ -200,7 +193,9 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count",
+        [10, 100, 1000, 10000],
+        ids=["10", "100", "1000", "10000"],
     )
     def test_register_performance(
         self,
@@ -213,7 +208,9 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count",
+        [10, 100, 1000, 10000],
+        ids=["10", "100", "1000", "10000"],
     )
     def test_get_performance(
         self,
@@ -251,7 +248,9 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count",
+        [10, 100, 1000, 10000],
+        ids=["10", "100", "1000", "10000"],
     )
     def test_has_service_performance(
         self,

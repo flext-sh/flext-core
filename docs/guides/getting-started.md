@@ -330,3 +330,6 @@ Now that you have FLEXT installed and running, explore these areas:
 1. **Examples**: Real-world usage examples
 
 Happy coding with FLEXT! 🚀
+
+```
+```

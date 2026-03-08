@@ -1,0 +1,17 @@
+export PYTHON_KEYRING_BACKEND := keyring.backends.null.Keyring
+
+VENV_PYTHON := $(ACTIVE_VENV)/bin/python
+VENV_ACTIVATE := source $(ACTIVE_VENV)/bin/activate
+export VIRTUAL_ENV := $(ACTIVE_VENV)
+export PATH := $(ACTIVE_VENV)/bin:$(PATH)
+
+# Poetry command (uses workspace venv automatically)
+POETRY := {{ config.package_manager }}
+
+# Quality tool (flext-quality with fallback)
+QUALITY_CMD ?= flext-quality
+QUALITY_AVAILABLE := $(shell command -v $(QUALITY_CMD) 2>/dev/null)
+
+# Export for subprocesses
+export PROJECT_NAME PYTHON_VERSION
+export FLEXT_ROOT := $(WORKSPACE_ROOT)

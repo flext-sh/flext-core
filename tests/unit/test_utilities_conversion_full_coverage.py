@@ -1,22 +1,25 @@
+# mypy: ignore-errors
+"""Tests for FlextUtilitiesConversion to achieve full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections import UserList
+from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import cast
 
 from pydantic import BaseModel
 
 from flext_core import c, m, r, t, u
+from flext_core._utilities.conversion import StrictJsonValue
 
 
-class _SeqLike(Sequence[int]):
-    def __init__(self, values: list[int]) -> None:
-        self._values = values
-
-    def __getitem__(self, index: int) -> int:
-        return self._values[index]
-
-    def __len__(self) -> int:
-        return len(self._values)
+class _SeqLike(UserList[int]):
+    pass
 
 
 class _Model(BaseModel):
@@ -27,30 +30,38 @@ def test_conversion_string_and_join_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"a": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
 
-    assert u.Conversion.to_str(object()).startswith("<")
+    assert u.Conversion.to_str(cast("StrictJsonValue", object())).startswith("<")
     assert u.Conversion.to_str_list(None) == []
-    assert u.Conversion.to_str_list(_SeqLike([1, 2])) == ["1", "2"]
+    assert u.Conversion.to_str_list(cast("StrictJsonValue", _SeqLike([1, 2]))) == [
+        "1",
+        "2",
+    ]
     assert u.Conversion.normalize("Ab") == "Ab"
     assert u.Conversion.join([]) == ""
     assert u.Conversion.join(["A", "B"], case="lower") == "a b"
 
 
-def test_to_general_value_type_branches() -> None:
-    assert u.Conversion.to_general_value_type(None) is None
-    model = _Model(value=1)
-    assert u.Conversion.to_general_value_type(model) == model
-    assert isinstance(u.Conversion.to_general_value_type(object()), str)
-
-
 def test_to_flexible_value_and_safe_list_branches() -> None:
-    assert u.Conversion.to_flexible_value(None) is None
-    assert u.Conversion.to_flexible_value(_Model(value=1)) is None
+    none_result = u.Conversion.to_flexible_value(None)
+    assert none_result.is_failure
 
-    mapping_value: Mapping[str, t.GeneralValueType] = {"x": 1}
-    assert u.Conversion.to_flexible_value(mapping_value) is None
-    assert u.Conversion.to_flexible_value(datetime.now(UTC)) is not None
+    model_result = u.Conversion.to_flexible_value(
+        cast("StrictJsonValue", cast("object", _Model(value=1))),
+    )
+    assert model_result.is_failure
+
+    mapping_value: Mapping[str, t.ContainerValue] = {"x": 1}
+    mapping_result = u.Conversion.to_flexible_value(
+        cast("StrictJsonValue", mapping_value),
+    )
+    assert mapping_result.is_failure
+
+    datetime_result = u.Conversion.to_flexible_value(
+        cast("StrictJsonValue", cast("object", datetime.now(UTC))),
+    )
+    assert datetime_result.is_success
 
     assert u.Conversion.to_str_list_safe(None) == []
     assert u.Conversion.to_str_list_safe("abc") == ["abc"]
@@ -58,4 +69,6 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
 
 
 def test_to_flexible_value_fallback_none_branch_for_unsupported_type() -> None:
-    assert u.Conversion.to_flexible_value(lambda: None) is None
+    result = u.Conversion.to_flexible_value(cast("StrictJsonValue", (lambda: None)))
+    assert result.is_success
+    assert isinstance(result.value, str)

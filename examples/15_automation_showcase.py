@@ -19,6 +19,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
+from pydantic import PrivateAttr
+
 from flext_core import (
     FlextContext,
     c,
@@ -28,7 +32,6 @@ from flext_core import (
     t,
     u,
 )
-from pydantic import PrivateAttr
 
 # =============================================================================
 # EXAMPLE 1: Service with Context Enrichment
@@ -38,7 +41,7 @@ from pydantic import PrivateAttr
 class UserService(s[m.ConfigMap]):
     """Service demonstrating automatic context enrichment."""
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize with automatic context enrichment.
 
         s.__init__ automatically calls:
@@ -46,10 +49,6 @@ class UserService(s[m.ConfigMap]):
         """
         super().__init__(**data)
         # Context now includes: service_type, service_module
-
-    def execute(self) -> r[m.ConfigMap]:
-        """Required abstract method implementation."""
-        return r[m.ConfigMap].ok({"status": "initialized"})
 
     def create_user(
         self,
@@ -62,13 +61,20 @@ class UserService(s[m.ConfigMap]):
             self.logger.info("Creating user", username=username, email=email)
 
         # Business logic
-        user_data: m.ConfigMap = {
-            "id": "usr_123",
-            "username": username,
-            "email": email,
-        }
+        user_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "id": "usr_123",
+                "username": username,
+                "email": email,
+            },
+        )
 
         return r[m.ConfigMap].ok(user_data)
+
+    @override
+    def execute(self) -> r[m.ConfigMap]:
+        """Required abstract method implementation."""
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
 
 
 # =============================================================================
@@ -79,13 +85,14 @@ class UserService(s[m.ConfigMap]):
 class PaymentService(s[m.ConfigMap]):
     """Service demonstrating correlation ID tracking."""
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
-        return r[m.ConfigMap].ok({"status": "initialized"})
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
 
     def process_payment(
         self,
@@ -127,12 +134,14 @@ class PaymentService(s[m.ConfigMap]):
             )
 
         # Business logic
-        payment_data: m.ConfigMap = {
-            "payment_id": payment_id,
-            "amount": amount,
-            "status": "completed",
-            "correlation_id": correlation_id,
-        }
+        payment_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "payment_id": payment_id,
+                "amount": amount,
+                "status": "completed",
+                "correlation_id": correlation_id,
+            },
+        )
 
         # Clean up operation context
         self._clear_operation_context()
@@ -148,39 +157,22 @@ class PaymentService(s[m.ConfigMap]):
 class OrderService(s[m.ConfigMap]):
     """Service demonstrating context enrichment helper method."""
 
-    _order_data: m.ConfigMap = PrivateAttr(default_factory=dict)
+    _order_data: m.ConfigMap = PrivateAttr(default_factory=lambda: m.ConfigMap(root={}))
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
-        order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
-        # Simple merge: new values override existing ones
-        merged: dict[str, t.GeneralValueType] = dict(order_data_dict)
-        merged.update(
-            {
-                "order_id": u.get(order_data_dict, "order_id", default="ord_123")
-                or "ord_123",
+        order_id_raw = self._order_data.get("order_id", "ord_123")
+        order_id = str(order_id_raw) if order_id_raw else "ord_123"
+        result_data = m.ConfigMap(
+            root={
+                "order_id": order_id,
                 "status": c.Cqrs.CommonStatus.PENDING.value,
-            },
-        )
-        order_data_dict = merged
-
-        def is_string_key(_k: str, _v: t.GeneralValueType) -> bool:
-            # k is already typed as str from dict[str, t.GeneralValueType]
-            return True
-
-        # Use u.filter to filter dict items with string keys
-        filtered_dict = u.filter_dict(
-            order_data_dict,
-            predicate=is_string_key,
-        )
-        result_data: m.ConfigMap = (
-            filtered_dict
-            if u.guard(filtered_dict, dict, return_value=True) is not None
-            else {}
+            }
         )
         return r[m.ConfigMap].ok(result_data)
 
@@ -191,9 +183,12 @@ class OrderService(s[m.ConfigMap]):
         correlation_id: str | None = None,
     ) -> r[m.ConfigMap]:
         """Process order with automatic context enrichment."""
-        order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
-        order_data_dict["order_id"] = order_id
-        order_data_dict["customer_id"] = customer_id
+        self._order_data = m.ConfigMap(
+            root={
+                "order_id": order_id,
+                "customer_id": customer_id,
+            }
+        )
 
         correlation = correlation_id or f"order_{order_id}_{customer_id}"
         FlextContext.Correlation.set_correlation_id(correlation)
@@ -228,38 +223,137 @@ class AutomationService(s[m.ConfigMap]):
     - unwrap_or pattern: Lazy resource initialization
     """
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize automation service."""
         super().__init__(**data)
 
-    def execute(
-        self,
-        **_kwargs: t.GeneralValueType,
-    ) -> r[m.ConfigMap]:
-        """Required abstract method implementation."""
-        return r[m.ConfigMap].ok({
-            "status": "automation_ready",
-        })
+    @staticmethod
+    def _demo_advanced_scenarios() -> None:
+        """Demo 6: Advanced Automation Scenarios."""
+        print("\n=== 6. ADVANCED AUTOMATION SCENARIOS ===")
+        AutomationService._demo_etl_pipeline()
+        AutomationService._demo_service_orchestration()
+        AutomationService._demo_lazy_config()
+        print("\n" + "=" * 60)
+        print("✅ ADVANCED AUTOMATION SCENARIOS COMPLETE!")
+        print("=" * 60)
 
     @staticmethod
-    def demonstrate_new_r_methods() -> None:
-        """Demonstrate the 5 new r methods in automation context."""
-        print("\n" + "=" * 60)
-        print("NEW r METHODS - AUTOMATION CONTEXT")
-        print("Demonstrating v0.9.9+ methods with automated workflows")
-        print("=" * 60)
+    def _demo_alt() -> None:
+        """Demo 4: alt - Alternative Automation Paths."""
+        print("\n=== 4. alt: Alternative Automation Paths ===")
 
-        AutomationService._demo_from_callable()
-        AutomationService._demo_flow_through()
-        AutomationService._demo_lash()
-        AutomationService._demo_alt()
-        AutomationService._demo_value_or_call()
-        AutomationService._demo_advanced_scenarios()
+        def get_cached() -> r[m.ConfigMap]:
+            return r[m.ConfigMap].fail("Cache unavailable")
 
-        print("\n" + "=" * 60)
-        print("✅ NEW r METHODS AUTOMATION DEMO COMPLETE!")
-        print("All 5 methods + 3 advanced scenarios demonstrated")
-        print("=" * 60)
+        def get_default() -> r[m.ConfigMap]:
+            return r[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
+                        "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
+                    },
+                ),
+            )
+
+        cached = get_cached()
+        config_result = get_default() if cached.is_failure else cached
+        if config_result.is_success:
+            config = config_result.value
+            mode = config.get("automation_mode", "unknown")
+            batch_size = config.get("batch_size", 0)
+            print(f"✅ Config acquired: {mode}")
+            print(f"   Batch size: {batch_size}")
+        else:
+            print(f"❌ No config available: {config_result.error}")
+
+    @staticmethod
+    def _demo_etl_pipeline() -> None:
+        """ETL Pipeline with Error Recovery."""
+        print("\n--- Data Pipeline with Error Recovery ---")
+
+        def extract() -> r[list[m.ConfigMap]]:
+            return r[list[m.ConfigMap]].ok([
+                m.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
+                m.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
+            ])
+
+        def transform(
+            data: list[m.ConfigMap],
+        ) -> r[list[m.ConfigMap]]:
+            transformed: list[m.ConfigMap] = [
+                m.ConfigMap(
+                    root={
+                        **item.root,
+                        "processed": True,
+                        "timestamp": "2025-01-01T12:00:00Z",
+                    },
+                )
+                for item in data
+            ]
+            return r[list[m.ConfigMap]].ok(transformed)
+
+        def load(
+            data: list[m.ConfigMap],
+        ) -> r[list[m.ConfigMap]]:
+            print(f"   💾 Loaded {len(data)} records successfully")
+            return r[list[m.ConfigMap]].ok(data)
+
+        result = extract().flow_through(transform, load)
+        if result.is_success:
+            print(f"✅ ETL Pipeline: {result.value}")
+        else:
+            print(f"❌ ETL Pipeline failed: {result.error}")
+
+    @staticmethod
+    def _demo_flow_through() -> None:
+        """Demo 2: flow_through - Automation Pipeline Composition."""
+        print("\n=== 2. flow_through: Automation Pipeline Composition ===")
+
+        def validate(
+            data: m.ConfigMap,
+        ) -> r[m.ConfigMap]:
+            task_type = str(data.get("task_type", ""))
+            if not task_type:
+                return r[m.ConfigMap].fail("Task type required")
+            return r[m.ConfigMap].ok(data)
+
+        def enrich(
+            data: m.ConfigMap,
+        ) -> r[m.ConfigMap]:
+            enriched: m.ConfigMap = m.ConfigMap(
+                root={
+                    **data.root,
+                    "automation_timestamp": "2025-01-01T12:00:00Z",
+                    "duration_ms": 250,
+                    "result_id": "RESULT-001",
+                },
+            )
+            return r[m.ConfigMap].ok(enriched)
+
+        automation_input: m.ConfigMap = m.ConfigMap(
+            root={
+                "task_type": c.Cqrs.ProcessingMode.BATCH.value,
+                "source": "database",
+            },
+        )
+        pipeline_result = (
+            r[m.ConfigMap]
+            .ok(automation_input)
+            .flow_through(
+                validate,
+                enrich,
+            )
+        )
+
+        if pipeline_result.is_success:
+            data = pipeline_result.value
+            task_type = data.get("task_type", "")
+            duration = data.get("duration_ms", 0)
+            print(f"✅ Pipeline complete: {task_type}")
+            print(f"   Duration: {duration}ms")
+        else:
+            print(f"❌ Pipeline failed: {pipeline_result.error}")
 
     @staticmethod
     def _demo_from_callable() -> None:
@@ -267,14 +361,17 @@ class AutomationService(s[m.ConfigMap]):
         print("\n=== 1. from_callable: Safe Automation Task Execution ===")
 
         def risky_automation_task() -> m.ConfigMap:
-            task_data: m.ConfigMap = {
-                "task_id": "AUTO-001",
-                "task_type": "data_sync",
-                "records_processed": 1000,
-                "status": "success",
-            }
-            records = u.get(task_data, "records_processed", default=0) or 0
-            if u.guard(records, int, return_value=True) is None or records == 0:
+            task_data: m.ConfigMap = m.ConfigMap(
+                root={
+                    "task_id": "AUTO-001",
+                    "task_type": "data_sync",
+                    "records_processed": 1000,
+                    "status": "success",
+                },
+            )
+            records_text = str(u.get(task_data, "records_processed", default=0) or 0)
+            records = int(records_text) if records_text.isdigit() else 0
+            if records == 0:
                 msg = "No records to process"
                 raise ValueError(msg)
             return task_data
@@ -288,47 +385,6 @@ class AutomationService(s[m.ConfigMap]):
             print(f"   Records: {data.get('records_processed', 0)}")
         else:
             print(f"❌ Automation failed: {result.error}")
-
-    @staticmethod
-    def _demo_flow_through() -> None:
-        """Demo 2: flow_through - Automation Pipeline Composition."""
-        print("\n=== 2. flow_through: Automation Pipeline Composition ===")
-
-        def validate(
-            data: m.ConfigMap,
-        ) -> r[m.ConfigMap]:
-            task_type = data.get("task_type", "")
-            if not isinstance(task_type, str) or not task_type:
-                return r[m.ConfigMap].fail("Task type required")
-            return r[m.ConfigMap].ok(data)
-
-        def enrich(
-            data: m.ConfigMap,
-        ) -> r[m.ConfigMap]:
-            enriched: m.ConfigMap = {
-                **data,
-                "automation_timestamp": "2025-01-01T12:00:00Z",
-                "duration_ms": 250,
-                "result_id": "RESULT-001",
-            }
-            return r[m.ConfigMap].ok(enriched)
-
-        automation_input: m.ConfigMap = {
-            "task_type": c.Cqrs.ProcessingMode.BATCH.value,
-            "source": "database",
-        }
-        pipeline_result = (
-            r[m.ConfigMap].ok(automation_input).flow_through(validate, enrich)
-        )
-
-        if pipeline_result.is_success:
-            data = pipeline_result.value
-            task_type = data.get("task_type", "")
-            duration = data.get("duration_ms", 0)
-            print(f"✅ Pipeline complete: {task_type}")
-            print(f"   Duration: {duration}ms")
-        else:
-            print(f"❌ Pipeline failed: {pipeline_result.error}")
 
     @staticmethod
     def _demo_lash() -> None:
@@ -349,106 +405,28 @@ class AutomationService(s[m.ConfigMap]):
             print(f"❌ All strategies failed: {result.error}")
 
     @staticmethod
-    def _demo_alt() -> None:
-        """Demo 4: alt - Alternative Automation Paths."""
-        print("\n=== 4. alt: Alternative Automation Paths ===")
+    def _demo_lazy_config() -> None:
+        """Configuration with Lazy Loading."""
+        print("\n--- Configuration with Lazy Loading ---")
 
-        def get_cached() -> r[m.ConfigMap]:
-            return r[m.ConfigMap].fail("Cache unavailable")
+        cache = m.ConfigMap(root={})
 
-        def get_default() -> r[m.ConfigMap]:
-            return r[m.ConfigMap].ok({
-                "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
-                "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
-            })
+        def load_config() -> m.ConfigMap:
+            if not cache.root:
+                print("   📄 Loading configuration from file...")
+                cache.root["database_url"] = "postgresql://localhost:5432/testdb"
+                cache.root["cache_ttl"] = c.Defaults.DEFAULT_CACHE_TTL
+            return cache
 
-        cached = get_cached()
-        config_result = get_default() if cached.is_failure else cached
-        if config_result.is_success:
-            config = config_result.value
-            mode = config.get("automation_mode", "unknown")
-            batch_size = config.get("batch_size", 0)
-            print(f"✅ Config acquired: {mode}")
-            print(f"   Batch size: {batch_size}")
-        else:
-            print(f"❌ No config available: {config_result.error}")
-
-    @staticmethod
-    def _demo_value_or_call() -> None:
-        """Demo 5: value_or_call - Lazy Resource Initialization."""
-        print("\n=== 5. value_or_call: Lazy Resource Initialization ===")
-
-        def create_engine() -> m.ConfigMap:
-            print("   ⚙️  Initializing automation engine...")
-            return {
-                "engine_id": "AUTO-ENGINE-001",
-                "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
-                "worker_count": c.Performance.DEFAULT_DB_POOL_SIZE,
-            }
-
-        fail_result = r[m.ConfigMap].fail(
-            "No existing engine",
+        fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail(
+            "No cached config",
         )
-        engine = create_engine() if fail_result.is_failure else fail_result.value
-        engine_id = str(engine.get("engine_id", "unknown"))
-        worker_count_val = engine.get("worker_count", 0)
-        worker_count = (
-            int(worker_count_val) if isinstance(worker_count_val, (int, float)) else 0
-        )
-        print(f"✅ Engine acquired: {engine_id}")
-        print(f"   Workers: {worker_count}")
+        config = load_config() if fail_attempt.is_failure else fail_attempt.value
+        config_count = len(config.root)
+        print(f"✅ Config loaded: {config_count} settings")
 
-        existing: m.ConfigMap = {
-            "engine_id": "CACHED-ENGINE-001",
-            "worker_count": c.Container.DEFAULT_WORKERS,
-        }
-        success_result = r[m.ConfigMap].ok(existing)
-        cached = success_result.map_or(create_engine())
-        cached_id = str(cached.get("engine_id", "unknown"))
-        print(f"✅ Existing engine used: {cached_id}")
-
-    @staticmethod
-    def _demo_advanced_scenarios() -> None:
-        """Demo 6: Advanced Automation Scenarios."""
-        print("\n=== 6. ADVANCED AUTOMATION SCENARIOS ===")
-        AutomationService._demo_etl_pipeline()
-        AutomationService._demo_service_orchestration()
-        AutomationService._demo_lazy_config()
-        print("\n" + "=" * 60)
-        print("✅ ADVANCED AUTOMATION SCENARIOS COMPLETE!")
-        print("=" * 60)
-
-    @staticmethod
-    def _demo_etl_pipeline() -> None:
-        """ETL Pipeline with Error Recovery."""
-        print("\n--- Data Pipeline with Error Recovery ---")
-
-        def extract() -> r[list[m.ConfigMap]]:
-            return r[list[m.ConfigMap]].ok([
-                {"id": 1, "name": "Item A", "value": 100},
-                {"id": 2, "name": "Item B", "value": 200},
-            ])
-
-        def transform(
-            data: list[m.ConfigMap],
-        ) -> r[list[m.ConfigMap]]:
-            transformed: list[m.ConfigMap] = [
-                {**item, "processed": True, "timestamp": "2025-01-01T12:00:00Z"}
-                for item in data
-            ]
-            return r[list[m.ConfigMap]].ok(transformed)
-
-        def load(
-            data: list[m.ConfigMap],
-        ) -> r[list[m.ConfigMap]]:
-            print(f"   💾 Loaded {len(data)} records successfully")
-            return r[list[m.ConfigMap]].ok(data)
-
-        result = extract().flow_through(transform, load)
-        if result.is_success:
-            print(f"✅ ETL Pipeline: {result.value}")
-        else:
-            print(f"❌ ETL Pipeline failed: {result.error}")
+        load_config()
+        print("✅ Second config access used cached version (no file loading)")
 
     @staticmethod
     def _demo_service_orchestration() -> None:
@@ -472,30 +450,74 @@ class AutomationService(s[m.ConfigMap]):
             print(f"❌ Service Orchestration failed: {result.error}")
 
     @staticmethod
-    def _demo_lazy_config() -> None:
-        """Configuration with Lazy Loading."""
-        print("\n--- Configuration with Lazy Loading ---")
+    def _demo_value_or_call() -> None:
+        """Demo 5: value_or_call - Lazy Resource Initialization."""
+        print("\n=== 5. value_or_call: Lazy Resource Initialization ===")
 
-        cache: dict[str, t.GeneralValueType] = {}
+        def create_engine() -> m.ConfigMap:
+            print("   ⚙️  Initializing automation engine...")
+            return m.ConfigMap(
+                root={
+                    "engine_id": "AUTO-ENGINE-001",
+                    "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
+                    "worker_count": c.Performance.DEFAULT_DB_POOL_SIZE,
+                },
+            )
 
-        def load_config() -> m.ConfigMap:
-            if not cache:
-                print("   📄 Loading configuration from file...")
-                cache.update({
-                    "database_url": "postgresql://localhost:5432/testdb",
-                    "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
-                })
-            return cache
-
-        fail_attempt = r[m.ConfigMap].fail(
-            "No cached config",
+        fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail(
+            "No existing engine",
         )
-        config = load_config() if fail_attempt.is_failure else fail_attempt.value
-        config_count = len(config)
-        print(f"✅ Config loaded: {config_count} settings")
+        engine = create_engine() if fail_result.is_failure else fail_result.value
+        engine_id = str(engine.get("engine_id", "unknown"))
+        worker_count_text = str(engine.get("worker_count", 0))
+        worker_count = int(worker_count_text) if worker_count_text.isdigit() else 0
+        print(f"✅ Engine acquired: {engine_id}")
+        print(f"   Workers: {worker_count}")
 
-        _ = load_config()
-        print("✅ Second config access used cached version (no file loading)")
+        existing: m.ConfigMap = m.ConfigMap(
+            root={
+                "engine_id": "CACHED-ENGINE-001",
+                "worker_count": c.Container.DEFAULT_WORKERS,
+            },
+        )
+        success_result = r[m.ConfigMap].ok(existing)
+        cached = success_result.map_or(create_engine())
+        cached_id = str(cached.get("engine_id", "unknown"))
+        print(f"✅ Existing engine used: {cached_id}")
+
+    @staticmethod
+    def demonstrate_new_r_methods() -> None:
+        """Demonstrate the 5 new r methods in automation context."""
+        print("\n" + "=" * 60)
+        print("NEW r METHODS - AUTOMATION CONTEXT")
+        print("Demonstrating v0.9.9+ methods with automated workflows")
+        print("=" * 60)
+
+        AutomationService._demo_from_callable()
+        AutomationService._demo_flow_through()
+        AutomationService._demo_lash()
+        AutomationService._demo_alt()
+        AutomationService._demo_value_or_call()
+        AutomationService._demo_advanced_scenarios()
+
+        print("\n" + "=" * 60)
+        print("✅ NEW r METHODS AUTOMATION DEMO COMPLETE!")
+        print("All 5 methods + 3 advanced scenarios demonstrated")
+        print("=" * 60)
+
+    @override
+    def execute(
+        self,
+        **_kwargs: t.Container,
+    ) -> r[m.ConfigMap]:
+        """Required abstract method implementation."""
+        return r[m.ConfigMap].ok(
+            m.ConfigMap(
+                root={
+                    "status": "automation_ready",
+                },
+            ),
+        )
 
 
 # =============================================================================

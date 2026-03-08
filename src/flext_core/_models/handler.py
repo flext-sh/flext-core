@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -19,12 +19,12 @@ from pydantic import (
     PrivateAttr,
     computed_field,
     field_validator,
+    model_validator,
 )
 
-from flext_core._models.base import FlextModelsBase
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core import c, p, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsHandler:
@@ -34,7 +34,7 @@ class FlextModelsHandler:
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
 
-    class Registration(FlextModelsBase.ArbitraryTypesModel):
+    class Registration(FlextModelFoundation.ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
         name: str = Field(
@@ -53,14 +53,25 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: object,
-        ) -> object:
+            v: t.HandlerCallable | t.ContainerValue,
+        ) -> t.HandlerCallable:
             if not callable(v):
-                msg = f"Handler must be callable, got {type(v).__name__}"
+                msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
-            return v
+            return cast("t.HandlerCallable", v)
 
-    class RegistrationResult(FlextModelsBase.ArbitraryTypesModel):
+        @model_validator(mode="after")
+        def validate_handler_interface(self) -> Self:
+            """Validate handler has handle() or execute() method or is callable."""
+            handler = self.handler
+            if callable(handler):
+                return self
+            if hasattr(handler, "handle") or hasattr(handler, "execute"):
+                return self
+            msg = "Handler must be callable or have handle()/execute() method"
+            raise ValueError(msg)
+
+    class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of a handler registration operation.
 
         Provides structured feedback on the outcome of a handler registration,
@@ -85,20 +96,34 @@ class FlextModelsHandler:
             description="Message type bound (for explicit mode)",
         )
 
-        def __getitem__(self, key: str) -> object:
-            return self.model_dump()[key]
+        _GETITEM_FIELDS: ClassVar[frozenset[str]] = frozenset({
+            "handler_name",
+            "status",
+            "mode",
+            "handler_mode",
+            "message_type",
+        })
 
-    class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
+        def __getitem__(self, key: str) -> t.ContainerValue:
+            if key in self._GETITEM_FIELDS:
+                return getattr(self, key)
+            raise KeyError(key)
+
+    class RegistrationRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Request model for dynamic handler registration.
 
         Strictly typed model for handler registration parameters, replacing
         legacy dictionary-based configuration.
         """
 
-        handler: object = Field(
+        handler: (
+            t.HandlerCallable
+            | p.Handler[t.ContainerValue, t.ContainerValue]
+            | BaseModel
+        ) = Field(
             description="Handler instance (callable, object, or FlextHandlers)",
         )
-        message_type: t.GeneralValueType | str | type | None = Field(
+        message_type: t.MessageTypeSpecifier | None = Field(
             default=None,
             description="Message type to handle (required for explicit mode)",
         )
@@ -110,32 +135,6 @@ class FlextModelsHandler:
             default=None,
             description="Explicit handler name override",
         )
-
-        @field_validator("handler_mode")
-        @classmethod
-        def validate_mode(cls, v: str | None) -> str | None:
-            """Validate handler mode against allowed values."""
-            if v is None:
-                return None
-            allowed = {
-                c.Cqrs.HandlerType.COMMAND,
-                c.Cqrs.HandlerType.QUERY,
-                c.Cqrs.HandlerType.EVENT,
-            }
-            if v not in allowed:
-                # Allow it to pass if it matches the string value but maybe not the enum constant?
-                # Actually, strictly enforcing enum values is better.
-                # But Cqrs.HandlerTypeLiteral is a literal of strings.
-                return v
-            return v
-
-        @field_validator("handler", mode="before")
-        @classmethod
-        def validate_handler_value(cls, v: object) -> object:
-            if not callable(v) and not isinstance(v, BaseModel):
-                msg = f"Handler must be callable or handler instance, got {type(v).__name__}"
-                raise TypeError(msg)
-            return v
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
@@ -195,7 +194,12 @@ class FlextModelsHandler:
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = Field(default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP)
+        ] = Field(
+            default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
+            description="ISO 8601 timestamp recording when the registration entry was created.",
+            title="Registration Timestamp",
+            examples=["2025-01-01T00:00:00Z"],
+        )
         status: Annotated[
             c.Cqrs.CommonStatus,
             Field(
@@ -204,16 +208,6 @@ class FlextModelsHandler:
                 examples=["running", "stopped", "failed"],
             ),
         ] = c.Cqrs.CommonStatus.RUNNING
-
-        @field_validator("timestamp", mode="after")
-        @classmethod
-        def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (using FlextRuntime)."""
-            # Allow empty strings
-            if not v:
-                return v
-            # Validate ISO 8601 format - removed due to missing method
-            return v
 
     class ExecutionContext(BaseModel):
         """Handler execution context for tracking handler performance and state.
@@ -267,42 +261,11 @@ class FlextModelsHandler:
         # Use PrivateAttr for internal state (Pydantic v2 pattern)
         # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.Dict | None = PrivateAttr(default=None)
-
-        def start_execution(self) -> None:
-            """Start execution timing.
-
-            Records the current time as the start time for execution metrics.
-            Should be called at the beginning of handler execution.
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-
-            """
-            # Use PrivateAttr for proper Pydantic v2 pattern
-            self._start_time = time.time()
+        _metrics_state: FlextModelsContainers.Dict | None = PrivateAttr(default=None)
 
         @computed_field
         def execution_time_ms(self) -> float:
-            """Get execution time in milliseconds.
-
-            Returns:
-                Execution time in milliseconds, or 0.0 if not started
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-                >>> # ... handler executes ...
-                >>> elapsed = context.execution_time_ms
-                >>> isinstance(elapsed, float)
-                True
-
-            """
+            """Get execution time in milliseconds."""
             if self._start_time is None:
                 return 0.0
 
@@ -313,7 +276,19 @@ class FlextModelsHandler:
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
-        def metrics_state(self) -> t.Dict:
+        def has_metrics(self) -> bool:
+            """Check if metrics have been recorded."""
+            # Type narrowing: PrivateAttr type narrowing works directly
+            return self._metrics_state is not None and bool(self._metrics_state)
+
+        @computed_field
+        def is_running(self) -> bool:
+            """Check if execution is currently running."""
+            # Type narrowing: PrivateAttr type narrowing works directly
+            return self._start_time is not None
+
+        @computed_field
+        def metrics_state(self) -> FlextModelsContainers.Dict:
             """Get current metrics state.
 
             Returns:
@@ -330,54 +305,13 @@ class FlextModelsHandler:
             """
             if self._metrics_state is None:
                 # Use PrivateAttr for proper Pydantic v2 pattern
-                self._metrics_state = t.Dict(root={})
+                self._metrics_state = FlextModelsContainers.Dict(root={})
             # Type narrowing: _metrics_state is not None after initialization above
             # PrivateAttr type narrowing works after None check and initialization
-            metrics_state_val: t.Dict = self._metrics_state
+            metrics_state_val: FlextModelsContainers.Dict = self._metrics_state
             # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
             # dict implements Mapping, so direct return works without cast
             return metrics_state_val
-
-        def set_metrics_state(
-            self,
-            state: t.Dict,
-        ) -> None:
-            """Set metrics state.
-
-            Direct assignment to _metrics_state. Use this to update metrics.
-
-            Args:
-                state: Metrics state to set
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.set_metrics_state({"items_processed": 42, "errors": 0})
-
-            """
-            # Use PrivateAttr for proper Pydantic v2 pattern
-            self._metrics_state = state
-
-        def reset(self) -> None:
-            """Reset execution context.
-
-            Clears all timing and metrics state, preparing the context
-            for reuse or cleanup.
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-                >>> context.reset()
-                >>> context.execution_time_ms
-                0.0
-
-            """
-            # Use PrivateAttr for proper Pydantic v2 pattern
-            self._start_time = None
-            self._metrics_state = None
 
         @classmethod
         def create_for_handler(
@@ -409,19 +343,51 @@ class FlextModelsHandler:
             """
             return cls(handler_name=handler_name, handler_mode=handler_mode)
 
-        @computed_field
-        def is_running(self) -> bool:
-            """Check if execution is currently running."""
-            # Type narrowing: PrivateAttr type narrowing works directly
-            return self._start_time is not None
+        def reset(self) -> None:
+            """Reset execution context.
 
-        @computed_field
-        def has_metrics(self) -> bool:
-            """Check if metrics have been recorded."""
-            # Type narrowing: PrivateAttr type narrowing works directly
-            return self._metrics_state is not None and bool(self._metrics_state)
+            Clears all timing and metrics state, preparing the context
+            for reuse or cleanup.
 
-    class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
+            Examples:
+                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler", handler_mode="command"
+                ... )
+                >>> context.start_execution()
+                >>> context.reset()
+                >>> context.execution_time_ms
+                0.0
+
+            """
+            # Use PrivateAttr for proper Pydantic v2 pattern
+            self._start_time = None
+            self._metrics_state = None
+
+        def set_metrics_state(
+            self,
+            state: FlextModelsContainers.Dict,
+        ) -> None:
+            """Set metrics state."""
+            # Use PrivateAttr for proper Pydantic v2 pattern
+            self._metrics_state = state
+
+        def start_execution(self) -> None:
+            """Start execution timing.
+
+            Records the current time as the start time for execution metrics.
+            Should be called at the beginning of handler execution.
+
+            Examples:
+                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler", handler_mode="command"
+                ... )
+                >>> context.start_execution()
+
+            """
+            # Use PrivateAttr for proper Pydantic v2 pattern
+            self._start_time = time.time()
+
+    class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator.
 
         Used by handler discovery to auto-register handlers with FlextDispatcher.
@@ -450,7 +416,7 @@ class FlextModelsHandler:
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
         command: Annotated[
-            type[object],
+            type,
             Field(
                 description="Command type this handler processes",
             ),

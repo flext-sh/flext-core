@@ -16,12 +16,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TypedDict
 
-from flext_core.typings import T, T_co, T_contra, t as core_t
-from flext_tests.typings import (
+from flext_core import T, T_co, T_contra, t
+from flext_tests import (
     FlextTestsTypes,
-    TTestModel,
-    TTestResult,
-    TTestService,
 )
 
 
@@ -40,19 +37,19 @@ class TestsFlextTypes(FlextTestsTypes):
     class Core:
         """Flext-core-specific type definitions for testing.
 
-        Uses composition of core_t for type safety and consistency.
+        Uses composition of t for type safety and consistency.
         Only defines types that are truly flext-core-specific.
         """
 
         type ServiceConfigMapping = Mapping[
             str,
-            core_t.GeneralValueType | Sequence[str] | Mapping[str, str | int] | None,
+            t.ContainerValue | Sequence[str] | Mapping[str, str | int] | None,
         ]
         """Service configuration mapping specific to flext-core services."""
 
         type HandlerConfigMapping = Mapping[
             str,
-            core_t.GeneralValueType | Sequence[str] | Mapping[str, str] | None,
+            t.ContainerValue | Sequence[str] | Mapping[str, str] | None,
         ]
         """Handler configuration mapping specific to flext-core handlers."""
 
@@ -247,9 +244,6 @@ class TestsFlextTypes(FlextTestsTypes):
 
 __all__ = [
     "T",
-    "TTestModel",
-    "TTestResult",
-    "TTestService",
     "T_co",
     "T_contra",
     "TestsFlextTypes",

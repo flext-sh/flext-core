@@ -19,7 +19,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core.container import FlextContainer
+from flext_core import FlextContainer
 
 
 def get_memory_usage() -> int:
@@ -53,7 +53,7 @@ class TestContainerMemory:
         gc.collect()
         after_creation = get_memory_usage()
 
-        after_creation - initial_memory
+        _ = after_creation - initial_memory
 
     @pytest.mark.benchmark
     def test_memory_with_services(self) -> None:
@@ -72,7 +72,7 @@ class TestContainerMemory:
         gc.collect()
         after_registration = get_memory_usage()
 
-        after_registration - initial_memory
+        _ = after_registration - initial_memory
 
     @pytest.mark.benchmark
     def test_memory_with_factories(self) -> None:
@@ -89,16 +89,13 @@ class TestContainerMemory:
             return lambda: f"value_{captured_i}"
 
         for i in range(100):
-            container.register_factory(
-                f"factory_{i}",
-                make_factory(i),
-            )
+            container.register(f"factory_{i}", make_factory(i), kind="factory")
 
         # Force GC after registration
         gc.collect()
         after_registration = get_memory_usage()
 
-        after_registration - initial_memory
+        _ = after_registration - initial_memory
 
     @pytest.mark.benchmark
     def test_memory_after_clear_all(self) -> None:
@@ -120,7 +117,7 @@ class TestContainerMemory:
         gc.collect()
         after_clear = get_memory_usage()
 
-        before_clear - after_clear
+        _ = before_clear - after_clear
 
     @pytest.mark.benchmark
     def test_memory_leak_detection(self) -> None:

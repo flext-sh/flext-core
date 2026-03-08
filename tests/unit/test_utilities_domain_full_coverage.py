@@ -9,12 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-from datetime import datetime
+from collections import UserDict
+from datetime import UTC, datetime
+from typing import cast, override
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import c, t, u
+from flext_core import t, u
 
 
 class _SampleEntity(BaseModel):
@@ -38,14 +39,14 @@ class TestDomainLogger:
     """Tests for u.Domain.logger property."""
 
     def test_logger_property_returns_logger(self) -> None:
-        """logger property returns a structlog logger (line 32)."""
+        """Logger property returns a structlog logger (line 32)."""
         domain_util = u.Domain()
         logger = domain_util.logger
         assert logger is not None
         assert hasattr(logger, "info")
 
 
-class TestDomainHashValueObject:
+class TestDomainHashValue:
     """Tests for u.Domain.hash_value_object_by_value()."""
 
     def test_hash_with_hashable_non_primitive(self) -> None:
@@ -54,7 +55,7 @@ class TestDomainHashValueObject:
 
         class EntityWithDate(BaseModel):
             unique_id: str = "test"
-            created: datetime = datetime(2025, 1, 1)
+            created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
         entity = EntityWithDate()
         result = u.Domain.hash_value_object_by_value(entity)
@@ -72,7 +73,7 @@ class TestDomainHashValueObject:
         assert isinstance(result, int)
 
 
-class TestValidateValueObjectImmutable:
+class TestValidateValueImmutable:
     """Tests for u.Domain.validate_value_object_immutable()."""
 
     def test_frozen_model_is_immutable(self) -> None:
@@ -95,7 +96,12 @@ class TestValidateValueObjectImmutable:
 
         obj = PlainObj()
         # PlainObj uses object.__setattr__ → mutable
-        assert u.Domain.validate_value_object_immutable(obj) is False
+        assert (
+            u.Domain.validate_value_object_immutable(
+                cast("t.ContainerValue", cast("object", obj)),
+            )
+            is False
+        )
 
     def test_object_without_model_config(self) -> None:
         """Object without model_config just checks __setattr__."""
@@ -104,20 +110,33 @@ class TestValidateValueObjectImmutable:
 
 
 def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
-    class _BrokenConfigDict(dict[str, bool]):
+    class _BrokenConfigDict(UserDict[str, bool]):
+        @override
         def get(self, key: str, default: object = None) -> bool:
             _ = key
             _ = default
-            raise TypeError("bad config")
+            msg = "bad config"
+            raise TypeError(msg)
 
     class _BrokenConfig:
         model_config: _BrokenConfigDict = _BrokenConfigDict()
 
     class _NoSetattrVisible:
-        def __getattribute__(self, name: str):
+        @override
+        def __getattribute__(self, name: str) -> object:
             if name == "__setattr__":
                 raise AttributeError(name)
             return object.__getattribute__(self, name)
 
-    assert u.Domain.validate_value_object_immutable(_BrokenConfig()) is False
-    assert u.Domain.validate_value_object_immutable(_NoSetattrVisible()) is False
+    assert (
+        u.Domain.validate_value_object_immutable(
+            cast("t.ContainerValue", cast("object", _BrokenConfig())),
+        )
+        is False
+    )
+    assert (
+        u.Domain.validate_value_object_immutable(
+            cast("t.ContainerValue", cast("object", _NoSetattrVisible())),
+        )
+        is False
+    )

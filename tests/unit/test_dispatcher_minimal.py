@@ -1,318 +1,210 @@
-"""Minimal dispatcher flow coverage with real handlers (no mocks)."""
+"""Minimal dispatcher flow coverage with real handlers (no mocks).
+
+Tests the strict FlextDispatcher API:
+- register_handler(handler: t.HandlerLike) — handler must expose
+  message_type, event_type, or can_handle.
+- dispatch(message: p.Routable) — accepts only CQRS messages.
+"""
 
 from __future__ import annotations
-from flext_core.typings import t
 
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import cast
+from flext_core import FlextDispatcher, c, m, t
 
-from pydantic import BaseModel
-
-from flext_core import FlextDispatcher, c, m, r, t
-from tests.test_utils import assertion_helpers
-
-
-@dataclass(slots=True)
-class EchoCommand:
-    """Simple command payload."""
-
-    value: str
+# ---------------------------------------------------------------------------
+# Test handlers — all must satisfy t.HandlerLike (Callable[..., ...])
+# by implementing __call__; keep handle() for HandleProtocol compatibility.
+# ---------------------------------------------------------------------------
 
 
 class EchoHandler:
-    """Handler with required handle method."""
+    """Handler that echoes command_type back."""
 
-    def handle(self, cmd: EchoCommand) -> str:
-        return f"handled:{cmd.value}"
+    message_type = "EchoRoute"
 
-    def __call__(self, cmd: EchoCommand) -> str:
-        return self.handle(cmd)
+    def handle(self, msg: m.Command) -> str:
+        return f"handled:{msg.command_type}"
+
+    def __call__(self, msg: m.Command) -> str:
+        return self.handle(msg)
 
 
 class ExplodingHandler:
-    """Handler that raises in handle."""
+    """Handler that raises on handle()."""
 
-    def handle(self, _: EchoCommand) -> str:
+    message_type = "ExplodeRoute"
+
+    def handle(self, _: m.Command) -> str:
         msg = "boom"
         raise RuntimeError(msg)
 
-    def __call__(self, cmd: EchoCommand) -> str:
-        return self.handle(cmd)
+    def __call__(self, msg: m.Command) -> str:
+        return self.handle(msg)
 
 
-class CallableHandleWrapper:
-    """Callable object exposing a handle attribute for interface validation."""
+class AutoCommand(m.Command):
+    """Auto-routed command fixture."""
 
-    def __init__(self, func: Callable[[EchoCommand], str]) -> None:
-        """Initialize wrapper with callable function."""
-        self.handle = func
-
-    def __call__(self, cmd: EchoCommand) -> str:
-        return self.handle(cmd)
+    command_type: str = "AutoRoute"
+    payload: str = "auto"
 
 
 class AutoDiscoveryHandler:
-    """Handler that participates in auto-discovery via can_handle."""
+    """Handler using can_handle for route resolution."""
 
-    def can_handle(self, message: object) -> bool:
-        if isinstance(message, str):
-            return message == EchoCommand.__name__
-        return isinstance(message, EchoCommand)
+    def can_handle(self, msg_type: type) -> bool:
+        return msg_type is AutoCommand
 
-    def handle(self, message: EchoCommand) -> str:
-        return f"auto:{message.value}"
+    def handle(self, msg: AutoCommand) -> str:
+        return f"auto:{msg.command_type}"
 
-    def __call__(self, message: EchoCommand) -> str:
-        return self.handle(message)
+    def __call__(self, msg: AutoCommand) -> str:
+        return self.handle(msg)
 
 
-class RecordingHandler(EchoHandler):
-    """Handler that records invocation."""
+class EventSubscriber:
+    """Event handler for publish() testing."""
 
-    def __init__(self) -> None:
-        """Initialize recording handler."""
-        super().__init__()
-        self.called: bool = False
-
-    def handle(self, cmd: EchoCommand) -> str:
-        self.called = True
-        return super().handle(cmd)
-
-    def __call__(self, cmd: EchoCommand) -> str:
-        return self.handle(cmd)
-
-
-class AutoRecordingHandler:
-    """Auto-discovery handler that records invocation without explicit mapping."""
+    message_type = "OrderCreated"
 
     def __init__(self) -> None:
-        """Initialize auto-recording handler."""
-        self.called: bool = False
+        """Initialize received events list."""
+        self.received: list[m.Event] = []
 
-    def can_handle(self, message: object) -> bool:
-        if isinstance(message, str):
-            return message == EchoCommand.__name__
-        return isinstance(message, EchoCommand)
+    def handle(self, event: m.Event) -> None:
+        self.received.append(event)
 
-    def handle(self, message: EchoCommand) -> str:
-        self.called = True
-        return f"auto:{message.value}"
-
-    def __call__(self, message: EchoCommand) -> str:
-        return self.handle(message)
+    def __call__(self, event: m.Event) -> None:
+        self.handle(event)
 
 
-class RecordingMiddleware:
-    """Middleware that captures invocations."""
-
-    def __init__(self, calls: list[tuple[str, str]]) -> None:
-        """Initialize middleware with calls list."""
-        self.calls = calls
-
-    def process(self, command: EchoCommand, handler: object) -> bool:
-        handler_name = handler.__class__.__name__
-        self.calls.append((command.value, handler_name))
-        return True
+# ---------------------------------------------------------------------------
+# Tests: register_handler
+# ---------------------------------------------------------------------------
 
 
-class BlockingMiddleware:
-    """Middleware that stops pipeline execution."""
-
-    def process(self, command: EchoCommand, _: object) -> r[bool]:
-        return r[bool].fail(f"blocked:{command.value}")
-
-
-class InvalidMiddleware:
-    """Middleware without process method to exercise validation."""
-
-    # Intentionally no process() defined
-
-
-def test_register_and_dispatch_success() -> None:
-    """Register a callable handler and dispatch a message successfully."""
+def test_register_handler_with_message_type() -> None:
+    """Handler with message_type attribute registers successfully."""
     dispatcher = FlextDispatcher()
-    handler = CallableHandleWrapper(EchoHandler().handle)
-    # Cast to t.GeneralValueType | BaseModel for type checker
-    registration = dispatcher.register_handler(
-        cast("t.GeneralValueType | BaseModel", EchoCommand),
-        cast("t.GeneralValueType", handler),
-    )
-    assert registration.is_success
-
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
-    assertion_helpers.assert_flext_result_success(result)
-    assert result.value == "handled:ping"
+    res = dispatcher.register_handler(EchoHandler())
+    assert res.is_success
 
 
-def test_register_handler_validation_error_on_missing_message_type() -> None:
-    """Handler without can_handle but missing message_type should fail."""
+def test_register_handler_with_can_handle() -> None:
+    """Handler with can_handle registers as auto-discovery handler."""
     dispatcher = FlextDispatcher()
-    # Cast dict to t.GeneralValueType | BaseModel for type checker
-    register_result = dispatcher.register_handler(
-        cast("t.GeneralValueType | BaseModel", {"handler": object()}),
-    )
-    assert register_result.is_failure
-    assert "callable" in (register_result.error or "").lower()
+    res = dispatcher.register_handler(AutoDiscoveryHandler())
+    assert res.is_success
 
 
-def test_dispatch_handler_raises_returns_failure() -> None:
-    """Handler exceptions should surface as failure results."""
+def test_register_handler_without_route_fails() -> None:
+    """Handler without message_type/event_type/can_handle must fail."""
     dispatcher = FlextDispatcher()
-    handler = ExplodingHandler()
-    # Cast to t.GeneralValueType | BaseModel for type checker
-    _ = dispatcher.register_handler(
-        cast("t.GeneralValueType | BaseModel", EchoCommand),
-        cast("t.GeneralValueType", handler),
-    )
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
-    assertion_helpers.assert_flext_result_failure(result)
+
+    class BareHandler:
+        """Callable handler lacking routing attributes — should fail registration."""
+
+        def __call__(self, msg: t.ContainerValue) -> t.ContainerValue:
+            return "bare"
+
+    res = dispatcher.register_handler(BareHandler())
+    assert res.is_failure
+    assert "must expose" in (res.error or "")
+
+
+def test_register_handler_as_event_subscriber() -> None:
+    """Handler registered with is_event=True goes to event subscribers."""
+    dispatcher = FlextDispatcher()
+    subscriber = EventSubscriber()
+    res = dispatcher.register_handler(subscriber, is_event=True)
+    assert res.is_success
+
+
+# ---------------------------------------------------------------------------
+# Tests: dispatch
+# ---------------------------------------------------------------------------
+
+
+def test_dispatch_command_success() -> None:
+    """Dispatch a Command to its registered handler."""
+    dispatcher = FlextDispatcher()
+    dispatcher.register_handler(EchoHandler())
+
+    cmd = m.Command(command_type="EchoRoute")
+    result = dispatcher.dispatch(cmd)
+    assert result.is_success
+    assert result.value == "handled:EchoRoute"
+
+
+def test_dispatch_no_handler_fails() -> None:
+    """Dispatch with no matching handler returns failure."""
+    dispatcher = FlextDispatcher()
+    cmd = m.Command(command_type="UnknownRoute")
+    result = dispatcher.dispatch(cmd)
+    assert result.is_failure
+    assert result.error_code == c.Errors.COMMAND_HANDLER_NOT_FOUND
+
+
+def test_dispatch_handler_exception_returns_failure() -> None:
+    """Handler that raises returns a failure result."""
+    dispatcher = FlextDispatcher()
+    dispatcher.register_handler(ExplodingHandler())
+
+    cmd = m.Command(command_type="ExplodeRoute")
+    result = dispatcher.dispatch(cmd)
+    assert result.is_failure
     assert "boom" in (result.error or "")
+    assert result.error_code == c.Errors.COMMAND_PROCESSING_FAILED
 
 
-def test_convert_metadata_to_model_and_build_config() -> None:
-    """Cover metadata conversion branches and config construction."""
-    # Cast metadata to t.GeneralValueType for type checker
-    metadata: t.GeneralValueType = cast(
-        "t.GeneralValueType",
-        {"numbers": [1, 2], "nested": {"k": object()}, "flag": True},
-    )
-    meta_model = FlextDispatcher._convert_metadata_to_model(metadata)
-    assert meta_model is not None
-    assert meta_model.attributes["flag"] is True
-    assert meta_model.attributes["numbers"] == [1, 2]
-    # Nested dicts are serialized to JSON strings for Metadata.attributes compatibility
-    assert isinstance(meta_model.attributes["nested"], str)
-    assert "k" in meta_model.attributes["nested"]
-
-    config = FlextDispatcher._build_dispatch_config_from_args(
-        None,
-        metadata,
-        correlation_id="cid",
-        timeout_override=5,
-    )
-    assert config is not None
-    # Type narrowing: config is DispatchConfig or t.GeneralValueType
-    if isinstance(config, m.DispatchConfig):
-        assert config.correlation_id == "cid"
-        assert config.timeout_override == 5
-    else:
-        # For t.GeneralValueType, use getattr
-        assert getattr(config, "correlation_id", None) == "cid"
-        assert getattr(config, "timeout_override", None) == 5
-
-
-def test_dispatch_none_message_fails() -> None:
-    """Ensure None messages are rejected early."""
+def test_dispatch_auto_discovery_handler() -> None:
+    """Auto-discovery handler is found via can_handle fallback."""
     dispatcher = FlextDispatcher()
-    result = dispatcher.dispatch(None)
-    assertion_helpers.assert_flext_result_failure(result)
-    assert result.error_code == c.Errors.VALIDATION_ERROR
+    dispatcher.register_handler(AutoDiscoveryHandler())
+
+    cmd = AutoCommand()
+    result = dispatcher.dispatch(cmd)
+    assert result.is_success
+    assert result.value == "auto:AutoRoute"
 
 
-def test_try_simple_dispatch_non_callable_handler() -> None:
-    """Non-callable handler entries should yield failure."""
+def test_dispatch_after_handler_removal_fails() -> None:
+    """Dispatching when handler route is cleared fails gracefully."""
     dispatcher = FlextDispatcher()
-    # Cast string to HandlerType for type checker (testing invalid handler)
-    dispatcher._handlers[EchoCommand.__name__] = cast(
-        "t.HandlerType",
-        "not_callable",
-    )
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
-    assertion_helpers.assert_flext_result_failure(result)
-    assert "not callable" in (result.error or "")
+    dispatcher.register_handler(EchoHandler())
+    dispatcher._handlers.clear()
+
+    cmd = m.Command(command_type="EchoRoute")
+    result = dispatcher.dispatch(cmd)
+    assert result.is_failure
+    assert result.error_code == c.Errors.COMMAND_HANDLER_NOT_FOUND
 
 
-def test_auto_discovery_handler_processes_command() -> None:
-    """Handler registered via single-arg auto-discovery must be used."""
+# ---------------------------------------------------------------------------
+# Tests: publish
+# ---------------------------------------------------------------------------
+
+
+def test_publish_event_to_subscriber() -> None:
+    """Published event is delivered to registered subscriber."""
     dispatcher = FlextDispatcher()
-    handler = AutoDiscoveryHandler()
-    # Cast handler to t.GeneralValueType | BaseModel for type checker
-    reg = dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
-    assert reg.is_success
+    subscriber = EventSubscriber()
+    dispatcher.register_handler(subscriber, is_event=True)
 
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("auto")))
-    assertion_helpers.assert_flext_result_success(result)
-    assert result.value == "auto:auto"
+    event = m.Event(
+        event_type="OrderCreated",
+        aggregate_id="order-1",
+    )
+    res = dispatcher.publish(event)
+    assert res.is_success
+    assert len(subscriber.received) == 1
 
 
-def test_register_handler_with_request_dict_success() -> None:
-    """Explicit request dict with message_type and handler should succeed."""
+def test_publish_no_subscribers_succeeds() -> None:
+    """Publishing with no subscribers succeeds silently."""
     dispatcher = FlextDispatcher()
-    handler = EchoHandler()
-    # Cast dict to t.GeneralValueType | BaseModel for type checker
-    request: t.GeneralValueType | BaseModel = cast(
-        "t.GeneralValueType | BaseModel",
-        {
-            "handler": handler,
-            "message_type": EchoCommand,
-            "handler_mode": c.Cqrs.HandlerType.COMMAND.value,
-        },
+    event = m.Event(
+        event_type="NobodyListening",
+        aggregate_id="agg-1",
     )
-    reg = dispatcher.register_handler(request)
-    assert reg.is_success
-    assert reg.value["mode"] == "explicit"
-
-
-def test_middleware_short_circuits_and_preserves_order() -> None:
-    """Middleware failure should stop pipeline before handler runs."""
-    dispatcher = FlextDispatcher()
-    handler = AutoRecordingHandler()
-    log: list[tuple[str, str]] = []
-    # Cast handler to t.GeneralValueType | BaseModel for type checker
-    dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
-
-    # Blocking middleware runs first (order 0) and stops execution
-    # Cast middleware to HandlerCallable for type checker
-    dispatcher.layer1_add_middleware(
-        cast("t.HandlerCallable", BlockingMiddleware()),
-        {"middleware_id": "block", "order": 0},
-    )
-    # This middleware would run second if pipeline continued
-    dispatcher.layer1_add_middleware(
-        cast("t.HandlerCallable", RecordingMiddleware(log)),
-        {"middleware_id": "record", "order": 1},
-    )
-
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("halt")))
-    assertion_helpers.assert_flext_result_failure(result)
-    assert "blocked:halt" in (result.error or "")
-    assert handler.called is False
-    assert log == []
-
-
-def test_disabled_middleware_is_skipped() -> None:
-    """Disabled middleware should be ignored while handler executes."""
-    dispatcher = FlextDispatcher()
-    handler = AutoRecordingHandler()
-    log: list[tuple[str, str]] = []
-    # Cast handler to t.GeneralValueType | BaseModel for type checker
-    dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
-
-    dispatcher.layer1_add_middleware(
-        cast("t.HandlerCallable", RecordingMiddleware(log)),
-        {"middleware_id": "mw_disabled", "enabled": False},
-    )
-
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ok")))
-    assertion_helpers.assert_flext_result_success(result)
-    assert handler.called
-    assert log == []
-
-
-def test_middleware_requires_process_callable() -> None:
-    """Middleware without process should return configuration error."""
-    dispatcher = FlextDispatcher()
-    handler = AutoRecordingHandler()
-    # Cast handler to t.GeneralValueType | BaseModel for type checker
-    dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
-
-    dispatcher.layer1_add_middleware(
-        cast("t.HandlerCallable", InvalidMiddleware()),
-        {"middleware_id": "invalid"},
-    )
-
-    result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("x")))
-    assertion_helpers.assert_flext_result_failure(result)
-    assert "callable 'process' method" in (result.error or "")
-    assert handler.called is False
+    res = dispatcher.publish(event)
+    assert res.is_success

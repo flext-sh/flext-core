@@ -43,3 +43,6 @@ docs/
 - Prefer linking to authoritative guides instead of repeating the same content across files.
 - Align terminology with the dispatcher-centric CQRS architecture: `FlextDispatcher`, handler registry, middleware, and domain-event publishing.
 - Update dates and version references only when `pyproject.toml` changes to avoid drift.
+
+```
+```

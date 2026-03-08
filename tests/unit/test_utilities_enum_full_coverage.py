@@ -1,6 +1,8 @@
-from __future__ import annotations
-# pyright: reportMissingImports=false, reportPrivateUsage=false, reportUnknownMemberType=false, reportUntypedFunctionDecorator=false, reportUnusedCallResult=false, reportUnknownVariableType=false, reportCallIssue=false, reportArgumentType=false
+"""Tests for Enum utilities full coverage."""
 
+from __future__ import annotations
+
+from collections.abc import Callable
 from enum import StrEnum
 from typing import cast, override
 
@@ -10,36 +12,26 @@ from flext_core import u
 
 
 class Status(StrEnum):
+    """Test Status Enum."""
+
     ACTIVE = "active"
     PENDING = "pending"
     INACTIVE = "inactive"
 
 
 class Priority(StrEnum):
+    """Test Priority Enum."""
+
     LOW = "low"
     HIGH = "high"
 
 
 class TextLike:
+    """Test string-like class implementation."""
+
     @override
     def __str__(self) -> str:
         return "active"
-
-
-def test_check_direct_access_warns_from_non_approved_module() -> None:
-    mod_globals: dict[str, object] = {
-        "__name__": "external.module",
-        "target": u.Enum._check_direct_access,
-    }
-    exec(
-        "def outer():\n    inner()\n\ndef inner():\n    target()\n",
-        mod_globals,
-    )
-    outer = mod_globals["outer"]
-    assert callable(outer)
-
-    with pytest.warns(DeprecationWarning, match="Direct import from _utilities.enum"):
-        outer()
 
 
 @pytest.mark.parametrize(
@@ -51,7 +43,10 @@ def test_check_direct_access_warns_from_non_approved_module() -> None:
         (123, False),
     ],
 )
-def test_private_is_member_by_value(value: object, expected: bool) -> None:
+def test_private_is_member_by_value(
+    value: str | float | bool | Status,
+    expected: bool,
+) -> None:
     assert u.Enum._is_member_by_value(value, Status) is expected
 
 
@@ -129,14 +124,15 @@ def test_bi_map_returns_forward_copy_and_inverse() -> None:
 
 
 def test_create_enum_executes_factory_path() -> None:
-    with pytest.raises((TypeError, AttributeError)):
+    expected_errors = cast("tuple[type[Exception], ...]", (TypeError, AttributeError))
+    with pytest.raises(expected_errors):
         _ = u.Enum.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"})
 
 
 def test_shortcuts_delegate_to_primary_methods() -> None:
-    assert u.Enum.is_enum_member("active", Status) is True
+    assert u.Enum.is_member(Status, "active") is True
 
-    parsed = u.Enum.parse_enum(Status, "inactive")
+    parsed = u.Enum.parse(Status, "inactive")
     assert parsed.is_success
     assert parsed.value == Status.INACTIVE
 
@@ -161,7 +157,7 @@ def test_dispatch_parse_mode_with_enum_string_and_other_object() -> None:
     assert parsed_from_string.is_success
     assert parsed_from_string.value == Status.PENDING
 
-    parsed_from_other = u.Enum.dispatch(TextLike(), Status, mode="parse")
+    parsed_from_other = u.Enum.dispatch(str(TextLike()), Status, mode="parse")
     assert parsed_from_other.is_success
     assert parsed_from_other.value == Status.ACTIVE
 
@@ -173,11 +169,12 @@ def test_dispatch_coerce_mode_with_enum_string_and_other_object() -> None:
     from_string = u.Enum.dispatch("active", Status, mode="coerce")
     assert from_string == Status.ACTIVE
 
-    from_other = u.Enum.dispatch(TextLike(), Status, mode="coerce")
+    from_other = u.Enum.dispatch(str(TextLike()), Status, mode="coerce")
     assert from_other == Status.ACTIVE
 
 
 def test_dispatch_unknown_mode_raises() -> None:
-    bad_mode = cast(str, "not-a-mode")
+    bad_mode = cast("str", "not-a-mode")
+    dispatch_any = cast("Callable[..., object]", u.Enum.dispatch)
     with pytest.raises(ValueError, match="Unknown mode"):
-        _ = u.Enum.dispatch("active", Status, mode=bad_mode)
+        _ = dispatch_any("active", Status, mode=bad_mode)

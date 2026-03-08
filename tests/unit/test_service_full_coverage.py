@@ -1,18 +1,22 @@
+"""Tests for FlextService to achieve full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
+
+from typing import cast, override
 
 import pytest
 
-from flext_core import c, m, r, t, u
-
-
-service_mod = __import__(
-    "flext_core.service", fromlist=["FlextService", "FlextSettings"]
-)
-FlextService = service_mod.FlextService
-FlextSettings = service_mod.FlextSettings
+from flext_core import FlextService, FlextSettings, c, m, p, r, u
+from flext_core._models.service import FlextModelsService
+from flext_core.context import FlextContext
 
 
 class _Svc(FlextService[bool]):
+    @override
     def execute(self) -> r[bool]:
         return r[bool].ok(True)
 
@@ -21,34 +25,38 @@ class _FakeConfig:
     version = "1"
 
 
-def test_service_init_type_guards_and_properties(monkeypatch) -> None:
+def test_service_init_type_guards_and_properties(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
     bad_ctx_runtime = m.ServiceRuntime.model_construct(
         config=FlextSettings(),
-        context=object(),
-        container=object(),
+        context=cast("p.Context", "invalid-context"),
+        container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
-        _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_ctx_runtime)
+        _Svc,
+        "_create_initial_runtime",
+        classmethod(lambda cls: bad_ctx_runtime),
     )
     with pytest.raises(TypeError, match="Expected FlextContext"):
         _Svc()
 
-    good_ctx = __import__(
-        "flext_core.context", fromlist=["FlextContext"]
-    ).FlextContext.create()
+    good_ctx = FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
-        config=_FakeConfig(),
+        config=cast("p.Config", _FakeConfig()),
         context=good_ctx,
-        container=object(),
+        container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
-        _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_cfg_runtime)
+        _Svc,
+        "_create_initial_runtime",
+        classmethod(lambda cls: bad_cfg_runtime),
     )
     with pytest.raises(TypeError, match="Expected FlextSettings"):
         _Svc()
@@ -67,8 +75,9 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
 
     class _CustomSvc(_Svc):
         @classmethod
-        def _runtime_bootstrap_options(cls):
-            return service_mod.p.RuntimeBootstrapOptions(
+        @override
+        def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+            return FlextModelsService.RuntimeBootstrapOptions(
                 config_type=_CustomSettings,
             )
 

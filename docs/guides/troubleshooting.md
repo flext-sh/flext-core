@@ -13,7 +13,6 @@
   - [System Status](#system-status)
 - [Common Issues](#common-issues)
   - [1. Import Errors](#1-import-errors)
-  - [r](#r)
   - [2. Type Checking Errors](#2-type-checking-errors)
   - [3. Test Failures](#3-test-failures)
   - [4. Configuration Issues](#4-configuration-issues)
@@ -115,7 +114,7 @@ poetry env info
 poetry install
 ```
 
-### r
+#### Debug Python Path
 
 ```python
 # Debug import issues
@@ -679,13 +678,15 @@ monitor_cpu()
    cd flext-core && make validate
    ```
 
+````
+
 1. **Check Logs**
 
    ```bash
    # Enable debug logging
    export FLEXT_LOG_LEVEL=DEBUG
    python your_script.py
-   ```
+````
 
 ### Community Support
 
@@ -718,6 +719,8 @@ When reporting issues, include:
    make info
    ```
 
+````
+
 1. **Error Details**
 
    ```python
@@ -727,7 +730,7 @@ When reporting issues, include:
        # Your code here
    except Exception as e:
        traceback.print_exc()
-   ```
+````
 
 1. **Minimal Reproduction**
 
@@ -735,6 +738,8 @@ When reporting issues, include:
    # Minimal code that reproduces the issue
    from flext_core import FlextBus
    ```
+
+````
 
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -758,7 +763,7 @@ from flext_core import u
 
 ### Your minimal example here
 
-4. **Expected vs Actual Behavior**
+1. **Expected vs Actual Behavior**
 
 - What you expected to happen
 - What actually happened
@@ -778,9 +783,9 @@ def process(data: dict) -> FlextResult[ProcessedData]:
 # ❌ BAD
 def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
-```
+````
 
-2. **Validate Input Early**
+1. **Validate Input Early**
 
    ```python
    def process_data(data: dict) -> FlextResult[dict]:
@@ -790,6 +795,8 @@ def process(data: dict) -> ProcessedData:
        # Process data
        return FlextResult.ok(processed_data)
    ```
+
+````
 
 1. **Use Type Hints**
 
@@ -801,7 +808,7 @@ def process(data: dict) -> ProcessedData:
    # ❌ BAD
    def process(items):
        pass
-   ```
+````
 
 1. **Test Thoroughly**
 
@@ -816,6 +823,8 @@ def process(data: dict) -> ProcessedData:
        assert result.is_failure
    ```
 
+```
+
 ## Resources
 
 - FLEXT Core Documentation
@@ -824,3 +833,4 @@ def process(data: dict) -> ProcessedData:
 - Testing Guide
 - [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
+```

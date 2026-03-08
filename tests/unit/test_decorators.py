@@ -28,6 +28,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import (
     FlextContainer,
@@ -302,19 +303,20 @@ class TestFlextDecorators:
         elif test_case.operation == DecoratorOperationType.INJECT_PROVIDED:
             container = FlextContainer()
 
-            @dataclasses.dataclass
-            class TestServiceTyped:
+            class TestServiceTyped(BaseModel):
                 value: str
 
             # Cast dataclass instance for type compatibility with container
-            service_instance: TestServiceTyped = TestServiceTyped("from_container")
-            container.with_service("service", service_instance)
+            service_instance: TestServiceTyped = TestServiceTyped(
+                value="from_container",
+            )
+            container.register("service", service_instance)
 
             @FlextDecorators.inject(service="service")
             def process(*, service: TestServiceTyped) -> str:
                 return service.value
 
-            explicit_service = TestServiceTyped("explicit")
+            explicit_service = TestServiceTyped(value="explicit")
             assert process(service=explicit_service) == "explicit"
 
     @pytest.mark.parametrize(
@@ -350,7 +352,7 @@ class TestFlextDecorators:
         """Test track_performance decorator with various scenarios."""
         if test_case.operation == DecoratorOperationType.TRACK_PERFORMANCE_BASIC:
 
-            @FlextDecorators.track_performance("timed_operation")
+            @FlextDecorators.log_operation("timed_operation")
             def timed_function() -> str:
                 time.sleep(0.01)
                 return "completed"
@@ -363,7 +365,7 @@ class TestFlextDecorators:
             # Note: Actual performance tracking validation would require logger capture
         elif test_case.operation == DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION:
 
-            @FlextDecorators.track_performance("failing_operation")
+            @FlextDecorators.log_operation("failing_operation")
             def failing_function() -> None:
                 error_msg = "Timed failure"
                 raise RuntimeError(error_msg)
@@ -399,7 +401,7 @@ class TestFlextDecorators:
 
             result = failing_operation()
             assert isinstance(result, FlextResult)
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert result.error is not None
             assert "Operation failed" in result.error
 
@@ -499,7 +501,7 @@ class TestFlextDecorators:
 
             result = operation()
             assert isinstance(result, FlextResult)
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success(result)
 
     def test_railway_with_existing_result(self) -> None:
         """Test railway decorator with existing FlextResult."""
@@ -510,7 +512,7 @@ class TestFlextDecorators:
 
         result = returns_result()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
         unwrapped = result.value
         # Railway decorator may unwrap nested FlextResult or keep it
         if isinstance(unwrapped, FlextResult):
@@ -550,14 +552,14 @@ class TestFlextDecorators:
         """Test manual decorator stacking."""
 
         @FlextDecorators.log_operation("stacked")
-        @FlextDecorators.track_performance("stacked")
+        @FlextDecorators.log_operation("stacked")
         @FlextDecorators.railway()
         def stacked_operation() -> str:
             return "stacked_result"
 
         result = stacked_operation()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
 
     def test_integration_retry_with_railway(self) -> None:
         """Test retry decorator with railway."""
@@ -575,7 +577,7 @@ class TestFlextDecorators:
 
         result = flaky_with_railway()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
         assert attempts == 2
 
 

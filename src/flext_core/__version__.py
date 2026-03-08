@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
 
 
@@ -16,18 +17,16 @@ class FlextVersion:
     """Package version and metadata information.
 
     Provides version information and package metadata using standard library
-    metadata extraction with graceful fallback handling.
+    metadata extraction.
     """
 
-    _metadata: PackageMetadata | dict[str, str]
     try:
-        _metadata = metadata("flext-core")
+        _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
     except PackageNotFoundError:
-        # Create PackageMetadata-compatible dict for fallback
         _metadata = {
-            "Version": "0.0.0-dev",
+            "Version": "0.12.0-dev",
             "Name": "flext-core",
-            "Summary": "FLEXT core (metadata fallback)",
+            "Summary": "",
             "Author": "",
             "Author-Email": "",
             "License": "",
@@ -47,17 +46,17 @@ class FlextVersion:
     __url__ = _metadata.get("Home-Page", "")
 
     @classmethod
-    def get_version_string(cls) -> str:
-        """Get package version as human-readable string.
-
-        Returns the package version in string format suitable for display
-        and logging. Follows PEP 440 semantic versioning format.
-
-        Returns:
-            str: Version string (e.g., "1.0.0", "1.0.0rc1")
-
-        """
-        return cls.__version__
+    def get_package_info(cls) -> Mapping[str, str]:
+        """Get comprehensive package information dictionary."""
+        return {
+            "name": cls.__title__,
+            "version": cls.__version__,
+            "description": cls.__description__,
+            "author": cls.__author__,
+            "author_email": cls.__author_email__,
+            "license": cls.__license__,
+            "url": cls.__url__,
+        }
 
     @classmethod
     def get_version_info(cls) -> tuple[int | str, ...]:
@@ -74,51 +73,22 @@ class FlextVersion:
         return cls.__version_info__
 
     @classmethod
-    def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
-        """Check if current version meets minimum version requirement.
+    def get_version_string(cls) -> str:
+        """Get package version as human-readable string.
 
-        Performs version comparison to determine if the current package version
-        is at least the specified minimum version. Useful for feature gating
-        and compatibility checks.
-
-        Args:
-            major: Minimum major version number
-            minor: Minimum minor version number (default: 0)
-            patch: Minimum patch version number (default: 0)
+        Returns the package version in string format suitable for display
+        and logging. Follows PEP 440 semantic versioning format.
 
         Returns:
-            bool: True if current version >= specified version
+            str: Version string (e.g., "1.0.0", "1.0.0rc1")
 
         """
-        return cls.__version_info__ >= (major, minor, patch)
+        return cls.__version__
 
     @classmethod
-    def get_package_info(cls) -> dict[str, str]:
-        """Get comprehensive package information dictionary.
-
-        Returns all available package metadata in a structured dictionary
-        format for programmatic access to package information.
-
-        Returns:
-            dict[str, str]: Package metadata dictionary containing:
-                - name: Package name
-                - version: Version string
-                - description: Package description
-                - author: Author name
-                - author_email: Author email
-                - license: License type
-                - url: Homepage URL
-
-        """
-        return {
-            "name": cls.__title__,
-            "version": cls.__version__,
-            "description": cls.__description__,
-            "author": cls.__author__,
-            "author_email": cls.__author_email__,
-            "license": cls.__license__,
-            "url": cls.__url__,
-        }
+    def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
+        """Check if current version meets minimum version requirement."""
+        return cls.__version_info__ >= (major, minor, patch)
 
 
 __version__ = FlextVersion.__version__

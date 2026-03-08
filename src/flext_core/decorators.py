@@ -16,82 +16,26 @@ import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, overload
+from typing import Literal, Protocol, TypeGuard, overload
 
-from flext_core._decorators import FactoryDecoratorsDiscovery
-from flext_core.constants import c
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
-from flext_core.exceptions import e
-from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, T, t
-from flext_core.utilities import u
-
-
-def deprecated(
-    message: str,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Decorator to mark functions/variables as deprecated.
-
-    Emits DeprecationWarning when decorated function is called.
-    Used during v0.10 → v0.11 refactoring for constants migration.
-
-    Architecture: Cross-Cutting Concern (Tier 3)
-    ============================================
-    Provides simple deprecation warnings for functions, methods, and constants
-    being replaced during the constants refactoring phase. Warnings guide users
-    to use new APIs before deprecated code is removed.
-
-    Args:
-        message: Deprecation message explaining what to use instead
-
-    Returns:
-        Decorator function that wraps the target callable
-
-    Example:
-        >>> @deprecated("Use FlextConstants.Errors.VALIDATION_ERROR instead")
-        ... def old_validation_error():
-        ...     return "validation_error"
-
-        >>> # When called:
-        >>> result = old_validation_error()  # DeprecationWarning emitted
-        >>> assert result == "validation_error"  # Still works
-
-    Note:
-        This decorator is intended for v0.10 → v0.11 transition period.
-        After deprecation cycle completes, remove decorator and aliases.
-        Part of comprehensive constants refactoring (PASSO 3-7).
-
-    """
-
-    def decorator(
-        func: Callable[P, R],
-    ) -> Callable[P, R]:
-        """Apply deprecation warning to callable."""
-
-        @wraps(func)
-        def wrapper(
-            *args: P.args,
-            **kwargs: P.kwargs,
-        ) -> R:
-            """Wrapper that emits warning before execution."""
-            warnings.warn(
-                message,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextExceptions as e,
+    FlextLogger,
+    FlextRuntime,
+    P,
+    R,
+    T,
+    c,
+    m,
+    p,
+    r,
+    t,
+)
 
 
-class FlextDecorators(FlextRuntime):
+class FlextDecorators:
     """Automation decorators for infrastructure concerns.
 
     Architecture: Layer 3 (Application Layer - Cross-Cutting Concerns)
@@ -123,11 +67,10 @@ class FlextDecorators(FlextRuntime):
        - Defensive cleanup via context.suppress() to ensure unbinding
        - Integration with FlextLogger for context propagation
 
-    3. **@track_performance**: Automatic performance tracking and metrics
-       - Tracks operation duration (milliseconds and seconds)
-       - Logs performance metrics with success/failure status
-       - Error-aware timing (tracks duration even on exceptions)
-       - Integration with FlextLogger for metrics collection
+    3. **@railway**: Automatic exception-to-FlextResult wrapping
+       - Converts exceptions to FlextResult.fail() automatically
+       - Preserves type safety via generic return type
+       - Integration with FlextResult for monadic error handling
 
     4. **@railway**: Automatic railway pattern wrapping with FlextResult
        - Converts exceptions to FlextResult.fail()
@@ -154,7 +97,7 @@ class FlextDecorators(FlextRuntime):
        - No-op if correlation ID already set
 
         return func(*args, **kwargs)
-       - Combines @inject, @log_operation, @track_performance, @railway
+       - Combines @inject, @log_operation, @railway
        - Single-line configuration for maximum automation
        - Correct wrapper ordering for proper exception propagation
        - Balances automation with code clarity
@@ -182,7 +125,7 @@ class FlextDecorators(FlextRuntime):
     ```
     @railway (outermost - converts exceptions to FlextResult)
     @inject (provides dependencies)
-    @track_performance (tracks execution time)
+    @log_operation (logs operations)
     @log_operation (logs operations)
     (function)
     ```
@@ -217,14 +160,14 @@ class FlextDecorators(FlextRuntime):
         ...         # Start/completion/failure automatically logged
         ...         return self._process_order(order_data)
 
-    3. Performance tracking:
-        >>> class ReportService:
-        ...     @FlextDecorators.track_performance("generate_report")
-        ...     def generate_report(self, params: dict) -> r[Report]:
-        ...         # Duration and metrics automatically tracked
-        ...         return self._generate(params)
+    3. Railway pattern wrapping:
+        >>> from pydantic import EmailStr
+        >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
+        ... def process_user_email(email: EmailStr) -> str:
+        ...     # Pydantic v2 EmailStr validates email format natively
+        ...     return email.lower()
 
-    4. Railway pattern wrapping:
+    4. Context management:
         >>> from pydantic import EmailStr
         >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
         ... def process_user_email(email: EmailStr) -> str:
@@ -243,7 +186,7 @@ class FlextDecorators(FlextRuntime):
         ...     )
         ...     def call_external_api(
         ...         self, endpoint: str
-        ...     ) -> dict[str, t.GeneralValueType]:
+         ...     ) -> m.ConfigMap:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -315,7 +258,7 @@ class FlextDecorators(FlextRuntime):
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-        ... def business_operation() -> dict[str, t.GeneralValueType]:
+         ... def business_operation() -> m.ConfigMap:
         ...     # All exceptions become FlextResult.fail()
         ...     return process_business_logic()
         >>>
@@ -362,6 +305,60 @@ class FlextDecorators(FlextRuntime):
         ...             return r[dict].fail("Name required")
         ...         return r[dict].ok(data)
     """
+
+    @staticmethod
+    def deprecated(
+        message: str,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Decorator to mark functions/variables as deprecated.
+
+        Emits DeprecationWarning when decorated function is called.
+        Used during v0.10 → v0.11 refactoring for constants migration.
+
+        Architecture: Cross-Cutting Concern (Tier 3)
+        ============================================
+        Provides simple deprecation warnings for functions, methods, and constants
+        being replaced during the constants refactoring phase. Warnings guide users
+        to use new APIs before deprecated code is removed.
+
+        Args:
+            message: Deprecation message explaining what to use instead
+
+        Returns:
+            Decorator function that wraps the target callable
+
+        Example:
+            >>> @FlextDecorators.deprecated("Use new_constant instead")
+            ... def old_function():
+            ...     return "old"
+
+        Note:
+            This decorator is intended for v0.10 → v0.11 transition period.
+            After deprecation cycle completes, remove decorator and aliases.
+
+        """
+
+        def decorator(
+            func: Callable[P, R],
+        ) -> Callable[P, R]:
+            """Apply deprecation warning to callable."""
+
+            @wraps(func)
+            def wrapper(
+                *args: P.args,
+                **kwargs: P.kwargs,
+            ) -> R:
+                """Wrapper that emits warning before execution."""
+                warnings.warn(
+                    message,
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
 
     @staticmethod
     def inject(
@@ -489,22 +486,36 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, t.GeneralValueType] = {
+                    start_extra: dict[str, t.Scalar] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
 
-                    result_logger.debug(
-                        "%s_started",
-                        op_name,
-                        extra=start_extra,
-                    )
+                    if correlation_id is not None:
+                        _ = result_logger.debug(
+                            "%s_started",
+                            op_name,
+                            extra={
+                                "function": func.__name__,
+                                "func_module": func.__module__,
+                                "correlation_id": correlation_id,
+                            },
+                        )
+                    else:
+                        _ = result_logger.debug(
+                            "%s_started",
+                            op_name,
+                            extra={
+                                "function": func.__name__,
+                                "func_module": func.__module__,
+                            },
+                        )
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, t.GeneralValueType] = {
+                    completion_extra: dict[str, t.Scalar] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -519,10 +530,10 @@ class FlextDecorators(FlextRuntime):
                         )
                         completion_extra["duration_seconds"] = duration
 
-                    result_logger.debug(
+                    _ = result_logger.debug(
                         "%s_completed",
                         op_name,
-                        extra=completion_extra,
+                        extra=dict(completion_extra),
                     )
                     return result
                 except (
@@ -532,150 +543,77 @@ class FlextDecorators(FlextRuntime):
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, t.GeneralValueType] = {
+                    failure_extra: dict[str, t.MetadataValue] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
-                        "error_type": type(exc).__name__,
+                        "error_type": exc.__class__.__name__,
                         "operation": op_name,
                     }
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
 
+                    tracked_duration = (
+                        time.perf_counter() - start_time if track_perf else 0.0
+                    )
                     # Add timing metrics if tracking performance
                     if track_perf:
-                        duration = time.perf_counter() - start_time
                         failure_extra["duration_ms"] = (
-                            duration * c.MILLISECONDS_MULTIPLIER
+                            tracked_duration * c.MILLISECONDS_MULTIPLIER
                         )
-                        failure_extra["duration_seconds"] = duration
+                        failure_extra["duration_seconds"] = tracked_duration
 
-                    # Log with exception details
-                    # Type narrowing: exception method accepts exc_info: bool,
-                    # extract it from kwargs
-                    failure_extra_copy = dict(failure_extra)
-                    exc_info_raw = failure_extra_copy.pop("exc_info", None)
-                    exc_info_value: bool = (
-                        bool(exc_info_raw) if u.is_type(exc_info_raw, bool) else True
-                    )
-                    # Remove 'exception' key from kwargs if present to avoid duplicate
-                    # This ensures exception=exc doesn't conflict with **kwargs
-                    failure_extra_copy.pop("exception", None)
-                    # Pass exception as keyword argument, not in **kwargs
-                    result_logger.exception(
-                        op_name,
-                        exception=exc,
-                        exc_info=exc_info_value,
-                        **failure_extra_copy,
-                    )
-                    raise
-                finally:
-                    # CRITICAL: Clear operation context (defensive cleanup)
-                    # Use suppress to ensure cleanup never fails
-                    with suppress(Exception):
-                        FlextDecorators._clear_operation_scope(
-                            logger=logger,
-                            function_name=func.__name__,
+                    exc_info_value = True
+                    if correlation_id is not None and track_perf:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                            correlation_id=correlation_id,
+                            duration_ms=tracked_duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_seconds=tracked_duration,
+                        )
+                    elif correlation_id is not None:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                            correlation_id=correlation_id,
+                        )
+                    elif track_perf:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                            duration_ms=tracked_duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_seconds=tracked_duration,
+                        )
+                    else:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
                             operation=op_name,
                         )
-
-            return wrapper
-
-        return decorator
-
-    @staticmethod
-    def track_performance(
-        operation_name: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to automatically track operation performance metrics.
-
-        Tracks operation duration and logs performance metrics with structured
-        logging, enabling performance monitoring without manual timing code.
-
-        Args:
-            operation_name: Name for the operation (defaults to function name)
-
-        Returns:
-            Decorated function with automatic performance tracking
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators, FlextResult
-
-
-            class MyService:
-                @FlextDecorators.track_performance("heavy_computation")
-                def compute(self, data: list) -> r[float]:
-                    # Automatic timing and performance logging
-                    return self._expensive_calculation(data)
-            ```
-
-        Note:
-            Performance metrics are logged to structured logging context and
-            can be used with track() for metrics collection.
-
-        """
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Fast fail: explicit default value instead of 'or' fallback
-                op_name: str = (
-                    operation_name if operation_name is not None else func.__name__
-                )
-
-                # Get logger from self if available, otherwise create one
-                logger = FlextDecorators._resolve_logger(args, func)
-
-                start_time = time.perf_counter()
-
-                correlation_id = FlextDecorators._bind_operation_context(
-                    operation=op_name,
-                    logger=logger,
-                    function_name=func.__name__,
-                    ensure_correlation=True,
-                )
-
-                try:
-                    result = func(*args, **kwargs)
-                    duration = time.perf_counter() - start_time
-
-                    success_extra: dict[str, t.GeneralValueType] = {
-                        "operation": op_name,
-                        "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
-                        "duration_seconds": duration,
-                        "success": True,
-                    }
-                    if correlation_id is not None:
-                        success_extra["correlation_id"] = correlation_id
-                    logger.info(
-                        "operation_completed",
-                        extra=success_extra,
-                    )
-                    return result
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as e:
-                    duration = time.perf_counter() - start_time
-
-                    failure_extra: dict[str, t.GeneralValueType] = {
-                        "operation": op_name,
-                        "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
-                        "duration_seconds": duration,
-                        "success": False,
-                        "error": str(e),
-                        "error_type": type(e).__name__,
-                    }
-                    if correlation_id is not None:
-                        failure_extra["correlation_id"] = correlation_id
-                    logger.exception(
-                        "operation_failed",
-                        extra=failure_extra,
-                    )
                     raise
                 finally:
                     # CRITICAL: Clear operation context (defensive cleanup)
@@ -740,11 +678,6 @@ class FlextDecorators(FlextRuntime):
                 try:
                     result = func(*args, **kwargs)
 
-                    # If already a FlextResult, return as-is
-                    # Type narrowing: isinstance(result, r) confirms result is r[T]
-                    if isinstance(result, r):
-                        return result
-
                     # Wrap successful result
                     return r[T].ok(result)
 
@@ -756,9 +689,8 @@ class FlextDecorators(FlextRuntime):
                     KeyError,
                 ) as e:
                     # Convert exception to FlextResult failure
-                    # Fast fail: error_code must be str or None
                     effective_error_code: str = (
-                        error_code if isinstance(error_code, str) else "OPERATION_ERROR"
+                        error_code if error_code is not None else "OPERATION_ERROR"
                     )
                     return r[T].fail(
                         str(e),
@@ -805,7 +737,7 @@ class FlextDecorators(FlextRuntime):
                     delay_seconds=2.0,
                     backoff_strategy=c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
-                def unreliable_operation(self) -> dict[str, t.GeneralValueType]:
+                def unreliable_operation(self) -> m.ConfigMap:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -836,201 +768,69 @@ class FlextDecorators(FlextRuntime):
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
+                retry_func = func
                 # Create retry config from parameters
                 retry_config = m.RetryConfiguration(
-                    max_attempts=attempts,
+                    max_retries=attempts,
                     initial_delay_seconds=delay,
                     exponential_backoff=(
                         strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL
                     ),
                 )
-                result_or_exception = FlextDecorators._execute_retry_loop(
-                    func,
-                    args,
-                    kwargs,
-                    logger,
-                    retry_config=retry_config,
-                )
-                # Check if we got a successful result or an exception
-                if isinstance(result_or_exception, Exception):
-                    # All retries failed - handle exhaustion and raise
+                try:
+                    retry_args: tuple[object, ...] = tuple(args)
+                    retry_kwargs: Mapping[str, object] = dict(kwargs)
+                    retry_result = FlextDecorators._execute_retry_loop(
+                        retry_func,
+                        retry_args,
+                        retry_kwargs,
+                        logger,
+                        retry_config=retry_config,
+                    )
+                    if isinstance(retry_result, Exception):
+                        FlextDecorators._handle_retry_exhaustion(
+                            retry_result,
+                            retry_func,
+                            attempts,
+                            error_code,
+                            logger,
+                        )
+                        retry_error_code = (
+                            error_code
+                            if error_code is not None
+                            else "OPERATION_TIMEOUT"
+                        )
+                        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
+                        raise e.TimeoutError(
+                            timeout_message,
+                            error_code=retry_error_code,
+                            operation=func.__name__,
+                            attempts=attempts,
+                            original_error=str(retry_result),
+                        )
+                    return retry_result
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as exc:
                     FlextDecorators._handle_retry_exhaustion(
-                        result_or_exception,
-                        func,
+                        exc,
+                        retry_func,
                         attempts,
                         error_code,
                         logger,
                     )
-                    # Unreachable, but needed for type checking
-                    msg = f"Operation {func.__name__} failed"
-                    raise e.TimeoutError(
-                        msg,
-                        error_code=error_code or "RETRY_EXHAUSTED",
-                    )
-                # Success - return the result
-                return result_or_exception
+                    raise
 
             return wrapper
 
         return decorator
 
-    @staticmethod
-    def _resolve_logger(
-        args: tuple[object, ...],
-        func: Callable[P, R],
-    ) -> FlextLogger:
-        """Resolve logger from first argument or create module logger.
-
-        Returns:
-            FlextLogger instance (concrete type, not protocol)
-
-        """
-        first_arg = args[0] if args else None
-        potential_logger: object | None = (
-            getattr(first_arg, "logger", None) if first_arg is not None else None
-        )
-        if potential_logger is not None and isinstance(potential_logger, FlextLogger):
-            # Type narrowing via isinstance check
-            return potential_logger
-        # FlextLogger constructor returns FlextLogger
-        return FlextLogger(func.__module__)
-
-    @staticmethod
-    def _execute_retry_loop[R](
-        func: Callable[..., R],  # Variadic: called with pre-split args/kwargs
-        args: tuple[object, ...],
-        kwargs: dict[str, object],
-        logger: FlextLogger,
-        *,
-        retry_config: m.RetryConfiguration | None = None,
-    ) -> R | Exception:
-        """Execute retry loop and return last exception.
-
-        Uses RetryConfiguration model to reduce parameter count from 8 to 5.
-
-        Args:
-            func: Function to execute
-            args: Function positional arguments
-            kwargs: Function keyword arguments
-            logger: Logger instance
-            retry_config: RetryConfiguration instance (Pydantic v2)
-
-        Returns:
-            Function result on success, or Exception on failure
-
-        """
-        # Use default config if none provided
-        if retry_config is None:
-            retry_config = m.RetryConfiguration()
-
-        attempts = retry_config.max_attempts
-        delay = retry_config.initial_delay_seconds
-        # Map exponential_backoff bool to strategy string
-        strategy = (
-            c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL
-            if retry_config.exponential_backoff
-            else c.Reliability.BACKOFF_STRATEGY_LINEAR
-        )
-
-        last_exception: Exception | None = None
-        current_delay = delay
-
-        for attempt in range(1, attempts + 1):
-            try:
-                if attempt > 1:
-                    logger.info(
-                        "retry_attempt",
-                        extra={
-                            "function": func.__name__,
-                            "attempt": attempt,
-                            "max_attempts": attempts,
-                            "delay_seconds": current_delay,
-                        },
-                    )
-                    time.sleep(current_delay)
-
-                return func(*args, **kwargs)
-
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as e:
-                last_exception = e
-
-                logger.warning(
-                    "operation_failed_retrying",
-                    extra={
-                        "function": func.__name__,
-                        "attempt": attempt,
-                        "max_attempts": attempts,
-                        "error": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                )
-
-                # Calculate next delay based on strategy
-                if strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL:
-                    current_delay *= 2
-                elif strategy == c.Reliability.BACKOFF_STRATEGY_LINEAR:
-                    current_delay += delay
-                # For unknown strategies, keep constant delay
-
-                # If this was the last attempt, we'll raise after loop
-                if attempt == attempts:
-                    break
-
-        # Should never be None (loop always catches exceptions), but handle defensively
-        if last_exception is None:
-            return RuntimeError("Retry loop completed without success or exception")
-        return last_exception
-
-    @staticmethod
-    def _handle_retry_exhaustion(
-        last_exception: Exception,
-        func: Callable[P, R],
-        attempts: int,
-        error_code: str | None,
-        logger: FlextLogger,
-    ) -> None:
-        """Handle retry exhaustion and raise appropriate exception."""
-        # All retries exhausted
-        if last_exception:
-            logger.error(
-                "operation_failed_all_retries_exhausted",
-                extra={
-                    "function": func.__name__,
-                    "attempts": attempts,
-                    "error": str(last_exception),
-                    "error_type": type(last_exception).__name__,
-                },
-            )
-        else:
-            logger.error(
-                "operation_failed_all_retries_exhausted",
-                extra={
-                    "function": func.__name__,
-                    "attempts": attempts,
-                    "error": "Unknown error",
-                },
-            )
-
-        # Raise the last exception
-        if last_exception:
-            raise last_exception
-
-        # Should never reach here, but type safety
-        msg = f"Operation {func.__name__} failed after {attempts} attempts"
-        # Fast fail: error_code must be str or None
-        effective_error_code: str = (
-            error_code if isinstance(error_code, str) else "RETRY_EXHAUSTED"
-        )
-        raise e.TimeoutError(
-            msg,
-            error_code=effective_error_code,
-        )
+    class _HasLogger(Protocol):
+        logger: FlextLogger
 
     @staticmethod
     def _bind_operation_context(
@@ -1046,7 +846,7 @@ class FlextDecorators(FlextRuntime):
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
         else:
             current_id = FlextContext.Variables.CorrelationId.get()
-            if u.is_type(current_id, str) and current_id:
+            if isinstance(current_id, str):
                 correlation_id = current_id
 
         FlextContext.Request.set_operation_name(operation)
@@ -1059,13 +859,11 @@ class FlextDecorators(FlextRuntime):
         if binding_result.is_failure:
             logger.warning(
                 "operation_context_binding_failed",
-                extra={
-                    "function": function_name,
-                    "operation": operation,
-                    "error": binding_result.error,
-                    "error_code": binding_result.error_code,
-                    "correlation_id": correlation_id,
-                },
+                function=function_name,
+                operation=operation,
+                error=binding_result.error or "",
+                error_code=binding_result.error_code or "",
+                correlation_id=correlation_id or "",
             )
         return correlation_id
 
@@ -1090,140 +888,183 @@ class FlextDecorators(FlextRuntime):
                             "function": function_name,
                             "operation": operation,
                         },
-                    }
+                    },
                 ),
             )
 
     @staticmethod
+    def _execute_retry_loop(
+        func: Callable[..., R],
+        args: tuple[object, ...],
+        kwargs: Mapping[str, object],
+        logger: FlextLogger,
+        *,
+        retry_config: m.RetryConfiguration | None = None,
+    ) -> R | Exception:
+        """Execute retry loop and return last exception.
+
+        Uses RetryConfiguration model to reduce parameter count from 8 to 5.
+
+        Args:
+            func: Function to execute
+            args: Function positional arguments
+            kwargs: Function keyword arguments
+            logger: Logger instance
+            retry_config: RetryConfiguration instance (Pydantic v2)
+
+        Returns:
+            Function result on success
+
+        """
+        # Use default config if none provided
+        if retry_config is None:
+            retry_config = m.RetryConfiguration()
+
+        attempts = retry_config.max_retries
+        delay = retry_config.initial_delay_seconds
+        # Map exponential_backoff bool to strategy string
+        strategy = (
+            c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL
+            if retry_config.exponential_backoff
+            else c.Reliability.BACKOFF_STRATEGY_LINEAR
+        )
+
+        last_exception: Exception | None = None
+        current_delay = delay
+
+        for attempt in range(1, attempts + 1):
+            try:
+                if attempt > 1:
+                    logger.info(
+                        "retry_attempt",
+                        function=func.__name__,
+                        attempt=attempt,
+                        max_attempts=attempts,
+                        delay_seconds=current_delay,
+                    )
+                    time.sleep(current_delay)
+
+                return func(*args, **kwargs)
+
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as e:
+                last_exception = e
+
+                logger.warning(
+                    "operation_failed_retrying",
+                    function=func.__name__,
+                    attempt=attempt,
+                    max_attempts=attempts,
+                    error=str(e),
+                    error_type=e.__class__.__name__,
+                )
+
+                # Calculate next delay based on strategy
+                if strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL:
+                    current_delay *= 2
+                elif strategy == c.Reliability.BACKOFF_STRATEGY_LINEAR:
+                    current_delay += delay
+                # For unknown strategies, keep constant delay
+
+                # If this was the last attempt, we'll raise after loop
+                if attempt == attempts:
+                    break
+
+        # Should never be None (loop always catches exceptions), but handle defensively
+        if last_exception is None:
+            msg = "Retry loop completed without success or exception"
+            return RuntimeError(msg)
+        return last_exception
+
+    @staticmethod
     def _handle_log_result(
         *,
-        result: p.Result[bool] | FlextRuntime.RuntimeResult[bool],
+        result: r[bool] | p.Result[bool] | FlextRuntime.RuntimeResult[bool],
         logger: FlextLogger,
         fallback_message: str,
         kwargs: m.ConfigMap,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
-            fallback_logger = getattr(logger, "logger", None)
+            fallback_logger = logger.logger if hasattr(logger, "logger") else None
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
-            fallback_kwargs = dict(kwargs)
-            fallback_kwargs.setdefault("extra", {})
+            fallback_kwargs = m.ConfigMap(root=dict(kwargs.root))
+            _ = fallback_kwargs.setdefault("extra", {})
             extra_payload_raw = fallback_kwargs["extra"]
-            # Type narrowing: object to ConfigurationDict for is_dict_like
-            if isinstance(extra_payload_raw, dict):
-                extra_payload: dict[str, t.GeneralValueType] = extra_payload_raw
-            else:
-                extra_payload = {}
+            extra_payload = (
+                m.ConfigMap(root=dict(extra_payload_raw))
+                if FlextRuntime.is_dict_like(extra_payload_raw)
+                else m.ConfigMap(root={})
+            )
             if FlextRuntime.is_dict_like(extra_payload):
-                extra_payload = dict(extra_payload)
                 extra_payload["log_error"] = result.error
                 extra_payload["log_error_code"] = result.error_code
                 fallback_kwargs["extra"] = extra_payload
             else:
                 fallback_kwargs["log_error"] = result.error
                 fallback_kwargs["log_error_code"] = result.error_code
-            _ = fallback_logger.warning(fallback_message, **fallback_kwargs)
+            _ = fallback_logger.warning(fallback_message, **fallback_kwargs.root)
 
     @staticmethod
-    def timeout(
-        timeout_seconds: float | None = None,
-        error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to enforce operation timeout.
-
-        Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default
-        timeout and e.TimeoutError for structured error
-        handling.
-
-        Args:
-            timeout_seconds: Timeout in seconds (default:
-                c.Reliability.DEFAULT_TIMEOUT_SECONDS)
-            error_code: Optional error code for timeout
-
-        Returns:
-            Decorated function with timeout enforcement
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators
-
-
-            class MyService:
-                @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> dict[str, t.GeneralValueType]:
-                    # Automatically raises TimeoutError if exceeds 30 seconds
-                    return self._process_data()
-            ```
-
-        Note:
-            This is a simple timeout based on elapsed time checking. For true
-            thread-based timeouts, use threading.Timer or asyncio.
-
-        """
-        # Use c.Reliability for default
-        max_duration = (
-            timeout_seconds
-            if timeout_seconds is not None
-            else c.Reliability.DEFAULT_TIMEOUT_SECONDS
+    def _handle_retry_exhaustion(
+        last_exception: Exception,
+        func: Callable[..., R],
+        attempts: int,
+        error_code: str | None,
+        logger: FlextLogger,
+    ) -> None:
+        """Handle retry exhaustion and raise appropriate exception."""
+        # All retries exhausted
+        logger.error(
+            "operation_failed_all_retries_exhausted",
+            function=func.__name__,
+            attempts=attempts,
+            error=str(last_exception),
+            error_type=last_exception.__class__.__name__,
+        )
+        if last_exception:
+            raise last_exception
+        retry_error_code = error_code if error_code is not None else "OPERATION_TIMEOUT"
+        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
+        raise e.TimeoutError(
+            timeout_message,
+            error_code=retry_error_code,
+            operation=func.__name__,
+            attempts=attempts,
+            original_error=str(last_exception),
         )
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                start_time = time.perf_counter()
+    @staticmethod
+    def _has_flext_logger(value: object) -> TypeGuard[_HasLogger]:
+        if not hasattr(value, "logger"):
+            return False
+        logger_value = getattr(value, "logger")
+        return isinstance(logger_value, FlextLogger)
 
-                try:
-                    result = func(*args, **kwargs)
+    @staticmethod
+    def _resolve_logger(
+        args: tuple[object, ...],
+        func: Callable[P, R],
+    ) -> FlextLogger:
+        """Resolve logger from first argument or create module logger.
 
-                    # Check if operation exceeded timeout
-                    duration = time.perf_counter() - start_time
-                    if duration > max_duration:
-                        msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s)"
-                        # Fast fail: error_code must be str or None
-                        effective_error_code: str = (
-                            error_code
-                            if isinstance(error_code, str)
-                            else "OPERATION_TIMEOUT"
-                        )
-                        raise e.TimeoutError(
-                            msg,
-                            error_code=effective_error_code,
-                            timeout_seconds=max_duration,
-                            operation=func.__name__,
-                            duration_seconds=duration,
-                        )
+        Returns:
+            FlextLogger instance (concrete type, not protocol)
 
-                    return result
-
-                except e.TimeoutError:
-                    # Re-raise timeout errors
-                    raise
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as exc:
-                    # Check duration even on exception
-                    duration = time.perf_counter() - start_time
-                    if duration > max_duration:
-                        msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {type(exc).__name__}"
-                        raise e.TimeoutError(
-                            msg,
-                            error_code=error_code or "OPERATION_TIMEOUT",
-                            timeout_seconds=max_duration,
-                            operation=func.__name__,
-                            duration_seconds=duration,
-                            original_error=str(exc),
-                        ) from exc
-                    # Re-raise original exception if not timeout
-                    raise
-
-            return wrapper
-
-        return decorator
+        """
+        first_arg = args[0] if args else None
+        if isinstance(first_arg, FlextLogger):
+            return first_arg
+        if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
+            return first_arg.logger
+        # FlextLogger constructor returns FlextLogger
+        return FlextLogger(func.__module__)
 
     @overload
     @staticmethod
@@ -1270,8 +1111,8 @@ class FlextDecorators(FlextRuntime):
 
         Returns:
             Decorated function with all requested automations.
-            When use_railway=True, returns Callable[P, r[R]].
-            When use_railway=False, returns Callable[P, R].
+            When use_railway=True, returns Callable[..., r[R]].
+            When use_railway=False, returns Callable[..., R].
 
         Example:
             ```python
@@ -1336,122 +1177,138 @@ class FlextDecorators(FlextRuntime):
         return standard_decorator
 
     @staticmethod
-    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to ensure correlation ID exists for operation tracking.
+    def factory(
+        name: str,
+        *,
+        singleton: bool = False,
+        lazy: bool = True,
+    ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
+        """Decorator to mark functions as factories for DI container.
 
-        Automatically ensures a correlation ID is present in the context,
-        generating one if needed. Essential for distributed tracing and
-        request correlation across services.
+        Stores factory configuration as metadata on the decorated function,
+        enabling auto-discovery by FlextContainer and factory registries.
+
+        Args:
+            name: Name to register the factory under in the container
+            singleton: Whether factory creates singleton instances. Default: False
+            lazy: Whether to defer factory invocation until first use. Default: True
 
         Returns:
-            Decorated function with correlation ID management
+            Decorator function for marking factory functions
 
         Example:
-            ```python
-            from flext_core import FlextDecorators, FlextResult
-
-
-            class OrderService:
-                @FlextDecorators.with_correlation()
-                def process_order(self, order_id: str) -> r[dict]:
-                    # Correlation ID automatically ensured in context
-                    # All logs will include correlation_id
-                    return self._process(order_id)
-            ```
-
-        Note:
-            Uses FlextRuntime.Integration for context management via
-            structlog.contextvars (single source of truth).
+            >>> @FlextDecorators.factory(name="user_service", singleton=True)
+            ... def create_user_service(config: FlextSettings) -> UserService:
+            ...     return UserService(config)
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Ensure correlation ID exists
-                _ = FlextContext.Utilities.ensure_correlation_id()
-
-                return func(*args, **kwargs)
-
-            return wrapper
+        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
+            """Apply factory configuration metadata to function."""
+            config = m.HandlerFactoryDecoratorConfig(
+                name=name,
+                singleton=singleton,
+                lazy=lazy,
+            )
+            setattr(func, c.Discovery.FACTORY_ATTR, config)
+            return func
 
         return decorator
 
     @staticmethod
-    def with_context(
-        **context_vars: str | int | bool | None,
+    def timeout(
+        timeout_seconds: float | None = None,
+        error_code: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to manage context lifecycle for an operation.
+        """Decorator to enforce operation timeout.
 
-        Automatically binds context variables for the operation duration and
-        unbinds them after completion. Enables automatic context propagation
-        without manual bind/unbind calls.
+        Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default
+        timeout and e.TimeoutError for structured error
+        handling.
 
         Args:
-            **context_vars: Context variables to bind for operation duration
+            timeout_seconds: Timeout in seconds (default:
+                c.Reliability.DEFAULT_TIMEOUT_SECONDS)
+            error_code: Optional error code for timeout
 
         Returns:
-            Decorated function with automatic context management
+            Decorated function with timeout enforcement
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators
 
 
-            class PaymentService:
-                @FlextDecorators.with_context(
-                    service_name="payment_service", service_version="1.0.0"
-                )
-                def process_payment(self, amount: float) -> r[str]:
-                    # service_name and service_version automatically in context
-                    # All logs will include these values
-                    return self._charge(amount)
+            class MyService:
+                @FlextDecorators.timeout(timeout_seconds=30.0)
+                def long_running_operation(self) -> m.ConfigMap:
+                    # Automatically raises TimeoutError if exceeds 30 seconds
+                    return self._process_data()
             ```
 
         Note:
-            Context is automatically cleaned up after operation completes,
-            even if exception occurs.
+            This is a simple timeout based on elapsed time checking. For true
+            thread-based timeouts, use threading.Timer or asyncio.
 
         """
+        # Use c.Reliability for default
+        max_duration = (
+            timeout_seconds
+            if timeout_seconds is not None
+            else c.Reliability.DEFAULT_TIMEOUT_SECONDS
+        )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(args, func)
+                start_time = time.perf_counter()
 
                 try:
-                    # Bind context variables to global logging context
-                    if context_vars:
-                        bind_result = FlextLogger.bind_global_context(**context_vars)
-                        if bind_result.is_failure:
-                            logger.warning(
-                                "global_context_binding_failed",
-                                extra={
-                                    "function": func.__name__,
-                                    "error": bind_result.error,
-                                    "error_code": bind_result.error_code,
-                                    "bound_keys": tuple(context_vars.keys()),
-                                },
-                            )
+                    result = func(*args, **kwargs)
 
-                    return func(*args, **kwargs)
-
-                finally:
-                    # Unbind context variables
-                    if context_vars:
-                        unbind_result = FlextLogger.unbind_global_context(
-                            *tuple(context_vars.keys()),
+                    # Check if operation exceeded timeout
+                    duration = time.perf_counter() - start_time
+                    if duration > max_duration:
+                        msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s)"
+                        effective_error_code: str = (
+                            error_code
+                            if error_code is not None
+                            else "OPERATION_TIMEOUT"
                         )
-                        if unbind_result.is_failure:
-                            logger.warning(
-                                "global_context_unbind_failed",
-                                extra={
-                                    "function": func.__name__,
-                                    "error": unbind_result.error,
-                                    "error_code": unbind_result.error_code,
-                                    "bound_keys": tuple(context_vars.keys()),
-                                },
-                            )
+                        raise e.TimeoutError(
+                            msg,
+                            error_code=effective_error_code,
+                            timeout_seconds=max_duration,
+                            operation=func.__name__,
+                            duration_seconds=duration,
+                        )
+
+                    return result
+
+                except e.TimeoutError:
+                    # Re-raise timeout errors
+                    raise
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as exc:
+                    # Check duration even on exception
+                    duration = time.perf_counter() - start_time
+                    if duration > max_duration:
+                        msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {exc.__class__.__name__}"
+                        raise e.TimeoutError(
+                            msg,
+                            error_code=error_code or "OPERATION_TIMEOUT",
+                            timeout_seconds=max_duration,
+                            operation=func.__name__,
+                            duration_seconds=duration,
+                            original_error=str(exc),
+                        ) from exc
+                    # Re-raise original exception if not timeout
+                    raise
 
             return wrapper
 
@@ -1519,10 +1376,8 @@ class FlextDecorators(FlextRuntime):
                 if track_correlation and correlation_id is None:
                     logger.warning(
                         "correlation_id_missing",
-                        extra={
-                            "function": func.__name__,
-                            "operation": op_name,
-                        },
+                        function=func.__name__,
+                        operation=op_name,
                     )
 
                 try:
@@ -1545,52 +1400,129 @@ class FlextDecorators(FlextRuntime):
         return decorator
 
     @staticmethod
-    def factory(
-        name: str,
-        *,
-        singleton: bool = False,
-        lazy: bool = True,
-    ) -> t.DecoratorType:
-        """Decorator to mark functions as factories for DI container.
+    def with_context(
+        **context_vars: str | int | bool | None,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Decorator to manage context lifecycle for an operation.
 
-        Stores factory configuration as metadata on the decorated function,
-        enabling auto-discovery by FlextContainer and factory registries.
+        Automatically binds context variables for the operation duration and
+        unbinds them after completion. Enables automatic context propagation
+        without manual bind/unbind calls.
 
         Args:
-            name: Name to register the factory under in the container
-            singleton: Whether factory creates singleton instances. Default: False
-            lazy: Whether to defer factory invocation until first use. Default: True
+            **context_vars: Context variables to bind for operation duration
 
         Returns:
-            Decorator function for marking factory functions
+            Decorated function with automatic context management
 
         Example:
-            >>> @FlextDecorators.factory(name="user_service", singleton=True)
-            ... def create_user_service(config: FlextSettings) -> UserService:
-            ...     return UserService(config)
+            ```python
+            from flext_core import FlextDecorators, FlextResult
+
+
+            class PaymentService:
+                @FlextDecorators.with_context(
+                    service_name="payment_service", service_version="1.0.0"
+                )
+                def process_payment(self, amount: float) -> r[str]:
+                    # service_name and service_version automatically in context
+                    # All logs will include these values
+                    return self._charge(amount)
+            ```
+
+        Note:
+            Context is automatically cleaned up after operation completes,
+            even if exception occurs.
 
         """
 
-        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
-            """Apply factory configuration metadata to function."""
-            config = m.HandlerFactoryDecoratorConfig(
-                name=name,
-                singleton=singleton,
-                lazy=lazy,
-            )
-            setattr(func, c.Discovery.FACTORY_ATTR, config)
-            return func
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                logger = FlextDecorators._resolve_logger(args, func)
+
+                try:
+                    # Bind context variables to global logging context
+                    if context_vars:
+                        filtered_vars: dict[str, t.MetadataValue] = {
+                            k: v for k, v in context_vars.items() if v is not None
+                        }
+                        bind_result = FlextLogger.bind_global_context(**filtered_vars)
+                        if bind_result.is_failure:
+                            logger.warning(
+                                "global_context_binding_failed",
+                                function=func.__name__,
+                                error=bind_result.error or "",
+                                error_code=bind_result.error_code or "",
+                                bound_keys=", ".join(context_vars.keys()),
+                            )
+
+                    return func(*args, **kwargs)
+
+                finally:
+                    # Unbind context variables
+                    if context_vars:
+                        unbind_result = FlextLogger.unbind_global_context(
+                            *tuple(context_vars.keys()),
+                        )
+                        if unbind_result.is_failure:
+                            logger.warning(
+                                "global_context_unbind_failed",
+                                function=func.__name__,
+                                error=unbind_result.error or "",
+                                error_code=unbind_result.error_code or "",
+                                bound_keys=", ".join(context_vars.keys()),
+                            )
+
+            return wrapper
 
         return decorator
 
-    # Re-export FactoryDecoratorsDiscovery for backward compatibility
-    # FactoryDecoratorsDiscovery is now in _decorators/ to break circular dependencies
-    FactoryDiscovery = FactoryDecoratorsDiscovery
+    @staticmethod
+    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Decorator to ensure correlation ID exists for operation tracking.
+
+        Automatically ensures a correlation ID is present in the context,
+        generating one if needed. Essential for distributed tracing and
+        request correlation across services.
+
+        Returns:
+            Decorated function with correlation ID management
+
+        Example:
+            ```python
+            from flext_core import FlextDecorators, FlextResult
+
+
+            class OrderService:
+                @FlextDecorators.with_correlation()
+                def process_order(self, order_id: str) -> r[dict]:
+                    # Correlation ID automatically ensured in context
+                    # All logs will include correlation_id
+                    return self._process(order_id)
+            ```
+
+        Note:
+            Uses FlextRuntime.Integration for context management via
+            structlog.contextvars (single source of truth).
+
+        """
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                # Ensure correlation ID exists
+                _ = FlextContext.Utilities.ensure_correlation_id()
+
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
+
+    # FactoryDecoratorsDiscovery lives in _decorators/; use it or d from facade.
 
 
 d = FlextDecorators
 
-__all__ = [
-    "FlextDecorators",
-    "d",
-]
+__all__ = ["FlextDecorators", "d"]

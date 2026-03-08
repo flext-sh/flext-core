@@ -149,7 +149,7 @@ BREAKING CHANGES (Phase 4 - v0.9.9):
 - register[T]() now uses generic type T instead of object
 - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
 - get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
-```
+
 
 Add migration guide from v0.9.8 to v0.9.9.
 
@@ -177,6 +177,7 @@ ______________________________________________________________________
 Add a decision tree for choosing methods:
 
 ```
+
 Need a service?
 ├─ Service always exists? → get_typed()
 ├─ Service might not exist? → get_with_fallback()
@@ -188,6 +189,7 @@ Registering services?
 ├─ Expensive creation? → register_factory()
 ├─ Multiple services? → batch_register()
 └─ Auto-detect dependencies? → auto_wire()
+
 ```
 
 ### 2. Common Pitfalls
@@ -221,7 +223,7 @@ ______________________________________________________________________
 
 ### External References
 
-- ⚠️ Link to CLAUDE.md could be more specific (which section?)
+- ⚠️ Link to AGENTS.md could be more specific (which section?)
 - ✅ Examples reference is generic but works
 
 ______________________________________________________________________
@@ -271,13 +273,13 @@ ______________________________________________________________________
 
 ### Medium Priority
 
-4. Add performance considerations section
+1. Add performance considerations section
 1. Create v0.9.8 → v0.9.9 migration guide
 1. Expand testing patterns section
 
 ### Low Priority
 
-7. Add more real-world examples
+1. Add more real-world examples
 1. Create comparison table of all methods
 1. Add troubleshooting section
 
@@ -290,3 +292,5 @@ The Dependency Injection guide is **highly accurate and well-written**. Unlike t
 **Status**: ✅ PRODUCTION READY with minor enhancements recommended
 
 **Next**: Audit Domain-Driven Design guide
+
+```

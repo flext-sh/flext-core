@@ -18,7 +18,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, override
+
+from pydantic import EmailStr, Field, computed_field, model_validator
 
 from flext_core import (
     c,
@@ -28,7 +30,6 @@ from flext_core import (
 )
 from flext_core._models.base import FlextModelFoundation as F
 from flext_core._models.generic import FlextGenericModels as gm
-from pydantic import EmailStr, Field, computed_field, model_validator
 
 # Using centralized literals from c (DRY - no local aliases)
 
@@ -46,13 +47,15 @@ def demonstrate_enhanced_generic_models() -> None:
         user_id="user123",
         tenant_id="tenant456",
         environment="development",
-        metadata={"session_id": "sess789", "request_id": "req101"},
+        metadata=m.Dict(root={"session_id": "sess789", "request_id": "req101"}),
     )
 
-    print(f"📊 Context Summary: {context.context_summary}")
-    print(f"⏱️ Age: {context.age_seconds:.1f}s, Recent: {context.is_recent}")
-    print(f"👤 Has User Context: {context.has_user_context}")
-    print(f"🏢 Has Tenant Context: {context.has_tenant_context}")
+    print(f"📊 Context: source={context.source}, env={context.environment}")
+    print(
+        f"🆔 Correlation: {context.correlation_id[:8]}..., operation={context.operation_id[:8]}..."
+    )
+    print(f"👤 User: {context.user_id}, Tenant: {context.tenant_id}")
+    print(f"🧾 Metadata: {context.metadata.root}")
 
     # Enhanced Service snapshot with health monitoring
     service = gm.Snapshot.Service(
@@ -66,32 +69,44 @@ def demonstrate_enhanced_generic_models() -> None:
     )
 
     print(f"🔧 Service: {service.name} v{service.version}")
-    print(f"⚡ Active: {service.is_active}, Healthy: {service.is_healthy}")
-    print(f"⏰ Uptime: {service.formatted_uptime}")
-    print(f"📈 Resources: {service.resource_summary}")
+    print(f"⚡ Status: {service.status}, Health: {service.health_status}")
+    print(f"⏰ Uptime (s): {service.uptime_seconds}")
+    print(
+        f"📈 Resources: memory={service.memory_usage_mb}MB cpu={service.cpu_usage_percent}%",
+    )
 
     # Enhanced Health check with detailed monitoring
     health = gm.Snapshot.Health(
         healthy=True,
-        checks={
-            "database": True,
-            "cache": True,
-            "external_api": False,
-            "filesystem": True,
-        },
+        checks=m.Dict(
+            root={
+                "database": True,
+                "cache": True,
+                "external_api": False,
+                "filesystem": True,
+            },
+        ),
         service_name="user-service",
         service_version="2.1.0",
         duration_ms=125.5,
     )
 
-    print(f"🏥 Health: {health.healthy} ({health.health_percentage:.1f}%)")
-    print(f"📋 Status: {health.status_summary}")
-    print(f"🚨 Severity: {health.severity_level}")
-    print(f"❌ Failed Checks: {health.unhealthy_checks}")
+    check_values = [
+        value for value in health.checks.root.values() if isinstance(value, bool)
+    ]
+    total_checks = len(check_values)
+    healthy_checks = sum(1 for value in check_values if value)
+    health_percentage = (healthy_checks / total_checks * 100.0) if total_checks else 0.0
+    failed_checks = total_checks - healthy_checks
+    print(f"🏥 Health: {health.healthy} ({health_percentage:.1f}%)")
+    print(f"📋 Status: service={health.service_name} version={health.service_version}")
+    print(f"🚨 Severity: {'high' if failed_checks > 0 else 'normal'}")
+    print(f"❌ Failed Checks: {failed_checks}")
 
     # Enhanced Operation progress tracking
     operation = gm.Progress.Operation(
-        operation_name="user_import", estimated_total=1000
+        operation_name="user_import",
+        estimated_total=1000,
     )
     operation.start_operation()
 
@@ -103,15 +118,30 @@ def demonstrate_enhanced_generic_models() -> None:
     for _ in range(25):
         operation.record_warning()
 
+    operation_total = (
+        operation.success_count + operation.failure_count + operation.skipped_count
+    )
+    operation_completion = gm.Progress.safe_percentage(
+        operation_total,
+        operation.estimated_total,
+    )
+    operation_success_rate = gm.Progress.safe_rate(
+        operation.success_count,
+        operation_total,
+    )
     print(f"📈 Operation: {operation.operation_name}")
-    print(f"✅ Progress: {operation.completion_percentage:.1f}%")
-    print(f"🎯 Success Rate: {operation.success_rate:.1%}")
-    print(f"⚠️ Has Warnings: {operation.has_warnings}")
-    print(f"📊 Status: {operation.status_summary}")
+    print(f"✅ Progress: {operation_completion:.1f}%")
+    print(f"🎯 Success Rate: {operation_success_rate:.1%}")
+    print(f"⚠️ Has Warnings: {operation.warning_count > 0}")
+    print(
+        f"📊 Status: successes={operation.success_count}, failures={operation.failure_count}"
+    )
 
     # Enhanced Conversion tracking
     conversion = gm.Progress.Conversion(
-        source_format="csv", target_format="json", total_input_count=500
+        source_format="csv",
+        target_format="json",
+        total_input_count=500,
     )
     conversion.start_conversion()
 
@@ -125,15 +155,36 @@ def demonstrate_enhanced_generic_models() -> None:
 
     conversion.complete_conversion()
 
+    conversion_total = (
+        len(conversion.converted) + len(conversion.errors) + len(conversion.skipped)
+    )
+    conversion_completion = gm.Progress.safe_percentage(
+        conversion_total,
+        conversion.total_input_count,
+    )
+    conversion_success_rate = gm.Progress.safe_rate(
+        len(conversion.converted),
+        conversion_total,
+    )
+    duration_seconds = (
+        (conversion.end_time - conversion.start_time).total_seconds()
+        if conversion.start_time is not None and conversion.end_time is not None
+        else 0.0
+    )
+    items_per_second = (
+        (conversion_total / duration_seconds) if duration_seconds > 0 else 0.0
+    )
     print(f"🔄 Conversion: {conversion.source_format} → {conversion.target_format}")
-    print(f"📊 Progress: {conversion.completion_percentage:.1f}%")
-    print(f"✅ Success Rate: {conversion.success_rate:.1%}")
-    print(f"⚡ Processing Rate: {conversion.items_per_second:.1f} items/sec")
-    print(f"⏱️ Duration: {conversion.duration_seconds:.2f}s")
-    print(f"📋 Status: {conversion.status_summary}")
+    print(f"📊 Progress: {conversion_completion:.1f}%")
+    print(f"✅ Success Rate: {conversion_success_rate:.1%}")
+    print(f"⚡ Processing Rate: {items_per_second:.1f} items/sec")
+    print(f"⏱️ Duration: {duration_seconds:.2f}s")
+    print(
+        f"📋 Status: converted={len(conversion.converted)} errors={len(conversion.errors)} skipped={len(conversion.skipped)}",
+    )
 
     print(
-        "✨ Enhanced generic models provide rich monitoring and tracking capabilities!\n"
+        "✨ Enhanced generic models provide rich monitoring and tracking capabilities!\n",
     )
 
 
@@ -149,19 +200,18 @@ def demonstrate_advanced_pydantic_mixins() -> None:
         F.IdentifiableMixin,
         F.TimestampableMixin,
         F.VersionableMixin,
-        F.AuditableMixin,
-        F.TaggableMixin,
-        F.SoftDeletableMixin,
-        F.ValidatableMixin,
-        F.SerializableMixin,
     ):
         """Entity demonstrating all mixins with Pydantic v2 features."""
 
         name: str
         description: str | None = None
+        tags: list[str] = Field(default_factory=list)
+        categories: list[str] = Field(default_factory=list)
+        labels: dict[str, str] = Field(default_factory=dict)
+        is_deleted: bool = False
 
         @model_validator(mode="after")
-        def validate_entity_business_rules(self):
+        def validate_entity_business_rules(self) -> AdvancedEntity:
             """Custom business rule validation."""
             if self.is_deleted and self.name.startswith("ACTIVE_"):
                 msg = "Active entities cannot be deleted"
@@ -172,43 +222,38 @@ def demonstrate_advanced_pydantic_mixins() -> None:
     entity = AdvancedEntity(
         name="TestEntity",
         description="Advanced entity demo",
-        created_by="system",
-        updated_by="user123",
         tags=["demo", "advanced"],
         categories=["test"],
         labels={"env": "dev", "priority": "high"},
     )
 
     print(f"🏷️ Entity: {entity.name}")
-    print(f"🆔 ID: {entity.id_short} (UUID: {entity.is_uuid_format})")
-    print(f"⏰ Created: {entity.time_since_creation_formatted} ago")
-    print(f"📊 Version: {entity.version_string} ({entity.version_category})")
-    print(f"👤 Audit: {entity.audit_summary}")
-    print(f"🏷️ Tags: {entity.tags} ({entity.tag_count} total)")
+    print(f"🆔 ID: {entity.unique_id}")
+    print(f"⏰ Created: {entity.created_at.isoformat()}")
+    print(f"📊 Version: {entity.version}")
+    print(f"🏷️ Tags: {entity.tags} ({len(entity.tags)} total)")
     print(f"📂 Categories: {entity.categories}")
     print(f"🏷️ Labels: {entity.labels}")
 
-    # Test validation
-    print(f"✅ Valid: {entity.is_valid()}")
-    print(f"🚨 Validation errors: {entity.get_validation_errors()}")
+    entity.increment_version()
+    entity.update_timestamp()
+    print(f"✅ Updated version: {entity.version}")
+    print(f"🕒 Updated at: {entity.updated_at}")
 
     # Test serialization
-    json_data = entity.to_json(indent=2)
+    json_data = entity.model_dump_json(indent=2)
     print(f"📄 JSON length: {len(json_data)} chars")
 
     # Test deserialization
-    restored = AdvancedEntity.from_json(json_data)
+    restored = AdvancedEntity.model_validate_json(json_data)
     print(f"🔄 Round-trip successful: {restored.name == entity.name}")
-
-    # Note: Soft delete functionality works but has complex validation interactions
-    # in this demo. The mixins provide full soft delete capabilities.
 
     # Test business rule validation
     try:
-        invalid_entity = AdvancedEntity(
-            name="ACTIVE_Invalid", created_by="system", tags=["test"]
+        _invalid_entity = AdvancedEntity(
+            name="ACTIVE_Invalid",
+            is_deleted=True,
         )
-        invalid_entity.soft_delete("REDACTED_LDAP_BIND_PASSWORD")
         print("❌ Should have failed validation")
     except ValueError as e:
         print(f"✅ Business rule validation: {e}")
@@ -221,7 +266,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
 
     # Test field validators
     try:
-        F.IdentifiableMixin(unique_id="")
+        _invalid_identifiable = F.IdentifiableMixin(unique_id="")
     except ValueError as e:
         print(f"✅ Field validation: {e}")
 
@@ -229,19 +274,19 @@ def demonstrate_advanced_pydantic_mixins() -> None:
     try:
         invalid_timestamp = F.TimestampableMixin()
         invalid_timestamp.updated_at = invalid_timestamp.created_at.replace(
-            second=0
+            second=0,
         )  # Before creation
     except ValueError as e:
         print(f"✅ Cross-field validation: {e}")
 
     # Test audit consistency
     try:
-        F.AuditableMixin(created_by="", updated_by="user")  # Empty created_by
+        _invalid_versionable = F.VersionableMixin(version=0)
     except ValueError as e:
-        print(f"✅ Audit validation: {e}")
+        print(f"✅ Version validation: {e}")
 
     print(
-        "🎯 Pydantic v2 mixins provide enterprise-grade validation and functionality!\n"
+        "🎯 Pydantic v2 mixins provide enterprise-grade validation and functionality!\n",
     )
 
 
@@ -257,7 +302,7 @@ if __name__ == "__main__":
 class Email(m.Value):
     """Email value object with advanced Pydantic 2 EmailStr validation."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     address: Annotated[
         EmailStr,
@@ -271,7 +316,7 @@ class Email(m.Value):
 class Money(m.Value):
     """Money value object with StrEnum currency and railway operations."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     amount: Annotated[Decimal, Field(gt=Decimal(0))]
     currency: c.Domain.Currency | str = Field(
@@ -281,7 +326,7 @@ class Money(m.Value):
     def add(self, other: Money) -> r[Money]:
         """Railway pattern for currency-aware addition."""
         if self.currency != other.currency:
-            return r.fail("Currency mismatch")
+            return r[Money].fail("Currency mismatch")
         return r.ok(
             Money(amount=self.amount + other.amount, currency=self.currency),
         )
@@ -290,7 +335,7 @@ class Money(m.Value):
 class User(m.Entity):
     """User entity with comprehensive validation and domain rules."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     name: str = Field(
         min_length=c.Validation.MIN_NAME_LENGTH,
@@ -309,7 +354,7 @@ class User(m.Entity):
 class OrderItem(m.Value):
     """Order item with computed fields and railway validation."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     product_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
@@ -329,31 +374,13 @@ class OrderItem(m.Value):
 class Order(m.AggregateRoot):
     """Order aggregate root with advanced business rules."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     customer_id: str = Field(min_length=1)
     items: list[OrderItem] = Field(default_factory=list)
     status: c.Domain.OrderStatus = Field(
         default=c.Domain.OrderStatus.PENDING,
     )
-
-    def add_item(self, item: OrderItem) -> r[Order]:
-        """Railway pattern for item addition with domain rules."""
-        if self.status != c.Domain.OrderStatus.PENDING:
-            return r.fail("Cannot modify non-pending order")
-        if any(existing.product_id == item.product_id for existing in self.items):
-            return r.fail("Product already in order")
-        self.items.append(item)
-        return r.ok(self)
-
-    def confirm(self) -> r[Order]:
-        """Railway pattern for order confirmation."""
-        if not self.items:
-            return r.fail("Cannot confirm empty order")
-        if self.status != c.Domain.OrderStatus.PENDING:
-            return r.fail("Order already processed")
-        self.status = c.Domain.OrderStatus.CONFIRMED
-        return r.ok(self)
 
     @property
     @computed_field
@@ -362,8 +389,28 @@ class Order(m.AggregateRoot):
         if not self.items:
             return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
         currency = self.items[0].price.currency
-        total_amount = Decimal(sum(item.total.amount for item in self.items))
+        total_amount = Decimal(
+            sum(item.price.amount * item.quantity for item in self.items),
+        )
         return Money(amount=total_amount, currency=currency)
+
+    def add_item(self, item: OrderItem) -> r[Order]:
+        """Railway pattern for item addition with domain rules."""
+        if self.status != c.Domain.OrderStatus.PENDING:
+            return r[Order].fail("Cannot modify non-pending order")
+        if any(existing.product_id == item.product_id for existing in self.items):
+            return r[Order].fail("Product already in order")
+        self.items.append(item)
+        return r.ok(self)
+
+    def confirm(self) -> r[Order]:
+        """Railway pattern for order confirmation."""
+        if not self.items:
+            return r[Order].fail("Cannot confirm empty order")
+        if self.status != c.Domain.OrderStatus.PENDING:
+            return r[Order].fail("Order already processed")
+        self.status = c.Domain.OrderStatus.CONFIRMED
+        return r.ok(self)
 
 
 # No model_rebuild() needed - Pydantic v2 with 'from __future__ import annotations'
@@ -373,6 +420,7 @@ class Order(m.AggregateRoot):
 class DomainModelService(s[m.ConfigMap]):
     """Advanced DDD demonstration service with railway-oriented programming."""
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute comprehensive DDD demonstrations using railway patterns."""
         # Railway pattern with value objects using traverse (DRY)
@@ -435,13 +483,16 @@ class DomainModelService(s[m.ConfigMap]):
             user: User,
             order: Order,
         ) -> m.ConfigMap:
-            return {
-                "email": vo_tuple[0].address,
-                "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
-                "user_id": user.entity_id,
-                "order_total": float(order.total.amount),
-                "order_status": order.status,
-            }
+            order_total = sum(item.price.amount * item.quantity for item in order.items)
+            return m.ConfigMap(
+                root={
+                    "email": vo_tuple[0].address,
+                    "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
+                    "user_id": user.entity_id,
+                    "order_total": float(order_total),
+                    "order_status": order.status,
+                },
+            )
 
         def combine_with_user(
             vo_tuple: tuple[Email, Money],

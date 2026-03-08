@@ -1,0 +1,1 @@
+"""Namespace validator test fixtures."""

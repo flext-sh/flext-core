@@ -20,49 +20,45 @@ from pathlib import Path
 import pytest
 from docker import DockerClient
 
-from flext_core import FlextConstants, FlextResult
-from flext_tests.docker import FlextTestsDocker
+from flext_core import r
+from flext_tests import FlextTestsDocker, c
 from tests.test_utils import assertion_helpers
-
-# Access nested classes
-ContainerInfo = FlextTestsDocker.ContainerInfo
-ContainerStatus = FlextTestsDocker.ContainerStatus
 
 
 class TestContainerStatus:
-    """Test suite for ContainerStatus enum."""
+    """Test suite for c.Tests.Docker.ContainerStatus enum."""
 
     def test_container_status_values(self) -> None:
-        """Test ContainerStatus enum values."""
-        assert ContainerStatus.RUNNING.value == "running"
-        assert ContainerStatus.STOPPED.value == "stopped"
-        assert ContainerStatus.NOT_FOUND.value == "not_found"
-        assert ContainerStatus.ERROR.value == "error"
+        """Test c.Tests.Docker.ContainerStatus enum values."""
+        assert c.Tests.Docker.ContainerStatus.RUNNING.value == "running"
+        assert c.Tests.Docker.ContainerStatus.STOPPED.value == "stopped"
+        assert c.Tests.Docker.ContainerStatus.NOT_FOUND.value == "not_found"
+        assert c.Tests.Docker.ContainerStatus.ERROR.value == "error"
 
 
 class TestContainerInfo:
-    """Test suite for ContainerInfo model."""
+    """Test suite for FlextTestsDocker.ContainerInfo model."""
 
     def test_container_info_creation(self) -> None:
-        """Test ContainerInfo creation with required fields."""
-        info = ContainerInfo(
+        """Test FlextTestsDocker.ContainerInfo creation with required fields."""
+        info = FlextTestsDocker.ContainerInfo(
             name="test_container",
-            status=ContainerStatus.RUNNING,
+            status=c.Tests.Docker.ContainerStatus.RUNNING,
             ports={"8080/tcp": "8080"},
             image="nginx:latest",
         )
 
         assert info.name == "test_container"
-        assert info.status == ContainerStatus.RUNNING.value
+        assert info.status == c.Tests.Docker.ContainerStatus.RUNNING.value
         assert info.ports == {"8080/tcp": "8080"}
         assert info.image == "nginx:latest"
         assert not info.container_id
 
     def test_container_info_with_container_id(self) -> None:
-        """Test ContainerInfo with container_id."""
-        info = ContainerInfo(
+        """Test FlextTestsDocker.ContainerInfo with container_id."""
+        info = FlextTestsDocker.ContainerInfo(
             name="test_container",
-            status=ContainerStatus.RUNNING,
+            status=c.Tests.Docker.ContainerStatus.RUNNING,
             ports={},
             image="nginx:latest",
             container_id="abc123",
@@ -240,19 +236,19 @@ class TestFlextTestsDocker:
         self,
         docker_manager: FlextTestsDocker,
     ) -> None:
-        """Test compose_up returns FlextResult."""
+        """Test compose_up returns r."""
         result = docker_manager.compose_up("docker-compose.yml")
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_compose_down_returns_flext_result(
         self,
         docker_manager: FlextTestsDocker,
     ) -> None:
-        """Test compose_down returns FlextResult."""
+        """Test compose_down returns r."""
         result = docker_manager.compose_down("docker-compose.yml")
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_start_existing_container_not_found(
         self,
@@ -289,7 +285,9 @@ class TestFlextTestsDocker:
     ) -> None:
         """Test wait_for_port_ready returns quickly for unavailable port."""
         result = docker_manager.wait_for_port_ready(
-            FlextConstants.Network.LOOPBACK_IP, 59999, max_wait=1
+            c.Network.LOOPBACK_IP,
+            59999,
+            max_wait=1,
         )
 
         assertion_helpers.assert_flext_result_success(result)
@@ -299,10 +297,10 @@ class TestFlextTestsDocker:
         self,
         docker_manager: FlextTestsDocker,
     ) -> None:
-        """Test start_compose_stack returns FlextResult."""
+        """Test start_compose_stack returns r."""
         result = docker_manager.start_compose_stack("docker-compose.yml")
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
 
     def test_cleanup_dirty_containers_empty(
         self,

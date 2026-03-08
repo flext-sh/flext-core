@@ -1,31 +1,24 @@
+"""Tests for Configuration utilities full coverage."""
+
 from __future__ import annotations
 
-import importlib
 import logging
+from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
 import pytest
 from pydantic import BaseModel
 
-core = importlib.import_module("flext_core")
-r = core.r
-t = core.t
-u = core.u
+from flext_core import p, r, t, u
 
 
 class _DumpErrorModel(BaseModel):
     value: int = 1
 
-    def model_dump(self, **kwargs: object) -> dict[str, t.GeneralValueType]:
-        _ = kwargs
-        msg = "dump boom"
-        raise TypeError(msg)
-
 
 class _DuckDumpError:
-    def model_dump(self) -> dict[str, t.GeneralValueType]:
-        msg = "duck boom"
-        raise RuntimeError(msg)
+    model_dump = "duck boom"
 
 
 class _Opts(BaseModel):
@@ -33,31 +26,49 @@ class _Opts(BaseModel):
 
 
 class _ContainerOK:
-    def register(self, _name: str, _instance: t.GeneralValueType):
+    def register(
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
+    ) -> r[bool]:
         return r[bool].ok(True)
 
-    def register_factory(self, _name: str, _factory):
+    def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
         return r[bool].ok(True)
 
 
 class _ContainerFail:
-    def register(self, _name: str, _instance: t.GeneralValueType):
+    def register(
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
+    ) -> r[bool]:
         return r[bool].fail("reg fail")
 
-    def register_factory(self, _name: str, _factory):
+    def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
         return r[bool].fail("fac fail")
 
 
 class _ContainerRaise:
-    def register(self, _name: str, _instance: t.GeneralValueType):
-        raise RuntimeError("reg ex")
+    def register(
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
+    ) -> r[bool]:
+        msg = "reg ex"
+        raise RuntimeError(msg)
 
-    def register_factory(self, _name: str, _factory):
-        raise RuntimeError("fac ex")
+    def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
+        msg = "fac ex"
+        raise RuntimeError(msg)
 
 
 def test_resolve_env_file_and_log_level(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     existing = tmp_path / "custom.env"
     existing.write_text("A=1\n", encoding="utf-8")
@@ -85,10 +96,10 @@ def test_resolve_env_file_and_log_level(
 
 
 def test_private_getters_exception_paths() -> None:
-    assert u.Configuration._try_get_from_model_dump(_DumpErrorModel(), "value") == (
-        False,
-        None,
-    )
+    assert u.Configuration._try_get_from_model_dump(
+        cast("p.HasModelDump", cast("object", _DumpErrorModel())),
+        "missing",
+    ) == (False, None)
     assert u.Configuration._try_get_from_duck_model_dump(_DuckDumpError(), "value") == (
         False,
         None,
@@ -108,13 +119,13 @@ def test_build_options_invalid_only_kwargs_returns_base() -> None:
 
 
 def test_register_singleton_register_factory_and_bulk_register_paths() -> None:
-    ok = _ContainerOK()
-    fail = _ContainerFail()
-    err = _ContainerRaise()
+    ok = cast("p.DI", cast("object", _ContainerOK()))
+    fail = cast("p.DI", cast("object", _ContainerFail()))
+    err = cast("p.DI", cast("object", _ContainerRaise()))
 
-    singleton_ok = u.Configuration.register_singleton(ok, "s", object())
-    singleton_fail = u.Configuration.register_singleton(fail, "s", object())
-    singleton_err = u.Configuration.register_singleton(err, "s", object())
+    singleton_ok = u.Configuration.register_singleton(ok, "s", 1)
+    singleton_fail = u.Configuration.register_singleton(fail, "s", 1)
+    singleton_err = u.Configuration.register_singleton(err, "s", 1)
     assert singleton_ok.is_success
     assert singleton_fail.is_failure
     assert singleton_err.is_failure

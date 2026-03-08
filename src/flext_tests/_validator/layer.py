@@ -9,13 +9,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core.result import r
-
-from flext_tests.constants import c
-from flext_tests.models import m
-from flext_tests.utilities import u
+from flext_core import r
+from flext_tests import c, m, u
 
 
 class FlextValidatorLayer:
@@ -25,45 +23,25 @@ class FlextValidatorLayer:
     """
 
     @classmethod
-    def scan(
-        cls,
-        files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
-        layer_hierarchy: dict[str, int] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
-        """Scan files for layer violations.
+    def _extract_module_name(cls, module_path: str) -> str:
+        """Extract the final module name from an import path.
 
-        Args:
-            files: List of Python files to scan
-            approved_exceptions: Dict mapping rule IDs to list of approved file patterns
-            layer_hierarchy: Custom layer hierarchy (module_name -> layer_number)
-
-        Returns:
-            FlextResult with ScanResult containing all violations found
+        Examples:
+            'flext_core.result' -> 'result'
+            'flext_core._models.domain' -> 'domain'
+            'result' -> 'result'
 
         """
-        violations: list[m.Tests.Validator.Violation] = []
-        approved = approved_exceptions or {}
-        hierarchy = layer_hierarchy or c.Tests.Validator.LayerHierarchy.as_dict()
-
-        for file_path in files:
-            file_violations = cls._scan_file(file_path, approved, hierarchy)
-            violations.extend(file_violations)
-
-        return r[m.Tests.Validator.ScanResult].ok(
-            m.Tests.Validator.ScanResult.create(
-                validator_name=c.Tests.Validator.Defaults.VALIDATOR_LAYER,
-                files_scanned=len(files),
-                violations=violations,
-            ),
-        )
+        parts = module_path.split(".")
+        # Return the last part
+        return parts[-1]
 
     @classmethod
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
-        hierarchy: dict[str, int],
+        approved: Mapping[str, list[str]],
+        hierarchy: Mapping[str, int],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single file for layer violations."""
         if u.Tests.Validator.is_approved("LAYER-001", file_path, approved):
@@ -112,18 +90,38 @@ class FlextValidatorLayer:
         return violations
 
     @classmethod
-    def _extract_module_name(cls, module_path: str) -> str:
-        """Extract the final module name from an import path.
+    def scan(
+        cls,
+        files: list[Path],
+        approved_exceptions: Mapping[str, list[str]] | None = None,
+        layer_hierarchy: Mapping[str, int] | None = None,
+    ) -> r[m.Tests.Validator.ScanResult]:
+        """Scan files for layer violations.
 
-        Examples:
-            'flext_core.result' -> 'result'
-            'flext_core._models.domain' -> 'domain'
-            'result' -> 'result'
+        Args:
+            files: List of Python files to scan
+            approved_exceptions: Dict mapping rule IDs to list of approved file patterns
+            layer_hierarchy: Custom layer hierarchy (module_name -> layer_number)
+
+        Returns:
+            FlextResult with ScanResult containing all violations found
 
         """
-        parts = module_path.split(".")
-        # Return the last part
-        return parts[-1]
+        violations: list[m.Tests.Validator.Violation] = []
+        approved = approved_exceptions or {}
+        hierarchy = layer_hierarchy or c.Tests.Validator.LayerHierarchy.as_dict()
+
+        for file_path in files:
+            file_violations = cls._scan_file(file_path, approved, hierarchy)
+            violations.extend(file_violations)
+
+        return r[m.Tests.Validator.ScanResult].ok(
+            m.Tests.Validator.ScanResult.create(
+                validator_name=c.Tests.Validator.Defaults.VALIDATOR_LAYER,
+                files_scanned=len(files),
+                violations=violations,
+            ),
+        )
 
 
 __all__ = ["FlextValidatorLayer"]

@@ -23,13 +23,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, override
 
 import pytest
 
-from flext_core import r, s, t
+from flext_core import m, r, s, t
 from flext_tests import FlextTestsUtilities, u
-from flext_core.models import m
 
 
 class ServiceScenarioType(StrEnum):
@@ -49,18 +48,23 @@ class ServiceScenario:
     name: str
     scenario_type: ServiceScenarioType
     is_valid_expected: bool
-    service_kwargs: Mapping[str, t.ScalarValue] | None = None
+    service_kwargs: Mapping[str, t.Scalar] | None = None
 
 
 class UserService(s[m.ConfigMap]):
     """Basic user service for standard testing."""
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute service and return data."""
-        return r[m.ConfigMap].ok({
-            "user_id": 1,
-            "name": "test_user",
-        })
+        return r[m.ConfigMap].ok(
+            m.ConfigMap(
+                root={
+                    "user_id": 1,
+                    "name": "test_user",
+                },
+            ),
+        )
 
 
 class ComplexService(s[str]):
@@ -70,6 +74,7 @@ class ComplexService(s[str]):
     amount: int = 0
     enabled: bool = True
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules."""
         if not self.name:
@@ -78,6 +83,7 @@ class ComplexService(s[str]):
             return r[bool].fail("Value too low")
         return r[bool].ok(True)
 
+    @override
     def execute(self) -> r[str]:
         """Execute operation."""
         if not self.name:
@@ -88,10 +94,12 @@ class ComplexService(s[str]):
 class FailingService(s[bool]):
     """Service that fails validation."""
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         """Always fail validation."""
         return r[bool].fail("Processing error")
 
+    @override
     def execute(self) -> r[bool]:
         """Execute failing operation."""
         return r[bool].fail("Processing error")
@@ -102,6 +110,7 @@ class ExceptionService(s[str]):
 
     should_raise: bool = False
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         """Validation that can raise exceptions."""
         if self.should_raise:
@@ -109,6 +118,7 @@ class ExceptionService(s[str]):
             raise ValueError(error_msg)
         return r[bool].ok(True)
 
+    @override
     def execute(self) -> r[str]:
         """Execute operation that can raise."""
         if self.should_raise:
@@ -148,7 +158,7 @@ class ServiceScenarios:
         scenario: ServiceScenario,
     ) -> s[m.ConfigMap] | s[str] | s[bool]:
         """Create service instance for scenario."""
-        kwargs_raw: Mapping[str, t.ScalarValue] = scenario.service_kwargs or {}
+        kwargs_raw: Mapping[str, t.Scalar] = scenario.service_kwargs or {}
 
         if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
             return UserService()
@@ -167,7 +177,11 @@ class ServiceScenarios:
             enabled_val = kwargs_raw.get("enabled", True)
             enabled = bool(enabled_val) if enabled_val is not None else True
 
-            return ComplexService(name=name, amount=amount, enabled=enabled)
+            return ComplexService.model_construct(
+                name=name,
+                amount=amount,
+                enabled=enabled,
+            )
 
         if scenario.scenario_type == ServiceScenarioType.FAILING:
             return FailingService()
@@ -177,7 +191,7 @@ class ServiceScenarios:
             should_raise = (
                 bool(should_raise_val) if should_raise_val is not None else False
             )
-            return ExceptionService(should_raise=should_raise)
+            return ExceptionService.model_construct(should_raise=should_raise)
 
         error_msg = f"Unknown scenario type: {scenario.scenario_type}"
         raise ValueError(error_msg)
@@ -208,6 +222,7 @@ class TestsCore:
         """Test execute method implementation."""
 
         class ConcreteService(s[str]):
+            @override
             def execute(self) -> r[str]:
                 return r[str].ok("test_value")
 
@@ -222,9 +237,9 @@ class TestsCore:
         """Test basic service execution returns expected type."""
         service = UserService()
         result = service.execute()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
         data = result.value
-        assert isinstance(data, Mapping)
+        assert isinstance(data, m.ConfigMap)
         assert "user_id" in data
 
     @pytest.mark.parametrize(
@@ -241,17 +256,17 @@ class TestsCore:
         """Test default business rules validation."""
         service = UserService()
         result = service.validate_business_rules()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
-        service = ComplexService(name="test")
+        service = ComplexService.model_construct(name="test")
         result = service.validate_business_rules()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
-        service = ComplexService(name="")
+        service = ComplexService.model_construct(name="")
         result = service.validate_business_rules()
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -268,7 +283,7 @@ class TestsCore:
     def test_service_validation_using_generic_helpers(self) -> None:
         """Test service validation using generic helpers - real behavior."""
         # Use generic helper to validate model attributes
-        service = ComplexService(name="test", amount=10, enabled=True)
+        service = ComplexService.model_construct(name="test", amount=10, enabled=True)
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
                 service,
@@ -281,7 +296,7 @@ class TestsCore:
     def test_service_validation_failure_limits(self) -> None:
         """Test service validation failure - limit cases."""
         # Test with missing required attributes
-        service = ComplexService(name="", amount=-1, enabled=False)
+        service = ComplexService.model_construct(name="", amount=-1, enabled=False)
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
                 service,
@@ -289,12 +304,10 @@ class TestsCore:
             )
         )
         # Should pass attribute check, but business rules should fail
-        u.Tests.Result.assert_result_success(
-            validation_result,
-        )  # Attributes exist
+        u.Tests.Result.assert_success(validation_result)  # Attributes exist
         # But business rules validation should fail
         business_result = service.validate_business_rules()
-        u.Tests.Result.assert_result_failure(business_result)
+        u.Tests.Result.assert_failure(business_result)
 
 
 __all__ = ["TestsCore"]

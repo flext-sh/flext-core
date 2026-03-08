@@ -6,9 +6,12 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 
-from flext_core import FlextTypes as t, r
+from flext_core import r, t
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -56,7 +59,8 @@ class TestAutomatedFlextMixins:
         ids=lambda case: case["description"],
     )
     def test_automated_mixins_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for mixins functionality."""
         try:
@@ -93,7 +97,8 @@ class TestAutomatedFlextMixins:
         # Test with correct types
         result = self._execute_mixins_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextMixins type safety test"
+            result,
+            "FlextMixins type safety test",
         )
 
     def test_automated_mixins_error_handling(self) -> None:
@@ -101,7 +106,12 @@ class TestAutomatedFlextMixins:
         instance = fixture_factory.create_test_mixins_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
 
         for error_input in error_inputs:
             result = self._execute_mixins_operation(instance, error_input or {})
@@ -120,7 +130,8 @@ class TestAutomatedFlextMixins:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextMixins performance test exceeded timeout"
+            result,
+            "FlextMixins performance test exceeded timeout",
         )
 
     def test_automated_mixins_resource_management(self) -> None:
@@ -130,39 +141,46 @@ class TestAutomatedFlextMixins:
         # Test normal operation
         result = self._execute_mixins_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextMixins resource test"
+            result,
+            "FlextMixins resource test",
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        cleanup = getattr(instance, "cleanup", None)
+        if callable(cleanup):
+            cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextMixins cleanup failed"
+                    cast("r[t.ContainerValue]", cleanup_result),
+                    "FlextMixins cleanup failed",
                 )
 
     def _execute_mixins_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on mixins instance.
 
         This method should be customized based on the actual mixins API.
         For now, it provides a generic implementation that can be adapted.
         """
         try:
-            # Generic operation - adapt based on actual mixins interface
-            if hasattr(instance, "process"):
-                return instance.process(input_data)
-            if hasattr(instance, "execute"):
-                return instance.execute(input_data)
-            if hasattr(instance, "handle"):
-                return instance.handle(input_data)
+            process = getattr(instance, "process", None)
+            if callable(process):
+                return cast("r[t.ContainerValue]", process(dict(input_data)))
+            execute = getattr(instance, "execute", None)
+            if callable(execute):
+                return cast("r[t.ContainerValue]", execute(dict(input_data)))
+            handle = getattr(instance, "handle", None)
+            if callable(handle):
+                return cast("r[t.ContainerValue]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(instance)
+            return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextMixins operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextMixins operation failed: {e}")
 
     @pytest.fixture
-    def test_mixins_instance(self) -> t.GeneralValueType:
+    def test_mixins_instance(self) -> object:
         """Fixture for mixins test instance."""
         return fixture_factory.create_test_mixins_instance()

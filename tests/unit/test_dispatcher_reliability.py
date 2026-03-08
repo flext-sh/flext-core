@@ -1,9 +1,10 @@
 """Real reliability tests for dispatcher helpers (no mocks)."""
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import time
+
+import pytest
 
 from flext_core import c
 from flext_core._dispatcher.reliability import (
@@ -38,7 +39,7 @@ def test_circuit_breaker_transitions_and_metrics() -> None:
     assert cb.get_state(message_type) == c.Reliability.CircuitBreakerState.CLOSED
 
     metrics = cb.get_metrics()
-    # Type narrowing: metrics values are t.GeneralValueType, need to check for int
+    # Type narrowing: metrics values are t.ContainerValue, need to check for int
     failures_val = metrics.get("failures")
     total_ops_val = metrics.get("total_operations")
     assert isinstance(failures_val, int) and failures_val >= 1
@@ -79,7 +80,7 @@ def test_rate_limiter_jitter_application() -> None:
         window_seconds=1.0,
         jitter_factor=0.0,
     )
-    assert limiter_zero._apply_jitter(0.5) == 0.5
+    assert limiter_zero._apply_jitter(0.5) == pytest.approx(0.5)
 
 
 def test_retry_policy_behavior() -> None:
@@ -93,10 +94,10 @@ def test_retry_policy_behavior() -> None:
     assert policy.is_retriable_error("Temporary failure - try again later")
     assert not policy.is_retriable_error(None)
 
-    assert policy.get_retry_delay() == 0.1
+    assert policy.get_retry_delay() == pytest.approx(0.1)
     assert policy.get_max_attempts() == 3
-    assert policy.get_exponential_delay(0) == 0.1
-    assert policy.get_exponential_delay(2) == min(0.1 * (2.0**2), 300.0)
+    assert policy.get_exponential_delay(0) == pytest.approx(0.1)
+    assert policy.get_exponential_delay(2) == pytest.approx(min(0.1 * (2.0**2), 300.0))
 
     policy.record_attempt("cmd")
     policy.reset("cmd")

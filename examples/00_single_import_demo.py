@@ -53,7 +53,7 @@ class UserProfile:
     def activate(self) -> r[None]:
         """Railway pattern for business operations - no None returns."""
         if self.status == c.Domain.Status.ACTIVE:
-            return r.fail("Already active")
+            return r[None].fail("Already active")
         return r.ok(None)
 
 
@@ -66,7 +66,7 @@ def validate_transform_user(
     name_value = data.get("name")
     email_value = data.get("email")
 
-    # Validate and extract with type narrowing
+    # Validate and extract with fixed types
     if not isinstance(name_value, str) or not name_value:
         return r[UserProfile].fail("Name is required and must be a string")
     if not isinstance(email_value, str) or not email_value:
@@ -122,30 +122,15 @@ class UserService:
         self.logger = FlextLogger.create_module_logger(__name__)
         self.operation_count = 0
 
-    def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
-        """Create user with advanced context tracing and railway pattern - direct functional composition."""
-        with FlextContext.Request.request_context(operation_name="create_user"):
-            correlation_id = (
-                FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
-            )
-            self.operation_count += 1
+    @staticmethod
+    def _activate_user(user: UserProfile) -> r[UserProfile]:
+        """Activate user using domain business logic - railway pattern."""
 
-            self.logger.info(  # Using mixin logger
-                "Creating user",
-                extra={
-                    "correlation_id": correlation_id,
-                    "operation_count": self.operation_count,
-                    "user_data_keys": tuple(user_data.keys()),
-                },
-            )
+        def return_user(_: object) -> UserProfile:
+            """Return the user after activation."""
+            return user
 
-            # Railway pattern with advanced functional composition (DRY)
-            return (
-                self
-                ._validate_data(user_data)
-                .flat_map(lambda _: self._validate_and_transform(user_data, _))
-                .map(self._log_success)
-            )
+        return user.activate().map(return_user)
 
     @staticmethod
     def _validate_data(
@@ -164,26 +149,28 @@ class UserService:
 
         return r[bool].ok(value=True)
 
-    @staticmethod
-    def _activate_user(user: UserProfile) -> r[UserProfile]:
-        """Activate user using domain business logic - railway pattern."""
+    def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
+        """Create user with advanced context tracing and railway pattern - direct functional composition."""
+        with FlextContext.Correlation.new_correlation():
+            correlation_id = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
+            )
+            self.operation_count += 1
 
-        def return_user(_: object) -> UserProfile:
-            """Return the user after activation."""
-            return user
+            self.logger.info(  # Using mixin logger
+                "Creating user",
+                correlation_id=correlation_id,
+                operation_count=self.operation_count,
+                user_data_keys=str(tuple(user_data.keys())),
+            )
 
-        return user.activate().map(return_user)
-
-    def _log_success(self, user: UserProfile) -> UserProfile:
-        """Log success and return user (railway pattern)."""
-        self.logger.debug(f"User {user.name} activated successfully")
-        return user
-
-    def _validate_and_transform(
-        self, user_data: m.ConfigMap, _: object
-    ) -> r[UserProfile]:
-        """Validate and transform user data for flat_map."""
-        return validate_transform_user(user_data)
+            # Railway pattern with advanced functional composition (DRY)
+            return (
+                self
+                ._validate_data(user_data)
+                .flat_map(lambda _: self._validate_and_transform(user_data, _))
+                .map(self._log_success)
+            )
 
     def _log_final_result(
         self,
@@ -194,15 +181,26 @@ class UserService:
         def log_result(user: UserProfile) -> UserProfile:
             self.logger.info(
                 "User created successfully",
-                extra={
-                    "user_id": user.unique_id,
-                    "correlation_id": correlation_id,
-                    "user_status": user.status.value,
-                },
+                user_id=user.unique_id,
+                correlation_id=correlation_id,
+                user_status=user.status.value,
             )
             return user
 
         return log_result
+
+    def _log_success(self, user: UserProfile) -> UserProfile:
+        """Log success and return user (railway pattern)."""
+        self.logger.debug(f"User {user.name} activated successfully")
+        return user
+
+    def _validate_and_transform(
+        self,
+        user_data: m.ConfigMap,
+        _: object,
+    ) -> r[UserProfile]:
+        """Validate and transform user data for flat_map."""
+        return validate_transform_user(user_data)
 
 
 # Comprehensive utilities demonstration (DRY + SRP with advanced flext-core integration)
@@ -210,10 +208,12 @@ def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     # Create test data and perform operations with railway pattern (DRY + SRP)
     correlation_id = u.generate("correlation")
-    test_obj: m.ConfigMap = {
-        "unique_id": correlation_id,
-        "test": True,
-    }
+    test_obj: m.ConfigMap = m.ConfigMap(
+        root={
+            "unique_id": correlation_id,
+            "test": True,
+        },
+    )
 
     # Railway pattern with traverse for multiple operations (DRY - no manual loops)
     cache_result = u.clear_object_cache(test_obj)
@@ -240,7 +240,7 @@ def demonstrate_utilities() -> None:
     )
 
     # Safe output with railway pattern
-    _ = result.map(print)
+    result.map(print)
 
 
 # Advanced exception handling with comprehensive error integration (DRY + SRP)
@@ -254,7 +254,7 @@ def demonstrate_exceptions() -> None:
     )
 
     def create_error_result(msg: str, field: str, value: str) -> r[str]:
-        return r.fail(
+        return r[str].fail(
             e.ValidationError(
                 msg,
                 field=field,
@@ -282,18 +282,18 @@ def demonstrate_exceptions() -> None:
             return format_error_message(field_str, value_str)
 
         return create_error_result(msg_str, field_str, value_str).map(
-            format_error_after_validation
+            format_error_after_validation,
         )
 
     def process_exception(error: object) -> r[str]:
         error_str = str(error)
         return r.ok(format_exception_message(error_str))
 
-    _ = r.traverse(
+    r.traverse(
         list(starmap(process_scenario, error_scenarios))
         + [
             # Standard exception conversion
-            process_exception("Standard exception")
+            process_exception("Standard exception"),
         ],
         identity,
     ).map(print)
@@ -322,7 +322,7 @@ def execute_validation_chain(
 ) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
     # Railway pattern with advanced functional composition (DRY + SRP)
-    _ = (
+    (
         validate_transform_user(user_data)
         .map(
             lambda user: (
@@ -360,7 +360,7 @@ def execute_demonstrations(
 ) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
     # Railway pattern with side effects (DRY - no manual loops)
-    _ = service.create_user(user_data).map(ignore_and_return_none)
+    service.create_user(user_data).map(ignore_and_return_none)
     # Execute demonstrations as side effects
     demonstrate_utilities()
     demonstrate_exceptions()
@@ -371,15 +371,17 @@ def main() -> None:
     """Advanced FLEXT demo with railway patterns and context management - functional composition."""
     logger = FlextLogger.create_module_logger(__name__)
 
-    with FlextContext.Request.request_context(operation_name="demo"):
+    with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        logger.info("Starting demonstration", extra={"correlation_id": correlation_id})
+        logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
-        user_data: m.ConfigMap = {
-            "name": "Demo",
-            "email": "demo@example.com",
-        }
+        user_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "name": "Demo",
+                "email": "demo@example.com",
+            },
+        )
 
         # Service instance (DRY - single creation)
         service = UserService()

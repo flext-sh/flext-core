@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import time
 from collections.abc import Callable, Mapping
@@ -23,7 +22,7 @@ from typing import Final
 
 import pytest
 
-from flext_core import r, t
+from flext_core import FlextRuntime, r, t
 from flext_tests import u
 
 
@@ -129,11 +128,11 @@ class TestFlextUtilitiesReliability:
         @staticmethod
         def create_delay_config(
             config_type: TestFlextUtilitiesReliability.DelayConfig,
-        ) -> dict[str, t.GeneralValueType]:
+        ) -> dict[str, t.ContainerValue]:
             """Create delay configuration for given type."""
             configs: Mapping[
                 TestFlextUtilitiesReliability.DelayConfig,
-                dict[str, t.GeneralValueType],
+                dict[str, t.ContainerValue],
             ] = {
                 TestFlextUtilitiesReliability.DelayConfig.EXPONENTIAL: {
                     "initial_delay_seconds": 0.1,
@@ -227,7 +226,7 @@ class TestFlextUtilitiesReliability:
             )
         else:
             assert error_pattern is not None
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert error_pattern in (result.error or "")
 
     def test_with_timeout_invalid_timeout(self) -> None:
@@ -236,7 +235,7 @@ class TestFlextUtilitiesReliability:
             lambda: r[str].ok("test"),
             -1.0,
         )
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert "Timeout must be positive" in (result.error or "")
 
     def test_retry_succeeds_after_failure(self) -> None:
@@ -261,7 +260,7 @@ class TestFlextUtilitiesReliability:
             lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert "Max attempts must be at least" in (result.error or "")
 
     @pytest.mark.parametrize(
@@ -334,21 +333,17 @@ class TestFlextUtilitiesReliability:
             cleanup_func=lambda: cleanups.append("done"),
         )
 
-        u.Tests.Result.assert_success_with_value(
-            result,
-            self.Constants.SUCCESS_RETRY,
-        )
+        assert result.is_success
+        assert result.value == self.Constants.SUCCESS_RETRY
         assert cleanups == ["done"]
         assert attempts == [0, 1]
 
     def test_with_retry_blocked(self) -> None:
         """Test retry blocked by should_retry_func."""
-        blocked = u.Reliability.with_retry(
+        blocked: FlextRuntime.RuntimeResult[str] = u.Reliability.with_retry(
             lambda: r[str].fail("stop"),
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,
         )
-        u.Tests.Result.assert_failure_with_error(
-            blocked,
-            "stop",
-        )
+        assert blocked.is_failure
+        assert blocked.error is not None and "stop" in blocked.error

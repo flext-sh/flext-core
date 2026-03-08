@@ -9,7 +9,7 @@ does NOT extend FlextService (Pydantic model) because pytest cannot collect
 Pydantic models as test classes.
 
 Utility classes (factories, builders, validators) should use
-FlextTestsUtilityBase (alias: su) which extends FlextService.
+FlextTestsUtilityBase (alias: s) which extends FlextService and provides a default execute().
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,9 +17,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.result import r
-from flext_core.service import FlextService
-from flext_core.typings import T
+from typing import override
+
+from flext_core import FlextService, T, r
 
 
 class FlextTestsServiceBase[T]:
@@ -35,24 +35,6 @@ class FlextTestsServiceBase[T]:
     - assert_success(result) -> unwrap successful results
     - assert_failure(result) -> verify failure and get error
     """
-
-    def assert_success[TResult](self, result: r[TResult]) -> TResult:
-        """Assert result is success and return unwrapped value.
-
-        Args:
-            result: FlextResult to check
-
-        Returns:
-            TResult: Unwrapped value from successful result
-
-        Raises:
-            AssertionError: If result is not successful
-
-        """
-        if not result.is_success:
-            msg = f"Expected success but got failure: {result.error}"
-            raise AssertionError(msg)
-        return result.value
 
     def assert_failure[TResult](self, result: r[TResult]) -> str:
         """Assert result is failure and return error message.
@@ -72,6 +54,24 @@ class FlextTestsServiceBase[T]:
             raise AssertionError(msg)
         return result.error or ""
 
+    def assert_success[TResult](self, result: r[TResult]) -> TResult:
+        """Assert result is success and return unwrapped value.
+
+        Args:
+            result: FlextResult to check
+
+        Returns:
+            TResult: Unwrapped value from successful result
+
+        Raises:
+            AssertionError: If result is not successful
+
+        """
+        if not result.is_success:
+            msg = f"Expected success but got failure: {result.error}"
+            raise AssertionError(msg)
+        return result.value
+
 
 class FlextTestsUtilityBase(FlextService[T]):
     """Base class for FLEXT test utility classes (factories, builders, validators).
@@ -84,9 +84,13 @@ class FlextTestsUtilityBase(FlextService[T]):
     - Generic type parameter support
     """
 
+    @override
+    def execute(self) -> r[T]:
+        """Default utility execution — subclasses should override with specific logic."""
+        return r.fail(f"{type(self).__name__} must implement execute()")
 
-__all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s", "su"]
 
-# Aliases for simplified usage
-s = FlextTestsServiceBase  # For test classes
-su = FlextTestsUtilityBase  # For utility classes (factories, builders, validators)
+s = FlextTestsServiceBase
+
+
+__all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s"]

@@ -17,12 +17,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import override
 
 from flext_core import c, h, m, r, s, u
 
 
-class CreateUserCommand(m.Cqrs.Command):
+class CreateUserCommand(m.Command):
     """Command to create a user."""
 
     user_id: str
@@ -30,7 +30,7 @@ class CreateUserCommand(m.Cqrs.Command):
     email: str
 
 
-class GetUserQuery(m.Cqrs.Query):
+class GetUserQuery(m.Query):
     """Query to get a user."""
 
     user_id: str
@@ -48,10 +48,9 @@ class UserDTO(m.Value):
 class CommandHandler(h[CreateUserCommand, str]):
     """Example command handler."""
 
+    @override
     def handle(self, message: CreateUserCommand) -> r[str]:
         """Handle user creation command using u validation."""
-        _ = self.handler_name  # Use self to satisfy ruff
-
         # Railway pattern with u validation (DRY)
         name_validation = u.validate_length(
             message.name,
@@ -81,9 +80,9 @@ class CommandHandler(h[CreateUserCommand, str]):
 class QueryHandler(h[GetUserQuery, UserDTO]):
     """Example query handler."""
 
+    @override
     def handle(self, message: GetUserQuery) -> r[UserDTO]:
         """Handle user retrieval query using c error codes."""
-        _ = self.handler_name  # Use self to satisfy ruff
         if message.user_id == "not-found":
             return r[UserDTO].fail(
                 c.Errors.NOT_FOUND_ERROR,
@@ -101,32 +100,6 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
 # Service using s directly
 class HandlersService(s[m.ConfigMap]):
     """Service demonstrating CQRS handlers with flext-core."""
-
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
-        """Execute comprehensive handler demonstrations."""
-        print("Starting CQRS handlers demonstration")
-
-        self._demonstrate_command_handlers()
-        self._demonstrate_query_handlers()
-        self._demonstrate_pipeline_execution()
-        self._demonstrate_error_handling()
-
-        return r[m.ConfigMap].ok({
-            "handlers_demonstrated": [
-                c.Cqrs.HandlerType.COMMAND,
-                c.Cqrs.HandlerType.QUERY,
-                "pipeline",
-                "error_handling",
-            ],
-            "cqrs_patterns": [
-                "separation_of_concerns",
-                "type_safety",
-                "result_patterns",
-            ],
-            "handler_types": 2,
-        })
 
     @staticmethod
     def _demonstrate_command_handlers() -> None:
@@ -154,22 +127,22 @@ class HandlersService(s[m.ConfigMap]):
             print(f"❌ Command failed: {invalid_result.error}")
 
     @staticmethod
-    def _demonstrate_query_handlers() -> None:
-        """Show query handler patterns."""
-        print("\n=== Query Handlers ===")
+    def _demonstrate_error_handling() -> None:
+        """Show error handling in handlers."""
+        print("\n=== Error Handling ===")
 
-        handler = QueryHandler()
+        command_handler = CommandHandler()
 
-        query = GetUserQuery(user_id="user-123")
-        result = handler.handle(query)
-        if result.is_success:
-            user = result.value
-            print(f"✅ Query result: {user.name} ({user.email})")
+        error_command = CreateUserCommand(
+            user_id="error-user",
+            name="",
+            email="",
+        )
 
-        not_found_query = GetUserQuery(user_id="not-found")
-        not_found_result = handler.handle(not_found_query)
-        if not_found_result.is_failure:
-            print(f"❌ Query failed: {not_found_result.error}")
+        error_result = command_handler.handle(error_command)
+        if error_result.is_failure:
+            print(f"✅ Error handled: {error_result.error}")
+            print(f"   Error code: {error_result.error_code or 'N/A'}")
 
     @staticmethod
     def _demonstrate_pipeline_execution() -> None:
@@ -189,22 +162,53 @@ class HandlersService(s[m.ConfigMap]):
         print("✅ Pipeline executed successfully")
 
     @staticmethod
-    def _demonstrate_error_handling() -> None:
-        """Show error handling in handlers."""
-        print("\n=== Error Handling ===")
+    def _demonstrate_query_handlers() -> None:
+        """Show query handler patterns."""
+        print("\n=== Query Handlers ===")
 
-        command_handler = CommandHandler()
+        handler = QueryHandler()
 
-        error_command = CreateUserCommand(
-            user_id="error-user",
-            name="",
-            email="",
+        query = GetUserQuery(user_id="user-123")
+        result = handler.handle(query)
+        if result.is_success:
+            user = result.value
+            print(f"✅ Query result: {user.name} ({user.email})")
+
+        not_found_query = GetUserQuery(user_id="not-found")
+        not_found_result = handler.handle(not_found_query)
+        if not_found_result.is_failure:
+            print(f"❌ Query failed: {not_found_result.error}")
+
+    @override
+    def execute(
+        self,
+    ) -> r[m.ConfigMap]:
+        """Execute comprehensive handler demonstrations."""
+        print("Starting CQRS handlers demonstration")
+
+        self._demonstrate_command_handlers()
+        self._demonstrate_query_handlers()
+        self._demonstrate_pipeline_execution()
+        self._demonstrate_error_handling()
+
+        return r[m.ConfigMap].ok(
+            m.ConfigMap(
+                root={
+                    "handlers_demonstrated": [
+                        c.Cqrs.HandlerType.COMMAND,
+                        c.Cqrs.HandlerType.QUERY,
+                        "pipeline",
+                        "error_handling",
+                    ],
+                    "cqrs_patterns": [
+                        "separation_of_concerns",
+                        "type_safety",
+                        "result_patterns",
+                    ],
+                    "handler_types": 2,
+                },
+            ),
         )
-
-        error_result = command_handler.handle(error_command)
-        if error_result.is_failure:
-            print(f"✅ Error handled: {error_result.error}")
-            print(f"   Error code: {error_result.error_code or 'N/A'}")
 
 
 def demonstrate_cqrs_architecture() -> None:
@@ -230,10 +234,10 @@ def main() -> None:
 
     if result.is_success:
         data = result.value
-        handlers = data.get("handlers_demonstrated", [])
-        patterns = data.get("cqrs_patterns", [])
-        handler_count = len(handlers) if isinstance(handlers, Sequence) else 0
-        pattern_count = len(patterns) if isinstance(patterns, Sequence) else 0
+        handler_count_raw = data.get("handler_types", 0)
+        handler_count_text = str(handler_count_raw)
+        handler_count = int(handler_count_text) if handler_count_text.isdigit() else 0
+        pattern_count = 3
         print(f"\n✅ Demonstrated {handler_count} handler patterns")
         print(f"✅ Used {pattern_count} CQRS patterns")
     else:

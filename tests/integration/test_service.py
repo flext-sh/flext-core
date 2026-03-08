@@ -8,9 +8,9 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from dataclasses import dataclass
+from typing import override
 
 import pytest
 from pydantic import PrivateAttr
@@ -51,11 +51,12 @@ class UserQueryService(FlextService[bool]):
 
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize user query service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> FlextResult[bool]:
         """Execute user query service.
 
@@ -134,11 +135,12 @@ class NotificationService(FlextService[str]):
 
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize notification service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Execute notification service."""
         if self._should_fail:
@@ -196,6 +198,14 @@ class ServiceConfig(m.CollectionsConfig):
     temp_dir: str | None = None
 
 
+def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:
+    return ServiceConfig.model_validate({
+        "name": name,
+        "version": version,
+        "temp_dir": temp_dir,
+    })
+
+
 class LifecycleService(FlextService[str]):
     """Real lifecycle service using FlextService with config model."""
 
@@ -207,11 +217,12 @@ class LifecycleService(FlextService[str]):
 
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize lifecycle service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Execute lifecycle service."""
         if self._initialized:
@@ -505,7 +516,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -536,7 +547,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -570,7 +581,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -601,7 +612,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -649,17 +660,15 @@ class TestFlextServiceIntegration:
         user_service.set_user_data(user_id, user_entity)
 
         # Register services in container
-        _ = clean_container.with_service("user_service", user_service)
-        _ = clean_container.with_service("notification_service", notification_service)
+        _ = clean_container.register("user_service", user_service)
+        _ = clean_container.register("notification_service", notification_service)
 
         # Act - Retrieve and use services
-        user_service_result = clean_container.get_typed(
-            "user_service",
-            UserQueryService,
+        user_service_result = clean_container.get(
+            "user_service", type_cls=UserQueryService
         )
-        notification_service_result = clean_container.get_typed(
-            "notification_service",
-            NotificationService,
+        notification_service_result = clean_container.get(
+            "notification_service", type_cls=NotificationService
         )
 
         assert user_service_result.is_success

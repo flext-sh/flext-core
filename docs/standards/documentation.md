@@ -109,8 +109,9 @@ One paragraph explaining what this feature does and why use it.
 
 ```python
 # Working example
-```
 ````
+
+```markdown
 
 ## API Reference
 
@@ -135,6 +136,7 @@ One paragraph explaining what this feature does and why use it.
 ### Issue: Something breaks
 
 **Solution**: How to fix it
+```
 
 ````
 
@@ -478,19 +480,20 @@ Before publishing documentation:
 
 ```python
 # Working example
-```
 ````
+
+```markdown
 
 **Raises/Errors:**
 
 - Error1: When this happens
 - Error2: When that happens
 
-````
+```
 
 ### For Classes
 
-```markdown
+````markdown
 ## ClassName
 
 **Purpose**: One sentence explaining what this class does.
@@ -498,8 +501,11 @@ Before publishing documentation:
 **Inherits from**: Parent class if applicable
 
 **Usage:**
+
 ```python
 # Basic usage example
+````
+
 ````
 
 ### Methods
@@ -514,7 +520,8 @@ Each method documented as above.
 **Type**: DataType
 
 **Description**: What does this property represent?
-```
+
+````
 
 ## Writing Guidelines
 
@@ -698,3 +705,10 @@ FLEXT-Core documentation standards:
 - ✅ Pass quality gate before publishing
 
 Documentation is part of the product. Maintain the same standards as the code.
+
+```
+
+```
+
+```
+```

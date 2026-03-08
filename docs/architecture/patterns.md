@@ -326,7 +326,7 @@ else:
 **Pattern:** Chain middleware for cross-cutting concerns.
 
 ```python
-from flext_core.decorators import FlextDecorators
+from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
@@ -462,4 +462,7 @@ Use these patterns to build maintainable, scalable FLEXT-Core applications.
 - Railway-Oriented Programming - Result composition patterns
 - Service Patterns Guide - Domain service implementation
 - Dependency Injection Advanced - DI container patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
+
+```
+```

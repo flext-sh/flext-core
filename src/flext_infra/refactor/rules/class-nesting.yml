@@ -1,0 +1,61 @@
+# Class Nesting Refactor Rule
+# Transforms loose classes to nested namespace classes
+
+rules:
+  - id: class-nesting-refactor
+    name: "Class Nesting Refactor"
+    description: "Transform loose classes to nested namespace classes following {Project}{Dirs}{Module} pattern"
+    enabled: true
+    severity: error
+    auto_fix: true
+    fix_action: nest_classes
+    
+    # Configuration
+    config:
+      mappings_file: "class-nesting-mappings.yml"
+      schema_file: "class-nesting-schema.json"
+      
+    # Confidence thresholds
+    confidence_levels:
+      high:
+        threshold: 0.9
+        auto_apply: true
+        description: "High confidence - auto-apply"
+      medium:
+        threshold: 0.7
+        auto_apply: false
+        description: "Medium confidence - review suggested"
+      low:
+        threshold: 0.0
+        auto_apply: false
+        description: "Low confidence - manual review required"
+    
+    # Target namespaces
+    namespaces:
+      - FlextDispatcher
+      - FlextModels
+      - FlextDecorators
+      - FlextUtilities
+      - FlextCore
+    
+    # Patterns to detect
+    patterns:
+      loose_class_in_private_dir:
+        description: "Top-level class in _*/ directory"
+        confidence: high
+      class_without_namespace_prefix:
+        description: "Class name doesn't match expected namespace prefix"
+        confidence: medium
+      
+    # Safety settings
+    safety:
+      dry_run_by_default: true
+      require_confirmation_for_high_impact: true
+      max_files_per_batch: 50
+      
+    # Reporting
+    report:
+      show_violations: true
+      show_transformations: true
+      show_statistics: true
+      output_format: json

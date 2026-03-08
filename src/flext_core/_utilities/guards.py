@@ -14,18 +14,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-import warnings
 from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
-from typing import TypeGuard
+from types import MappingProxyType
+from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel
 
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextResult, m, p, r, t
 
 
 class FlextUtilitiesGuards:
@@ -43,280 +40,176 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
-    def is_string_non_empty(value: t.GeneralValueType) -> bool:
-        """Check if value is a non-empty string using duck typing.
-
-        Validates that the provided value is a string type and contains
-        non-whitespace content after stripping.
-
-        Args:
-            value: Object to check for non-empty string type
-
-        Returns:
-            bool: True if value is non-empty string, False otherwise
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> u.is_type("hello", "string_non_empty")
-            True
-            >>> u.is_type("   ", "string_non_empty")
-            False
-            >>> u.is_type(123, "string_non_empty")
-            False
-
-        """
-        return isinstance(value, str) and bool(value.strip())
+    def _is_bool(value: t.ContainerValue) -> TypeGuard[bool]:
+        """Check if value is bool."""
+        return isinstance(value, bool)
 
     @staticmethod
-    def is_dict_non_empty(value: t.GeneralValueType) -> bool:
-        """Check if value is a non-empty dictionary using duck typing.
-
-        Validates that the provided value behaves like a dictionary
-        (has dict-like interface) and contains at least one item.
-
-        Args:
-            value: Object to check for non-empty dict-like type
-
-        Returns:
-            bool: True if value is non-empty dict-like, False otherwise
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> u.is_type({"key": "value"}, "dict_non_empty")
-            True
-            >>> u.is_type({}, "dict_non_empty")
-            False
-            >>> u.is_type("not_a_dict", "dict_non_empty")
-            False
-
-        """
-        return FlextRuntime.is_dict_like(value) and bool(value)
+    def _is_bytes(value: t.ContainerValue) -> TypeGuard[bytes]:
+        """Check if value is bytes."""
+        return isinstance(value, bytes)
 
     @staticmethod
-    def is_list_non_empty(value: t.GeneralValueType) -> bool:
-        """Check if value is a non-empty list using duck typing.
-
-        Validates that the provided value behaves like a list
-        (has list-like interface) and contains at least one item.
-
-        Args:
-            value: Object to check for non-empty list-like type
-
-        Returns:
-            bool: True if value is non-empty list-like, False otherwise
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> u.is_type([1, 2, 3], "list_non_empty")
-            True
-            >>> u.is_type([], "list_non_empty")
-            False
-            >>> u.is_type("not_a_list", "list_non_empty")
-            False
-
-        """
-        return FlextRuntime.is_list_like(value) and bool(value)
+    def _is_callable_key_func(
+        func: t.ContainerValue,
+    ) -> TypeGuard[Callable[[t.ContainerValue], t.ContainerValue]]:
+        """Check if value is callable and can be used as key function for sorted()."""
+        return callable(func)
 
     @staticmethod
-    def normalize_to_metadata_value(
-        val: t.GeneralValueType,
-    ) -> t.MetadataAttributeValue:
-        """Normalize any value to MetadataAttributeValue.
+    def _is_dict(value: t.ContainerValue) -> TypeGuard[m.Dict]:
+        """Check if value is a dict-like mapping."""
+        return isinstance(value, dict)
 
-        MetadataAttributeValue is more restrictive than t.GeneralValueType,
-        so we need to normalize nested structures to flat types.
+    @staticmethod
+    def _is_float(value: t.ContainerValue) -> TypeGuard[float]:
+        """Check if value is float."""
+        return isinstance(value, float)
 
-        Args:
-            val: Value to normalize
+    @staticmethod
+    def _is_int(value: t.ContainerValue) -> TypeGuard[int]:
+        """Check if value is int."""
+        return isinstance(value, int)
 
-        Returns:
-            t.MetadataAttributeValue: Normalized value compatible with Metadata attributes
+    @staticmethod
+    def _is_list_or_tuple(
+        value: t.ContainerValue,
+    ) -> TypeGuard[list[t.ContainerValue] | tuple[t.ContainerValue, ...]]:
+        """Check if value is list or tuple."""
+        return isinstance(value, (list, tuple))
 
-        Example:
-            >>> from flext_core.utilities import u
-            >>> u.Guards.normalize_to_metadata_value("test")
-            'test'
-            >>> u.Guards.normalize_to_metadata_value({"key": "value"})
-            {'key': 'value'}
-            >>> u.Guards.normalize_to_metadata_value([1, 2, 3])
-            [1, 2, 3]
+    @staticmethod
+    def _is_mapping(
+        value: t.ContainerValue,
+    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
+        """Check if value is a Mapping (dict-like)."""
+        return isinstance(value, Mapping)
 
-        """
-        if isinstance(val, (str, int, float, bool, type(None))):
-            return val
-        if FlextRuntime.is_dict_like(val):
-            # Convert to flat dict with ScalarValue values
-            # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
-            # ConfigurationMapping is Mapping[str, t.GeneralValueType]
-            val_mapping = val  # type narrowing via TypeGuard
-            # Use full type from start to satisfy dict invariance
-            result_dict: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | datetime
-                | list[str | int | float | bool | datetime | None]
-                | None,
-            ] = {}
-            # TypeGuard already narrows to Mapping - no extra check needed
-            dict_v = dict(val_mapping.items())
-            for k, v in dict_v.items():
-                # Explicit type annotations for loop variables
-                key: str = k
-                value: t.GeneralValueType = v
-                if isinstance(value, (str, int, float, bool, datetime, type(None))):
-                    result_dict[key] = value
-                else:
-                    result_dict[key] = str(value)
-            return result_dict
-        if FlextRuntime.is_list_like(val):
-            # Convert to list[t.MetadataAttributeValue]
-            # Type narrowing: is_list_like returns TypeGuard[Sequence[t.GeneralValueType]]
-            val_sequence = val  # type narrowing via TypeGuard
-            result_list: t.GeneralListValue = []
-            # TypeGuard already narrows to Sequence - no extra check needed
-            # Exclude str/bytes from iteration
-            if not isinstance(val_sequence, (str, bytes)):
-                for item in val_sequence:
-                    # Explicit type annotation for loop variable
-                    list_item: t.GeneralValueType = item
-                    if isinstance(list_item, (str, int, float, bool, type(None))):
-                        result_list.append(list_item)
-                    else:
-                        result_list.append(str(list_item))
-            return result_list
-        return str(val)
+    @staticmethod
+    def _is_none(value: t.ContainerValue) -> TypeGuard[None]:
+        """Check if value is None."""
+        return value is None
+
+    @staticmethod
+    def _is_sequence(
+        value: t.ContainerValue,
+    ) -> TypeGuard[Sequence[t.ContainerValue]]:
+        """Check if value is Sequence of ContainerValue."""
+        return isinstance(value, (list, tuple, range))
 
     # =========================================================================
-    # TypeGuard Functions for FLEXT Core Types
+    # Generic Type Guards for Collections and Sequences
     # =========================================================================
-    # These functions enable type narrowing without  - zero tolerance typing
 
     @staticmethod
-    def is_general_value_type(value: object) -> TypeGuard[t.GeneralValueType]:
-        """Check if value is a valid t.GeneralValueType.
+    def _is_sequence_not_str(
+        value: t.ContainerValue,
+    ) -> TypeGuard[Sequence[t.ContainerValue]]:
+        """Check if value is Sequence and not str."""
+        # Runtime check needed: type checker sees str | Sequence[T] as Sequence[Unknown]
+        # but runtime can be either str or Sequence[str]
+        # Type check is necessary for runtime type distinction
+        return isinstance(value, (list, tuple, range)) and not isinstance(value, str)
 
-        t.GeneralValueType = ScalarValue | Sequence[t.GeneralValueType] | Mapping[str, t.GeneralValueType]
-        ScalarValue = str | int | float | bool | datetime | None
+    @staticmethod
+    def _is_sequence_not_str_bytes(
+        value: t.ContainerValue,
+    ) -> TypeGuard[Sequence[t.ContainerValue]]:
+        """Check if value is Sequence and not str or bytes."""
+        return isinstance(value, (list, tuple, range)) and not isinstance(
+            value,
+            (str, bytes),
+        )
 
-        This TypeGuard enables type narrowing without  for t.GeneralValueType.
-        Uses structural typing to validate at runtime.
+    @staticmethod
+    def _is_sized(value: t.ContainerValue) -> TypeGuard[Sized]:
+        """Check if value has __len__ (str, bytes, Sequence, Mapping)."""
+        if isinstance(value, (str, bytes, list, tuple, dict)):
+            return True
+        return hasattr(value, "__len__") and callable(getattr(value, "__len__", None))
+
+    @staticmethod
+    def _is_str(value: t.ContainerValue) -> TypeGuard[str]:
+        """Check if value is str."""
+        return isinstance(value, str)
+
+    @staticmethod
+    def _is_tuple(value: t.ContainerValue) -> TypeGuard[tuple[t.ContainerValue, ...]]:
+        """Check if value is tuple."""
+        return isinstance(value, tuple)
+
+    @staticmethod
+    def is_config_value(value: t.ContainerValue) -> TypeGuard[t.ContainerValue]:
+        """Check if value is a valid t.ContainerValue.
+
+        t.ContainerValue = str | int | float | bool | datetime | None |
+                          Sequence[scalar] | Mapping[str, scalar]
+
+        This TypeGuard enables type narrowing for simple config values.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[t.GeneralValueType]: True if value matches t.GeneralValueType structure
+            TypeGuard[t.ContainerValue]: True if value matches config value type
 
         """
-        # Check scalar types first (most common case)
-        if isinstance(value, (str, int, float, bool, type(None), datetime)):
+        if value is None:
             return True
-        # Check for bool before int (bool is subclass of int in Python)
-        if value is True or value is False:
+        if isinstance(value, (str, int, float, bool, datetime)):
             return True
-        # Check sequence types (list/tuple can never be str/bytes)
         if isinstance(value, (list, tuple)):
-            # Iterate with explicit type annotation to satisfy pyright
-            item: object
             for item in value:
-                if not FlextUtilitiesGuards.is_general_value_type(item):
+                if not (
+                    item is None or isinstance(item, (str, int, float, bool, datetime))
+                ):
                     return False
             return True
-        # Check mapping types
         if isinstance(value, Mapping):
-            # Iterate with explicit type annotations to satisfy pyright
-            k: object
-            v: object
-            for k, v in value.items():
-                if not isinstance(k, str):
-                    return False
-                if not FlextUtilitiesGuards.is_general_value_type(v):
+            for v in value.values():
+                if not (v is None or isinstance(v, (str, int, float, bool, datetime))):
                     return False
             return True
-        # Check callable types (GeneralValueType includes Callable[..., object])
-        if callable(value):
-            return True
-        # Check BaseModel or Path instances
-        return isinstance(value, (BaseModel, Path))
+        return False
 
     @staticmethod
-    def is_handler_type(value: object) -> TypeGuard[t.HandlerType]:
-        """Check if value is a valid t.HandlerType.
+    def is_configuration_dict(
+        value: t.ContainerValue,
+    ) -> TypeGuard[m.Dict]:
+        """Check if value is a valid m.Dict mapping.
 
-        t.HandlerType = HandlerCallable | Mapping[str, GeneralValueType] | BaseModel
-
-        This TypeGuard enables type narrowing for t.HandlerType.
+        This TypeGuard enables explicit narrowing for m.Dict values.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[t.HandlerType]: True if value matches t.HandlerType structure
+            TypeGuard[m.Dict]: True if value matches ConfigurationDict structure
 
         Example:
-            >>> from flext_core.utilities import u
-            >>> if u.Guards.is_handler_type(handler):
-            ...     # handler is now typed as t.HandlerType
-            ...     result = container.register("my_handler", handler)
+            >>> from flext_core import u
+            >>> if u.Guards.is_configuration_dict(config):
+            ...     # config is now typed as m.Dict
+            ...     config["key"] = "value"
 
         """
-        # Check if callable (most common case - HandlerCallable)
-        if callable(value):
-            return True
-        # Check if Mapping (handler mapping)
-        if isinstance(value, Mapping):
-            return True
-        # Check if BaseModel instance or class
-        if isinstance(value, BaseModel):
-            return True
-        if isinstance(value, type):
-            try:
-                if issubclass(value, BaseModel):
-                    return True
-            except TypeError:
-                # value is not a class
-                pass
-        # Check for handler protocol methods (duck typing)
-        # All values are objects in Python, so isinstance(value, object) is always True
-        return hasattr(value, "handle") or hasattr(value, "can_handle")
-
-    @staticmethod
-    def is_handler_callable(value: object) -> TypeGuard[t.HandlerCallable]:
-        """Check if value is a valid t.HandlerCallable.
-
-        t.HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
-
-        This TypeGuard enables type narrowing without cast() for handler functions.
-        Checks if value is callable and has the handler decorator attribute.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[t.HandlerCallable]: True if value is a decorated handler callable
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> if u.Guards.is_handler_callable(func):
-            ...     # func is now typed as t.HandlerCallable
-            ...     result = func(message)
-
-        """
-        return callable(value)
+        if not isinstance(value, dict):
+            return False
+        for item_value in value.values():
+            if not FlextUtilitiesGuards.is_general_value_type(item_value):
+                return False
+        return True
 
     @staticmethod
     def is_configuration_mapping(
-        value: object,
+        value: t.ContainerValue,
     ) -> TypeGuard[m.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
-        m.ConfigMap = Mapping[str, t.GeneralValueType]
+        m.ConfigMap = Mapping[str, t.ContainerValue]
 
-        This TypeGuard enables type narrowing without cast() for m.ConfigMap.
+        This TypeGuard enables explicit narrowing for m.ConfigMap.
         Uses structural typing to validate at runtime.
 
         Args:
@@ -326,896 +219,564 @@ class FlextUtilitiesGuards:
             TypeGuard[m.ConfigMap]: True if value matches ConfigurationMapping structure
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core import u
             >>> if u.Guards.is_configuration_mapping(config):
             ...     # config is now typed as m.ConfigMap
             ...     items = config.items()
 
         """
-        # Check if it's a Mapping
+        # Check if it's a Mapping (structural)
         if not isinstance(value, Mapping):
             return False
-        # Check all keys are strings and values are GeneralValueType
-        # Iterate with explicit type annotations to satisfy pyright
-        k: object
-        v: object
-        for k, v in value.items():
-            if not isinstance(k, str):
-                return False
-            if not FlextUtilitiesGuards.is_general_value_type(v):
+        # Check all keys are strings and values are ContainerValue
+        for item_value in value.values():
+            if not FlextUtilitiesGuards.is_general_value_type(item_value):
                 return False
         return True
 
     @staticmethod
-    def is_configuration_dict(
-        value: object,
-    ) -> TypeGuard[dict[str, t.GeneralValueType]]:
-        """Check if value is a valid dict[str, t.GeneralValueType].
+    def is_context(obj: t.ContainerValue) -> TypeGuard[p.Context]:
+        """Check if object satisfies the Context protocol."""
+        return (
+            hasattr(obj, "clone")
+            and callable(getattr(obj, "clone", None))
+            and hasattr(obj, "set")
+            and callable(getattr(obj, "set", None))
+            and hasattr(obj, "get")
+            and callable(getattr(obj, "get", None))
+        )
 
-        dict[str, t.GeneralValueType] = dict[str, t.GeneralValueType]
+    @staticmethod
+    def is_dict_non_empty(value: t.ContainerValue) -> bool:
+        """Check if value is a non-empty dictionary using duck typing."""
+        return isinstance(value, Mapping) and bool(value)
 
-        This TypeGuard enables type narrowing without cast() for dict[str, t.GeneralValueType].
+    @staticmethod
+    def is_flexible_value(value: t.ContainerValue) -> TypeIs[t.ContainerValue]:
+        if value is None or FlextUtilitiesGuards.is_scalar(value):
+            return True
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                if item is not None and not FlextUtilitiesGuards.is_scalar(
+                    item,
+                ):
+                    return False
+            return True
+        if isinstance(value, Mapping):
+            for item in value.values():
+                if item is not None and not FlextUtilitiesGuards.is_scalar(
+                    item,
+                ):
+                    return False
+            return True
+        return False
+
+    # =========================================================================
+    # TypeGuard Functions for FLEXT Core Types
+    # =========================================================================
+    # These functions enable type narrowing without  - zero tolerance typing
+
+    @staticmethod
+    def is_general_value_type(value: object) -> TypeGuard[t.ContainerValue]:
+        """Check if value is a valid t.ContainerValue.
+
+        t.ContainerValue = ScalarValue | Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue]
+        ScalarValue = str | int | float | bool | datetime | None
+
+        This TypeGuard enables type narrowing for t.ContainerValue.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[dict[str, t.GeneralValueType]]: True if value matches ConfigurationDict structure
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> if u.Guards.is_configuration_dict(config):
-            ...     # config is now typed as dict[str, t.GeneralValueType]
-            ...     config["key"] = "value"
+            TypeGuard[t.ContainerValue]: True if value matches t.ContainerValue structure
 
         """
-        # Check if it's a dict (mutable)
-        if not isinstance(value, dict):
-            return False
-        # Check all keys are strings and values are GeneralValueType
-        # Iterate with explicit type annotations to satisfy pyright
-        k: object
-        v: object
-        for k, v in value.items():
-            if not isinstance(k, str):
-                return False
-            if not FlextUtilitiesGuards.is_general_value_type(v):
-                return False
-        return True
-
-    @staticmethod
-    def is_flexible_value(value: object) -> TypeGuard[t.FlexibleValue]:
-        """Check if value is a valid t.FlexibleValue.
-
-        t.FlexibleValue = str | int | float | bool | datetime | None |
-                          Sequence[scalar] | Mapping[str, scalar]
-
-        This TypeGuard enables type narrowing for simple config values.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[t.FlexibleValue]: True if value matches FlexibleValue type
-
-        """
-        # None is flexible
-        if value is None:
+        # Check scalar types first (most common case)
+        if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
-        # Scalars: str, int, float, bool
-        if isinstance(value, (str, int, float, bool)):
+        # Check for bool before int (bool is subclass of int in Python)
+        if value is True or value is False:
             return True
-        # datetime
-        if isinstance(value, datetime):
-            return True
-        # Sequence of scalars (excluding str which is already handled)
+        # Check sequence types (list/tuple can never be str/bytes)
         if isinstance(value, (list, tuple)):
             # Iterate with explicit type annotation to satisfy pyright
-            item: object
+            item: t.ContainerValue
             for item in value:
-                if not (
-                    item is None or isinstance(item, (str, int, float, bool, datetime))
-                ):
+                if not FlextUtilitiesGuards.is_general_value_type(item):
                     return False
             return True
-        # Mapping of str to scalars
+        # Check mapping types (structural)
         if isinstance(value, Mapping):
             # Iterate with explicit type annotations to satisfy pyright
-            k: object
-            v: object
-            for k, v in value.items():
-                if not isinstance(k, str):
-                    return False
-                if not (v is None or isinstance(v, (str, int, float, bool, datetime))):
+            v: t.Primitives | None
+            for v in value.values():
+                if not FlextUtilitiesGuards.is_general_value_type(v):
                     return False
             return True
-        return False
+        # Check callable types
+        if callable(value):
+            return True
+        # Check BaseModel or Path instances (structural for BaseModel)
+        return hasattr(value, "model_dump") or isinstance(value, Path)
 
     @staticmethod
-    def _is_config(obj: object) -> TypeGuard[p.Config]:
-        """Check if object satisfies the Config protocol.
-
-        Enables type narrowing for configuration objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Config]: True if obj satisfies Config protocol
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> if u.is_type(config, "config"):
-            ...     # config is now typed as p.Config
-            ...     name = config.app_name
-
-        """
-        return isinstance(obj, p.Config)
+    def is_handler_callable(value: object) -> TypeGuard[t.HandlerCallable]:
+        """Check if value is a valid t.HandlerCallable."""
+        return callable(value)
 
     @staticmethod
-    def is_context(obj: object) -> TypeGuard[p.Context]:
-        """Check if object satisfies the Context protocol.
-
-        Enables type narrowing for context objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Context]: True if obj satisfies Ctx protocol
-
-        """
-        return isinstance(obj, p.Context)
-
-    @staticmethod
-    def _is_context(obj: object) -> TypeGuard[p.Context]:
-        """Private version of is_context for internal protocol checks."""
-        return isinstance(obj, p.Context)
-
-    @staticmethod
-    def _is_container(obj: object) -> TypeGuard[p.DI]:
-        """Check if object satisfies the DI protocol.
-
-        Enables type narrowing for container objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.DI]: True if obj satisfies DI protocol
-
-        """
-        return isinstance(obj, p.DI)
-
-    @staticmethod
-    def _is_command_bus(obj: object) -> TypeGuard[p.CommandBus]:
-        """Check if object satisfies the CommandBus protocol.
-
-        Enables type narrowing for dispatcher/command bus without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.CommandBus]: True if obj satisfies CommandBus
-
-        """
-        return isinstance(obj, p.CommandBus)
-
-    @staticmethod
-    def _is_handler(obj: object) -> TypeGuard[p.Handler]:
-        """Check if object satisfies the Handler protocol.
-
-        Enables type narrowing for handler objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Handler]: True if obj satisfies Handler protocol
-
-        """
-        return isinstance(obj, p.Handler)
-
-    @staticmethod
-    def _is_logger(obj: object) -> TypeGuard[p.Log.StructlogLogger]:
-        """Check if object satisfies the StructlogLogger protocol.
-
-        Enables type narrowing for logger objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Log.StructlogLogger]: True if satisfies protocol
-
-        """
-        return (
-            hasattr(obj, "debug")
-            and hasattr(obj, "info")
-            and hasattr(obj, "warning")
-            and hasattr(obj, "error")
-            and hasattr(obj, "exception")
-        )
-
-    @staticmethod
-    def _is_result(obj: object) -> TypeGuard[p.Result[t.GeneralValueType]]:
-        """Check if object satisfies the Result protocol.
-
-        Enables type narrowing for result objects.
-
-        Uses attribute-based checking instead of isinstance() because
-        p.Result has optional methods (from_maybe, to_io, etc.) that
-        may not be implemented by all Result classes.
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Result]: True if obj satisfies Result protocol
-
-        """
-        # Check for core result properties
-        return (
-            hasattr(obj, "is_success")
-            and hasattr(obj, "is_failure")
-            and hasattr(obj, "value")
-            and hasattr(obj, "error")
-        )
-
-    @staticmethod
-    def _is_service(obj: object) -> TypeGuard[p.Service[t.GeneralValueType]]:
-        """Check if object satisfies the Service protocol.
-
-        Enables type narrowing for service objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Service]: True if obj satisfies Service protocol
-
-        """
-        return isinstance(obj, p.Service)
-
-    @staticmethod
-    def _is_middleware(obj: object) -> TypeGuard[p.Middleware]:
-        """Check if object satisfies the Middleware protocol.
-
-        Enables type narrowing for middleware objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Middleware]: True if obj satisfies Middleware
-
-        """
-        return isinstance(obj, p.Middleware)
-
-    # =========================================================================
-    # Generic Type Guards for Collections and Sequences
-    # =========================================================================
-
-    @staticmethod
-    def _is_sequence_not_str(value: object) -> TypeGuard[Sequence[t.GeneralValueType]]:
-        """Check if value is Sequence and not str.
-
-        Type guard to distinguish Sequence[str] from str in union types.
-        Useful for ExclusionSpec, ErrorCodeSpec, ContainmentSpec, etc.
-
-        Args:
-            value: Value that can be str or Sequence[T]
-
-        Returns:
-            TypeGuard[Sequence[t.GeneralValueType]]: True if value is Sequence and not str
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_sequence_not_str(spec):
-            ...     # spec is now typed as Sequence[t.GeneralValueType]
-            ...     items = list(spec)
-
-        """
-        # Runtime check needed: type checker sees str | Sequence[T] as Sequence[Unknown]
-        # but runtime can be either str or Sequence[str]
-        # isinstance is necessary for runtime type distinction
-        return isinstance(value, Sequence) and not isinstance(value, str)
-
-    @staticmethod
-    def is_mapping(value: t.GeneralValueType) -> TypeGuard[m.ConfigMap]:
-        """Check if value is ConfigurationMapping (Mapping[str, GeneralValueType]).
-
-        Type guard for mapping types used in FLEXT validation.
-        Uses proper FLEXT types instead of object.
-
-        Args:
-            value: GeneralValueType to check
-
-        Returns:
-            TypeGuard[m.ConfigMap]: True if value is ConfigurationMapping
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_mapping(params.kv):
-            ...     # params.kv is now typed as m.ConfigMap
-            ...     for key, val in params.kv.items():
-
-        """
-        return isinstance(value, Mapping)
-
-    @staticmethod
-    def _is_callable_key_func(
-        func: t.GeneralValueType,
-    ) -> TypeGuard[Callable[[t.GeneralValueType], t.GeneralValueType]]:
-        """Check if value is callable and can be used as key function for sorted().
-
-        Type guard for sorted() key functions that return comparable values.
-        Runtime validation ensures correctness. Uses FLEXT types.
-
-        Args:
-            func: GeneralValueType to check
-
-        Returns:
-            TypeGuard[Callable[[GeneralValueType], GeneralValueType]]: True if callable
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_callable_key_func(key_func):
-            ...     # key_func is callable, can be used with sorted()
-            ...     sorted_list = sorted(items, key=key_func)
-
-        """
-        return callable(func)
-
-    @staticmethod
-    def _is_sequence(
-        value: t.GeneralValueType,
-    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
-        """Check if value is Sequence of GeneralValueType.
-
-        Type guard for sequence types using FLEXT types.
-
-        Args:
-            value: GeneralValueType to check
-
-        Returns:
-            TypeGuard[Sequence[GeneralValueType]]: True if value is Sequence
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_sequence(key_equals):
-            ...     # key_equals is now typed as Sequence[t.GeneralValueType]
-            ...     pairs = list(key_equals)
-
-        """
-        return isinstance(value, Sequence)
-
-    @staticmethod
-    def _is_str(value: object) -> TypeGuard[str]:
-        """Check if value is str.
-
-        Type guard for string types.
+    def is_handler_type(
+        value: t.ContainerValue | t.HandlerCallable,
+    ) -> TypeGuard[t.HandlerLike]:
+        """Check if value is a valid t.HandlerLike.
+
+        t.HandlerLike = Callable[..., t.ContainerValue | None]
+
+        This TypeGuard enables type narrowing for t.HandlerLike.
+        Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[str]: True if value is str
+            TypeGuard[t.HandlerLike]: True if value matches t.HandlerLike structure
 
         Example:
-            >>> if FlextUtilitiesGuards.is_str(path):
-            ...     # path is now typed as str
-            ...     parts = path.split(".")
+            >>> from flext_core import u
+            >>> if u.Guards.is_handler_type(handler):
+            ...     # handler is now typed as t.HandlerLike
+            ...     result = container.register("my_handler", handler)
 
         """
-        return isinstance(value, str)
+        # Check if callable (most common case - HandlerCallable)
+        if callable(value):
+            return True
+        # Check if Mapping (handler mapping) - structural
+        if isinstance(value, Mapping):
+            return True
+        # Check if BaseModel instance or class
+        if (
+            isinstance(value, BaseModel)
+            and hasattr(value, "model_dump")
+            and callable(value.model_dump)
+        ):
+            return True
+        # Check for handler protocol methods (duck typing)
+        # All values are objects in Python, so type check (value, object) is always True
+        return hasattr(value, "handle") or hasattr(value, "can_handle")
 
     @staticmethod
-    def _is_dict(value: object) -> TypeGuard[dict[str, t.GeneralValueType]]:
-        """Check if value is dict[str, t.GeneralValueType].
-
-        Type guard for dictionary types. Returns ConfigurationDict for type safety.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[ConfigurationDict]: True if value is dict
-
-        Example:
-            >>> if FlextUtilitiesGuards._is_dict(items):
-            ...     # items is now typed as ConfigurationDict
-            ...     value = items.get("key")
-
-        """
-        return isinstance(value, dict)
-
-    @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
-        """Check if value is a Mapping (dict-like).
-
-        Type guard for Mapping types (dict, ChainMap, MappingProxyType, etc.).
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[Mapping[str, t.GeneralValueType]]: True if value is a Mapping
-
-        Example:
-            >>> if FlextUtilitiesGuards._is_mapping(config):
-            ...     # config is now typed as Mapping[str, t.GeneralValueType]
-            ...     value = config.get("key")
-
-        """
-        return isinstance(value, Mapping)
-
-    @staticmethod
-    def _is_int(value: object) -> TypeGuard[int]:
-        """Check if value is int.
-
-        Type guard for integer types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[int]: True if value is int
-
-        Example:
-            >>> if FlextUtilitiesGuards._is_int(index):
-            ...     # index is now typed as int
-            ...     value = items[index]
-
-        """
-        return isinstance(value, int)
-
-    @staticmethod
-    def _is_list_or_tuple(
-        value: object,
-    ) -> TypeGuard[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]]:
-        """Check if value is list or tuple.
-
-        Type guard for list and tuple types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]]: True if value is list or tuple
-
-        Example:
-            >>> if FlextUtilitiesGuards._is_list_or_tuple(items):
-            ...     # items is now typed as list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]
-            ...     value = items[0]
-
-        """
-        return isinstance(value, (list, tuple))
-
-    @staticmethod
-    def _is_sized(value: object) -> TypeGuard[object]:
-        """Check if value has __len__ (str, bytes, Sequence, Mapping).
-
-        Type guard for sized types that support len().
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[object]: True if value has __len__
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_sized(value):
-            ...     # value has __len__, can call len()
-            ...     length = len(value)
-
-        """
-        return isinstance(value, (str, bytes, Sequence, Mapping))
-
-    @staticmethod
-    def is_list(value: t.GeneralValueType) -> TypeGuard[list[t.GeneralValueType]]:
-        """Check if value is list of GeneralValueType.
-
-        Type guard for list types using FLEXT types.
-
-        Args:
-            value: GeneralValueType to check
-
-        Returns:
-            TypeGuard[list[GeneralValueType]]: True if value is list
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_list(value):
-            ...     # value is list[GeneralValueType]
-            ...     first = value[0]
-
-        """
+    def is_list(value: t.ContainerValue) -> TypeGuard[list[t.ContainerValue]]:
+        """Check if value is a list (type guard)."""
         return isinstance(value, list)
 
     @staticmethod
-    def _is_float(value: object) -> TypeGuard[float]:
-        """Check if value is float.
-
-        Type guard for float types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[float]: True if value is float
-
-        """
-        return isinstance(value, float)
+    def is_list_non_empty(value: t.ContainerValue) -> bool:
+        """Check if value is a non-empty list using duck typing."""
+        return (
+            isinstance(value, Sequence)
+            and not isinstance(value, str | bytes)
+            and bool(value)
+        )
 
     @staticmethod
-    def _is_bool(value: object) -> TypeGuard[bool]:
-        """Check if value is bool.
+    def is_mapping(
+        value: t.ContainerValue,
+    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
+        """Check if value is ConfigurationMapping (Mapping[str, t.ContainerValue])."""
+        return isinstance(value, Mapping)
 
-        Type guard for boolean types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[bool]: True if value is bool
-
-        """
-        return isinstance(value, bool)
+    # ── Runtime type-layer guards ─────────────────────────────────────────
+    # Single source of truth for isinstance checks against t.Primitives / t.Scalar.
+    # Call sites MUST use these guards — never raw isinstance with type aliases.
 
     @staticmethod
-    def _is_none(value: object) -> TypeGuard[None]:
-        """Check if value is None.
-
-        Type guard for None type.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[None]: True if value is None
-
-        """
-        return value is None
+    def is_primitive(value: object) -> TypeGuard[t.Primitives]:
+        """Check if value is a primitive type (str, int, float, bool)."""
+        return isinstance(value, (str, int, float, bool))
 
     @staticmethod
-    def _is_tuple(value: object) -> TypeGuard[tuple[t.GeneralValueType, ...]]:
-        """Check if value is tuple.
+    def is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ContainerValue]]:
+        """Check if value implements ResultLike protocol (has is_success, value, error).
 
-        Type guard for tuple types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[tuple[t.GeneralValueType, ...]]: True if value is tuple
-
+        Uses try/except to avoid triggering property getters that may raise
+        (e.g., FlextResult.value on failure raises RuntimeError, not AttributeError).
         """
-        return isinstance(value, tuple)
+        try:
+            return (
+                hasattr(value, "is_success")
+                and hasattr(value, "value")
+                and hasattr(value, "error")
+            )
+        except (RuntimeError, TypeError, ValueError):
+            cls = type(value)
+            return (
+                hasattr(cls, "is_success")
+                and hasattr(cls, "value")
+                and hasattr(cls, "error")
+            )
 
     @staticmethod
-    def _is_bytes(value: object) -> TypeGuard[bytes]:
-        """Check if value is bytes.
-
-        Type guard for bytes types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[bytes]: True if value is bytes
-
-        """
-        return isinstance(value, bytes)
+    def is_scalar(value: object) -> TypeGuard[t.Scalar]:
+        """Check if value is a scalar type (str, int, float, bool, datetime)."""
+        return isinstance(value, (str, int, float, bool, datetime))
 
     @staticmethod
-    def _is_sequence_not_str_bytes(
-        value: object,
-    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
-        """Check if value is Sequence and not str or bytes.
+    def is_string_non_empty(value: t.ContainerValue) -> TypeGuard[str]:
+        """Check if value is a non-empty string using duck typing."""
+        return isinstance(value, str) and bool(value.strip())
 
-        Type guard to distinguish Sequence from str/bytes in union types.
+    @staticmethod
+    def require_initialized[T](value: T | None, name: str) -> T:
+        """Guard that a service attribute was initialized.
 
         Args:
-            value: Object to check
+            value: The potentially uninitialized attribute.
+            name: Human-readable name for the error message.
 
         Returns:
-            TypeGuard[Sequence[t.GeneralValueType]]: True if value is Sequence and not str/bytes
+            The value if it is not None.
+
+        Raises:
+            AttributeError: If the value is None (uninitialized).
 
         """
-        return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+        if value is None:
+            msg = f"{name} is not initialized"
+            raise AttributeError(msg)
+        return value
 
     # =========================================================================
     # Generic is_type() Function - Unified Type Checking
     # =========================================================================
 
+    # Protocol specs: name -> check function (returns bool)
+    # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
+    _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
+        "config": lambda v: (
+            hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
+        ),
+        "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
+        "container": lambda v: (
+            hasattr(v, "register") and callable(getattr(v, "register", None))
+        ),
+        "command_bus": lambda v: (
+            hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
+        ),
+        "handler": lambda v: (
+            hasattr(v, "handle") and callable(getattr(v, "handle", None))
+        ),
+        "logger": lambda v: all(
+            hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
+        ),
+        "result": lambda v: all(
+            hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
+        ),
+        "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run", None)),
+        "middleware": lambda v: (
+            hasattr(v, "before_dispatch")
+            and callable(getattr(v, "before_dispatch", None))
+        ),
+    })
+
+    _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
+        p.Config: "config",
+        p.Context: "context",
+        p.DI: "container",
+        p.CommandBus: "command_bus",
+        p.Handler: "handler",
+        p.Log.StructlogLogger: "logger",
+        p.Result: "result",
+        p.Service: "service",
+        p.Middleware: "middleware",
+    })
+
+    _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType({
+        # Collection checks
+        "str": "_is_str",
+        "dict": "_is_dict",
+        "list": "is_list",
+        "tuple": "_is_tuple",
+        "sequence": "_is_sequence",
+        "mapping": "_is_mapping",
+        "list_or_tuple": "_is_list_or_tuple",
+        "sequence_not_str": "_is_sequence_not_str",
+        "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
+        "sized": "_is_sized",
+        "callable": "_is_callable_key_func",
+        "bytes": "_is_bytes",
+        # Primitive type checks
+        "int": "_is_int",
+        "float": "_is_float",
+        "bool": "_is_bool",
+        "none": "_is_none",
+        # Non-empty checks
+        "string_non_empty": "is_string_non_empty",
+        "dict_non_empty": "is_dict_non_empty",
+        "list_non_empty": "is_list_non_empty",
+    })
+
     @staticmethod
-    def is_type(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
-        """Generic type checking function that unifies all guard checks.
-
-        Provides a single entry point for all type checking operations,
-        supporting string-based type names, direct type/class checks, and
-        protocol checks. This function delegates to the appropriate specific
-        guard function or performs direct isinstance checks.
-
-        Args:
-            value: Object to check
-            type_spec: Type specification as:
-                - String name: "config", "str", "dict", "list", "sequence",
-                  "mapping", "callable", "sized", "list_or_tuple", "sequence_not_str",
-                  "string_non_empty", "dict_non_empty", "list_non_empty"
-                - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
-                - Protocol: p.Config, p.Context, etc.
-
-        Returns:
-            bool: True if value matches the type specification
-
-        Examples:
-            >>> from flext_core.utilities import u
-            >>> # String-based checks
-            >>> u.is_type(obj, "config")
-            >>> u.is_type(obj, "str")
-            >>> u.is_type(obj, "dict")
-            >>> u.is_type(obj, "string_non_empty")
-
-            >>> # Direct type checks
-            >>> u.is_type(obj, str)
-            >>> u.is_type(obj, dict)
-            >>> u.is_type(obj, list)
-
-            >>> # Tuple of types checks
-            >>> u.is_type(obj, (int, float))
-            >>> u.is_type(obj, (str, bytes))
-
-            >>> # Protocol checks
-            >>> u.is_type(obj, p.Config)
-            >>> u.is_type(obj, p.Context)
-
-        """
-        # String-based type names (delegate to specific guard functions)
-        if isinstance(type_spec, str):
-            type_name = type_spec.lower()
-            # Map string names to private method names
-            method_map: dict[str, str] = {
-                # Protocol checks
-                "config": "_is_config",
-                "context": "_is_context",
-                "container": "_is_container",
-                "command_bus": "_is_command_bus",
-                "handler": "_is_handler",
-                "logger": "_is_logger",
-                "result": "_is_result",
-                "service": "_is_service",
-                "middleware": "_is_middleware",
-                # Collection checks
-                "str": "_is_str",
-                "dict": "_is_dict",
-                "list": "is_list",
-                "tuple": "_is_tuple",
-                "sequence": "_is_sequence",
-                "mapping": "_is_mapping",
-                "list_or_tuple": "_is_list_or_tuple",
-                "sequence_not_str": "_is_sequence_not_str",
-                "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
-                "sized": "_is_sized",
-                "callable": "_is_callable_key_func",
-                "bytes": "_is_bytes",
-                # Primitive type checks
-                "int": "_is_int",
-                "float": "_is_float",
-                "bool": "_is_bool",
-                "none": "_is_none",
-                # Non-empty checks
-                "string_non_empty": "is_string_non_empty",
-                "dict_non_empty": "is_dict_non_empty",
-                "list_non_empty": "is_list_non_empty",
-            }
-            if type_name in method_map:
-                method_name = method_map[type_name]
-                method = getattr(FlextUtilitiesGuards, method_name)
-                # For non-empty checks, use t.GeneralValueType from lower layer
-                # Methods accept t.GeneralValueType, so use TypeGuard for type narrowing
-                if type_name in {
-                    "string_non_empty",
-                    "dict_non_empty",
-                    "list_non_empty",
-                }:
-                    # TypeGuard-based type narrowing for t.GeneralValueType
-                    if FlextUtilitiesGuards.is_general_value_type(value):
-                        return bool(method(value))
-                    # Value is not t.GeneralValueType, return False
-                    return False
-                return bool(method(value))
-            # Unknown string type spec
-            return False
-
-        # Tuple of types check
-        if isinstance(type_spec, tuple):
-            return isinstance(value, type_spec)
-
-        # Direct type/class checks
-        if type(type_spec) is type:
-            # Check if it's a protocol first
-            # Use type() to get class safely without accessing __class__
-            type_class = type(type_spec)
-            if hasattr(type_spec, "__protocol_attrs__") or (
-                hasattr(type_spec, "__module__") and "Protocol" in str(type_class)
-            ):
-                # Protocol check - try isinstance first
-                try:
-                    return isinstance(value, type_spec)
-                except TypeError:
-                    # Protocol runtime check failed, try specific protocol checks
-                    if type_spec == p.Config:
-                        return FlextUtilitiesGuards._is_config(value)
-                    if type_spec == p.Context:
-                        return FlextUtilitiesGuards._is_context(value)
-                    if type_spec == p.DI:
-                        return FlextUtilitiesGuards._is_container(value)
-                    if type_spec == p.CommandBus:
-                        return FlextUtilitiesGuards._is_command_bus(value)
-                    if type_spec == p.Handler:
-                        return FlextUtilitiesGuards._is_handler(value)
-                    if type_spec == p.Log.StructlogLogger:
-                        return FlextUtilitiesGuards._is_logger(value)
-                    if type_spec == p.Result:
-                        return FlextUtilitiesGuards._is_result(value)
-                    if type_spec == p.Service:
-                        return FlextUtilitiesGuards._is_service(value)
-                    if type_spec == p.Middleware:
-                        return FlextUtilitiesGuards._is_middleware(value)
-                    return False
-            # Regular type check
-            return isinstance(value, type_spec)
-
-        # Fallback: try isinstance for any other type specification
+    def _check_protocol(value: t.ContainerValue, name: str) -> bool:
+        """Check protocol via _PROTOCOL_SPECS mapping."""
+        if name == "context":
+            return FlextUtilitiesGuards.is_context(value)
         try:
-            return isinstance(value, type_spec)
-        except TypeError:
+            return FlextUtilitiesGuards._PROTOCOL_SPECS[name](value)
+        except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
     @staticmethod
-    def is_pydantic_model(value: object) -> TypeGuard[p.HasModelDump]:
-        """Type guard to check if value is a Pydantic model with model_dump method.
+    def _ensure_to_dict(
+        value: t.ContainerValue | t.ConfigurationMapping | None,
+        default: Mapping[str, t.ContainerValue] | None,
+    ) -> Mapping[str, t.ContainerValue]:
+        if value is None:
+            return default if default is not None else {}
+        if isinstance(value, Mapping):
+            return {str(k): v for k, v in value.items()}
+        wrapped_dict: Mapping[str, t.ContainerValue] = {"value": value}
+        return wrapped_dict
 
-        Args:
-            value: Object to check
+    @staticmethod
+    def _ensure_to_list(
+        value: t.ContainerValue | list[t.ContainerValue] | None,
+        default: list[t.ContainerValue] | None,
+    ) -> list[t.ContainerValue]:
+        if value is None:
+            return default if default is not None else []
+        if isinstance(value, list):
+            return value
+        single_item_list: list[t.ContainerValue] = [value]
+        return single_item_list
 
-        Returns:
-            True if object implements HasModelDump protocol, False otherwise
+    @staticmethod
+    def _guard_check_condition[T](
+        value: T,
+        condition: type[T]
+        | tuple[type[T], ...]
+        | Callable[[T], bool]
+        | p.ValidatorSpec
+        | str,
+        context_name: str,
+        error_msg: str | None,
+    ) -> str:
+        if isinstance(condition, type):
+            if FlextUtilitiesGuards.is_general_value_type(value):
+                return FlextUtilitiesGuards._guard_check_type(
+                    value,
+                    condition,
+                    context_name,
+                    error_msg,
+                )
+            return (
+                error_msg
+                or f"{context_name} must be {condition.__name__}, got {value.__class__.__name__}"
+            )
+        if FlextUtilitiesGuards._is_type_tuple(condition):
+            if FlextUtilitiesGuards.is_general_value_type(value):
+                return FlextUtilitiesGuards._guard_check_type(
+                    value,
+                    condition,
+                    context_name,
+                    error_msg,
+                )
+            return (
+                error_msg
+                or f"{context_name} type check failed for {value.__class__.__name__}"
+            )
+        if isinstance(condition, p.ValidatorSpec):
+            if not FlextUtilitiesGuards.is_general_value_type(value):
+                return (
+                    error_msg or f"{context_name} must be a valid configuration value"
+                )
+            typed_value: t.ContainerValue = value
+            return FlextUtilitiesGuards._guard_check_validator(
+                typed_value,
+                condition,
+                context_name,
+                error_msg,
+            )
+        if isinstance(condition, str):
+            if not FlextUtilitiesGuards.is_general_value_type(value):
+                return (
+                    error_msg or f"{context_name} must be a valid configuration value"
+                )
+            typed_value_s: t.ContainerValue = value
+            return FlextUtilitiesGuards._guard_check_string_shortcut(
+                typed_value_s,
+                condition,
+                context_name,
+                error_msg,
+            )
+        if callable(condition):
+            return FlextUtilitiesGuards._guard_check_predicate(
+                value,
+                condition,
+                context_name,
+                error_msg,
+            )
+        return error_msg or f"{context_name} invalid guard condition type"
 
-        """
-        return hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump", None),
+    @staticmethod
+    def _guard_check_predicate[T](
+        value: T,
+        condition: Callable[[T], bool],
+        context_name: str,
+        error_msg: str | None,
+    ) -> str:
+        try:
+            if not bool(condition(value)):
+                if error_msg is None:
+                    func_name = (
+                        condition.__name__
+                        if hasattr(condition, "__name__")
+                        else "custom"
+                    )
+                    return f"{context_name} failed {func_name} check"
+                return error_msg
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            if error_msg is None:
+                return f"{context_name} guard check raised: {e}"
+            return error_msg
+        return ""
+
+    @staticmethod
+    def _guard_check_string_shortcut(
+        value: t.ContainerValue,
+        condition: str,
+        context_name: str,
+        error_msg: str | None,
+    ) -> str:
+        shortcut_lower = condition.lower()
+        if shortcut_lower == "non_empty":
+            if isinstance(value, (str, list, dict)) and bool(value):
+                return ""
+            return error_msg or f"{context_name} must be non-empty"
+        if shortcut_lower == "positive":
+            if (
+                isinstance(value, int | float)
+                and not isinstance(value, bool)
+                and value > 0
+            ):
+                return ""
+            return error_msg or f"{context_name} must be positive number"
+        if shortcut_lower == "non_negative":
+            if (
+                isinstance(value, int | float)
+                and not isinstance(value, bool)
+                and value >= 0
+            ):
+                return ""
+            return error_msg or f"{context_name} must be non-negative number"
+        if shortcut_lower == "dict":
+            if hasattr(value, "items") and value.__class__ not in {str, bytes}:
+                return ""
+            return error_msg or f"{context_name} must be dict-like"
+        if shortcut_lower == "list":
+            if (
+                hasattr(value, "__iter__")
+                and value.__class__ not in {str, bytes}
+                and not hasattr(value, "items")
+            ):
+                return ""
+            return error_msg or f"{context_name} must be list-like"
+        if shortcut_lower == "string":
+            if isinstance(value, str):
+                return ""
+            return error_msg or f"{context_name} must be string"
+        if shortcut_lower == "int":
+            if isinstance(value, int) and not isinstance(value, bool):
+                return ""
+            return error_msg or f"{context_name} must be int"
+        if shortcut_lower == "float":
+            if isinstance(value, int | float) and not isinstance(value, bool):
+                return ""
+            return error_msg or f"{context_name} must be float"
+        if shortcut_lower == "bool":
+            if isinstance(value, bool):
+                return ""
+            return error_msg or f"{context_name} must be bool"
+        return error_msg or f"{context_name} unknown guard shortcut: {condition}"
+
+    @staticmethod
+    def _guard_check_type(
+        value: t.ContainerValue,
+        condition: type | tuple[type, ...],
+        context_name: str,
+        error_msg: str | None,
+    ) -> str:
+        type_match = isinstance(value, condition)
+        if not type_match:
+            if error_msg is None:
+                type_name = (
+                    condition.__name__
+                    if isinstance(condition, type)
+                    else " | ".join(c.__name__ for c in condition)
+                )
+                return f"{context_name} must be {type_name}, got {value.__class__.__name__}"
+            return error_msg
+        return ""
+
+    @staticmethod
+    def _guard_check_validator(
+        value: t.ContainerValue,
+        condition: p.ValidatorSpec,
+        context_name: str,
+        error_msg: str | None,
+    ) -> str:
+        if not condition(value):
+            if error_msg is None:
+                desc = (
+                    getattr(condition, "description", "validation")
+                    if hasattr(condition, "description")
+                    else "validation"
+                )
+                return f"{context_name} failed {desc} check"
+            return error_msg
+        return ""
+
+    @staticmethod
+    def _guard_handle_failure[T](
+        error_message: str,
+        *,
+        return_value: bool,
+        default: T | None,
+    ) -> r[T] | T:
+        if return_value:
+            if default is not None:
+                return default
+            return r[T].fail(error_message)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail(error_message)
+
+    @staticmethod
+    def _is_type_tuple(value: object) -> TypeGuard[tuple[type, ...]]:
+        return isinstance(value, tuple) and all(
+            isinstance(item, type) for item in value
         )
 
     @staticmethod
-    def extract_mapping_or_none(
-        value: object,
-    ) -> m.ConfigMap | None:
-        """Extract a mapping from a value or return None.
-
-        Used for type narrowing when a generic parameter could be a Mapping
-        or another type. Returns the value as ConfigurationMapping if it's
-        a Mapping, otherwise returns None.
-
-        Args:
-            value: Value that may or may not be a Mapping
-
-        Returns:
-            The value as ConfigurationMapping if it's a Mapping, None otherwise
-
-        """
-        if isinstance(value, Mapping) and FlextUtilitiesGuards.is_configuration_mapping(
-            value,
-        ):
-            return value
-        return None
-
-    # =========================================================================
-    # Guard Methods - Moved from utilities.py
-    # =========================================================================
-
-    @staticmethod
-    def guard(
-        value: object,
-        validator: Callable[[object], bool] | type | object = None,
-        *,
-        default: object | None = None,
-        return_value: bool = False,
-    ) -> object | None:
-        """Simple guard method for validation. Returns value if valid, default if not.
-
-        Args:
-            value: Value to validate
-            validator: Callable, type, or tuple of types to validate against
-            default: Default value to return if validation fails
-            return_value: If True, return the value itself; if False, return True/default
-
-        Returns:
-            Validated value, True, or default value
-
-        """
-        try:
-            if callable(validator):
-                if validator(value):
-                    return value if return_value else True
-            elif isinstance(validator, (type, tuple)):
-                if isinstance(value, validator):
-                    return value if return_value else True
-            # Default validation - check if value is truthy
-            elif value:
-                return value if return_value else True
-            return default
-        except Exception:
-            return default
-
-    @staticmethod
-    def in_(value: object, container: object) -> bool:
-        """Check if value is in container."""
-        if isinstance(container, (list, tuple, set, dict)):
-            try:
-                return value in container
-            except TypeError:
-                return False
-        return False
-
-    @staticmethod
-    def has(obj: object, key: str) -> bool:
-        """Check if object has attribute/key."""
-        if isinstance(obj, dict):
-            return key in obj
-        return hasattr(obj, key)
-
-    @staticmethod
-    def empty(items: object | None) -> bool:
-        """Check if items is empty or None.
-
-        Args:
-            items: Any object to check (None, Sized, or any object)
-
-        Returns:
-            True if items is None, empty, or falsy
-
-        """
-        if items is None:
-            return True
-        if isinstance(items, Sized):
-            return len(items) == 0
-        return not bool(items)
-
-    @staticmethod
-    def none_(*values: object) -> bool:
-        """Check if all values are None.
-
-        Args:
-            *values: Values to check
-
-        Returns:
-            True if all values are None, False otherwise
-
-        Example:
-            if u.none_(name, email):
-                return r.fail("Name and email are required")
-
-        """
-        return all(v is None for v in values)
-
-    @staticmethod
     def chk(
-        value: object,
+        value: t.ContainerValue,
         *,
-        eq: object | None = None,
-        ne: object | None = None,
+        eq: t.ContainerValue | None = None,
+        ne: t.ContainerValue | None = None,
         gt: float | None = None,
         gte: float | None = None,
         lt: float | None = None,
         lte: float | None = None,
-        is_: type[object] | None = None,
-        not_: type[object] | None = None,
-        in_: Sequence[object] | None = None,
-        not_in: Sequence[object] | None = None,
+        is_: type | None = None,
+        not_: type | None = None,
+        in_: Sequence[t.ContainerValue] | None = None,
+        not_in: Sequence[t.ContainerValue] | None = None,
         none: bool | None = None,
         empty: bool | None = None,
         match: str | None = None,
-        contains: object | None = None,
+        contains: t.ContainerValue | None = None,
         starts: str | None = None,
         ends: str | None = None,
     ) -> bool:
@@ -1253,25 +814,12 @@ class FlextUtilitiesGuards:
             return False
 
         # Type checks
-        # is_ and not_ are type[GeneralValueType] which can be generic
-        # Check if the type is a plain type (not generic) before using isinstance
-        if is_ is not None:
-            # Check if it's a runtime-checkable type (not a generic alias)
-            if isinstance(is_, type):
-                if not isinstance(value, is_):
-                    return False
-            else:
-                # Skip check for generic types (list[str], dict[str, int], etc.)
-                # These can't be used with isinstance at runtime
-                pass
-        if not_ is not None:
-            # Check if it's a runtime-checkable type (not a generic alias)
-            if isinstance(not_, type):
-                if isinstance(value, not_):
-                    return False
-            else:
-                # Skip check for generic types
-                pass
+        # is_ and not_ are type[ContainerValue] which can be generic
+        # Check if the type is a plain type (not generic) before using type check
+        if is_ is not None and not isinstance(value, is_):
+            return False
+        if not_ is not None and isinstance(value, not_):
+            return False
 
         # Equality checks
         if eq is not None and value != eq:
@@ -1289,13 +837,9 @@ class FlextUtilitiesGuards:
         check_val: int | float = 0
         if isinstance(value, (int, float)):
             check_val = value
-        elif isinstance(value, (str, bytes)):
-            check_val = len(value)
-        elif isinstance(value, (list, tuple, dict, set, frozenset)):
-            # Directly use len() - pyright warning about Unknown is expected for runtime guards
+        elif isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
             check_val = len(value)
         elif hasattr(value, "__len__"):
-            # Other sized types with __len__ method
             try:
                 len_method = getattr(value, "__len__", None)
                 if callable(len_method):
@@ -1335,12 +879,7 @@ class FlextUtilitiesGuards:
             ):
                 return False
         elif contains is not None:
-            # Generic containment for sequences/dicts
-            if isinstance(value, dict):
-                if contains not in value:
-                    return False
-            elif isinstance(value, (list, tuple, set, frozenset)):
-                # Common container types - direct containment check
+            if isinstance(value, (dict, list, tuple, set, frozenset)):
                 if contains not in value:
                     return False
             # Other types - use hasattr/getattr with explicit type narrowing
@@ -1355,50 +894,422 @@ class FlextUtilitiesGuards:
 
         return True
 
-    def __getattribute__(self, name: str) -> object:
-        """Intercept attribute access to warn about direct usage.
-
-        Emits DeprecationWarning when public methods are accessed directly
-        instead of through u.guard() or u.Guards.*.
+    @staticmethod
+    def empty(items: t.ContainerValue | None) -> bool:
+        """Check if items is empty or None.
 
         Args:
-            name: Attribute name being accessed
+            items: Value to check (None, Sized, or other value)
 
         Returns:
-            object: The requested attribute
+            True if items is None, empty, or falsy
 
         """
-        # Allow access to private methods and special attributes
-        if name.startswith("_") or name in {
-            "__class__",
-            "__dict__",
-            "__module__",
-            "__qualname__",
-            "__name__",
-            "__doc__",
-            "__annotations__",
-            "__init__",
-            "__new__",
-            "__subclasshook__",
-            "__instancecheck__",
-            "__subclasscheck__",
-        }:
-            return super().__getattribute__(name)
+        if items is None:
+            return True
+        if FlextUtilitiesGuards._is_sized(items):
+            return len(items) == 0
+        return not bool(items)
 
-        # Check if this is a public method that should be accessed via u.Guards
-        if hasattr(FlextUtilitiesGuards, name):
-            warnings.warn(
-                (
-                    f"Direct access to FlextUtilitiesGuards.{name} is deprecated. "
-                    f"Use u.guard() or u.Guards.{name} instead."
-                ),
-                DeprecationWarning,
-                stacklevel=2,
+    @staticmethod
+    def ensure(
+        value: t.ContainerValue,
+        *,
+        target_type: str = "auto",
+        default: str | list[t.ContainerValue] | t.ConfigurationMapping | None = None,
+    ) -> str | list[t.ContainerValue] | t.ConfigurationMapping:
+        if target_type == "str":
+            str_default = default if isinstance(default, str) else ""
+            return (
+                value
+                if isinstance(value, str)
+                else str(value)
+                if value is not None
+                else str_default
             )
 
-        return super().__getattribute__(name)
+        if target_type == "str_list":
+            str_list_default: list[str] | None = None
+            if isinstance(default, list):
+                str_list_default = [str(x) for x in default]
+            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+                return list(value)
+            if value is None:
+                return list(str_list_default) if str_list_default else []
+            return [value]
+
+        if target_type == "dict":
+            dict_default: Mapping[str, t.ContainerValue] | None = (
+                default if isinstance(default, Mapping) else None
+            )
+            return FlextUtilitiesGuards._ensure_to_dict(value, dict_default)
+
+        if target_type == "auto" and isinstance(value, Mapping):
+            return {str(k): v for k, v in value.items()}
+
+        list_default: list[t.ContainerValue] | None = (
+            default if isinstance(default, list) else None
+        )
+        return FlextUtilitiesGuards._ensure_to_list(value, list_default)
+
+    @staticmethod
+    def extract_mapping_or_none(
+        value: t.ContainerValue,
+    ) -> r[m.ConfigMap]:
+        """Extract a mapping from a value or return None.
+
+        Used for type narrowing when a generic parameter could be a Mapping
+        or another type. Returns the value as ConfigurationMapping if it's
+        a Mapping, otherwise returns None.
+
+        Args:
+            value: Value that may or may not be a Mapping
+
+        Returns:
+            r[m.ConfigMap] containing mapping on success, failure otherwise
+
+        """
+        if (
+            isinstance(value, dict)
+            or (hasattr(value, "keys") and hasattr(value, "__getitem__"))
+        ) and FlextUtilitiesGuards.is_configuration_mapping(
+            value,
+        ):
+            return r[m.ConfigMap].ok(value)
+        return r[m.ConfigMap].fail("Value is not a configuration mapping")
+
+    @staticmethod
+    def guard(
+        value: t.ContainerValue,
+        validator: Callable[[t.ContainerValue], bool]
+        | type
+        | tuple[type, ...]
+        | None = None,
+        *,
+        default: t.ContainerValue | None = None,
+        return_value: bool = False,
+    ) -> t.ContainerValue | bool | r[t.ContainerValue]:
+        guarded_value: t.ContainerValue = value
+        try:
+            if isinstance(validator, type):
+                if isinstance(value, validator):
+                    return guarded_value if return_value else True
+            elif isinstance(validator, tuple):
+                tuple_types = tuple(
+                    item for item in validator if isinstance(item, type)
+                )
+                if len(tuple_types) == len(validator) and isinstance(
+                    value,
+                    tuple_types,
+                ):
+                    return guarded_value if return_value else True
+            elif callable(validator):
+                if validator(value):
+                    return guarded_value if return_value else True
+            elif value:
+                return guarded_value if return_value else True
+            if default is not None:
+                return default
+            return (
+                r[t.ContainerValue].fail("Guard validation failed")
+                if return_value
+                else False
+            )
+        except (TypeError, ValueError, AttributeError):
+            if default is not None:
+                return default
+            return (
+                r[t.ContainerValue].fail("Guard validation raised an exception")
+                if return_value
+                else False
+            )
+
+    @staticmethod
+    def guard_result[T](
+        value: T,
+        *conditions: (
+            type[T] | tuple[type[T], ...] | Callable[[T], bool] | p.ValidatorSpec | str
+        ),
+        error_message: str | None = None,
+        context: str | None = None,
+        default: T | None = None,
+        return_value: bool = False,
+    ) -> r[T] | T:
+        context_name = context or "Value"
+        if len(conditions) == 0:
+            if bool(value):
+                return value if return_value else r.ok(value)
+            failure_message = error_message or f"{context_name} guard failed"
+            return FlextUtilitiesGuards._guard_handle_failure(
+                failure_message,
+                return_value=return_value,
+                default=default,
+            )
+
+        for condition in conditions:
+            condition_error = FlextUtilitiesGuards._guard_check_condition(
+                value,
+                condition,
+                context_name,
+                error_message,
+            )
+            if condition_error:
+                return FlextUtilitiesGuards._guard_handle_failure(
+                    condition_error,
+                    return_value=return_value,
+                    default=default,
+                )
+
+        return value if return_value else r.ok(value)
+
+    @staticmethod
+    def has(obj: t.ContainerValue, key: str) -> bool:
+        """Check if object has attribute/key."""
+        if isinstance(obj, dict):
+            return key in obj
+        return hasattr(obj, key)
+
+    @staticmethod
+    def in_(value: t.ContainerValue, container: t.ContainerValue) -> bool:
+        """Check if value is in container."""
+        if isinstance(container, (list, tuple, set, dict)):
+            try:
+                return value in container
+            except TypeError:
+                return False
+        return False
+
+    @staticmethod
+    def is_pydantic_model(value: t.ContainerValue) -> TypeGuard[p.HasModelDump]:
+        """Type guard to check if value is a Pydantic model with model_dump method."""
+        return (
+            isinstance(value, BaseModel)
+            and hasattr(value, "model_dump")
+            and callable(
+                value.model_dump,
+            )
+        )
+
+    @staticmethod
+    def is_type(
+        value: t.ContainerValue,
+        type_spec: str | type | tuple[type, ...],
+    ) -> bool:
+        """Generic type checking function that unifies all guard checks.
+
+        Provides a single entry point for all type checking operations,
+        supporting string-based type names, direct type/class checks, and
+        protocol checks. Uses centralized _PROTOCOL_SPECS mapping
+        for protocol validation to eliminate repeated if/type_spec branches.
+
+        Args:
+            value: Object to check
+            type_spec: Type specification as:
+                - String name: "config", "str", "dict", "list", "sequence",
+                  "mapping", "callable", "sized", "list_or_tuple", "sequence_not_str",
+                  "string_non_empty", "dict_non_empty", "list_non_empty"
+                - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
+                - Protocol: p.Config, p.Context, etc.
+
+        Returns:
+            bool: True if value matches the type specification
+
+        Examples:
+            >>> from flext_core import u
+            >>> # String-based checks
+            >>> u.is_type(obj, "config")
+            >>> u.is_type(obj, "str")
+            >>> u.is_type(obj, "dict")
+            >>> u.is_type(obj, "string_non_empty")
+
+            >>> # Direct type checks
+            >>> u.is_type(obj, str)
+            >>> u.is_type(obj, dict)
+            >>> u.is_type(obj, list)
+
+            >>> # Tuple of types checks
+            >>> u.is_type(obj, (int, float))
+            >>> u.is_type(obj, (str, bytes))
+
+            >>> # Protocol checks
+            >>> u.is_type(obj, p.Config)
+            >>> u.is_type(obj, p.Context)
+
+        """
+        # String-based type names (delegate to specific guard functions or centralized models)
+        if isinstance(type_spec, str):
+            type_name = type_spec.lower()
+
+            # Protocol checks via _PROTOCOL_SPECS mapping
+            if type_name in FlextUtilitiesGuards._PROTOCOL_SPECS:
+                return FlextUtilitiesGuards._check_protocol(value, type_name)
+
+            # Non-protocol string-based checks
+            if type_name in FlextUtilitiesGuards._STRING_METHOD_MAP:
+                method_name = FlextUtilitiesGuards._STRING_METHOD_MAP[type_name]
+                method = getattr(FlextUtilitiesGuards, method_name)
+                if type_name in {
+                    "string_non_empty",
+                    "dict_non_empty",
+                    "list_non_empty",
+                }:
+                    if FlextUtilitiesGuards.is_general_value_type(value):
+                        return bool(method(value))
+                    return False
+                return bool(method(value))
+
+            return False
+
+        # Tuple of types check
+        if isinstance(type_spec, tuple):
+            return isinstance(value, type_spec)
+
+        # Fallback: type check for any other type specification
+        try:
+            return isinstance(value, type_spec)
+        except TypeError:
+            return False
+
+    @staticmethod
+    def none_(*values: t.ContainerValue) -> bool:
+        """Check if all values are None.
+
+        Args:
+            *values: Values to check
+
+        Returns:
+            True if all values are None, False otherwise
+
+        Example:
+            if u.none_(name, email):
+                return r.fail("Name and email are required")
+
+        """
+        return all(v is None for v in values)
+
+    @staticmethod
+    def validate_hostname(
+        hostname: str,
+        field_name: str = "hostname",
+    ) -> r[str]:
+        """Return success when ``hostname`` is a valid hostname or FQDN."""
+        hostname_pattern = (
+            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
+        )
+        if re.search(hostname_pattern, hostname) is None:
+            return r[str].fail(f"{field_name} has invalid hostname format")
+        return r[str].ok(hostname)
+
+    # =========================================================================
+    # Validation Methods
+    # =========================================================================
+
+    @staticmethod
+    def validate_length[T: Sized](
+        value: T,
+        *,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        field_name: str = "value",
+    ) -> r[T]:
+        """Return success when ``value`` length is within bounds."""
+        try:
+            length = len(value)
+        except (TypeError, ValueError):
+            return r[T].fail(f"{field_name} length is invalid")
+        if min_length is not None and length < min_length:
+            return r[T].fail(
+                f"{field_name} must have at least {min_length} characters/items",
+            )
+        if max_length is not None and length > max_length:
+            return r[T].fail(
+                f"{field_name} must have at most {max_length} characters/items",
+            )
+        return r[T].ok(value)
+
+    @staticmethod
+    def validate_pattern(
+        value: str,
+        pattern: str,
+        field_name: str = "value",
+    ) -> r[str]:
+        """Return success when ``value`` matches ``pattern``."""
+        if re.search(pattern, value) is None:
+            return r[str].fail(f"{field_name} has invalid format")
+        return r[str].ok(value)
+
+    @staticmethod
+    def validate_port_number(
+        port: int,
+        field_name: str = "port",
+    ) -> r[int]:
+        """Return success when ``port`` is a valid port number (1-65535)."""
+        if not isinstance(port, int) or isinstance(port, bool):
+            return r[int].fail(f"{field_name} must be an integer")
+        max_port = 65535
+        if port < 1 or port > max_port:
+            return r[int].fail(f"{field_name} must be between 1 and 65535")
+        return r[int].ok(port)
+
+    @staticmethod
+    def validate_positive(
+        value: float,
+        field_name: str = "value",
+    ) -> r[int | float]:
+        """Return success when numeric ``value`` is greater than zero."""
+        if isinstance(value, bool) or value <= 0:
+            return r[int | float].fail(f"{field_name} must be positive")
+        return r[int | float].ok(value)
+
+    @staticmethod
+    def validate_uri(
+        uri: str,
+        field_name: str = "uri",
+    ) -> r[str]:
+        """Return success when ``uri`` is a valid URI/URL format."""
+        uri_pattern = r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$"
+        if re.search(uri_pattern, uri) is None:
+            return r[str].fail(f"{field_name} has invalid URI format")
+        return r[str].ok(uri)
+
+
+# Pydantic v2 validation template with FlextResult error handling
+
+
+def validate_pydantic_model[T: BaseModel](
+    model_class: type[T],
+    data: Mapping[str, t.ContainerValue],
+) -> r[T]:
+    """Validate data using Pydantic v2 model and return FlextResult.
+
+    This template function reduces boilerplate for validation + error handling
+    patterns across the FLEXT ecosystem.
+
+    Args:
+        model_class: Pydantic v2 BaseModel subclass to validate against
+        data: Dictionary of data to validate
+
+    Returns:
+        FlextResult containing validated model instance or error message
+
+    Example:
+        >>> from pydantic import BaseModel, Field
+        >>> class Config(BaseModel):
+        ...     name: str = Field(min_length=1)
+        ...     value: int = Field(ge=0)
+        >>> result = validate_pydantic_model(Config, {"name": "test", "value": 42})
+        >>> if result.is_success:
+        ...     config = result.value
+
+    """
+    try:
+        validated = model_class.model_validate(data)
+        return FlextResult[T].ok(validated)
+    except Exception as e:
+        return FlextResult[T].fail(f"Validation failed: {e}")
 
 
 __all__ = [
     "FlextUtilitiesGuards",
+    "validate_pydantic_model",
 ]

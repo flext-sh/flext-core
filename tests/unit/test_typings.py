@@ -20,9 +20,14 @@ from enum import StrEnum
 from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
+from pydantic import (
+    TypeAdapter as PydanticTypeAdapter,
+    ValidationError as PydanticValidationError,
+)
 
 from flext_core import (
     E,
+    FlextConstants,
     P,
     R,
     ResultT,
@@ -31,10 +36,8 @@ from flext_core import (
     T_contra,
     U,
     t,
-    u,
 )
-from flext_core.constants import FlextConstants
-from flext_tests.matchers import tm
+from flext_tests import tm
 
 
 class TypeVarCategory(StrEnum):
@@ -77,10 +80,10 @@ class TypeScenarios:
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.GeneralValueType, True),
+        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.ContainerValue, True),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
@@ -178,11 +181,11 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
-            # CQRS aliases should all be t.GeneralValueType
+            # CQRS aliases should all be t.ContainerValue
             tm.that(
                 test_case.type_var,
-                eq=t.GeneralValueType,
-                msg=f"{test_case.name} must equal t.GeneralValueType",
+                eq=t.ContainerValue,
+                msg=f"{test_case.name} must equal t.ContainerValue",
             )
 
     @pytest.mark.parametrize(
@@ -209,8 +212,8 @@ class TestFlextTypings:
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
         # Verify flat type aliases are accessible
         flat_types = [
-            "GeneralValueType",
-            "ScalarValue",
+            "Container",
+            "Scalar",
             "HandlerCallable",
         ]
         for type_alias in flat_types:
@@ -242,53 +245,48 @@ class TestFlextTypings:
                 eq=True,
                 msg="TypeVar must be TypeVar or ParamSpec instance",
             )
-        # Validate CQRS aliases all point to t.GeneralValueType
+        # Validate CQRS aliases all point to t.ContainerValue
         cqrs_aliases = [
-            t.GeneralValueType,  # Command
-            t.GeneralValueType,  # Event
-            t.GeneralValueType,  # Query
-            t.GeneralValueType,  # Message
+            t.ContainerValue,  # Command
+            t.ContainerValue,  # Event
+            t.ContainerValue,  # Query
+            t.ContainerValue,  # Message
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
                 alias,
-                eq=t.GeneralValueType,
-                msg="CQRS alias must equal t.GeneralValueType",
+                eq=t.ContainerValue,
+                msg="CQRS alias must equal t.ContainerValue",
             )
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
-        # Test with a valid hostname - validate_hostname is in u.Validation.Network
-        result = u.Validation.Network.validate_hostname(
-            FlextConstants.Network.LOCALHOST
+        hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
+            t.Validation.HostnameStr,
         )
-        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        result = hostname_adapter.validate_python(FlextConstants.Network.LOCALHOST)
         tm.that(
-            result.value,
+            result,
             eq=FlextConstants.Network.LOCALHOST,
             msg="FlextConstants.Network.LOCALHOST must validate correctly",
         )
         tm.that(
-            result.value,
+            result,
             is_=str,
             none=False,
             empty=False,
             msg="Result value must be non-empty string",
         )
 
-        # Test with a valid IP address (should also work)
-        result = u.Validation.Network.validate_hostname(
-            FlextConstants.Network.LOOPBACK_IP
-        )
-        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        result = hostname_adapter.validate_python(FlextConstants.Network.LOOPBACK_IP)
         tm.that(
-            result.value,
+            result,
             eq=FlextConstants.Network.LOOPBACK_IP,
             msg="IP address must validate correctly",
         )
         tm.that(
-            result.value,
+            result,
             is_=str,
             none=False,
             empty=False,
@@ -297,19 +295,19 @@ class TestFlextTypings:
 
     def test_hostname_validation_error(self) -> None:
         """Test hostname validation error path with real validation."""
-        # validate_hostname is in u.Validation.Network and returns FlextResult
-        invalid_hostname = "invalid..hostname"  # Invalid due to consecutive dots
+        invalid_hostname = ""
         tm.that(
             invalid_hostname,
             is_=str,
-            none=False,
-            empty=False,
-            msg="Invalid hostname must be a non-empty string",
+            eq="",
+            msg="Invalid hostname must be empty to fail HostnameStr",
         )
 
-        # Test that invalid hostname returns failed result
-        result = u.Validation.Network.validate_hostname(invalid_hostname)
-        tm.that(result.is_failure, eq=True, msg="Invalid hostname must return failure")
+        hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
+            t.Validation.HostnameStr,
+        )
+        with pytest.raises(PydanticValidationError):
+            hostname_adapter.validate_python(invalid_hostname)
 
 
 __all__ = ["TestFlextTypings"]

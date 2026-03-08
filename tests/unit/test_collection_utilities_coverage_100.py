@@ -21,8 +21,7 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import t
-from flext_tests import u
+from flext_tests import t, u
 
 
 class Status(StrEnum):
@@ -57,7 +56,7 @@ class CoerceListValidatorScenario:
     """Coerce list validator test scenario."""
 
     name: str
-    value: t.FlexibleValue
+    value: t.ContainerValue
     expected_success: bool
     expected_error: str | None
 
@@ -224,12 +223,12 @@ class TestuCollectionParseSequence:
         result = u.Collection.parse_sequence(Status, scenario.values)
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
@@ -276,13 +275,13 @@ class TestuCollectionParseMapping:
         result = u.Collection.parse_mapping(Status, scenario.mapping)
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, dict)
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg

@@ -1,0 +1,125 @@
+[service_core_api]
+alias.FlextService_is_s: True
+execute.unwrap: 'echo:ok'
+execute.unwrap.matches: True
+result.property: 'echo:ok'
+runtime.type: 'ModelPrivateAttr'
+runtime.has_config_attr: False
+runtime.has_context_attr: False
+runtime.has_container_attr: False
+context.type: 'FlextContext'
+config.type: 'FlextSettings'
+container.type: 'FlextContainer'
+validate_business_rules.default: True
+is_valid.default: True
+service_info.type: '_EchoService'
+validate_business_rules.override.success: False
+validate_business_rules.override.error: 'invalid-rule'
+is_valid.override: False
+is_valid.exception_guard: False
+result.failure.raises: False
+result.failure.raises: True
+result.failure.type: 'BaseError'
+auto_execute.declared: True
+auto_execute.execute_count_after_init: 1
+auto_execute.result: 'auto:1'
+auto_execute.execute_count_after_result: 1
+
+[runtime_creation_and_serialization]
+create_runtime.default.context: 'FlextContext'
+create_runtime.full.container: 'FlextContainer'
+create_runtime.full.config: 'FlextSettings'
+to_dict.none: ConfigMap
+to_dict.mapping: ConfigMap
+to_dict.model: ConfigMap
+model_dump.type: 'dict'
+model_dump.has_result: True
+model_dump_json.type: 'str'
+
+[mixins_and_runtime_methods]
+ok.unwrap: True
+fail.error: True
+ensure_result.raw: True
+ensure_result.result: True
+generate_id.length: 36
+generate_prefixed_id.prefix: True
+generate_prefixed_id.length: 17
+generate_datetime_utc.tz: True
+track.context.type: 'dict'
+track.has_operation_count: True
+track.has_success_rate: True
+traverse.success: [10, 32]
+traverse.fail_fast: 'odd:7'
+accumulate_errors.ok: True
+accumulate_errors.fail: 'ukbx; osfm'
+
+[namespace_bootstrap_cqrs_validation]
+Bootstrap.create_instance.type: '_TinyType'
+Bootstrap.create_instance.init_called: False
+CQRS.MetricsTracker.record: True
+CQRS.MetricsTracker.get: True
+CQRS.ContextStack.push.dict: True
+CQRS.ContextStack.current.type: 'ExecutionContext'
+CQRS.ContextStack.pop.handler_name: 'gpxkfz'
+CQRS.ContextStack.pop.empty: {}
+ProtocolValidation.is_handler: True
+ProtocolValidation.is_service: False
+ProtocolValidation.is_command_bus: True
+ProtocolValidation.protocol_ok: False
+ProtocolValidation.protocol_unknown: 'Unknown protocol: UnknownProto. Supported: Handler, Service, CommandBus, Repository, Configurable'
+ProtocolValidation.processor_ok: True
+ProtocolValidation.processor_bad: "Processor _ProcessorProtocolBad missing required method 'process()'. Processors must implement: model_dump, process, validate"
+Validation.validate_with_result.ok: 'NCB'
+Validation.validate_with_result.fail: 'Validation failed: too-short'
+
+[namespace_runtime_and_integration]
+Metadata.version: '1.0.0'
+Metadata.attributes: {'service': 'svc.ukbjzn'}
+Integration.calls: 'ok'
+DependencyIntegration.service: True
+DependencyIntegration.factory: True
+DependencyIntegration.resource.type: 'ConfigMap'
+DependencyIntegration.bridge.type: 'DynamicContainer'
+DependencyIntegration.service_module.type: 'DynamicContainer'
+DependencyIntegration.resource_module.type: 'DynamicContainer'
+RuntimeResult.is_success: True
+RuntimeResult.is_failure: True
+RuntimeResult.value: 32
+RuntimeResult.error: 'fdyomu'
+RuntimeResult.error_code: 'uecl'
+RuntimeResult.unwrap_or: True
+RuntimeResult.unwrap_or_else: True
+RuntimeResult.map: True
+RuntimeResult.flat_map: True
+RuntimeResult.and_then: True
+RuntimeResult.flow_through: True
+RuntimeResult.fold.success: 's:32'
+RuntimeResult.fold.failure: 'f:fdyomu'
+RuntimeResult.tap: True
+RuntimeResult.tap_error: True
+RuntimeResult.tap.values: [32]
+RuntimeResult.tap_error.values: ['fdyomu']
+RuntimeResult.map_error: 'x:fdyomu'
+RuntimeResult.filter.pass: True
+RuntimeResult.filter.fail: 'Filter predicate failed'
+RuntimeResult.alt: 'alt:fdyomu'
+RuntimeResult.lash: 6
+RuntimeResult.recover: 6
+RuntimeResult.operator_or: 87
+RuntimeResult.bool.success: True
+RuntimeResult.bool.failure: False
+RuntimeResult.repr.success: 'r.ok(32)'
+RuntimeResult.repr.failure: "r.fail('fdyomu')"
+RuntimeResult.context_manager: 32
+RuntimeResult.ok.none_raises: True
+RuntimeResult.ok.none_type: 'str'
+compare_entities_by_id.true: True
+compare_entities_by_id.false: False
+hash_entity_by_id.type: 'int'
+compare_value_objects_by_value: True
+hash_value_object_by_value.type: 'int'
+ensure_trace_context.has_trace_id: True
+ensure_trace_context.has_span_id: True
+ensure_trace_context.has_correlation_id: True
+validate_http_status_codes.ok: [200, 201]
+validate_http_status_codes.fail: 'Invalid HTTP status code: 99 (must be 100-599)'

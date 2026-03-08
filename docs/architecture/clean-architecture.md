@@ -57,7 +57,7 @@ describes the dependency rules and per-layer responsibilities.
 from flext_core import FlextDispatcher, FlextResult
 
 # ❌ Forbidden: foundation pulling from application
-from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.py
+from flext_core import FlextDispatcher  # not allowed inside result.py
 ```
 
 ## Layer Responsibilities
@@ -132,4 +132,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

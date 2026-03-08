@@ -14,8 +14,7 @@ import time
 
 import pytest
 
-from flext_core import FlextConstants, FlextResult, m
-from flext_core.typings import t
+from flext_core import FlextConstants, FlextResult, m, t
 from tests.test_utils import assertion_helpers
 
 
@@ -76,7 +75,7 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, t.GeneralValueType] = {}
+                self._config: dict[str, t.ContainerValue] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -93,15 +92,15 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> FlextResult[dict[str, t.GeneralValueType]]:
+            def build(self) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[dict[str, t.GeneralValueType]].fail(
+                    return FlextResult[dict[str, t.ContainerValue]].fail(
                         "Configuration cannot be empty",
                     )
 
-                return FlextResult[dict[str, t.GeneralValueType]].ok(
-                    self._config.copy()
+                return FlextResult[dict[str, t.ContainerValue]].ok(
+                    self._config.copy(),
                 )
 
         # Test builder usage
@@ -140,22 +139,28 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: dict[str, t.GeneralValueType] = {}
+                self._data: dict[str, t.ContainerValue] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: object) -> FlextResult[bool]:
+            def save(
+                self,
+                entity_id: str,
+                data: t.ContainerValue,
+            ) -> FlextResult[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return FlextResult[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> FlextResult[object]:
+            def find_by_id(self, entity_id: str) -> FlextResult[t.ContainerValue]:
                 """Find entity by ID."""
                 self._query_count += 1
 
                 if entity_id in self._data:
-                    return FlextResult[object].ok(self._data[entity_id])
+                    return FlextResult[t.ContainerValue].ok(self._data[entity_id])
 
-                return FlextResult[object].fail(f"Entity not found: {entity_id}")
+                return FlextResult[t.ContainerValue].fail(
+                    f"Entity not found: {entity_id}",
+                )
 
             def get_query_count(self) -> int:
                 """Get number of queries executed."""
@@ -168,7 +173,7 @@ class TestEnterprisePatterns:
         start_time = time.perf_counter()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 f"Save operation {i} should succeed",
             )
@@ -187,7 +192,9 @@ class TestEnterprisePatterns:
         # Query entities
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
+            query_result: FlextResult[t.ContainerValue] = repo.find_by_id(
+                f"entity_{i}",
+            )
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, dict), (
@@ -303,15 +310,15 @@ class TestEventDrivenPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[dict[str, t.GeneralValueType]] = []
+        observers: list[dict[str, t.ContainerValue]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
         # Create observers
-        obs1: dict[str, t.GeneralValueType] = {"name": "Observer1", "state": None}
-        obs2: dict[str, t.GeneralValueType] = {"name": "Observer2", "state": None}
+        obs1: dict[str, t.ContainerValue] = {"name": "Observer1", "state": None}
+        obs2: dict[str, t.ContainerValue] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
 
         # Test notifications

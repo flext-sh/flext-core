@@ -22,39 +22,39 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
+from typing import override
 
 import pytest
 from pydantic import ValidationError, field_validator
 
-from flext_core import m, t
-
-FlextModelsCqrs = m.Cqrs
+from flext_core import m
+from flext_core._models.domain_event import _ComparableConfigMap
 
 
 class ModelScenarios:
     """Centralized model test scenarios using FlextConstants."""
 
 
-class TestValueObjects:
+class TestValues:
     """Test immutable value objects using FlextTestsUtilities."""
 
     def test_value_object_creation(self) -> None:
         """Test creating a value object."""
 
-        class Money(m.ValueObject):
+        class Money(m.Value):
             """Money value object."""
 
             amount: float
             currency: str
 
         money = Money(amount=100.0, currency="USD")
-        assert money.amount == 100.0
+        assert money.amount == pytest.approx(100.0)
         assert money.currency == "USD"
 
     def test_value_object_immutability(self) -> None:
         """Test value object is immutable."""
 
-        class Point(m.ValueObject):
+        class Point(m.Value):
             """Point value object."""
 
             x: float
@@ -62,12 +62,12 @@ class TestValueObjects:
 
         point = Point(x=1.0, y=2.0)
         with pytest.raises(ValidationError):
-            point.x = 3.0
+            setattr(point, "x", 3.0)
 
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""
 
-        class Color(m.ValueObject):
+        class Color(m.Value):
             """Color value object."""
 
             red: int
@@ -81,7 +81,7 @@ class TestValueObjects:
     def test_value_object_validation(self) -> None:
         """Test value object validation."""
 
-        class Email(m.ValueObject):
+        class Email(m.Value):
             """Email value object with validation."""
 
             address: str
@@ -102,7 +102,7 @@ class TestValueObjects:
     def test_value_object_hashable(self) -> None:
         """Test value objects are hashable."""
 
-        class ISBN(m.ValueObject):
+        class ISBN(m.Value):
             """ISBN value object."""
 
             code: str
@@ -111,6 +111,7 @@ class TestValueObjects:
                 """Hash based on code value."""
                 return hash(self.code)
 
+            @override
             def __eq__(self, other: object) -> bool:
                 """Equality based on code value."""
                 if not isinstance(other, ISBN):
@@ -203,7 +204,7 @@ class TestEntities:
         product_dict = product.model_dump()
         assert isinstance(product_dict, dict)
         assert product_dict["name"] == "Widget"
-        assert product_dict["price"] == 19.99
+        assert product_dict["price"] == pytest.approx(19.99)
         assert all(
             key in product_dict for key in ["unique_id", "created_at", "updated_at"]
         )
@@ -265,7 +266,7 @@ class TestCommands:
 
         cmd = CreateUserCommand(email="user@example.com", username="alice")
         assert cmd.email == "user@example.com"
-        assert cmd.unique_id is not None
+        assert cmd.command_id is not None
 
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
@@ -300,7 +301,7 @@ class TestCommands:
                 return v
 
         cmd = DepositCommand(account_id="ACC-001", amount=100.0)
-        assert cmd.amount == 100.0
+        assert cmd.amount == pytest.approx(100.0)
         with pytest.raises(ValidationError):
             DepositCommand(account_id="ACC-001", amount=-50.0)
 
@@ -331,7 +332,10 @@ class TestQueries:
 
     def test_query_creation(self) -> None:
         """Test creating a query."""
-        query = GetUserQuery(filters={"user_id": "USER-001"}, query_type="get_user")
+        query = GetUserQuery(
+            filters=m.Dict(root={"user_id": "USER-001"}),
+            query_type="get_user",
+        )
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
         assert query.query_type == "get_user"
@@ -353,7 +357,7 @@ class TestQueries:
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
-        assert query.min_price == 500.0
+        assert query.min_price == pytest.approx(500.0)
 
 
 class TestDomainEvents:
@@ -364,7 +368,9 @@ class TestDomainEvents:
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="USER-001",
-            data={"user_id": "USER-001", "email": "user@example.com"},
+            data=_ComparableConfigMap(
+                root={"user_id": "USER-001", "email": "user@example.com"},
+            ),
         )
         assert event.event_type == "UserCreated"
         assert event.aggregate_id == "USER-001"
@@ -378,12 +384,16 @@ class TestDomainEvents:
         event1 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data={"tracking_number": "TRACK-123"},
+            data=_ComparableConfigMap(
+                root={"tracking_number": "TRACK-123"},
+            ),
         )
         event2 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data={"tracking_number": "TRACK-123"},
+            data=_ComparableConfigMap(
+                root={"tracking_number": "TRACK-123"},
+            ),
         )
         assert event1.unique_id != event2.unique_id
         assert event1.event_type == event2.event_type
@@ -398,7 +408,7 @@ class TestDomainEvents:
         event = AccountUpdatedEvent(
             event_type="AccountUpdated",
             aggregate_id="ACC-001",
-            data={"field": "balance"},
+            data=_ComparableConfigMap(root={"field": "balance"}),
         )
         assert event.created_at is not None
         assert isinstance(event.created_at, datetime)
@@ -412,7 +422,7 @@ class TestDomainEvents:
         event = PaymentProcessedEvent(
             event_type="PaymentProcessed",
             aggregate_id="PAY-001",
-            data={"amount": 99.99},
+            data=_ComparableConfigMap(root={"amount": 99.99}),
         )
         assert event.unique_id is not None
         assert event.created_at is not None
@@ -552,7 +562,7 @@ class TestModelSerialization:
         )
         dumped = cart.model_dump()
         assert len(dumped["items"]) == 2
-        assert dumped["total"] == 99.99
+        assert dumped["total"] == pytest.approx(99.99)
 
 
 class TestModelIntegration:
@@ -602,5 +612,5 @@ __all__ = [
     "TestModelSerialization",
     "TestModelValidation",
     "TestQueries",
-    "TestValueObjects",
+    "TestValues",
 ]

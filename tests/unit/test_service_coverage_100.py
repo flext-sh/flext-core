@@ -8,10 +8,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
+
+from typing import override
 
 from flext_core import r, s, t
-from flext_tests.domains import FlextTestsDomains
+from flext_tests import FlextTestsDomains
 from tests.test_utils import assertion_helpers
 
 # ==================== REAL SERVICE CLASSES ====================
@@ -25,11 +26,12 @@ class TestService(s[TestDomainResult]):
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.ContainerValue) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self, **_kwargs: t.GeneralValueType) -> r[TestDomainResult]:
+    @override
+    def execute(self, **_kwargs: t.ContainerValue) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("success"))
 
@@ -39,11 +41,12 @@ class TestServiceWithValidation(s[TestDomainResult]):
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.ContainerValue) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self, **_kwargs: t.GeneralValueType) -> r[TestDomainResult]:
+    @override
+    def execute(self, **_kwargs: t.ContainerValue) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("validated"))
 
@@ -60,7 +63,7 @@ class TestService100Coverage:
         result = service.validate_business_rules()
 
         # Default implementation should succeed
-        assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        _ = assertion_helpers.assert_flext_result_success(result) or result.is_failure
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""

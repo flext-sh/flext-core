@@ -16,18 +16,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import Any, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import FlextRuntime, r, t
+from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
 from tests.test_utils import assertion_helpers
-from flext_core.models import m
 
 
 class FixtureStatus(StrEnum):
@@ -66,7 +65,7 @@ class CoerceListScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: t.FlexibleValue
+    value: t.ContainerValue
     expected_success: bool
     expected_count: int | None = None
     error_type: type[Exception] | None = None
@@ -91,7 +90,7 @@ class CoerceDictScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: t.FlexibleValue
+    value: t.ContainerValue
     expected_success: bool
     expected_keys: list[str] | None = None
     error_type: type[Exception] | None = None
@@ -103,9 +102,11 @@ class MapScenario:
     """Map method test scenario."""
 
     name: str
-    items: object
-    mapper: Callable[..., object]
-    expected_result: object
+    items: list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
+    mapper: Callable[[Any], Any]
+    expected_result: (
+        list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
+    )
     default_error: str = "Operation failed"
     expected_failure: bool = False
     error_contains: str | None = None
@@ -116,8 +117,8 @@ class FindScenario:
     """Find method test scenario."""
 
     name: str
-    items: object
-    predicate: Callable[..., bool]
+    items: list[Any] | tuple[Any, ...] | dict[str, Any]
+    predicate: Callable[[Any], bool]
     expected_result: object
     return_key: bool = False
 
@@ -127,10 +128,10 @@ class FilterScenario:
     """Filter method test scenario."""
 
     name: str
-    items: object
-    predicate: Callable[..., bool]
-    expected_result: object
-    mapper: Callable[..., object] | None = None
+    items: list[Any] | tuple[Any, ...] | dict[str, Any]
+    predicate: Callable[[Any], bool]
+    expected_result: list[Any] | tuple[Any, ...] | dict[str, Any]
+    mapper: Callable[[Any], Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,9 +139,9 @@ class CountScenario:
     """Count method test scenario."""
 
     name: str
-    items: object
+    items: Sequence[Any]
     expected_count: int
-    predicate: Callable[..., bool] | None = None
+    predicate: Callable[[Any], bool] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,11 +149,11 @@ class ProcessScenario:
     """Process method test scenario."""
 
     name: str
-    items: object
-    processor: Callable[..., object]
+    items: Sequence[Any]
+    processor: Callable[[Any], Any]
     expected_result: object
     on_error: str = "collect"
-    predicate: Callable[..., bool] | None = None
+    predicate: Callable[[Any], bool] | None = None
     filter_keys: set[str] | None = None
     exclude_keys: set[str] | None = None
     expected_failure: bool = False
@@ -164,9 +165,9 @@ class GroupScenario:
     """Group method test scenario."""
 
     name: str
-    items: list[t.GeneralValueType] | tuple[object, ...]
-    key: str | Callable[[object], object]
-    expected_result: dict[object, list[t.GeneralValueType]]
+    items: list[str] | tuple[str, ...]
+    key: Callable[[str], int | str]
+    expected_result: dict[int | str, list[str]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,9 +175,9 @@ class ChunkScenario:
     """Chunk method test scenario."""
 
     name: str
-    items: list[t.GeneralValueType] | tuple[object, ...]
+    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...]
     size: int
-    expected_result: list[list[t.GeneralValueType]]
+    expected_result: list[list[t.ContainerValue]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,7 +185,7 @@ class BatchScenario:
     """Batch method test scenario."""
 
     name: str
-    items: list[t.GeneralValueType]
+    items: list[t.ContainerValue]
     operation: Callable[[object], object]
     expected_result: object
     size: int = 100
@@ -453,37 +454,37 @@ class CollectionUtilitiesScenarios:
         MapScenario(
             name="list_ints",
             items=[1, 2, 3],
-            mapper=lambda x: x * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=[2, 4, 6],
         ),
         MapScenario(
             name="tuple_ints",
             items=(1, 2, 3),
-            mapper=lambda x: x * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=(2, 4, 6),
         ),
         MapScenario(
             name="set_ints",
             items={1, 2, 3},
-            mapper=lambda x: x * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result={2, 4, 6},
         ),
         MapScenario(
             name="dict_values",
             items={"a": 1, "b": 2},
-            mapper=lambda v: v * 2,
+            mapper=lambda v: cast("int", v) * 2,
             expected_result={"a": 2, "b": 4},
         ),
         MapScenario(
             name="frozenset_ints",
             items=frozenset({1, 2, 3}),
-            mapper=lambda x: x * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=frozenset({2, 4, 6}),
         ),
         MapScenario(
             name="strings_upper",
             items=["hello", "world"],
-            mapper=lambda x: x.upper(),
+            mapper=lambda x: cast("str", x).upper(),
             expected_result=["HELLO", "WORLD"],
         ),
     ]
@@ -492,13 +493,13 @@ class CollectionUtilitiesScenarios:
         FindScenario(
             name="list_find",
             items=[1, 2, 3, 4],
-            predicate=lambda x: x % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=2,
         ),
         FindScenario(
             name="list_not_found",
             items=[1, 3, 5],
-            predicate=lambda x: x % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=None,
         ),
         FindScenario(
@@ -510,7 +511,7 @@ class CollectionUtilitiesScenarios:
         FindScenario(
             name="dict_find_other",
             items={"x": 10, "y": 20},
-            predicate=lambda v: v > 15,
+            predicate=lambda v: cast("int", v) > 15,
             expected_result=20,
         ),
     ]
@@ -519,39 +520,39 @@ class CollectionUtilitiesScenarios:
         FilterScenario(
             name="list_filter",
             items=[1, 2, 3, 4],
-            predicate=lambda x: x % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=[2, 4],
         ),
         FilterScenario(
             name="list_filter_map",
             items=[1, 2, 3, 4],
-            predicate=lambda x: x > 2,
-            mapper=lambda x: x * 2,
+            predicate=lambda x: cast("int", x) > 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=[6, 8],
         ),
         FilterScenario(
             name="dict_filter",
             items={"a": 1, "b": 2, "c": 3},
-            predicate=lambda v: v % 2 != 0,
+            predicate=lambda v: cast("int", v) % 2 != 0,
             expected_result={"a": 1, "c": 3},
         ),
         FilterScenario(
             name="dict_filter_map",
             items={"a": 1, "b": 4},
-            predicate=lambda v: v > 2,
-            mapper=lambda v: v * 2,
+            predicate=lambda v: cast("int", v) > 2,
+            mapper=lambda v: cast("int", v) * 2,
             expected_result={"b": 8},
         ),
         FilterScenario(
             name="list_filter_empty",
             items=[1, 3, 5],
-            predicate=lambda x: x > 10,
+            predicate=lambda x: cast("int", x) > 10,
             expected_result=[],
         ),
         FilterScenario(
             name="list_filter_all",
             items=[2, 4, 6],
-            predicate=lambda x: x % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=[2, 4, 6],
         ),
     ]
@@ -565,7 +566,7 @@ class CollectionUtilitiesScenarios:
         CountScenario(
             name="count_predicate",
             items=[1, 2, 3, 4],
-            predicate=lambda x: x % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_count=2,
         ),
     ]
@@ -574,26 +575,26 @@ class CollectionUtilitiesScenarios:
         ProcessScenario(
             name="process_list",
             items=[1, 2, 3],
-            processor=lambda x: x * 2,
+            processor=lambda x: cast("int", x) * 2,
             expected_result=[2, 4, 6],
         ),
         ProcessScenario(
             name="process_list_skip",
             items=[1, 2, 3],
-            processor=lambda x: x * 2,
+            processor=lambda x: cast("int", x) * 2,
             expected_result=[4, 6],
-            predicate=lambda x: x > 1,
+            predicate=lambda x: cast("int", x) > 1,
         ),
         ProcessScenario(
             name="process_strings",
             items=["a", "b", "c"],
-            processor=lambda x: x.upper(),
+            processor=lambda x: cast("str", x).upper(),
             expected_result=["A", "B", "C"],
         ),
         ProcessScenario(
             name="process_empty",
             items=[],
-            processor=lambda x: x * 2,
+            processor=lambda x: cast("int", x) * 2,
             expected_result=[],
         ),
     ]
@@ -636,10 +637,7 @@ class TestuCollectionParseSequence:
         )
 
         if scenario.expected_success:
-            (
-                assertion_helpers.assert_flext_result_success(result),
-                f"Expected success but got: {result.error}",
-            )
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
             if scenario.expected_count is not None:
                 assert len(result.value) == scenario.expected_count
@@ -647,10 +645,7 @@ class TestuCollectionParseSequence:
             for val in result.value:
                 assert isinstance(val, scenario.enum_cls)
         else:
-            (
-                assertion_helpers.assert_flext_result_failure(result),
-                "Expected failure but got success",
-            )
+            assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None
             if scenario.error_contains:
                 assert scenario.error_contains in result.error
@@ -750,10 +745,7 @@ class TestuCollectionParseMapping:
         )
 
         if scenario.expected_success:
-            (
-                assertion_helpers.assert_flext_result_success(result),
-                f"Expected success but got: {result.error}",
-            )
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
             if scenario.expected_keys is not None:
                 assert set(result.value.keys()) == set(scenario.expected_keys)
@@ -761,10 +753,7 @@ class TestuCollectionParseMapping:
             for val in result.value.values():
                 assert isinstance(val, scenario.enum_cls)
         else:
-            (
-                assertion_helpers.assert_flext_result_failure(result),
-                "Expected failure but got success",
-            )
+            assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None
             if scenario.error_contains:
                 assert scenario.error_contains in result.error
@@ -889,9 +878,13 @@ class TestuCollectionFind:
         # Collection.find works on lists, tuples, and dicts
         result = u.Collection.find(
             scenario.items,
-            scenario.predicate,
+            cast("Any", scenario.predicate),
         )
-        assert result == scenario.expected_result
+        if scenario.expected_result is None:
+            assert result.is_failure
+        else:
+            assert result.is_success
+            assert result.value == scenario.expected_result
 
 
 class TestuCollectionFilter:
@@ -1001,14 +994,14 @@ class TestuCollectionBatch:
         result = u.Collection.batch(
             items,
             lambda x: x * 2,
-            _size=2,
+            size=2,
         )
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
-        assert data["total"] == 5
-        assert data["success_count"] == 5
-        assert data["results"] == [2, 4, 6, 8, 10]
-        assert data["errors"] == []
+        assert data.total == 5
+        assert data.success_count == 5
+        assert data.results == [2, 4, 6, 8, 10]
+        assert data.errors == []
 
     def test_batch_with_errors_collect(self) -> None:
         """Test batch with errors (collect mode)."""
@@ -1027,22 +1020,22 @@ class TestuCollectionBatch:
         )
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
-        assert data["total"] == 4
-        assert data["success_count"] == 3
-        assert len(data["errors"]) == 1
-        assert "Zero" in data["errors"][0][1]
+        assert data.total == 4
+        assert data.success_count == 3
+        assert len(data.errors) == 1
+        assert "Zero" in data.errors[0][1]
 
     def test_batch_flatten(self) -> None:
         """Test batch with flattening."""
         items = [[1, 2], [3, 4], 5]
         result = u.Collection.batch(
             items,
-            lambda x: x,
+            cast("Callable[[object], int | r[int]]", lambda x: cast("int | r[int]", x)),
             flatten=True,
         )
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
-        assert data["results"] == [1, 2, 3, 4, 5]
+        assert data.results == [1, 2, 3, 4, 5]
 
 
 class TestuCollectionMerge:
@@ -1050,17 +1043,17 @@ class TestuCollectionMerge:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base: m.ConfigMap = {"a": 1, "b": {"x": 1}}
-        other: m.ConfigMap = {"b": {"y": 2}, "c": 3}
-        result = u.Collection.merge(base, other)
+        base = m.ConfigMap(root={"a": 1, "b": {"x": 1}})
+        other = m.ConfigMap(root={"b": {"y": 2}, "c": 3})
+        result = u.Collection.merge(base.root, other.root)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base: m.ConfigMap = {"a": 1, "b": {"x": 1}}
-        other: m.ConfigMap = {"b": {"y": 2}, "c": 3}
-        result = u.Collection.merge(base, other, strategy="override")
+        base = m.ConfigMap(root={"a": 1, "b": {"x": 1}})
+        other = m.ConfigMap(root={"b": {"y": 2}, "c": 3})
+        result = u.Collection.merge(base.root, other.root, strategy="override")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}
 

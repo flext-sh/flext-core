@@ -20,11 +20,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast, override
 
 import pytest
 
@@ -33,11 +33,11 @@ from flext_core import (
     c,
     h,
     m,
+    p,
     r,
     t,
 )
 from flext_tests import FlextTestsUtilities, u
-from flext_core.models import m
 
 
 class RegistryOperationType(StrEnum):
@@ -68,12 +68,21 @@ class RegistryTestCase:
     duplicate_registration: bool = False
 
 
-class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
+class ConcreteTestHandler(h[t.ContainerValue, t.ContainerValue]):
     """Concrete implementation of h for testing."""
 
-    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
+    @override
+    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         """Handle the message."""
-        return r[t.GeneralValueType].ok(f"processed_{message}")
+        return r[t.ContainerValue].ok(f"processed_{message}")
+
+    def __call__(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        """Make handler callable for registry validation."""
+        return self.handle(message)
+
+    def _protocol_name(self) -> str:
+        """Return protocol name for registry identification."""
+        return "test-handler"
 
 
 class RegistryScenarios:
@@ -102,7 +111,7 @@ class RegistryScenarios:
             RegistryOperationType.REGISTER_HANDLER,
             0,
             False,
-            "Handler cannot be None",
+            "Handler must expose message_type",
         ),
     ]
 
@@ -254,7 +263,7 @@ class RegistryScenarios:
             RegistryOperationType.ERROR_HANDLING,
             0,
             False,
-            "Handler cannot be None",
+            "Handler must expose message_type",
         ),
         RegistryTestCase(
             "dispatcher_integration",
@@ -267,17 +276,17 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[h[t.GeneralValueType, t.GeneralValueType]]:
+    ) -> list[p.Handler[t.ContainerValue, t.ContainerValue]]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: list[h[t.GeneralValueType, t.GeneralValueType]],
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
     ) -> list[
         tuple[
-            type[t.GeneralValueType],
-            h[t.GeneralValueType, t.GeneralValueType],
+            type[t.ContainerValue],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ]
     ]:
         """Create test bindings using str message type."""
@@ -285,15 +294,15 @@ class RegistryScenarios:
 
     @staticmethod
     def create_function_map(
-        handlers: list[h[t.GeneralValueType, t.GeneralValueType]],
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
     ) -> dict[
-        type[t.GeneralValueType],
-        h[t.GeneralValueType, t.GeneralValueType],
+        type[t.ContainerValue],
+        p.Handler[t.ContainerValue, t.ContainerValue],
     ]:
         """Create test function map using str message type."""
         result: dict[
-            type[t.GeneralValueType],
-            h[t.GeneralValueType, t.GeneralValueType],
+            type[t.ContainerValue],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
@@ -312,18 +321,23 @@ class TestFlextRegistry:
         """Test handler registration with various scenarios."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(None)
+            result = registry.register_handler(
+                cast(
+                    "p.Handler[t.ContainerValue, t.ContainerValue]",
+                    cast("object", None),
+                ),
+            )
         else:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
             if test_case.duplicate_registration:
                 result = registry.register_handler(handler)
         if test_case.should_succeed:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success(result)
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
-                # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
+                # Type ignore: RegistrationDetails is not t.ContainerValue but test is valid
                 u.Tests.Result.assert_failure_with_error(
                     result,
                     test_case.error_pattern,
@@ -343,9 +357,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_result_success(
+        u.Tests.Result.assert_success(
             result,
-        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_failure(
             result,
         )
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -365,9 +379,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_result_success(
+        u.Tests.Result.assert_success(
             result,
-        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_failure(
             result,
         )
         assert result.value is not None
@@ -387,9 +401,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_result_success(
+        u.Tests.Result.assert_success(
             result,
-        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_failure(
             result,
         )
         assert result.value is not None
@@ -405,7 +419,7 @@ class TestFlextRegistry:
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(
-                    m.Handler.RegistrationDetails(
+                    m.HandlerRegistrationDetails(
                         registration_id=f"test_{i}",
                         handler_mode=c.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
@@ -416,7 +430,7 @@ class TestFlextRegistry:
             summary.errors.append("test_error")
         assert len(summary.registered) == test_case.handler_count
         assert (len(summary.errors) > 0) == (not test_case.should_succeed)
-        assert (not summary) == (not test_case.should_succeed)
+        assert summary.is_failure == (not test_case.should_succeed)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -428,10 +442,10 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
         # All key resolution uses _resolve_handler_key
-        if test_case.operation in (
+        if test_case.operation in {
             RegistryOperationType.RESOLVE_HANDLER_KEY,
             RegistryOperationType.RESOLVE_BINDING_KEY,
-        ):
+        }:
             key = registry._resolve_handler_key(handler)
             assert isinstance(key, str) and len(key) > 0
 
@@ -444,18 +458,23 @@ class TestFlextRegistry:
         """Test error handling scenarios."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(None)
-            u.Tests.Result.assert_result_failure(result)
-            # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
+            result = registry.register_handler(
+                cast(
+                    "p.Handler[t.ContainerValue, t.ContainerValue]",
+                    cast("object", None),
+                ),
+            )
+            u.Tests.Result.assert_failure(result)
+            # Type ignore: RegistrationDetails is not t.ContainerValue but test is valid
             u.Tests.Result.assert_failure_with_error(
                 result,
-                "Handler cannot be None",
+                "Handler must expose message_type",
             )
         else:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
-            u.Tests.Result.assert_result_success(result)
-            assert isinstance(result.value, m.Handler.RegistrationDetails)
+            u.Tests.Result.assert_success(result)
+            assert isinstance(result.value, m.HandlerRegistrationDetails)
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
@@ -468,8 +487,8 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
-        u.Tests.Result.assert_result_success(result)
-        assert isinstance(result.value, m.Handler.RegistrationDetails)
+        u.Tests.Result.assert_success(result)
+        assert isinstance(result.value, m.HandlerRegistrationDetails)
 
     @pytest.mark.parametrize(
         ("mode", "expected"),
@@ -488,7 +507,7 @@ class TestFlextRegistry:
     ) -> None:
         """Test safe handler mode extraction."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        assert registry._safe_get_handler_mode(mode) == expected
+        assert registry._safe_get_handler_mode(mode or "") == expected
 
     @pytest.mark.parametrize(
         ("status", "expected"),
@@ -503,7 +522,8 @@ class TestFlextRegistry:
     def test_safe_status_extraction(self, status: str | None, expected: str) -> None:
         """Test safe status extraction."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        assert registry._safe_get_status(status) == expected
+        parsed_status = cast("str", status)
+        assert registry._safe_get_status(parsed_status) == expected
 
 
 __all__ = ["ConcreteTestHandler", "TestFlextRegistry"]

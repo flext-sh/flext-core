@@ -16,7 +16,7 @@ ______________________________________________________________________
 
 ## Layout
 
-```
+```text
 tests/
 ├── unit/                # Module-level guarantees (result, container, dispatcher, etc.)
 ├── integration/         # Cross-module flows (config + container + dispatcher)

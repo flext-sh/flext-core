@@ -9,16 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core.constants import FlextConstants, c as flext_c
-from flext_core.models import m
+from flext_core import FlextConstants, m
 
 
 class FlextTestsConstants(FlextConstants):
     """Constants for FLEXT tests - extends FlextConstants.
 
+    Architecture layer: Layer 0 foundation constants with test extensions.
     Architecture: Extends FlextConstants with test-specific constants.
     All base constants from FlextConstants are available through inheritance.
     Uses StrEnum and Literals for type-safe constants following Python 3.13+ patterns.
@@ -43,7 +44,17 @@ class FlextTestsConstants(FlextConstants):
                 "mongodb",
                 "elasticsearch",
             )
-            SHARED_CONTAINERS: Final[dict[str, m.ConfigMap]] = {}
+            SHARED_CONTAINERS: Final[Mapping[str, m.ConfigMap]] = {
+                "flext-oracle-db-test": m.ConfigMap(
+                    root={
+                        "compose_file": "docker/docker-compose.oracle-db.yml",
+                        "service": "oracle-db",
+                        "port": 1522,
+                        "host": "localhost",
+                        "container_name": "flext-oracle-db-test",
+                    },
+                ),
+            }
 
             # Test-specific Docker constants
             DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
@@ -295,82 +306,18 @@ class FlextTestsConstants(FlextConstants):
             # Operation messages
             SUCCESS_MESSAGE: Final[str] = "success"
 
-            # Deprecation message templates - use .format() for method names
-            DEPRECATION_RESULT_OK: Final[str] = (
-                'Result.ok() is deprecated. Use tt.res("ok", value=value) instead.'
-            )
-            DEPRECATION_RESULT_FAIL: Final[str] = (
-                'Result.fail() is deprecated. Use tt.res("fail", error=error) instead.'
-            )
-            DEPRECATION_RESULT_FROM_VALUE: Final[str] = (
-                "Result.from_value() deprecated. Use tt.res('from_value')."
-            )
-            DEPRECATION_MODELS_USER: Final[str] = (
-                "Models.user() deprecated. Use tt.model('user', ...)."
-            )
-            DEPRECATION_MODELS_CONFIG: Final[str] = (
-                "Models.config() deprecated. Use tt.model('config', ...)."
-            )
-            DEPRECATION_MODELS_SERVICE: Final[str] = (
-                "Models.service() deprecated. Use tt.model('service', ...)."
-            )
-            DEPRECATION_MODELS_ENTITY: Final[str] = (
-                "Models.entity() deprecated. Use tt.model('entity', ...)."
-            )
-            DEPRECATION_MODELS_VALUE_OBJECT: Final[str] = (
-                "Models.value_object() deprecated. Use tt.model('value', ...)."
-            )
-            DEPRECATION_OPS_SIMPLE: Final[str] = (
-                "Operations.simple() deprecated. Use tt.op('simple')."
-            )
-            DEPRECATION_OPS_ADD: Final[str] = (
-                "Operations.add() deprecated. Use tt.op('add')."
-            )
-            DEPRECATION_OPS_FORMAT: Final[str] = (
-                "Operations.format() deprecated. Use tt.op('format')."
-            )
-            DEPRECATION_OPS_ERROR: Final[str] = (
-                "Operations.error() deprecated. Use tt.op('error', ...)."
-            )
-            DEPRECATION_OPS_TYPE_ERROR: Final[str] = (
-                "Operations.type_error() deprecated. Use tt.op('type_error')."
-            )
-            DEPRECATION_OPS_RESULT_OK: Final[str] = (
-                "Operations.result_ok() deprecated. Use tt.op('result_ok')."
-            )
-            DEPRECATION_OPS_RESULT_FAIL: Final[str] = (
-                "Operations.result_fail() deprecated. Use tt.op('result_fail')."
-            )
-            DEPRECATION_BATCH_USERS: Final[str] = (
-                "Batch.users() deprecated. Use tt.batch('user', count=n)."
-            )
-            DEPRECATION_BATCH_CONFIGS: Final[str] = (
-                "Batch.configs() deprecated. Use tt.batch('config', count=n)."
-            )
-            DEPRECATION_BATCH_SERVICES: Final[str] = (
-                "Batch.services() deprecated. Use tt.batch('service', count=n)."
-            )
-            DEPRECATION_BATCH_RESULTS: Final[str] = (
-                "Batch.results() deprecated. Use tt.results(values, ...)."
-            )
-            DEPRECATION_CREATE_USER: Final[str] = (
-                "create_user() deprecated. Use tt.model('user', ...)."
-            )
-            DEPRECATION_CREATE_CONFIG: Final[str] = (
-                "create_config() deprecated. Use tt.model('config', ...)."
-            )
-            DEPRECATION_CREATE_SERVICE: Final[str] = (
-                "create_service() deprecated. Use tt.model('service', ...)."
-            )
-            DEPRECATION_BATCH_USERS_FUNC: Final[str] = (
-                "batch_users() deprecated. Use tt.batch('user', count=n)."
-            )
-            DEPRECATION_CREATE_TEST_OPERATION: Final[str] = (
-                "create_test_operation() deprecated. Use tt.op(kind, ...)."
-            )
-            DEPRECATION_CREATE_TEST_SERVICE: Final[str] = (
-                "create_test_service() deprecated. Use tt.svc(...)."
-            )
+            @classmethod
+            def service_name(cls, service_type: str) -> str:
+                """Generate service name from template.
+
+                Args:
+                    service_type: Type of service.
+
+                Returns:
+                    Formatted service name.
+
+                """
+                return cls.DEFAULT_SERVICE_NAME_TEMPLATE.format(type=service_type)
 
             @classmethod
             def user_email(cls, user_id: str) -> str:
@@ -384,19 +331,6 @@ class FlextTestsConstants(FlextConstants):
 
                 """
                 return cls.DEFAULT_USER_EMAIL_TEMPLATE.format(id=user_id)
-
-            @classmethod
-            def service_name(cls, service_type: str) -> str:
-                """Generate service name from template.
-
-                Args:
-                    service_type: Type of service.
-
-                Returns:
-                    Formatted service name.
-
-                """
-                return cls.DEFAULT_SERVICE_NAME_TEMPLATE.format(type=service_type)
 
         class Execution:
             """Test execution constants for test infrastructure."""
@@ -489,7 +423,7 @@ class FlextTestsConstants(FlextConstants):
             """Type-safe literal for error handling modes."""
 
             # Extension to format mapping
-            EXT_TO_FMT: Final[dict[str, str]] = {
+            EXT_TO_FMT: Final[Mapping[str, str]] = {
                 ".txt": "text",
                 ".log": "text",
                 ".md": "text",
@@ -539,31 +473,6 @@ class FlextTestsConstants(FlextConstants):
             ERROR_READ: Final[str] = "Read error: {error}"
             ERROR_COMPARE: Final[str] = "Compare error: {error}"
             ERROR_INFO: Final[str] = "Info error: {error}"
-
-            # Deprecation message templates
-            DEPRECATION_CREATE_TEXT: Final[str] = (
-                "create_text_file() is deprecated. Use create(content, name) instead."
-            )
-            DEPRECATION_CREATE_BINARY: Final[str] = (
-                "create_binary_file() is deprecated. "
-                "Use create(content, name, fmt='bin') instead."
-            )
-            DEPRECATION_CREATE_EMPTY: Final[str] = (
-                "create_empty_file() is deprecated. Use create('', name) instead."
-            )
-            DEPRECATION_CREATE_CONFIG: Final[str] = (
-                "create_config_file() is deprecated. Use create(content, name) instead."
-            )
-            DEPRECATION_CREATE_FILE_SET: Final[str] = (
-                "create_file_set() is deprecated. Use tf.files(content) instead."
-            )
-            DEPRECATION_GET_FILE_INFO: Final[str] = (
-                "get_file_info() is deprecated. Use info(path) instead. "
-                "Note: info() returns r[FileInfo]."
-            )
-            DEPRECATION_TEMPORARY_FILES: Final[str] = (
-                "temporary_files() is deprecated. Use tf.files(content) instead."
-            )
 
             @classmethod
             def format_size(cls, size: int) -> str:
@@ -643,7 +552,7 @@ class FlextTestsConstants(FlextConstants):
 
             # Default values
             DEFAULT_DATABASE_URL: Final[str] = (
-                f"postgresql://{flext_c.Platform.DEFAULT_HOST}/testdb"
+                f"postgresql://{FlextConstants.Platform.DEFAULT_HOST}/testdb"
             )
             DEFAULT_MAX_CONNECTIONS: Final[int] = 10
             DEFAULT_ENVIRONMENT_PRODUCTION: Final[str] = "production"
@@ -657,7 +566,7 @@ class FlextTestsConstants(FlextConstants):
             )
             VALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = (
                 "example.com",
-                flext_c.Platform.DEFAULT_HOST,
+                FlextConstants.Platform.DEFAULT_HOST,
             )
             INVALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = ("invalid..hostname", "")
 
@@ -1025,7 +934,7 @@ class FlextTestsConstants(FlextConstants):
                 DECORATORS: Final[int] = 9
 
                 @classmethod
-                def as_dict(cls) -> dict[str, int]:
+                def as_dict(cls) -> Mapping[str, int]:
                     """Get layer hierarchy as dictionary.
 
                     Returns:
@@ -1054,11 +963,8 @@ class FlextTestsConstants(FlextConstants):
                     }
 
 
+# Runtime alias for project namespace; tc for internal use to avoid shadowing core c
 c = FlextTestsConstants
+tc = FlextTestsConstants
 
-# Type aliases for mypy resolution of deeply nested classes
-# These help mypy resolve nested class types correctly
-ContainerStatus = FlextTestsConstants.Tests.Docker.ContainerStatus
-"""Type alias for ContainerStatus enum to help mypy resolution."""
-
-__all__ = ["ContainerStatus", "FlextTestsConstants", "c"]
+__all__ = ["FlextTestsConstants", "c", "tc"]

@@ -33,7 +33,7 @@ This guide documents essential Pydantic v2 patterns used throughout the FLEXT ec
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
+- Follow root governance in `AGENTS.md`.
 - Keep all examples pure Pydantic v2 (`model_dump`, `model_validate`, `ConfigDict`).
 - Keep guidance consistent with `lib-pydantic-v2` and `lib-pydantic-settings` rules.
 
@@ -599,6 +599,8 @@ else:
    name: str
    ```
 
+````
+
 1. **Validate in `@field_validator`**
 
    ```python
@@ -612,7 +614,7 @@ else:
 
    # Avoid - validation hidden in constraints
    age: int = Field(ge=0)  # Only for simple cases
-   ```
+````
 
 1. **Use ConfigDict for strict validation**
 
@@ -625,6 +627,8 @@ else:
        validate_assignment = False
        extra = "allow"
    ```
+
+````
 
 1. **Use computed_field for derived properties**
 
@@ -639,7 +643,7 @@ else:
    @property
    def full_name(self) -> str:  # Not in model_dump()
        return f"{self.first_name} {self.last_name}"
-   ```
+````
 
 ## Checklists
 
@@ -672,10 +676,13 @@ else:
 - Railway-Oriented Programming
 - Anti-Patterns and Best Practices
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.4/)
-- **FLEXT CLAUDE.md**: Development standards and patterns
+- **FLEXT AGENTS.md**: Development standards and patterns
 
 ______________________________________________________________________
 
 **Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Pydantic**: v2.12.3+
+
+```
+```

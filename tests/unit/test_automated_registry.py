@@ -6,12 +6,35 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Protocol, runtime_checkable
+
 import pytest
 
-from flext_core import FlextTypes as t, r
+from flext_core import r, t
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
+
+
+@runtime_checkable
+class _ProcessCapable(Protocol):
+    def process(self, input_data: Mapping[str, t.ContainerValue]) -> object: ...
+
+
+@runtime_checkable
+class _ExecuteCapable(Protocol):
+    def execute(self) -> object: ...
+
+
+@runtime_checkable
+class _HandleCapable(Protocol):
+    def handle(self, input_data: Mapping[str, t.ContainerValue]) -> object: ...
+
+
+@runtime_checkable
+class _CleanupCapable(Protocol):
+    def cleanup(self) -> r[bool] | None: ...
 
 
 class TestAutomatedFlextRegistry:
@@ -56,7 +79,8 @@ class TestAutomatedFlextRegistry:
         ids=lambda case: case["description"],
     )
     def test_automated_registry_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for registry functionality."""
         try:
@@ -93,7 +117,8 @@ class TestAutomatedFlextRegistry:
         # Test with correct types
         result = self._execute_registry_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextRegistry type safety test"
+            result,
+            "FlextRegistry type safety test",
         )
 
     def test_automated_registry_error_handling(self) -> None:
@@ -101,7 +126,12 @@ class TestAutomatedFlextRegistry:
         instance = fixture_factory.create_test_registry_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
 
         for error_input in error_inputs:
             result = self._execute_registry_operation(instance, error_input or {})
@@ -116,13 +146,15 @@ class TestAutomatedFlextRegistry:
 
         def operation() -> object:
             return self._execute_registry_operation(
-                instance, {"performance_test": True}
+                instance,
+                {"performance_test": True},
             )
 
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextRegistry performance test exceeded timeout"
+            result,
+            "FlextRegistry performance test exceeded timeout",
         )
 
     def test_automated_registry_resource_management(self) -> None:
@@ -132,20 +164,24 @@ class TestAutomatedFlextRegistry:
         # Test normal operation
         result = self._execute_registry_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextRegistry resource test"
+            result,
+            "FlextRegistry resource test",
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
+        if isinstance(instance, _CleanupCapable):
             cleanup_result = instance.cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextRegistry cleanup failed"
+                    cleanup_result,
+                    "FlextRegistry cleanup failed",
                 )
 
     def _execute_registry_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[bool]:
         """Execute a test operation on registry instance.
 
         This method should be customized based on the actual registry API.
@@ -153,19 +189,20 @@ class TestAutomatedFlextRegistry:
         """
         try:
             # Generic operation - adapt based on actual registry interface
-            if hasattr(instance, "process"):
-                return instance.process(input_data)
-            if hasattr(instance, "execute"):
-                # FlextRegistry.execute() takes no arguments
-                return instance.execute()
-            if hasattr(instance, "handle"):
-                return instance.handle(input_data)
-            # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(instance)
+            if isinstance(instance, _ProcessCapable):
+                instance.process(input_data)
+                return r[bool].ok(True)
+            if isinstance(instance, _ExecuteCapable):
+                instance.execute()
+                return r[bool].ok(True)
+            if isinstance(instance, _HandleCapable):
+                instance.handle(input_data)
+                return r[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextRegistry operation failed: {e}")
+            return r[bool].fail(f"FlextRegistry operation failed: {e}")
 
     @pytest.fixture
-    def test_registry_instance(self) -> t.GeneralValueType:
+    def test_registry_instance(self) -> object:
         """Fixture for registry test instance."""
         return fixture_factory.create_test_registry_instance()

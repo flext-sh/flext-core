@@ -7,38 +7,58 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextConstants, FlextResult as r
-from flext_core.typings import t
-from flext_tests.builders import FlextTestsBuilders, tb
-from flext_tests.typings import t as t_test
+from flext_core import r
+from flext_tests import c, t, tb
 from tests.test_utils import assertion_helpers
 
 
+def _as_builder_dict(value: object) -> t.Tests.Builders.BuilderDict:
+    assert isinstance(value, Mapping)
+    return cast("t.Tests.Builders.BuilderDict", dict(value))
+
+
+def _as_builder_result(
+    value: t.Tests.Builders.BuilderValue | r[t.Tests.Builders.BuilderValue],
+) -> r[t.Tests.Builders.BuilderDict]:
+    assert isinstance(value, r)
+    return cast("r[t.Tests.Builders.BuilderDict]", value)
+
+
+def _as_parametrized_cases(
+    value: object,
+) -> list[t.Tests.Builders.ParametrizedCase]:
+    assert isinstance(value, list)
+    return cast("list[t.Tests.Builders.ParametrizedCase]", value)
+
+
 class TestFlextTestsBuilders:
-    """Test suite for FlextTestsBuilders class."""
+    """Test suite for tb class."""
 
     def test_init(self) -> None:
-        """Test FlextTestsBuilders initialization."""
-        builder = FlextTestsBuilders()
+        """Test tb initialization."""
+        builder = tb()
 
         assert builder is not None
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
         assert isinstance(data, dict)
         assert data == {}
 
     def test_with_users_default(self) -> None:
         """Test with_users with default count."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         result = builder.with_users()
 
         assert result is builder
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
         assert "users" in data
-        users: list[dict[str, str | bool]] = data["users"]
+        users = cast("list[dict[str, str | bool]]", data["users"])
         assert len(users) == 5
 
         first_user = users[0]
@@ -50,23 +70,23 @@ class TestFlextTestsBuilders:
 
     def test_with_users_custom_count(self) -> None:
         """Test with_users with custom count."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.with_users(count=3)
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
-        users: list[dict[str, str | bool]] = data["users"]
+        users = cast("list[dict[str, str | bool]]", data["users"])
         assert len(users) == 3
 
     def test_with_configs_development(self) -> None:
         """Test with_configs in development mode."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         result = builder.with_configs(production=False)
 
         assert result is builder
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
         assert "configs" in data
-        config: dict[str, str | int | bool] = data["configs"]
+        config = cast("dict[str, str | int | bool]", data["configs"])
         assert config["environment"] == "development"
         assert config["debug"] is True
         assert config["service_type"] == "api"
@@ -74,87 +94,94 @@ class TestFlextTestsBuilders:
 
     def test_with_configs_production(self) -> None:
         """Test with_configs in production mode."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.with_configs(production=True)
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
-        config: dict[str, str | int | bool] = data["configs"]
+        config = cast("dict[str, str | int | bool]", data["configs"])
         assert config["environment"] == "production"
         assert config["debug"] is False
 
     def test_with_validation_fields_default(self) -> None:
         """Test with_validation_fields with default count."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         result = builder.with_validation_fields()
 
         assert result is builder
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
         assert "validation_fields" in data
-        fields: dict[str, t.GeneralValueType] = data["validation_fields"]
+        fields = cast("dict[str, t.ContainerValue]", data["validation_fields"])
 
-        valid_emails: list[str] = fields["valid_emails"]
+        valid_emails = cast("list[str]", fields["valid_emails"])
         assert len(valid_emails) == 5
         assert valid_emails[0] == "user0@example.com"
 
-        invalid_emails: list[str] = fields["invalid_emails"]
+        invalid_emails = cast("list[str]", fields["invalid_emails"])
         assert len(invalid_emails) == 3
 
-        assert fields["valid_hostnames"] == ["example.com", FlextConstants.Network.LOCALHOST]
+        assert fields["valid_hostnames"] == [
+            "example.com",
+            c.Network.LOCALHOST,
+        ]
 
     def test_with_validation_fields_custom_count(self) -> None:
         """Test with_validation_fields with custom count."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.with_validation_fields(count=3)
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
-        validation_fields: dict[str, t.GeneralValueType] = data["validation_fields"]
-        valid_emails: list[str] = validation_fields["valid_emails"]
+        validation_fields = cast(
+            "dict[str, t.ContainerValue]",
+            data["validation_fields"],
+        )
+        valid_emails = cast("list[str]", validation_fields["valid_emails"])
         assert len(valid_emails) == 3
 
     def test_build_empty(self) -> None:
         """Test build with no data added."""
-        builder = FlextTestsBuilders()
-        data = builder.build()
+        builder = tb()
+        data = _as_builder_dict(builder.build())
 
         assert isinstance(data, dict)
         assert data == {}
 
     def test_build_full_dataset(self) -> None:
         """Test build with all data types added."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.with_users(2).with_configs(production=True).with_validation_fields(2)
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
 
         assert "users" in data
         assert "configs" in data
         assert "validation_fields" in data
 
-        users: list[dict[str, str | bool]] = data["users"]
-        configs: dict[str, str | int | bool] = data["configs"]
+        users = cast("list[dict[str, str | bool]]", data["users"])
+        configs = cast("dict[str, str | int | bool]", data["configs"])
         assert len(users) == 2
         assert configs["environment"] == "production"
 
     def test_reset(self) -> None:
         """Test reset clears builder state."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.with_users(3).with_configs()
 
-        data_before = builder.build()
+        data_before = _as_builder_dict(builder.build())
         assert "users" in data_before
         assert "configs" in data_before
 
         result = builder.reset()
         assert result is builder
 
-        data_after = builder.build()
+        data_after = _as_builder_dict(builder.build())
         assert data_after == {}
 
     def test_method_chaining(self) -> None:
         """Test fluent interface method chaining."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         result = (
-            builder.with_users(2)
+            builder
+            .with_users(2)
             .with_configs(production=False)
             .with_validation_fields(3)
             .build()
@@ -167,15 +194,15 @@ class TestFlextTestsBuilders:
 
     def test_multiple_calls_overwrite(self) -> None:
         """Test multiple calls to same method overwrite previous data."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.with_users(2)
-        data1 = builder.build()
-        users1: list[dict[str, str | bool]] = data1["users"]
+        data1 = _as_builder_dict(builder.build())
+        users1 = cast("list[dict[str, str | bool]]", data1["users"])
         assert len(users1) == 2
 
         builder.with_users(5)
-        data2 = builder.build()
-        users2: list[dict[str, str | bool]] = data2["users"]
+        data2 = _as_builder_dict(builder.build())
+        users2 = cast("list[dict[str, str | bool]]", data2["users"])
         assert len(users2) == 5
 
     # =========================================================================
@@ -184,83 +211,90 @@ class TestFlextTestsBuilders:
 
     def test_add_direct_value(self) -> None:
         """Test add() with direct value."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("name", "test")
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
         assert data["name"] == "test"
 
     def test_add_with_result_ok(self) -> None:
         """Test add() with result_ok parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("result", result_ok=42)
-        data = builder.build()
-        result: r[int] = data["result"]
+        data = _as_builder_dict(builder.build())
+        result = cast("r[int]", cast("object", data["result"]))
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_add_with_result_fail(self) -> None:
         """Test add() with result_fail parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("error", result_fail="Failed", result_code="E001")
-        data = builder.build()
-        result: r[object] = data["error"]
+        data = _as_builder_dict(builder.build())
+        result = cast("r[t.ContainerValue]", cast("object", data["error"]))
         assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
     def test_add_with_items_and_map(self) -> None:
         """Test add() with items and items_map."""
-        builder = FlextTestsBuilders()
-        builder.add("doubled", items=[1, 2, 3], items_map=lambda x: x * 2)
-        data = builder.build()
-        doubled: list[int] = data["doubled"]
+        builder = tb()
+        builder.add(
+            "doubled",
+            items=[1, 2, 3],
+            items_map=cast("t.Tests.ContainerValue", lambda x: cast("int", x) * 2),
+        )
+        data = _as_builder_dict(builder.build())
+        doubled = cast("list[int]", data["doubled"])
         assert doubled == [2, 4, 6]
 
     def test_add_with_entries_and_filter(self) -> None:
         """Test add() with entries and entries_filter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add(
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
-            entries_filter={"a", "c"},
+            entries_filter=cast(
+                "t.Tests.ContainerValue",
+                cast("object", {"a", "c"}),
+            ),
         )
-        data = builder.build()
-        filtered: dict[str, int] = data["filtered"]
+        data = _as_builder_dict(builder.build())
+        filtered = cast("dict[str, int]", data["filtered"])
         assert "a" in filtered
         assert "c" in filtered
         assert "b" not in filtered
 
     def test_add_with_factory(self) -> None:
         """Test add() with factory parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("users", factory="users", count=3)
-        data = builder.build()
-        users: list[dict[str, t.GeneralValueType]] = data["users"]
+        data = _as_builder_dict(builder.build())
+        users = cast("list[dict[str, t.ContainerValue]]", data["users"])
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
         """Test add() with mapping parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("config", mapping={"env": "test", "debug": True})
-        data = builder.build()
-        config: dict[str, t.GeneralValueType] = data["config"]
+        data = _as_builder_dict(builder.build())
+        config = cast("dict[str, t.ContainerValue]", data["config"])
         assert config["env"] == "test"
         assert config["debug"] is True
 
     def test_add_with_sequence(self) -> None:
         """Test add() with sequence parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("items", sequence=[1, 2, 3])
-        data = builder.build()
-        items: list[int] = data["items"]
+        data = _as_builder_dict(builder.build())
+        items = cast("list[int]", data["items"])
         assert items == [1, 2, 3]
 
     def test_add_with_merge(self) -> None:
         """Test add() with merge parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("config", mapping={"a": 1, "b": 2})
         builder.add("config", mapping={"b": 3, "c": 4}, merge=True)
-        data = builder.build()
-        config: dict[str, int] = data["config"]
+        data = _as_builder_dict(builder.build())
+        config = cast("dict[str, int]", data["config"])
         # Verify merge was attempted (either merged or replaced)
         assert "a" in config or "b" in config or "c" in config
 
@@ -270,17 +304,17 @@ class TestFlextTestsBuilders:
 
     def test_build_as_list(self) -> None:
         """Test build() with as_list parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("a", 1).add("b", 2)
         result = builder.build(as_list=True)
-        items: list[tuple[str, object]] = result
+        items = cast("list[tuple[str, t.ContainerValue]]", result)
         assert len(items) == 2
         assert ("a", 1) in items
         assert ("b", 2) in items
 
     def test_build_keys_only(self) -> None:
         """Test build() with keys_only parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("a", 1).add("b", 2)
         keys = builder.build(keys_only=True)
         assert isinstance(keys, list)
@@ -289,7 +323,7 @@ class TestFlextTestsBuilders:
 
     def test_build_values_only(self) -> None:
         """Test build() with values_only parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("a", 1).add("b", 2)
         values = builder.build(values_only=True)
         assert isinstance(values, list)
@@ -298,37 +332,34 @@ class TestFlextTestsBuilders:
 
     def test_build_with_flatten(self) -> None:
         """Test build() with flatten parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.set("a.b.c", 42)
         # flatten is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
         flattened_raw = builder.build(flatten=True)
-        # Type narrowing: flatten=True returns BuilderDict
-        flattened: dict[str, t.GeneralValueType] = flattened_raw
+        flattened = cast("dict[str, t.ContainerValue]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
 
     def test_build_with_filter_none(self) -> None:
         """Test build() with filter_none parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("a", 1).add("b", None).add("c", 3)
         # filter_none is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
         filtered_raw = builder.build(filter_none=True)
-        # Type narrowing: filter_none=True returns BuilderDict
-        filtered: dict[str, t.GeneralValueType] = filtered_raw
+        filtered = cast("dict[str, t.ContainerValue]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered
 
     def test_build_as_parametrized(self) -> None:
         """Test build() with as_parametrized parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("test_id", "case_1").add("value", 42)
         cases_raw = builder.build(as_parametrized=True)
-        # Type narrowing: as_parametrized=True returns list[ParametrizedCase]
-        cases: list[tuple[str, dict[str, t.GeneralValueType]]] = cases_raw
+        cases = _as_parametrized_cases(cases_raw)
         assert isinstance(cases, list)
         assert len(cases) == 1
         test_id, data = cases[0]
@@ -337,12 +368,17 @@ class TestFlextTestsBuilders:
 
     def test_build_with_validate_with(self) -> None:
         """Test build() with validate_with parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("count", 5)
         # validate_with is a special kwarg processed by BuildParams
-        # Type ignore needed because validate_with is Callable, not t.GeneralValueType
+        # Type ignore needed because validate_with is Callable, not t.ContainerValue
         # build() accepts **kwargs: object, validated by BuildParams
-        build_result = builder.build(validate_with=lambda d: d["count"] > 0)
+        build_result = builder.build(
+            validate_with=cast(
+                "t.Tests.ContainerValue",
+                lambda d: cast("t.Tests.Builders.BuilderOutputDict", d)["count"] == 5,
+            ),
+        )
         # Type narrowing: build() returns union, extract dict
         if isinstance(build_result, dict):
             data = build_result
@@ -355,13 +391,19 @@ class TestFlextTestsBuilders:
 
     def test_build_with_map_result(self) -> None:
         """Test build() with map_result parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("x", 1)
         # map_result is a special kwarg processed by BuildParams
-        # Type ignore needed because map_result is Callable, not t.GeneralValueType
-        build_result = builder.build(map_result=lambda d: d["x"] * 2)
-        # Type narrowing: map_result returns transformed value (int in this case)
-        doubled: int = build_result
+        # Type ignore needed because map_result is Callable, not t.ContainerValue
+        build_result = builder.build(
+            map_result=cast(
+                "t.Tests.ContainerValue",
+                lambda d: (
+                    cast("int", cast("t.Tests.Builders.BuilderOutputDict", d)["x"]) * 2
+                ),
+            ),
+        )
+        doubled = cast("int", build_result)
         assert doubled == 2
 
     # =========================================================================
@@ -370,7 +412,7 @@ class TestFlextTestsBuilders:
 
     def test_to_result_success(self) -> None:
         """Test to_result() with success case."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("x", 1)
         # to_result() returns complex union: r[T] | r[BuilderDict] | r[BaseModel] | r[list[T]] | r[dict[str, T]] | T
         # Default case returns r[BuilderDict]
@@ -378,50 +420,52 @@ class TestFlextTestsBuilders:
         # to_result() returns: r[T] | r[BuilderDict] | r[BaseModel] | r[list[T]] | r[dict[str, T]] | T
         # Actual return type is more specific: r[BuilderDict] | r[BaseModel] | r[list[Never]] | r[dict[str, Never]]
         # Use explicit type annotation with cast to handle type compatibility
-        result_raw: object = builder.to_result()
-        # Type narrowing: default to_result() returns r[BuilderDict]
-        # Cast to handle union type compatibility
-        result: r[t_test.Tests.Builders.BuilderDict] = result_raw
+        result_raw = builder.to_result()
+        result = _as_builder_result(result_raw)
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data["x"] == 1
 
     def test_to_result_with_error(self) -> None:
         """Test to_result() with error parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         # to_result() returns r[BuilderDict] | BuilderDict (when unwrap=True)
-        result: r[t_test.Tests.Builders.BuilderDict] = builder.to_result(error="Failed", error_code="E001",
+        result = _as_builder_result(
+            builder.to_result(error="Failed", error_code="E001"),
         )
         assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
     def test_to_result_with_unwrap(self) -> None:
         """Test to_result() with unwrap parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("x", 1)
         # unwrap=True returns T directly (not wrapped in r[T])
         # to_result() returns: r[T] | r[BuilderDict] | r[BaseModel] | r[list[T]] | r[dict[str, T]] | T
         # Type annotation matches actual return type from to_result()
         # unwrap=True returns T directly (not wrapped in r[T])
         # Actual return type is more specific, use explicit type annotation with cast
-        result_raw: object = builder.to_result(unwrap=True)
-        # Type narrowing: unwrap=True returns value directly (BuilderDict)
-        data: t_test.Tests.Builders.BuilderDict = result_raw
+        result_raw = builder.to_result(unwrap=True)
+        data = cast("t.Tests.Builders.BuilderDict", result_raw)
         assert isinstance(data, dict)
         assert data["x"] == 1
 
     def test_to_result_with_validate(self) -> None:
         """Test to_result() with validate parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("count", 5)
         # validate is a special kwarg processed by ToResultParams
-        # Type ignore needed because validate is Callable, not t.GeneralValueType
+        # Type ignore needed because validate is Callable, not t.ContainerValue
         # Type annotation matches actual return type from to_result()
         # validate is Callable, validated by ToResultParams
         # Actual return type is more specific, use explicit type annotation with cast
-        result_raw: object = builder.to_result(validate=lambda d: d["count"] > 0)
-        # Type narrowing: to_result() returns union, extract r[BuilderDict]
-        result: r[t_test.Tests.Builders.BuilderDict] = result_raw
+        result_raw = builder.to_result(
+            validate=cast(
+                "t.Tests.ContainerValue",
+                lambda d: cast("t.Tests.Builders.BuilderDict", d)["count"] == 5,
+            ),
+        )
+        result = _as_builder_result(result_raw)
         assertion_helpers.assert_flext_result_success(result)
 
     # =========================================================================
@@ -430,7 +474,7 @@ class TestFlextTestsBuilders:
 
     def test_copy_builder(self) -> None:
         """Test copy_builder() creates independent copy."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("base", 1)
         copied = builder.copy_builder()
         copied.add("extra", 2)
@@ -439,23 +483,23 @@ class TestFlextTestsBuilders:
 
     def test_fork(self) -> None:
         """Test fork() creates copy with updates."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("base", 1)
         forked = builder.fork(extra=2, another=3)
         assert builder.build() == {"base": 1}
-        forked_data = forked.build()
+        forked_data = _as_builder_dict(forked.build())
         assert forked_data["base"] == 1
         assert forked_data["extra"] == 2
         assert forked_data["another"] == 3
 
     def test_merge_from(self) -> None:
         """Test merge_from() merges data from another builder."""
-        builder1 = FlextTestsBuilders()
+        builder1 = tb()
         builder1.add("a", 1)
-        builder2 = FlextTestsBuilders()
+        builder2 = tb()
         builder2.add("b", 2)
         builder1.merge_from(builder2)
-        data = builder1.build()
+        data = _as_builder_dict(builder1.build())
         assert data["a"] == 1
         assert data["b"] == 2
 
@@ -465,31 +509,31 @@ class TestFlextTestsBuilders:
 
     def test_batch(self) -> None:
         """Test batch() creates batch of scenarios."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.batch(
             "cases",
             [("valid", "test@example.com"), ("invalid", "not-email")],
         )
-        data = builder.build()
-        cases: list[t.GeneralValueType] = data["cases"]
+        data = _as_builder_dict(builder.build())
+        cases = cast("list[t.ContainerValue]", data["cases"])
         assert len(cases) == 2
 
     def test_batch_with_results(self) -> None:
         """Test batch() with as_results parameter."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.batch(
             "results",
             [("success", 42), ("another", 100)],
             as_results=True,
         )
-        data = builder.build()
-        results: list[r[int]] = data["results"]
+        data = _as_builder_dict(builder.build())
+        results = cast("list[r[int]]", data["results"])
         assert len(results) == 2
         assert all(r.is_success for r in results)
 
     def test_scenarios(self) -> None:
         """Test scenarios() creates parametrized test cases."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         cases = builder.scenarios(
             ("test_valid", {"input": "hello", "expected": 5}),
             ("test_empty", {"input": "", "expected": 0}),
@@ -511,8 +555,8 @@ class TestFlextTestsBuilders:
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[object] = tb.Tests.Result.fail("Error", code="E001")
-        result: r[object] = result_raw
+        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error", code="E001")
+        result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
     def test_tests_result_batch_ok(self) -> None:
@@ -566,14 +610,14 @@ class TestFlextTestsBuilders:
 
     def test_add_params_validation_count_positive(self) -> None:
         """Test AddParams validates count is positive."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         # count=0 should fail validation
         with pytest.raises((ValueError, ValidationError)):
             builder.add("items", factory="users", count=0)
 
     def test_build_params_validation_parametrize_key_not_empty(self) -> None:
         """Test BuildParams validates parametrize_key is not empty."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("test_id", "case_1")
         # Empty parametrize_key should fail validation
         # build() accepts **kwargs: object, validated by BuildParams
@@ -582,29 +626,28 @@ class TestFlextTestsBuilders:
 
     def test_to_result_params_validation_error_code_with_error(self) -> None:
         """Test ToResultParams validates error_code is only with error."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         # error_code without error should work (uses default)
         # to_result() returns complex union
         # Type annotation matches actual return type from to_result()
         # Actual return type is more specific, use explicit type annotation with cast
-        result_raw: object = builder.to_result(error_code="E001")
-        # Type narrowing: default to_result() returns r[BuilderDict]
-        result: r[t_test.Tests.Builders.BuilderDict] = result_raw
+        result_raw = builder.to_result(error_code="E001")
+        result = _as_builder_result(result_raw)
         # Should succeed but error_code is ignored without error
-        assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        assertion_helpers.assert_flext_result_success(result)
 
     def test_batch_params_validation_scenarios_not_empty(self) -> None:
         """Test BatchParams validates scenarios is not empty."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         # Empty scenarios should fail validation
         with pytest.raises((ValueError, ValidationError)):
             builder.batch("cases", [])
 
     def test_merge_from_params_validation_strategy(self) -> None:
         """Test MergeFromParams validates strategy is valid."""
-        builder1 = FlextTestsBuilders()
+        builder1 = tb()
         builder1.add("a", 1)
-        builder2 = FlextTestsBuilders()
+        builder2 = tb()
         builder2.add("b", 2)
         # Invalid strategy should fail validation
         with pytest.raises((ValueError, ValidationError)):
@@ -616,54 +659,44 @@ class TestFlextTestsBuilders:
 
     def test_add_uses_model_from_kwargs(self) -> None:
         """Test add() uses u.Model.from_kwargs() for validation."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         # This should work because u.Model.from_kwargs() handles validation
         builder.add("value", value=42, count=1)  # count is ignored but validated
-        data = builder.build()
+        data = _as_builder_dict(builder.build())
         assert data["value"] == 42
 
     def test_build_uses_model_from_kwargs(self) -> None:
         """Test build() uses u.Model.from_kwargs() for validation."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("x", 1)
         # build() uses u.Model.from_kwargs() internally
         # build() returns complex union, but filter_none=True returns BuilderDict
         # build() accepts **kwargs: object, validated by BuildParams
-        data_raw: (
-            t_test.Tests.Builders.BuilderDict
-            | BaseModel
-            | list[tuple[str, t_test.Tests.Builders.BuilderValue]]
-            | list[str]
-            | list[t_test.Tests.Builders.BuilderValue]
-            | list[t_test.Tests.Builders.ParametrizedCase]
-            | object
-        ) = builder.build(filter_none=True)
-        # Type narrowing: filter_none=True returns BuilderDict
-        data: t_test.Tests.Builders.BuilderDict = data_raw
+        data_raw = builder.build(filter_none=True)
+        data = cast("t.Tests.Builders.BuilderDict", data_raw)
         assert data["x"] == 1
 
     def test_to_result_uses_model_from_kwargs(self) -> None:
         """Test to_result() uses u.Model.from_kwargs() for validation."""
-        builder = FlextTestsBuilders()
+        builder = tb()
         builder.add("x", 1)
         # to_result() uses u.Model.from_kwargs() internally
         # to_result() returns complex union
         # Type annotation matches actual return type from to_result()
         # Actual return type is more specific, use explicit type annotation with cast
-        result_raw: object = builder.to_result(unwrap=False)
-        # Type narrowing: default to_result() returns r[BuilderDict]
-        result: r[t_test.Tests.Builders.BuilderDict] = result_raw
+        result_raw = builder.to_result(unwrap=False)
+        result = _as_builder_result(result_raw)
         assertion_helpers.assert_flext_result_success(result)
 
     def test_merge_from_uses_merge_utility(self) -> None:
         """Test merge_from() uses u.merge() utility."""
-        builder1 = FlextTestsBuilders()
+        builder1 = tb()
         builder1.add("a", 1)
-        builder2 = FlextTestsBuilders()
+        builder2 = tb()
         builder2.add("b", 2)
         # merge_from() uses u.merge() internally
         builder1.merge_from(builder2, strategy="deep")
-        data = builder1.build()
+        data = _as_builder_dict(builder1.build())
         assert "a" in data
         assert "b" in data
 
@@ -695,8 +728,8 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         # Result.fail() delegates to tt.res("fail", error=...)
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[object] = tb.Tests.Result.fail("Error")
-        result: r[object] = result_raw
+        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error")
+        result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
     def test_result_batch_ok_delegates_to_tt_results(self) -> None:
@@ -740,8 +773,10 @@ class TestFlextTestsBuilders:
     def test_result_assert_failure_delegates_to_tu(self) -> None:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
         # Result.assert_failure() delegates to tu.Tests.Result.assert_failure()
-        result: r[int] = r[int].fail("Error")
-        # Type narrowing: assert_failure accepts r[t.GeneralValueType], r[int] is compatible
+        result: r[t.Tests.ContainerValue] = r[t.Tests.ContainerValue].fail(
+            "Error",
+        )
+        # Type narrowing: assert_failure accepts r[t.ContainerValue], r[int] is compatible
         error: str = tb.Tests.Result.assert_failure(
             result,
         )
@@ -800,4 +835,4 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Operation.execute_service() delegates to tu.Tests.Factory."""
         # Operation.execute_service() delegates to tu.Tests.Factory.execute_user_service()
         result = tb.Tests.Operation.execute_service()
-        assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        assertion_helpers.assert_flext_result_success(result)

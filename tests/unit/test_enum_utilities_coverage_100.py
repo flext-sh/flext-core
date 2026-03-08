@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -22,8 +21,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import t
-from flext_core.result import r
+from flext_core import r, t
 from flext_tests import u
 
 
@@ -88,7 +86,7 @@ class CoerceValidatorScenario:
     """Coerce validator test scenario."""
 
     name: str
-    value: t.FlexibleValue
+    value: t.Primitives | Status | None
     expected_success: bool
     expected_status: Status | None
     expected_error: str | None
@@ -227,10 +225,9 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        # Convert object to t.GeneralValueType for type compatibility
-        value_typed: t.GeneralValueType = (
+        value_typed: bool | float | int | str | Status = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
         result = u.Enum.is_member(Status, value_typed)
@@ -243,10 +240,9 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        # Convert object to t.GeneralValueType for type compatibility
-        value_typed: t.GeneralValueType = (
+        value_typed: bool | float | int | str | Status = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
         result = u.Enum.is_subset(
@@ -266,25 +262,25 @@ class TestuEnumParse:
         result = u.Enum.parse(Status, scenario.value)
 
         if scenario.expected_success:
-            # Type annotation: Status is StrEnum, compatible with t.GeneralValueType
+            # Type annotation: Status is StrEnum, compatible with t.ContainerValue
             # Use explicit type annotation to help mypy infer TValue
-            expected_status_cast: t.GeneralValueType = cast(
-                "t.GeneralValueType",
+            expected_status_cast: t.ContainerValue = cast(
+                "t.ContainerValue",
                 scenario.expected_status,
             )
             # Type annotation: mypy cannot infer TValue from StrEnum, specify explicitly
-            # Cast result to r[t.GeneralValueType] and expected_value to t.GeneralValueType
-            result_typed: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
+            # Cast result to r[t.ContainerValue] and expected_value to t.ContainerValue
+            result_typed: r[t.ContainerValue] = cast(
+                "r[t.ContainerValue]",
                 result,
             )
-            expected_typed: t.GeneralValueType = expected_status_cast
+            expected_typed: t.ContainerValue = expected_status_cast
             u.Tests.Result.assert_success_with_value(
                 result_typed,
                 expected_typed,
             )
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None
@@ -321,13 +317,18 @@ class TestuEnumCoerceValidator:
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
         validator = u.Enum.coerce_validator(Status)
+        value: bool | float | int | str | Status = (
+            scenario.value
+            if isinstance(scenario.value, (str, int, float, bool, Status))
+            else str(scenario.value)
+        )
 
         if scenario.expected_success:
-            result = validator(scenario.value)
+            result = validator(value)
             assert result == scenario.expected_status
         else:
             with pytest.raises(ValueError) as exc_info:
-                validator(scenario.value)
+                validator(value)
             error_str = str(exc_info.value) if exc_info.value else ""
             assert (
                 scenario.expected_error is not None

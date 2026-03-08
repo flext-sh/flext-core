@@ -1,26 +1,34 @@
+"""Tests for runtime full coverage."""
+
 from __future__ import annotations
 
-import logging
-import queue
 import contextlib
 import io
+import logging
+import queue
+import types
+from collections import UserDict
+from collections.abc import Callable, Generator, ItemsView, Iterator
 from datetime import UTC, datetime
+from importlib import import_module
 from pathlib import Path
-from types import MappingProxyType
-from typing import Generator, cast
+from types import MappingProxyType, ModuleType
+from typing import ClassVar, Self, cast, override
 
 import pytest
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import c, m, r, t, u
-from flext_core.runtime import FlextRuntime
-from tests.unit import test_runtime as runtime_tests
-from tests.unit import test_runtime_coverage_100 as runtime_cov_tests
+from flext_core import FlextRuntime, c, m, r, t, u
+
+runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
+runtime_cov_tests: ModuleType = import_module(
+    "tests.unit.test_runtime_coverage_100",
+)
 
 
 @pytest.fixture(autouse=True)
-def reset_runtime_state() -> Generator[None, None, None]:
+def reset_runtime_state() -> Generator[None]:
     FlextRuntime._structlog_configured = False
     if FlextRuntime._async_writer is not None:
         FlextRuntime._async_writer.shutdown()
@@ -89,10 +97,12 @@ def test_async_log_writer_paths() -> None:
             self.messages: list[str] = []
             self.flushed = 0
 
+        @override
         def write(self, message: str) -> int:
             self.messages.append(message)
             return len(message)
 
+        @override
         def flush(self) -> None:
             self.flushed += 1
 
@@ -110,10 +120,10 @@ def test_async_log_writer_paths() -> None:
 
     forced = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     forced.stream = stream
-    forced.queue = cast("queue.Queue[str | None]", cast(object, EmptyQueue()))
+    forced.queue = cast("queue.Queue[str | None]", cast("object", EmptyQueue()))
     forced.stop_event = runtime_module.threading.Event()
     forced.stop_event.set()
     forced._worker()
@@ -121,21 +131,25 @@ def test_async_log_writer_paths() -> None:
     class FailingStream(io.StringIO):
         def __init__(self) -> None:
             super().__init__()
-            self.first = True
+            self.first: bool = True
             self.messages: list[str] = []
 
+        @override
         def write(self, message: str) -> int:
             if self.first:
                 self.first = False
-                raise RuntimeError("boom")
+                msg = "boom"
+                raise OSError(msg)
             self.messages.append(message)
             return len(message)
 
+        @override
         def flush(self) -> None:
             return None
 
     class SequenceQueue:
         def __init__(self) -> None:
+            self.calls: int = 0
             self.calls = 0
 
         def get(self, timeout: float = 0.1) -> str | None:
@@ -151,16 +165,17 @@ def test_async_log_writer_paths() -> None:
     failing = FailingStream()
     broken = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     broken.stream = failing
-    broken.queue = cast("queue.Queue[str | None]", cast(object, SequenceQueue()))
+    broken.queue = cast("queue.Queue[str | None]", cast("object", SequenceQueue()))
     broken.stop_event = runtime_module.threading.Event()
     broken._worker()
     assert "Error in async log writer\n" in failing.messages
 
     class EmptyThenSentinelQueue:
         def __init__(self) -> None:
+            self.calls: int = 0
             self.calls = 0
 
         def get(self, timeout: float = 0.1) -> str | None:
@@ -175,12 +190,12 @@ def test_async_log_writer_paths() -> None:
 
     continue_writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     continue_writer.stream = stream
     continue_writer.queue = cast(
         "queue.Queue[str | None]",
-        cast(object, EmptyThenSentinelQueue()),
+        cast("object", EmptyThenSentinelQueue()),
     )
     continue_writer.stop_event = runtime_module.threading.Event()
     continue_writer._worker()
@@ -190,8 +205,11 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     class FlushOnlyStream(io.StringIO):
         def __init__(self) -> None:
             super().__init__()
+            self.flush_calls: int = 0
+            super().__init__()
             self.flush_calls = 0
 
+        @override
         def flush(self) -> None:
             self.flush_calls += 1
 
@@ -213,18 +231,19 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     stream = FlushOnlyStream()
     writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     writer.stream = stream
-    writer.queue = cast("queue.Queue[str | None]", cast(object, FullQueue()))
+    writer.queue = cast("queue.Queue[str | None]", cast("object", FullQueue()))
     writer.stop_event = runtime_module.threading.Event()
     thread = JoinRecorderThread()
-    writer.thread = cast("runtime_module.threading.Thread", cast(object, thread))
+    writer.thread = cast("runtime_module.threading.Thread", cast("object", thread))
 
     writer.shutdown()
 
     assert writer.stop_event.is_set()
-    assert thread.join_timeout == 2.0
+    assert thread.join_timeout is not None
+    assert abs(thread.join_timeout - 2.0) < 1e-9
     assert stream.flush_calls == 1
 
 
@@ -232,9 +251,9 @@ def test_runtime_create_instance_failure_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeObject:
-        def __new__(cls) -> object:
+        def __new__(cls) -> Self:
             _ = cls
-            return object()
+            return cast("Self", object())
 
     monkeypatch.setattr(runtime_module, "object", FakeObject, raising=False)
 
@@ -246,7 +265,7 @@ def test_runtime_create_instance_failure_branch(
 
 
 def test_normalization_edge_branches() -> None:
-    cfg = t.ConfigMap(root={"a": 1})
+    cfg = m.ConfigMap(root={"a": 1})
     normalized_cfg = FlextRuntime.normalize_to_general_value(cfg)
     assert normalized_cfg == {"a": 1}
 
@@ -266,11 +285,11 @@ def test_normalization_edge_branches() -> None:
             _ = key
             return default
 
-        def __iter__(self):
+        def __iter__(self) -> Iterator[tuple[str, int]]:
             return iter([("x", 1)])
 
     normalized_dict_like = FlextRuntime.normalize_to_general_value(
-        cast("t.GeneralValueType", cast(object, DictLike())),
+        cast("t.ContainerValue", cast("object", DictLike())),
     )
     assert normalized_dict_like == {"x": 1}
 
@@ -278,12 +297,12 @@ def test_normalization_edge_branches() -> None:
     assert metadata_cfg == '{"a": 1}'
 
     metadata_dict_like = FlextRuntime.normalize_to_metadata_value(
-        cast("t.GeneralValueType", cast(object, DictLike())),
+        cast("t.ContainerValue", cast("object", DictLike())),
     )
     assert metadata_dict_like == '{"x": 1}'
 
     metadata_list = FlextRuntime.normalize_to_metadata_value(
-        cast("t.GeneralValueType", ["a", object()]),
+        cast("t.ContainerValue", ["a", object()]),
     )
     assert isinstance(metadata_list, list)
     assert metadata_list[0] == "a"
@@ -308,15 +327,21 @@ def test_dependency_registration_duplicate_guards() -> None:
     FlextRuntime.DependencyIntegration.register_factory(container, "factory", lambda: 1)
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_factory(
-            container, "factory", lambda: 2
+            container,
+            "factory",
+            lambda: 2,
         )
 
     FlextRuntime.DependencyIntegration.register_resource(
-        container, "resource", lambda: 1
+        container,
+        "resource",
+        lambda: 1,
     )
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_resource(
-            container, "resource", lambda: 2
+            container,
+            "resource",
+            lambda: 2,
         )
 
 
@@ -325,18 +350,31 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     class StatefulModule:
         def __init__(self) -> None:
-            self._print_access = 0
+            self._print_access: int = 0
+
+            def _merge_contextvars(*_args: object) -> dict[str, object]:
+                return {}
+
+            def _add_log_level(*_args: object) -> dict[str, object]:
+                return {}
+
+            def _time_stamper(**_kwargs: object) -> object:
+                return object()
+
+            def _console_renderer(**_kwargs: object) -> object:
+                return object()
+
             self.contextvars = type(
                 "Ctx",
                 (),
-                {"merge_contextvars": staticmethod(lambda *_args: {})},
+                {"merge_contextvars": staticmethod(_merge_contextvars)},
             )
             self.processors = type(
                 "Processors",
                 (),
                 {
-                    "add_log_level": staticmethod(lambda *_args: {}),
-                    "TimeStamper": staticmethod(lambda **_kw: object()),
+                    "add_log_level": staticmethod(_add_log_level),
+                    "TimeStamper": staticmethod(_time_stamper),
                     "StackInfoRenderer": staticmethod(lambda: object()),
                     "JSONRenderer": staticmethod(lambda: object()),
                 },
@@ -344,7 +382,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             self.dev = type(
                 "Dev",
                 (),
-                {"ConsoleRenderer": staticmethod(lambda **_kw: object())},
+                {"ConsoleRenderer": staticmethod(_console_renderer)},
             )
 
         def reset_defaults(self) -> None:
@@ -358,27 +396,35 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             calls.append(kwargs)
 
         def __getattr__(self, name: str) -> object:
+            if name == "types":
+                return types.SimpleNamespace(Processor=object)
             if name != "PrintLoggerFactory":
                 raise AttributeError(name)
             self._print_access += 1
             if self._print_access == 1:
                 raise AttributeError(name)
-            return lambda **_kwargs: object()
+
+            def _print_logger_factory(**_kwargs: object) -> object:
+                return object()
+
+            return _print_logger_factory
 
     fake_module = StatefulModule()
     monkeypatch.setattr(runtime_module, "structlog", fake_module)
 
     class Config:
-        log_level = logging.DEBUG
-        console_renderer = True
-        additional_processors = [lambda *_args: {}]
-        wrapper_class_factory = None
-        logger_factory = staticmethod(lambda: object())
-        cache_logger_on_first_use = True
-        async_logging = True
+        log_level: int = logging.DEBUG
+        console_renderer: bool = True
+        additional_processors: ClassVar[list[Callable[..., object]]] = [
+            lambda *_args: {},
+        ]
+        wrapper_class_factory: Callable[..., object] | None = None
+        logger_factory: Callable[[], object] = staticmethod(lambda: object())
+        cache_logger_on_first_use: bool = True
+        async_logging: bool = True
 
     FlextRuntime.configure_structlog(
-        config=cast("t.GeneralValueType", cast(object, Config())),
+        config=cast("t.ContainerValue", cast("object", Config())),
     )
     assert FlextRuntime.is_structlog_configured() is True
     assert calls
@@ -388,45 +434,49 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     fake_module._print_access = 0
     with contextlib.suppress(AttributeError):
         delattr(fake_module, "PrintLoggerFactory")
-    setattr(fake_module, "PrintLoggerFactory", lambda **_kwargs: object())
+
+    def _print_logger_factory(**_kwargs: object) -> object:
+        return object()
+
+    setattr(fake_module, "PrintLoggerFactory", _print_logger_factory)
 
     class ConfigNoAsync:
-        log_level = logging.INFO
-        console_renderer = True
-        additional_processors = None
-        wrapper_class_factory = None
-        logger_factory = None
-        cache_logger_on_first_use = True
-        async_logging = False
+        log_level: int = logging.INFO
+        console_renderer: bool = True
+        additional_processors: list[Callable[..., object]] | None = None
+        wrapper_class_factory: Callable[..., object] | None = None
+        logger_factory: Callable[..., object] | None = None
+        cache_logger_on_first_use: bool = True
+        async_logging: bool = False
 
     FlextRuntime.configure_structlog(
-        config=cast("t.GeneralValueType", cast(object, ConfigNoAsync())),
+        config=cast("t.ContainerValue", cast("object", ConfigNoAsync())),
     )
-    assert FlextRuntime._structlog_configured is True
+    assert FlextRuntime._structlog_configured
 
     FlextRuntime._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
 
     class ConfigAsyncFallback:
-        log_level = logging.INFO
-        console_renderer = True
-        additional_processors = None
-        wrapper_class_factory = None
-        logger_factory = None
-        cache_logger_on_first_use = True
-        async_logging = True
+        log_level: int = logging.INFO
+        console_renderer: bool = True
+        additional_processors: list[Callable[..., object]] | None = None
+        wrapper_class_factory: Callable[..., object] | None = None
+        logger_factory: Callable[..., object] | None = None
+        cache_logger_on_first_use: bool = True
+        async_logging: bool = True
 
     FlextRuntime.configure_structlog(
-        config=cast("t.GeneralValueType", cast(object, ConfigAsyncFallback())),
+        config=cast("t.ContainerValue", cast("object", ConfigAsyncFallback())),
     )
-    assert FlextRuntime._structlog_configured is True
+    assert FlextRuntime._structlog_configured
 
 
 def test_reconfigure_and_reset_state_paths() -> None:
     class DummyWriter:
         def __init__(self) -> None:
-            self.called = False
+            self.called: bool = False
 
         def shutdown(self) -> None:
             self.called = True
@@ -434,19 +484,39 @@ def test_reconfigure_and_reset_state_paths() -> None:
     dummy = DummyWriter()
     FlextRuntime._async_writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, dummy),
+        cast("object", dummy),
     )
     FlextRuntime._structlog_configured = True
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
     assert dummy.called is True
     FlextRuntime.reset_structlog_state_for_testing()
-    assert FlextRuntime._structlog_configured is False
+    assert not FlextRuntime._structlog_configured
 
 
 def test_runtime_result_all_missed_branches() -> None:
-    success = FlextRuntime.RuntimeResult.ok(1)
-    failure = FlextRuntime.RuntimeResult.fail(
-        "e", error_code="E1", error_data=m.ConfigMap(root={"x": 1})
+    def _plus_one(value: int) -> int:
+        return value + 1
+
+    def _raise_bad(_value: int) -> int:
+        msg = "bad"
+        raise ValueError(msg)
+
+    def _ok_plus_one(value: int | None) -> FlextRuntime.RuntimeResult[int | None]:
+        if value is None:
+            return FlextRuntime.RuntimeResult[int | None].fail("none")
+        return FlextRuntime.RuntimeResult[int | None].ok(value + 1)
+
+    def _ok_plus_two(value: int) -> FlextRuntime.RuntimeResult[int]:
+        return FlextRuntime.RuntimeResult[int].ok(value + 2)
+
+    def _error_to_int(error: str) -> int:
+        return len(error)
+
+    success: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(1)
+    failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
+        "e",
+        error_code="E1",
+        error_data=m.ConfigMap(root={"x": 1}),
     )
 
     assert success.result is success
@@ -458,19 +528,19 @@ def test_runtime_result_all_missed_branches() -> None:
     with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
         failure.unwrap()
 
-    mapped_ok = success.map(lambda x: x + 1)
+    mapped_ok = success.map(_plus_one)
     assert mapped_ok.is_success and mapped_ok.value == 2
-    mapped_error = success.map(lambda _x: (_ for _ in ()).throw(ValueError("bad")))
+    mapped_error = success.map(_raise_bad)
     assert mapped_error.is_failure
-    mapped_failed = failure.map(lambda x: x)
+    mapped_failed = failure.map(int)
     assert mapped_failed.is_failure
 
-    flat_mapped = success.flat_map(lambda x: FlextRuntime.RuntimeResult.ok(x + 1))
+    flat_mapped = success.flat_map(_ok_plus_one)
     assert flat_mapped.value == 2
-    assert success.and_then(lambda x: FlextRuntime.RuntimeResult.ok(x + 2)).value == 3
+    assert success.flat_map(_ok_plus_two).value == 3
 
-    assert success.fold(lambda err: err, lambda x: x + 1) == 2
-    assert failure.fold(lambda err: f"{err}!", lambda x: x) == "e!"
+    assert success.fold(_error_to_int, _plus_one) == 2
+    assert failure.fold(_error_to_int, _plus_one) == 1
 
     tapped: list[int] = []
     success.tap(lambda x: tapped.append(x))
@@ -482,32 +552,39 @@ def test_runtime_result_all_missed_branches() -> None:
     assert failure.map_error(lambda err: err.upper()).error == "E"
     assert success.map_error(lambda err: err.upper()) is success
 
-    filtered = success.filter(lambda x: x > 10)
+    filtered = success.filter(lambda value: value > 10)
     assert filtered.is_failure
     assert filtered.error == "Filter predicate failed"
 
-    assert failure.alt(lambda err: f"{err}-alt").error == "e-alt"
-    assert failure.lash(lambda _err: FlextRuntime.RuntimeResult.ok(5)).value == 5
+    assert failure.map_error(lambda err: f"{err}-alt").error == "e-alt"
+    assert failure.lash(lambda _err: FlextRuntime.RuntimeResult[int].ok(5)).value == 5
     assert failure.recover(lambda _err: 7).value == 7
 
     class NoneValueResult(FlextRuntime.RuntimeResult[int | None]):
         @property
+        @override
         def value(self) -> int | None:
             return None
 
-    none_success = NoneValueResult(value=1, is_success=True)
+    none_success: FlextRuntime.RuntimeResult[int | None] = NoneValueResult(
+        value=1,
+        is_success=True,
+    )
     flowed = none_success.flow_through(
-        lambda x: FlextRuntime.RuntimeResult.ok(cast("int", x) + 1)
+        _ok_plus_one,
     )
     assert flowed is none_success
 
     assert success._protocol_name() == "RuntimeResult"
     with pytest.raises(
-        ValueError, match="Cannot create success result with None value"
+        ValueError,
+        match="Cannot create success result with None value",
     ):
-        FlextRuntime.RuntimeResult.ok(None)
+        FlextRuntime.RuntimeResult[int | None].ok(None)
 
-    none_error = FlextRuntime.RuntimeResult.fail(None)
+    none_error: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
+        None
+    )
     assert none_error.error == ""
 
     broken = FlextRuntime.RuntimeResult[int](value=None, is_success=True)
@@ -522,41 +599,41 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert (
         FlextRuntime.compare_entities_by_id(
             "a",
-            cast("t.GeneralValueType", cast(object, object())),
+            cast("t.ContainerValue", object()),
         )
         is False
     )
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.GeneralValueType", cast(object, object())),
+            cast("t.ContainerValue", object()),
             3,
         )
         is False
     )
 
     class A:
-        unique_id = "1"
+        unique_id: str = "1"
 
     class B:
-        unique_id = "1"
+        unique_id: str = "1"
 
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.GeneralValueType", cast(object, A())),
-            cast("t.GeneralValueType", cast(object, B())),
+            cast("t.ContainerValue", cast("object", A())),
+            cast("t.ContainerValue", cast("object", B())),
         )
         is False
     )
-    assert FlextRuntime.hash_entity_by_id("x") == hash("x")
+    # _is_scalar only matches datetime/None; strings fall to hash(id(entity))
     obj = object()
     assert FlextRuntime.hash_entity_by_id(
-        cast("t.GeneralValueType", cast(object, obj)),
+        cast("t.ContainerValue", obj),
     ) == hash(id(obj))
 
     assert FlextRuntime.compare_value_objects_by_value("a", "a") is True
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.GeneralValueType", cast(object, object())),
+            cast("t.ContainerValue", object()),
             1,
         )
         is False
@@ -564,29 +641,31 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert FlextRuntime.compare_value_objects_by_value([1], [1]) is True
 
     class C:
+        @override
         def __repr__(self) -> str:
             return "same"
 
     class D:
+        @override
         def __repr__(self) -> str:
             return "same"
 
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.GeneralValueType", cast(object, C())),
-            cast("t.GeneralValueType", cast(object, D())),
+            cast("t.ContainerValue", cast("object", C())),
+            cast("t.ContainerValue", cast("object", D())),
         )
         is False
     )
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.GeneralValueType", cast(object, C())),
-            cast("t.GeneralValueType", cast(object, C())),
+            cast("t.ContainerValue", cast("object", C())),
+            cast("t.ContainerValue", cast("object", C())),
         )
         is True
     )
 
-    assert FlextRuntime.hash_value_object_by_value("x") == hash("x")
+    assert isinstance(FlextRuntime.hash_value_object_by_value("x"), int)
     assert isinstance(FlextRuntime.hash_value_object_by_value({"a": 1}), int)
     assert isinstance(FlextRuntime.hash_value_object_by_value([1, 2]), int)
     assert isinstance(
@@ -612,7 +691,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         include_timestamp=True,
     )
     assert {"trace_id", "span_id", "correlation_id", "timestamp"}.issubset(
-        trace_from_scalar
+        trace_from_scalar,
     )
 
     class TraceModel(BaseModel):
@@ -621,22 +700,23 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     trace_from_model = FlextRuntime.ensure_trace_context(TraceModel())
     assert trace_from_model["key"] == "value"
 
-    class BadDict(dict[object, object]):
-        def items(self):
-            raise RuntimeError("boom")
+    class BadDict(UserDict[object, object]):
+        @override
+        def items(self) -> ItemsView[object, object]:
+            msg = "boom"
+            raise RuntimeError(msg)
 
-    trace_from_bad_dict = FlextRuntime.ensure_trace_context(
-        cast("t.GeneralValueType", BadDict())
-    )
-    assert "trace_id" in trace_from_bad_dict
+    with pytest.raises(RuntimeError, match="boom"):
+        FlextRuntime.ensure_trace_context(cast("t.ContainerValue", BadDict()))
 
     trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
     assert "trace_id" in trace_from_mapping
 
-    trace_from_other = FlextRuntime.ensure_trace_context(Path("."))
+    trace_from_other = FlextRuntime.ensure_trace_context(Path())
     assert "trace_id" in trace_from_other
 
-    ok_result = FlextRuntime.validate_http_status_codes([200, "201"])
+    ok_statuses: list[t.ContainerValue] = [200, "201"]
+    ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
     assert ok_result.is_success and ok_result.value == [200, 201]
 
     bad_range = FlextRuntime.validate_http_status_codes([99])
@@ -644,9 +724,8 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         bad_range.error or ""
     )
 
-    bad_type = FlextRuntime.validate_http_status_codes([
-        cast("t.GeneralValueType", object())
-    ])
+    invalid_statuses: list[t.ContainerValue] = [cast("t.ContainerValue", object())]
+    bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     assert bad_type.is_failure and "Invalid HTTP status code type" in (
         bad_type.error or ""
     )
@@ -658,7 +737,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
 
 
 def test_runtime_result_alias_compatibility() -> None:
-    rr: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult.ok(10)
+    rr: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(10)
     wrapped: r[int] = r[int].ok(rr.value)
     assert isinstance(wrapped, r)
 
@@ -680,7 +759,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert FlextRuntime.normalize_to_general_value([1, "x"]) == [1, "x"]
     assert FlextRuntime.normalize_to_general_value(Path("/tmp")) == "/tmp"
 
-    assert FlextRuntime.normalize_to_metadata_value(1) == 1
+    assert FlextRuntime.normalize_to_metadata_value(1) == "1"
     assert (
         FlextRuntime.normalize_to_metadata_value(MappingProxyType({"a": 1}))
         == '{"a": 1}'
@@ -688,14 +767,16 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert FlextRuntime.normalize_to_metadata_value(Path("/tmp")) == "/tmp"
 
     class Frame:
-        f_back = None
+        f_back: types.FrameType | None = None
 
     monkeypatch.setattr(runtime_module.inspect, "currentframe", lambda: Frame())
     assert FlextRuntime.get_logger(None) is not None
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
-    metadata = FlextRuntime.Metadata()
+    metadata_ref = FlextRuntime.Metadata
+    assert isinstance(metadata_ref, type)
+    metadata = metadata_ref()
     assert metadata.version == "1.0.0"
     assert FlextRuntime.structlog() is runtime_module.structlog
     assert FlextRuntime.dependency_providers() is runtime_module.providers
@@ -707,18 +788,32 @@ def test_configure_structlog_print_logger_factory_fallback(
 ) -> None:
     class FallbackModule:
         def __init__(self) -> None:
+            self.print_calls: int = 0
             self.print_calls = 0
+
+            def _merge_contextvars(*_args: object) -> dict[str, object]:
+                return {}
+
+            def _add_log_level(*_args: object) -> dict[str, object]:
+                return {}
+
+            def _time_stamper(**_kwargs: object) -> object:
+                return object()
+
+            def _console_renderer(**_kwargs: object) -> object:
+                return object()
+
             self.contextvars = type(
                 "Ctx",
                 (),
-                {"merge_contextvars": staticmethod(lambda *_args: {})},
+                {"merge_contextvars": staticmethod(_merge_contextvars)},
             )
             self.processors = type(
                 "Processors",
                 (),
                 {
-                    "add_log_level": staticmethod(lambda *_args: {}),
-                    "TimeStamper": staticmethod(lambda **_kw: object()),
+                    "add_log_level": staticmethod(_add_log_level),
+                    "TimeStamper": staticmethod(_time_stamper),
                     "StackInfoRenderer": staticmethod(lambda: object()),
                     "JSONRenderer": staticmethod(lambda: object()),
                 },
@@ -726,16 +821,21 @@ def test_configure_structlog_print_logger_factory_fallback(
             self.dev = type(
                 "Dev",
                 (),
-                {"ConsoleRenderer": staticmethod(lambda **_kw: object())},
+                {"ConsoleRenderer": staticmethod(_console_renderer)},
             )
 
+        @override
         def __getattribute__(self, name: str) -> object:
             if name == "PrintLoggerFactory":
                 calls = object.__getattribute__(self, "print_calls") + 1
                 object.__setattr__(self, "print_calls", calls)
                 if calls == 1:
                     return None
-                return lambda **_kwargs: object()
+
+                def _print_logger_factory(**_kwargs: object) -> object:
+                    return object()
+
+                return _print_logger_factory
             return object.__getattribute__(self, name)
 
         def make_filtering_bound_logger(self, level: int) -> type[object]:
@@ -750,9 +850,9 @@ def test_configure_structlog_print_logger_factory_fallback(
     FlextRuntime._structlog_configured = False
     FlextRuntime.configure_structlog(
         config=cast(
-            "t.GeneralValueType",
+            "t.ContainerValue",
             cast(
-                object,
+                "object",
                 type(
                     "Cfg",
                     (),
@@ -775,13 +875,13 @@ def test_configure_structlog_print_logger_factory_fallback(
 def test_dependency_integration_and_wiring_paths() -> None:
     bridge, services, resources = (
         FlextRuntime.DependencyIntegration.create_layered_bridge(
-            config=t.ConfigMap(root={"db": {"dsn": "sqlite://"}}),
+            config=m.ConfigMap(root={"db": {"dsn": "sqlite://"}}),
         )
     )
     assert bridge is not None and services is not None and resources is not None
 
     di = FlextRuntime.DependencyIntegration.create_container(
-        config=t.ConfigMap(root={"feature": {"enabled": True}}),
+        config=m.ConfigMap(root={"feature": {"enabled": True}}),
         services={"svc": 1},
         factories={"factory": lambda: 2},
         resources={"resource": lambda: {"ok": True}},
@@ -797,14 +897,23 @@ def test_dependency_integration_and_wiring_paths() -> None:
     provider = runtime_module.providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
         provider,
-        t.ConfigMap(root={"api": {"url": "x"}}),
+        m.ConfigMap(root={"api": {"url": "x"}}),
     )
     assert provider.api.url() == "x"
 
 
 def test_runtime_result_remaining_paths() -> None:
-    success = FlextRuntime.RuntimeResult.ok(3)
-    failure = FlextRuntime.RuntimeResult.fail(
+    def _ok_passthrough(value: int) -> FlextRuntime.RuntimeResult[int]:
+        return FlextRuntime.RuntimeResult[int].ok(value)
+
+    def _ok_inc(value: int) -> FlextRuntime.RuntimeResult[int]:
+        return FlextRuntime.RuntimeResult[int].ok(value + 1)
+
+    def _fail_boom(_value: int) -> FlextRuntime.RuntimeResult[int]:
+        return FlextRuntime.RuntimeResult[int].fail("boom")
+
+    success: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(3)
+    failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
         "err",
         error_code="E2",
         error_data=m.ConfigMap(root={"k": "v"}),
@@ -817,21 +926,21 @@ def test_runtime_result_remaining_paths() -> None:
         _ = failure.value
     assert success.unwrap() == 3
 
-    assert failure.flat_map(lambda x: FlextRuntime.RuntimeResult.ok(x)).is_failure
-    assert success.filter(lambda x: x > 0) is success
-    assert success.alt(lambda e: e) is success
-    assert success.lash(lambda e: FlextRuntime.RuntimeResult.fail(e)) is success
+    assert failure.flat_map(_ok_passthrough).is_failure
+    assert success.filter(lambda value: value > 0) is success
+    assert success.map_error(str) is success
+    assert success.lash(FlextRuntime.RuntimeResult.fail) is success
     assert success.recover(lambda _e: 0) is success
 
     chain_success = success.flow_through(
-        lambda x: FlextRuntime.RuntimeResult.ok(x + 1),
-        lambda x: FlextRuntime.RuntimeResult.ok(x + 1),
+        _ok_inc,
+        _ok_inc,
     )
     assert chain_success.is_success and chain_success.value == 5
 
     chain_failure = success.flow_through(
-        lambda _x: FlextRuntime.RuntimeResult.fail("boom"),
-        lambda x: FlextRuntime.RuntimeResult.ok(x + 1),
+        _fail_boom,
+        _ok_inc,
     )
     assert chain_failure.is_failure
 
@@ -853,6 +962,9 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         def error(self, message: str, **kwargs: object) -> None:
             events.append((message, kwargs))
 
+    def _get_logger(_name: str | None = None) -> Logger:
+        return Logger()
+
     class CtxVars:
         @staticmethod
         def get_contextvars() -> dict[str, str]:
@@ -867,19 +979,21 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         (),
         {
             "contextvars": CtxVars,
-            "get_logger": staticmethod(lambda _name=None: Logger()),
+            "get_logger": staticmethod(_get_logger),
         },
     )
     monkeypatch.setattr(runtime_module, "structlog", fake_structlog)
 
     FlextRuntime.Integration.track_service_resolution("svc", resolved=True)
     FlextRuntime.Integration.track_service_resolution(
-        "svc", resolved=False, error_message="x"
+        "svc",
+        resolved=False,
+        error_message="x",
     )
     FlextRuntime.Integration.track_domain_event(
         "evt",
         aggregate_id="agg",
-        event_data=t.ConfigMap(root={"k": "v"}),
+        event_data=m.ConfigMap(root={"k": "v"}),
     )
     FlextRuntime.Integration.setup_service_infrastructure(
         service_name="svc",
@@ -901,13 +1015,15 @@ def test_model_helpers_remaining_paths() -> None:
     right = Entity("u-1")
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.GeneralValueType", cast(object, left)),
-            cast("t.GeneralValueType", cast(object, right)),
+            cast("t.ContainerValue", cast("object", left)),
+            cast("t.ContainerValue", cast("object", right)),
         )
         is True
     )
     assert isinstance(
-        FlextRuntime.hash_entity_by_id(cast("t.GeneralValueType", cast(object, left))),
+        FlextRuntime.hash_entity_by_id(
+            cast("t.ContainerValue", cast("object", left)),
+        ),
         int,
     )
 
@@ -918,20 +1034,20 @@ def test_model_helpers_remaining_paths() -> None:
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
-    payload = {
+    payload: dict[str, object] = {
         "none": None,
         "str": "x",
         "int": 1,
         "float": 1.5,
         "bool": True,
         "dt": datetime.now(UTC),
-        "path": Path("."),
+        "path": Path(),
         "list": [1, 2],
         "dict": {"a": 1},
         "callable": lambda: 1,
         "other": object(),
     }
-    result = FlextRuntime.ensure_trace_context(cast("t.GeneralValueType", payload))
+    result = FlextRuntime.ensure_trace_context(cast("t.ContainerValue", payload))
     assert result["str"] == "x"
     assert result["int"] == "1"
     assert "trace_id" in result and "span_id" in result

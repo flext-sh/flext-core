@@ -13,11 +13,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import count
-from typing import ClassVar
+from typing import ClassVar, override
 
-from flext_core import FlextModels, FlextResult, FlextService
-from flext_core.models import m
-
+from flext_core import FlextModels, FlextResult, FlextService, m, t
 from tests.constants import TestsFlextConstants
 
 # =========================================================================
@@ -64,6 +62,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str
 
+    @override
     def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         return FlextResult.ok(
@@ -81,6 +80,7 @@ class ValidatingService(FlextService[str]):
     value_input: str
     min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
@@ -95,6 +95,7 @@ class FailingService(FlextService[str]):
 
     error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Always fails."""
         return FlextResult.fail(self.error_message)
@@ -187,7 +188,7 @@ class GetUserServiceFactory:
         """Build a GetUserService instance."""
         n = next(cls._counter)
         actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
-        return GetUserService(user_id=actual_user_id)
+        return GetUserService.model_construct(user_id=actual_user_id)
 
     @classmethod
     def build_batch(cls, size: int) -> list[GetUserService]:
@@ -228,7 +229,10 @@ class ValidatingServiceFactory:
     ) -> ValidatingService:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
-        return ValidatingService(value_input=actual_value, min_length=min_length)
+        return ValidatingService.model_construct(
+            value_input=actual_value,
+            min_length=min_length,
+        )
 
     @classmethod
     def build_batch(cls, size: int) -> list[ValidatingService]:
@@ -251,7 +255,7 @@ class FailingServiceFactory:
         error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingService:
         """Build a FailingService instance."""
-        return FailingService(error_message=error_message)
+        return FailingService.model_construct(error_message=error_message)
 
     @classmethod
     def build_batch(cls, size: int) -> list[FailingService]:
@@ -269,7 +273,7 @@ class GetUserServiceAutoFactory:
         """Build a GetUserServiceAuto instance."""
         n = next(cls._counter)
         actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
-        return GetUserServiceAuto(user_id=actual_user_id)
+        return GetUserServiceAuto.model_construct(user_id=actual_user_id)
 
     @classmethod
     def build_batch(cls, size: int) -> list[GetUserServiceAuto]:
@@ -310,7 +314,10 @@ class ValidatingServiceAutoFactory:
     ) -> ValidatingServiceAuto:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
-        return ValidatingServiceAuto(value_input=actual_value, min_length=min_length)
+        return ValidatingServiceAuto.model_construct(
+            value_input=actual_value,
+            min_length=min_length,
+        )
 
     @classmethod
     def build_batch(cls, size: int) -> list[ValidatingServiceAuto]:
@@ -333,7 +340,7 @@ class FailingServiceAutoFactory:
         error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
-        return FailingServiceAuto(error_message=error_message)
+        return FailingServiceAuto.model_construct(error_message=error_message)
 
     @classmethod
     def build_batch(cls, size: int) -> list[FailingServiceAuto]:
@@ -447,7 +454,7 @@ class ServiceFactoryRegistry:
             case ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
             case _:
-                msg = f"Unknown service type: {case.service_type}"
+                msg = f"Unsupported service type: {case.service_type}"
                 raise ValueError(msg)
 
         return service
@@ -556,18 +563,18 @@ class GenericModelFactory:
     @staticmethod
     def operation_context(
         source: str | None = None,
-    ) -> m.Value.OperationContext:
+    ) -> m.OperationContext:
         """Create OperationContext value object."""
-        return m.Value.OperationContext(source=source)
+        return m.OperationContext(source=source)
 
     @staticmethod
     def service_snapshot(
         name: str,
         version: str | None = None,
         status: str = "active",
-    ) -> m.Snapshot.Service:
+    ) -> m.Service:
         """Create ServiceSnapshot."""
-        return m.Snapshot.Service(
+        return m.Service(
             name=name,
             version=version,
             status=status,
@@ -575,13 +582,13 @@ class GenericModelFactory:
 
     @staticmethod
     def configuration_snapshot(
-        config: dict[str, object] | None = None,
+        config: dict[str, t.ContainerValue] | None = None,
         source: str | None = None,
         environment: str | None = None,
-    ) -> m.Snapshot.Configuration:
+    ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
-        return m.Snapshot.Configuration(
-            config=config or {},
+        return m.Configuration(
+            config=m.Dict.model_validate(config or {}),
             source=source,
             environment=environment,
         )
@@ -591,11 +598,11 @@ class GenericModelFactory:
         *,
         healthy: bool = True,
         checks: dict[str, bool] | None = None,
-    ) -> m.Snapshot.Health:
+    ) -> m.Health:
         """Create HealthStatus."""
-        return m.Snapshot.Health(
+        return m.Health(
             healthy=healthy,
-            checks=checks or {},
+            checks=m.Dict.model_validate(checks or {}),
         )
 
     @staticmethod
@@ -603,18 +610,18 @@ class GenericModelFactory:
         success: int = 0,
         failure: int = 0,
         skipped: int = 0,
-    ) -> m.Progress.Operation:
+    ) -> m.Operation:
         """Create OperationProgress."""
-        return m.Progress.Operation(
+        return m.Operation(
             success_count=success,
             failure_count=failure,
             skipped_count=skipped,
         )
 
     @staticmethod
-    def conversion_progress() -> m.Progress.Conversion:
+    def conversion_progress() -> m.Conversion:
         """Create ConversionProgress."""
-        return m.Progress.Conversion()
+        return m.Conversion()
 
 
 # =========================================================================

@@ -28,7 +28,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import pytest
 
@@ -41,7 +40,6 @@ from flext_core import (
 )
 from tests.test_utils import assertion_helpers
 
-# Use FunctionalExternalService from conftest.py to avoid duplication
 from ..conftest import FunctionalExternalService
 
 pytestmark = [pytest.mark.integration]
@@ -59,7 +57,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, t.GeneralValueType],
+        sample_data: dict[str, t.ContainerValue],
     ) -> None:
         """Test comprehensive integration of core library exports.
 
@@ -90,13 +88,13 @@ class TestLibraryIntegration:
         assert len(entity_id) > 0  # Just verify it's a non-empty string
 
         # Act - Test FlextContainer service registration
-        register_result = clean_container.with_service("test_service", test_value)
+        register_result = clean_container.register("test_service", test_value)
 
         # Assert - Service registration success (fluent interface returns Self)
         assert register_result is clean_container
 
         # Act - Test service retrieval
-        service_result: FlextResult[t.GeneralValueType] = clean_container.get(
+        service_result = clean_container.get(
             "test_service",
         )
 
@@ -136,28 +134,27 @@ class TestLibraryIntegration:
         def create_result() -> str:
             # Use functional service processing - real behavior
             process_result = mock_external_service.process(input_data)
-            # Unwrap FlextResult to return t.GeneralValueType (str)
+            # Unwrap FlextResult to return t.ContainerValue (str)
             return process_result.unwrap_or("")
 
         # Act - Register factory in container
-        register_result = clean_container.with_factory(
-            "result_factory",
-            create_result,
+        register_result = clean_container.register(
+            "result_factory", create_result, kind="factory"
         )
 
         # Assert - Factory registration success (fluent interface returns Self)
         assert register_result is clean_container
 
         # Act - Get factory result from container
-        factory_result: FlextResult[t.GeneralValueType] = clean_container.get(
+        factory_result = clean_container.get(
             "result_factory",
         )
 
         # Assert - Factory retrieval success
         assert factory_result.is_success is True
 
-        # Act - Verify factory produced string value (t.GeneralValueType)
-        # Type narrowing: factory returns str, which is t.GeneralValueType
+        # Act - Verify factory produced string value (t.ContainerValue)
+        # Type narrowing: factory returns str, which is t.ContainerValue
         result_value = factory_result.value
         assert isinstance(result_value, str)
 

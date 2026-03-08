@@ -951,8 +951,11 @@ Layer 0: FlextConstants, t
 - Architecture Overview - System architecture
 - API Reference: FlextContainer - Complete container API
 - API Reference: FlextDispatcher - Dispatcher reliability API
-- **FLEXT CLAUDE.md**: Development workflow and patterns
+- **FLEXT AGENTS.md**: Development workflow and patterns
 
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_container.py` for 180+ test cases demonstrating container patterns and edge cases.
+
+```
+```

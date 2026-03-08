@@ -273,7 +273,7 @@ Layer 0: constants.py, typings.py, protocols.py
 
 **Verification**: ✅ ACCURATE
 
-- Layer hierarchy documented in CLAUDE.md and enforced
+- Layer hierarchy documented in AGENTS.md and enforced
 - Internal library code uses internal imports (correct)
 - External ecosystem MUST use root imports (documented)
 - No circular dependencies found
@@ -499,13 +499,13 @@ Checked all referenced guides:
 - ✅ Railway-Oriented Programming - EXISTS
 - ❌ Clean Architecture - MISSING (should create)
 - ❌ Development Standards - MISSING (should create)
-- ✅ FLEXT CLAUDE.md - EXISTS
+- ✅ FLEXT AGENTS.md - EXISTS
 
 **Recommendation**: Create missing guides referenced in "See Also" section.
 
 ### External References ✅
 
-- ✅ CLAUDE.md references - Accurate
+- ✅ AGENTS.md references - Accurate
 - ✅ Version reference (0.9.9) - Current
 
 ______________________________________________________________________
@@ -572,9 +572,11 @@ ______________________________________________________________________
    Example: Anti-Pattern 1 - See result.py:313 (ok method)
    ```
 
+````
+
 ### Medium Priority
 
-3. **Create Missing Referenced Guides**:
+1. **Create Missing Referenced Guides**:
 
    - `../architecture/clean-architecture.md` - Layer hierarchy
    - `../standards/development.md` - Coding standards
@@ -586,7 +588,7 @@ ______________________________________________________________________
 
 1. **Add Anti-Pattern Detection**:
 
-   ````markdown
+   ```markdown
    ## How to Detect These Anti-Patterns
 
    ### Anti-Pattern 1: Exceptions for Business Logic
@@ -594,12 +596,13 @@ ______________________________________________________________________
    ```bash
    # Search for business logic exceptions
    grep -r "raise ValueError\|raise KeyError" src/
-   ```
-   ````
+````
+
+```
 
 ### Low Priority
 
-6. **Expand Examples**: Add more complex real-world scenarios
+1. **Expand Examples**: Add more complex real-world scenarios
 1. **Add Metrics**: Include performance comparisons (exception vs FlextResult)
 1. **Add Migration Guide**: How to refactor code with anti-patterns
 
@@ -659,3 +662,4 @@ The Anti-Patterns and Best Practices guide is **EXCELLENT** and serves as a **go
 ______________________________________________________________________
 
 **Next**: Audit Pydantic v2 Patterns guide
+```

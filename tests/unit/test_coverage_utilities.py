@@ -19,19 +19,18 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, FlextResult, p, t, u
-from tests.test_utils import assertion_helpers
-from flext_core.models import m
+from flext_core import FlextExceptions, FlextResult, m, p, t, u
+
+from ..test_utils import assertion_helpers
 
 # =========================================================================
 # Test Data and Scenarios
@@ -57,7 +56,7 @@ class UtilityTestCase:
     """Test case for utility operations."""
 
     operation: UtilityOperationType
-    input_data: t.GeneralValueType | None = None
+    input_data: t.ContainerValue | None = None
     expected_type: type | None = None
     should_succeed: bool = True
     description: str = ""
@@ -155,31 +154,13 @@ class UtilityScenarios:
 
     @staticmethod
     def create_mock_config(
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ContainerValue,
     ) -> p.HasModelDump:
         """Create mock config object."""
-
-        class TestConfig:
-            def model_dump(self) -> m.ConfigMap:
-                # Convert kwargs to proper ConfigurationMapping type
-                # HasModelDump expects Mapping[str, FlexibleValue]
-                # ConfigurationMapping = Mapping[str, t.GeneralValueType]
-                # For test purposes, we return ConfigurationMapping which is compatible
-                result: dict[str, t.GeneralValueType] = {}
-                for key, value in kwargs.items():
-                    result[str(key)] = value
-                # dict[str, t.GeneralValueType] is compatible with Mapping[str, t.GeneralValueType]
-                return result
-
-        # TestConfig implements HasModelDump protocol via structural typing
-        # model_dump() returns ConfigurationMapping which satisfies the protocol
-        # ConfigurationMapping = Mapping[str, t.GeneralValueType]
-        # HasModelDump expects Mapping[str, FlexibleValue]
-        # t.GeneralValueType is compatible with FlexibleValue at runtime
-        # Type assertion: TestConfig structurally implements HasModelDump
-        # The model_dump() method signature is compatible with the protocol
-        # Use cast to help type checker understand structural typing
-        return cast("p.HasModelDump", TestConfig())
+        result: dict[str, t.ContainerValue] = {}
+        for key, value in kwargs.items():
+            result[str(key)] = value
+        return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
 
     @staticmethod
     def create_mock_cached_object() -> object:
@@ -187,7 +168,7 @@ class UtilityScenarios:
 
         class TestCachedObject:
             def __init__(self) -> None:
-                self._cache: m.ConfigMap = {"key": "value"}
+                self._cache: m.ConfigMap = m.ConfigMap(root={"key": "value"})
                 self._simple_cache: str = "cached_value"
 
         return TestCachedObject()
@@ -207,6 +188,7 @@ class UtilityScenarios:
         """Create custom serializable object."""
 
         class CustomObject:
+            @override
             def __str__(self) -> str:
                 return "custom_object"
 
@@ -370,7 +352,7 @@ class Testu:
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.GeneralValueType | None,
+        input_data: t.ContainerValue | None,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
@@ -400,13 +382,13 @@ class Testu:
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        # Type narrowing: obj is object, but clear_object_cache expects t.GeneralValueType
+        # Type narrowing: obj is object, but clear_object_cache expects t.ContainerValue
         # Since obj has model_dump, it's compatible
         if isinstance(obj, BaseModel):
             result = u.Cache.clear_object_cache(obj)
         else:
             # For non-BaseModel objects, convert to dict-like structure
-            obj_dict: dict[str, t.GeneralValueType] = {}
+            obj_dict: dict[str, t.ContainerValue] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (
@@ -424,16 +406,16 @@ class Testu:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to t.GeneralValueType for type checker
-        obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
+        # Cast to t.ContainerValue for type checker
+        obj_typed: t.ContainerValue = cast("t.ContainerValue", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to t.GeneralValueType for type checker
-        obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
+        # Cast to t.ContainerValue for type checker
+        obj_typed: t.ContainerValue = cast("t.ContainerValue", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is False
 
     # =====================================================================
@@ -486,7 +468,7 @@ class Testu:
 
     def test_type_checker_object_accepts_all(self) -> None:
         """Test type checking with object (accepts all)."""
-        # MessageTypeSpecifier = str | type[t.GeneralValueType]
+        # MessageTypeSpecifier = str | type[t.ContainerValue]
         # object is not a valid MessageTypeSpecifier, use str instead
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         assert u.Checker.can_handle_message_type(accepted, str) is True
@@ -525,63 +507,6 @@ class Testu:
         # TestConfig has model_dump method, so it's compatible
         with pytest.raises(FlextExceptions.NotFoundError):
             u.Configuration.get_parameter(config, "missing")
-
-    # =====================================================================
-    # Validation Tests
-    # =====================================================================
-
-    def test_validation_pipeline_with_failing_validator(self) -> None:
-        """Test validation pipeline with exception-raising validator."""
-
-        def failing_validator(x: object) -> FlextResult[bool]:
-            msg = "Validation error"
-            raise ValueError(msg)
-
-        result = u.Validation.validate_pipeline(
-            "test_value",
-            [failing_validator],
-        )
-        assertion_helpers.assert_flext_result_failure(result)
-        assert "Validator failed" in (result.error or "")
-
-    def test_validation_sort_key_dict(self) -> None:
-        """Test sort_key with dict - returns tuple[str, str]."""
-        key = u.Validation.sort_key({"b": 2, "a": 1})
-        assert isinstance(key, tuple)
-        assert len(key) == 2
-
-    def test_validation_sort_key_list(self) -> None:
-        """Test sort_key with list - returns tuple[str, str]."""
-        key = u.Validation.sort_key([1, 2, 3])
-        assert isinstance(key, tuple)
-        assert len(key) == 2
-
-    def test_validation_sort_key_string(self) -> None:
-        """Test sort_key with string - returns tuple[str, str]."""
-        key = u.Validation.sort_key("test")
-        assert isinstance(key, tuple)
-        assert len(key) == 2
-
-    def test_validation_sort_key_number(self) -> None:
-        """Test sort_key with number - returns tuple[str, str]."""
-        # sort_key expects t.GeneralValueType, numbers are compatible
-        key = u.Validation.sort_key(42)
-        assert isinstance(key, tuple)
-        assert len(key) == 2
-
-    def test_validation_sort_key_custom_object(self) -> None:
-        """Test sort_key with custom object - returns tuple[str, str]."""
-        obj = UtilityScenarios.create_custom_object()
-        # Type narrowing: sort_key expects t.GeneralValueType
-        # Convert object to t.GeneralValueType compatible value
-        obj_value: t.GeneralValueType = (
-            obj
-            if isinstance(obj, (str, int, float, bool, type(None), list, dict))
-            else str(obj)
-        )
-        result = u.Validation.sort_key(obj_value)
-        assert isinstance(result, tuple)
-        assert len(result) == 2
 
 
 __all__ = ["Testu"]

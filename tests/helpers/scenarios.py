@@ -13,8 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from flext_core.models import m
-from flext_core.typings import t
+from flext_core import m, t
 
 # =========================================================================
 # Scenario Dataclasses
@@ -27,10 +26,10 @@ class ValidationScenario:
 
     name: str
     validator_type: str  # "network", "string", "numeric"
-    input_value: t.GeneralValueType
+    input_value: t.ContainerValue
     input_params: dict[str, object] | None = None
     should_succeed: bool = True
-    expected_value: t.GeneralValueType | None = None
+    expected_value: t.ContainerValue | None = None
     expected_error_contains: str | None = None
     description: str | None = None
 
@@ -42,7 +41,7 @@ class ParserScenario:
     name: str
     parser_method: str
     input_data: str
-    expected_output: t.GeneralValueType | None = None
+    expected_output: t.ContainerValue | None = None
     should_succeed: bool = True
     error_contains: str | None = None
     description: str | None = None
@@ -698,7 +697,9 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_immediate_success",
             strategy="retry",
-            config={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            config=m.ConfigMap(
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            ),
             simulate_failures=0,
             expected_state="success",
             should_succeed=True,
@@ -707,7 +708,9 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_after_one_failure",
             strategy="retry",
-            config={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            config=m.ConfigMap(
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            ),
             simulate_failures=1,
             expected_state="success",
             should_succeed=True,
@@ -716,7 +719,9 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_exhausted",
             strategy="retry",
-            config={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+            config=m.ConfigMap(
+                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+            ),
             simulate_failures=5,
             expected_state="exhausted",
             should_succeed=False,
@@ -728,7 +733,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",
-            config={"failure_threshold": 5, "timeout_ms": 1000},
+            config=m.ConfigMap(root={"failure_threshold": 5, "timeout_ms": 1000}),
             simulate_failures=0,
             expected_state="closed",
             should_succeed=True,
@@ -737,7 +742,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_open_on_threshold",
             strategy="circuit_breaker",
-            config={"failure_threshold": 2, "timeout_ms": 1000},
+            config=m.ConfigMap(root={"failure_threshold": 2, "timeout_ms": 1000}),
             simulate_failures=3,
             expected_state="open",
             should_succeed=False,

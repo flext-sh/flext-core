@@ -11,31 +11,32 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, ClassVar, Self, cast
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from typing import Annotated, ClassVar, Literal, Self, TypeGuard, override
 
-from pydantic import Field, PrivateAttr, computed_field
+from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import c
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import FlextHandlers
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.service import FlextService
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    FlextContainer,
+    FlextDispatcher,
+    FlextHandlers,
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+)
 
-# Use centralized version from utilities
-_to_general_value_type = u.Cast.to_general_value_type
+type RegistrablePlugin = t.RegistrablePlugin
+type RegistryBindingKey = str | type[object]
 
 
-class FlextRegistry(FlextService[bool]):
+class FlextRegistry(s[bool]):
     """Application-layer registry for CQRS handlers.
 
-    Extends FlextService for automatic infrastructure (config, context,
+    Extends s for automatic infrastructure (config, context,
     container, logging) while providing handler registration and management
     capabilities. The registry pairs message types with handlers, enforces
     idempotent registration, and exposes batch operations that return ``r``
@@ -45,20 +46,17 @@ class FlextRegistry(FlextService[bool]):
     for actual handler registration and execution.
     """
 
-    class Summary(FlextModelsEntity.Value):
+    class Summary(m.Value):
         """Aggregated outcome for batch handler registration tracking.
 
         Tracks successful, skipped, and failed registrations with computed
         success indicators for batch handler operations.
         """
 
-        registered: Annotated[
-            list[m.HandlerRegistrationDetails],
-            Field(
-                default_factory=list,
-                description="Successfully registered handlers with registration details",
-            ),
-        ] = Field(default_factory=list)
+        registered: list[m.HandlerRegistrationDetails] = Field(
+            default_factory=lambda: list[m.HandlerRegistrationDetails](),
+            description="Successfully registered handlers with registration details.",
+        )
         skipped: Annotated[
             list[str],
             Field(
@@ -66,7 +64,10 @@ class FlextRegistry(FlextService[bool]):
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = Field(default_factory=list)
+        ] = Field(
+            default_factory=list,
+            description="Handler identifiers skipped because they were already registered.",
+        )
         errors: Annotated[
             list[str],
             Field(
@@ -74,17 +75,10 @@ class FlextRegistry(FlextService[bool]):
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = Field(default_factory=list)
-
-        @computed_field
-        def is_success(self) -> bool:
-            """Indicate whether the batch registration fully succeeded.
-
-            Returns:
-                True if no errors occurred, False otherwise
-
-            """
-            return not self.errors
+        ] = Field(
+            default_factory=list,
+            description="Error messages captured for failed handler registrations.",
+        )
 
         @computed_field
         def is_failure(self) -> bool:
@@ -97,52 +91,62 @@ class FlextRegistry(FlextService[bool]):
             return bool(self.errors)
 
         @computed_field
-        def successful_registrations(self) -> int:
-            """Number of successful registrations.
+        def is_success(self) -> bool:
+            """Indicate whether the batch registration fully succeeded.
 
             Returns:
-                Count of successfully registered handlers
-
-            """
-            return len(self.registered)
-
-        @computed_field
-        def failed_registrations(self) -> int:
-            """Number of failed registrations.
-
-            Returns:
-                Count of failed registration attempts
-
-            """
-            return len(self.errors)
-
-        def __bool__(self) -> bool:
-            """Boolean representation - False when there are errors, True otherwise.
-
-            Returns:
-                False if any errors occurred (is_failure), True if successful
+                True if no errors occurred, False otherwise
 
             """
             return not self.errors
 
     # Private attributes using Pydantic v2 PrivateAttr pattern
     _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
-    _registered_keys: set[str] = PrivateAttr(default_factory=set)
+    _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
 
     # Class-level storage declarations (created per-subclass via __init_subclass__)
     # These ClassVars are automatically created for each subclass to ensure
     # per-subclass isolation (FlextApiRegistry, FlextAuthRegistry, FlextLdifServer
     # each get their own storage, not inherited from parent)
     # Uses t.RegistrablePlugin for type-safe plugin storage (includes callables)
-    _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
+    _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    def __init_subclass__(cls, **kwargs: t.GeneralValueType) -> None:
+    def __init__(
+        self,
+        dispatcher: p.CommandBus | None = None,
+        **data: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
+    ) -> None:
+        """Initialize the registry with a CommandBus protocol instance.
+
+        Args:
+            dispatcher: CommandBus protocol instance (defaults to container DI resolution)
+            **data: Additional configuration passed to s
+
+        """
+        super().__init__(**data)
+
+        # Create dispatcher instance if not provided
+        if dispatcher is not None:
+            self._dispatcher = dispatcher
+        else:
+            container_value = FlextContainer.get_global().get("command_bus").unwrap()
+            if isinstance(container_value, FlextDispatcher):
+                self._dispatcher = container_value
+            else:
+                msg = f"Expected CommandBus, got {type(container_value).__name__}"
+                raise TypeError(msg)
+
+    def __init_subclass__(
+        cls,
+        **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
+    ) -> None:
         """Auto-create per-subclass class-level storage.
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
         This enables auto-discovery patterns where plugins registered via
-        register_class_plugin() are visible across all instances of that subclass.
+        register_plugin(..., scope="class") are visible across all instances of that
+        subclass.
         """
         # Filter kwargs - BaseModel.__init_subclass__ expects specific types
         # but we accept broader types for registry customization
@@ -151,34 +155,6 @@ class FlextRegistry(FlextService[bool]):
         cls._class_plugin_storage = {}
         cls._class_registered_keys = set()
 
-    def __init__(
-        self,
-        dispatcher: p.CommandBus | FlextDispatcher | None = None,
-        **data: t.GeneralValueType,
-    ) -> None:
-        """Initialize the registry with a CommandBus protocol instance.
-
-        Args:
-            dispatcher: CommandBus or FlextDispatcher instance (defaults to creating FlextDispatcher)
-            **data: Additional configuration passed to FlextService
-
-        """
-        super().__init__(**data)
-
-        # Create dispatcher instance if not provided
-        self._dispatcher = dispatcher if dispatcher is not None else FlextDispatcher()
-
-    def execute(self) -> r[bool]:
-        """Validate registry is properly initialized.
-
-        Returns:
-            r[bool]: Success if dispatcher is configured, failure otherwise.
-
-        """
-        if not self._dispatcher:
-            return r[bool].fail("Dispatcher not configured")
-        return r[bool].ok(value=True)
-
     # ------------------------------------------------------------------
     # Factory Method with Auto-Discovery
     # ------------------------------------------------------------------
@@ -186,7 +162,7 @@ class FlextRegistry(FlextService[bool]):
     @classmethod
     def create(
         cls,
-        dispatcher: p.CommandBus | FlextDispatcher | None = None,
+        dispatcher: p.CommandBus | None = None,
         *,
         auto_discover_handlers: bool = False,
     ) -> Self:
@@ -233,16 +209,54 @@ class FlextRegistry(FlextService[bool]):
                             # Deduplication happens in register_handler() via _registered_keys
                             # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
-                            _ = instance.register_handler(handler_typed)
+                            if FlextRegistry._is_protocol_handler(handler_typed):
+                                _ = instance.register_handler(handler_typed)
 
         return instance
 
     @staticmethod
+    def _add_registration_error(
+        key: str,
+        error: str,
+        summary: FlextRegistry.Summary,
+    ) -> str:
+        """Add registration error to summary.
+
+        Returns:
+            str: The error message that was added.
+
+        """
+        # When is_failure is True, error is never None (fail() converts None to "")
+        # Use error or fallback message
+        summary.errors.append(error or f"Failed to register handler '{key}'")
+        return error
+
+    @staticmethod
+    def _is_protocol_handler(
+        value: object,
+    ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
+        return bool(
+            hasattr(value, "handle")
+            and hasattr(value, "can_handle")
+            and hasattr(value, "_protocol_name")
+        )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _resolve_handler_key(
+        handler: p.Handler[t.ContainerValue, t.ContainerValue],
+    ) -> str:
+        """Resolve registration key from handler."""
+        handler_id = getattr(handler, "handler_id", None)
+        return str(handler_id) if handler_id else handler.__class__.__name__
+
+    @staticmethod
     def _safe_get_handler_mode(
-        value: t.GeneralValueType,
+        value: t.Scalar | BaseModel,
     ) -> c.Cqrs.HandlerType:
-        """Safely extract and validate handler mode from t.GeneralValueType value."""
-        # Use u.parse() for cleaner enum parsing
+        """Safely extract and validate handler mode from value."""
         parse_result = u.parse(
             value,
             c.Cqrs.HandlerType,
@@ -257,15 +271,13 @@ class FlextRegistry(FlextService[bool]):
 
     @staticmethod
     def _safe_get_status(
-        value: t.GeneralValueType,
+        value: c.Cqrs.RegistrationStatus | str,
     ) -> c.Cqrs.CommonStatus:
-        """Safely extract and validate status from t.GeneralValueType value."""
-        # Handle special case: RegistrationStatus.ACTIVE -> CommonStatus.RUNNING
+        """Safely extract and validate status from c.Cqrs.RegistrationStatus value."""
         if value == c.Cqrs.RegistrationStatus.ACTIVE:
             return c.Cqrs.CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.INACTIVE:
             return c.Cqrs.CommonStatus.FAILED
-        # Use u.parse() for cleaner enum parsing
         parse_result = u.parse(
             value,
             c.Cqrs.CommonStatus,
@@ -276,6 +288,620 @@ class FlextRegistry(FlextService[bool]):
             parse_result.value
             if parse_result.is_success
             else c.Cqrs.CommonStatus.RUNNING
+        )
+
+    @staticmethod
+    def _to_dispatcher_handler(
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue],
+    ) -> t.HandlerLike:
+        """Convert handler to dispatcher-compatible callable."""
+        # Wrap handler.handle() to return ContainerValue | None
+        handler_ref = handler_for_dispatch
+
+        def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
+            if args:
+                result = handler_ref.handle(args[0])
+                return result.value if result.is_success else None
+            return None
+
+        # Preserve message_type for route discovery via setattr
+        message_type_attr = getattr(handler_for_dispatch, "message_type", None)
+        if message_type_attr is not None:
+            setattr(_dispatch_wrapper, "message_type", message_type_attr)
+        event_type_attr = getattr(handler_for_dispatch, "event_type", None)
+        if event_type_attr is not None:
+            setattr(_dispatch_wrapper, "event_type", event_type_attr)
+        can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
+        if can_handle_attr is not None:
+            setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
+        return _dispatch_wrapper  # type: ignore[return-value]
+
+    @override
+    def execute(self) -> r[bool]:  # pyrefly: ignore[bad-override]
+        """Validate registry is properly initialized.
+
+        Returns:
+            r[bool]: Success if dispatcher is configured, failure otherwise.
+
+        """
+        if not self._dispatcher:
+            return r[bool].fail("Dispatcher not configured")
+        return r[bool].ok(value=True)
+
+    def get_plugin(
+        self,
+        category: str,
+        name: str,
+        *,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[t.RegisterableService | t.RegistrablePlugin]:
+        """Get a registered plugin by category and name.
+
+        Returns:
+            Success with plugin (RegisterableService) or failure if not found.
+
+        """
+        key = f"{category}::{name}"
+        if scope == "instance":
+            if key not in self._registered_keys:
+                available = [
+                    k.split("::")[1]
+                    for k in self._registered_keys
+                    if k.startswith(f"{category}::")
+                ]
+                return r[t.RegisterableService | t.RegistrablePlugin].fail(
+                    f"{category} '{name}' not found. Available: {available}",
+                )
+
+            raw_result = self.container.get(key)
+            if raw_result.is_failure:
+                return r[t.RegisterableService | t.RegistrablePlugin].fail(
+                    f"Failed to retrieve {category} '{name}': {raw_result.error}",
+                )
+            return r[t.RegisterableService | t.RegistrablePlugin].ok(raw_result.value)
+
+        cls = type(self)
+        if key not in cls._class_registered_keys:
+            available = [
+                k.split("::")[1]
+                for k in cls._class_registered_keys
+                if k.startswith(f"{category}::")
+            ]
+            return r[t.RegisterableService | t.RegistrablePlugin].fail(
+                f"{category} '{name}' not found. Available: {available}",
+            )
+        return r[t.RegisterableService | t.RegistrablePlugin].ok(
+            cls._class_plugin_storage[key]
+        )
+
+    def list_plugins(
+        self,
+        category: str,
+        *,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[list[str]]:
+        """List all plugins in a category.
+
+        Args:
+            category: Plugin category to list
+
+        Returns:
+            r[list[str]]: Success with list of plugin names.
+
+        """
+        keys = self._registered_keys
+        if scope == "class":
+            keys = self._class_registered_keys
+        plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
+        return r[list[str]].ok(plugins)
+
+    def register(
+        self,
+        name: str,
+        service: RegistrablePlugin,
+        metadata: m.ConfigMap | m.Metadata | None = None,
+    ) -> r[bool]:
+        """Register a service component with optional metadata.
+
+        Delegates to the container's register method for dependency injection.
+        Metadata is currently stored for future use but not actively used.
+
+        Args:
+            name: Service name for later retrieval
+            service: Service instance to register
+            metadata: Optional metadata (dict or m.Metadata)
+
+        Returns:
+            r[bool]: Success (True) if registered or failure with error details.
+
+        """
+        # Normalize metadata to dict for internal use
+        validated_metadata: m.ConfigMap | None = None
+        if metadata is not None:
+            raw_metadata: object
+            if isinstance(metadata, m.Metadata):
+                raw_metadata = metadata.attributes
+            else:
+                raw_metadata = metadata
+            validated_metadata = m.ConfigMap.model_validate(
+                raw_metadata,
+            )
+
+        # Store metadata if provided (for future use)
+        if validated_metadata is not None:
+            metadata_dict = m.ConfigMap.model_validate(validated_metadata)
+            metadata_keys_str: str = ",".join(metadata_dict.keys())
+            self.logger.debug(
+                "Registering service with metadata",
+                operation="with_service",
+                service_name=name,
+                has_metadata=True,
+                metadata_keys=metadata_keys_str,
+            )
+
+        # Delegate to container (x.container returns FlextContainer)
+        # Use with_service for fluent API compatibility (returns Self)
+        try:
+            # service is already valid registerable type (from method signature)
+            # with_service returns Self for fluent chaining, but we don't need the return value
+            _ = self.container.register(name, service)
+            return r[bool].ok(value=True)
+        except ValueError as e:
+            error_str = str(e)
+            return r[bool].fail(error_str)
+
+    def register_bindings(
+        self,
+        bindings: Mapping[
+            RegistryBindingKey,
+            p.Handler[t.ContainerValue, t.ContainerValue],
+        ],
+    ) -> r[FlextRegistry.Summary]:
+        """Register message-to-handler bindings.
+
+        Args:
+            bindings: Map of MessageType -> HandlerInstance
+
+        Returns:
+            r[FlextRegistry.Summary]: Batch registration summary
+
+        """
+        summary = FlextRegistry.Summary()
+
+        # This implementation delegates to dispatcher's register_handler for each binding
+        # But wait - register_handler takes (request, handler) or just (handler) if it's decorated
+        # FlextRegistry.register_handler only takes (handler).
+        # It seems FlextRegistry assumes handlers are self-describing (decorated) or we need to use dispatcher directly.
+
+        # If we look at dispatcher.register_handler signature:
+        # def register_handler(self, request: ..., handler: ... = None)
+
+        for message_type, handler in bindings.items():
+            message_type_name = getattr(message_type, "__name__", str(message_type))
+            key = f"binding::{message_type_name}::{handler.__class__.__name__}"
+
+            # We use the dispatcher directly because registry's register_handler
+            # currently only supports single-argument (self-describing) handlers
+            # Use strict type checking for message_type (it's a type)
+            try:
+                # Dispatcher return type is r[m.HandlerRegistrationResult]
+                # We need to adapt it to Registry logic
+                try:
+                    m.HandlerRegistrationDetails.model_validate({
+                        "registration_id": key,
+                        "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                        "timestamp": "",
+                        "status": c.Cqrs.CommonStatus.RUNNING,
+                    })
+                except ValidationError:
+                    _ = self._add_registration_error(
+                        key,
+                        "Handler validation failed",
+                        summary,
+                    )
+                    continue
+                handler_for_dispatch: p.Handler[
+                    t.ContainerValue,
+                    t.ContainerValue,
+                ] = handler
+                reg_result: r[m.HandlerRegistrationResult]
+                if isinstance(self._dispatcher, FlextDispatcher):
+                    dispatcher_handler = FlextRegistry._to_dispatcher_handler(
+                        handler_for_dispatch,
+                    )
+                    # Handlers MUST self-describe via p.Handler protocol
+                    if (
+                        not getattr(dispatcher_handler, "message_type", None)
+                        and not getattr(dispatcher_handler, "event_type", None)
+                        and not getattr(dispatcher_handler, "query_type", None)
+                        and not getattr(dispatcher_handler, "command_type", None)
+                    ):
+                        handler_name = getattr(
+                            dispatcher_handler,
+                            "__name__",
+                            dispatcher_handler.__class__.__name__,
+                        )
+                        msg = (
+                            f"Handler {handler_name} must implement p.Handler with self-describing "
+                            f"message_type, event_type, query_type, or command_type attribute"
+                        )
+                        raise TypeError(msg)
+
+                    raw_result = self._dispatcher.register_handler(
+                        dispatcher_handler,
+                    )
+                    if raw_result.is_failure:
+                        reg_result = r[m.HandlerRegistrationResult].fail(
+                            raw_result.error or "Unknown error",
+                        )
+                    else:
+                        reg_result = r[m.HandlerRegistrationResult].ok(
+                            m.HandlerRegistrationResult(
+                                handler_name=key,
+                                status=c.Cqrs.CommonStatus.RUNNING,
+                                mode="explicit",
+                            ),
+                        )
+                else:
+                    # Protocol path: handler must self-describe
+                    if not getattr(handler_for_dispatch, "message_type", None):
+                        handler_name = getattr(
+                            handler_for_dispatch,
+                            "__name__",
+                            handler_for_dispatch.__class__.__name__,
+                        )
+                        msg = (
+                            f"Handler {handler_name} must implement p.Handler with self-describing "
+                            f"message_type attribute for protocol-based registration"
+                        )
+                        raise TypeError(msg)
+                    handler_callable = FlextRegistry._to_dispatcher_handler(
+                        handler_for_dispatch
+                    )
+                    protocol_result = self._dispatcher.register_handler(
+                        handler_callable,
+                    )
+                    if protocol_result.is_failure:
+                        reg_result = r[m.HandlerRegistrationResult].fail(
+                            protocol_result.error or "Unknown error",
+                        )
+                    else:
+                        reg_result = r[m.HandlerRegistrationResult].ok(
+                            m.HandlerRegistrationResult(
+                                handler_name=key,
+                                status=c.Cqrs.CommonStatus.RUNNING,
+                                mode="explicit",
+                            ),
+                        )
+
+                if reg_result.is_success:
+                    # Convert dispatcher result to Registry details
+                    val = reg_result.value
+                    details = self._create_registration_details(
+                        m.HandlerRegistrationResult.model_validate(val),
+                        key,
+                    )
+                    self._add_successful_registration(key, details, summary)
+                else:
+                    self._add_registration_error(
+                        key,
+                        reg_result.error or "Unknown error",
+                        summary,
+                    )
+            except Exception as e:
+                self._add_registration_error(key, str(e), summary)
+
+        return self._finalize_summary(summary)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def register_handler(
+        self,
+        handler: p.Handler[t.ContainerValue, t.ContainerValue],
+    ) -> r[m.HandlerRegistrationDetails]:
+        """Register an already-constructed handler instance.
+
+        Re-registration is ignored and treated as success to guarantee
+        idempotent behaviour when multiple packages attempt to register
+        the same handler.
+
+        Returns:
+            r[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
+
+        """
+        try:
+            m.HandlerRegistrationDetails.model_validate({
+                "registration_id": handler.__class__.__name__,
+                "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                "timestamp": "",
+                "status": c.Cqrs.CommonStatus.RUNNING,
+            })
+        except ValidationError:
+            return r[m.HandlerRegistrationDetails].fail(
+                "Handler validation failed",
+            )
+
+        # Propagate context for distributed tracing
+        handler_name = handler.__class__.__name__
+        self._propagate_context(f"register_handler_{handler_name}")
+
+        self.logger.debug(
+            "Starting handler registration",
+            operation="register_handler",
+            handler_name=handler_name,
+            handler_type=handler.__class__.__name__,
+        )
+
+        key = FlextRegistry._resolve_handler_key(handler)
+        if key in self._registered_keys:
+            self.logger.debug(
+                "Handler already registered, returning existing registration",
+                operation="register_handler",
+                handler_name=handler_name,
+                handler_key=key,
+            )
+            # Return successful registration details for idempotent registration
+            return r[m.HandlerRegistrationDetails].ok(
+                m.HandlerRegistrationDetails(
+                    registration_id=key,
+                    handler_mode=c.Cqrs.HandlerType.COMMAND,
+                    timestamp="",  # Will be set by model if needed
+                    status=c.Cqrs.CommonStatus.RUNNING,
+                ),
+            )
+
+        # Handler is already the correct type
+        self.logger.debug(
+            "Registering handler with dispatcher",
+            operation="register_handler",
+            handler_name=handler_name,
+            handler_key=key,
+        )
+        # register_handler returns r[m.HandlerRegistrationResult]
+        # register_handler accepts t.ContainerValue | BaseModel, but h works via runtime check
+        # Type narrowing: handler is FlextHandlers which is compatible with t.ContainerValue
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = handler
+        registration_result: r[m.HandlerRegistrationResult]
+        if isinstance(self._dispatcher, FlextDispatcher):
+            dispatcher_handler = FlextRegistry._to_dispatcher_handler(
+                handler_for_dispatch,
+            )
+            # Use self-describing standard dispatcher handler
+            raw_result = self._dispatcher.register_handler(
+                dispatcher_handler,
+            )
+            if raw_result.is_failure:
+                registration_result = r[m.HandlerRegistrationResult].fail(
+                    raw_result.error or "Unknown error",
+                )
+            else:
+                registration_result = r[m.HandlerRegistrationResult].ok(
+                    m.HandlerRegistrationResult(
+                        handler_name=key,
+                        status=c.Cqrs.CommonStatus.RUNNING,
+                        mode="explicit",
+                    ),
+                )
+        else:
+            handler_callable = FlextRegistry._to_dispatcher_handler(
+                handler_for_dispatch
+            )
+            protocol_result = self._dispatcher.register_handler(
+                handler_callable,
+            )
+            if protocol_result.is_failure:
+                registration_result = r[m.HandlerRegistrationResult].fail(
+                    protocol_result.error or "Unknown error",
+                )
+            else:
+                protocol_value = protocol_result.value
+                if isinstance(protocol_value, m.HandlerRegistrationResult):
+                    normalized_result = protocol_value
+                elif isinstance(protocol_value, BaseModel):
+                    normalized_result = m.HandlerRegistrationResult.model_validate(
+                        protocol_value.model_dump(),
+                    )
+                else:
+                    normalized_result = m.HandlerRegistrationResult.model_validate(
+                        protocol_value,
+                    )
+                registration_result = r[m.HandlerRegistrationResult].ok(
+                    normalized_result,
+                )
+        if registration_result.is_success:
+            # Convert model result to RegistrationDetails
+            reg_result = registration_result.value
+            reg_details = self._create_registration_details(
+                m.HandlerRegistrationResult.model_validate(reg_result),
+                key,
+            )
+            if not reg_details:
+                reg_details = m.HandlerRegistrationDetails(
+                    registration_id=key,
+                    handler_mode=c.Cqrs.HandlerType.COMMAND,
+                    timestamp="",
+                    status=c.Cqrs.CommonStatus.RUNNING,
+                )
+
+            self._registered_keys.add(key)
+            self.logger.debug(
+                "Handler registered successfully",
+                operation="register_handler",
+                handler_name=handler_name,
+                handler_key=key,
+            )
+            return r[m.HandlerRegistrationDetails].ok(reg_details)
+
+        error_msg = registration_result.error
+        self.logger.warning(
+            "Handler registration failed",
+            operation="register_handler",
+            handler_name=handler_name,
+            handler_key=key,
+            error=error_msg or "",
+            consequence="Handler will not be available for dispatch",
+        )
+        # Use error property for type-safe str
+        error_str = registration_result.error or "Unknown error"
+        return r[m.HandlerRegistrationDetails].fail(error_str)
+
+    def register_handlers(
+        self,
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
+    ) -> r[FlextRegistry.Summary]:
+        """Register multiple handlers in batch.
+
+        Args:
+            handlers: Sequence of handler instances to register
+
+        Returns:
+            r[FlextRegistry.Summary]: Batch registration summary
+
+        """
+        summary = FlextRegistry.Summary()
+        for handler in handlers:
+            # We must determine a key BEFORE registration to track it properly
+            # The register_handler method recalculates this, but we need it here for consistent logging
+            # However, simpler to let register_handler do the work and check result
+            result = self.register_handler(handler)
+
+            # Extract key/ID from handler for tracking
+            key = FlextRegistry._resolve_handler_key(handler)
+
+            if result.is_success:
+                # Type narrow: cast guarantees concrete type for Pyrefly
+                registration_details = result.value
+                self._add_successful_registration(key, registration_details, summary)
+            else:
+                self._add_registration_error(
+                    key,
+                    result.error or "Unknown error",
+                    summary,
+                )
+
+        return self._finalize_summary(summary)
+
+    # ------------------------------------------------------------------
+    # Generic Plugin Registry API
+    # ------------------------------------------------------------------
+    def register_plugin(
+        self,
+        category: str,
+        name: str,
+        plugin: RegistrablePlugin,
+        *,
+        validate: Callable[
+            [t.RegistrablePlugin],
+            r[bool],
+        ]
+        | None = None,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[bool]:
+        """Register a plugin with optional validation.
+
+        Generic plugin registration that can be used by subclasses for
+        specialized registries (protocols, schemas, transports, auth, etc.)
+
+        Args:
+            category: Plugin category (e.g., "protocols", "validators")
+            name: Plugin name within the category
+            plugin: Plugin instance to register
+            validate: Optional validation callable returning r[bool]
+
+        Returns:
+            r[bool]: Success if registered, failure with error details.
+
+        """
+        if not name:
+            return r[bool].fail(f"{category} name cannot be empty")
+
+        if validate:
+            try:
+                validation_result = validate(plugin)
+                if (
+                    hasattr(validation_result, "is_failure")
+                    and validation_result.is_failure
+                ):
+                    return r[bool].fail(f"Validation failed: {validation_result.error}")
+            except (TypeError, ValueError, RuntimeError) as exc:
+                return r[bool].fail(f"Validation error: {exc}")
+
+        key = f"{category}::{name}"
+        if scope == "instance":
+            if key in self._registered_keys:
+                self.logger.debug(
+                    "Plugin already registered (idempotent)",
+                    category=category,
+                    name=name,
+                )
+                return r[bool].ok(value=True)
+
+            self.container.register(key, plugin)
+            self._registered_keys.add(key)
+            self.logger.info("Registered %s: %s", category, name)
+            return r[bool].ok(value=True)
+
+        cls = type(self)
+        if key in cls._class_registered_keys:
+            self.logger.debug(
+                "Class plugin already registered (idempotent)",
+                category=category,
+                name=name,
+            )
+            return r[bool].ok(value=True)
+
+        cls._class_plugin_storage[key] = plugin
+        cls._class_registered_keys.add(key)
+        self.logger.info("Registered class plugin %s: %s", category, name)
+        return r[bool].ok(value=True)
+
+    def unregister_plugin(
+        self,
+        category: str,
+        name: str,
+        *,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[bool]:
+        """Unregister a plugin.
+
+        Args:
+            category: Plugin category
+            name: Plugin name
+
+        Returns:
+            r[bool]: Success if unregistered, failure if not found.
+
+        """
+        key = f"{category}::{name}"
+        if scope == "instance":
+            if key not in self._registered_keys:
+                return r[bool].fail(f"{category} '{name}' not registered")
+
+            self._registered_keys.discard(key)
+            self.logger.info("Unregistered %s: %s", category, name)
+            return r[bool].ok(value=True)
+
+        cls = type(self)
+        if key not in cls._class_registered_keys:
+            return r[bool].fail(f"{category} '{name}' not registered")
+
+        del cls._class_plugin_storage[key]
+        cls._class_registered_keys.discard(key)
+        self.logger.info("Unregistered class plugin %s: %s", category, name)
+        return r[bool].ok(value=True)
+
+    def _add_successful_registration(
+        self,
+        key: str,
+        registration: m.HandlerRegistrationDetails,
+        summary: FlextRegistry.Summary,
+    ) -> None:
+        """Add successful registration to summary."""
+        self._registered_keys.add(key)
+        summary.registered.append(
+            registration,
         )
 
     def _create_registration_details(
@@ -313,143 +939,6 @@ class FlextRegistry(FlextService[bool]):
             status=self._safe_get_status(status),
         )
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-    def register_handler(
-        self,
-        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType]
-        | t.HandlerType
-        | None,
-    ) -> r[m.HandlerRegistrationDetails]:
-        """Register an already-constructed handler instance.
-
-        Re-registration is ignored and treated as success to guarantee
-        idempotent behaviour when multiple packages attempt to register
-        the same handler.
-
-        Returns:
-            r[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
-
-        """
-        # Propagate context for distributed tracing
-        handler_name = handler.__class__.__name__ if handler else "unknown"
-        self._propagate_context(f"register_handler_{handler_name}")
-
-        self.logger.debug(
-            "Starting handler registration",
-            operation="register_handler",
-            handler_name=handler_name,
-            handler_type=type(handler).__name__ if handler else "None",
-        )
-
-        # Validate handler is not None
-        if handler is None:
-            self.logger.error(
-                "FAILED: Handler is None - REGISTRATION ABORTED",
-                operation="register_handler",
-                consequence="Cannot register None handler",
-                resolution_hint="Provide a valid handler instance",
-            )
-            return r[m.HandlerRegistrationDetails].fail(
-                "Handler cannot be None",
-            )
-
-        key = FlextRegistry._resolve_handler_key(handler)
-        if key in self._registered_keys:
-            self.logger.debug(
-                "Handler already registered, returning existing registration",
-                operation="register_handler",
-                handler_name=handler_name,
-                handler_key=key,
-            )
-            # Return successful registration details for idempotent registration
-            return r[m.HandlerRegistrationDetails].ok(
-                m.HandlerRegistrationDetails(
-                    registration_id=key,
-                    handler_mode=c.Cqrs.HandlerType.COMMAND,
-                    timestamp="",  # Will be set by model if needed
-                    status=c.Cqrs.CommonStatus.RUNNING,
-                ),
-            )
-
-        # Handler is already the correct type
-        self.logger.debug(
-            "Registering handler with dispatcher",
-            operation="register_handler",
-            handler_name=handler_name,
-            handler_key=key,
-        )
-        # register_handler returns r[m.HandlerRegistrationResult]
-        # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
-        # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
-        registration_result = self._dispatcher.register_handler(
-            handler,
-        )
-        if registration_result.is_success:
-            # Convert model result to RegistrationDetails
-            reg_result = cast("m.HandlerRegistrationResult", registration_result.value)
-            reg_details = self._create_registration_details(reg_result, key)
-            if not reg_details:
-                # Fallback: create minimal registration details
-                reg_details = m.HandlerRegistrationDetails(
-                    registration_id=key,
-                    handler_mode=c.Cqrs.HandlerType.COMMAND,
-                    timestamp="",
-                    status=c.Cqrs.CommonStatus.RUNNING,
-                )
-
-            self._registered_keys.add(key)
-            self.logger.debug(
-                "Handler registered successfully",
-                operation="register_handler",
-                handler_name=handler_name,
-                handler_key=key,
-            )
-            return r[m.HandlerRegistrationDetails].ok(reg_details)
-
-        error_msg = registration_result.error
-        self.logger.warning(
-            "Handler registration failed",
-            operation="register_handler",
-            handler_name=handler_name,
-            handler_key=key,
-            error=error_msg,
-            consequence="Handler will not be available for dispatch",
-        )
-        # Use error property for type-safe str
-        error_str = registration_result.error or "Unknown error"
-        return r[m.HandlerRegistrationDetails].fail(error_str)
-
-    def _add_successful_registration(
-        self,
-        key: str,
-        registration: m.HandlerRegistrationDetails,
-        summary: FlextRegistry.Summary,
-    ) -> None:
-        """Add successful registration to summary."""
-        self._registered_keys.add(key)
-        summary.registered.append(
-            registration,
-        )
-
-    @staticmethod
-    def _add_registration_error(
-        key: str,
-        error: str,
-        summary: FlextRegistry.Summary,
-    ) -> str:
-        """Add registration error to summary.
-
-        Returns:
-            str: The error message that was added.
-
-        """
-        # When is_failure is True, error is never None (fail() converts None to "")
-        # Use error or fallback message
-        summary.errors.append(error or f"Failed to register handler '{key}'")
-        return error
-
     def _finalize_summary(
         self,
         summary: FlextRegistry.Summary,
@@ -466,448 +955,9 @@ class FlextRegistry(FlextService[bool]):
             )
         return r[FlextRegistry.Summary].ok(summary)
 
-    def register_handlers(
-        self,
-        handlers: Sequence[
-            FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType
-        ],
-    ) -> r[FlextRegistry.Summary]:
-        """Register multiple handlers in batch.
-
-        Args:
-            handlers: Sequence of handler instances to register
-
-        Returns:
-            r[FlextRegistry.Summary]: Batch registration summary
-
-        """
-        summary = FlextRegistry.Summary()
-        for handler in handlers:
-            # We must determine a key BEFORE registration to track it properly
-            # The register_handler method recalculates this, but we need it here for consistent logging
-            # However, simpler to let register_handler do the work and check result
-            result = self.register_handler(handler)
-
-            # Extract key/ID from handler for tracking
-            key = FlextRegistry._resolve_handler_key(handler)
-
-            if result.is_success:
-                # Use value directly (it's HandlerRegistrationDetails)
-                self._add_successful_registration(key, result.value, summary)
-            else:
-                self._add_registration_error(
-                    key, result.error or "Unknown error", summary
-                )
-
-        return self._finalize_summary(summary)
-
-    def register_bindings(
-        self,
-        bindings: Mapping[
-            type[t.GeneralValueType],
-            FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType,
-        ],
-    ) -> r[FlextRegistry.Summary]:
-        """Register message-to-handler bindings.
-
-        Args:
-            bindings: Map of MessageType -> HandlerInstance
-
-        Returns:
-            r[FlextRegistry.Summary]: Batch registration summary
-
-        """
-        summary = FlextRegistry.Summary()
-
-        # This implementation delegates to dispatcher's register_handler for each binding
-        # But wait - register_handler takes (request, handler) or just (handler) if it's decorated
-        # FlextRegistry.register_handler only takes (handler).
-        # It seems FlextRegistry assumes handlers are self-describing (decorated) or we need to use dispatcher directly.
-
-        # If we look at dispatcher.register_handler signature:
-        # def register_handler(self, request: ..., handler: ... = None)
-
-        for message_type, handler in bindings.items():
-            key = f"binding::{message_type.__name__}::{handler.__class__.__name__}"
-
-            # We use the dispatcher directly because registry's register_handler
-            # currently only supports single-argument (self-describing) handlers
-            # Use strict type checking for message_type (it's a type)
-            try:
-                # Dispatcher return type is r[m.HandlerRegistrationResult]
-                # We need to adapt it to Registry logic
-                reg_result = self._dispatcher.register_handler(
-                    message_type,
-                    cast("t.GeneralValueType", handler),
-                )
-
-                if reg_result.is_success:
-                    # Convert dispatcher result to Registry details
-                    val = cast("m.HandlerRegistrationResult", reg_result.value)
-                    details = self._create_registration_details(val, key)
-                    self._add_successful_registration(key, details, summary)
-                else:
-                    self._add_registration_error(
-                        key, reg_result.error or "Unknown error", summary
-                    )
-            except Exception as e:
-                self._add_registration_error(key, str(e), summary)
-
-        return self._finalize_summary(summary)
-
-    # ------------------------------------------------------------------
-    # Generic Plugin Registry API
-    # ------------------------------------------------------------------
-    def register_plugin(
-        self,
-        category: str,
-        name: str,
-        plugin: t.GeneralValueType,
-        *,
-        validate: Callable[[t.GeneralValueType], r[bool]] | None = None,
-    ) -> r[bool]:
-        """Register a plugin with optional validation.
-
-        Generic plugin registration that can be used by subclasses for
-        specialized registries (protocols, schemas, transports, auth, etc.)
-
-        Args:
-            category: Plugin category (e.g., "protocols", "validators")
-            name: Plugin name within the category
-            plugin: Plugin instance to register
-            validate: Optional validation callable returning r[bool]
-
-        Returns:
-            r[bool]: Success if registered, failure with error details.
-
-        """
-        if not name:
-            return r[bool].fail(f"{category} name cannot be empty")
-
-        if validate:
-            try:
-                validation_result = validate(plugin)
-                if (
-                    hasattr(validation_result, "is_failure")
-                    and validation_result.is_failure
-                ):
-                    return r[bool].fail(f"Validation failed: {validation_result.error}")
-            except (TypeError, ValueError, RuntimeError) as exc:
-                return r[bool].fail(f"Validation error: {exc}")
-
-        key = f"{category}::{name}"
-        if key in self._registered_keys:
-            self.logger.debug(
-                "Plugin already registered (idempotent)",
-                category=category,
-                name=name,
-            )
-            return r[bool].ok(value=True)
-
-        # Store plugin in container for retrieval
-        # plugin is already t.GeneralValueType from method signature
-        self.container.register(key, plugin)
-        self._registered_keys.add(key)
-        self.logger.info("Registered %s: %s", category, name)
-        return r[bool].ok(value=True)
-
-    def get_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
-        """Get a registered plugin by category and name.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
-
-        Returns:
-            r[t.GeneralValueType]: Success with plugin or failure if not found.
-                Caller should validate/narrow the type as needed.
-
-        """
-        key = f"{category}::{name}"
-        if key not in self._registered_keys:
-            available = [
-                k.split("::")[1]
-                for k in self._registered_keys
-                if k.startswith(f"{category}::")
-            ]
-            return r[t.GeneralValueType].fail(
-                f"{category} '{name}' not found. Available: {available}",
-            )
-
-        raw_result = self.container.get(key)
-        if raw_result.is_failure:
-            return r[t.GeneralValueType].fail(
-                f"Failed to retrieve {category} '{name}': {raw_result.error}",
-            )
-        # container.get() returns r[p.RegisterableService]
-        # Convert value to GeneralValueType using helper function
-        plugin_value = raw_result.value
-        general_value: t.GeneralValueType = _to_general_value_type(plugin_value)
-        return r[t.GeneralValueType].ok(general_value)
-
-    def list_plugins(self, category: str) -> r[list[str]]:
-        """List all plugins in a category.
-
-        Args:
-            category: Plugin category to list
-
-        Returns:
-            r[list[str]]: Success with list of plugin names.
-
-        """
-        plugins = [
-            k.split("::")[1]
-            for k in self._registered_keys
-            if k.startswith(f"{category}::")
-        ]
-        return r[list[str]].ok(plugins)
-
-    def unregister_plugin(self, category: str, name: str) -> r[bool]:
-        """Unregister a plugin.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
-
-        Returns:
-            r[bool]: Success if unregistered, failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        if key not in self._registered_keys:
-            return r[bool].fail(f"{category} '{name}' not registered")
-
-        self._registered_keys.discard(key)
-        self.logger.info("Unregistered %s: %s", category, name)
-        return r[bool].ok(value=True)
-
-    # ------------------------------------------------------------------
-    # Class-Level Plugin Registry API (for auto-discovery patterns)
-    # ------------------------------------------------------------------
-    def register_class_plugin(
-        self,
-        category: str,
-        name: str,
-        plugin: t.RegistrablePlugin,
-    ) -> r[bool]:
-        """Register plugin to class-level storage (shared across all instances).
-
-        Use this for auto-discovery patterns where plugins discovered once
-        should be visible to all instances of this registry class.
-
-        Args:
-            category: Plugin category (e.g., "ldif_servers")
-            name: Plugin name within the category
-            plugin: Plugin instance to register
-
-        Returns:
-            r[bool]: Success if registered (idempotent - re-registration is OK).
-
-        """
-        if not name:
-            return r[bool].fail(f"{category} name cannot be empty")
-
-        key = f"{category}::{name}"
-        cls = type(self)
-        if key in cls._class_registered_keys:
-            self.logger.debug(
-                "Class plugin already registered (idempotent)",
-                category=category,
-                name=name,
-            )
-            return r[bool].ok(value=True)
-
-        cls._class_plugin_storage[key] = plugin
-        cls._class_registered_keys.add(key)
-        self.logger.info("Registered class plugin %s: %s", category, name)
-        return r[bool].ok(value=True)
-
-    def get_class_plugin(self, category: str, name: str) -> r[t.RegistrablePlugin]:
-        """Get plugin from class-level storage.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
-
-        Returns:
-            r[t.RegistrablePlugin]: Success with plugin or failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        cls = type(self)
-        if key not in cls._class_registered_keys:
-            available = [
-                k.split("::")[1]
-                for k in cls._class_registered_keys
-                if k.startswith(f"{category}::")
-            ]
-            return r[t.RegistrablePlugin].fail(
-                f"{category} '{name}' not found. Available: {available}",
-            )
-        return r[t.RegistrablePlugin].ok(cls._class_plugin_storage[key])
-
-    def list_class_plugins(self, category: str) -> r[list[str]]:
-        """List class-level plugins in category.
-
-        Args:
-            category: Plugin category to list
-
-        Returns:
-            r[list[str]]: Success with list of plugin names.
-
-        """
-        cls = type(self)
-        return r[list[str]].ok([
-            k.split("::")[1]
-            for k in cls._class_registered_keys
-            if k.startswith(f"{category}::")
-        ])
-
-    def unregister_class_plugin(self, category: str, name: str) -> r[bool]:
-        """Unregister plugin from class-level storage.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
-
-        Returns:
-            r[bool]: Success if unregistered, failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        cls = type(self)
-        if key not in cls._class_registered_keys:
-            return r[bool].fail(f"{category} '{name}' not registered")
-
-        del cls._class_plugin_storage[key]
-        cls._class_registered_keys.discard(key)
-        self.logger.info("Unregistered class plugin %s: %s", category, name)
-        return r[bool].ok(value=True)
-
-    @classmethod
-    def reset_class_storage(cls) -> None:
-        """Reset class-level storage (for testing only).
-
-        This method clears all class-level plugins for this specific class.
-        Use in test fixtures to ensure test isolation.
-        """
-        cls._class_plugin_storage = {}
-        cls._class_registered_keys = set()
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-    @staticmethod
-    def _resolve_handler_key(
-        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType,
-    ) -> str:
-        """Resolve registration key from handler."""
-        handler_id = getattr(handler, "handler_id", None)
-        return (
-            handler_id
-            if handler_id and u.is_type(handler_id, str)
-            else handler.__class__.__name__
-        )
-
-    def register(
-        self,
-        name: str,
-        service: t.GeneralValueType,
-        metadata: t.GeneralValueType | m.Metadata | None = None,
-    ) -> r[bool]:
-        """Register a service component with optional metadata.
-
-        Delegates to the container's register method for dependency injection.
-        Metadata is currently stored for future use but not actively used.
-
-        Args:
-            name: Service name for later retrieval
-            service: Service instance to register
-            metadata: Optional metadata (dict or m.Metadata)
-
-        Returns:
-            r[bool]: Success (True) if registered or failure with error details.
-
-        """
-        # Normalize metadata to dict for internal use
-        validated_metadata: t.GeneralValueType | None = None
-        if metadata is not None:
-            # Handle Metadata model first
-            if isinstance(metadata, m.Metadata):
-                validated_metadata = metadata.attributes
-            else:
-                # Cast to t.GeneralValueType for is_dict_like check
-                metadata_as_general = metadata
-                if FlextRuntime.is_dict_like(metadata_as_general):
-                    # Type guard ensures metadata_as_general is m.ConfigMap
-                    # Type narrowing: metadata_as_general is dict-like, assign as ConfigurationMapping
-                    metadata_mapping = metadata_as_general
-                    validated_metadata = dict(metadata_mapping)
-                else:
-                    return r[bool].fail(
-                        f"metadata must be dict or m.Metadata, got {type(metadata).__name__}",
-                    )
-
-        # Store metadata if provided (for future use)
-        if isinstance(validated_metadata, Mapping):
-            # Type narrowing: validated_metadata is Mapping after isinstance check
-            # Log metadata with service name for observability
-            # Convert Mapping to dict for logging
-            metadata_dict: dict[str, t.GeneralValueType] = dict(
-                validated_metadata.items(),
-            )
-            metadata_keys: list[str] = list(metadata_dict.keys())
-            self.logger.debug(
-                "Registering service with metadata",
-                operation="with_service",
-                service_name=name,
-                has_metadata=True,
-                metadata_keys=metadata_keys,
-            )
-
-        # Delegate to container (x.container returns FlextContainer)
-        # Use with_service for fluent API compatibility (returns Self)
-        try:
-            # service is already t.GeneralValueType (from method signature)
-            # with_service returns Self for fluent chaining, but we don't need the return value
-            _ = self.container.with_service(name, service)
-            return r[bool].ok(value=True)
-        except ValueError as e:
-            error_str = str(e)
-            return r[bool].fail(error_str)
-
     # =========================================================================
     # Protocol Implementations: RegistrationTracker, BatchProcessor
     # =========================================================================
-
-    def register_item(
-        self,
-        name: str,
-        item: t.GeneralValueType,
-    ) -> r[bool]:
-        """Register item (RegistrationTracker protocol)."""
-        # Direct implementation without try/except - use FlextResult for error handling
-        return self.register(name, item)
-
-    def get_item(self, name: str) -> r[t.GeneralValueType]:
-        """Get registered item (RegistrationTracker protocol)."""
-        try:
-            return r[t.GeneralValueType].ok(getattr(self, name))
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[t.GeneralValueType].fail(str(e))
-
-    def list_items(self) -> r[list[str]]:
-        """List registered items (RegistrationTracker protocol)."""
-        try:
-            keys = list(getattr(self, "_registered_keys", []))
-            return r[list[str]].ok(keys)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[list[str]].fail(str(e))
-
-    @staticmethod
-    def get_batch_size() -> int:
-        """Get batch size (BatchProcessor protocol)."""
-        return 100
 
 
 __all__ = ["FlextRegistry"]

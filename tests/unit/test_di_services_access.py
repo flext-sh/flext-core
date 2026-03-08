@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import cast
+from typing import cast, override
 
 from flext_core import (
     FlextContainer,
@@ -27,12 +27,14 @@ from flext_core import (
     FlextLogger,
     FlextRuntime,
     FlextSettings,
+    m,
+    p,
     r,
     s,
+    t,
 )
-from flext_core.typings import t
-from flext_tests.matchers import tm
-from flext_tests.utilities import u
+from flext_core._models.service import FlextModelsService
+from flext_tests import tm, u
 from tests.test_utils import assertion_helpers
 
 
@@ -40,10 +42,10 @@ class TestConfigServiceViaDI:
     """Test FlextSettings accessibility via DI."""
 
     def test_config_via_container_get_global(self) -> None:
-        """Test accessing FlextSettings via container.get_global_instance."""
+        """Test accessing FlextSettings via get_global."""
         # Config is accessible via singleton pattern
-        config1 = FlextSettings.get_global_instance()
-        config2 = FlextSettings.get_global_instance()
+        config1 = FlextSettings.get_global()
+        config2 = FlextSettings.get_global()
         assert config1 is config2
         assert isinstance(config1, FlextSettings)
 
@@ -68,7 +70,7 @@ class TestConfigServiceViaDI:
         """Test injecting FlextSettings via @inject decorator."""
         # Use DependencyIntegration to create container with config
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected_config"},
+            config=m.ConfigMap(root={"app_name": "injected_config"}),
         )
 
         module = ModuleType("config_injection_module")
@@ -119,7 +121,7 @@ class TestLoggerServiceViaDI:
 
         # Logger is auto-registered by default, so we can retrieve it directly
         # or register a custom one with a different name
-        logger_result: r[FlextLogger] = container.get("logger")
+        logger_result = container.get("logger")
         assert logger_result.is_success
         assert isinstance(logger_result.value, FlextLogger)
 
@@ -128,11 +130,14 @@ class TestLoggerServiceViaDI:
             return FlextLogger.create_module_logger("service_logger")
 
         # Register custom logger factory with different name
-        result = container.register_factory("custom_logger", create_custom_logger)
-        assertion_helpers.assert_flext_result_success(result)
+        returned_container = container.register(
+            "custom_logger", create_custom_logger, kind="factory"
+        )
+        assert returned_container is container
+        assert container.has_service("custom_logger")
 
         # Retrieve custom logger
-        custom_logger_result: r[FlextLogger] = container.get("custom_logger")
+        custom_logger_result = container.get("custom_logger")
         assert custom_logger_result.is_success
         assert isinstance(custom_logger_result.value, FlextLogger)
 
@@ -160,17 +165,21 @@ class TestContextServiceViaDI:
         container = FlextContainer(_context=FlextContext())
 
         # Context is auto-registered when provided, so we can retrieve it directly
-        context_result: r[FlextContext] = container.get("context")
+        context_result = container.get("context")
         assert context_result.is_success
         assert isinstance(context_result.value, FlextContext)
 
         # Test registering a custom context with a different name
         custom_context = FlextContext()
-        result = container.register("custom_context", custom_context)
-        assertion_helpers.assert_flext_result_success(result)
+        returned_container = container.register(
+            "custom_context",
+            cast("t.ContainerValue", custom_context),
+        )
+        assert returned_container is container
+        assert container.has_service("custom_context")
 
         # Retrieve custom context
-        custom_context_result: r[FlextContext] = container.get("custom_context")
+        custom_context_result = container.get("custom_context")
         assert custom_context_result.is_success
         assert isinstance(custom_context_result.value, FlextContext)
         assert custom_context_result.value is custom_context
@@ -204,20 +213,16 @@ class TestServicesIntegrationViaDI:
 
         class ServiceWithDI(s[str]):
             @classmethod
-            def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
-                # Create a factory function that returns a context instance
-                def create_context() -> FlextContext:
-                    """Factory function for creating context instances."""
-                    return FlextContext()
-
-                return {
-                    "config_overrides": {"app_name": "service_app"},
-                    "services": {
+            @override
+            def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                return FlextModelsService.RuntimeBootstrapOptions(
+                    config_overrides={"app_name": "service_app"},
+                    services={
                         "logger": FlextLogger.create_module_logger("service"),
-                        "custom_context": create_context(),
                     },
-                }
+                )
 
+            @override
             def execute(self) -> r[str]:
                 # Access config
                 app_name = self.config.app_name
@@ -226,7 +231,7 @@ class TestServicesIntegrationViaDI:
                 # Access container services
                 # Type narrowing: container.get returns r[T], cast to help mypy
                 container_get_result: object = self.container.get("logger")
-                logger_result = cast("r[t.GeneralValueType]", container_get_result)
+                logger_result = cast("r[t.ContainerValue]", container_get_result)
                 u.Tests.Result.assert_success(logger_result)
                 logger = cast("FlextLogger", logger_result.value)
                 tm.that(
@@ -234,18 +239,6 @@ class TestServicesIntegrationViaDI:
                     is_=FlextLogger,
                     none=False,
                     msg="Logger must be accessible via DI",
-                )
-
-                # Type narrowing: container.get returns r[T], cast to help mypy
-                container_get_result2: object = self.container.get("custom_context")
-                context_result = cast("r[t.GeneralValueType]", container_get_result2)
-                u.Tests.Result.assert_success(context_result)
-                context = cast("FlextContext", context_result.value)
-                tm.that(
-                    context,
-                    is_=FlextContext,
-                    none=False,
-                    msg="Context must be accessible via DI",
                 )
 
                 return r[str].ok(f"app: {app_name}")
@@ -259,17 +252,17 @@ class TestServicesIntegrationViaDI:
         """Test injecting multiple services via @inject."""
         # Use DependencyIntegration to create container with config and services
         # This ensures config provider is properly configured
-        # Convert services to t.GeneralValueType-compatible dict for type compatibility
+        # Convert services to t.ContainerValue-compatible dict for type compatibility
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
-        services_raw: dict[str, t.GeneralValueType] = {
-            "logger": logger_instance,
-            "context": context_instance,
+        services_raw: dict[str, t.ContainerValue] = {
+            "logger": cast("t.ContainerValue", logger_instance),
+            "context": cast("t.ContainerValue", context_instance),
         }
-        # Cast to t.GeneralValueType dict - services dict accepts any object
+        # Cast to t.ContainerValue dict - services dict accepts any object
         services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected"},
+            config=m.ConfigMap(root={"app_name": "injected"}),
             services=services,
         )
 

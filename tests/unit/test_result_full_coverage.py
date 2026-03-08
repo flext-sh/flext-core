@@ -1,21 +1,22 @@
+# mypy: ignore-errors
+"""Tests for FlextResult to achieve full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
-import importlib
-from typing import cast
+from typing import Never, cast, override
 
 from pydantic import BaseModel
-from returns.io import IOSuccess
+from returns.io import IOResult, IOSuccess
 
-core = importlib.import_module("flext_core")
-FlextRuntime = core.FlextRuntime
-r = core.r
-t = core.t
-
-result_module = importlib.import_module("flext_core.result")
+from flext_core import FlextRuntime, r, t
 
 
-class _ValidationLikeError(Exception):
-    def errors(self) -> list[dict[str, t.GeneralValueType]]:
+class _ValidationLikeError(ValueError):
+    def errors(self) -> list[dict[str, t.JsonValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
@@ -23,6 +24,7 @@ class _ErrorsModel(BaseModel):
     value: int
 
     @classmethod
+    @override
     def model_validate(
         cls,
         obj: object,
@@ -33,16 +35,17 @@ class _ErrorsModel(BaseModel):
         context: dict[str, object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
-    ):
+    ) -> Never:
         _ = strict, extra, from_attributes, context, by_alias, by_name
         _ = obj
-        raise _ValidationLikeError()
+        raise _ValidationLikeError
 
 
 class _PlainErrorModel(BaseModel):
     value: int
 
     @classmethod
+    @override
     def model_validate(
         cls,
         obj: object,
@@ -53,10 +56,11 @@ class _PlainErrorModel(BaseModel):
         context: dict[str, object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
-    ):
+    ) -> Never:
         _ = strict, extra, from_attributes, context, by_alias, by_name
         _ = obj
-        raise RuntimeError("plain boom")
+        msg = "plain boom"
+        raise RuntimeError(msg)
 
 
 class _TargetModel(BaseModel):
@@ -65,14 +69,14 @@ class _TargetModel(BaseModel):
 
 def test_type_guards_and_protocol_name() -> None:
     ok_res = r[int].ok(1)
-    fail_res = r[int].fail("x")
-    assert result_module.is_success_result(ok_res)
-    assert result_module.is_failure_result(fail_res)
+    fail_res: r[int] = cast("r[int]", r.fail("x"))
+    assert r.is_success_result(ok_res)
+    assert r.is_failure_result(fail_res)
     assert ok_res._protocol_name() == "FlextResult"
 
 
 def test_init_fallback_and_lazy_result_property() -> None:
-    fallback = r[int](cast("object", object()), value=9, is_success=True)
+    fallback = r[int](value=9, is_success=True)
     assert fallback.is_success
     assert fallback.value == 9
 
@@ -95,19 +99,23 @@ def test_map_flat_map_and_then_paths() -> None:
     assert flat_ok.is_success
     assert flat_ok.value == 20
 
-    runtime_fail = FlextRuntime.RuntimeResult(error="inner", is_success=False)
+    runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult(
+        error="inner",
+        is_success=False,
+    )
     flat_fail = r[int].ok(1).flat_map(lambda _: runtime_fail)
     assert flat_fail.is_failure
     assert flat_fail.error == "inner"
 
-    and_then_ok = r[int].ok(3).and_then(lambda v: r[str].ok(str(v)))
+    and_then_ok = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
     assert and_then_ok.is_success
     assert and_then_ok.value == "3"
 
 
 def test_recover_tap_and_tap_error_paths() -> None:
     assert r[int].ok(1).recover(lambda _e: 99).value == 1
-    recovered = r[int].fail("bad").recover(lambda _e: 42)
+    failed_for_recover: r[int] = cast("r[int]", r.fail("bad"))
+    recovered: r[int] = failed_for_recover.recover(lambda _e: 42)
     assert recovered.is_success
     assert recovered.value == 42
 
@@ -149,18 +157,24 @@ def test_from_validation_and_to_model_paths() -> None:
 
 def test_lash_runtime_result_and_from_io_result_fallback() -> None:
     runtime_ok = FlextRuntime.RuntimeResult(value=99, is_success=True)
-    lash_ok = r[int].fail("x").lash(lambda _e: runtime_ok)
+    failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
+    lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok)
     assert lash_ok.is_success
     assert lash_ok.value == 99
 
-    runtime_fail = FlextRuntime.RuntimeResult(error="recovery failed", is_success=False)
-    lash_fail = r[int].fail("x").lash(lambda _e: runtime_fail)
+    runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult(
+        error="recovery failed",
+        is_success=False,
+    )
+    failed_for_lash_2: r[int] = cast("r[int]", r.fail("x"))
+    lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail)
     assert lash_fail.is_failure
     assert lash_fail.error == "recovery failed"
 
     good = r[int].from_io_result(IOSuccess(1))
     assert good.is_success
 
-    invalid = r[int].from_io_result(cast("object", object()))
+    invalid_io = cast("IOResult[int, str]", object())
+    invalid = r[int].from_io_result(invalid_io)
     assert invalid.is_failure
     assert invalid.error == "Invalid IOResult structure"

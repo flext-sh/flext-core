@@ -303,7 +303,7 @@ ______________________________________________________________________
 
 **Problem**: Modules importing each other violates layer hierarchy.
 
-```
+```python
 config.py imports → result.py
     ↓
 result.py imports ← config.py
@@ -313,11 +313,11 @@ result.py imports ← config.py
 ```python
 # config.py
 # ❌ ANTI-PATTERN - Imports from higher layer
-from flext_core.result import FlextResult  # config is higher than result
+from flext_core import FlextResult  # config is higher than result
 
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
-from flext_core.settings import FlextSettings  # result is lower than config
+from flext_core import FlextSettings  # result is lower than config
 ```
 
 **Why it's wrong**:
@@ -329,7 +329,7 @@ from flext_core.settings import FlextSettings  # result is lower than config
 
 **Solution**: Respect layer hierarchy (only import downward)
 
-```
+```python
 Layer 0: FlextConstants, t, p (no imports from other layers)
 Layer 0.5: FlextRuntime (imports Layer 0 only)
 Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
@@ -341,12 +341,12 @@ Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```python
 # ✅ CORRECT - Respect hierarchy
 # config.py (Layer 4) - can import from all lower layers
-from flext_core.result import FlextResult
-from flext_core.constants import FlextConstants
+from flext_core import FlextResult
+from flext_core import FlextConstants
 
 # result.py (Layer 1) - imports only from Layer 0
-from flext_core.constants import FlextConstants
-from flext_core.typings import t
+from flext_core import FlextConstants
+from flext_core import t
 ```
 
 ### Anti-Pattern 8: Multiple Exports per Module
@@ -362,11 +362,11 @@ class FlextModels:
 class DomainModel:  # Second export - WRONG!
     pass
 
-class ValueObject:  # Third export - WRONG!
+class Value:  # Third export - WRONG!
     pass
 
 # In __init__.py
-from flext_core.models import FlextModels, DomainModel, ValueObject
+from flext_core import FlextModels, DomainModel, Value
 # Violates single class per module rule
 ```
 
@@ -393,7 +393,7 @@ class FlextModels:
         pass
 
 # In __init__.py
-from flext_core.models import FlextModels
+from flext_core import FlextModels
 # Clear, single responsibility
 ```
 
@@ -843,8 +843,11 @@ ______________________________________________________________________
 - Configuration Guide - Configuration best practices
 - Clean Architecture - Architecture patterns
 - Development Standards - Development standards
-- **FLEXT CLAUDE.md**: Architecture principles and zero-tolerance standards
+- **FLEXT AGENTS.md**: Architecture principles and zero-tolerance standards
 
 ______________________________________________________________________
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
+
+```
+```

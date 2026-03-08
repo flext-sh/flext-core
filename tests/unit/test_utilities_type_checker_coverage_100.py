@@ -19,10 +19,9 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections import UserDict as BaseUserDict
-from typing import TypeVar, cast, get_origin
+from typing import TypeVar, cast, get_origin, override
 
 import pytest
 
@@ -32,10 +31,19 @@ T = TypeVar("T")
 TMessage = TypeVar("TMessage")
 
 
+def _type_origin(value: object) -> t.TypeHintSpecifier:
+    return cast("t.TypeOriginSpecifier", value)
+
+
+def _message_type(value: object) -> t.MessageTypeSpecifier:
+    return cast("t.MessageTypeSpecifier", value)
+
+
 # Test handler classes
 class StringHandler(h[str, str]):
     """Handler for string messages."""
 
+    @override
     def handle(self, message: str) -> FlextResult[str]:
         """Handle string message."""
         return FlextResult[str].ok(f"Processed: {message}")
@@ -44,20 +52,22 @@ class StringHandler(h[str, str]):
 class IntHandler(h[int, int]):
     """Handler for int messages."""
 
+    @override
     def handle(self, message: int) -> FlextResult[int]:
         """Handle int message."""
         return FlextResult[int].ok(message * 2)
 
 
-class DictHandler(h[dict[str, t.GeneralValueType], dict[str, t.GeneralValueType]]):
+class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
     """Handler for dict messages."""
 
+    @override
     def handle(
         self,
-        message: dict[str, t.GeneralValueType],
-    ) -> FlextResult[dict[str, t.GeneralValueType]]:
+        message: dict[str, t.ContainerValue],
+    ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle dict message."""
-        return FlextResult[dict[str, t.GeneralValueType]].ok({
+        return FlextResult[dict[str, t.ContainerValue]].ok({
             "processed": True,
             **message,
         })
@@ -66,6 +76,7 @@ class DictHandler(h[dict[str, t.GeneralValueType], dict[str, t.GeneralValueType]
 class ObjectHandler(h[object, object]):
     """Handler for object messages (universal)."""
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle any message."""
         return FlextResult[object].ok(message)
@@ -134,11 +145,11 @@ class TestuTypeChecker:
         """Test compute_accepted_message_types with dict handler."""
         types = u.Checker.compute_accepted_message_types(DictHandler)
         assert len(types) == 1
-        # Check that it's a dict type (may be dict or dict[str, t.GeneralValueType])
+        # Check that it's a dict type (may be dict or dict[str, t.ContainerValue])
         # Generic aliases have origin dict
         origin = get_origin(types[0])
         if origin is None:
-            # For GenericAlias types (e.g., dict[str, t.GeneralValueType])
+            # For GenericAlias types (e.g., dict[str, t.ContainerValue])
             # Check if the type itself represents dict
             type_str = str(types[0])
             assert type_str.startswith("dict[") or types[0] is dict
@@ -171,13 +182,11 @@ class TestuTypeChecker:
     def test_can_handle_message_type_dict_compatibility(self) -> None:
         """Test can_handle_message_type with dict type compatibility."""
         # Business Rule: MessageTypeSpecifier accepts built-in types like dict
-        accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            cast("t.MessageTypeSpecifier", dict),
-        )
+        accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
         assert u.Checker.can_handle_message_type(accepted, str) is False
         assert u.Checker.can_handle_message_type(accepted, dict) is True
-        # dict[str, t.GeneralValueType] should be compatible with dict
-        dict_type: type[dict[str, t.GeneralValueType]] = dict
+        # dict[str, t.ContainerValue] should be compatible with dict
+        dict_type: type[dict[str, t.ContainerValue]] = dict
         assert u.Checker.can_handle_message_type(accepted, dict_type) is True
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -188,9 +197,9 @@ class TestuTypeChecker:
     def test_can_handle_message_type_multiple_accepted(self) -> None:
         """Test can_handle_message_type with multiple accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            cast("t.MessageTypeSpecifier", str),
-            cast("t.MessageTypeSpecifier", int),
-            cast("t.MessageTypeSpecifier", dict),
+            _message_type(str),
+            _message_type(int),
+            _message_type(dict),
         )
         assert u.Checker.can_handle_message_type(accepted, str) is True
         assert u.Checker.can_handle_message_type(accepted, int) is True
@@ -207,7 +216,7 @@ class TestuTypeChecker:
         # Business Rule: _evaluate_type_compatibility accepts TypeOriginSpecifier
         # object type is compatible with TypeOriginSpecifier at runtime
 
-        object_type: t.TypeOriginSpecifier = cast(
+        object_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             object,
         )
@@ -219,10 +228,13 @@ class TestuTypeChecker:
 
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
-        assert u.Checker._evaluate_type_compatibility(dict, dict) is True
-        # dict[str, t.GeneralValueType] should be compatible with dict
-        dict_type: type[dict[str, t.GeneralValueType]] = dict
-        assert u.Checker._evaluate_type_compatibility(dict, dict_type) is True
+        assert u.Checker._evaluate_type_compatibility(_type_origin(dict), dict) is True
+        # dict[str, t.ContainerValue] should be compatible with dict
+        dict_type: type[dict[str, t.ContainerValue]] = dict
+        assert (
+            u.Checker._evaluate_type_compatibility(_type_origin(dict), dict_type)
+            is True
+        )
 
     def test_evaluate_type_compatibility_subclass(self) -> None:
         """Test _evaluate_type_compatibility with subclass relationship."""
@@ -248,7 +260,7 @@ class TestuTypeChecker:
     def test_check_object_type_compatibility_object_type(self) -> None:
         """Test _check_object_type_compatibility with object type."""
         # Business Rule: _check_object_type_compatibility accepts TypeOriginSpecifier
-        object_type: t.TypeOriginSpecifier = cast(
+        object_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             object,
         )
@@ -258,32 +270,37 @@ class TestuTypeChecker:
     def test_check_object_type_compatibility_non_object(self) -> None:
         """Test _check_object_type_compatibility with non-object type."""
         result = u.Checker._check_object_type_compatibility(str)
-        assert result is None
+        assert result is False
 
     def test_check_dict_compatibility_both_dict(self) -> None:
         """Test _check_dict_compatibility with both types being dict."""
-        result = u.Checker._check_dict_compatibility(dict, dict, dict, dict)
+        result = u.Checker._check_dict_compatibility(
+            _type_origin(dict),
+            dict,
+            _type_origin(dict),
+            _type_origin(dict),
+        )
         assert result is True
 
     def test_check_dict_compatibility_dict_subclass(self) -> None:
         """Test _check_dict_compatibility with dict subclass."""
 
         # Business Rule: UserDict requires type parameters for generic type
-        class CustomDict(BaseUserDict[str, t.GeneralValueType]):
+        class CustomDict(BaseUserDict[str, t.ContainerValue]):
             """Custom dict subclass."""
 
         result = u.Checker._check_dict_compatibility(
-            dict,
+            _type_origin(dict),
             CustomDict,
-            dict,
-            dict,
+            _type_origin(dict),
+            _type_origin(dict),
         )
         assert result is True
 
     def test_check_dict_compatibility_non_dict(self) -> None:
         """Test _check_dict_compatibility with non-dict types."""
         result = u.Checker._check_dict_compatibility(str, int, str, int)
-        assert result is None
+        assert result is False
 
     def test_extract_generic_message_types_flext_handlers(self) -> None:
         """Test _extract_generic_message_types with h base."""
@@ -313,23 +330,25 @@ class TestuTypeChecker:
 
     def test_extract_message_type_from_handle_with_annotation(self) -> None:
         """Test _extract_message_type_from_handle with type annotation."""
-        types = u.Checker._extract_message_type_from_handle(
+        message_type_result = u.Checker._extract_message_type_from_handle(
             ExplicitTypeHandler,
         )
-        assert types is str
+        assert message_type_result.is_success
+        assert message_type_result.value is str
 
     def test_extract_message_type_from_handle_no_handle_method(self) -> None:
         """Test _extract_message_type_from_handle without handle method."""
-        types = u.Checker._extract_message_type_from_handle(NoHandleMethod)
-        assert types is None
+        message_type_result = u.Checker._extract_message_type_from_handle(
+            NoHandleMethod
+        )
+        assert message_type_result.is_failure
 
     def test_extract_message_type_from_handle_non_callable(self) -> None:
         """Test _extract_message_type_from_handle with non-callable handle."""
-        types = u.Checker._extract_message_type_from_handle(
+        message_type_result = u.Checker._extract_message_type_from_handle(
             NonCallableHandle,
         )
-        # Should return None or handle gracefully
-        assert types is None or isinstance(types, str)
+        assert message_type_result.is_failure
 
     def test_get_method_signature_valid_callable(self) -> None:
         """Test _get_method_signature with valid callable."""
@@ -341,16 +360,17 @@ class TestuTypeChecker:
         signature = u.Checker._get_method_signature(
             cast("t.HandlerCallable", test_func),
         )
-        assert signature is not None
-        assert len(signature.parameters) == 1
-        assert "x" in signature.parameters
+        assert signature.is_success
+        signature_value = signature.value
+        assert len(signature_value.parameters) == 1
+        assert "x" in signature_value.parameters
 
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
         signature = u.Checker._get_method_signature(
             cast("t.HandlerCallable", "not callable"),
         )
-        assert signature is None
+        assert signature.is_failure
 
     def test_get_type_hints_safe_valid_method(self) -> None:
         """Test _get_type_hints_safe with valid method."""
@@ -368,7 +388,7 @@ class TestuTypeChecker:
         )
         assert "message" in hints
         # Business Rule: Type hints return type objects
-        # hints["message"] is of type t.GeneralValueType, so we check if it equals str type
+        # hints["message"] is of type t.ContainerValue, so we check if it equals str type
         # Use getattr and name check to avoid mypy comparison-overlap error
         message_type = hints.get("message")
         assert message_type is not None
@@ -398,10 +418,10 @@ class TestuTypeChecker:
         origin = get_origin(dict_type) or dict_type
 
         result = u.Checker._handle_type_or_origin_check(
-            dict,
-            dict_type,
-            dict,
-            origin,
+            _type_origin(dict),
+            _type_origin(dict_type),
+            _type_origin(dict),
+            _type_origin(origin),
         )
         # Should handle origin comparison
         assert isinstance(result, bool)
@@ -416,11 +436,11 @@ class TestuTypeChecker:
             """Derived class."""
 
         # Business Rule: _handle_type_or_origin_check accepts TypeOriginSpecifier
-        base_type: t.TypeOriginSpecifier = cast(
+        base_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             Base,
         )
-        derived_type: t.TypeOriginSpecifier = cast(
+        derived_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             Derived,
         )
@@ -461,7 +481,7 @@ class TestuTypeChecker:
         # Business Rule: _handle_instance_check accepts TypeOriginSpecifier
         # object() is an instance, not a type - use type(object) instead
         custom_type = type("CustomType", (), {})
-        custom_type_spec: t.TypeOriginSpecifier = cast(
+        custom_type_spec: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             custom_type,
         )
@@ -483,10 +503,10 @@ class TestuTypeChecker:
         accepted = (str,)
         # This should not crash, but may return False
         # Use cast to handle None case for testing
-        # MessageTypeSpecifier is defined as: str | type[t.GeneralValueType]
+        # MessageTypeSpecifier is defined as: str | type[t.ContainerValue]
         result = u.Checker.can_handle_message_type(
             accepted,
-            cast("str | type[t.GeneralValueType]", None),
+            cast("str | type[t.ContainerValue]", None),
         )
         assert isinstance(result, bool)
 

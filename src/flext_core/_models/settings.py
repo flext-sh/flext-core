@@ -12,14 +12,21 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Annotated, Final, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
-from flext_core._models.base import FlextModelsBase
+from flext_core import FlextRuntime, c, p, t
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsConfig:
@@ -39,7 +46,7 @@ class FlextModelsConfig:
         """
         return FlextRuntime.get_log_level_from_config()
 
-    class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
+    class ProcessingRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
         model_config = ConfigDict(
@@ -55,8 +62,18 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: t.ConfigMap = Field(default_factory=t.ConfigMap)
-        context: t.ConfigMap = Field(default_factory=t.ConfigMap)
+        data: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
+            description="Primary request payload passed to the processing operation.",
+            title="Processing Data",
+            examples=[{"record_id": "123", "status": "pending"}],
+        )
+        context: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
+            description="Execution context metadata used for traceability and request scoping.",
+            title="Processing Context",
+            examples=[{"correlation_id": "corr-123"}],
+        )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -73,10 +90,10 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> dict[str, str]:
+        def validate_context(cls, v: t.ContainerValue) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
-            Returns dict[str, str] because ensure_trace_context generates
+            Returns Mapping[str, str] because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
@@ -86,25 +103,22 @@ class FlextModelsConfig:
                 include_timestamp=True,
             )
 
-    class RetryConfiguration(FlextModelsBase.ArbitraryTypesModel):
+    class RetryConfiguration(
+        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelFoundation.RetryConfigurationMixin,
+    ):
         """Retry configuration with advanced validation."""
 
-        max_attempts: int = Field(
+        max_retries: int = Field(
             default=c.Reliability.MAX_RETRY_ATTEMPTS,
             ge=c.Reliability.RETRY_COUNT_MIN,
             le=c.Reliability.MAX_RETRY_ATTEMPTS,
+            alias="max_attempts",
+            validation_alias=AliasChoices("max_attempts", "max_retries"),
+            serialization_alias="max_attempts",
             description=("Maximum retry attempts from c (Constants default)"),
         )
-        initial_delay_seconds: float = Field(
-            default=c.Performance.DEFAULT_INITIAL_DELAY_SECONDS,
-            gt=c.ZERO,
-            description="Initial delay between retries",
-        )
-        max_delay_seconds: float = Field(
-            default=c.DEFAULT_MAX_DELAY_SECONDS,
-            gt=c.ZERO,
-            description="Maximum delay between retries",
-        )
+
         exponential_backoff: bool = True
         backoff_multiplier: float = Field(
             default=c.DEFAULT_BACKOFF_MULTIPLIER,
@@ -125,22 +139,22 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(
             cls,
-            v: list[int] | list[t.GeneralValueType],
+            v: list[int] | list[t.Scalar],
         ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
-            # Use default HTTP status code range (100-599) - domain-specific validation
-            # removed from flext-core per domain violation rules
-            # Convert to list[GeneralValueType] for validation function
-            # Handle both int and string values (pydantic may pass strings from YAML/JSON)
-            codes_for_validation: list[t.GeneralValueType] = []
-            for x in v:
-                if isinstance(x, int):
-                    codes_for_validation.append(x)
-                elif isinstance(x, str):
-                    codes_for_validation.append(int(x))
+            codes_for_validation: list[int] = []
+            for item in v:
+                if isinstance(item, bool):
+                    msg = "retry_on_status_codes item must be int or str, got bool"
+                    raise TypeError(msg)
+                if isinstance(item, int):
+                    codes_for_validation.append(item)
                 else:
-                    # Convert unknown types to string then int
-                    codes_for_validation.append(int(repr(x)))
+                    try:
+                        codes_for_validation.append(int(str(item)))
+                    except (TypeError, ValueError) as exc:
+                        msg = f"retry_on_status_codes item must be int or str: {exc}"
+                        raise TypeError(msg) from exc
             result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
@@ -163,10 +177,9 @@ class FlextModelsConfig:
                 raise ValueError(msg)
             return self
 
-    class ValidationConfiguration(FlextModelsBase.ArbitraryTypesModel):
+    class ValidationConfiguration(FlextModelFoundation.ArbitraryTypesModel):
         """Validation configuration."""
 
-        enable_strict_mode: bool = Field(default=True)
         max_validation_errors: int = Field(
             default=c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
             ge=c.Reliability.RETRY_COUNT_MIN,
@@ -176,7 +189,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[t.GeneralValueType],
+            list[t.ContainerValue],
             Field(
                 default_factory=list,
                 max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
@@ -188,15 +201,13 @@ class FlextModelsConfig:
         @classmethod
         def validate_additional_validators(
             cls,
-            v: list[t.GeneralValueType],
-        ) -> list[t.GeneralValueType]:
+            v: list[t.ContainerValue],
+        ) -> list[t.ContainerValue]:
             """Validate custom validators are callable."""
             for validator in v:
-                # Direct callable check - object can be any callable,
-                # not just t.GeneralValueType
                 if not callable(validator):
                     base_msg = "Validator must be callable"
-                    error_msg = f"{base_msg}: got {type(validator).__name__}"
+                    error_msg = f"{base_msg}: got {validator.__class__.__name__}"
                     raise TypeError(error_msg)
             return v
 
@@ -205,6 +216,7 @@ class FlextModelsConfig:
 
         batch_size: int = Field(
             default=c.Performance.MAX_BATCH_SIZE,
+            le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
             description=("Batch size from c (Constants default)"),
         )
         max_workers: int = Field(
@@ -218,37 +230,59 @@ class FlextModelsConfig:
         )
         continue_on_error: bool = True
         data_items: Annotated[
-            list[t.GeneralValueType],
+            list[t.ContainerValue],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
+                description="Ordered list of items to process in this batch; bounded by MAX_ITEMS performance constant.",
+                title="Data Items",
+                examples=[["item-a", "item-b"]],
             ),
         ]
 
-        @model_validator(mode="after")
-        def validate_batch(self) -> Self:
-            """Validate batch configuration consistency."""
-            max_batch_size = c.Performance.BatchProcessing.MAX_VALIDATION_SIZE
-            if self.batch_size > max_batch_size:
-                msg = f"Batch size cannot exceed {max_batch_size}"
-                raise ValueError(msg)
+        @classmethod
+        def validate_batch(
+            cls,
+            models: list[t.ContainerValue],
+        ) -> list[FlextModelsConfig.BatchProcessingConfig]:
+            try:
+                validated = TypeAdapter(list[FlextModelsConfig.BatchProcessingConfig])
+                return validated.validate_python(models)
+            except ValidationError as exc:
+                item_errors = [
+                    f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
+                    for err in exc.errors()
+                ]
+                msg = f"Batch validation failed: {'; '.join(item_errors)}"
+                raise ValueError(msg) from exc
 
-            # Adjust max_workers to not exceed batch_size without triggering validation
+        @model_validator(mode="after")
+        def validate_cross_fields(self) -> Self:
             adjusted_workers = min(self.max_workers, self.batch_size)
-            # Use direct assignment to __dict__ to bypass Pydantic validation
-            self.__dict__["max_workers"] = adjusted_workers
+            self.max_workers = adjusted_workers
 
             return self
 
     class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""
 
-        handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
-        input_data: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+        handler_name: str = Field(
+            pattern=c.Platform.PATTERN_IDENTIFIER,
+            description="Handler identifier used to route execution in the dispatcher.",
+            title="Handler Name",
+            examples=["process_order", "sync_inventory"],
         )
-        execution_context: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+        input_data: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
+            description="Input payload supplied to the handler during execution.",
+            title="Input Data",
+            examples=[{"order_id": "ord-1001"}],
+        )
+        execution_context: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
+            description="Context values provided to the handler for tracing and runtime behavior.",
+            title="Execution Context",
+            examples=[{"correlation_id": "corr-abc"}],
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -284,10 +318,16 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+        config: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
             description="Middleware-specific configuration",
         )
+
+    class DispatcherMiddlewareConfig(MiddlewareConfig):
+        """Internal configuration for dispatcher middleware."""
+
+        middleware_id: str
+        middleware_type: str
 
     class RateLimiterState(BaseModel):
         """State tracking for rate limiter functionality.
@@ -349,7 +389,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: t.ConfigMap | None = Field(
+        env: FlextModelsContainers.ConfigMap | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -400,7 +440,7 @@ class FlextModelsConfig:
             default=None,
             description="Custom wrapper factory for structlog",
         )
-        logger_factory: p.VariadicCallable[t.GeneralValueType] | None = Field(
+        logger_factory: p.VariadicCallable[t.ContainerValue] | None = Field(
             default=None,
             description="Custom logger factory for structlog",
         )
@@ -444,7 +484,7 @@ class FlextModelsConfig:
         Groups optional dispatch context and overrides.
         """
 
-        metadata: FlextModelsBase.Metadata | None = Field(
+        metadata: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Optional execution context metadata (Pydantic model)",
         )
@@ -468,7 +508,7 @@ class FlextModelsConfig:
         message_type: str = Field(
             description="Message type name for routing and circuit breaker",
         )
-        metadata: t.GeneralValueType | None = Field(
+        metadata: t.ContainerValue | None = Field(
             default=None,
             description="Optional execution context metadata",
         )
@@ -492,7 +532,7 @@ class FlextModelsConfig:
         Groups runtime scope configuration parameters.
         """
 
-        config_overrides: Mapping[str, t.FlexibleValue] | None = Field(
+        config_overrides: Mapping[str, t.ContainerValue] | None = Field(
             default=None,
             description="Optional configuration overrides",
         )
@@ -504,21 +544,23 @@ class FlextModelsConfig:
             default=None,
             description="Optional subproject name",
         )
-        services: Mapping[str, t.FlexibleValue] | None = Field(
+        services: Mapping[str, t.ContainerValue] | None = Field(
             default=None,
             description="Optional container services mapping",
         )
-        factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = Field(
+        factories: Mapping[str, Callable[[], t.ContainerValue]] | None = Field(
             default=None,
             description="Optional container factories mapping",
         )
-        container_services: Mapping[str, t.FlexibleValue] | None = Field(
+        container_services: Mapping[str, t.ContainerValue] | None = Field(
             default=None,
             description="Optional container services (alias for services)",
         )
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = Field(
-            default=None,
-            description="Optional container factories (alias for factories)",
+        container_factories: Mapping[str, Callable[[], t.ContainerValue]] | None = (
+            Field(
+                default=None,
+                description="Optional container factories (alias for factories)",
+            )
         )
 
     class NestedExecutionOptions(FlextModelsCollections.Config):
@@ -528,7 +570,7 @@ class FlextModelsConfig:
         Groups nested execution configuration parameters.
         """
 
-        config_overrides: Mapping[str, t.FlexibleValue] | None = Field(
+        config_overrides: Mapping[str, t.ContainerValue] | None = Field(
             default=None,
             description="Optional configuration overrides",
         )
@@ -544,13 +586,15 @@ class FlextModelsConfig:
             default=None,
             description="Optional correlation ID for tracing",
         )
-        container_services: Mapping[str, t.FlexibleValue] | None = Field(
+        container_services: Mapping[str, t.ContainerValue] | None = Field(
             default=None,
             description="Optional container services mapping",
         )
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = Field(
-            default=None,
-            description="Optional container factories mapping",
+        container_factories: Mapping[str, Callable[[], t.ContainerValue]] | None = (
+            Field(
+                default=None,
+                description="Optional container factories mapping",
+            )
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):
@@ -568,7 +612,7 @@ class FlextModelsConfig:
             default=None,
             description="Correlation ID for distributed tracing",
         )
-        metadata: FlextModelsBase.Metadata | None = Field(
+        metadata: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Additional metadata (Pydantic model)",
         )
@@ -580,8 +624,8 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: t.Dict = Field(
-            default_factory=t.Dict,
+        extra_kwargs: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
             description="Additional keyword arguments for metadata",
         )
 
@@ -599,7 +643,7 @@ class FlextModelsConfig:
             default=None,
             description="Error code for categorization",
         )
-        error_data: FlextModelsBase.Metadata | None = Field(
+        error_data: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Additional error data (Pydantic model)",
         )
@@ -612,7 +656,7 @@ class FlextModelsConfig:
             default=None,
             description="Field name that failed validation",
         )
-        value: t.GeneralValueType | None = Field(
+        value: t.ContainerValue | None = Field(
             default=None,
             description="Value that failed validation",
         )
@@ -767,12 +811,12 @@ class FlextModelsConfig:
             default=None,
             description="Actual type class",
         )
-        context: Mapping[str, t.MetadataAttributeValue] | None = Field(
+        context: Mapping[str, t.MetadataValue] | None = Field(
             default=None,
             description="Additional context for error",
         )
         metadata: (
-            FlextModelsBase.Metadata | Mapping[str, t.MetadataAttributeValue] | None
+            FlextModelFoundation.Metadata | Mapping[str, t.MetadataValue] | None
         ) = Field(
             default=None,
             description="Metadata for error",
@@ -785,7 +829,7 @@ class FlextModelsConfig:
             default=None,
             description="Expected value description",
         )
-        actual_value: t.GeneralValueType | None = Field(
+        actual_value: t.ContainerValue | None = Field(
             default=None,
             description="Actual value that caused error",
         )
@@ -890,7 +934,7 @@ class FlextModelsConfig:
             description="Whether to track performance metrics",
         )
 
-    class RetryLoopConfig(FlextModelsBase.ArbitraryTypesModel):
+    class RetryLoopConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for retry loop execution (Pydantic v2).
 
         Reduces parameter count for _execute_retry_loop from 8 to 3 params.
@@ -899,15 +943,15 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        func: p.VariadicCallable[t.GeneralValueType] = Field(
+        func: p.VariadicCallable[t.ContainerValue] = Field(
             description="Function to execute",
         )
-        args: tuple[t.GeneralValueType, ...] = Field(
+        args: tuple[t.ContainerValue, ...] = Field(
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        kwargs: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+        call_kwargs: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
             description="Keyword arguments for function",
         )
         retry_config: FlextModelsConfig.RetryConfiguration | None = Field(
@@ -932,7 +976,7 @@ class FlextModelsConfig:
             ),
         )
 
-    class DispatcherConfig(FlextModelsBase.ArbitraryTypesModel):
+    class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for message dispatcher.
 
         Replaces TypedDict DispatcherConfig from typings.py.
@@ -999,8 +1043,6 @@ class FlextModelsConfig:
             description="Enable dispatcher metrics collection",
         )
 
-    # Domain model configuration - moved from constants.py
-    # constants.py cannot import ConfigDict, so this belongs here
     DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,

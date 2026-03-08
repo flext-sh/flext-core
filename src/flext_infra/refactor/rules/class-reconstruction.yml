@@ -1,0 +1,133 @@
+# Regras para reconstrução de classes
+# Baseado em convenções da comunidade Python (Google Style, Django, etc.)
+# NOTA: PEP 8 não define ordenação de métodos, apenas espaçamento
+
+rules:
+  - id: ensure-future-annotations
+    name: "Ensure from __future__ import annotations"
+    description: "Garante que o import de __future__ annotations existe no arquivo"
+    enabled: true
+    severity: error
+    auto_fix: true
+    fix_action: ensure_future_annotations
+    check: missing_future_import
+
+  - id: reorder-class-methods
+    name: "Reorder class methods by convention"
+    description: "Reordena métodos seguindo convenções da comunidade Python"
+    enabled: true
+    severity: warning
+    auto_fix: true
+    fix_action: reorder_methods
+
+    # Ordem hierárquica dos métodos (de cima para baixo)
+    method_order:
+      # Nível 1: Atributos de classe e constantes
+      - category: "class_attributes"
+        description: "Atributos e constantes de classe"
+        patterns:
+          - type: "attribute"
+        sort_by: "name"
+
+      # Nível 2: Métodos especiais (dunder methods)
+      - category: "magic_methods"
+        description: "Métodos especiais do Python"
+        patterns:
+          - regex: "^__.+__$"
+        order:
+          - "__new__"
+          - "__init__"
+          - "__post_init__"
+          - "__del__"
+          - "__repr__"
+          - "__str__"
+          - "__eq__"
+          - "__ne__"
+          - "__lt__"
+          - "__le__"
+          - "__gt__"
+          - "__ge__"
+          - "__hash__"
+          - "__bool__"
+          - "__getattr__"
+          - "__setattr__"
+          - "__delattr__"
+          - "__getattribute__"
+          - "__getitem__"
+          - "__setitem__"
+          - "__delitem__"
+          - "__iter__"
+          - "__next__"
+          - "__len__"
+          - "__contains__"
+          - "__enter__"
+          - "__exit__"
+          - "__call__"
+          - "*"
+
+      # Nível 3: Propriedades
+      - category: "properties"
+        description: "Propriedades e descriptors"
+        patterns:
+          - decorators: ["property", "cached_property", "computed_field"]
+        group_by_attribute: true
+        sort_by: "name"
+
+      # Nível 4: Métodos de classe
+      - category: "classmethods"
+        description: "Métodos de classe e factories"
+        patterns:
+          - decorators: ["classmethod"]
+        sort_by: "name"
+
+      # Nível 5: Métodos estáticos
+      - category: "staticmethods"
+        description: "Métodos utilitários estáticos"
+        patterns:
+          - decorators: ["staticmethod"]
+        sort_by: "name"
+
+      # Nível 6: Métodos públicos (API)
+      - category: "public_methods"
+        description: "Métodos públicos da API"
+        visibility: "public"
+        exclude_decorators: ["property", "classmethod", "staticmethod"]
+        sort_by: "name"
+
+      # Nível 7: Métodos protegidos
+      - category: "protected_methods"
+        description: "Métodos internos para subclasses"
+        visibility: "protected"
+        patterns:
+          - regex: "^_[^_].*"
+        sort_by: "name"
+
+      # Nível 8: Métodos privados
+      - category: "private_methods"
+        description: "Métodos de implementação privada"
+        visibility: "private"
+        patterns:
+          - regex: "^__.+"
+        sort_by: "name"
+
+    spacing:
+      blank_lines_between_methods: 1
+      blank_lines_between_categories: 1
+      blank_lines_before_class: 2
+      blank_lines_after_class: 2
+
+    preserve:
+      comments: true
+      docstrings: true
+      type_hints: true
+      decorators: true
+
+  - id: fix-mro-redeclaration
+    name: "Fix MRO redeclaration"
+    description: "Remove herança redundante em classes aninhadas (MRO issues)"
+    enabled: true
+    severity: error
+    auto_fix: true
+    fix_action: remove_inheritance_keep_class
+    pattern: 'class.*\\(.*Constants.*\\)'
+    action: remove_inheritance_keep_class

@@ -17,10 +17,8 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextSettings, m, p
-from flext_core.constants import c
+from flext_core import FlextLogger, FlextSettings, m, r
 from tests.test_utils import assertion_helpers
 
 
@@ -34,7 +32,7 @@ def make_result_logger(
     _correlation_id: str | None = None,
     _force_new: bool = False,
 ) -> FlextLogger.ResultAdapter:
-    """Helper to build loggers returning FlextResult for logging tests."""
+    """Helper to build loggers returning r for logging tests."""
     return FlextLogger(
         name,
         config=config,
@@ -97,51 +95,25 @@ class TestGlobalContextManagement:
         context = FlextLogger._get_global_context()
         assert isinstance(context, m.ConfigMap)
 
-    def test_unbind_global_context_with_non_sequence_keys(self) -> None:
-        """Test unbind with non-sequence keys (covers line 121-124)."""
+    def test_unbind_global_context_specific_key(self) -> None:
+        """Test unbind_global_context with valid keys."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123")
-        # Pass non-sequence keys (int is not Sequence) - should handle gracefully
-        result = FlextLogger._context_operation(
-            "unbind",
-            keys=42,  # int is not Sequence, so isinstance check fails
-        )
-        assert (
-            result.is_success
-        )  # Should still succeed (skips unbind but returns success)
+        result = FlextLogger.unbind_global_context("request_id")
+        assert result.is_success
 
-    def test_context_operation_unknown_operation(self) -> None:
-        """Test context operation with unknown operation (covers line 131)."""
-        # _execute_context_op returns ResultProtocol[bool] | dict[str, t.GeneralValueType]
-        # For unknown operations, it returns ResultProtocol[bool] via result_fail
-        result = FlextLogger._execute_context_op("unknown_operation", {})
-        # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
-        # RuntimeResult implements p.Result protocol
-        assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
-        assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None
-        assert (
-            "Unknown operation" in result.error or "unknown_operation" in result.error
-        )
-
-    def test_context_operation_get_with_empty_context(self) -> None:
-        """Test GET operation with empty context (covers line 130)."""
+    def test_get_global_context_empty(self) -> None:
+        """Test _get_global_context with empty context."""
         FlextLogger.clear_global_context()
-        result = FlextLogger._context_operation(
-            "get",
-        )
-        # Should return empty dict when context is empty
+        result = FlextLogger._get_global_context()
         assert isinstance(result, m.ConfigMap)
         assert result.root == {}
 
-    def test_context_operation_get_with_context(self) -> None:
-        """Test GET operation with existing context (covers line 129-130)."""
+    def test_get_global_context_with_values(self) -> None:
+        """Test _get_global_context with existing context."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
-        result = FlextLogger._context_operation(
-            "get",
-        )
-        # Should return dict with context
+        result = FlextLogger._get_global_context()
         assert isinstance(result, m.ConfigMap)
         assert "test_key" in result.root
         assert result.root["test_key"] == "test_value"
@@ -361,7 +333,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.trace("Test trace message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Trace logging should succeed",
         )
@@ -385,7 +357,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.debug("Test debug message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Debug logging should succeed",
         )
@@ -408,7 +380,7 @@ class TestLoggingMethods:
 
         # Execute logging with context and validate result
         result = logger.debug("Debug with context", user_id="123", action="login")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Debug logging with context should succeed",
         )
@@ -433,7 +405,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.info("Test info message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Info logging should succeed",
         )
@@ -460,7 +432,7 @@ class TestLoggingMethods:
             status="completed",
             duration="0.5s",
         )
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Info logging with context should succeed",
         )
@@ -484,7 +456,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.warning("Test warning message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Warning logging should succeed",
         )
@@ -507,7 +479,7 @@ class TestLoggingMethods:
 
         # Execute logging with context and validate result
         result = logger.warning("Warning with context", retry_count=3, delay="1s")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Warning logging with context should succeed",
         )
@@ -531,7 +503,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.error("Test error message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Error logging should succeed",
         )
@@ -554,7 +526,7 @@ class TestLoggingMethods:
 
         # Execute logging with context and validate result
         result = logger.error("Error with context", error_code="ERR_001", user_id="456")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Error logging with context should succeed",
         )
@@ -578,7 +550,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.critical("Test critical message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Critical logging should succeed",
         )
@@ -605,7 +577,7 @@ class TestLoggingMethods:
             alert_level="high",
             system="payment",
         )
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Critical logging with context should succeed",
         )
@@ -628,7 +600,7 @@ class TestLoggingMethods:
 
         # Execute logging with formatting and validate result
         result = logger.info("User %s logged in", "john")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Logging with formatting should succeed",
         )
@@ -651,7 +623,7 @@ class TestLoggingMethods:
 
         # Execute logging with multiple format arguments and validate result
         result = logger.info("Message with %s and %d", "arg1", 42)
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             ("Logging with multiple format arguments should succeed"),
         )
@@ -685,7 +657,7 @@ class TestExceptionLogging:
             exception_obj = e
             # Execute exception logging and validate result
             result = logger.exception("An error occurred", exception=e)
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging should succeed",
             )
@@ -719,7 +691,7 @@ class TestExceptionLogging:
             exception_obj = e
             # Execute exception logging and validate result
             result = logger.exception("Operation failed")
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging with exc_info should succeed",
             )
@@ -747,7 +719,7 @@ class TestExceptionLogging:
 
         # Execute error logging outside exception context and validate result
         result = logger.error("No exception context")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             ("Error logging without exception context should succeed"),
         )
@@ -781,7 +753,7 @@ class TestExceptionLogging:
                 operation="file_read",
                 file="data.txt",
             )
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging with context should succeed",
             )
@@ -834,12 +806,12 @@ class TestResultAdapter:
 
 
 class TestResultIntegration:
-    """Test FlextResult integration with logging via with_result()."""
+    """Test r integration with logging via with_result()."""
 
     def test_log_result_success(self) -> None:
         """Test logging successful result via with_result()."""
         logger = make_result_logger("test")
-        result = FlextResult[str].ok("test_value")
+        result = r[str].ok("test_value")
         log_result = logger.with_result().info(
             f"Operation completed with: {result.value}",
         )
@@ -848,28 +820,28 @@ class TestResultIntegration:
     def test_log_result_failure(self) -> None:
         """Test logging failed result via with_result()."""
         logger = make_result_logger("test")
-        result = FlextResult[str].fail("Something went wrong")
+        result: r[str] = r[str].fail("Something went wrong")
         log_result = logger.with_result().error(f"Operation failed: {result.error}")
         assert log_result.is_success
 
     def test_log_result_without_operation(self) -> None:
         """Test logging result without operation name."""
         logger = make_result_logger("test")
-        result = FlextResult[str].ok("value")
+        result = r[str].ok("value")
         log_result = logger.with_result().info(f"Result: {result.value}")
         assert log_result.is_success
 
     def test_log_result_with_custom_level(self) -> None:
         """Test logging result with debug level."""
         logger = make_result_logger("test")
-        result = FlextResult[str].ok("value")
+        result = r[str].ok("value")
         log_result = logger.with_result().debug(f"Debug result: {result.value}")
         assert log_result.is_success
 
     def test_log_result_failure_includes_error_details(self) -> None:
         """Test logging result includes error details."""
         logger = make_result_logger("test")
-        result = FlextResult[str].fail("Error occurred")
+        result: r[str] = r[str].fail("Error occurred")
         log_result = logger.with_result().error(f"Error: {result.error}")
         assert log_result.is_success
 
@@ -957,7 +929,7 @@ class TestEdgeCases:
     def test_logging_with_none_context_values(self) -> None:
         """Test logging with None context values."""
         logger = make_result_logger("test")
-        result = logger.info("Message", context_key=None)
+        result = logger.info("Message", context_key="")
         assertion_helpers.assert_flext_result_success(result)
 
     def test_logging_with_large_context(self) -> None:

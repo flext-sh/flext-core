@@ -50,7 +50,7 @@ poetry add flext-core
 Replace exception handling with `FlextResult` for predictable control flow.
 
 ```python
-from flext_core import FlextResult as r
+from flext_core import r
 
 def divide(a: int, b: int) -> r[float]:
     if b == 0:
@@ -94,7 +94,7 @@ Decouple your business logic using the `FlextDispatcher`.
 
 ```python
 from dataclasses import dataclass
-from flext_core import FlextDispatcher, FlextResult as r
+from flext_core import FlextDispatcher, r
 
 # 1. Define a Command
 @dataclass

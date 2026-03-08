@@ -12,13 +12,13 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 
-from flext_core import FlextResult, u
+from flext_core import FlextResult, t, u
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
@@ -75,13 +75,17 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: dict[str, t.GeneralValueType] = {}
-        self._when: dict[str, t.GeneralValueType] = {}
-        self._then: dict[str, t.GeneralValueType] = {}
+        self._given: dict[str, t.ContainerValue] = {}
+        self._when: dict[str, t.ContainerValue] = {}
+        self._then: dict[str, t.ContainerValue] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
-    def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def given(
+        self,
+        _description: str,
+        **kwargs: t.ContainerValue,
+    ) -> GivenWhenThenBuilder:
         """Given method.
 
         Returns:
@@ -91,7 +95,11 @@ class GivenWhenThenBuilder:
         self._given.update(kwargs)
         return self
 
-    def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def when(
+        self,
+        _description: str,
+        **kwargs: t.ContainerValue,
+    ) -> GivenWhenThenBuilder:
         """When method.
 
         Returns:
@@ -101,7 +109,11 @@ class GivenWhenThenBuilder:
         self._when.update(kwargs)
         return self
 
-    def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def then(
+        self,
+        _description: str,
+        **kwargs: t.ContainerValue,
+    ) -> GivenWhenThenBuilder:
         """Then method.
 
         Returns:
@@ -150,36 +162,45 @@ class GivenWhenThenBuilder:
             return str(value)
 
         # Use mapper to transform dict values and convert keys to strings
-        given_converted: dict[str, str | int | bool] = u.mapper().transform_values(
-            u.mapper()
-            .map_dict_keys(
-                self._given, {k: str(k) for k in self._given}, keep_unmapped=True
-            )
-            .value
+        given_mapped = u.Mapper.transform_values(
+            u.Mapper.map_dict_keys(
+                self._given,
+                {k: str(k) for k in self._given},
+                keep_unmapped=True,
+            ).value
             if isinstance(self._given, dict)
             else {},
             convert_dict_value,
         )
-        when_converted: dict[str, str | int | bool] = u.mapper().transform_values(
-            u.mapper()
-            .map_dict_keys(
-                self._when, {k: str(k) for k in self._when}, keep_unmapped=True
-            )
-            .value
+        given_converted: dict[str, str | int | bool] = {
+            key: convert_dict_value(value) for key, value in given_mapped.items()
+        }
+        when_mapped = u.Mapper.transform_values(
+            u.Mapper.map_dict_keys(
+                self._when,
+                {k: str(k) for k in self._when},
+                keep_unmapped=True,
+            ).value
             if isinstance(self._when, dict)
             else {},
             convert_dict_value,
         )
-        then_converted: dict[str, str | int | bool] = u.mapper().transform_values(
-            u.mapper()
-            .map_dict_keys(
-                self._then, {k: str(k) for k in self._then}, keep_unmapped=True
-            )
-            .value
+        when_converted: dict[str, str | int | bool] = {
+            key: convert_dict_value(value) for key, value in when_mapped.items()
+        }
+        then_mapped = u.Mapper.transform_values(
+            u.Mapper.map_dict_keys(
+                self._then,
+                {k: str(k) for k in self._then},
+                keep_unmapped=True,
+            ).value
             if isinstance(self._then, dict)
             else {},
             convert_dict_value,
         )
+        then_converted: dict[str, str | int | bool] = {
+            key: convert_dict_value(value) for key, value in then_mapped.items()
+        }
 
         scenario_data: MockScenarioData = {
             "given": given_converted,
@@ -197,8 +218,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: dict[str, t.GeneralValueType] = {}
-        self._validation_rules: dict[str, t.GeneralValueType] = {}
+        self._data: dict[str, t.ContainerValue] = {}
+        self._validation_rules: dict[str, t.ContainerValue] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -220,7 +241,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: t.ContainerValue) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -252,7 +273,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs: object) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs: t.ContainerValue) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:
@@ -264,7 +285,7 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> dict[str, t.GeneralValueType]:
+    def build(self) -> dict[str, t.ContainerValue]:
         """Build method.
 
         Returns:
@@ -285,15 +306,17 @@ class ParameterizedTestBuilder:
         self._success_cases: list[FixtureCaseDict] = []
         self._failure_cases: list[FixtureCaseDict] = []
 
-    def add_case(self, **kwargs: str | int | bool | list[str]) -> ParameterizedTestBuilder:
+    def add_case(
+        self,
+        **kwargs: str | int | bool | list[str],
+    ) -> ParameterizedTestBuilder:
         """add_case method.
 
         Returns:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        case: FixtureCaseDict = kwargs  # type: ignore[assignment]
-        self._cases.append(case)
+        cast("FixtureCaseDict", kwargs)
         return self
 
     def add_success_cases(
@@ -366,11 +389,19 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...],
+        data: list[t.ContainerValue]
+        | dict[str, t.ContainerValue]
+        | str
+        | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...] = data
+        self.data: (
+            list[t.ContainerValue]
+            | dict[str, t.ContainerValue]
+            | str
+            | tuple[object, ...]
+        ) = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: object) -> AssertionBuilder:
@@ -426,7 +457,12 @@ class AssertionBuilder:
     def satisfies(
         self,
         condition: Callable[
-            [list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...]],
+            [
+                list[t.ContainerValue]
+                | dict[str, t.ContainerValue]
+                | str
+                | tuple[object, ...],
+            ],
             bool,
         ],
         description: str = "",
@@ -540,7 +576,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, t.GeneralValueType] = {
+        test_data: dict[str, t.ContainerValue] = {
             "name": "John",
             "age": 30,
             "active": True,

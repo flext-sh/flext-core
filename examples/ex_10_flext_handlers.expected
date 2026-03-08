@@ -1,0 +1,129 @@
+[handler_core]
+handle.not_implemented_pattern: 'NotImplementedError:'
+handler.handler_name: 'afqofpvaus'
+handler.name_matches: True
+handler.mode: 'command'
+validate.none.failure: True
+validate.ok.success: True
+validate.blocked_cmd: 'blocked'
+validate.blocked_qry: 'blocked'
+validate.consistent: True
+can_handle.expected: True
+can_handle.derived: True
+can_handle.other: False
+execute.success.value: True
+execute.validation_failure: 'blocked'
+dispatch.success: True
+dispatch.mode_mismatch: "Handler with mode 'command' cannot execute query pipelines"
+dispatch.pipeline_exception: 'Handler cannot handle message type str'
+record_metric.ok: True
+push_context.mapping: True
+push_context.execution: True
+pop_context.1: 'srbqng'
+pop_context.2: 'jlvejr'
+
+[create_from_callable]
+callable.default: 'default:mhyrfi'
+callable.default.matches: True
+callable.named.handler_name: 'twderpkpmg'
+callable.named.name_matches: True
+callable.named.mode: 'query'
+callable.named.value_matches: True
+callable.mode_enum: 'event'
+callable.mode_enum.value_matches: True
+callable.mode_str: 'query'
+callable.mode_str.value_matches: True
+callable.handler_config.name: 'heassztncq'
+callable.handler_config.mode: 'saga'
+callable.handler_config.name_matches: True
+callable.handler_config.value_matches: True
+callable.invalid_mode: 'ValidationError:[VALIDATION_ERROR] Invalid handler mode: invalid'
+
+[discovery]
+scan_class.count: 2
+scan_class.first: 'high'
+has_handlers.class: True
+has_handlers.class_none: False
+scan_module.count: 1
+scan_module.name: 'mod_handler'
+scan_module.wrapped_result: True
+has_handlers_module.true: True
+has_handlers_module.false: False
+
+[namespaces_and_mixins]
+bootstrap.create_instance: '_NoArgs'
+cqrs.record_metric: True
+cqrs.get_metrics: 5
+cqrs.push_context.mapping: False
+cqrs.current_context: '-'
+cqrs.pop_context: '-'
+di.bind_configuration_exists: True
+di.register_object: True
+di.register_factory.cached: True
+di.register_resource: True
+di.duplicate_error: "ValueError:Provider 'npzyt' is already registered"
+di.layered.bridge: 'DynamicContainer'
+di.layered.services: 'DynamicContainer'
+di.layered.resources: 'DynamicContainer'
+di.wire.noop: True
+integration.calls: True
+metadata.version: '9.1.0'
+metadata.attributes: {'tag': 'qoac'}
+protocol.is_handler.true: True
+protocol.is_handler.false: False
+protocol.is_service: True
+protocol.is_command_bus: True
+protocol.validate_known: False
+protocol.validate_unknown: 'Unknown protocol: Unknown. Supported: Handler, Service, CommandBus, Repository, Configurable'
+protocol.validate_processor.good: True
+protocol.validate_processor.bad: None
+validation.chain.ok: True
+validation.chain.fail: 'Validator must return r[bool].ok(True) for success, got False'
+
+[runtime_result_and_utilities]
+rr.is_success: True
+rr.is_failure: True
+rr.unwrap_or: True
+rr.map: True
+rr.flat_map: True
+rr.and_then: True
+rr.alt: True
+rr.lash: True
+rr.recover: True
+rr.fold: True
+mixin.ok: True
+mixin.fail: True
+mixin.ensure_result.value: True
+mixin.ensure_result.result: True
+mixin.to_dict: ConfigMap
+runtime.generate_id.length: True
+runtime.generate_id.unique: True
+runtime.generate_prefixed_id.default: True
+runtime.generate_prefixed_id.length: True
+runtime.generate_datetime_utc: True
+runtime.compare_entities.true: True
+runtime.compare_entities.false: False
+runtime.hash_entity: True
+runtime.compare_value_objects.scalar: True
+runtime.compare_value_objects.model: False
+runtime.hash_value_object: True
+runtime.ensure_trace_context.source: 'vhryd'
+runtime.ensure_trace_context.keys: [True, True, True, True]
+runtime.get_log_level: True
+runtime.validate_http.success: [200, 404]
+runtime.validate_http.range_fail: 'Invalid HTTP status code: 99 (must be 100-599)'
+runtime.validate_http.type_fail: 'Invalid HTTP status code type: PosixPath'
+runtime.is_dict_like.true: True
+runtime.is_dict_like.false: False
+runtime.is_list_like.true: True
+runtime.is_list_like.false: False
+runtime.is_valid_json.true: True
+runtime.is_valid_json.false: False
+runtime.is_valid_identifier.true: True
+runtime.is_valid_identifier.false: False
+runtime.safe_get_attribute: True
+runtime.extract_generic_args: True
+runtime.is_sequence_type.true: True
+runtime.is_sequence_type.false: False
+runtime.normalize_general: {'lh': 1}
+runtime.normalize_metadata: '{"k": [1, 2]}'

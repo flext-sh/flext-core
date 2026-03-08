@@ -12,12 +12,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, c, p, r
 
 
 class FlextUtilitiesText:
@@ -25,12 +21,8 @@ class FlextUtilitiesText:
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
-
-        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
-        Uses same structure/config as FlextLogger but without circular import.
-        """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def clean_text(text: str) -> str:
@@ -51,17 +43,24 @@ class FlextUtilitiesText:
         ).strip()
 
     @staticmethod
-    def truncate_text(
-        text: str,
-        max_length: int = c.Performance.BatchProcessing.DEFAULT_SIZE,
-        suffix: str = "...",
-    ) -> r[str]:
-        """Truncate text to maximum length with suffix."""
-        if len(text) <= max_length:
-            return r[str].ok(text)
+    def format_app_id(name: str) -> str:
+        """Format application ID.
 
-        truncated = text[: max_length - len(suffix)] + suffix
-        return r[str].ok(truncated)
+        Converts a name to a valid application ID by lowercasing
+        and replacing spaces and underscores with hyphens.
+
+        Args:
+            name: Application name to format
+
+        Returns:
+            Formatted application ID (lowercase, hyphens)
+
+        Example:
+            app_id = u.format_app_id("My Application_Name")
+            # → "my-application-name"
+
+        """
+        return name.lower().replace(" ", "-").replace("_", "-")
 
     @staticmethod
     def safe_string(text: str | None) -> str:
@@ -89,24 +88,17 @@ class FlextUtilitiesText:
         return stripped
 
     @staticmethod
-    def format_app_id(name: str) -> str:
-        """Format application ID.
+    def truncate_text(
+        text: str,
+        max_length: int = c.Performance.BatchProcessing.DEFAULT_SIZE,
+        suffix: str = "...",
+    ) -> r[str]:
+        """Truncate text to maximum length with suffix."""
+        if len(text) <= max_length:
+            return r[str].ok(text)
 
-        Converts a name to a valid application ID by lowercasing
-        and replacing spaces and underscores with hyphens.
-
-        Args:
-            name: Application name to format
-
-        Returns:
-            Formatted application ID (lowercase, hyphens)
-
-        Example:
-            app_id = u.format_app_id("My Application_Name")
-            # → "my-application-name"
-
-        """
-        return name.lower().replace(" ", "-").replace("_", "-")
+        truncated = text[: max_length - len(suffix)] + suffix
+        return r[str].ok(truncated)
 
 
 __all__ = [

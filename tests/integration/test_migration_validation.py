@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import override
 
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -38,8 +38,8 @@ from flext_core import (
     FlextSettings,
     FlextTypes,
     FlextUtilities,
+    t,
 )
-from flext_core.typings import t
 from tests.test_utils import assertion_helpers
 
 
@@ -101,24 +101,17 @@ class TestMigrationScenario2:
         container = FlextContainer()
 
         # Register a simple service
-        class TestService:
-            def __init__(self) -> None:
-                super().__init__()
-                self.name = "test"
+        class TestService(PydanticBaseModel):
+            name: str = "test"
 
         # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
         # Explicit type annotation for container registration
-        service_typed: FlextTypes.GeneralValueType | PydanticBaseModel | Callable[..., FlextTypes.GeneralValueType] = test_service
-        registration_result = container.with_service(
-            "test_migration_service", service_typed
-        )
+        registration_result = container.register("test_migration_service", test_service)
         assert registration_result is container  # Fluent interface returns Self
 
         # Use correct API: get() for resolution
-        resolution_result: FlextResult[FlextTypes.GeneralValueType] = container.get(
-            "test_migration_service"
-        )
+        resolution_result = container.get("test_migration_service")
         assert resolution_result.is_success
         service = resolution_result.value
         assert isinstance(service, TestService)
@@ -134,21 +127,24 @@ class TestMigrationScenario4:
         class UserService(FlextService[None]):
             """User service extending FlextService."""
 
-            def __init__(self, **data: FlextTypes.GeneralValueType) -> None:
+            def __init__(self, **data: FlextTypes.Container) -> None:
                 super().__init__(**data)
                 self._logger = FlextLogger(__name__)
 
+            @override
             def execute(self, **_kwargs: object) -> FlextResult[None]:
                 """Execute method required by FlextService abstract class."""
                 return FlextResult[None].ok(None)
 
             def create_user(
-                self, username: str, email: str
+                self,
+                username: str,
+                email: str,
             ) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
                     return FlextResult[dict[str, str]].fail(
-                        "Username and email required"
+                        "Username and email required",
                     )
 
                 self._logger.info("Creating user", extra={"username": username})
@@ -217,7 +213,7 @@ class TestBackwardCompatibility:
         assert success.unwrap_or("default") == "test_value"
 
         # Create failure result
-        failure = FlextResult[str].fail("test_error")
+        failure: FlextResult[str] = FlextResult[str].fail("test_error")
 
         assert not failure.is_success
         assert failure.is_failure
@@ -262,18 +258,21 @@ class TestMigrationComplexity:
                 self.container = FlextContainer()
 
             def process_data(
-                self, data: dict[str, str]
-            ) -> FlextResult[dict[str, t.GeneralValueType]]:
+                self,
+                data: dict[str, str],
+            ) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict[str, t.GeneralValueType]].fail("Data required")
+                    return FlextResult[dict[str, t.ContainerValue]].fail(
+                        "Data required",
+                    )
 
                 self.logger.info("Processing data", extra={"size": len(data)})
-                processed: dict[str, t.GeneralValueType] = {
+                processed: dict[str, t.ContainerValue] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return FlextResult[dict[str, t.GeneralValueType]].ok(processed)
+                return FlextResult[dict[str, t.ContainerValue]].ok(processed)
 
         # Test application works correctly
         app = ApplicationExample()

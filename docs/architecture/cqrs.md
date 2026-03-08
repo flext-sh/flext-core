@@ -14,8 +14,8 @@
   - [Dispatch Flow](#dispatch-flow)
   - [Handler Registration](#handler-registration)
 - [Integration with FlextService](#integration-with-flextservice)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1)](#current-state-v1)
+- [Modernization Roadmap - Phase Overview](#modernization-roadmap-phase-overview)
+  - [Current State (V1) - Phase Overview](#current-state-v1-phase-overview)
   - [Planned Phases](#planned-phases)
   - [Phase 1: FlextMixins.CQRS](#phase-1-flextmixinscqrs)
   - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
@@ -23,8 +23,8 @@
   - [V1 Handler (Current Production)](#v1-handler-current-production)
   - [V2 Handler (Target - Phase 3+)](#v2-handler-target-phase-3)
   - [Migration Path](#migration-path)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1) vs Target (V2)](#current-state-v1-vs-target-v2)
+- [Modernization Roadmap - Detailed Strategy](#modernization-roadmap-detailed-strategy)
+  - [Current State (V1) vs Target (V2) - Detailed](#current-state-v1-vs-target-v2-detailed)
   - [Timeline](#timeline)
   - [Problems Addressed](#problems-addressed)
   - [Solution Strategy](#solution-strategy)
@@ -95,8 +95,8 @@ Handlers derive from `FlextHandlers[MessageT, ResultT]` and implement the
 abstract `handle()` method:
 
 ```python
-from flext_core.handlers import FlextHandlers
-from flext_core.result import r
+from flext_core import FlextHandlers
+from flext_core import r
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
@@ -164,7 +164,7 @@ ______________________________________________________________________
 The dispatcher initializes reliability managers internally:
 
 ```python
-from flext_core.dispatcher import FlextDispatcher
+from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
 dispatcher.register_handler(CreateUserCommand, CreateUserHandler())
@@ -241,9 +241,9 @@ See Service Patterns Guide for service usage.
 
 ______________________________________________________________________
 
-## Modernization Roadmap
+## Modernization Roadmap - Phase Overview
 
-### Current State (V1)
+### Current State (V1) - Phase Overview
 
 | Component       | Issue                            | Impact                |
 | --------------- | -------------------------------- | --------------------- |
@@ -342,9 +342,9 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 
 ______________________________________________________________________
 
-## Modernization Roadmap
+## Modernization Roadmap - Detailed Strategy
 
-### Current State (V1) vs Target (V2)
+### Current State (V1) vs Target (V2) - Detailed
 
 | Aspecto                   | V1 (Atual)                                | V2 (Target)                              |
 | ------------------------- | ----------------------------------------- | ---------------------------------------- |
@@ -541,4 +541,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

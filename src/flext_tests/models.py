@@ -11,13 +11,10 @@ from __future__ import annotations
 
 import datetime
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
+from typing import TypeAliasType, override
 
-from flext_core import r, u as flext_u
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.models import FlextModels as FlextModelsBase
 from pydantic import (
     AliasChoices,
     BaseModel,
@@ -28,45 +25,24 @@ from pydantic import (
     model_validator,
 )
 
-from flext_tests.constants import ContainerStatus, FlextTestsConstants, c
-from flext_tests.typings import FileContent as TestsFileContent, t
-
-# Type aliases for readability
-type _FormatLiteral = FlextTestsConstants.Tests.Files.FormatLiteral
-type _CompareModeLiteral = FlextTestsConstants.Tests.Files.CompareModeLiteral
-type _OperationLiteral = FlextTestsConstants.Tests.Files.OperationLiteral
-type _ErrorModeLiteral = FlextTestsConstants.Tests.Files.ErrorModeLiteral
-type _SeverityLiteral = FlextTestsConstants.Tests.Validator.SeverityLiteral
-
-# =====================================================================
-# Module-level test models for Pydantic forward reference resolution
-# (These are defined at module level to avoid nested class issues)
-# Use actual classes, not type aliases, for proper Pydantic inheritance
-# =====================================================================
-
-
-class _TestEntity(FlextModelsEntity.Entry):
-    """Test entity model with identity - module-level for Pydantic resolution."""
-
-    name: str
-    value: t.GeneralValueType = ""
-
-
-class _TestValueObject(FlextModelsBase.Value):
-    """Test value object model - module-level for Pydantic resolution."""
-
-    data: str = ""
-    count: int = 1
+from flext_core import FlextModels, r, u
+from flext_core._models.base import FlextModelFoundation
+from flext_tests import c, t
 
 
 # Create FlextTestsModels that extends FlextModels with Tests.Factory namespace
-class FlextTestsModels(FlextModelsBase):
+class FlextTestsModels(FlextModels):
     """Test models extending FlextModels with test-specific factory models."""
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(
+        cls,
+        **kwargs: Mapping[str, t.ContainerValue],
+    ) -> None:
         """Warn when FlextTestsModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
-        flext_u.Deprecation.warn_once(
+        if cls.__module__.startswith("tests"):
+            return
+        u.Deprecation.warn_once(
             f"subclass:{cls.__name__}",
             "Subclassing FlextTestsModels is deprecated. Use FlextModels directly with composition instead.",
         )
@@ -77,16 +53,17 @@ class FlextTestsModels(FlextModelsBase):
         class Docker:
             """Docker-specific models for test infrastructure."""
 
-            class ContainerInfo(FlextModelsBase.Value):
+            class ContainerInfo(FlextModels.Value):
                 """Container information model."""
 
                 name: str
-                status: ContainerStatus
+                status: c.Tests.Docker.ContainerStatus
                 ports: Mapping[str, str]
                 image: str
                 container_id: str = ""
 
-                def model_post_init(self, __context: object, /) -> None:
+                @override
+                def model_post_init(self, __context: t.ContainerValue, /) -> None:
                     """Validate container info after initialization."""
                     super().model_post_init(__context)
                     if not self.name:
@@ -96,14 +73,15 @@ class FlextTestsModels(FlextModelsBase):
                         msg = "Container image cannot be empty"
                         raise ValueError(msg)
 
-            class ContainerConfig(FlextModelsBase.Value):
+            class ContainerConfig(FlextModels.Value):
                 """Container configuration model."""
 
                 compose_file: Path
                 service: str
                 port: int
 
-                def model_post_init(self, __context: object, /) -> None:
+                @override
+                def model_post_init(self, __context: t.ContainerValue, /) -> None:
                     """Validate container config after initialization."""
                     super().model_post_init(__context)
                     if not self.compose_file.exists():
@@ -116,7 +94,7 @@ class FlextTestsModels(FlextModelsBase):
                         msg = f"Port {self.port} out of valid range"
                         raise ValueError(msg)
 
-            class ContainerState(FlextModelsBase.Value):
+            class ContainerState(FlextModels.Value):
                 """Container state tracking model."""
 
                 container_name: str
@@ -127,7 +105,7 @@ class FlextTestsModels(FlextModelsBase):
         class Factory:
             """Factory models for test data generation."""
 
-            class ModelFactoryParams(FlextModelsBase.Value):
+            class ModelFactoryParams(FlextModels.Value):
                 """Parameters for factory model() method with Pydantic 2 validation."""
 
                 kind: t.Tests.Factory.ModelKind = Field(
@@ -187,18 +165,18 @@ class FlextTestsModels(FlextModelsBase):
                 # Service-specific
                 status: str | None = Field(default=None, description="Status override")
                 # Entity-specific
-                value: t.GeneralValueType | None = Field(
+                value: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Value override",
                 )
-                # ValueObject-specific
+                # Value-specific
                 data: str | None = Field(default=None, description="Data override")
                 value_count: int | None = Field(
                     default=None,
                     description="Value count override",
                 )
                 # Generic overrides
-                overrides: Mapping[str, t.GeneralValueType] | None = Field(
+                overrides: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Generic field overrides",
                 )
@@ -231,7 +209,7 @@ class FlextTestsModels(FlextModelsBase):
                         raise ValueError(msg)
                     return self
 
-            class ResultFactoryParams(FlextModelsBase.Value):
+            class ResultFactoryParams(FlextModels.Value):
                 """Parameters for tt.res() factory method with Pydantic 2 advanced validation.
 
                 Uses Field constraints and model_validator for comprehensive validation.
@@ -241,7 +219,7 @@ class FlextTestsModels(FlextModelsBase):
                     default="ok",
                     description="Result type ('ok', 'fail', 'from_value')",
                 )
-                value: t.GeneralValueType = Field(
+                value: t.Tests.ContainerValue = Field(
                     default=None,
                     description="Value for success (required for 'ok')",
                 )
@@ -250,7 +228,7 @@ class FlextTestsModels(FlextModelsBase):
                     ge=1,
                     description="Number of results to create",
                 )
-                values: Sequence[t.GeneralValueType] | None = Field(
+                values: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Explicit value list for batch creation",
                 )
@@ -274,11 +252,11 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Error message when value is None (for 'from_value')",
                 )
-                transform: Callable[[t.GeneralValueType], t.GeneralValueType] | None = (
-                    Field(
-                        default=None,
-                        description="Transform function for success values",
-                    )
+                transform: (
+                    Callable[[t.Tests.ContainerValue], t.Tests.ContainerValue] | None
+                ) = Field(
+                    default=None,
+                    description="Transform function for success values",
                 )
 
                 @model_validator(mode="after")
@@ -314,7 +292,7 @@ class FlextTestsModels(FlextModelsBase):
                         raise ValueError(msg)
                     return self
 
-            class ListFactoryParams(FlextModelsBase.Value):
+            class ListFactoryParams(FlextModels.Value):
                 """Parameters for tt.list() factory method with Pydantic 2 advanced validation.
 
                 Uses Field constraints for inline validation. Source can be ModelKind (str),
@@ -326,8 +304,8 @@ class FlextTestsModels(FlextModelsBase):
 
                 source: (
                     t.Tests.Factory.ModelKind
-                    | Sequence[t.GeneralValueType]
-                    | Callable[[], t.GeneralValueType]
+                    | Sequence[t.Tests.ContainerValue]
+                    | Callable[[], t.Tests.ContainerValue]
                 ) = Field(
                     default="user",
                     description="Source for list items (ModelKind, Sequence, or Callable)",
@@ -345,19 +323,19 @@ class FlextTestsModels(FlextModelsBase):
                     default=False,
                     description="Ensure all items are unique",
                 )
-                transform: Callable[[t.GeneralValueType], t.GeneralValueType] | None = (
-                    Field(
-                        default=None,
-                        description="Transform function applied to each item",
-                    )
+                transform: (
+                    Callable[[t.Tests.ContainerValue], t.Tests.ContainerValue] | None
+                ) = Field(
+                    default=None,
+                    description="Transform function applied to each item",
                 )
-                filter_: Callable[[t.GeneralValueType], bool] | None = Field(
+                filter_: Callable[[t.Tests.ContainerValue], bool] | None = Field(
                     default=None,
                     alias="filter",
                     description="Filter predicate to exclude items",
                 )
 
-            class DictFactoryParams(FlextModelsBase.Value):
+            class DictFactoryParams(FlextModels.Value):
                 """Parameters for tt.dict_factory() method with Pydantic 2 advanced validation.
 
                 Uses Field constraints for inline validation. Source can be ModelKind (str),
@@ -366,8 +344,8 @@ class FlextTestsModels(FlextModelsBase):
 
                 source: (
                     t.Tests.Factory.ModelKind
-                    | Mapping[str, t.GeneralValueType]
-                    | Callable[[], tuple[str, t.GeneralValueType]]
+                    | Mapping[str, t.Tests.ContainerValue]
+                    | Callable[[], tuple[str, t.Tests.ContainerValue]]
                 ) = Field(
                     default="user",
                     description="Source for dict items (ModelKind, Mapping, or Callable)",
@@ -381,7 +359,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Factory function for keys (takes index, returns str key)",
                 )
-                value_factory: Callable[[str], t.GeneralValueType] | None = Field(
+                value_factory: Callable[[str], t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Factory function for values (takes key, returns value)",
                 )
@@ -389,26 +367,26 @@ class FlextTestsModels(FlextModelsBase):
                     default=False,
                     description="Wrap result in FlextResult",
                 )
-                merge_with: Mapping[str, t.GeneralValueType] | None = Field(
+                merge_with: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Additional mapping to merge into result",
                 )
 
-            class GenericFactoryParams(FlextModelsBase.Value):
+            class GenericFactoryParams(FlextModels.Value):
                 """Parameters for tt.generic() factory method with Pydantic 2 advanced validation.
 
                 Uses Field constraints for inline validation. Type validation done via
-                model_validator since Field constraints cannot validate isinstance checks.
+                    model_validator since Field constraints cannot validate runtime type checks.
                 """
 
                 type_: type = Field(
                     description="Type class to instantiate",
                 )
-                args: Sequence[t.GeneralValueType] | None = Field(
+                args: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Positional arguments for constructor",
                 )
-                kwargs: Mapping[str, t.GeneralValueType] | None = Field(
+                call_kwargs: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Keyword arguments for constructor",
                 )
@@ -427,7 +405,7 @@ class FlextTestsModels(FlextModelsBase):
                     description="Validation predicate (must return True for success)",
                 )
 
-            class User(FlextModelsBase.Value):
+            class User(FlextModels.Value):
                 """Test user model - immutable value object."""
 
                 id: str
@@ -435,7 +413,7 @@ class FlextTestsModels(FlextModelsBase):
                 email: str
                 active: bool = True
 
-            class Config(FlextModelsBase.Value):
+            class Config(FlextModels.Value):
                 """Test configuration model - immutable value object."""
 
                 service_type: str = "api"
@@ -445,7 +423,7 @@ class FlextTestsModels(FlextModelsBase):
                 timeout: int = 30
                 max_retries: int = 3
 
-            class Service(FlextModelsBase.Value):
+            class Service(FlextModels.Value):
                 """Test service model - immutable value object."""
 
                 id: str
@@ -453,18 +431,24 @@ class FlextTestsModels(FlextModelsBase):
                 name: str = ""
                 status: str = "active"
 
-            # Use module-level Entity and ValueObject to avoid Pydantic forward reference issues
+            # Use module-level Entity and Value to avoid Pydantic forward reference issues
             # Factory classes for test model creation
-            class Entity(_TestEntity):
+            class Entity(FlextModels.Entity):
                 """Factory entity class for tests."""
 
-            class ValueObject(_TestValueObject):
+                name: str = ""
+                value: t.Tests.ContainerValue = None
+
+            class Value(FlextModels.Value):
                 """Factory value object class for tests."""
+
+                data: str = ""
+                count: int = 0
 
         class Files:
             """File-related models for test infrastructure."""
 
-            class FileInfo(FlextModelsBase.Value):
+            class FileInfo(FlextModels.Value):
                 """Comprehensive file information model."""
 
                 exists: bool
@@ -485,7 +469,7 @@ class FlextTestsModels(FlextModelsBase):
                 content_meta: FlextTestsModels.Tests.Files.ContentMeta | None = None
                 """Optional content metadata for parsed files."""
 
-            class ContentMeta(FlextModelsBase.Value):
+            class ContentMeta(FlextModels.Value):
                 """Content-specific metadata for parsed files."""
 
                 key_count: int | None = None
@@ -501,10 +485,10 @@ class FlextTestsModels(FlextModelsBase):
                 model_name: str | None = None
                 """Model class name if validated."""
 
-            class CreateParams(FlextModelsBase.Value):
+            class CreateParams(FlextModels.Value):
                 """Parameters for file creation operations with Pydantic 2 advanced validation."""
 
-                content: TestsFileContent
+                content: t.Tests.ContainerValue
                 """File content to create."""
                 name: str = Field(
                     default=c.Tests.Files.DEFAULT_FILENAME,
@@ -515,7 +499,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Target directory (uses base_dir or temp if None).",
                 )
-                fmt: _FormatLiteral = Field(
+                fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
                 )
@@ -550,13 +534,13 @@ class FlextTestsModels(FlextModelsBase):
 
                 @field_validator("name", mode="before")
                 @classmethod
-                def normalize_name(cls, value: object) -> str:
+                def normalize_name(cls, value: t.Tests.ContainerValue) -> str:
                     """Normalize filename by stripping whitespace."""
                     if isinstance(value, str):
                         return value.strip()
                     return str(value)
 
-            class ReadParams(FlextModelsBase.Value):
+            class ReadParams(FlextModels.Value):
                 """Parameters for file read operations with Pydantic 2 advanced validation."""
 
                 path: Path = Field(
@@ -566,7 +550,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Optional Pydantic model class to deserialize into.",
                 )
-                fmt: _FormatLiteral = Field(
+                fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="Format override.",
                 )
@@ -592,7 +576,7 @@ class FlextTestsModels(FlextModelsBase):
                     """Convert string to Path - Field constraints cannot handle type conversion."""
                     return Path(value) if isinstance(value, str) else value
 
-            class CompareParams(FlextModelsBase.Value):
+            class CompareParams(FlextModels.Value):
                 """Parameters for file comparison operations with Pydantic 2 advanced validation."""
 
                 file1: Path = Field(
@@ -601,8 +585,8 @@ class FlextTestsModels(FlextModelsBase):
                 file2: Path = Field(
                     description="Second file to compare (str or Path converted automatically).",
                 )
-                mode: _CompareModeLiteral = Field(
-                    default="content",
+                mode: str = Field(
+                    default=c.Tests.Files.CompareMode.CONTENT.value,
                     description="Comparison mode.",
                 )
                 ignore_ws: bool = Field(
@@ -634,9 +618,9 @@ class FlextTestsModels(FlextModelsBase):
                 @classmethod
                 def convert_path(cls, value: Path | str) -> Path:
                     """Convert string to Path - Field constraints cannot handle type conversion."""
-                    return Path(value) if isinstance(value, str) else value
+                    return Path(value)
 
-            class InfoParams(FlextModelsBase.Value):
+            class InfoParams(FlextModels.Value):
                 """Parameters for file info() operations with Pydantic 2 validation."""
 
                 path: Path = Field(
@@ -663,9 +647,9 @@ class FlextTestsModels(FlextModelsBase):
                 @classmethod
                 def convert_path(cls, value: Path | str) -> Path:
                     """Convert string to Path - Field constraints cannot handle type conversion."""
-                    return Path(value) if isinstance(value, str) else value
+                    return Path(value)
 
-            class CreateKwargsParams(FlextModelsBase.Value):
+            class CreateKwargsParams(FlextModels.Value):
                 """Parameters for file create() kwargs with Pydantic 2 validation.
 
                 Fields match FlextTestsFileManager.create() method signature exactly.
@@ -675,7 +659,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Directory to create file in.",
                 )
-                fmt: _FormatLiteral = Field(
+                fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
                 )
@@ -704,7 +688,7 @@ class FlextTestsModels(FlextModelsBase):
                     description="Create file as read-only.",
                 )
 
-            class BatchParams(FlextModelsBase.Value):
+            class BatchParams(FlextModels.Value):
                 """Parameters for FlextTestsFiles.batch() method."""
 
                 files: t.Tests.Files.BatchFiles = Field(
@@ -714,7 +698,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Target directory for create operations",
                 )
-                operation: _OperationLiteral = Field(
+                operation: t.Tests.Files.OperationLiteral = Field(
                     default="create",
                     description="Operation type: create, read, or delete",
                 )
@@ -722,7 +706,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Optional model class for read operations",
                 )
-                on_error: _ErrorModeLiteral = Field(
+                on_error: t.Tests.Files.ErrorModeLiteral = Field(
                     default="collect",
                     description="Error handling mode: stop, skip, or collect",
                 )
@@ -731,7 +715,7 @@ class FlextTestsModels(FlextModelsBase):
                     description="Run operations in parallel",
                 )
 
-            class BatchResult(FlextModelsBase.Value):
+            class BatchResult(FlextModels.Value):
                 """Result of batch file operations."""
 
                 succeeded: int = Field(
@@ -740,7 +724,7 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 failed: int = Field(ge=0, description="Number of failed operations")
                 total: int = Field(ge=0, description="Total number of operations")
-                results: Mapping[str, r[object]] = Field(
+                results: Mapping[str, r[Path | t.Tests.ContainerValue]] = Field(
                     default_factory=dict,
                     description="Mapping of file names to operation results",
                 )
@@ -750,14 +734,14 @@ class FlextTestsModels(FlextModelsBase):
                 )
 
                 @computed_field
-                def success_count(self) -> int:
-                    """Alias for succeeded count."""
-                    return self.succeeded
-
-                @computed_field
                 def failure_count(self) -> int:
                     """Alias for failed count."""
                     return self.failed
+
+                @computed_field
+                def success_count(self) -> int:
+                    """Alias for succeeded count."""
+                    return self.succeeded
 
                 @computed_field
                 def success_rate(self) -> float:
@@ -771,13 +755,13 @@ class FlextTestsModels(FlextModelsBase):
 
             Severity = c.Tests.Validator.Severity
 
-            class Violation(FlextModelsBase.Value):
+            class Violation(FlextModels.Value):
                 """A detected architecture violation."""
 
                 file_path: Path
                 line_number: int
                 rule_id: str
-                severity: _SeverityLiteral
+                severity: c.Tests.Validator.SeverityLiteral
                 description: str
                 code_snippet: str = ""
 
@@ -797,7 +781,7 @@ class FlextTestsModels(FlextModelsBase):
                         line=self.line_number,
                     )
 
-            class ScanResult(FlextModelsBase.Value):
+            class ScanResult(FlextModels.Value):
                 """Result of a validation scan."""
 
                 validator_name: str
@@ -827,7 +811,7 @@ class FlextTestsModels(FlextModelsBase):
             for comprehensive parameter validation and computation.
             """
 
-            class AddParams(FlextModelsBase.Value):
+            class AddParams(FlextModels.Value):
                 """Parameters for FlextTestsBuilders.add() method.
 
                 Uses Pydantic 2 advanced features:
@@ -841,7 +825,7 @@ class FlextTestsModels(FlextModelsBase):
                 """
 
                 key: str = Field(min_length=1, description="Key to store data under")
-                value: t.GeneralValueType | None = Field(
+                value: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Direct value to store (validated as BuilderValue)",
                 )
@@ -860,15 +844,15 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Pydantic model class to instantiate (type[BaseModel])",
                 )
-                model_data: Mapping[str, t.GeneralValueType] | None = Field(
+                model_data: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Data for model instantiation",
                 )
-                mapping: Mapping[str, t.GeneralValueType] | None = Field(
+                mapping: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Dict/mapping to store",
                 )
-                sequence: Sequence[t.GeneralValueType] | None = Field(
+                sequence: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="List/sequence to store",
                 )
@@ -885,7 +869,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=False,
                     description="Whether to merge with existing data at key",
                 )
-                default: t.GeneralValueType | None = Field(
+                default: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Default value if result is None (validated as BuilderValue)",
                 )
@@ -899,11 +883,11 @@ class FlextTestsModels(FlextModelsBase):
                 )
 
                 # FlextResult parameters
-                result: r[t.GeneralValueType] | None = Field(
+                result: r[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="FlextResult to store directly",
                 )
-                result_ok: t.GeneralValueType | None = Field(
+                result_ok: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Value to wrap in r[T].ok()",
                 )
@@ -917,11 +901,11 @@ class FlextTestsModels(FlextModelsBase):
                 )
 
                 # Batch result parameters
-                results: Sequence[r[t.GeneralValueType]] | None = Field(
+                results: Sequence[r[t.Tests.ContainerValue]] | None = Field(
                     default=None,
                     description="Sequence of FlextResult to store",
                 )
-                results_ok: Sequence[t.GeneralValueType] | None = Field(
+                results_ok: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Sequence of values to wrap in r[T].ok()",
                 )
@@ -931,43 +915,61 @@ class FlextTestsModels(FlextModelsBase):
                 )
 
                 # Generic class instantiation
-                cls: type[object] | None = Field(
+                cls: type[BaseModel] | None = Field(
                     default=None,
                     description="Class type to instantiate",
                 )
-                cls_args: tuple[t.GeneralValueType, ...] | None = Field(
+                cls_args: tuple[t.Tests.ContainerValue, ...] | None = Field(
                     default=None,
                     description="Positional arguments for cls",
                 )
-                cls_kwargs: dict[str, t.GeneralValueType] | None = Field(
+                cls_kwargs: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Keyword arguments for cls",
                 )
 
                 # Collection with transformation
-                items: Sequence[t.GeneralValueType] | None = Field(
+                items: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Type-safe sequence",
                 )
-                items_map: Callable[[t.GeneralValueType], t.GeneralValueType] | None = (
-                    Field(default=None, description="Transform each item")
-                )
-                items_filter: Callable[[t.GeneralValueType], bool] | None = Field(
+                items_map: (
+                    Callable[[t.Tests.ContainerValue], t.Tests.ContainerValue] | None
+                ) = Field(default=None, description="Transform each item")
+                items_filter: Callable[[t.Tests.ContainerValue], bool] | None = Field(
                     default=None,
                     description="Filter items",
                 )
 
-                entries: Mapping[str, t.GeneralValueType] | None = Field(
+                entries: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Type-safe mapping",
                 )
                 entries_map: (
-                    Callable[[t.GeneralValueType], t.GeneralValueType] | None
+                    Callable[[t.Tests.ContainerValue], t.Tests.ContainerValue] | None
                 ) = Field(default=None, description="Transform values")
                 entries_filter: set[str] | None = Field(
                     default=None,
                     description="Include only these keys",
                 )
+
+                @computed_field
+                def effective_count(self) -> int:
+                    """Compute effective count value with defaults.
+
+                    Uses c.Tests.Factory.DEFAULT_BATCH_COUNT if count is None.
+
+                    """
+                    return self.count or c.Tests.Factory.DEFAULT_BATCH_COUNT
+
+                @computed_field
+                def effective_error_code(self) -> str:
+                    """Compute effective error code with defaults.
+
+                    Uses c.Errors.VALIDATION_ERROR if result_code is None.
+
+                    """
+                    return self.result_code or c.Errors.VALIDATION_ERROR
 
                 @computed_field
                 def resolution_priority(self) -> int:
@@ -1011,46 +1013,6 @@ class FlextTestsModels(FlextModelsBase):
                         return 16
                     return 0  # No valid parameter
 
-                @computed_field
-                def effective_count(self) -> int:
-                    """Compute effective count value with defaults.
-
-                    Uses c.Tests.Factory.DEFAULT_BATCH_COUNT if count is None.
-
-                    """
-                    return self.count or c.Tests.Factory.DEFAULT_BATCH_COUNT
-
-                @computed_field
-                def effective_error_code(self) -> str:
-                    """Compute effective error code with defaults.
-
-                    Uses c.Errors.VALIDATION_ERROR if result_code is None.
-
-                    """
-                    return self.result_code or c.Errors.VALIDATION_ERROR
-
-                @model_validator(mode="after")
-                def validate_count_positive(
-                    self,
-                ) -> FlextTestsModels.Tests.Builders.AddParams:
-                    """Validate count is positive when provided."""
-                    if self.count is not None and self.count < 1:
-                        msg = c.Tests.Builders.ERROR_INVALID_COUNT.format(
-                            count=self.count,
-                        )
-                        raise ValueError(msg)
-                    return self
-
-                @model_validator(mode="after")
-                def validate_result_code_with_fail(
-                    self,
-                ) -> FlextTestsModels.Tests.Builders.AddParams:
-                    """Validate result_code is only provided with result_fail."""
-                    if self.result_code is not None and self.result_fail is None:
-                        msg = "result_code can only be used with result_fail"
-                        raise ValueError(msg)
-                    return self
-
                 @model_validator(mode="after")
                 def validate_cls_with_args(
                     self,
@@ -1064,14 +1026,14 @@ class FlextTestsModels(FlextModelsBase):
                     return self
 
                 @model_validator(mode="after")
-                def validate_items_transform(
+                def validate_count_positive(
                     self,
                 ) -> FlextTestsModels.Tests.Builders.AddParams:
-                    """Validate items_map/items_filter are only provided with items."""
-                    if (
-                        self.items_map is not None or self.items_filter is not None
-                    ) and self.items is None:
-                        msg = "items_map/items_filter can only be used with items"
+                    """Validate count is positive when provided."""
+                    if self.count is not None and self.count < 1:
+                        msg = c.Tests.Builders.ERROR_INVALID_COUNT.format(
+                            count=self.count,
+                        )
                         raise ValueError(msg)
                     return self
 
@@ -1088,6 +1050,18 @@ class FlextTestsModels(FlextModelsBase):
                     return self
 
                 @model_validator(mode="after")
+                def validate_items_transform(
+                    self,
+                ) -> FlextTestsModels.Tests.Builders.AddParams:
+                    """Validate items_map/items_filter are only provided with items."""
+                    if (
+                        self.items_map is not None or self.items_filter is not None
+                    ) and self.items is None:
+                        msg = "items_map/items_filter can only be used with items"
+                        raise ValueError(msg)
+                    return self
+
+                @model_validator(mode="after")
                 def validate_model_data(
                     self,
                 ) -> FlextTestsModels.Tests.Builders.AddParams:
@@ -1097,7 +1071,17 @@ class FlextTestsModels(FlextModelsBase):
                         raise ValueError(msg)
                     return self
 
-            class BuildParams(FlextModelsBase.Value):
+                @model_validator(mode="after")
+                def validate_result_code_with_fail(
+                    self,
+                ) -> FlextTestsModels.Tests.Builders.AddParams:
+                    """Validate result_code is only provided with result_fail."""
+                    if self.result_code is not None and self.result_fail is None:
+                        msg = "result_code can only be used with result_fail"
+                        raise ValueError(msg)
+                    return self
+
+            class BuildParams(FlextModels.Value):
                 """Parameters for FlextTestsBuilders.build() method.
 
                 Uses Pydantic 2 advanced features:
@@ -1153,7 +1137,10 @@ class FlextTestsModels(FlextModelsBase):
                     description="Assertion function that raises on invalid data",
                 )
                 map_result: (
-                    Callable[[t.Tests.Builders.BuilderOutputDict], object] | None
+                    Callable[
+                        [t.Tests.Builders.BuilderOutputDict], t.Tests.ContainerValue
+                    ]
+                    | None
                 ) = Field(
                     default=None,
                     description="Transform function applied to final result",
@@ -1169,7 +1156,7 @@ class FlextTestsModels(FlextModelsBase):
                         raise ValueError(msg)
                     return self
 
-            class ToResultParams(FlextModelsBase.Value):
+            class ToResultParams(FlextModels.Value):
                 """Parameters for FlextTestsBuilders.to_result() method.
 
                 Uses Pydantic 2 advanced features:
@@ -1188,7 +1175,7 @@ class FlextTestsModels(FlextModelsBase):
                     min_length=1,
                     description="Error code for failure result",
                 )
-                error_data: t.ConfigMap | None = Field(
+                error_data: m.ConfigMap | None = Field(
                     default=None,
                     description="Error metadata dictionary for failure result",
                 )
@@ -1209,7 +1196,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Class type to instantiate",
                 )
-                cls_args: tuple[t.GeneralValueType, ...] | None = Field(
+                cls_args: tuple[t.Tests.ContainerValue, ...] | None = Field(
                     default=None,
                     description="Positional arguments for as_cls",
                 )
@@ -1221,7 +1208,8 @@ class FlextTestsModels(FlextModelsBase):
                     )
                 )
                 map_fn: (
-                    Callable[[t.Tests.Builders.BuilderDict], t.GeneralValueType] | None
+                    Callable[[t.Tests.Builders.BuilderDict], t.Tests.ContainerValue]
+                    | None
                 ) = Field(
                     default=None,
                     description="Transform function applied before wrapping in result",
@@ -1232,7 +1220,7 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 as_dict_result: bool = Field(
                     default=False,
-                    description="Return as FlextResult[dict[str, T]]",
+                    description="Return as FlextResult[Mapping[str, T]]",
                 )
 
                 @computed_field
@@ -1258,7 +1246,7 @@ class FlextTestsModels(FlextModelsBase):
                         raise ValueError(msg)
                     return self
 
-            class BatchParams(FlextModelsBase.Value):
+            class BatchParams(FlextModels.Value):
                 """Parameters for FlextTestsBuilders.batch() method.
 
                 Uses Pydantic 2 advanced features:
@@ -1268,7 +1256,7 @@ class FlextTestsModels(FlextModelsBase):
                 """
 
                 key: str = Field(min_length=1, description="Key to store batch under")
-                scenarios: Sequence[tuple[str, t.GeneralValueType]] = Field(
+                scenarios: Sequence[tuple[str, t.Tests.ContainerValue]] = Field(
                     description="Sequence of (scenario_id, data) tuples",
                 )
                 as_results: bool = Field(
@@ -1291,7 +1279,7 @@ class FlextTestsModels(FlextModelsBase):
                         raise ValueError(msg)
                     return self
 
-            class MergeFromParams(FlextModelsBase.Value):
+            class MergeFromParams(FlextModels.Value):
                 """Parameters for FlextTestsBuilders.merge_from() method.
 
                 Uses Pydantic 2 advanced features:
@@ -1303,7 +1291,7 @@ class FlextTestsModels(FlextModelsBase):
                 strategy: str = Field(
                     default="deep",
                     min_length=1,
-                    description="Merge strategy (deep, override, append, etc.)",
+                    description="Merge strategy (deep, override, append, ec.)",
                 )
                 exclude_keys: frozenset[str] | None = Field(
                     default=None,
@@ -1330,23 +1318,45 @@ class FlextTestsModels(FlextModelsBase):
         class Matcher:
             """Matcher models for test assertions and matching operations using Pydantic 2 advanced features."""
 
-            class OkParams(FlextModelsBase.Value):
+            class OkParams(FlextModels.Value):
                 """Parameters for matcher ok() operations with Pydantic 2 validation."""
 
                 model_config = ConfigDict(populate_by_name=True)
 
-                eq: t.GeneralValueType | None = Field(
+                eq: (
+                    Mapping[str, t.Tests.ContainerValue]
+                    | Sequence[t.Tests.ContainerValue]
+                    | bytes
+                    | str
+                    | int
+                    | float
+                    | bool
+                    | TypeAliasType
+                    | None
+                ) = Field(
                     default=None,
                     description="Expected value (equality check)",
+                    union_mode="left_to_right",
                 )
-                ne: t.GeneralValueType | None = Field(
+                ne: (
+                    Mapping[str, t.Tests.ContainerValue]
+                    | Sequence[t.Tests.ContainerValue]
+                    | bytes
+                    | str
+                    | int
+                    | float
+                    | bool
+                    | TypeAliasType
+                    | None
+                ) = Field(
                     default=None,
                     description="Value must not equal",
+                    union_mode="left_to_right",
                 )
                 is_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("is_", "is"),
-                    description="Type check (isinstance) - single type or tuple",
+                    description="Runtime type check against single type or tuple",
                 )
                 none: bool | None = Field(
                     default=None,
@@ -1410,7 +1420,7 @@ class FlextTestsModels(FlextModelsBase):
                     description="Custom error message",
                 )
 
-            class FailParams(FlextModelsBase.Value):
+            class FailParams(FlextModels.Value):
                 """Parameters for matcher fail() operations with Pydantic 2 validation."""
 
                 model_config = ConfigDict(populate_by_name=True)
@@ -1451,7 +1461,7 @@ class FlextTestsModels(FlextModelsBase):
                     description="Error data contains key-value pairs",
                 )
 
-            class ThatParams(FlextModelsBase.Value):
+            class ThatParams(FlextModels.Value):
                 """Parameters for matcher that() operations with Pydantic 2 validation."""
 
                 model_config = ConfigDict(populate_by_name=True)
@@ -1460,18 +1470,18 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Custom error message",
                 )
-                eq: object | None = Field(
+                eq: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Expected value (equality check)",
                 )
-                ne: object | None = Field(
+                ne: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Value must not equal",
                 )
                 is_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("is_", "is"),
-                    description="Type check (isinstance) - single type or tuple",
+                    description="Runtime type check against single type or tuple",
                 )
                 not_: type | tuple[type, ...] | None = Field(
                     default=None,
@@ -1542,11 +1552,11 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Regex pattern (for strings)",
                 )
-                first: t.GeneralValueType | None = Field(
+                first: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Sequence first item equals",
                 )
-                last: t.GeneralValueType | None = Field(
+                last: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Sequence last item equals",
                 )
@@ -1576,7 +1586,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Mapping missing keys",
                 )
-                values: Sequence[t.GeneralValueType] | None = Field(
+                values: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Mapping has all values",
                 )
@@ -1617,7 +1627,7 @@ class FlextTestsModels(FlextModelsBase):
                 def normalize_legacy_parameters(
                     self,
                 ) -> FlextTestsModels.Tests.Matcher.ThatParams:
-                    updates: dict[str, object] = {}
+                    updates: MutableMapping[str, t.Tests.ContainerValue] = {}
                     if self.error is not None and self.has is None:
                         updates["has"] = self.error
                     # Convert legacy length_* params to unified len tuple
@@ -1645,18 +1655,18 @@ class FlextTestsModels(FlextModelsBase):
                         return self.model_copy(update=updates)
                     return self
 
-            class ScopeParams(FlextModelsBase.Value):
+            class ScopeParams(FlextModels.Value):
                 """Parameters for matcher scope() operations with Pydantic 2 validation."""
 
-                config: Mapping[str, t.GeneralValueType] | None = Field(
+                config: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Initial configuration values",
                 )
-                container: Mapping[str, t.GeneralValueType] | None = Field(
+                container: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Initial container/service mappings",
                 )
-                context: Mapping[str, t.GeneralValueType] | None = Field(
+                context: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
                     description="Initial context values",
                 )
@@ -1681,14 +1691,14 @@ class FlextTestsModels(FlextModelsBase):
                         return Path(value)
                     return value
 
-            class DeepMatchResult(FlextModelsBase.Value):
+            class DeepMatchResult(FlextModels.Value):
                 """Result of deep matching operations."""
 
                 path: str = Field(description="Path where match occurred or failed")
                 expected: t.Tests.Matcher.ValueSpec = Field(
-                    description="Expected value or predicate"
+                    description="Expected value or predicate",
                 )
-                actual: t.GeneralValueType | None = Field(
+                actual: t.Tests.ContainerValue | None = Field(
                     default=None,
                     description="Actual value found",
                 )
@@ -1698,35 +1708,34 @@ class FlextTestsModels(FlextModelsBase):
                     description="Reason for match failure if matched=False",
                 )
 
-            class Chain[TResult](FlextModelsBase.Value):
+            class Chain[TResult](FlextModels.Value):
                 """Chain matcher configuration for railway pattern assertions."""
 
                 result: r[TResult] = Field(
                     description="FlextResult being chained",
                 )
 
-            class TestScope(FlextModelFoundation.DynamicConfigModel):
+            class TestScope(FlextModelFoundation.ArbitraryTypesModel):
                 """Test scope configuration for isolated test execution.
 
-                Uses DynamicConfigModel to allow arbitrary test values including
+                Uses ArbitraryTypesModel to allow arbitrary test values including
                 mock objects, services, and other non-serializable types.
                 """
 
-                config: dict[str, t.GeneralValueType] = Field(
+                config: Mapping[str, t.Tests.ContainerValue] = Field(
                     default_factory=dict,
                     description="Configuration dictionary",
                 )
-                container: dict[str, t.GeneralValueType] = Field(
+                container: Mapping[str, t.Tests.ContainerValue] = Field(
                     default_factory=dict,
                     description="Container/service mappings",
                 )
-                context: dict[str, t.GeneralValueType] = Field(
+                context: Mapping[str, t.Tests.ContainerValue] = Field(
                     default_factory=dict,
                     description="Context values",
                 )
 
 
-# Type alias for convenience
 m = FlextTestsModels
 
 __all__ = ["FlextTestsModels", "m"]

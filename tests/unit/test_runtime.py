@@ -22,17 +22,28 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from enum import StrEnum
 from types import ModuleType
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, s, t
-from flext_core.mixins import FlextMixins
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextMixins,
+    FlextRuntime,
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+)
+from flext_core._models.service import FlextModelsService
 
 
 class RuntimeOperationType(StrEnum):
@@ -90,8 +101,8 @@ class RuntimeTestCase:
     name: str
     operation: RuntimeOperationType
     # Business Rule: test_input supports both values and types for comprehensive testing
-    # t.GeneralValueType | type[object] | None allows testing runtime type checking with various inputs
-    test_input: t.GeneralValueType | type[object] | None = None
+    # t.ContainerValue | type[object] | None allows testing runtime type checking with various inputs
+    test_input: t.ContainerValue | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
 
@@ -561,13 +572,13 @@ class TestFlextRuntime:
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
 
-        Business Rule: is_dict_like accepts t.GeneralValueType compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.GeneralValueType
+        Business Rule: is_dict_like accepts t.ContainerValue compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.ContainerValue
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to t.GeneralValueType for type compatibility
-        # None and various types are compatible with t.GeneralValueType at runtime
-        test_input_typed = cast("t.GeneralValueType", test_case.test_input)
+        # Business Rule: Cast to t.ContainerValue for type compatibility
+        # None and various types are compatible with t.ContainerValue at runtime
+        test_input_typed = cast("t.ContainerValue", test_case.test_input)
         result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -579,13 +590,13 @@ class TestFlextRuntime:
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
 
-        Business Rule: is_list_like accepts t.GeneralValueType compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.GeneralValueType
+        Business Rule: is_list_like accepts t.ContainerValue compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.ContainerValue
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to t.GeneralValueType for type compatibility
-        # None and various types are compatible with t.GeneralValueType at runtime
-        test_input_typed = cast("t.GeneralValueType", test_case.test_input)
+        # Business Rule: Cast to t.ContainerValue for type compatibility
+        # None and various types are compatible with t.ContainerValue at runtime
+        test_input_typed = cast("t.ContainerValue", test_case.test_input)
         result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -601,7 +612,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_json(
-            cast("t.GeneralValueType", test_case.test_input),
+            cast("t.ContainerValue", test_case.test_input),
         )
         assert result == test_case.expected_result
 
@@ -617,7 +628,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_identifier(
-            cast("t.GeneralValueType", test_case.test_input),
+            cast("t.ContainerValue", test_case.test_input),
         )
         assert result == test_case.expected_result
 
@@ -634,8 +645,11 @@ class TestFlextRuntime:
                 attr = "value"
 
             test_obj = TestObj()
-            # Type narrowing: TestObj is compatible with t.GeneralValueType
-            test_obj_cast: t.GeneralValueType = cast("t.GeneralValueType", test_obj)
+            # Type narrowing: TestObj is compatible with t.ContainerValue
+            test_obj_cast: t.ContainerValue = cast(
+                "t.ContainerValue",
+                cast("object", test_obj),
+            )
             result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
             assert result == "value"
         elif (
@@ -647,10 +661,10 @@ class TestFlextRuntime:
                 pass
 
             test_obj_default_obj = TestObjDefault()
-            # Type narrowing: TestObjDefault is compatible with t.GeneralValueType
-            test_obj_default_cast: t.GeneralValueType = cast(
-                "t.GeneralValueType",
-                test_obj_default_obj,
+            # Type narrowing: TestObjDefault is compatible with t.ContainerValue
+            test_obj_default_cast: t.ContainerValue = cast(
+                "t.ContainerValue",
+                cast("object", test_obj_default_obj),
             )
             result = FlextRuntime.safe_get_attribute(
                 test_obj_default_cast,
@@ -666,9 +680,12 @@ class TestFlextRuntime:
             class TestObjNoDefault:
                 pass
 
-            # Business Rule: TestObjNoDefault instances are compatible with t.GeneralValueType at runtime
-            # Cast to t.GeneralValueType for type compatibility
-            test_obj_no_default = cast("t.GeneralValueType", TestObjNoDefault())
+            # Business Rule: TestObjNoDefault instances are compatible with t.ContainerValue at runtime
+            # Cast to t.ContainerValue for type compatibility
+            test_obj_no_default = cast(
+                "t.ContainerValue",
+                cast("object", TestObjNoDefault()),
+            )
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
             assert result is None
 
@@ -733,7 +750,7 @@ class TestFlextRuntime:
             di_container = FlextRuntime.DependencyIntegration.create_container()
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
                 di_container,
-                {"database": {"dsn": "sqlite://"}},
+                m.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
             )
             assert isinstance(config_provider, providers.Configuration)
             # Type narrowing: di_container.config is providers.Configuration
@@ -760,7 +777,7 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has read_config attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                read_func = getattr(module, "read_config")
+                read_func = cast("Callable[[], str]", getattr(module, "read_config"))
                 assert callable(read_func)
                 result = read_func()
                 assert result == "sqlite://"
@@ -801,9 +818,12 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")
-                assert callable(consume_func)
-                tokens, value = consume_func()
+                consume_factory_func = cast(
+                    "Callable[[], tuple[dict[str, str], int]]",
+                    getattr(module, "consume"),
+                )
+                assert callable(consume_factory_func)
+                tokens, value = consume_factory_func()
                 assert tokens == {"token": "abc123"}
                 assert value == 42
             finally:
@@ -838,10 +858,14 @@ class TestFlextRuntime:
             setattr(module, "consume", consume_automation)
 
             di_container = FlextRuntime.DependencyIntegration.create_container(
-                config={"flags": {"enabled": True}},
+                config=m.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
                 factories={"token_factory": token_factory},
-                resources={"api_client": lambda: {"connected": True}},
+                resources={
+                    "api_client": cast(
+                        "Callable[[], t.ContainerValue]", lambda: {"connected": True}
+                    )
+                },
                 wire_modules=[module],
                 factory_cache=False,
             )
@@ -849,12 +873,15 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")
-                assert callable(consume_func)
-                first_static, first_token, config_enabled, resource_value = (
-                    consume_func()
+                consume_automation_func = cast(
+                    "Callable[[], tuple[int, dict[str, int], bool, dict[str, bool]]]",
+                    getattr(module, "consume"),
                 )
-                second_static, second_token, _, _ = consume_func()
+                assert callable(consume_automation_func)
+                first_static, first_token, config_enabled, resource_value = (
+                    consume_automation_func()
+                )
+                second_static, second_token, _, _ = consume_automation_func()
 
                 assert first_static == second_static == 7
                 assert config_enabled is True
@@ -891,7 +918,11 @@ class TestFlextRuntime:
                 config_overrides={"app_name": "runtime-service"},
                 services={"feature_flag": True},
                 factories={"token_factory": token_factory},
-                resources={"api_client": lambda: {"connected": True}},
+                resources={
+                    "api_client": cast(
+                        "Callable[[], t.ContainerValue]", lambda: {"connected": True}
+                    )
+                },
                 wire_modules=[module],
             )
             # Type narrowing: runtime is BaseModel, but is actually m.ServiceRuntime
@@ -900,10 +931,13 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")
-                assert callable(consume_func)
-                feature_flag, first_token, resource = consume_func()
-                _, second_token, _ = consume_func()
+                consume_service_func = cast(
+                    "Callable[[], tuple[bool, dict[str, int], dict[str, bool]]]",
+                    getattr(module, "consume"),
+                )
+                assert callable(consume_service_func)
+                feature_flag, first_token, resource = consume_service_func()
+                _, second_token, _ = consume_service_func()
 
                 assert runtime.config.app_name == "runtime-service"
                 assert feature_flag is True
@@ -919,43 +953,16 @@ class TestFlextRuntime:
 
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
-                def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
-                    # factories should be Mapping[str, Callable[[], ScalarValue | Sequence | Mapping]]
-                    # RuntimeBootstrapOptions["factories"] has the correct type
-                    def counter_factory() -> t.GeneralValueType:
-                        return {"count": 1}
+                @override
+                def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                    def counter_factory() -> t.ContainerValue:
+                        return cast("t.ContainerValue", {"count": 1})
 
-                    # counter_factory returns dict[str, int] which is Mapping[str, ScalarValue]
-                    # Cast to satisfy type checker
-                    counter_factory_typed: Callable[
-                        [],
-                        (
-                            t.ScalarValue
-                            | Sequence[t.ScalarValue]
-                            | Mapping[str, t.ScalarValue]
-                        ),
-                    ] = cast(
-                        "Callable[[], t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]]",
-                        counter_factory,
+                    return FlextModelsService.RuntimeBootstrapOptions(
+                        config_overrides={"app_name": "runtime-aware"},
+                        services={"preseed": {"enabled": True}},
+                        factories={"counter": counter_factory},
                     )
-                    factories_dict: Mapping[
-                        str,
-                        Callable[
-                            [],
-                            (
-                                t.ScalarValue
-                                | Sequence[t.ScalarValue]
-                                | Mapping[str, t.ScalarValue]
-                            ),
-                        ],
-                    ] = {
-                        "counter": counter_factory_typed,
-                    }
-                    return {
-                        "config_overrides": {"app_name": "runtime-aware"},
-                        "services": {"preseed": {"enabled": True}},
-                        "factories": factories_dict,
-                    }
 
             component = RuntimeAwareComponent()
 
@@ -971,12 +978,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            service_result_raw: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
+            service_result_raw: r[t.ContainerValue] = cast(
+                "r[t.ContainerValue]",
                 component.container.get("preseed"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            service_result: r[t.GeneralValueType] = service_result_raw
+            service_result: r[t.ContainerValue] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
 
@@ -985,12 +992,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            factory_result_raw: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
+            factory_result_raw: r[t.ContainerValue] = cast(
+                "r[t.ContainerValue]",
                 component.container.get("counter"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            factory_result: r[t.GeneralValueType] = factory_result_raw
+            factory_result: r[t.ContainerValue] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 
@@ -1027,15 +1034,15 @@ class TestFlextRuntime:
             def custom_processor(
                 logger: object,
                 method_name: str,
-                event_dict: dict[str, t.GeneralValueType],
-            ) -> dict[str, t.GeneralValueType]:
+                event_dict: dict[str, t.ContainerValue],
+            ) -> dict[str, t.ContainerValue]:
                 event_dict["custom"] = True
                 return event_dict
 
-            # Business Rule: Callable processors are compatible with t.GeneralValueType at runtime
+            # Business Rule: Callable processors are compatible with t.ContainerValue at runtime
             # structlog accepts callable processors for custom processing
-            processor_typed: t.GeneralValueType = cast(
-                "t.GeneralValueType",
+            processor_typed: t.ContainerValue = cast(
+                "t.ContainerValue",
                 custom_processor,
             )
             FlextRuntime.configure_structlog(additional_processors=[processor_typed])
@@ -1085,7 +1092,7 @@ class TestFlextRuntime:
             FlextRuntime.Integration.track_domain_event(
                 "UserCreated",
                 aggregate_id="user-123",
-                event_data={"email": "test@example.com"},
+                event_data=m.ConfigMap(root={"email": "test@example.com"}),
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -1096,7 +1103,7 @@ class TestFlextRuntime:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_domain_event(
                 "SystemInitialized",
-                event_data={"timestamp": "2025-01-01T00:00:00Z"},
+                event_data=m.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -1109,8 +1116,8 @@ class TestFlextRuntime:
                 service_version="1.0.0",
                 enable_context_correlation=True,
             )
-            assert FlextContext.Service.get_service_name() == "test-service"
-            assert FlextContext.Service.get_service_version() == "1.0.0"
+            assert FlextContext.Variables.ServiceName.get() == "test-service"
+            assert FlextContext.Variables.ServiceVersion.get() == "1.0.0"
             assert FlextContext.Correlation.get_correlation_id() is not None
         elif (
             test_case.operation
@@ -1121,7 +1128,7 @@ class TestFlextRuntime:
                 service_name="minimal-service",
                 enable_context_correlation=True,
             )
-            assert FlextContext.Service.get_service_name() == "minimal-service"
+            assert FlextContext.Variables.ServiceName.get() == "minimal-service"
             assert FlextContext.Correlation.get_correlation_id() is not None
         elif (
             test_case.operation
@@ -1134,7 +1141,7 @@ class TestFlextRuntime:
                 service_version="2.0.0",
                 enable_context_correlation=False,
             )
-            assert FlextContext.Service.get_service_name() == "no-correlation-service"
+            assert FlextContext.Variables.ServiceName.get() == "no-correlation-service"
             assert FlextContext.Correlation.get_correlation_id() is None
 
 

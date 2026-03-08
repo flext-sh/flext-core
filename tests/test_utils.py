@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import TypeVar, override
 
 from flext_core import (
     FlextContainer,
@@ -26,8 +26,8 @@ from flext_core import (
     FlextSettings,
     FlextUtilities,
     r,
+    t,
 )
-from flext_core.typings import t
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -40,7 +40,7 @@ class StandardTestCase:
     """Standardized test case structure for parametrized tests."""
 
     description: str
-    input_data: dict[str, t.GeneralValueType]
+    input_data: dict[str, t.ContainerValue]
     expected_result: object
     expected_success: bool = True
     error_contains: str | None = None
@@ -51,15 +51,18 @@ class TestDataFactory:
 
     @staticmethod
     def create_entity_data(
-        unique_id: str, name: str, **kwargs: t.GeneralValueType
-    ) -> dict[str, t.GeneralValueType]:
+        unique_id: str,
+        name: str,
+        **kwargs: t.ContainerValue,
+    ) -> dict[str, t.ContainerValue]:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
     def create_value_object_data(
-        value: t.GeneralValueType, **kwargs: t.GeneralValueType
-    ) -> dict[str, t.GeneralValueType]:
+        value: t.ContainerValue,
+        **kwargs: t.ContainerValue,
+    ) -> dict[str, t.ContainerValue]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -67,8 +70,8 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: dict[str, t.GeneralValueType],
-        expected_result: t.GeneralValueType,
+        input_data: dict[str, t.ContainerValue],
+        expected_result: t.ContainerValue,
         *,
         expected_success: bool = True,
         error_contains: str | None = None,
@@ -124,7 +127,9 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity: object, expected_props: dict[str, t.GeneralValueType], context: str = ""
+        entity: object,
+        expected_props: dict[str, t.ContainerValue],
+        context: str = "",
     ) -> None:
         """Assert entity has expected properties."""
         for prop, expected_value in expected_props.items():
@@ -136,24 +141,27 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[..., FlextResult[t.GeneralValueType]],
+        operation_func: Callable[[], FlextResult[t.ContainerValue]],
         test_case: StandardTestCase,
         context: str = "",
-    ) -> t.GeneralValueType:
+    ) -> t.ContainerValue:
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()
 
             if test_case.expected_success:
                 actual_result = AssertionHelpers.assert_flext_result_success(
-                    result, f"{context} - {test_case.description}"
+                    result,
+                    f"{context} - {test_case.description}",
                 )
                 assert actual_result == test_case.expected_result, (
                     f"{context}: Expected {test_case.expected_result}, got {actual_result}"
                 )
                 return actual_result
             return AssertionHelpers.assert_flext_result_failure(
-                result, f"{context} - {test_case.description}", test_case.error_contains
+                result,
+                f"{context} - {test_case.description}",
+                test_case.error_contains,
             )
 
         except Exception as e:
@@ -169,7 +177,8 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_entity(
-        unique_id: str = "test-123", name: str = "Test Entity"
+        unique_id: str = "test-123",
+        name: str = "Test Entity",
     ) -> object:
         """Create test entity fixture."""
 
@@ -179,6 +188,7 @@ class TestFixtureFactory:
             unique_id: str
             name: str
 
+            @override
             def __eq__(self, other: object) -> bool:
                 if not isinstance(other, TestEntity):
                     return NotImplemented
@@ -191,10 +201,10 @@ class TestFixtureFactory:
         """Create test value object fixture."""
 
         @dataclass(frozen=True)
-        class TestValueObject:
+        class TestValue:
             value: object
 
-        return TestValueObject(value=value)
+        return TestValue(value=value)
 
     @staticmethod
     def create_test_container_instance() -> FlextContainer:
@@ -222,7 +232,9 @@ class TestFixtureFactory:
         return FlextExceptions
 
     @staticmethod
-    def create_test_handlers_instance() -> type[FlextHandlers[t.GeneralValueType, t.GeneralValueType]]:
+    def create_test_handlers_instance() -> type[
+        FlextHandlers[t.ContainerValue, t.ContainerValue]
+    ]:
         """Create test handlers fixture."""
         return FlextHandlers
 
@@ -242,7 +254,7 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[FlextResult[t.GeneralValueType]]:
+    def create_test_result_instance() -> type[FlextResult[t.ContainerValue]]:
         """Create test result fixture."""
         return FlextResult
 
@@ -258,6 +270,7 @@ class TestFixtureFactory:
         class TestFlextService(FlextService[dict[str, str]]):
             """Concrete test service implementation."""
 
+            @override
             def execute(self) -> r[dict[str, str]]:
                 """Execute test service operation."""
                 return r[dict[str, str]].ok({"result": "test_service_executed"})
@@ -276,7 +289,10 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_service_result(
-        *, success: bool = True, value: object = None, error: str = "Test error"
+        *,
+        success: bool = True,
+        value: object = None,
+        error: str = "Test error",
     ) -> TestResult[object]:
         """Create test service result fixture."""
         if success:

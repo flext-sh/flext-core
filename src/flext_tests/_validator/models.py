@@ -8,16 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core._models.entity import FlextModelsEntity
 from pydantic import Field
 
-from flext_tests.constants import FlextTestsConstants, c
-from flext_tests.models import m
-
-# Type aliases for readability
-type _SeverityLiteral = FlextTestsConstants.Tests.Validator.SeverityLiteral
+from flext_tests import c, m
 
 
 class FlextValidatorModels(m):
@@ -26,16 +22,13 @@ class FlextValidatorModels(m):
     Uses c.Tests.Validator for constants (Severity, Rules, Defaults, Approved patterns).
     """
 
-    # Re-export Severity from constants for convenience
-    Severity = c.Tests.Validator.Severity
-
-    class Violation(FlextModelsEntity.Value):
+    class Violation(m.Value):
         """A detected architecture violation."""
 
         file_path: Path
         line_number: int
         rule_id: str
-        severity: _SeverityLiteral
+        severity: c.Tests.Validator.SeverityLiteral
         description: str
         code_snippet: str = ""
 
@@ -55,7 +48,7 @@ class FlextValidatorModels(m):
                 line=self.line_number,
             )
 
-    class ScanResult(FlextModelsEntity.Value):
+    class ScanResult(m.Value):
         """Result of a validation scan."""
 
         validator_name: str
@@ -89,17 +82,28 @@ class FlextValidatorModels(m):
                 count=self.files_scanned,
             )
 
-    class ScanConfig(FlextModelsEntity.Value):
+    class ScanConfig(m.Value):
         """Configuration for validation scan."""
 
         target_path: Path
         include_patterns: list[str] = Field(
             default_factory=lambda: list(c.Tests.Validator.Defaults.INCLUDE_PATTERNS),
+            description="Glob patterns defining files that should be scanned for violations.",
+            title="Include Patterns",
+            examples=[["src/**/*.py", "tests/**/*.py"]],
         )
         exclude_patterns: list[str] = Field(
             default_factory=lambda: list(c.Tests.Validator.Defaults.EXCLUDE_PATTERNS),
+            description="Glob patterns defining files that should be excluded from scan input.",
+            title="Exclude Patterns",
+            examples=[["**/__pycache__/**", "**/.venv/**"]],
         )
-        approved_exceptions: dict[str, list[str]] = Field(default_factory=dict)
+        approved_exceptions: Mapping[str, list[str]] = Field(
+            default_factory=dict,
+            description="Rule-to-path allowlist for known and explicitly approved exceptions.",
+            title="Approved Exceptions",
+            examples=[{"RULE_001": ["tests/fixtures/generated.py"]}],
+        )
 
 
 # Short alias

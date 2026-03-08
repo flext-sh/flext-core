@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import logging
 from collections import UserDict
-from collections.abc import Sequence
-from typing import ClassVar, Never, cast, overload
+from collections.abc import Mapping, Sequence
+from typing import ClassVar, Never, cast, overload, override
 
 import structlog
 
 from flext_core import FlextRuntime, t
-from flext_core.models import m
 
 
 class TestRuntimeDictLike:
@@ -28,7 +27,7 @@ class TestRuntimeDictLike:
 
         # Create object that has keys/items/get but items() raises AttributeError
         class BadDictLike:
-            def keys(self) -> list[t.GeneralValueType]:
+            def keys(self) -> list[t.ContainerValue]:
                 return []
 
             def items(self) -> Never:
@@ -38,9 +37,9 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: BadDictLike instances are compatible with t.ContainerValue at runtime
         obj = BadDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -49,7 +48,7 @@ class TestRuntimeDictLike:
 
         # Create object that has keys/items/get but items() raises TypeError
         class BadDictLike:
-            def keys(self) -> list[t.GeneralValueType]:
+            def keys(self) -> list[t.ContainerValue]:
                 return []
 
             def items(self) -> Never:
@@ -59,9 +58,9 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: BadDictLike instances are compatible with t.ContainerValue at runtime
         obj = BadDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -77,9 +76,9 @@ class TestRuntimeDictLike:
         class NotDictLike:
             pass
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -87,15 +86,15 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing keys attribute."""
 
         class NotDictLike:
-            def items(self) -> list[t.GeneralValueType]:
+            def items(self) -> list[t.ContainerValue]:
                 return []
 
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -103,15 +102,15 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[t.GeneralValueType]:
+            def keys(self) -> list[t.ContainerValue]:
                 return []
 
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -119,15 +118,15 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[t.GeneralValueType]:
+            def keys(self) -> list[t.ContainerValue]:
                 return []
 
             def items(self) -> list[tuple[object, object]]:
                 return []
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -198,7 +197,7 @@ class TestRuntimeTypeChecking:
         # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
         # Create a key that starts with _level_ but has fewer parts than required
         malformed_key = "_level_"  # This will split into fewer parts than required
-        event_dict: m.ConfigMap = {
+        event_dict: dict[str, t.ContainerValue] = {
             malformed_key: "value1",  # Malformed - not enough parts after split
             "normal_key": "value2",  # Not prefixed
         }
@@ -219,31 +218,31 @@ class TestRuntimeTypeChecking:
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = False
-            additional_processors: ClassVar[list[t.GeneralValueType]] = []
+            additional_processors: ClassVar[list[t.ContainerValue]] = []
             wrapper_class_factory: ClassVar[object | None] = None
             logger_factory: ClassVar[object | None] = None
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
-        additional_processors_typed: Sequence[t.GeneralValueType] = (
-            cast("Sequence[t.GeneralValueType]", config.additional_processors)
+        # Convert list[t.ContainerValue] to Sequence[t.ContainerValue] for type compatibility
+        additional_processors_typed: Sequence[t.ContainerValue] = (
+            cast("Sequence[t.ContainerValue]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to t.GeneralValueType | None for type compatibility
-        wrapper_class_factory_typed: t.GeneralValueType | None = (
-            cast("t.GeneralValueType", config.wrapper_class_factory)
+        # Convert object | None to t.ContainerValue | None for type compatibility
+        wrapper_class_factory_typed: t.ContainerValue | None = (
+            cast("t.ContainerValue", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
             else None
         )
-        logger_factory_typed: t.GeneralValueType | None = (
-            cast("t.GeneralValueType", config.logger_factory)
+        logger_factory_typed: t.ContainerValue | None = (
+            cast("t.ContainerValue", config.logger_factory)
             if config.logger_factory is not None
             else None
         )
-        config_dict: m.ConfigMap = {
+        config_dict: dict[str, t.ContainerValue] = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,
@@ -253,7 +252,7 @@ class TestRuntimeTypeChecking:
         }
         FlextRuntime.configure_structlog(config=config_dict)
 
-        assert FlextRuntime._structlog_configured is True
+        assert FlextRuntime._structlog_configured
 
     def test_enable_runtime_checking(self) -> None:
         """Test enable_runtime_checking method."""
@@ -287,14 +286,14 @@ class TestRuntimeTypeChecking:
 
         # Test with object that raises exception
         class BadType:
+            @override
             def __getattribute__(self, name: str) -> object:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        bad_type = cast("type", BadType)
-        result = FlextRuntime.extract_generic_args(bad_type)
+        result = FlextRuntime.extract_generic_args(BadType)
         assert result == ()
 
     def test_is_sequence_type_with_origin(self) -> None:
@@ -313,9 +312,11 @@ class TestRuntimeTypeChecking:
             @overload
             def __getitem__(self, index: slice) -> Sequence[object]: ...
 
+            @override
             def __getitem__(self, index: int | slice) -> object | Sequence[object]:
                 return None if isinstance(index, int) else MySequence()
 
+            @override
             def __len__(self) -> int:
                 return 0
 
@@ -326,14 +327,14 @@ class TestRuntimeTypeChecking:
 
         # Test with object that raises exception
         class BadType:
+            @override
             def __getattribute__(self, name: str) -> object:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        bad_type = cast("type", BadType)
-        result = FlextRuntime.is_sequence_type(bad_type)
+        result = FlextRuntime.is_sequence_type(BadType)
         assert result is False
 
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
@@ -344,7 +345,7 @@ class TestRuntimeTypeChecking:
         # Format: _level_<level>_<key> where parts_count = 4
         # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
         # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
-        event_dict: m.ConfigMap = {
+        event_dict: Mapping[str, t.ContainerValue] = {
             "_level_debug_config": {"key": "value"},  # DEBUG level (10)
             "_level_info_status": "ok",  # INFO level (20)
             "_level_error_stack": "trace",  # ERROR level (40)
@@ -371,39 +372,39 @@ class TestRuntimeTypeChecking:
         def custom_processor(
             logger: object,
             method_name: str,
-            event_dict: dict[str, t.GeneralValueType],
-        ) -> dict[str, t.GeneralValueType]:
+            event_dict: dict[str, t.ContainerValue],
+        ) -> dict[str, t.ContainerValue]:
             event_dict["custom"] = True
             return event_dict
 
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = True
-            additional_processors: ClassVar[list[t.GeneralValueType]] = [custom_processor]
+            additional_processors: ClassVar[list[object]] = [custom_processor]
             wrapper_class_factory: ClassVar[object | None] = None
             logger_factory: ClassVar[object | None] = None
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
-        additional_processors_typed: Sequence[t.GeneralValueType] = (
-            cast("Sequence[t.GeneralValueType]", config.additional_processors)
+        # Convert list[t.ContainerValue] to Sequence[t.ContainerValue] for type compatibility
+        additional_processors_typed: Sequence[t.ContainerValue] = (
+            cast("Sequence[t.ContainerValue]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to t.GeneralValueType | None for type compatibility
-        wrapper_class_factory_typed: t.GeneralValueType | None = (
-            cast("t.GeneralValueType", config.wrapper_class_factory)
+        # Convert object | None to t.ContainerValue | None for type compatibility
+        wrapper_class_factory_typed: t.ContainerValue | None = (
+            cast("t.ContainerValue", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
             else None
         )
-        logger_factory_typed: t.GeneralValueType | None = (
-            cast("t.GeneralValueType", config.logger_factory)
+        logger_factory_typed: t.ContainerValue | None = (
+            cast("t.ContainerValue", config.logger_factory)
             if config.logger_factory is not None
             else None
         )
-        config_dict: m.ConfigMap = {
+        config_dict: dict[str, t.ContainerValue] = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,
@@ -412,4 +413,4 @@ class TestRuntimeTypeChecking:
             "cache_logger_on_first_use": config.cache_logger_on_first_use,
         }
         FlextRuntime.configure_structlog(config=config_dict)
-        assert FlextRuntime._structlog_configured is True
+        assert FlextRuntime._structlog_configured

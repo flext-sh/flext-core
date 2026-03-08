@@ -12,9 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping, MutableMapping
 
-from flext_tests.factories import tt
-from flext_tests.typings import t
+from flext_tests import t, tt
 
 
 class FlextTestsDomains:
@@ -37,9 +37,9 @@ class FlextTestsDomains:
             self.value = value
 
         @property
-        def is_success(self) -> bool:
-            """Check if success."""
-            return True
+        def error(self) -> str | None:
+            """Get error."""
+            return None
 
         @property
         def is_failure(self) -> bool:
@@ -47,20 +47,79 @@ class FlextTestsDomains:
             return False
 
         @property
-        def error(self) -> str | None:
-            """Get error."""
-            return None
+        def is_success(self) -> bool:
+            """Check if success."""
+            return True
 
         def unwrap(self) -> FlextTestsDomains.TestDomainResult:
             """Unwrap the result value."""
             return self
 
     @staticmethod
+    def api_response_data(
+        status: str = "success",
+        *,
+        include_data: bool | None = None,
+        **custom_fields: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
+        """Create API response test data.
+
+        Args:
+            status: Response status
+            include_data: Whether to include data field
+            **custom_fields: Custom response fields
+
+        Returns:
+            API response dictionary
+
+        """
+        response: MutableMapping[str, t.Tests.ContainerValue] = {
+            "status": status,
+            "timestamp": "2025-01-01T00:00:00Z",
+            "request_id": str(uuid.uuid4()),
+        }
+
+        if include_data:
+            response["data"] = {"test": "data"}
+
+        if status == "error":
+            response["error"] = {
+                "code": "TEST_ERROR",
+                "message": "Test error message",
+            }
+
+        response.update(custom_fields)
+        return response
+
+    @staticmethod
+    def batch_users(
+        count: int = 5,
+        **user_overrides: str | bool,
+    ) -> list[MutableMapping[str, str | bool]]:
+        """Create a batch of test users.
+
+        Args:
+            count: Number of users to create
+            **user_overrides: Common overrides for all users
+
+        Returns:
+            List of user dictionaries
+
+        """
+        users = []
+        for i in range(count):
+            user_overrides_copy = user_overrides.copy()
+            user_overrides_copy["username"] = f"testuser{i}"
+            user_overrides_copy["email"] = f"testuser{i}@example.com"
+            users.append(FlextTestsDomains.create_user(**user_overrides_copy))
+        return users
+
+    @staticmethod
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **overrides: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test configuration data using factories.
 
         Args:
@@ -78,8 +137,7 @@ class FlextTestsDomains:
             environment=environment,
         )
         # Extract attributes using getattr with defaults for type safety
-        # Use dict[str, t.GeneralValueType] directly instead of dict[str, t.GeneralValueType]
-        base_config: dict[str, t.GeneralValueType] = {
+        base_config: MutableMapping[str, t.Tests.ContainerValue] = {
             "service_type": getattr(config_result, "service_type", service_type),
             "environment": getattr(config_result, "environment", environment),
             "debug": getattr(config_result, "debug", False),
@@ -97,8 +155,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **custom_fields: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test payload data.
 
         Args:
@@ -109,7 +167,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: dict[str, dict[str, t.GeneralValueType]] = {
+        payloads: MutableMapping[str, Mapping[str, t.Tests.ContainerValue]] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -136,64 +194,10 @@ class FlextTestsDomains:
         return payload
 
     @staticmethod
-    def api_response_data(
-        status: str = "success",
-        *,
-        include_data: bool | None = None,
-        **custom_fields: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
-        """Create API response test data.
-
-        Args:
-            status: Response status
-            include_data: Whether to include data field
-            **custom_fields: Custom response fields
-
-        Returns:
-            API response dictionary
-
-        """
-        response: dict[str, t.GeneralValueType] = {
-            "status": status,
-            "timestamp": "2025-01-01T00:00:00Z",
-            "request_id": str(uuid.uuid4()),
-        }
-
-        if include_data:
-            response["data"] = {"test": "data"}
-
-        if status == "error":
-            response["error"] = {
-                "code": "TEST_ERROR",
-                "message": "Test error message",
-            }
-
-        response.update(custom_fields)
-        return response
-
-    @staticmethod
-    def valid_email_cases() -> list[tuple[str, bool]]:
-        """Get valid email test cases.
-
-        Returns:
-            List of (email, is_valid) tuples
-
-        """
-        return [
-            ("test@example.com", True),
-            ("user.name@domain.co.uk", True),
-            ("test+tag@example.com", True),
-            ("invalid-email", False),
-            ("@example.com", False),
-            ("test@", False),
-            ("", False),
-        ]
-
-    @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **config: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test service configuration.
 
         Args:
@@ -204,7 +208,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: dict[str, t.GeneralValueType] = {
+        base_service: MutableMapping[str, t.Tests.ContainerValue] = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,
@@ -214,7 +218,7 @@ class FlextTestsDomains:
         return base_service
 
     @staticmethod
-    def create_user(**overrides: str | bool) -> dict[str, str | bool]:
+    def create_user(**overrides: str | bool) -> MutableMapping[str, str | bool]:
         """Create test user data using factories.
 
         Args:
@@ -235,7 +239,7 @@ class FlextTestsDomains:
         )
         # Type narrowing: tt.model("user") returns m.Tests.Factory.User
         # Extract attributes safely using getattr
-        user: dict[str, str | bool] = {
+        user: MutableMapping[str, str | bool] = {
             "id": getattr(user_model_result, "id", ""),
             "username": str(overrides.get("username", "testuser")),
             "email": getattr(user_model_result, "email", email),
@@ -249,27 +253,14 @@ class FlextTestsDomains:
         return user
 
     @staticmethod
-    def batch_users(
-        count: int = 5,
-        **user_overrides: str | bool,
-    ) -> list[dict[str, str | bool]]:
-        """Create a batch of test users.
-
-        Args:
-            count: Number of users to create
-            **user_overrides: Common overrides for all users
+    def invalid_ages() -> list[int]:
+        """Get invalid age test cases.
 
         Returns:
-            List of user dictionaries
+            List of invalid ages
 
         """
-        users = []
-        for i in range(count):
-            user_overrides_copy = user_overrides.copy()
-            user_overrides_copy["username"] = f"testuser{i}"
-            user_overrides_copy["email"] = f"testuser{i}@example.com"
-            users.append(FlextTestsDomains.create_user(**user_overrides_copy))
-        return users
+        return [-5, 0, 17, 151, 200]
 
     @staticmethod
     def invalid_email_cases() -> list[tuple[str, bool]]:
@@ -300,14 +291,22 @@ class FlextTestsDomains:
         return [18, 25, 30, 45, 65, 80, 99]
 
     @staticmethod
-    def invalid_ages() -> list[int]:
-        """Get invalid age test cases.
+    def valid_email_cases() -> list[tuple[str, bool]]:
+        """Get valid email test cases.
 
         Returns:
-            List of invalid ages
+            List of (email, is_valid) tuples
 
         """
-        return [-5, 0, 17, 151, 200]
+        return [
+            ("test@example.com", True),
+            ("user.name@domain.co.uk", True),
+            ("test+tag@example.com", True),
+            ("invalid-email", False),
+            ("@example.com", False),
+            ("test@", False),
+            ("", False),
+        ]
 
 
 __all__ = ["FlextTestsDomains"]
