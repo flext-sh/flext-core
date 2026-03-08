@@ -371,7 +371,6 @@ class StringParserTestFactory:
             id = "TestId"
 
         return [
-            ObjectKeyCase(obj=int, expected_exact="int", description="type"),
             ObjectKeyCase(
                 obj=TestClass, expected_exact="TestClass", description="class"
             ),

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass
-from typing import Any, cast
 
 import pytest
 
@@ -52,7 +51,7 @@ class TestuMapperExtract:
     def test_extract_object(self) -> None:
         """Test object attribute extraction."""
         obj = SimpleObj(name="test", value=42)
-        result = u.Mapper.extract(cast("Any", obj), "name")
+        result = u.Mapper.extract(obj, "name")
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
 
@@ -134,15 +133,15 @@ class TestuMapperAccessors:
 
     def test_take_extraction(self) -> None:
         """Test take value extraction."""
-        data = {"a": 1, "b": "str"}
-        assert u.Mapper.take(cast("Any", data), "a", as_type=int) == 1
-        assert u.Mapper.take(cast("Any", data), "b", as_type=int, default=0) == 0
+        data: dict[str, t.Scalar] = {"a": 1, "b": "str"}
+        assert u.Mapper.take(data, "a", as_type=int) == 1
+        assert u.Mapper.take(data, "b", as_type=int, default=0) == 0
 
     def test_take_slice(self) -> None:
         """Test take slicing."""
-        items = [1, 2, 3, 4, 5]
-        assert u.Mapper.take(cast("Any", items), 2) == [1, 2]
-        assert u.Mapper.take(cast("Any", items), 2, from_start=False) == [4, 5]
+        items: list[int] = [1, 2, 3, 4, 5]
+        assert u.Mapper.take(items, 2) == [1, 2]
+        assert u.Mapper.take(items, 2, from_start=False) == [4, 5]
         d = {"a": 1, "b": 2, "c": 3}
         taken = u.Mapper.take(d, 2)
         assert len(taken) == 2
@@ -220,15 +219,16 @@ class TestuMapperConversions:
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value."""
         obj = SimpleObj("test", 1)
-        res = u.Mapper.convert_to_json_value(cast("Any", {"obj": obj}))
+        payload: dict[str, t.ContainerValue] = {"obj": obj}
+        res = u.Mapper.convert_to_json_value(payload)
         assert isinstance(res, dict)
         assert "obj" in res
         assert "SimpleObj" in str(res["obj"])
 
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
-        d = {"a": SimpleObj("test", 1)}
-        res = u.Mapper.convert_to_json_value(cast("Any", d))
+        d: dict[str, t.ContainerValue] = {"a": SimpleObj("test", 1)}
+        res = u.Mapper.convert_to_json_value(d)
         if isinstance(res, dict):
             assert isinstance(res["a"], str)
         else:
@@ -237,8 +237,8 @@ class TestuMapperConversions:
 
     def test_convert_list_to_json(self) -> None:
         """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
-        test_list = [{"a": SimpleObj("test", 1)}]
-        res = u.Mapper.convert_to_json_value(cast("Any", test_list))
+        test_list: list[dict[str, t.ContainerValue]] = [{"a": SimpleObj("test", 1)}]
+        res = u.Mapper.convert_to_json_value(test_list)
         if isinstance(res, list) and isinstance(res[0], dict):
             assert isinstance(res[0]["a"], str)
         else:
@@ -251,10 +251,12 @@ class TestuMapperBuild:
 
     def test_build_pipeline(self) -> None:
         """Test build pipeline."""
-        ops = {"ensure": "list", "map": lambda x: x * 2, "filter": lambda x: x > 2}
-        res = u.Mapper.build(
-            [1, 2, 3, 4], ops=cast("dict[str, t.ContainerValue] | None", ops)
-        )
+        ops: dict[str, t.ContainerValue] | None = {
+            "ensure": "list",
+            "map": lambda x: x * 2,
+            "filter": lambda x: x > 2,
+        }
+        res = u.Mapper.build([1, 2, 3, 4], ops=ops)
         assert res == [6, 8]
 
     def test_build_all_ops(self) -> None:
@@ -269,32 +271,25 @@ class TestuMapperBuild:
             "unique": True,
             "slice": (0, 2),
         }
-        res = u.Mapper.build(
-            input_data, ops=cast("dict[str, t.ContainerValue] | None", ops)
-        )
+        res = u.Mapper.build(input_data, ops=ops)
         assert res == [25, 35]
 
     def test_build_normalize(self) -> None:
         """Test build normalize."""
-        res = u.Mapper.build(
-            ["A", "b"],
-            ops=cast("dict[str, t.ContainerValue] | None", {"normalize": "lower"}),
-        )
+        ops: dict[str, t.ContainerValue] | None = {"normalize": "lower"}
+        res = u.Mapper.build(["A", "b"], ops=ops)
         assert res == ["a", "b"]
 
     def test_build_group(self) -> None:
         """Test build group - keys are converted to strings for ConfigurationDict."""
-        res = u.Mapper.build(
-            ["cat", "dog", "ant"],
-            ops=cast("dict[str, t.ContainerValue] | None", {"group": len}),
-        )
+        ops: dict[str, t.ContainerValue] | None = {"group": len}
+        res = u.Mapper.build(["cat", "dog", "ant"], ops=ops)
         assert res == {"3": ["cat", "dog", "ant"]}
 
     def test_build_chunk(self) -> None:
         """Test build chunk."""
-        res = u.Mapper.build(
-            [1, 2, 3, 4], ops=cast("dict[str, t.ContainerValue] | None", {"chunk": 2})
-        )
+        ops: dict[str, t.ContainerValue] | None = {"chunk": 2}
+        res = u.Mapper.build([1, 2, 3, 4], ops=ops)
         assert res == [[1, 2], [3, 4]]
 
     def test_fields_single(self) -> None:
@@ -305,22 +300,22 @@ class TestuMapperBuild:
     def test_fields_multi(self) -> None:
         """Test fields multi extraction."""
         data = {"a": 1, "b": 2}
-        spec: dict[str, None] = {"a": None, "b": None}
-        res = u.Mapper.fields_multi(data, cast("dict[str, t.ContainerValue]", spec))
+        spec: dict[str, t.ContainerValue] = {"a": None, "b": None}
+        res = u.Mapper.fields_multi(data, spec)
         assert res == {"a": 1, "b": 2}
 
     def test_construct(self) -> None:
         """Test construct."""
-        source = {"user_name": "john", "user_age": 30}
-        spec = {
+        source: dict[str, t.ContainerValue] = {
+            "user_name": "john",
+            "user_age": 30,
+        }
+        spec: dict[str, t.ContainerValue] = {
             "name": "user_name",
             "age": "user_age",
             "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
         }
-        res = u.Mapper.construct(
-            cast("dict[str, t.ContainerValue]", spec),
-            m.ConfigMap(root=cast("dict[str, t.ContainerValue]", source)),
-        )
+        res = u.Mapper.construct(spec, m.ConfigMap(root=source))
         assert res == {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
 
 
@@ -334,47 +329,43 @@ class TestuMapperAdvanced:
             a: int = 1
 
         obj = Dumpable()
-        assert u.Mapper.extract(cast("Any", obj), "a").value == 1
-        assert u.Mapper.extract(cast("Any", obj), "b", default=2).value == 2
+        assert u.Mapper.extract(obj, "a").value == 1
+        assert u.Mapper.extract(obj, "b", default=2).value == 2
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
-        res = u.Mapper.build(
-            "invalid", ops=cast("dict[str, t.ContainerValue] | None", {"convert": int})
-        )
+        ops: dict[str, t.ContainerValue] | None = {"convert": int}
+        res = u.Mapper.build("invalid", ops=ops)
         assert res == 0
-        res = u.Mapper.build(
-            "invalid",
-            ops=cast(
-                "dict[str, t.ContainerValue] | None",
-                {"convert": int, "convert_default": 10},
-            ),
-        )
+        ops_default: dict[str, t.ContainerValue] | None = {
+            "convert": int,
+            "convert_default": 10,
+        }
+        res = u.Mapper.build("invalid", ops=ops_default)
         assert res == 10
 
     def test_transform_options(self) -> None:
         """Test build transform options."""
         data: dict[str, str | None] = {"a": "UPPER", "b": None, "c": ""}
-        ops = {
+        ops: dict[str, t.ContainerValue] | None = {
             "transform": {"normalize": True, "strip_none": True, "strip_empty": True}
         }
-        res = u.Mapper.build(data, ops=cast("dict[str, t.ContainerValue] | None", ops))
+        res = u.Mapper.build(data, ops=ops)
         assert res == {"a": "UPPER"}
 
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
         data = [{"a": 2}, {"a": 1}]
-        res = u.Mapper.build(
-            data, ops=cast("dict[str, t.ContainerValue] | None", {"sort": "a"})
-        )
-        assert cast("list[dict[str, int]]", res)[0]["a"] == 1
-        res = u.Mapper.build(
-            data,
-            ops=cast(
-                "dict[str, t.ContainerValue] | None", {"sort": operator.itemgetter("a")}
-            ),
-        )
-        assert cast("list[dict[str, int]]", res)[0]["a"] == 1
+        ops_sort: dict[str, t.ContainerValue] | None = {"sort": "a"}
+        res = u.Mapper.build(data, ops=ops_sort)
+        assert isinstance(res, list) and len(res) > 0
+        assert isinstance(res[0], dict) and res[0].get("a") == 1
+        ops_getter: dict[str, t.ContainerValue] | None = {
+            "sort": operator.itemgetter("a")
+        }
+        res = u.Mapper.build(data, ops=ops_getter)
+        assert isinstance(res, list) and len(res) > 0
+        assert isinstance(res[0], dict) and res[0].get("a") == 1
 
     def test_build_unique(self) -> None:
         """Test build unique."""

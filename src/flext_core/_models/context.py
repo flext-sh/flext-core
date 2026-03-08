@@ -23,10 +23,11 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextRuntime, c, t
+from flext_core import c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.runtime import FlextRuntime
 
 
 def _normalize_to_mapping(v: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
@@ -597,7 +598,7 @@ class FlextModelsContext:
             description="Additional metric counters and timing values grouped by metric key.",
         )
 
-    class ContextMetadata:
+    class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
 
         Enhanced to use t.ContainerValue and Mapping patterns
@@ -696,7 +697,7 @@ class FlextModelsContext:
             msg = "Context must have get() and set() methods"
             raise ValueError(msg)
 
-    class ContextDomainData:
+    class ContextDomainData(BaseModel):
         """Domain-specific context data storage."""
 
         domain_name: Annotated[

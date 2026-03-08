@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import ClassVar, Never, override
+
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
+from flext_core import t
 
-class TestCaseMap(RootModel[Mapping[str, TestPayload]]):
+
+class _ValidationLikeError(Exception):
+    """Validation-like error for tests."""
+
+
+class TestCaseMap(RootModel[Mapping[str, t.ContainerValue]]):
     pass
 
 
-class InputPayloadMap(RootModel[dict[str, object]]):
+class InputPayloadMap(RootModel[dict[str, t.ContainerValue]]):
     pass
 
 
@@ -36,7 +45,7 @@ class _BrokenDumpModel(BaseModel):
     value: int = 1
 
     @override
-    def __getattribute__(self, name: str) -> object:
+    def __getattribute__(self, name: str) -> t.ContainerValue:
         if name == "model_dump":
             return lambda *args, **kwargs: [1]
         return super().__getattribute__(name)
@@ -54,7 +63,7 @@ class _ErrorsModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, object] | None = None,
+        context: dict[str, t.ContainerValue] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -75,7 +84,7 @@ class _PlainErrorModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, object] | None = None,
+        context: dict[str, t.ContainerValue] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -147,7 +156,7 @@ class SingletonClassForTest(BaseModel):
 class BadConfigForTest(BaseModel):
     """Config that fails to instantiate."""
 
-    model_config = {"validate_assignment": True}
+    model_config = ConfigDict(validate_assignment=True)
 
     def __init__(self, **kwargs: t.ContainerValue) -> None:
         """Raise error on init."""
@@ -170,7 +179,7 @@ class _FakeConfig(BaseModel):
     timeout: int = 10
 
     @property
-    def data(self) -> dict[str, object]:
+    def data(self) -> dict[str, t.ContainerValue]:
         return {"timeout": self.timeout}
 
 

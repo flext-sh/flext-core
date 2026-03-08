@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
+    BaseModel,
     ConfigDict,
     Discriminator,
     Field,
@@ -23,9 +24,10 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextRuntime, c, t
+from flext_core import c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsCqrs:
@@ -36,7 +38,7 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command:
+    class Command(BaseModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -68,7 +70,7 @@ class FlextModelsCqrs:
             """Query type identifier (always None for commands)."""
             return None
 
-    class Pagination:
+    class Pagination(BaseModel):
         """Pagination model for query results."""
 
         model_config = ConfigDict(
@@ -212,7 +214,7 @@ class FlextModelsCqrs:
             except (ValidationError, TypeError, ValueError):
                 return pagination_cls()
 
-    class Bus:
+    class Bus(BaseModel):
         """Dispatcher configuration model for CQRS routing."""
 
         model_config = ConfigDict(
@@ -242,7 +244,7 @@ class FlextModelsCqrs:
             description="Implementation path",
         )
 
-    class Handler:
+    class Handler(BaseModel):
         """Handler configuration model with Builder pattern support."""
 
         model_config = ConfigDict(

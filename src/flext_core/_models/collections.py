@@ -15,9 +15,10 @@ from typing import Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_core import FlextRuntime, t
+from flext_core import t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsCollections:

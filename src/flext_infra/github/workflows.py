@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 from pathlib import Path
+from typing import TypeAlias
 
 from flext_core import r, t
 from flext_infra import (
@@ -21,7 +22,7 @@ from flext_infra import (
 )
 from flext_infra.constants import c
 
-SyncOperation = m.Infra.Github.SyncOperation
+SyncOperation: TypeAlias = m.Infra.Github.SyncOperation
 
 
 class FlextInfraWorkflowSyncer:

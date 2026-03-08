@@ -37,6 +37,9 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> Non
     assert "detected_model_violations=" in captured
     assert "detected_alias_violations=" in captured
     assert "created_model_files=" in captured
+    assert "parse_syntax_errors=" in captured
+    assert "parse_encoding_errors=" in captured
+    assert "parse_io_errors=" in captured
     assert "created_typings_files=" in captured
 
 

@@ -446,7 +446,7 @@ class FlextModelFoundation:
             data = self.model_dump()
             return hash(tuple(sorted(((k, str(v)) for k, v in data.items()))))
 
-    class IdentifiableMixin:
+    class IdentifiableMixin(BaseModel):
         """Mixin for unique identifiers."""
 
         model_config = ConfigDict(
@@ -498,7 +498,7 @@ class FlextModelFoundation:
                 raise ValueError(msg)
             return self
 
-    class VersionableMixin:
+    class VersionableMixin(BaseModel):
         """Mixin for versioning with optimistic locking."""
 
         model_config = ConfigDict(
@@ -523,7 +523,7 @@ class FlextModelFoundation:
                 raise ValueError(msg)
             return self
 
-    class RetryConfigurationMixin:
+    class RetryConfigurationMixin(BaseModel):
         """Mixin for shared retry configuration properties."""
 
         model_config = ConfigDict(populate_by_name=True)

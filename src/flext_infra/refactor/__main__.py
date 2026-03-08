@@ -100,6 +100,9 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
         f"detected_alias_violations={summary['detected_alias_violations']}\n"
     )
     _ = sys.stdout.write(f"created_model_files={summary['created_model_files']}\n")
+    _ = sys.stdout.write(f"parse_syntax_errors={summary['parse_syntax_errors']}\n")
+    _ = sys.stdout.write(f"parse_encoding_errors={summary['parse_encoding_errors']}\n")
+    _ = sys.stdout.write(f"parse_io_errors={summary['parse_io_errors']}\n")
     _ = sys.stdout.write(f"created_typings_files={summary['created_typings_files']}\n")
     _ = sys.stdout.write(f"workspace={workspace_path}\n")
     _ = sys.stdout.write(f"mode={('apply' if apply_changes else 'dry-run')}\n")
@@ -171,7 +174,10 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
     apply_changes = bool(args.apply)
     if bool(args.dry_run_copy_workspace):
         workspace_path = _copy_workspace_for_dry_run(workspace_path)
-        apply_changes = False
+        # When --apply was explicitly given, apply to the copy (safe test)
+        # Otherwise default to scan-only on the copy
+        if not apply_changes:
+            apply_changes = False
     enforcer = FlextInfraNamespaceEnforcer(workspace_root=workspace_path)
     report = enforcer.enforce(apply_changes=apply_changes)
     _ = sys.stdout.write(FlextInfraNamespaceEnforcer.render_text(report))
@@ -247,6 +253,13 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     _ = sys.stdout.write(
         f"created_model_files={centralize_summary['created_model_files']}\n"
     )
+    _ = sys.stdout.write(
+        f"parse_syntax_errors={centralize_summary['parse_syntax_errors']}\n"
+    )
+    _ = sys.stdout.write(
+        f"parse_encoding_errors={centralize_summary['parse_encoding_errors']}\n"
+    )
+    _ = sys.stdout.write(f"parse_io_errors={centralize_summary['parse_io_errors']}\n")
     _ = sys.stdout.write(
         f"created_typings_files={centralize_summary['created_typings_files']}\n"
     )

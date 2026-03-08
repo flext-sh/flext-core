@@ -102,7 +102,7 @@ class FlextTypes:
     IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
     TYPE_CHECKING: TypeAlias = bool
     Dict: TypeAlias = Mapping[str, ContainerValue]
-    """Return type for PEP 562 __getattr__ on packages; avoids Any/object."""
+    # Return type for PEP 562 __getattr__ on packages; avoids Any/object.
     ModuleExport: TypeAlias = type | Callable[..., ContainerValue] | ContainerValue
 
     class Validation:

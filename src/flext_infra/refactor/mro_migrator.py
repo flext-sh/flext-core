@@ -32,13 +32,13 @@ class _MROTargetSpec:
 def _new_symbol_candidate(
     *, symbol: str, line: int, kind: str = "constant"
 ) -> m.Infra.Refactor.MROSymbolCandidate:
-    candidate = m.Infra.Refactor.MROSymbolCandidate()
-    candidate.symbol = symbol
-    candidate.line = line
-    candidate.kind = kind
-    candidate.class_name = ""
-    candidate.facade_name = ""
-    return candidate
+    return m.Infra.Refactor.MROSymbolCandidate(
+        symbol=symbol,
+        line=line,
+        kind=kind,
+        class_name="",
+        facade_name="",
+    )
 
 
 def _new_scan_report(
@@ -49,13 +49,13 @@ def _new_scan_report(
     facade_alias: str,
     candidates: tuple[m.Infra.Refactor.MROSymbolCandidate, ...],
 ) -> m.Infra.Refactor.MROScanReport:
-    report = m.Infra.Refactor.MROScanReport()
-    report.file = file
-    report.module = module
-    report.constants_class = constants_class
-    report.facade_alias = facade_alias
-    report.candidates = candidates
-    return report
+    return m.Infra.Refactor.MROScanReport(
+        file=file,
+        module=module,
+        constants_class=constants_class,
+        facade_alias=facade_alias,
+        candidates=candidates,
+    )
 
 
 def _new_file_migration(
@@ -65,33 +65,30 @@ def _new_file_migration(
     moved_symbols: tuple[str, ...],
     created_classes: tuple[str, ...],
 ) -> m.Infra.Refactor.MROFileMigration:
-    migration = m.Infra.Refactor.MROFileMigration()
-    migration.file = file
-    migration.module = module
-    migration.moved_symbols = moved_symbols
-    migration.created_classes = created_classes
-    return migration
+    return m.Infra.Refactor.MROFileMigration(
+        file=file,
+        module=module,
+        moved_symbols=moved_symbols,
+        created_classes=created_classes,
+    )
 
 
 def _new_import_rewrite(
     *, module: str, import_name: str, as_name: str | None, symbol: str, facade_name: str
 ) -> m.Infra.Refactor.MROImportRewrite:
-    rewrite = m.Infra.Refactor.MROImportRewrite()
-    rewrite.module = module
-    rewrite.import_name = import_name
-    rewrite.as_name = as_name
-    rewrite.symbol = symbol
-    rewrite.facade_name = facade_name
-    return rewrite
+    return m.Infra.Refactor.MROImportRewrite(
+        module=module,
+        import_name=import_name,
+        as_name=as_name,
+        symbol=symbol,
+        facade_name=facade_name,
+    )
 
 
 def _new_rewrite_result(
     *, file: str, replacements: int
 ) -> m.Infra.Refactor.MRORewriteResult:
-    result = m.Infra.Refactor.MRORewriteResult()
-    result.file = file
-    result.replacements = replacements
-    return result
+    return m.Infra.Refactor.MRORewriteResult(file=file, replacements=replacements)
 
 
 class FlextInfraRefactorMROMigrationScanner:
@@ -787,20 +784,21 @@ class FlextInfraRefactorMROImportRewriter:
                         module_name, c.Infra.Refactor.DEFAULT_FACADE_ALIAS
                     )
                     if alias.name == default_facade_alias:
-                        facade_local_name = alias.asname or alias.name
+                        facade_local_name = default_facade_alias
                         facade_aliases[facade_local_name] = module_name
                         module_facade_alias[module_name] = facade_local_name
                         facade_import = _new_import_rewrite(
                             module=module_name,
                             import_name=default_facade_alias,
-                            as_name=alias.asname,
+                            as_name=None,
                             symbol="",
                             facade_name=facade_local_name,
                         )
                         facade_key = f"{facade_import.module}:{facade_import.import_name}:{facade_import.as_name or ''}"
                         facade_imports_needed.add(facade_key)
                         facade_import_objects[facade_key] = facade_import
-                        kept_names.append(alias)
+                        if alias.asname is None or alias.asname == default_facade_alias:
+                            kept_names.append(ast.alias(name=default_facade_alias))
                         continue
                     symbol_map = moved_index[module_name]
                     new_symbol = symbol_map.get(alias.name)

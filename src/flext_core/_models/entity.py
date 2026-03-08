@@ -18,10 +18,11 @@ from typing import ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from flext_core import FlextRuntime, c, p, r, t
+from flext_core import c, p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsEntity:

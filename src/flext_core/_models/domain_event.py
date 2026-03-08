@@ -15,9 +15,10 @@ from typing import Annotated, override
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import FlextRuntime, c, t
+from flext_core import c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.runtime import FlextRuntime
 
 
 class _ComparableConfigMap(FlextModelsContainers.ConfigMap):

@@ -102,3 +102,44 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     assert violation.name == "ServiceContract"
     rendered = FlextInfraNamespaceEnforcer.render_text(report)
     assert "Manual protocols: 1" in rendered
+
+
+def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    pkg.mkdir(parents=True)
+    (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n", encoding="utf-8"
+    )
+    (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    service_file = pkg / "service.py"
+    service_file.write_text(
+        "from __future__ import annotations\n"
+        "from typing import Protocol\n\n"
+        "class ServiceContract(Protocol):\n"
+        "    def run(self) -> str:\n"
+        "        ...\n\n"
+        "class ServiceImpl:\n"
+        "    def run(self) -> str:\n"
+        "        return 'ok'\n",
+        encoding="utf-8",
+    )
+
+    report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=True
+    )
+
+    assert report.total_manual_protocol_violations == 0
+    protocols_file = pkg / "protocols.py"
+    assert protocols_file.exists()
+
+    service_source = service_file.read_text(encoding="utf-8")
+    protocols_source = protocols_file.read_text(encoding="utf-8")
+    assert "class ServiceContract(Protocol):" not in service_source
+    assert "class ServiceContract(Protocol):" in protocols_source
+    assert "from __future__ import annotations" in protocols_source
+    assert "from typing import Protocol" in protocols_source

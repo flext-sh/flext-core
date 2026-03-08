@@ -22,10 +22,11 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextRuntime, c, p, t
+from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsConfig:

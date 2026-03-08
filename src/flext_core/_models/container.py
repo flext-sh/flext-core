@@ -19,9 +19,10 @@ from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import FlextRuntime, c, t
+from flext_core import c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.runtime import FlextRuntime
 
 _MetadataInput = (
     FlextModelFoundation.Metadata
@@ -49,13 +50,15 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
     if not FlextRuntime.is_dict_like(value):
         msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
+    if isinstance(value, FlextModelsContainers.ConfigMap):
+        items_iter = value.root.items()
+    elif isinstance(value, FlextModelFoundation.Metadata):
+        items_iter = value.model_dump().items()
+    else:
+        items_iter = value.items()
     normalized_attrs: dict[str, t.MetadataValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
-        for key, raw_value in (
-            value.root.items()
-            if isinstance(value, FlextModelsContainers.ConfigMap)
-            else value.items()
-        )
+        for key, raw_value in items_iter
     }
     return FlextModelFoundation.Metadata.model_validate({
         "attributes": normalized_attrs
@@ -65,7 +68,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    class ServiceRegistration:
+    class ServiceRegistration(BaseModel):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
@@ -130,7 +133,7 @@ class FlextModelsContainer:
             msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
             raise ValueError(msg)
 
-    class FactoryRegistration:
+    class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -175,7 +178,7 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
-    class ResourceRegistration:
+    class ResourceRegistration(BaseModel):
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories that dependency-injector should wrap via
@@ -209,7 +212,7 @@ class FlextModelsContainer:
             """Normalize resource metadata to Metadata model."""
             return _normalize_metadata(v)
 
-    class ContainerConfig:
+    class ContainerConfig(BaseModel):
         """Model for container configuration.
 
         Replaces: m.ConfigMap for container configuration storage.
@@ -247,7 +250,7 @@ class FlextModelsContainer:
             default=True, description="Enable lazy loading of services"
         )
 
-    class FactoryDecoratorConfig:
+    class FactoryDecoratorConfig(BaseModel):
         """Configuration extracted from @d.factory() decorator.
 
         Used by factory discovery to auto-register factories with FlextContainer.

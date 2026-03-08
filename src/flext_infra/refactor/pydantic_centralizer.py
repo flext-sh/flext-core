@@ -25,6 +25,13 @@ class _AliasMove:
     alias_expr: str
 
 
+@dataclass(slots=True)
+class _CentralizerFailureStats:
+    parse_syntax_errors: int = 0
+    parse_encoding_errors: int = 0
+    parse_io_errors: int = 0
+
+
 class FlextInfraRefactorPydanticCentralizer:
     """Centralize model-like contracts into `models.py`/`_models.py` files."""
 
@@ -365,6 +372,24 @@ class FlextInfraRefactorPydanticCentralizer:
         return (class_moves, alias_moves)
 
     @staticmethod
+    def _collect_moves_safe(
+        file_path: Path,
+        *,
+        failure_stats: _CentralizerFailureStats,
+    ) -> tuple[list[_ClassMove], list[_AliasMove]] | None:
+        try:
+            return FlextInfraRefactorPydanticCentralizer._collect_moves(file_path)
+        except SyntaxError:
+            failure_stats.parse_syntax_errors += 1
+            return None
+        except UnicodeDecodeError:
+            failure_stats.parse_encoding_errors += 1
+            return None
+        except OSError:
+            failure_stats.parse_io_errors += 1
+            return None
+
+    @staticmethod
     def _dest_import_statement(file_path: Path, names: list[str]) -> str:
         joined = ", ".join(sorted(set(names)))
         if (file_path.parent / "__init__.py").exists():
@@ -531,6 +556,7 @@ class FlextInfraRefactorPydanticCentralizer:
         detected_alias_violations = 0
         created_model_files = 0
         created_typings_files = 0
+        failure_stats = _CentralizerFailureStats()
         for file_path in workspace_root.rglob("*.py"):
             if not FlextInfraRefactorPydanticCentralizer._is_target_python(file_path):
                 continue
@@ -542,12 +568,13 @@ class FlextInfraRefactorPydanticCentralizer:
             )
             detected_model_violations += found_models
             detected_alias_violations += found_aliases
-            try:
-                class_moves, alias_moves = (
-                    FlextInfraRefactorPydanticCentralizer._collect_moves(file_path)
-                )
-            except (SyntaxError, UnicodeDecodeError, OSError):
+            collected_moves = FlextInfraRefactorPydanticCentralizer._collect_moves_safe(
+                file_path,
+                failure_stats=failure_stats,
+            )
+            if collected_moves is None:
                 continue
+            class_moves, alias_moves = collected_moves
             if len(class_moves) == 0 and len(alias_moves) == 0:
                 continue
             dest_path = file_path.parent / "_models.py"
@@ -608,4 +635,7 @@ class FlextInfraRefactorPydanticCentralizer:
             "detected_alias_violations": detected_alias_violations,
             "created_model_files": created_model_files,
             "created_typings_files": created_typings_files,
+            "parse_syntax_errors": failure_stats.parse_syntax_errors,
+            "parse_encoding_errors": failure_stats.parse_encoding_errors,
+            "parse_io_errors": failure_stats.parse_io_errors,
         }

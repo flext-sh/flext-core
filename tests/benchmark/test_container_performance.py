@@ -93,10 +93,8 @@ class PerformanceBenchmark:
             return lambda: f"value_{captured_i}"
 
         _, elapsed = PerformanceBenchmark.measure_time(lambda: None)
-        [
-            _ = container.register(f"factory_{i}", make_factory(i), kind="factory")
-            for i in range(count)
-        ]
+        for i in range(count):
+            container.register(f"factory_{i}", make_factory(i), kind="factory")
         return elapsed
 
     @staticmethod
@@ -117,10 +115,8 @@ class PerformanceBenchmark:
             return lambda: f"value_{captured_i}"
 
         _, elapsed = PerformanceBenchmark.measure_time(lambda: None)
-        [
-            _ = container.register(f"resource_{i}", make_resource(i), kind="resource")
-            for i in range(count)
-        ]
+        for i in range(count):
+            container.register(f"resource_{i}", make_resource(i), kind="resource")
         return elapsed
 
     @staticmethod

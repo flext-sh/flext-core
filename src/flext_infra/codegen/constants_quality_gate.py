@@ -127,7 +127,9 @@ class FlextInfraCodegenConstantsQualityGate:
         """Return True for verdicts that should exit with status 0."""
         return verdict in FlextInfraCodegenConstantsQualityGate._PASS_VERDICTS
 
-    def _load_before_payload(self) -> tuple[dict[str, t.ContainerValue] | None, str, str]:
+    def _load_before_payload(
+        self,
+    ) -> tuple[dict[str, t.ContainerValue] | None, str, str]:
         baseline_path = self._before_report or self._baseline_file
         if baseline_path is None:
             return (None, "", "")
@@ -207,7 +209,8 @@ class FlextInfraCodegenConstantsQualityGate:
 
     @staticmethod
     def _improvement(
-        before_metrics: dict[str, t.ContainerValue], after_metrics: dict[str, t.ContainerValue]
+        before_metrics: dict[str, t.ContainerValue],
+        after_metrics: dict[str, t.ContainerValue],
     ) -> dict[str, t.ContainerValue]:
         before_violations = FlextInfraCodegenConstantsQualityGate._as_int(
             before_metrics.get("total_violations")
@@ -325,7 +328,8 @@ class FlextInfraCodegenConstantsQualityGate:
 
     @staticmethod
     def _compute_verdict(
-        checks: Sequence[dict[str, t.ContainerValue]], improvement: dict[str, t.ContainerValue]
+        checks: Sequence[dict[str, t.ContainerValue]],
+        improvement: dict[str, t.ContainerValue],
     ) -> str:
         if all(bool(item.get("passed", False)) for item in checks):
             return "PASS"
@@ -540,7 +544,9 @@ class FlextInfraCodegenConstantsQualityGate:
             return []
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
-    def _run_pyrefly_check(self, modified_files: list[str]) -> dict[str, t.ContainerValue]:
+    def _run_pyrefly_check(
+        self, modified_files: list[str]
+    ) -> dict[str, t.ContainerValue]:
         if not modified_files:
             return {
                 "passed": True,
@@ -608,7 +614,9 @@ class FlextInfraCodegenConstantsQualityGate:
             "exit_code": result.returncode,
         }
 
-    def _scan_import_nodes(self, modified_files: list[str]) -> dict[str, t.ContainerValue]:
+    def _scan_import_nodes(
+        self, modified_files: list[str]
+    ) -> dict[str, t.ContainerValue]:
         invalid_import_from: list[str] = []
         parse_errors: list[str] = []
         for rel_path in modified_files:
@@ -704,6 +712,7 @@ class FlextInfraCodegenConstantsQualityGate:
         )
         return FlextInfraCodegenConstantsQualityGate._as_int(totals.get("failed"))
 
+    @staticmethod
     def _as_int(value: t.ContainerValue) -> int:
         if isinstance(value, bool):
             return int(value)

@@ -319,10 +319,7 @@ class TestLoggingMethods:
         assert logger is not None
         assert hasattr(logger, "trace")
         result = logger.trace("Test trace message")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Trace logging should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert hasattr(result, "is_success")
 
     def test_debug_logging(self) -> None:
@@ -337,10 +334,7 @@ class TestLoggingMethods:
         assert logger is not None
         assert hasattr(logger, "debug")
         result = logger.debug("Test debug message")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Debug logging should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert hasattr(result, "is_success")
 
     def test_debug_with_context(self) -> None:
@@ -354,10 +348,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.debug("Debug with context", user_id="123", action="login")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Debug logging with context should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_info_logging(self) -> None:
         """Test info level logging.
@@ -372,10 +363,7 @@ class TestLoggingMethods:
         assert logger is not None
         assert hasattr(logger, "info")
         result = logger.info("Test info message")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Info logging should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert hasattr(result, "value") or hasattr(result, "data")
 
     def test_info_with_context(self) -> None:
@@ -389,10 +377,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.info("Info with context", status="completed", duration="0.5s")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Info logging with context should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_warning_logging(self) -> None:
         """Test warning level logging.
@@ -406,10 +391,7 @@ class TestLoggingMethods:
         assert logger is not None
         assert hasattr(logger, "warning")
         result = logger.warning("Test warning message")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Warning logging should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert hasattr(result, "is_success")
 
     def test_warning_with_context(self) -> None:
@@ -423,10 +405,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.warning("Warning with context", retry_count=3, delay="1s")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Warning logging with context should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_error_logging(self) -> None:
         """Test error level logging.
@@ -440,10 +419,7 @@ class TestLoggingMethods:
         assert logger is not None
         assert hasattr(logger, "error")
         result = logger.error("Test error message")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Error logging should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert hasattr(result, "is_success")
 
     def test_error_with_context(self) -> None:
@@ -457,10 +433,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.error("Error with context", error_code="ERR_001", user_id="456")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Error logging with context should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_critical_logging(self) -> None:
         """Test critical level logging.
@@ -474,10 +447,7 @@ class TestLoggingMethods:
         assert logger is not None
         assert hasattr(logger, "critical")
         result = logger.critical("Test critical message")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Critical logging should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert hasattr(result, "is_success")
 
     def test_critical_with_context(self) -> None:
@@ -493,10 +463,7 @@ class TestLoggingMethods:
         result = logger.critical(
             "Critical with context", alert_level="high", system="payment"
         )
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Critical logging with context should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_logging_with_formatting(self) -> None:
         """Test logging with message formatting.
@@ -509,10 +476,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.info("User %s logged in", "john")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Logging with formatting should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_logging_with_invalid_formatting(self) -> None:
         """Test logging with invalid format string.
@@ -525,10 +489,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.info("Message with %s and %d", "arg1", 42)
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Logging with multiple format arguments should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
 
 class TestExceptionLogging:

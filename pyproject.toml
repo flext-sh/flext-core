@@ -210,6 +210,7 @@ project-excludes = [
 python-version = "3.13"
 search-path = [
   ".",
+  "../.venv/lib/python3.13/site-packages",
 ]
 
 [tool.pyrefly.errors]
@@ -242,6 +243,8 @@ python_version = "3.13"
 explicit_package_bases = true
 ignore_missing_imports = true
 namespace_packages = true
+
+
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true

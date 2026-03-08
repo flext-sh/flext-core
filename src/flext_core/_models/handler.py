@@ -122,7 +122,7 @@ class FlextModelsHandler:
             default=None, description="Explicit handler name override"
         )
 
-    class RegistrationDetails:
+    class RegistrationDetails(FlextModelFoundation.ArbitraryTypesModel):
         """Registration details for handler registration tracking.
 
         Tracks metadata about handler registrations in the CQRS system,
@@ -194,7 +194,7 @@ class FlextModelsHandler:
             ),
         ] = c.Cqrs.CommonStatus.RUNNING
 
-    class ExecutionContext:
+    class ExecutionContext(FlextModelFoundation.ArbitraryTypesModel):
         """Handler execution context for tracking handler performance and state.
 
         Provides timing and metrics tracking for handler executions in the

@@ -32,6 +32,9 @@ def test_centralizer_converts_typed_dict_factory_to_model(tmp_path: Path) -> Non
     generated_models = models_file.read_text(encoding="utf-8")
 
     assert summary["moved_classes"] == 1
+    assert summary["parse_syntax_errors"] == 0
+    assert summary["parse_encoding_errors"] == 0
+    assert summary["parse_io_errors"] == 0
     assert "Payload = TypedDict(" not in updated_source
     assert "from _models import Payload" in updated_source
     assert "class Payload(BaseModel):" in generated_models

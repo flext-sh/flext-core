@@ -19,6 +19,7 @@ from __future__ import annotations
 import ast
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 from typing import ClassVar
@@ -79,6 +80,8 @@ class NamespaceEnforcementModels:
         suggested_import: str = Field(description="Correct facade import")
 
     class ManualProtocolViolation(BaseModel):
+        """Protocol class defined outside canonical protocols module paths."""
+
         model_config = ConfigDict(frozen=True)
 
         file: str = Field(min_length=1, description="Source file path")
@@ -108,6 +111,8 @@ class NamespaceEnforcementModels:
         file: str = Field(min_length=1, description="Source file path")
 
     class ManualTypingAliasViolation(BaseModel):
+        """Typing alias definition outside canonical `typings*` modules."""
+
         model_config = ConfigDict(frozen=True)
 
         file: str = Field(min_length=1, description="Source file path")
@@ -116,12 +121,24 @@ class NamespaceEnforcementModels:
         detail: str = Field(default="", description="Violation details")
 
     class CompatibilityAliasViolation(BaseModel):
+        """Compatibility alias pattern (`Old = New`) flagged for cleanup."""
+
         model_config = ConfigDict(frozen=True)
 
         file: str = Field(min_length=1, description="Source file path")
         line: int = Field(ge=1, description="Line number")
         alias_name: str = Field(min_length=1, description="Compatibility alias symbol")
         target_name: str = Field(min_length=1, description="Target symbol")
+
+    class ParseFailureViolation(BaseModel):
+        """Structured parse/read failure captured with typed origin."""
+
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+        stage: str = Field(min_length=1, description="Enforcement stage")
+        error_type: str = Field(min_length=1, description="Exception class name")
+        detail: str = Field(default="", description="Error detail")
 
     class ProjectEnforcementReport(BaseModel):
         """Enforcement report for a single project."""
@@ -155,6 +172,10 @@ class NamespaceEnforcementModels:
         compatibility_alias_violations: list[
             NamespaceEnforcementModels.CompatibilityAliasViolation
         ] = Field(default_factory=list, description="Compatibility alias violations")
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation] = Field(
+            default_factory=list,
+            description="Read/parse failures classified by type",
+        )
         files_scanned: int = Field(default=0, ge=0, description="Total files scanned")
 
     class WorkspaceEnforcementReport(BaseModel):
@@ -191,9 +212,67 @@ class NamespaceEnforcementModels:
         total_compatibility_alias_violations: int = Field(
             default=0, ge=0, description="Compatibility alias violations"
         )
+        total_parse_failures: int = Field(
+            default=0,
+            ge=0,
+            description="Read/parse failures across workspace",
+        )
         total_files_scanned: int = Field(
             default=0, ge=0, description="All files scanned"
         )
+
+
+@dataclass(frozen=True, slots=True)
+class _ParsedPythonModule:
+    source: str
+    tree: ast.Module
+
+
+def _load_python_module(
+    file_path: Path,
+    *,
+    stage: str = "scan",
+    parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+    | None = None,
+) -> _ParsedPythonModule | None:
+    try:
+        source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+    except UnicodeDecodeError as exc:
+        if parse_failures is not None:
+            parse_failures.append(
+                _new_parse_failure_violation(
+                    file=str(file_path),
+                    stage=stage,
+                    error_type=type(exc).__name__,
+                    detail=str(exc),
+                )
+            )
+        return None
+    except OSError as exc:
+        if parse_failures is not None:
+            parse_failures.append(
+                _new_parse_failure_violation(
+                    file=str(file_path),
+                    stage=stage,
+                    error_type=type(exc).__name__,
+                    detail=str(exc),
+                )
+            )
+        return None
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        if parse_failures is not None:
+            parse_failures.append(
+                _new_parse_failure_violation(
+                    file=str(file_path),
+                    stage=stage,
+                    error_type=type(exc).__name__,
+                    detail=str(exc),
+                )
+            )
+        return None
+    return _ParsedPythonModule(source=source, tree=tree)
 
 
 def _new_facade_status(
@@ -295,6 +374,17 @@ def _new_compatibility_alias_violation(
     })
 
 
+def _new_parse_failure_violation(
+    *, file: str, stage: str, error_type: str, detail: str
+) -> NamespaceEnforcementModels.ParseFailureViolation:
+    return NamespaceEnforcementModels.ParseFailureViolation.model_validate({
+        "file": file,
+        "stage": stage,
+        "error_type": error_type,
+        "detail": detail,
+    })
+
+
 def _new_workspace_enforcement_report(
     *,
     workspace: str,
@@ -308,6 +398,7 @@ def _new_workspace_enforcement_report(
     total_future_violations: int,
     total_manual_typing_violations: int,
     total_compatibility_alias_violations: int,
+    total_parse_failures: int,
     total_files_scanned: int,
 ) -> NamespaceEnforcementModels.WorkspaceEnforcementReport:
     return NamespaceEnforcementModels.WorkspaceEnforcementReport.model_validate({
@@ -322,6 +413,7 @@ def _new_workspace_enforcement_report(
         "total_future_violations": total_future_violations,
         "total_manual_typing_violations": total_manual_typing_violations,
         "total_compatibility_alias_violations": total_compatibility_alias_violations,
+        "total_parse_failures": total_parse_failures,
         "total_files_scanned": total_files_scanned,
     })
 
@@ -347,6 +439,7 @@ def _new_project_enforcement_report(
     compatibility_alias_violations: list[
         NamespaceEnforcementModels.CompatibilityAliasViolation
     ],
+    parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation],
     files_scanned: int,
 ) -> NamespaceEnforcementModels.ProjectEnforcementReport:
     return NamespaceEnforcementModels.ProjectEnforcementReport.model_validate({
@@ -361,12 +454,13 @@ def _new_project_enforcement_report(
         "future_violations": future_violations,
         "manual_typing_violations": manual_typing_violations,
         "compatibility_alias_violations": compatibility_alias_violations,
+        "parse_failures": parse_failures,
         "files_scanned": files_scanned,
     })
 
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants — all derived from c.Infra.Refactor.* (single source of truth)
 # ---------------------------------------------------------------------------
 _FACADE_FAMILIES: dict[str, str] = dict(c.Infra.Refactor.FAMILY_SUFFIXES)
 _FACADE_FILE_PATTERNS: dict[str, str] = dict(c.Infra.Refactor.FAMILY_FILES)
@@ -388,6 +482,31 @@ _MAX_RENDERED_LOOSE_OBJECTS: int = 10
 _MAX_RENDERED_IMPORT_VIOLATIONS: int = 5
 "Maximum import-violation lines rendered per project block."
 
+# Derived lookups — computed once from FAMILY_SUFFIXES (SSOT)
+_FILE_TO_FAMILY: dict[str, str] = {
+    f"{suffix.lower()}.py": alias
+    for alias, suffix in c.Infra.Refactor.FAMILY_SUFFIXES.items()
+}
+"""Map filename → family alias letter, derived from FAMILY_SUFFIXES."""
+
+_FAMILY_EXPECTED_ALIAS: dict[str, tuple[str, str]] = {
+    f"{suffix.lower()}.py": (alias, suffix)
+    for alias, suffix in c.Infra.Refactor.FAMILY_SUFFIXES.items()
+}
+"""Map filename → (alias_letter, class_suffix) for rewrite operations."""
+
+_CANONICAL_PROTOCOL_FILES: frozenset[str] = c.Infra.Refactor.MRO_PROTOCOLS_FILE_NAMES
+"""Canonical protocol file names — from c.Infra.Refactor."""
+
+_CANONICAL_PROTOCOL_DIR: str = c.Infra.Refactor.MRO_PROTOCOLS_DIRECTORY
+"""Canonical protocol directory — from c.Infra.Refactor."""
+
+_CANONICAL_TYPINGS_FILES: frozenset[str] = c.Infra.Refactor.MRO_TYPINGS_FILE_NAMES
+"""Canonical typings file names — from c.Infra.Refactor."""
+
+_CANONICAL_TYPINGS_DIR: str = c.Infra.Refactor.MRO_TYPINGS_DIRECTORY
+"""Canonical typings directory — from c.Infra.Refactor."""
+
 
 # ---------------------------------------------------------------------------
 # Facade scanner
@@ -401,6 +520,8 @@ class NamespaceFacadeScanner:
         *,
         project_root: Path,
         project_name: str,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.FacadeStatus]:
         """Return one FacadeStatus per family for this project."""
         results: list[NamespaceEnforcementModels.FacadeStatus] = []
@@ -412,6 +533,7 @@ class NamespaceFacadeScanner:
                 family=family,
                 expected_class=expected_class,
                 suffix=suffix,
+                parse_failures=parse_failures,
             )
             results.append(
                 _new_facade_status(
@@ -432,6 +554,7 @@ class NamespaceFacadeScanner:
         family: str,
         expected_class: str,
         suffix: str,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation] | None,
     ) -> tuple[str, str, int]:
         """Return (class_name, file_path, symbol_count) or empty."""
         file_pattern = _FACADE_FILE_PATTERNS[family]
@@ -439,10 +562,14 @@ class NamespaceFacadeScanner:
         if not src_dir.is_dir():
             return ("", "", 0)
         for file_path in src_dir.rglob(file_pattern):
-            try:
-                tree = ast.parse(file_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
-            except (OSError, SyntaxError, UnicodeDecodeError):
+            parsed = _load_python_module(
+                file_path,
+                stage="facade-scan",
+                parse_failures=parse_failures,
+            )
+            if parsed is None:
                 continue
+            tree = parsed.tree
             for node in ast.walk(tree):
                 if not isinstance(node, ast.ClassDef):
                     continue
@@ -502,17 +629,22 @@ class LooseObjectDetector:
         *,
         file_path: Path,
         project_name: str,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.LooseObjectViolation]:
         """Return loose objects found in a single file."""
         if file_path.name in _PROTECTED_FILES:
             return []
         if file_path.name in _SETTINGS_FILE_NAMES:
             return []
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        parsed = _load_python_module(
+            file_path,
+            stage="loose-object-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
             return []
+        tree = parsed.tree
 
         namespace_classes = cls._find_namespace_classes(tree=tree)
         violations: list[NamespaceEnforcementModels.LooseObjectViolation] = []
@@ -653,13 +785,18 @@ class ImportAliasDetector:
         cls,
         *,
         file_path: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.ImportAliasViolation]:
         """Return import alias violations for one file."""
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        parsed = _load_python_module(
+            file_path,
+            stage="import-alias-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
             return []
+        tree = parsed.tree
 
         violations: list[NamespaceEnforcementModels.ImportAliasViolation] = []
         for stmt in tree.body:
@@ -696,34 +833,40 @@ class ImportAliasDetector:
 
 
 class ManualProtocolDetector:
-    CANONICAL_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
-        "protocols.py",
-        "_protocols.py",
-    })
-    CANONICAL_DIR_NAME: ClassVar[str] = "protocols"
+    """Detect Protocol-like classes outside canonical `protocols*` locations."""
+
+    # Derived from c.Infra.Refactor.MRO_PROTOCOLS_* (SSOT)
+    CANONICAL_FILE_NAMES: ClassVar[frozenset[str]] = _CANONICAL_PROTOCOL_FILES
+    CANONICAL_DIR_NAME: ClassVar[str] = _CANONICAL_PROTOCOL_DIR
 
     @classmethod
     def scan_file(
         cls,
         *,
         file_path: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.ManualProtocolViolation]:
+        """Return protocol violations for one file outside canonical paths."""
         in_canonical_file = file_path.name in cls.CANONICAL_FILE_NAMES
         in_canonical_dir = cls.CANONICAL_DIR_NAME in file_path.parts
         if in_canonical_file or in_canonical_dir:
             return []
         if file_path.name in _PROTECTED_FILES:
             return []
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        parsed = _load_python_module(
+            file_path,
+            stage="manual-protocol-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
             return []
+        tree = parsed.tree
         violations: list[NamespaceEnforcementModels.ManualProtocolViolation] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.ClassDef):
                 continue
-            if cls._is_protocol_class(stmt):
+            if cls.is_protocol_class(stmt):
                 violations.append(
                     _new_manual_protocol_violation(
                         file=str(file_path),
@@ -734,7 +877,8 @@ class ManualProtocolDetector:
         return violations
 
     @staticmethod
-    def _is_protocol_class(node: ast.ClassDef) -> bool:
+    def is_protocol_class(node: ast.ClassDef) -> bool:
+        """Return True when class bases indicate typing.Protocol lineage."""
         for base_expr in node.bases:
             if isinstance(base_expr, ast.Name) and base_expr.id == "Protocol":
                 return True
@@ -763,6 +907,8 @@ class CyclicImportDetector:
         cls,
         *,
         project_root: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.CyclicImportViolation]:
         """Return cyclic import chains found within a project."""
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
@@ -782,10 +928,14 @@ class CyclicImportDetector:
                 continue
             file_map[module_name] = str(py_file)
             graph[module_name]  # ensure node exists
-            try:
-                tree = ast.parse(py_file.read_text(encoding=c.Infra.Encoding.DEFAULT))
-            except (OSError, SyntaxError, UnicodeDecodeError):
+            parsed = _load_python_module(
+                py_file,
+                stage="cyclic-import-scan",
+                parse_failures=parse_failures,
+            )
+            if parsed is None:
                 continue
+            tree = parsed.tree
             for stmt in tree.body:
                 if isinstance(stmt, ast.ImportFrom) and stmt.module:
                     imported = stmt.module
@@ -859,27 +1009,27 @@ class RuntimeAliasDetector:
         *,
         file_path: Path,
         project_name: str,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.RuntimeAliasViolation]:
         """Return runtime alias violations for one file."""
         # Only check facade files inside src/ (not tests/constants.py etc.)
-        if file_path.name not in {
-            "constants.py",
-            "models.py",
-            "typings.py",
-            "protocols.py",
-            "utilities.py",
-        }:
+        # Dynamic check: file must match a known facade filename (from FAMILY_SUFFIXES)
+        if file_path.name not in _FILE_TO_FAMILY:
             return []
         if file_path.name in _PROTECTED_FILES:
             return []
         # Only facade files live under src/ — skip tests/scripts/examples
         if "src" not in file_path.parts:
             return []
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        parsed = _load_python_module(
+            file_path,
+            stage="runtime-alias-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
             return []
+        tree = parsed.tree
 
         violations: list[NamespaceEnforcementModels.RuntimeAliasViolation] = []
         _ = project_name
@@ -925,15 +1075,11 @@ class RuntimeAliasDetector:
 
     @staticmethod
     def _family_for_file(*, file_name: str) -> str:
-        """Map file name to expected facade alias letter."""
-        mapping: dict[str, str] = {
-            "constants.py": "c",
-            "typings.py": "t",
-            "protocols.py": "p",
-            "models.py": "m",
-            "utilities.py": "u",
-        }
-        return mapping.get(file_name, "")
+        """Map file name to expected facade alias letter.
+
+        Uses _FILE_TO_FAMILY derived from c.Infra.Refactor.FAMILY_SUFFIXES.
+        """
+        return _FILE_TO_FAMILY.get(file_name, "")
 
 
 # ---------------------------------------------------------------------------
@@ -950,28 +1096,32 @@ class FutureAnnotationsDetector:
         cls,
         *,
         file_path: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.MissingFutureAnnotationsViolation]:
         """Return violations if __future__ annotations is missing."""
         if file_path.name == "py.typed":
             return []
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        parsed = _load_python_module(
+            file_path,
+            stage="future-annotations-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
             return []
 
         # Empty files are OK
-        if len(tree.body) == 0:
+        if len(parsed.tree.body) == 0:
             return []
         # Files with only a docstring are OK
         if (
-            len(tree.body) == 1
-            and isinstance(tree.body[0], ast.Expr)
-            and isinstance(tree.body[0].value, ast.Constant)
+            len(parsed.tree.body) == 1
+            and isinstance(parsed.tree.body[0], ast.Expr)
+            and isinstance(parsed.tree.body[0].value, ast.Constant)
         ):
             return []
 
-        for stmt in tree.body:
+        for stmt in parsed.tree.body:
             if (
                 isinstance(stmt, ast.ImportFrom)
                 and stmt.module == "__future__"
@@ -986,25 +1136,32 @@ class FutureAnnotationsDetector:
 
 
 class ManualTypingAliasDetector:
+    """Detect type-alias declarations outside canonical `typings*` scope."""
+
     @classmethod
     def scan_file(
         cls,
         *,
         file_path: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.ManualTypingAliasViolation]:
+        """Return manual typing-alias violations for one file."""
         if file_path.suffix != ".py":
             return []
-        posix = file_path.as_posix()
-        in_typings_scope = (
-            posix.endswith(("/typings.py", "/_typings.py")) or "/typings/" in posix
+        # Canonical typings scope — derived from c.Infra.Refactor.MRO_TYPINGS_*
+        if file_path.name in _CANONICAL_TYPINGS_FILES:
+            return []
+        if _CANONICAL_TYPINGS_DIR in file_path.parts:
+            return []
+        parsed = _load_python_module(
+            file_path,
+            stage="manual-typing-alias-scan",
+            parse_failures=parse_failures,
         )
-        if in_typings_scope:
+        if parsed is None:
             return []
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError, UnicodeDecodeError):
-            return []
+        source, tree = parsed.source, parsed.tree
         violations: list[NamespaceEnforcementModels.ManualTypingAliasViolation] = []
         for stmt in tree.body:
             if isinstance(stmt, ast.TypeAlias):
@@ -1033,18 +1190,27 @@ class ManualTypingAliasDetector:
 
 
 class CompatibilityAliasDetector:
+    """Detect compatibility alias assignments (`OldName = NewName`)."""
+
     @classmethod
     def scan_file(
         cls,
         *,
         file_path: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
     ) -> list[NamespaceEnforcementModels.CompatibilityAliasViolation]:
+        """Return compatibility alias violations for one file."""
         if file_path.suffix != ".py":
             return []
-        try:
-            tree = ast.parse(file_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        parsed = _load_python_module(
+            file_path,
+            stage="compatibility-alias-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
             return []
+        tree = parsed.tree
         violations: list[NamespaceEnforcementModels.CompatibilityAliasViolation] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.Assign):
@@ -1111,6 +1277,7 @@ class FlextInfraNamespaceEnforcer:
         total_manual_protocol_v = 0
         total_manual_typing_v = 0
         total_compat_alias_v = 0
+        total_parse_failures = 0
         total_files = 0
 
         for project_root in project_roots:
@@ -1130,6 +1297,7 @@ class FlextInfraNamespaceEnforcer:
             total_manual_protocol_v += len(report.manual_protocol_violations)
             total_manual_typing_v += len(report.manual_typing_violations)
             total_compat_alias_v += len(report.compatibility_alias_violations)
+            total_parse_failures += len(report.parse_failures)
             total_files += report.files_scanned
 
         return _new_workspace_enforcement_report(
@@ -1144,6 +1312,7 @@ class FlextInfraNamespaceEnforcer:
             total_manual_protocol_violations=total_manual_protocol_v,
             total_manual_typing_violations=total_manual_typing_v,
             total_compatibility_alias_violations=total_compat_alias_v,
+            total_parse_failures=total_parse_failures,
             total_files_scanned=total_files,
         )
 
@@ -1155,9 +1324,12 @@ class FlextInfraNamespaceEnforcer:
         apply_changes: bool,
     ) -> NamespaceEnforcementModels.ProjectEnforcementReport:
         """Enforce namespace rules on a single project."""
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation] = []
         # 1. Facade scan
         facade_statuses = NamespaceFacadeScanner.scan_project(
-            project_root=project_root, project_name=project_name
+            project_root=project_root,
+            project_name=project_name,
+            parse_failures=parse_failures,
         )
 
         if apply_changes:
@@ -1169,6 +1341,7 @@ class FlextInfraNamespaceEnforcer:
             facade_statuses = NamespaceFacadeScanner.scan_project(
                 project_root=project_root,
                 project_name=project_name,
+                parse_failures=parse_failures,
             )
 
         # 2. Collect Python files across all scan directories
@@ -1179,25 +1352,37 @@ class FlextInfraNamespaceEnforcer:
         for py_file in py_files:
             loose_objects.extend(
                 LooseObjectDetector.scan_file(
-                    file_path=py_file, project_name=project_name
+                    file_path=py_file,
+                    project_name=project_name,
+                    parse_failures=parse_failures,
                 )
             )
 
         # 4. Detect import alias violations
         import_violations: list[NamespaceEnforcementModels.ImportAliasViolation] = []
         for py_file in py_files:
-            import_violations.extend(ImportAliasDetector.scan_file(file_path=py_file))
+            import_violations.extend(
+                ImportAliasDetector.scan_file(
+                    file_path=py_file,
+                )
+            )
 
         if apply_changes and len(import_violations) > 0:
             self._rewrite_import_alias_violations(py_files=py_files)
             import_violations = []
             for py_file in py_files:
                 import_violations.extend(
-                    ImportAliasDetector.scan_file(file_path=py_file)
+                    ImportAliasDetector.scan_file(
+                        file_path=py_file,
+                        parse_failures=parse_failures,
+                    )
                 )
 
         # 5. Detect cyclic imports
-        cyclic_imports = CyclicImportDetector.scan_project(project_root=project_root)
+        cyclic_imports = CyclicImportDetector.scan_project(
+            project_root=project_root,
+            parse_failures=parse_failures,
+        )
 
         # 6. Detect runtime alias violations
         runtime_alias_violations: list[
@@ -1206,7 +1391,9 @@ class FlextInfraNamespaceEnforcer:
         for py_file in py_files:
             runtime_alias_violations.extend(
                 RuntimeAliasDetector.scan_file(
-                    file_path=py_file, project_name=project_name
+                    file_path=py_file,
+                    project_name=project_name,
+                    parse_failures=parse_failures,
                 )
             )
 
@@ -1218,6 +1405,7 @@ class FlextInfraNamespaceEnforcer:
                     RuntimeAliasDetector.scan_file(
                         file_path=py_file,
                         project_name=project_name,
+                        parse_failures=parse_failures,
                     )
                 )
 
@@ -1227,7 +1415,10 @@ class FlextInfraNamespaceEnforcer:
         ] = []
         for py_file in py_files:
             future_violations.extend(
-                FutureAnnotationsDetector.scan_file(file_path=py_file)
+                FutureAnnotationsDetector.scan_file(
+                    file_path=py_file,
+                    parse_failures=parse_failures,
+                )
             )
 
         if apply_changes and len(future_violations) > 0:
@@ -1235,7 +1426,10 @@ class FlextInfraNamespaceEnforcer:
             future_violations = []
             for py_file in py_files:
                 future_violations.extend(
-                    FutureAnnotationsDetector.scan_file(file_path=py_file)
+                    FutureAnnotationsDetector.scan_file(
+                        file_path=py_file,
+                        parse_failures=parse_failures,
+                    )
                 )
 
         manual_protocol_violations: list[
@@ -1243,15 +1437,35 @@ class FlextInfraNamespaceEnforcer:
         ] = []
         for py_file in py_files:
             manual_protocol_violations.extend(
-                ManualProtocolDetector.scan_file(file_path=py_file)
+                ManualProtocolDetector.scan_file(
+                    file_path=py_file,
+                    parse_failures=parse_failures,
+                )
             )
+
+        if apply_changes and len(manual_protocol_violations) > 0:
+            self._rewrite_manual_protocol_violations(
+                project_root=project_root,
+                violations=manual_protocol_violations,
+            )
+            manual_protocol_violations = []
+            for py_file in py_files:
+                manual_protocol_violations.extend(
+                    ManualProtocolDetector.scan_file(
+                        file_path=py_file,
+                        parse_failures=parse_failures,
+                    )
+                )
 
         manual_typing_violations: list[
             NamespaceEnforcementModels.ManualTypingAliasViolation
         ] = []
         for py_file in py_files:
             manual_typing_violations.extend(
-                ManualTypingAliasDetector.scan_file(file_path=py_file)
+                ManualTypingAliasDetector.scan_file(
+                    file_path=py_file,
+                    parse_failures=parse_failures,
+                )
             )
 
         compatibility_alias_violations: list[
@@ -1259,7 +1473,10 @@ class FlextInfraNamespaceEnforcer:
         ] = []
         for py_file in py_files:
             compatibility_alias_violations.extend(
-                CompatibilityAliasDetector.scan_file(file_path=py_file)
+                CompatibilityAliasDetector.scan_file(
+                    file_path=py_file,
+                    parse_failures=parse_failures,
+                )
             )
 
         return _new_project_enforcement_report(
@@ -1274,44 +1491,26 @@ class FlextInfraNamespaceEnforcer:
             future_violations=future_violations,
             manual_typing_violations=manual_typing_violations,
             compatibility_alias_violations=compatibility_alias_violations,
+            parse_failures=parse_failures,
             files_scanned=len(py_files),
         )
 
     @staticmethod
     def _preferred_file_name(*, family: str) -> str:
-        if family == "c":
-            return "constants.py"
-        if family == "t":
-            return "typings.py"
-        if family == "p":
-            return "protocols.py"
-        if family == "m":
-            return "models.py"
-        return "utilities.py"
+        """Get preferred file name for a family, derived from FAMILY_FILES."""
+        pattern = _FACADE_FILE_PATTERNS.get(family, "utilities.py")
+        return pattern.lstrip("*")
 
     @staticmethod
     def _base_import_for_family(*, family: str) -> str:
-        if family == "c":
-            return "from flext_core import FlextConstants"
-        if family == "t":
-            return "from flext_core import FlextTypes"
-        if family == "p":
-            return "from flext_core import FlextProtocols"
-        if family == "m":
-            return "from flext_core import FlextModels"
-        return "from flext_core import FlextUtilities"
+        """Get base import for a family, derived from FAMILY_SUFFIXES."""
+        class_name = f"Flext{_FACADE_FAMILIES.get(family, 'Utilities')}"
+        return f"from flext_core import {class_name}"
 
     @staticmethod
     def _base_class_for_family(*, family: str) -> str:
-        if family == "c":
-            return "FlextConstants"
-        if family == "t":
-            return "FlextTypes"
-        if family == "p":
-            return "FlextProtocols"
-        if family == "m":
-            return "FlextModels"
-        return "FlextUtilities"
+        """Get base class name for a family, derived from FAMILY_SUFFIXES."""
+        return f"Flext{_FACADE_FAMILIES.get(family, 'Utilities')}"
 
     @staticmethod
     def _write_missing_facade_file(
@@ -1436,26 +1635,18 @@ class FlextInfraNamespaceEnforcer:
 
     @staticmethod
     def _rewrite_runtime_alias_violations(*, py_files: list[Path]) -> None:
-        expected_aliases: dict[str, tuple[str, str]] = {
-            "constants.py": ("c", "Constants"),
-            "typings.py": ("t", "Types"),
-            "protocols.py": ("p", "Protocols"),
-            "models.py": ("m", "Models"),
-            "utilities.py": ("u", "Utilities"),
-        }
         for file_path in py_files:
-            expected = expected_aliases.get(file_path.name)
+            expected = _FAMILY_EXPECTED_ALIAS.get(file_path.name)
             if expected is None:
                 continue
             # Only rewrite facade files under src/ — skip tests/scripts/examples
             if "src" not in file_path.parts:
                 continue
             alias_name, expected_suffix = expected
-            try:
-                source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                tree = ast.parse(source)
-            except (OSError, SyntaxError, UnicodeDecodeError):
+            parsed = _load_python_module(file_path)
+            if parsed is None:
                 continue
+            source, tree = parsed.source, parsed.tree
             class_candidates = [
                 node.name
                 for node in tree.body
@@ -1506,6 +1697,141 @@ class FlextInfraNamespaceEnforcer:
                 encoding=c.Infra.Encoding.DEFAULT,
             )
 
+    @classmethod
+    def _rewrite_manual_protocol_violations(
+        cls,
+        *,
+        project_root: Path,
+        violations: list[NamespaceEnforcementModels.ManualProtocolViolation],
+    ) -> None:
+        grouped_names: dict[Path, set[str]] = defaultdict(set)
+        for violation in violations:
+            grouped_names[Path(violation.file)].add(violation.name)
+        for source_file, protocol_names in grouped_names.items():
+            cls._move_protocol_classes_to_canonical_file(
+                project_root=project_root,
+                source_file=source_file,
+                protocol_names=protocol_names,
+            )
+
+    @classmethod
+    def _move_protocol_classes_to_canonical_file(
+        cls,
+        *,
+        project_root: Path,
+        source_file: Path,
+        protocol_names: set[str],
+    ) -> None:
+        parsed = _load_python_module(source_file)
+        if parsed is None:
+            return
+        source, tree = parsed.source, parsed.tree
+
+        class_nodes: list[ast.ClassDef] = []
+        remove_ranges: list[tuple[int, int]] = []
+        blocks: list[str] = []
+        for stmt in tree.body:
+            if not isinstance(stmt, ast.ClassDef):
+                continue
+            if stmt.name not in protocol_names:
+                continue
+            if not ManualProtocolDetector.is_protocol_class(stmt):
+                continue
+            block = ast.get_source_segment(source, stmt)
+            if block is None:
+                lines = source.splitlines()
+                block = "\n".join(lines[stmt.lineno - 1 : stmt.end_lineno])
+            if stmt.end_lineno is None:
+                continue
+            class_nodes.append(stmt)
+            remove_ranges.append((stmt.lineno, stmt.end_lineno))
+            blocks.append(block.strip("\n"))
+        if len(class_nodes) == 0:
+            return
+
+        target_file = cls._manual_protocol_target_file(
+            project_root=project_root,
+            source_file=source_file,
+        )
+        cls._append_protocol_blocks(
+            project_root=project_root,
+            target_file=target_file,
+            blocks=blocks,
+        )
+
+        source_lines = source.splitlines()
+        filtered_lines: list[str] = []
+        for line_number, line_content in enumerate(source_lines, start=1):
+            should_skip = any(
+                start <= line_number <= end for start, end in remove_ranges
+            )
+            if should_skip:
+                continue
+            filtered_lines.append(line_content)
+        rewritten = "\n".join(filtered_lines).rstrip()
+        normalized = re.sub(r"\n{3,}", "\n\n", rewritten)
+        source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
+
+    @staticmethod
+    def _manual_protocol_target_file(*, project_root: Path, source_file: Path) -> Path:
+        parts = source_file.parts
+        if "src" in parts:
+            src_index = parts.index("src")
+            if src_index + 1 < len(parts):
+                package_name = parts[src_index + 1]
+                return (
+                    project_root
+                    / c.Infra.Paths.DEFAULT_SRC_DIR
+                    / package_name
+                    / "protocols.py"
+                )
+        return source_file.parent / "protocols.py"
+
+    @classmethod
+    def _append_protocol_blocks(
+        cls,
+        *,
+        project_root: Path,
+        target_file: Path,
+        blocks: list[str],
+    ) -> None:
+        if len(blocks) == 0:
+            return
+        project_name = project_root.name
+        class_stem = NamespaceFacadeScanner.project_class_stem(
+            project_name=project_name
+        )
+        protocols_class = f"{class_stem}Protocols"
+        if target_file.exists():
+            target_source = target_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
+        else:
+            target_source = ""
+
+        updated = target_source
+        if "from __future__ import annotations" not in updated:
+            updated = "from __future__ import annotations\n\n" + updated.lstrip("\n")
+        if "from typing import Protocol" not in updated:
+            updated = updated.rstrip() + "\n\nfrom typing import Protocol\n"
+        if (
+            f"class {protocols_class}(" not in updated
+            and f"class {protocols_class}:" not in updated
+        ):
+            updated = updated.rstrip() + f"\n\nclass {protocols_class}:\n    pass\n"
+        alias_line = f"p = {protocols_class}"
+        if alias_line not in updated:
+            updated = updated.rstrip() + f"\n\n{alias_line}\n"
+
+        for block in blocks:
+            class_header = block.splitlines()[0].strip()
+            if class_header in updated:
+                continue
+            updated = updated.rstrip() + "\n\n" + block + "\n"
+
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+        target_file.write_text(
+            updated.rstrip() + "\n", encoding=c.Infra.Encoding.DEFAULT
+        )
+
     @staticmethod
     def _collect_python_files(*, project_root: Path) -> list[Path]:
         """Collect Python files from src/, tests/, scripts/, examples/."""
@@ -1538,6 +1864,7 @@ class FlextInfraNamespaceEnforcer:
             f"Manual protocols: {report.total_manual_protocol_violations}",
             f"Manual typing aliases: {report.total_manual_typing_violations}",
             f"Compatibility aliases: {report.total_compatibility_alias_violations}",
+            f"Parse failures: {report.total_parse_failures}",
             "",
         ]
         for proj in report.projects:
@@ -1551,6 +1878,7 @@ class FlextInfraNamespaceEnforcer:
                 or proj.manual_protocol_violations
                 or proj.manual_typing_violations
                 or proj.compatibility_alias_violations
+                or proj.parse_failures
             )
             if not has_violations:
                 continue
@@ -1652,17 +1980,29 @@ class FlextInfraNamespaceEnforcer:
                     lines.append(
                         f"    ... and {len(proj.compatibility_alias_violations) - _MAX_RENDERED_LOOSE_OBJECTS} more"
                     )
+            if proj.parse_failures:
+                lines.append(f"  Parse failures: {len(proj.parse_failures)}")
+                lines.extend(
+                    f"    {pf.file} [{pf.stage}] {pf.error_type}: {pf.detail}"
+                    for pf in proj.parse_failures[:_MAX_RENDERED_LOOSE_OBJECTS]
+                )
+                if len(proj.parse_failures) > _MAX_RENDERED_LOOSE_OBJECTS:
+                    lines.append(
+                        f"    ... and {len(proj.parse_failures) - _MAX_RENDERED_LOOSE_OBJECTS} more"
+                    )
             lines.append("")
         return "\n".join(lines) + "\n"
 
 
 __all__ = [
+    "CompatibilityAliasDetector",
     "CyclicImportDetector",
     "FlextInfraNamespaceEnforcer",
     "FutureAnnotationsDetector",
     "ImportAliasDetector",
     "LooseObjectDetector",
     "ManualProtocolDetector",
+    "ManualTypingAliasDetector",
     "NamespaceEnforcementModels",
     "NamespaceFacadeScanner",
     "RuntimeAliasDetector",
