@@ -513,10 +513,7 @@ class TestExceptionLogging:
         except ValueError as e:
             exception_obj = e
             result = logger.exception("An error occurred", exception=e)
-            _ = (
-                _ = assertion_helpers.assert_flext_result_success(result),
-                "Exception logging should succeed",
-            )
+            _ = assertion_helpers.assert_flext_result_success(result)
         assert exception_obj is not None
         assert isinstance(exception_obj, ValueError)
         assert str(exception_obj) == msg
@@ -538,10 +535,7 @@ class TestExceptionLogging:
         except RuntimeError as e:
             exception_obj = e
             result = logger.exception("Operation failed")
-            _ = (
-                _ = assertion_helpers.assert_flext_result_success(result),
-                "Exception logging with exc_info should succeed",
-            )
+            _ = assertion_helpers.assert_flext_result_success(result)
         assert exception_obj is not None
         assert isinstance(exception_obj, RuntimeError)
         assert str(exception_obj) == msg
@@ -557,10 +551,7 @@ class TestExceptionLogging:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.error("No exception context")
-        _ = (
-            _ = assertion_helpers.assert_flext_result_success(result),
-            "Error logging without exception context should succeed",
-        )
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_exception_logging_with_context(self) -> None:
         """Test exception logging with additional context.
@@ -584,10 +575,7 @@ class TestExceptionLogging:
                 operation="file_read",
                 file="data.txt",
             )
-            _ = (
-                _ = assertion_helpers.assert_flext_result_success(result),
-                "Exception logging with context should succeed",
-            )
+            _ = assertion_helpers.assert_flext_result_success(result)
         assert exception_obj is not None
         assert isinstance(exception_obj, OSError)
         assert str(exception_obj) == msg

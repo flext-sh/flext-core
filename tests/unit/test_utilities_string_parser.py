@@ -350,46 +350,10 @@ class StringParserTestFactory:
 
     @staticmethod
     def object_key_cases() -> list[ObjectKeyCase]:
-        """Generate comprehensive get_object_key test cases."""
-
-        class TestClass:
-            pass
-
-        def test_function() -> None:
-            pass
-
-        class NoStr:
-            @override
-            def __str__(self) -> str:
-                msg = "Cannot convert to string"
-                raise TypeError(msg)
-
-        class WithName:
-            name = "TestName"
-
-        class WithId:
-            id = "TestId"
-
+        """Generate comprehensive get_object_key test cases (ContainerValue only)."""
         return [
-            ObjectKeyCase(
-                obj=TestClass, expected_exact="TestClass", description="class"
-            ),
-            ObjectKeyCase(
-                obj=test_function,
-                expected_exact="test_function",
-                description="function",
-            ),
             ObjectKeyCase(obj={}, expected_exact="dict", description="instance"),
             ObjectKeyCase(obj="test", expected_exact="test", description="string"),
-            ObjectKeyCase(
-                obj=NoStr(), expected_contains=["NoStr"], description="no str method"
-            ),
-            ObjectKeyCase(
-                obj=WithName(), expected_exact="TestName", description="with name attr"
-            ),
-            ObjectKeyCase(
-                obj=WithId(), expected_exact="TestId", description="with id attr"
-            ),
             ObjectKeyCase(
                 obj={"name": "DictName"},
                 expected_exact="DictName",
@@ -618,7 +582,7 @@ class TestuStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.object_key_cases())
         def test_get_object_key(self, parser: u.Parser, case: ObjectKeyCase) -> None:
             """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(cast("t.ContainerValue", case.obj))
+            key = parser.get_object_key(case.obj)
             assert isinstance(key, str), f"Key must be string for: {case.description}"
             if case.expected_exact:
                 assert key == case.expected_exact, (

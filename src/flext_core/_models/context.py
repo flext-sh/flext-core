@@ -543,7 +543,7 @@ class FlextModelsContext:
             Mapping[str, t.ContainerValue], BeforeValidator(_normalize_to_mapping)
         ] = Field(default_factory=dict, description="Scope metadata")
 
-    class ContextStatistics:
+    class ContextStatistics(BaseModel, FlextModelFoundation.ArbitraryTypesModel):
         """Statistics tracking for context operations and metrics.
 
         Enhanced to replace dict-based metrics storage across

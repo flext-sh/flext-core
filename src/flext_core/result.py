@@ -22,7 +22,7 @@ from returns.result import Failure, Result, Success
 from flext_core import FlextRuntime, T_Model, U, t
 
 
-class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
+class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
     """Type-safe result with monadic helpers for operation composition.
 
     Provides success/failure handling with various conversion and operation

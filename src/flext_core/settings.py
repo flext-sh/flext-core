@@ -192,7 +192,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.Scalar | None) -> None:
+    def __init__(self, **kwargs: t.ContainerValue) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,

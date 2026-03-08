@@ -671,12 +671,12 @@ class FlextRuntime:
                 )
             return json.dumps(normalized_mapping)
         if FlextRuntime.is_list_like(val):
-            result_list: list[t.Scalar | None] = []
+            result_list: list[t.Scalar] = []
             for item in val:
-                if FlextRuntime._is_scalar(item):
+                if FlextRuntime._is_scalar(item) and item is not None:
                     result_list.append(item)
                 else:
-                    result_list.append(str(item))
+                    result_list.append(str(item) if item is not None else "")
             return result_list
         result_str: t.MetadataValue = str(val)
         return result_str

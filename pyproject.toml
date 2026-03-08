@@ -264,7 +264,7 @@ known-first-party = [
 [tool.pyright]
 executionEnvironments = [
   {root = "src", reportPrivateUsage = "error"},
-  {root = "tests", reportPrivateUsage = "none"},
+  {root = "tests", reportPrivateUsage = "none", reportMissingTypeStubs = "none"},
 ]
 extraPaths = [
   "src",

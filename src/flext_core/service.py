@@ -37,7 +37,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.service import FlextModelsService
 
 
-class FlextService[TDomainResult](
+class FlextService[TDomainResult = t.ContainerValue](
     FlextModelFoundation.ArbitraryTypesModel, FlextMixins, ABC
 ):
     """Base class for domain services in FLEXT applications.

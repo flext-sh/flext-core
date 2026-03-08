@@ -330,7 +330,9 @@ class FlextUtilitiesMapper:
             fallback = converter_defaults.get(converter_name, current)
 
         def _convert(value: t.ContainerValue) -> t.ContainerValue:
-            converted_result = r[t.ContainerValue].create_from_callable(
+            converted_result: r[t.ContainerValue] = r[
+                t.ContainerValue
+            ].create_from_callable(
                 lambda: FlextUtilitiesMapper.narrow_to_general_value_type(
                     convert_callable(value)
                 )
@@ -587,7 +589,9 @@ class FlextUtilitiesMapper:
             current_general = FlextUtilitiesMapper.narrow_to_general_value_type(current)
             return process_func(current_general)
 
-        process_result = r[t.ContainerValue].create_from_callable(_process_current)
+        process_result: r[t.ContainerValue] = r[
+            t.ContainerValue
+        ].create_from_callable(_process_current)
         if process_result.is_failure:
             return default if on_error == "stop" else current
         process_val: t.ContainerValue = process_result.value

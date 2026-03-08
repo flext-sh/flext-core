@@ -17,7 +17,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+import io
 import re
+import token
+import tokenize
 from collections import defaultdict
 from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
@@ -1364,6 +1367,7 @@ class FlextInfraNamespaceEnforcer:
             import_violations.extend(
                 ImportAliasDetector.scan_file(
                     file_path=py_file,
+                    parse_failures=parse_failures,
                 )
             )
 
@@ -1446,6 +1450,7 @@ class FlextInfraNamespaceEnforcer:
         if apply_changes and len(manual_protocol_violations) > 0:
             self._rewrite_manual_protocol_violations(
                 project_root=project_root,
+                py_files=py_files,
                 violations=manual_protocol_violations,
             )
             manual_protocol_violations = []
@@ -1468,6 +1473,21 @@ class FlextInfraNamespaceEnforcer:
                 )
             )
 
+        if apply_changes and len(manual_typing_violations) > 0:
+            self._rewrite_manual_typing_alias_violations(
+                project_root=project_root,
+                violations=manual_typing_violations,
+                parse_failures=parse_failures,
+            )
+            manual_typing_violations = []
+            for py_file in py_files:
+                manual_typing_violations.extend(
+                    ManualTypingAliasDetector.scan_file(
+                        file_path=py_file,
+                        parse_failures=parse_failures,
+                    )
+                )
+
         compatibility_alias_violations: list[
             NamespaceEnforcementModels.CompatibilityAliasViolation
         ] = []
@@ -1478,6 +1498,20 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 )
             )
+
+        if apply_changes and len(compatibility_alias_violations) > 0:
+            self._rewrite_compatibility_alias_violations(
+                violations=compatibility_alias_violations,
+                parse_failures=parse_failures,
+            )
+            compatibility_alias_violations = []
+            for py_file in py_files:
+                compatibility_alias_violations.extend(
+                    CompatibilityAliasDetector.scan_file(
+                        file_path=py_file,
+                        parse_failures=parse_failures,
+                    )
+                )
 
         return _new_project_enforcement_report(
             project=project_name,
@@ -1702,16 +1736,27 @@ class FlextInfraNamespaceEnforcer:
         cls,
         *,
         project_root: Path,
+        py_files: list[Path],
         violations: list[NamespaceEnforcementModels.ManualProtocolViolation],
     ) -> None:
         grouped_names: dict[Path, set[str]] = defaultdict(set)
         for violation in violations:
             grouped_names[Path(violation.file)].add(violation.name)
+        protocol_moves: list[tuple[Path, Path, tuple[str, ...]]] = []
         for source_file, protocol_names in grouped_names.items():
-            cls._move_protocol_classes_to_canonical_file(
+            move_result = cls._move_protocol_classes_to_canonical_file(
                 project_root=project_root,
                 source_file=source_file,
                 protocol_names=protocol_names,
+            )
+            if move_result is None:
+                continue
+            protocol_moves.append(move_result)
+        if len(protocol_moves) > 0:
+            cls._rewrite_moved_protocol_imports(
+                project_root=project_root,
+                py_files=py_files,
+                protocol_moves=protocol_moves,
             )
 
     @classmethod
@@ -1721,10 +1766,10 @@ class FlextInfraNamespaceEnforcer:
         project_root: Path,
         source_file: Path,
         protocol_names: set[str],
-    ) -> None:
+    ) -> tuple[Path, Path, tuple[str, ...]] | None:
         parsed = _load_python_module(source_file)
         if parsed is None:
-            return
+            return None
         source, tree = parsed.source, parsed.tree
 
         class_nodes: list[ast.ClassDef] = []
@@ -1747,7 +1792,7 @@ class FlextInfraNamespaceEnforcer:
             remove_ranges.append((stmt.lineno, stmt.end_lineno))
             blocks.append(block.strip("\n"))
         if len(class_nodes) == 0:
-            return
+            return None
 
         target_file = cls._manual_protocol_target_file(
             project_root=project_root,
@@ -1771,6 +1816,213 @@ class FlextInfraNamespaceEnforcer:
         rewritten = "\n".join(filtered_lines).rstrip()
         normalized = re.sub(r"\n{3,}", "\n\n", rewritten)
         source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
+        moved_names = tuple(sorted({node.name for node in class_nodes}))
+        return (source_file, target_file, moved_names)
+
+    @classmethod
+    def _rewrite_manual_typing_alias_violations(
+        cls,
+        *,
+        project_root: Path,
+        violations: list[NamespaceEnforcementModels.ManualTypingAliasViolation],
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation],
+    ) -> None:
+        grouped_names: dict[Path, set[str]] = defaultdict(set)
+        for violation in violations:
+            grouped_names[Path(violation.file)].add(violation.name)
+        for source_file, alias_names in grouped_names.items():
+            cls._move_typing_aliases_to_canonical_file(
+                project_root=project_root,
+                source_file=source_file,
+                alias_names=alias_names,
+                parse_failures=parse_failures,
+            )
+
+    @classmethod
+    def _move_typing_aliases_to_canonical_file(
+        cls,
+        *,
+        project_root: Path,
+        source_file: Path,
+        alias_names: set[str],
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation],
+    ) -> None:
+        parsed = _load_python_module(
+            source_file,
+            stage="manual-typing-rewrite",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
+            return
+        source, tree = parsed.source, parsed.tree
+
+        remove_ranges: list[tuple[int, int]] = []
+        blocks: list[str] = []
+        for stmt in tree.body:
+            if isinstance(stmt, ast.TypeAlias):
+                alias_name = stmt.name.id
+                if alias_name not in alias_names:
+                    continue
+                if stmt.end_lineno is None:
+                    continue
+                block = ast.get_source_segment(source, stmt)
+                if block is None:
+                    lines = source.splitlines()
+                    block = "\n".join(lines[stmt.lineno - 1 : stmt.end_lineno])
+                remove_ranges.append((stmt.lineno, stmt.end_lineno))
+                blocks.append(block.strip("\n"))
+                continue
+            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                if stmt.target.id not in alias_names:
+                    continue
+                if stmt.end_lineno is None:
+                    continue
+                annotation_src = ast.get_source_segment(source, stmt.annotation) or ""
+                if "TypeAlias" not in annotation_src:
+                    continue
+                block = ast.get_source_segment(source, stmt)
+                if block is None:
+                    lines = source.splitlines()
+                    block = "\n".join(lines[stmt.lineno - 1 : stmt.end_lineno])
+                remove_ranges.append((stmt.lineno, stmt.end_lineno))
+                blocks.append(block.strip("\n"))
+        if len(blocks) == 0:
+            return
+
+        target_file = cls._manual_typings_target_file(
+            project_root=project_root,
+            source_file=source_file,
+        )
+        cls._append_typing_alias_blocks(target_file=target_file, blocks=blocks)
+
+        source_lines = source.splitlines()
+        filtered_lines: list[str] = []
+        for line_number, line_content in enumerate(source_lines, start=1):
+            should_skip = any(
+                start <= line_number <= end for start, end in remove_ranges
+            )
+            if not should_skip:
+                filtered_lines.append(line_content)
+        rewritten = "\n".join(filtered_lines).rstrip()
+        normalized = re.sub(r"\n{3,}", "\n\n", rewritten)
+        source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
+
+    @staticmethod
+    def _manual_typings_target_file(*, project_root: Path, source_file: Path) -> Path:
+        parts = source_file.parts
+        if "src" in parts:
+            src_index = parts.index("src")
+            if src_index + 1 < len(parts):
+                package_name = parts[src_index + 1]
+                return (
+                    project_root
+                    / c.Infra.Paths.DEFAULT_SRC_DIR
+                    / package_name
+                    / "typings.py"
+                )
+        return source_file.parent / "typings.py"
+
+    @staticmethod
+    def _append_typing_alias_blocks(*, target_file: Path, blocks: list[str]) -> None:
+        if len(blocks) == 0:
+            return
+        target_source = (
+            target_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            if target_file.exists()
+            else ""
+        )
+        updated = target_source
+        if "from __future__ import annotations" not in updated:
+            updated = "from __future__ import annotations\n\n" + updated.lstrip("\n")
+        merged_blocks = "\n\n".join(blocks)
+        if (
+            "TypeAlias" in merged_blocks
+            and "from typing import TypeAlias" not in updated
+        ):
+            updated = updated.rstrip() + "\n\nfrom typing import TypeAlias\n"
+        updated = updated.rstrip() + "\n\n" + merged_blocks + "\n"
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+        target_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
+
+    @staticmethod
+    def _rewrite_compatibility_alias_violations(
+        *,
+        violations: list[NamespaceEnforcementModels.CompatibilityAliasViolation],
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation],
+    ) -> None:
+        grouped: dict[Path, dict[str, str]] = defaultdict(dict)
+        for violation in violations:
+            grouped[Path(violation.file)][violation.alias_name] = violation.target_name
+        for file_path, alias_map in grouped.items():
+            parsed = _load_python_module(
+                file_path,
+                stage="compatibility-alias-rewrite",
+                parse_failures=parse_failures,
+            )
+            if parsed is None:
+                continue
+            source = parsed.source
+            assignment_lines: set[int] = set()
+            for stmt in parsed.tree.body:
+                if not isinstance(stmt, ast.Assign):
+                    continue
+                if len(stmt.targets) != 1:
+                    continue
+                target = stmt.targets[0]
+                if not isinstance(target, ast.Name):
+                    continue
+                if not isinstance(stmt.value, ast.Name):
+                    continue
+                if target.id in alias_map and stmt.value.id == alias_map[target.id]:
+                    assignment_lines.add(stmt.lineno)
+            if len(assignment_lines) == 0:
+                continue
+
+            kept_lines = [
+                line
+                for idx, line in enumerate(source.splitlines(keepends=True), start=1)
+                if idx not in assignment_lines
+            ]
+            kept_source = "".join(kept_lines)
+            line_buffer = kept_source.splitlines(keepends=True)
+
+            replacements_by_line: dict[int, list[tuple[int, int, str]]] = defaultdict(
+                list
+            )
+            token_stream = tokenize.generate_tokens(io.StringIO(kept_source).readline)
+            for tok in token_stream:
+                if tok.type != token.NAME:
+                    continue
+                replacement = alias_map.get(tok.string)
+                if replacement is None:
+                    continue
+                start_line, start_col = tok.start
+                end_line, end_col = tok.end
+                if start_line != end_line:
+                    continue
+                replacements_by_line[start_line - 1].append((
+                    start_col,
+                    end_col,
+                    replacement,
+                ))
+
+            for line_idx, replacements in replacements_by_line.items():
+                if line_idx < 0 or line_idx >= len(line_buffer):
+                    continue
+                line_text = line_buffer[line_idx]
+                for start_col, end_col, replacement in sorted(
+                    replacements,
+                    key=lambda item: item[0],
+                    reverse=True,
+                ):
+                    line_text = (
+                        line_text[:start_col] + replacement + line_text[end_col:]
+                    )
+                line_buffer[line_idx] = line_text
+
+            rewritten = "".join(line_buffer)
+            if rewritten != source:
+                file_path.write_text(rewritten, encoding=c.Infra.Encoding.DEFAULT)
 
     @staticmethod
     def _manual_protocol_target_file(*, project_root: Path, source_file: Path) -> Path:

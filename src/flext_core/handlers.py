@@ -22,7 +22,7 @@ from typing import ClassVar, override
 from flext_core import c, e, m, p, r, t, u, x
 
 
-class FlextHandlers[MessageT_contra, ResultT](x):
+class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerValue](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation

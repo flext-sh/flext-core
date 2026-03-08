@@ -227,10 +227,11 @@ class FlextUtilitiesReliability:
         current: t.ContainerValue = value
         for op in ops:
             if isinstance(op, Mapping):
+                op_dict: dict[str, t.ContainerValue]
                 try:
                     op_dict = _RELIABILITY_CONTAINER_DICT_ADAPTER.validate_python(op)
                 except ValidationError:
-                    op_dict: dict[str, t.ContainerValue] = {}
+                    op_dict = {}
                 if FlextUtilitiesGuards.is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
             elif callable(op):
