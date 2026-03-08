@@ -85,7 +85,7 @@ class IntegrationService(s[m.ConfigMap]):
 
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        _ = container.register("logger", logger)
+        container.register("logger", logger)
 
         logger_result = container.get("logger")
         if logger_result.is_success:
@@ -256,14 +256,14 @@ def main() -> None:
         data = result.value
 
         root_data: dict[str, t.ContainerValue] = (
-            data.root if isinstance(data.root, dict) else {}
+            data.root if u.is_type(data.root, dict) else {}
         )
         components = root_data.get("components_integrated", [])
         total = root_data.get("total_components", 0)
         if (
-            isinstance(components, Sequence)
-            and not isinstance(components, str | bytes | bytearray)
-            and isinstance(total, int)
+            u.is_type(components, Sequence)
+            and not u.is_type(components, str | bytes | bytearray)
+            and u.is_type(total, int)
         ):
             components_list = list(components)
             print(f"\n✅ Integrated {total} components")

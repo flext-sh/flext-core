@@ -27,7 +27,6 @@ from flext_core import (
     m,
     r,
     s,
-    t,
     u,
 )
 
@@ -64,13 +63,12 @@ class DatabaseService(m.ArbitraryTypesModel):
         if self.status == c.Cqrs.CommonStatus.ACTIVE:
             return r[bool].ok(value=True)
 
-        url = self.config.get("url", "")
-        if not isinstance(url, str) or not url:
+        url = str(self.config.get("url", ""))
+        if not url:
             return r[bool].fail(c.Errors.CONFIGURATION_ERROR)
 
-        timeout = self.config.get("timeout", 0)
-        if not isinstance(timeout, int):
-            return r[bool].fail(c.Errors.VALIDATION_ERROR)
+        timeout_text = str(self.config.get("timeout", 0))
+        timeout = int(timeout_text) if timeout_text.isdigit() else 0
 
         # Railway pattern with u validation (DRY)
         timeout_validation = u.validate_positive(timeout)
@@ -149,13 +147,9 @@ class CacheService(m.ArbitraryTypesModel):
                 max_length=c.Validation.MAX_NAME_LENGTH,
             )
             .flat_map(
-                lambda _: (
-                    u.validate_length(
-                        value,
-                        max_length=c.Validation.MAX_NAME_LENGTH,
-                    )
-                    if isinstance(value, str)
-                    else r[str].ok("")
+                lambda _: u.validate_length(
+                    str(value),
+                    max_length=c.Validation.MAX_NAME_LENGTH,
                 ),
             )
             .map(lambda _: True)
@@ -210,12 +204,12 @@ class DependencyInjectionService(s[m.ConfigMap]):
         print("\n=== Advanced DI Patterns ===")
 
         service_names = ["database", "cache", "email"]
-        services: dict[str, t.RegisterableService] = {}
+        services_count = 0
         for name in service_names:
             result = container.get(name)
             if result.is_success:
-                services[name] = result.value
-        print(f"✅ Auto-wired services: {len(services)}")
+                services_count += 1
+        print(f"✅ Auto-wired services: {services_count}")
 
         print(f"✅ Singleton: {FlextContainer() is FlextContainer()}")
 
@@ -226,46 +220,37 @@ class DependencyInjectionService(s[m.ConfigMap]):
         )
 
         # Error handling
-        missing_result: r[t.RegisterableService] = container.get("non_existent")
-        db_result: r[t.RegisterableService] = container.get("database")
-        if db_result.is_success:
-            db_service = db_result.value
-            if isinstance(db_service, DatabaseService):
-                invalid_query = db_service.query("INVALID QUERY")
-                print(
-                    f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
-                )
+        missing_result = container.get("non_existent")
+        typed_db_result = container.get("database", type_cls=DatabaseService)
+        invalid_query = (
+            typed_db_result.value.query("INVALID QUERY")
+            if typed_db_result.is_success
+            else r[m.ConfigMap].fail("database service unavailable")
+        )
+        print(
+            f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
+        )
 
     @staticmethod
     def _demonstrate_resolution(container: FlextContainer) -> None:
         """Show dependency resolution patterns."""
         print("\n=== Dependency Resolution ===")
 
-        def test_database(db: DatabaseService) -> r[bool]:
-            return db.connect()
+        database_result = container.get("database", type_cls=DatabaseService)
+        cache_result = container.get("cache", type_cls=CacheService)
+        email_result = container.get("email", type_cls=EmailService)
 
-        def test_cache(cache: CacheService) -> r[bool]:
-            return cache.set("test_key", "test_value")
+        db_check = database_result.flat_map(lambda service: service.connect())
+        cache_check = cache_result.flat_map(
+            lambda service: service.set("test_key", "test_value")
+        )
+        email_check = email_result.flat_map(
+            lambda service: service.send("test@example.com", "Test", "Hello")
+        )
 
-        def test_email(email: EmailService) -> r[bool]:
-            return email.send("test@example.com", "Test", "Hello")
-
-        # Test each service with type narrowing
-        for service_name in ["database", "cache", "email"]:
-            result: r[t.RegisterableService] = container.get(service_name)
-            if result.is_success:
-                service = result.value
-                if service_name == "database" and isinstance(service, DatabaseService):
-                    test_result = test_database(service)
-                elif service_name == "cache" and isinstance(service, CacheService):
-                    test_result = test_cache(service)
-                elif service_name == "email" and isinstance(service, EmailService):
-                    test_result = test_email(service)
-                else:
-                    test_result = r[bool].fail("Service type mismatch")
-                print(f"✅ {service_name}: {test_result.is_success}")
-            else:
-                print(f"❌ {service_name}: Failed to resolve")
+        print(f"✅ database: {db_check.is_success}")
+        print(f"✅ cache: {cache_check.is_success}")
+        print(f"✅ email: {email_check.is_success}")
 
     @staticmethod
     def _setup_container() -> FlextContainer:
@@ -301,9 +286,9 @@ class DependencyInjectionService(s[m.ConfigMap]):
         email_service = EmailService(config=email_config)
         email_service.status = c.Cqrs.CommonStatus.ACTIVE
 
-        _ = container.register("database", db_service)
-        _ = container.register("cache", cache_service)
-        _ = container.register("email", email_service)
+        container.register("database", db_service)
+        container.register("cache", cache_service)
+        container.register("email", email_service)
 
         return container
 

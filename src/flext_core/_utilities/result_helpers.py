@@ -28,12 +28,19 @@ class ResultHelpers:
 
     @staticmethod
     def empty(
-        items: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue] | str | None,
+        items: Sequence[t.ContainerValue]
+        | Mapping[str, t.ContainerValue]
+        | str
+        | p.Result[t.ContainerValue]
+        | None,
     ) -> bool:
-        if isinstance(items, r):
+        if FlextUtilitiesGuards.is_result_like(items):
             if items.is_failure:
                 return True
-            return FlextUtilitiesGuards.empty(items.value)
+            result_value = items.value
+            if not FlextUtilitiesGuards.is_general_value_type(result_value):
+                return True
+            return FlextUtilitiesGuards.empty(result_value)
         if items is None:
             return True
         if not FlextUtilitiesGuards.is_general_value_type(items):
@@ -94,12 +101,20 @@ class ResultHelpers:
     @staticmethod
     def vals(
         items: Mapping[str, T] | r[Mapping[str, T]], *, default: list[T] | None = None
-    ) -> list[T]:
+    ) -> r[list[T]]:
         if isinstance(items, r):
             if items.is_failure:
-                return default if default is not None else []
-            return list(items.value.values())
-        return list(items.values()) if items else default if default is not None else []
+                if default is not None:
+                    return r[list[T]].ok(default)
+                return r[list[T]].fail(
+                    items.error or "Failed to extract values from result",
+                )
+            return r[list[T]].ok(list(items.value.values()))
+        if items:
+            return r[list[T]].ok(list(items.values()))
+        if default is not None:
+            return r[list[T]].ok(default)
+        return r[list[T]].fail("No values available")
 
     @staticmethod
     def vals_sequence(results: Sequence[p.Result[T]]) -> list[T]:

@@ -23,6 +23,7 @@ from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.enum import FlextUtilitiesEnum
+from flext_core._utilities.file_ops import FlextUtilitiesFileOps
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.guards import (
     FlextUtilitiesGuards,
@@ -76,6 +77,9 @@ class FlextUtilities:
 
     class Conversion(FlextUtilitiesConversion):
         """Conversion utility class - real inheritance."""
+
+    class FileOps(FlextUtilitiesFileOps):
+        """File operations utility class - real inheritance."""
 
     class Deprecation(FlextUtilitiesDeprecation):
         """Deprecation utility class - real inheritance."""
@@ -206,6 +210,10 @@ class FlextUtilities:
     to_str = staticmethod(FlextUtilitiesConversion.to_str)
     to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
     to_flexible_value = staticmethod(FlextUtilitiesConversion.to_flexible_value)
+
+    # FileOps
+    write_file = staticmethod(FlextUtilitiesFileOps.write_file)
+    write_stdout = staticmethod(FlextUtilitiesFileOps.write_stdout)
 
     # Deprecation
     deprecated = staticmethod(FlextUtilitiesDeprecation.deprecated)

@@ -330,7 +330,7 @@ class ClassNestingRefactorRule:
                     )
 
             if modified and not dry_run:
-                file_path.write_text(result_code, encoding=c.Infra.Encoding.DEFAULT)
+                u.write_file(file_path, result_code, encoding=c.Infra.Encoding.DEFAULT)
 
             return m.Infra.Refactor.Result(
                 file_path=file_path,

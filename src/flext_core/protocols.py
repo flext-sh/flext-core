@@ -250,12 +250,6 @@ class FlextProtocols:
             """Query type identifier."""
             ...
 
-    @runtime_checkable
-    class RoutableType(Protocol):
-        """Protocol for message types (classes) with route information."""
-
-        model_fields: Mapping[str, t.Scalar]
-
     # =========================================================================
     # CONTEXT: Context Management Protocols
     # =========================================================================
@@ -823,23 +817,6 @@ class FlextProtocols:
                 """Evaluate predicate on value."""
                 ...
 
-        @runtime_checkable
-        class HasInvariants(Protocol):
-            """Protocol for DDD aggregate invariant checking.
-
-            Reflects real implementations like FlextModelsEntity.AggregateRoot
-            which checks invariants and raises exceptions on violation rather
-            than returning FlextProtocols.Result[bool].
-            """
-
-            def check_invariants(self) -> None:  # INTERFACE
-                """Check invariants, raising exception on violation.
-
-                Reflects real implementations like FlextModelsEntity.AggregateRoot
-                which raises ValidationError when invariants are violated.
-                """
-                ...
-
     # =========================================================================
     # APPLICATION: Application Layer Protocols
     # =========================================================================
@@ -978,83 +955,6 @@ class FlextProtocols:
 
             Reflects real implementations like FlextRegistry.register_handlers()
             which provides batch registration with summary reporting.
-            """
-            ...
-
-    @runtime_checkable
-    class HandlerDiscovery(BaseProtocol, Protocol):
-        """Handler discovery protocol for introspection and metadata extraction.
-
-        Reflects real implementations like FlextHandlers.Discovery which provides
-        zero-config handler discovery by scanning classes and modules for
-        @handler() decorated methods and functions.
-        """
-
-        @staticmethod
-        def has_handlers(target_class: type) -> bool:
-            """Check if class has any handler-decorated methods.
-
-            Efficiently checks if a class contains any methods marked with
-            the @handler() decorator without scanning all methods.
-
-            Args:
-                target_class: Class to check for handlers
-
-            Returns:
-                True if class has at least one handler, False otherwise
-
-            """
-            ...
-
-        @staticmethod
-        def has_handlers_module(module: ModuleType) -> bool:
-            """Check if module has any handler-decorated functions.
-
-            Efficiently checks if a module contains any functions marked with
-            the @handler() decorator without scanning all items.
-
-            Args:
-                module: Module object to check for handlers
-
-            Returns:
-                True if module has at least one handler, False otherwise
-
-            """
-            ...
-
-        @staticmethod
-        def scan_class(
-            target_class: type,
-        ) -> list[tuple[str, t.ContainerValue]]:
-            """Scan class for handler-decorated methods.
-
-            Introspects the class to find all methods with handler configuration
-            metadata, returning them sorted by priority (highest first).
-
-            Args:
-                target_class: Class to scan for handler decorators
-
-            Returns:
-                List of tuples (method_name, config) sorted by priority
-
-            """
-            ...
-
-        @staticmethod
-        def scan_module(
-            module: ModuleType,
-        ) -> list[tuple[str, t.HandlerCallable, t.ContainerValue]]:
-            """Scan module for handler-decorated functions.
-
-            Introspects the module to find all functions with handler configuration
-            metadata, returning them sorted by priority for consistent ordering.
-
-            Args:
-                module: Module object to scan for handler decorators
-
-            Returns:
-                List of tuples (function_name, function, config) sorted by priority
-
             """
             ...
 
@@ -1199,23 +1099,6 @@ class FlextProtocols:
             available via __getattr__ at runtime.
             """
 
-            @overload
-            def critical(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                _return_result: Literal[True],
-                **kw: t.ContainerValue | Exception,
-            ) -> r[bool]: ...
-
-            @overload
-            def critical(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
-            ) -> None: ...
-
             def critical(
                 self,
                 msg: str | t.ContainerValue,
@@ -1224,23 +1107,6 @@ class FlextProtocols:
             ) -> r[bool] | None:
                 """Log critical message."""
                 ...
-
-            @overload
-            def debug(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue | Exception,
-                _return_result: Literal[True],
-                **kw: t.ContainerValue | Exception,
-            ) -> r[bool]: ...
-
-            @overload
-            def debug(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue | Exception,
-                **kw: t.ContainerValue | Exception,
-            ) -> None: ...
 
             def debug(
                 self,
@@ -1251,23 +1117,6 @@ class FlextProtocols:
                 """Log debug message."""
                 ...
 
-            @overload
-            def error(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                _return_result: Literal[True],
-                **kw: t.ContainerValue | Exception,
-            ) -> r[bool]: ...
-
-            @overload
-            def error(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
-            ) -> None: ...
-
             def error(
                 self,
                 msg: str | t.ContainerValue,
@@ -1276,23 +1125,6 @@ class FlextProtocols:
             ) -> r[bool] | None:
                 """Log error message."""
                 ...
-
-            @overload
-            def exception(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                _return_result: Literal[True],
-                **kw: t.ContainerValue | Exception,
-            ) -> r[bool]: ...
-
-            @overload
-            def exception(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
-            ) -> None: ...
 
             def exception(
                 self,
@@ -1303,23 +1135,6 @@ class FlextProtocols:
                 """Log exception with traceback."""
                 ...
 
-            @overload
-            def info(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                _return_result: Literal[True],
-                **kw: t.ContainerValue | Exception,
-            ) -> r[bool]: ...
-
-            @overload
-            def info(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
-            ) -> None: ...
-
             def info(
                 self,
                 msg: str | t.ContainerValue,
@@ -1328,23 +1143,6 @@ class FlextProtocols:
             ) -> r[bool] | None:
                 """Log info message."""
                 ...
-
-            @overload
-            def warning(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                _return_result: Literal[True],
-                **kw: t.ContainerValue | Exception,
-            ) -> r[bool]: ...
-
-            @overload
-            def warning(
-                self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
-            ) -> None: ...
 
             def warning(
                 self,

@@ -180,6 +180,8 @@ class FlextUtilitiesModel:
     def load[T_Model: BaseModel](
         model_cls: type[T_Model],
         data: m.ConfigMap,
+        *,
+        strict: bool = False,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 
@@ -188,6 +190,7 @@ class FlextUtilitiesModel:
         Args:
             model_cls: Pydantic model class to instantiate.
             data: Dictionary or mapping to validate.
+            strict: If True, enforce strict type checking during validation.
 
         Returns:
             FlextResult containing model instance or error message.
@@ -199,7 +202,7 @@ class FlextUtilitiesModel:
 
         """
         try:
-            instance = model_cls.model_validate(data)
+            instance = model_cls.model_validate(data, strict=strict)
             return r[T_Model].ok(instance)
         except ValidationError as e:
             return r[T_Model].fail(f"Model validation failed: {e}")

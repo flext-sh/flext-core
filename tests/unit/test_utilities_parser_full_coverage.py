@@ -1,6 +1,5 @@
 """Coverage tests for current utilities parser APIs."""
 
-# mypy: ignore-errors
 from __future__ import annotations
 
 from collections import UserString
@@ -43,6 +42,58 @@ class _Model(BaseModel):
     count: int
 
 
+def _raise_type_error_value(_value: object) -> str:
+    msg = "x"
+    raise TypeError(msg)
+
+
+def _fail_components(*_args: object, **_kwargs: object) -> r[list[str]]:
+    return r[list[str]].fail("forced")
+
+
+def _safe_length_abc(_value: object) -> str:
+    return "abc"
+
+
+def _fail_escape_split(
+    *_args: object,
+) -> r[tuple[list[str], int]]:
+    return r[tuple[list[str], int]].fail("split fail")
+
+
+def _fail_pipeline_continue(*_args: object, **_kwargs: object) -> r[str]:
+    return r[str].fail("Continue pipeline", error_code="PIPELINE_CONTINUE")
+
+
+def _raise_runtime_boom(*_args: object, **_kwargs: object) -> str:
+    msg = "boom"
+    raise RuntimeError(msg)
+
+
+def _raise_value_error_float(_value: t.ContainerValue) -> r[float]:
+    msg = "boom"
+    raise ValueError(msg)
+
+
+def _raise_type_error_bool(_value: t.ContainerValue) -> r[bool]:
+    msg = "boom"
+    raise TypeError(msg)
+
+
+def _raise_value_error_int(_value: t.ContainerValue) -> r[int]:
+    msg = "boom"
+    raise ValueError(msg)
+
+
+def _raise_type_error_str(_value: t.ContainerValue) -> r[str]:
+    msg = "boom"
+    raise TypeError(msg)
+
+
+def _norm_list_dict(*_args: object, **_kwargs: object) -> dict[str, str]:
+    return {"k": "v"}
+
+
 def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -56,7 +107,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch.setattr(
         parser,
         "_safe_text_length",
-        lambda _v: (_ for _ in ()).throw(TypeError("x")),
+        _raise_type_error_value,
     )
     result = parser.parse_delimited("a,b", ",")
     assert result.is_success
@@ -64,7 +115,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch.setattr(
         parser,
         "_process_components",
-        lambda *_args, **_kwargs: r[list[str]].fail("forced"),
+        _fail_components,
     )
     forced_failure = parser.parse_delimited("a,b", ",")
     assert forced_failure.is_failure
@@ -77,7 +128,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch.setattr(
         parser,
         "_safe_text_length",
-        lambda _v: (_ for _ in ()).throw(TypeError("x")),
+        _raise_type_error_value,
     )
     split_failure = parser.parse_delimited(
         cast("str", cast("object", _SplitRaises())),
@@ -91,13 +142,13 @@ def test_parser_split_and_normalize_exception_paths(
 ) -> None:
     parser = u.Parser()
 
-    monkeypatch.setattr(parser, "_safe_text_length", lambda _v: "abc")
+    monkeypatch.setattr(parser, "_safe_text_length", _safe_length_abc)
     assert parser._get_safe_text_length("abc") == -1
 
     monkeypatch.setattr(
         parser,
         "_process_escape_splitting",
-        lambda *_args: r[tuple[list[str], int]].fail("split fail"),
+        _fail_escape_split,
     )
     split_result = parser._execute_escape_splitting("a,b", ",", "\\")
     assert split_result.is_failure
@@ -110,7 +161,7 @@ def test_parser_split_and_normalize_exception_paths(
     monkeypatch.setattr(
         parser2,
         "_safe_text_length",
-        lambda _v: (_ for _ in ()).throw(TypeError("x")),
+        _raise_type_error_value,
     )
     normalized = parser2.normalize_whitespace("x")
     assert normalized.is_success
@@ -127,7 +178,7 @@ def test_parser_pipeline_and_pattern_branches(
     monkeypatch.setattr(
         parser,
         "_safe_text_length",
-        lambda _v: (_ for _ in ()).throw(TypeError("x")),
+        _raise_type_error_value,
     )
     ok = parser.apply_regex_pipeline("abc", [("a", "b")])
     assert ok.is_success
@@ -135,10 +186,7 @@ def test_parser_pipeline_and_pattern_branches(
     monkeypatch.setattr(
         parser,
         "_handle_pipeline_edge_cases",
-        lambda *_args, **_kwargs: r[str].fail(
-            "Continue pipeline",
-            error_code="PIPELINE_CONTINUE",
-        ),
+        _fail_pipeline_continue,
     )
     none_text = parser.apply_regex_pipeline(None, [("a", "b")])
     assert none_text.is_failure
@@ -147,12 +195,12 @@ def test_parser_pipeline_and_pattern_branches(
     monkeypatch.setattr(
         parser2,
         "_process_all_patterns",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+        _raise_runtime_boom,
     )
     monkeypatch.setattr(
         parser2,
         "_safe_text_length",
-        lambda _v: (_ for _ in ()).throw(TypeError("x")),
+        _raise_type_error_value,
     )
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
@@ -169,9 +217,7 @@ def test_parser_pipeline_and_pattern_branches(
             raise TypeError(msg)
 
     parser3 = u.Parser()
-    original_hasattr = (
-        __builtins__["hasattr"] if isinstance(__builtins__, dict) else hasattr
-    )
+    original_hasattr = hasattr
 
     def _patched_hasattr(obj: object, name: str) -> bool:
         if name == "__class__":
@@ -258,7 +304,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     monkeypatch.setattr(
         u.Parser.__mro__[1],
         "_coerce_to_float",
-        staticmethod(lambda _v: (_ for _ in ()).throw(ValueError("boom"))),
+        staticmethod(_raise_value_error_float),
     )
     failed_float = parser._parse_try_primitive("x", float, 1.2, None, "field: ")
     assert failed_float is not None and failed_float.is_failure
@@ -266,7 +312,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     monkeypatch.setattr(
         u.Parser.__mro__[1],
         "_coerce_to_bool",
-        staticmethod(lambda _v: (_ for _ in ()).throw(TypeError("boom"))),
+        staticmethod(_raise_type_error_bool),
     )
     failed_bool = parser._parse_try_primitive("x", bool, True, None, "field: ")
     assert failed_bool is not None and failed_bool.is_failure
@@ -302,7 +348,8 @@ def test_parser_convert_and_norm_branches(
 
     assert parser.convert("10", int, 0) == 10
     assert parser._convert_to_int(True, default=7) == 7
-    assert parser._convert_to_float(1.5, default=0.0) == pytest.approx(1.5)
+    parsed_float = parser._convert_to_float(1.5, default=0.0)
+    assert abs(parsed_float - 1.5) < 1e-9
     assert parser._convert_to_str("x", default="") == "x"
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
@@ -320,7 +367,6 @@ def test_parser_convert_and_norm_branches(
         )
         is True
     )
-    assert parser._convert_fallback("x", object, "d") == "d"
 
     assert (
         parser.conv_str(
@@ -348,7 +394,7 @@ def test_parser_convert_and_norm_branches(
     monkeypatch.setattr(
         u.Parser.__mro__[1],
         "norm_list",
-        staticmethod(lambda *_args, **_kwargs: {"k": "v"}),
+        staticmethod(_norm_list_dict),
     )
     try:
         assert parser.norm_in("v", ["x"], case="lower") is False
@@ -436,7 +482,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         u.Parser.__mro__[1],
         "_coerce_to_int",
-        staticmethod(lambda _v: (_ for _ in ()).throw(ValueError("boom"))),
+        staticmethod(_raise_value_error_int),
     )
     failed_int = parser._parse_try_primitive("x", int, 1, None, "field: ")
     assert failed_int is not None and failed_int.is_failure
@@ -444,7 +490,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         u.Parser.__mro__[1],
         "_coerce_to_str",
-        staticmethod(lambda _v: (_ for _ in ()).throw(TypeError("boom"))),
+        staticmethod(_raise_type_error_str),
     )
     failed_str = parser._parse_try_primitive("x", str, "d", None, "field: ")
     assert failed_str is not None and failed_str.is_failure
@@ -454,8 +500,14 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert parser._convert_to_float(
         cast("t.ContainerValue", object()),
         default=1.5,
-    ) == pytest.approx(1.5)
-    assert parser._convert_fallback("x", str, "d") == "d"
+    )
+    assert (
+        abs(
+            parser._convert_to_float(cast("t.ContainerValue", object()), default=1.5)
+            - 1.5
+        )
+        < 1e-9
+    )
 
     assert (
         parser.norm_in(

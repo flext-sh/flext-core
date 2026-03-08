@@ -7,7 +7,7 @@ script subclasses.  Through MRO each subclass inherits:
 - ``rand_int`` / ``rand_float`` / ``rand_str`` / ``rand_bool`` — deterministic
   random value generators (fixed seed for reproducible golden-file output)
 - ``rand_person`` / ``rand_dict`` — composite random generators
-- ``Person`` / ``Handle`` — shared Pydantic/dataclass models
+- ``Person`` / ``Handle`` — shared Pydantic models
 - ``bind_probe`` / ``bind_status`` — FlextResult probe helpers
 
 Usage (inside an ``ex_*.py`` file)::
@@ -31,13 +31,10 @@ from __future__ import annotations
 import random
 import string
 import sys
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from pydantic import BaseModel
-
-from flext_core import FlextResult, r, t, u
+from flext_core import FlextResult, m, r, t
 
 
 class Examples:
@@ -79,9 +76,11 @@ class Examples:
         """Return a deterministic pseudo-random boolean."""
         return bool(self._rng.randint(0, 1))
 
-    def rand_dict(self, n: int = 3) -> dict[str, int]:
-        """Return a dict with ``n`` random string keys → int values."""
-        return {self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+    def rand_dict(self, n: int = 3) -> m.ConfigMap:
+        """Return a ConfigMap with ``n`` random string keys → int values."""
+        return m.ConfigMap(
+            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+        )
 
     def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
         """Return a deterministic pseudo-random float rounded to 4 decimals."""
@@ -126,27 +125,27 @@ class Examples:
         """
         if v is None:
             return "None"
-        if isinstance(v, bool):
-            return str(v)
-        if isinstance(v, (int, float)):
-            return str(v)
-        if isinstance(v, str):
-            return repr(v)
-        if u.is_list(v):
-            return "[" + ", ".join(self.ser(item) for item in v) + "]"
-        if u.is_dict_like(v):
-            pairs = ", ".join(
-                f"{self.ser(k)}: {self.ser(val)}"
-                for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-            )
-            return "{" + pairs + "}"
-        if isinstance(v, type):
-            return v.__name__
-        if isinstance(v, datetime):
-            return v.isoformat()
-        if isinstance(v, Path):
-            return str(v)
-        return type(v).__name__
+        match v:
+            case bool() as value:
+                return str(value)
+            case int() | float() as value:
+                return str(value)
+            case str() as value:
+                return repr(value)
+            case list() as values:
+                return "[" + ", ".join(self.ser(item) for item in values) + "]"
+            case dict() as mapping:
+                pairs = ", ".join(
+                    f"{self.ser(k)}: {self.ser(val)}"
+                    for k, val in sorted(mapping.items(), key=lambda kv: str(kv[0]))
+                )
+                return "{" + pairs + "}"
+            case datetime() as value:
+                return value.isoformat()
+            case Path() as value:
+                return str(value)
+            case _:
+                return type(v).__name__
 
     # ------------------------------------------------------------------
     # Golden-file verification
@@ -186,15 +185,14 @@ class Examples:
     # Shared example models
     # ------------------------------------------------------------------
 
-    class Person(BaseModel):
+    class Person(m.Value):
         """Tiny Pydantic model used across several examples."""
 
         name: str
         age: int
 
-    @dataclass
-    class Handle:
-        """Tiny dataclass used to exercise ``with_resource``."""
+    class Handle(m.Value):
+        """Tiny model used to exercise ``with_resource``."""
 
         value: int
         cleaned: bool = False
@@ -207,23 +205,23 @@ class Examples:
     def bind_probe(result_obj: FlextResult[int], delta: int) -> t.ContainerValue:
         """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
         try:
-            method = getattr(result_obj, "bind")
-        except AttributeError as exc:
-            return f"AttributeError:{exc}"
-        if not callable(method):
-            return "bind-not-callable"
-        try:
-            return method(lambda n: r[int].ok(n + delta))
+            return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             return f"{type(exc).__name__}:{exc}"
 
     @staticmethod
-    def bind_status(value: t.ContainerValue) -> t.ContainerValue:
-        """Return a summary dict when *value* is a ``FlextResult``."""
-        if isinstance(value, FlextResult):
-            return {
-                "is_success": value.is_success,
-                "error": value.error,
-                "unwrap_or": value.unwrap_or(-1),
-            }
-        return value
+    def bind_status(
+        value: t.ContainerValue | FlextResult[t.ContainerValue],
+    ) -> t.ContainerValue:
+        """Return a summary ConfigMap when *value* is a ``FlextResult``."""
+        match value:
+            case FlextResult() as result:
+                return m.ConfigMap(
+                    root={
+                        "is_success": result.is_success,
+                        "error": result.error,
+                        "unwrap_or": result.unwrap_or(-1),
+                    }
+                )
+            case _:
+                return value

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra import c, m
+from flext_infra import c, m, u
 
 from .mro_migrator import (
     FlextInfraRefactorMROImportRewriter,
@@ -66,7 +66,8 @@ class FlextInfraRefactorMigrateToClassMRO:
             migrations.append(migration)
             moved_index[scan_result.module] = symbol_alias_map
             if apply_changes:
-                Path(scan_result.file).write_text(
+                u.write_file(
+                    Path(scan_result.file),
                     updated_source,
                     encoding=c.Infra.Encoding.DEFAULT,
                 )

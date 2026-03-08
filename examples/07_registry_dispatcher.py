@@ -118,7 +118,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
 
         dispatcher = FlextDispatcher()
         create_handler = CreateUserHandler()
-        _ = dispatcher.register_handler(create_handler)
+        dispatcher.register_handler(create_handler)
 
         command = CreateUserCommand.model_validate({
             "name": "Alice",
@@ -127,7 +127,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
-            if isinstance(event_value, UserCreatedEvent):
+            if u.is_type(event_value, UserCreatedEvent):
                 print(f"✅ Command dispatched: {event_value.aggregate_id}")
             else:
                 print("✅ Command dispatched successfully")
@@ -140,12 +140,12 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatcher = FlextDispatcher()
         registry = FlextRegistry()
 
-        _ = registry.register_plugin(
+        registry.register_plugin(
             "handlers",
             "create_user",
             _DemoPlugin(name="create_user"),
         )
-        _ = registry.register_plugin(
+        registry.register_plugin(
             "handlers",
             "get_user",
             _DemoPlugin(name="get_user"),
@@ -153,8 +153,8 @@ class RegistryDispatcherService(s[m.ConfigMap]):
 
         create_handler = CreateUserHandler()
         get_handler = GetUserHandler()
-        _ = dispatcher.register_handler(create_handler)
-        _ = dispatcher.register_handler(get_handler)
+        dispatcher.register_handler(create_handler)
+        dispatcher.register_handler(get_handler)
 
         # Dispatch command - Pydantic models as message payload
         command: CreateUserCommand = CreateUserCommand.model_validate({
@@ -170,7 +170,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value
-            if isinstance(user_data, m.ConfigMap):
+            if u.is_type(user_data, m.ConfigMap):
                 print(f"✅ Query dispatched: {user_data.get('name')}")
 
     @staticmethod
@@ -190,7 +190,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
             print("✅ Plugin registered successfully")
 
         query_plugin = _DemoPlugin(name="get_user")
-        _ = registry.register_plugin(
+        registry.register_plugin(
             "handlers",
             "get_user",
             query_plugin,
@@ -254,13 +254,10 @@ def main() -> None:
         data = result.value
         patterns = (
             data.root.get("patterns_demonstrated")
-            if isinstance(data.root, dict)
+            if u.is_type(data.root, dict)
             else None
         )
-        if isinstance(patterns, Sequence) and not isinstance(
-            patterns,
-            str | bytes | bytearray,
-        ):
+        if u.is_type(patterns, Sequence) and not u.is_type(patterns, str | bytes | bytearray):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
     else:

@@ -114,6 +114,10 @@ logs/
 archive/
 backup/
 *.bak
+*.bkp
+*.bkp?
+*.actual
+*.archive
 *.backup
 *.orig
 /*_temp.*

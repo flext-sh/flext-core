@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
-from flext_core import FlextHandlers, c, e, h, m, p, r, t, u
+from flext_core import FlextDispatcher, FlextHandlers, c, e, h, m, r, t, u
 
 from .shared import Examples
 
@@ -298,20 +298,18 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
 
-        execute_value = handler.execute(
-            cast("t.ContainerValue", _Message(text=payload_text))
-        ).unwrap_or("-")
+        execute_value = handler.execute(_Message(text=payload_text)).unwrap_or("-")
         self.check(
             "execute.success.value",
             payload_text in str(execute_value),
         )
         self.check(
             "execute.validation_failure",
-            handler.execute(cast("t.ContainerValue", "bad")).error,
+            handler.execute("bad").error,
         )
 
         dispatch_value = handler.dispatch_message(
-            cast("t.ContainerValue", _Message(text=dispatch_text))
+            _Message(text=dispatch_text)
         ).unwrap_or("-")
         self.check(
             "dispatch.success",
@@ -320,14 +318,14 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "dispatch.mode_mismatch",
             handler.dispatch_message(
-                cast("t.ContainerValue", _Message(text="go")),
+                _Message(text="go"),
                 operation=c.Dispatcher.HANDLER_MODE_QUERY,
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                cast("t.ContainerValue", "explode"),
+                "explode",
                 operation=c.Dispatcher.HANDLER_MODE_COMMAND,
             ).error,
         )
@@ -489,7 +487,7 @@ class Ex10FlextHandlers(Examples):
         protocol_handler = _ProtocolHandler()
         self.check(
             "protocol.is_handler.true",
-            h.ProtocolValidation.is_handler(cast("t.Container", protocol_handler)),
+            h.ProtocolValidation.is_handler(protocol_handler),
         )
         self.check(
             "protocol.is_handler.false",
@@ -497,21 +495,22 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "protocol.is_service",
-            h.ProtocolValidation.is_service(
-                cast("p.Service[t.Container]", _ServiceStub())
-            ),
+            h.ProtocolValidation.is_service(_ServiceStub()),
         )
-        self.check("protocol.is_command_bus", h.ProtocolValidation.is_command_bus())
+        self.check(
+            "protocol.is_command_bus",
+            h.ProtocolValidation.is_command_bus(FlextDispatcher()),
+        )
         self.check(
             "protocol.validate_known",
             h.ProtocolValidation.validate_protocol_compliance(
-                cast("p.Handler[t.Container, t.Container]", protocol_handler), "Handler"
+                protocol_handler, "Handler"
             ).is_success,
         )
         self.check(
             "protocol.validate_unknown",
             h.ProtocolValidation.validate_protocol_compliance(
-                cast("p.Handler[t.Container, t.Container]", protocol_handler), "Unknown"
+                protocol_handler, "Unknown"
             ).error,
         )
         self.check(
@@ -702,15 +701,9 @@ class Ex10FlextHandlers(Examples):
             h.validate_http_status_codes([Path("x")]).error,
         )
 
-        self.check(
-            "runtime.is_dict_like.true", h.is_dict_like(cast("t.Container", {"a": 1}))
-        )
-        self.check(
-            "runtime.is_dict_like.false", h.is_dict_like(cast("t.Container", [1, 2]))
-        )
-        self.check(
-            "runtime.is_list_like.true", h.is_list_like(cast("t.Container", [1, 2]))
-        )
+        self.check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))
+        self.check("runtime.is_dict_like.false", h.is_dict_like([1, 2]))
+        self.check("runtime.is_list_like.true", h.is_list_like([1, 2]))
         self.check("runtime.is_list_like.false", h.is_list_like("ab"))
         self.check(
             "runtime.is_valid_json.true",
@@ -736,11 +729,11 @@ class Ex10FlextHandlers(Examples):
         self.check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
         self.check(
             "runtime.normalize_general",
-            h.normalize_to_general_value(cast("t.Container", {dict_key: dict_value})),
+            h.normalize_to_general_value({dict_key: dict_value}),
         )
         self.check(
             "runtime.normalize_metadata",
-            h.normalize_to_metadata_value(cast("t.Container", {"k": [1, 2]})),
+            h.normalize_to_metadata_value({"k": [1, 2]}),
         )
 
     @override

@@ -17,6 +17,7 @@ from flext_core import (
     d,
     r,
     t,
+    u,
 )
 
 from .shared import Examples
@@ -33,7 +34,7 @@ class Ex09FlextDecorators(Examples):
     @override
     def exercise(self) -> None:
         """Run all decorator demonstrations and record golden output."""
-        _ = self._setup_container()
+        self._setup_container()
         self._demo_deprecated()
         self._demo_inject()
         self._demo_factory()
@@ -63,7 +64,7 @@ class Ex09FlextDecorators(Examples):
         def combined_standard(*, service: str | None = None) -> str:
             """Use combined decorator without railway wrapping."""
             op_name = FlextContext.Request.get_operation_name()
-            service_value = service if isinstance(service, str) else "none"
+            service_value = service if u.Guards.is_type(service, str) else "none"
             return f"{service_value}|{op_name}"
 
         @d.combined(
@@ -78,7 +79,7 @@ class Ex09FlextDecorators(Examples):
             if not ok:
                 msg = self.rand_str(12)
                 raise ValueError(msg)
-            service_value = service if isinstance(service, str) else "none"
+            service_value = service if u.Guards.is_type(service, str) else "none"
             return f"{service_value}|{FlextContext.Request.get_operation_name()}"
 
         std_result = combined_standard()
@@ -185,7 +186,7 @@ class Ex09FlextDecorators(Examples):
         @d.inject(service=self._token_service_name)
         def token_value(*, service: str | None = None) -> str:
             """Resolve token service from container."""
-            return service if isinstance(service, str) else "none"
+            return service if u.Guards.is_type(service, str) else "none"
 
         override_service = self.rand_str(12)
         self.check(
@@ -438,7 +439,9 @@ class Ex09FlextDecorators(Examples):
         inside_dropped = inside.get("dropped")
         after_tenant_raw = after.get("tenant")
         after_tenant = (
-            after_tenant_raw if isinstance(after_tenant_raw, (str, int, bool)) else None
+            after_tenant_raw
+            if u.Guards.is_type(after_tenant_raw, (str, int, bool))
+            else None
         )
 
         self.check("with_context.inside.tenant", inside.get("tenant") == tenant)
@@ -468,7 +471,7 @@ class Ex09FlextDecorators(Examples):
         self.check("with_correlation.created", corr_id is not None)
         self.check(
             "with_correlation.prefix",
-            isinstance(corr_id, str) and corr_id.startswith("corr_"),
+            u.Guards.is_type(corr_id, str) and corr_id.startswith("corr_"),
         )
 
     def _setup_container(self) -> FlextContainer:
@@ -479,8 +482,8 @@ class Ex09FlextDecorators(Examples):
         self._token_service_value = self.rand_str(12)
         self._flaky_service_name = f"svc.{self.rand_str(6)}"
         self._flaky_service_value = self.rand_str(12)
-        _ = container.register(self._token_service_name, self._token_service_value)
-        _ = container.register(self._flaky_service_name, self._flaky_service_value)
+        container.register(self._token_service_name, self._token_service_value)
+        container.register(self._flaky_service_name, self._flaky_service_value)
         return container
 
 

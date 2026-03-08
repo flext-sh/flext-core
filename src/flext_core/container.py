@@ -558,13 +558,29 @@ class FlextContainer(p.DI):
         """
         return FlextLogger.create_module_logger(module_name or "flext_core")
 
+    @overload
+    def get[T](
+        self,
+        name: str,
+        *,
+        type_cls: type[T],
+    ) -> r[T]: ...
+
+    @overload
+    def get(
+        self,
+        name: str,
+        *,
+        type_cls: None = None,
+    ) -> r[t.RegisterableService]: ...
+
     @override
     def get[T](
         self,
         name: str,
         *,
         type_cls: type[T] | None = None,
-    ) -> r[t.RegisterableService]:
+    ) -> r[t.RegisterableService] | r[T]:
         """Resolve a registered service or factory by name.
 
         Returns the resolved service as RegisterableService or, when ``type_cls`` is
@@ -600,10 +616,10 @@ class FlextContainer(p.DI):
             if type_cls is not None:
                 service_for_check: object = service
                 if not self._is_instance_of(service_for_check, type_cls):
-                    return r[t.RegisterableService].fail(
+                    return r[T].fail(
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
                     )
-                return r[t.RegisterableService].ok(service)
+                return r[T].ok(service_for_check)
             return r[t.RegisterableService].ok(service)
 
         # Try factory
@@ -626,10 +642,10 @@ class FlextContainer(p.DI):
                 if type_cls is not None:
                     resolved_for_check: object = resolved
                     if not self._is_instance_of(resolved_for_check, type_cls):
-                        return r[t.RegisterableService].fail(
+                        return r[T].fail(
                             f"Factory '{name}' returned wrong type",
                         )
-                    return r[t.RegisterableService].ok(resolved)
+                    return r[T].ok(resolved_for_check)
                 return r[t.RegisterableService].ok(resolved)
             except Exception as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -649,10 +665,10 @@ class FlextContainer(p.DI):
                 if type_cls is not None:
                     resource_for_check: object = resolved
                     if not self._is_instance_of(resource_for_check, type_cls):
-                        return r[t.RegisterableService].fail(
+                        return r[T].fail(
                             f"Resource '{name}' returned wrong type",
                         )
-                    return r[t.RegisterableService].ok(resolved)
+                    return r[T].ok(resource_for_check)
                 return r[t.RegisterableService].ok(resolved)
             except Exception as e:
                 return r[t.RegisterableService].fail(str(e))

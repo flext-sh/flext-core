@@ -896,15 +896,22 @@ class FlextMixins(FlextRuntime):
         """Runtime protocol compliance validation utilities."""
 
         @staticmethod
-        def is_command_bus() -> bool:
-            """Check if object satisfies p.CommandBus protocol."""
-            return True
+        def is_command_bus(obj: t.ContainerValue) -> bool:
+            """Check if *obj* satisfies ``p.CommandBus`` structurally."""
+            return (
+                hasattr(obj, "dispatch")
+                and callable(getattr(obj, "dispatch", None))
+                and hasattr(obj, "publish")
+                and callable(getattr(obj, "publish", None))
+                and hasattr(obj, "register_handler")
+                and callable(getattr(obj, "register_handler", None))
+            )
 
         @staticmethod
         def is_handler(
             obj: t.ContainerValue,
         ) -> bool:
-            """Check if object satisfies p.Handler protocol."""
+            """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
                 hasattr(obj, "handle")
                 and callable(getattr(obj, "handle", None))
@@ -913,22 +920,22 @@ class FlextMixins(FlextRuntime):
             )
 
         @staticmethod
-        def is_service(
-            _obj: p.Service[t.ContainerValue],
-        ) -> bool:
-            """Check if object satisfies p.Service protocol.
-
-            Uses structural typing - any object implementing Service protocol
-            will pass this check, including FlextService instances.
-            """
-            return True
+        def is_service(obj: t.ContainerValue) -> bool:
+            """Check if *obj* satisfies ``p.Service`` structurally."""
+            return (
+                hasattr(obj, "execute")
+                and callable(getattr(obj, "execute", None))
+                and hasattr(obj, "get_service_info")
+                and callable(getattr(obj, "get_service_info", None))
+                and hasattr(obj, "is_valid")
+            )
 
         @staticmethod
         def validate_processor_protocol(
-            obj: p.HasModelDump,
+            obj: t.ContainerValue,
         ) -> r[bool]:
-            """Validate object has required process() and validate() methods."""
-            required_methods = ["process", "validate"]
+            """Validate *obj* has ``model_dump``, ``process``, and ``validate``."""
+            required_methods = ["model_dump", "process", "validate"]
 
             for method_name in required_methods:
                 if not hasattr(obj, method_name):
@@ -939,7 +946,7 @@ class FlextMixins(FlextRuntime):
                         f"Processors must implement: {methods_str}"
                     )
                     return r[bool].fail(error_msg)
-                if not callable(u.get(obj, method_name, default=None)):
+                if not callable(getattr(obj, method_name, None)):
                     return r[bool].fail(
                         f"Processor {obj.__class__.__name__}.{method_name} is not callable",
                     )
@@ -948,30 +955,31 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_protocol_compliance(
-            _obj: p.Handler[t.ContainerValue, t.ContainerValue]
-            | p.Service[t.ContainerValue]
-            | p.CommandBus
-            | p.Repository[t.ContainerValue]
-            | p.Configurable,
+            obj: t.ContainerValue,
             protocol_name: str,
         ) -> r[bool]:
-            """Validate object compliance with named protocol."""
-            protocol_map = {
-                "Handler": p.Handler,
-                "Service": p.Service,
-                "CommandBus": p.CommandBus,
-                "Repository": p.Repository,
-                "Configurable": p.Configurable,
+            """Validate *obj* compliance with named protocol via duck-typing."""
+            protocol_required_attrs: Mapping[str, Sequence[str]] = {
+                "Handler": ["handle", "can_handle"],
+                "Service": ["execute", "get_service_info", "is_valid"],
+                "CommandBus": ["dispatch", "publish", "register_handler"],
+                "Repository": ["get_by_id", "save", "delete", "find_all"],
+                "Configurable": ["configure"],
             }
 
-            # Check if protocol_name is in protocol_map (using native 'not in')
-            if protocol_name not in protocol_map:
-                supported = ", ".join(protocol_map.keys())
+            if protocol_name not in protocol_required_attrs:
+                supported = ", ".join(protocol_required_attrs.keys())
                 return r[bool].fail(
                     f"Unknown protocol: {protocol_name}. Supported: {supported}",
                 )
 
-            # Type already guarantees protocol compliance
+            for attr in protocol_required_attrs[protocol_name]:
+                if not hasattr(obj, attr):
+                    return r[bool].fail(
+                        f"{obj.__class__.__name__} missing '{attr}' "
+                        f"required by {protocol_name}",
+                    )
+
             return r[bool].ok(value=True)
 
 

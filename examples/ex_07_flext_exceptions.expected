@@ -53,19 +53,18 @@ AttributeAccessError.attribute_name: 'secret'
 AttributeAccessError.attribute_context: 'UserModel'
 
 [factories_helpers]
-create_error.ValidationError: 'BaseError'
-create_error.AttributeError: 'BaseError'
+create_error.ValidationError: 'ValidationError'
+create_error.AttributeError: 'AttributeAccessError'
 create.type: 'ValidationError'
 create.error_code: 'E_DYNAMIC'
-create.metadata.caller: 'example'
+create.metadata.caller: ''
 create.correlation_id: 'corr-dyn-1'
 __call__.type: 'ValidationError'
 __call__.error_code: 'E_CALL'
 
 [metrics]
 metrics.total_exceptions: 3
-metrics.validation_count: None
-metrics.configuration_count: None
+metrics.has_exception_counts: True
 metrics.summary_nonempty: True
 metrics.unique_types: 2
 metrics.cleared_total: 0

@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-from flext_infra import c, m
+from flext_infra import c, m, u
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
 __all__ = ["FlextInfraCodegenConstantsQualityGate"]
@@ -32,6 +32,7 @@ class FlextInfraCodegenConstantsQualityGate:
         baseline_file: Path | None = None,
     ) -> None:
         """Initialize quality gate with workspace and optional baseline source."""
+        super().__init__()
         self._workspace_root = workspace_root.resolve()
         self._before_report = before_report
         self._baseline_file = baseline_file
@@ -432,25 +433,31 @@ class FlextInfraCodegenConstantsQualityGate:
         inventory_json = directory / "inventory-after.json"
         validate_json = directory / "validate-after.json"
         baseline_json = directory / "baseline-used.json"
-        report_json.write_text(
+        u.write_file(
+            report_json,
             json.dumps(report, ensure_ascii=True, sort_keys=True),
             encoding=c.Infra.Encoding.DEFAULT,
         )
-        report_text.write_text(
-            self.render_text(report), encoding=c.Infra.Encoding.DEFAULT
+        u.write_file(
+            report_text,
+            self.render_text(report),
+            encoding=c.Infra.Encoding.DEFAULT,
         )
         census_payload: list[dict[str, object]] = [
             item.model_dump() for item in census_reports
         ]
-        census_json.write_text(
+        u.write_file(
+            census_json,
             json.dumps(census_payload, ensure_ascii=True),
             encoding=c.Infra.Encoding.DEFAULT,
         )
-        inventory_json.write_text(
+        u.write_file(
+            inventory_json,
             json.dumps({"duplicate_groups": duplicate_groups}, ensure_ascii=True),
             encoding=c.Infra.Encoding.DEFAULT,
         )
-        validate_json.write_text(
+        u.write_file(
+            validate_json,
             json.dumps(
                 {
                     "mro_failures": 0,
@@ -462,7 +469,8 @@ class FlextInfraCodegenConstantsQualityGate:
             encoding=c.Infra.Encoding.DEFAULT,
         )
         if before_payload is not None:
-            baseline_json.write_text(
+            u.write_file(
+                baseline_json,
                 json.dumps(before_payload, ensure_ascii=True, sort_keys=True),
                 encoding=c.Infra.Encoding.DEFAULT,
             )

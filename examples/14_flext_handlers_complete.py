@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import override
 
 from flext_core import c, h, m, r, s, u
@@ -52,8 +51,6 @@ class CommandHandler(h[CreateUserCommand, str]):
     @override
     def handle(self, message: CreateUserCommand) -> r[str]:
         """Handle user creation command using u validation."""
-        _ = self.handler_name  # Use self to satisfy ruff
-
         # Railway pattern with u validation (DRY)
         name_validation = u.validate_length(
             message.name,
@@ -86,7 +83,6 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
     @override
     def handle(self, message: GetUserQuery) -> r[UserDTO]:
         """Handle user retrieval query using c error codes."""
-        _ = self.handler_name  # Use self to satisfy ruff
         if message.user_id == "not-found":
             return r[UserDTO].fail(
                 c.Errors.NOT_FOUND_ERROR,
@@ -112,20 +108,20 @@ class HandlersService(s[m.ConfigMap]):
 
         handler = CommandHandler()
 
-        command = CreateUserCommand.model_validate({
-            "user_id": "user-123",
-            "name": "Alice",
-            "email": "alice@example.com",
-        })
+        command = CreateUserCommand(
+            user_id="user-123",
+            name="Alice",
+            email="alice@example.com",
+        )
         result = handler.handle(command)
         if result.is_success:
             print(f"✅ Command executed: {result.value}")
 
-        invalid_command = CreateUserCommand.model_validate({
-            "user_id": "user-456",
-            "name": "",
-            "email": "bob@example.com",
-        })
+        invalid_command = CreateUserCommand(
+            user_id="user-456",
+            name="",
+            email="bob@example.com",
+        )
         invalid_result = handler.handle(invalid_command)
         if invalid_result.is_failure:
             print(f"❌ Command failed: {invalid_result.error}")
@@ -137,11 +133,11 @@ class HandlersService(s[m.ConfigMap]):
 
         command_handler = CommandHandler()
 
-        error_command = CreateUserCommand.model_validate({
-            "user_id": "error-user",
-            "name": "",
-            "email": "",
-        })
+        error_command = CreateUserCommand(
+            user_id="error-user",
+            name="",
+            email="",
+        )
 
         error_result = command_handler.handle(error_command)
         if error_result.is_failure:
@@ -172,13 +168,13 @@ class HandlersService(s[m.ConfigMap]):
 
         handler = QueryHandler()
 
-        query = GetUserQuery.model_validate({"user_id": "user-123"})
+        query = GetUserQuery(user_id="user-123")
         result = handler.handle(query)
         if result.is_success:
             user = result.value
             print(f"✅ Query result: {user.name} ({user.email})")
 
-        not_found_query = GetUserQuery.model_validate({"user_id": "not-found"})
+        not_found_query = GetUserQuery(user_id="not-found")
         not_found_result = handler.handle(not_found_query)
         if not_found_result.is_failure:
             print(f"❌ Query failed: {not_found_result.error}")
@@ -238,23 +234,10 @@ def main() -> None:
 
     if result.is_success:
         data = result.value
-        handlers = data.get("handlers_demonstrated", [])
-        patterns = data.get("cqrs_patterns", [])
-
-        handler_items: Sequence[object] = (
-            handlers
-            if isinstance(handlers, Sequence)
-            and not isinstance(handlers, str | bytes | bytearray)
-            else ()
-        )
-        pattern_items: Sequence[object] = (
-            patterns
-            if isinstance(patterns, Sequence)
-            and not isinstance(patterns, str | bytes | bytearray)
-            else ()
-        )
-        handler_count = len(handler_items)
-        pattern_count = len(pattern_items)
+        handler_count_raw = data.get("handler_types", 0)
+        handler_count_text = str(handler_count_raw)
+        handler_count = int(handler_count_text) if handler_count_text.isdigit() else 0
+        pattern_count = 3
         print(f"\n✅ Demonstrated {handler_count} handler patterns")
         print(f"✅ Used {pattern_count} CQRS patterns")
     else:

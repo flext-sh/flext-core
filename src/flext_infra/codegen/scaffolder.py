@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import c, m
+from flext_infra import c, m, u
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
@@ -144,6 +144,6 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
                 docstring=docstring,
             )
 
-            filepath.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(filepath, content, encoding=c.Infra.Encoding.DEFAULT)
             FlextInfraCodegenTransforms.run_ruff_fix(filepath)
             files_created.append(str(filepath))

@@ -67,9 +67,9 @@ def validate_transform_user(
     email_value = data.get("email")
 
     # Validate and extract with fixed types
-    if not isinstance(name_value, str) or not name_value:
+    if not u.is_type(name_value, str) or not name_value:
         return r[UserProfile].fail("Name is required and must be a string")
-    if not isinstance(email_value, str) or not email_value:
+    if not u.is_type(email_value, str) or not email_value:
         return r[UserProfile].fail("Email is required and must be a string")
 
     name: str = name_value
@@ -157,7 +157,7 @@ class UserService:
             )
             self.operation_count += 1
 
-            _ = self.logger.info(  # Using mixin logger
+            self.logger.info(  # Using mixin logger
                 "Creating user",
                 correlation_id=correlation_id,
                 operation_count=self.operation_count,
@@ -179,7 +179,7 @@ class UserService:
         """Create logging function for final result - advanced functional pattern."""
 
         def log_result(user: UserProfile) -> UserProfile:
-            _ = self.logger.info(
+            self.logger.info(
                 "User created successfully",
                 user_id=user.unique_id,
                 correlation_id=correlation_id,
@@ -191,7 +191,7 @@ class UserService:
 
     def _log_success(self, user: UserProfile) -> UserProfile:
         """Log success and return user (railway pattern)."""
-        _ = self.logger.debug(f"User {user.name} activated successfully")
+        self.logger.debug(f"User {user.name} activated successfully")
         return user
 
     def _validate_and_transform(
@@ -240,7 +240,7 @@ def demonstrate_utilities() -> None:
     )
 
     # Safe output with railway pattern
-    _ = result.map(print)
+    result.map(print)
 
 
 # Advanced exception handling with comprehensive error integration (DRY + SRP)
@@ -289,7 +289,7 @@ def demonstrate_exceptions() -> None:
         error_str = str(error)
         return r.ok(format_exception_message(error_str))
 
-    _ = r.traverse(
+    r.traverse(
         list(starmap(process_scenario, error_scenarios))
         + [
             # Standard exception conversion
@@ -322,7 +322,7 @@ def execute_validation_chain(
 ) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
     # Railway pattern with advanced functional composition (DRY + SRP)
-    _ = (
+    (
         validate_transform_user(user_data)
         .map(
             lambda user: (
@@ -360,7 +360,7 @@ def execute_demonstrations(
 ) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
     # Railway pattern with side effects (DRY - no manual loops)
-    _ = service.create_user(user_data).map(ignore_and_return_none)
+    service.create_user(user_data).map(ignore_and_return_none)
     # Execute demonstrations as side effects
     demonstrate_utilities()
     demonstrate_exceptions()
@@ -373,7 +373,7 @@ def main() -> None:
 
     with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        _ = logger.info(
+        logger.info(
             "Starting demonstration", correlation_id=str(correlation_id or "")
         )
 
@@ -393,7 +393,7 @@ def main() -> None:
         execute_service_operations(service, user_data)
         execute_demonstrations(service, user_data)
 
-        _ = logger.info("Comprehensive demonstration completed successfully")
+        logger.info("Comprehensive demonstration completed successfully")
 
 
 if __name__ == "__main__":

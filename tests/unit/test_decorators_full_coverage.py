@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, cast
@@ -92,17 +93,29 @@ def test_log_operation_track_perf_exception_adds_duration(
 ) -> None:
     fake_logger = _FakeLogger()
 
+    def _resolve_logger(
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
+    ) -> _FakeLogger:
+        return fake_logger
+
+    def _bind_operation_context(**_kwargs: object) -> str:
+        return "cid-1"
+
+    def _clear_operation_scope(**_kwargs: object) -> None:
+        return None
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._resolve_logger",
-        lambda _a, _f: fake_logger,
+        _resolve_logger,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._bind_operation_context",
-        lambda **_kw: "cid-1",
+        _bind_operation_context,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._clear_operation_scope",
-        lambda **_kw: None,
+        _clear_operation_scope,
     )
 
     @d.log_operation("boom", track_perf=True)
@@ -119,17 +132,29 @@ def test_log_operation_track_perf_exception_adds_duration(
 
 
 def test_retry_unreachable_timeouterror_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _execute_retry_loop(*_args: object, **_kwargs: object) -> Exception:
+        return ValueError("failed")
+
+    def _handle_retry_exhaustion(*_args: object, **_kwargs: object) -> None:
+        return None
+
+    def _resolve_logger(
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
+    ) -> _FakeLogger:
+        return _FakeLogger()
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._execute_retry_loop",
-        lambda *_args, **_kwargs: ValueError("failed"),
+        _execute_retry_loop,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._handle_retry_exhaustion",
-        lambda *_args, **_kwargs: None,
+        _handle_retry_exhaustion,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._resolve_logger",
-        lambda _a, _f: _FakeLogger(),
+        _resolve_logger,
     )
 
     @d.retry(max_attempts=1, error_code="X")
@@ -154,7 +179,11 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_logger = _FakeLogger()
-    monkeypatch.setattr("flext_core.decorators.time.sleep", lambda _s: None)
+
+    def _sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
 
     calls = {"n": 0}
 
@@ -222,9 +251,12 @@ def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
     fake_logger = _FakeLogger()
     _ = FlextContext.Variables.CorrelationId.set("cid-existing")
 
+    def _bind_context(*_args: object, **_kwargs: object) -> r[bool]:
+        return r[bool].fail("bind-fail", error_code="E_BIND")
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextLogger.bind_context",
-        lambda *_args, **_kwargs: r[bool].fail("bind-fail", error_code="E_BIND"),
+        _bind_context,
     )
 
     cid = d._bind_operation_context(
@@ -242,9 +274,12 @@ def test_clear_operation_scope_and_handle_log_result_paths(
 ) -> None:
     fake_logger = _FakeLogger()
 
+    def _clear_scope(_scope: str) -> r[bool]:
+        return r[bool].fail("clear-fail", error_code="E_CLR")
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextLogger.clear_scope",
-        lambda _scope: r[bool].fail("clear-fail", error_code="E_CLR"),
+        _clear_scope,
     )
 
     d._clear_operation_scope(
@@ -282,9 +317,13 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
     )
 
     fake_logger = _FakeLogger()
+
+    def _is_dict_like(_value: object) -> bool:
+        return False
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextRuntime.is_dict_like",
-        lambda _v: False,
+        _is_dict_like,
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E"),
@@ -364,17 +403,35 @@ def test_with_correlation_with_context_track_operation_and_factory(
     assert fn() == "ok"
     assert ensure_calls == [1]
 
+    def _resolve_logger(
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
+    ) -> _FakeLogger:
+        return fake_logger
+
+    def _bind_global_context(**_kwargs: object) -> r[bool]:
+        return r[bool].fail("bind", error_code="B")
+
+    def _unbind_global_context(*_keys: str) -> r[bool]:
+        return r[bool].fail("unbind", error_code="U")
+
+    def _bind_operation_context(**_kwargs: object) -> None:
+        return None
+
+    def _clear_operation_scope(**_kwargs: object) -> None:
+        return None
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._resolve_logger",
-        lambda _a, _f: fake_logger,
+        _resolve_logger,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextLogger.bind_global_context",
-        lambda **_kw: r[bool].fail("bind", error_code="B"),
+        _bind_global_context,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextLogger.unbind_global_context",
-        lambda *_ks: r[bool].fail("unbind", error_code="U"),
+        _unbind_global_context,
     )
 
     @d.with_context(service="svc")
@@ -385,11 +442,11 @@ def test_with_correlation_with_context_track_operation_and_factory(
 
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._bind_operation_context",
-        lambda **_kw: None,
+        _bind_operation_context,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._clear_operation_scope",
-        lambda **_kw: None,
+        _clear_operation_scope,
     )
 
     @d.track_operation("tracked", track_correlation=True)
@@ -409,17 +466,30 @@ def test_track_performance_success_and_failure_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_logger = _FakeLogger()
+
+    def _resolve_logger(
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
+    ) -> _FakeLogger:
+        return fake_logger
+
+    def _bind_operation_context(**_kwargs: object) -> str:
+        return "cid-perf"
+
+    def _clear_operation_scope(**_kwargs: object) -> None:
+        return None
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._resolve_logger",
-        lambda _a, _f: fake_logger,
+        _resolve_logger,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._bind_operation_context",
-        lambda **_kw: "cid-perf",
+        _bind_operation_context,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._clear_operation_scope",
-        lambda **_kw: None,
+        _clear_operation_scope,
     )
 
     @d.log_operation("perf-op")
@@ -452,13 +522,23 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
     assert fail_result.is_failure
 
     fake_logger = _FakeLogger()
+
+    def _resolve_logger(
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
+    ) -> _FakeLogger:
+        return fake_logger
+
+    def _execute_retry_loop(*_args: object, **_kwargs: object) -> str:
+        return "done"
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._resolve_logger",
-        lambda _a, _f: fake_logger,
+        _resolve_logger,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._execute_retry_loop",
-        lambda *_a, **_k: "done",
+        _execute_retry_loop,
     )
 
     @d.retry(max_attempts=1)
@@ -472,7 +552,11 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_logger = _FakeLogger()
-    monkeypatch.setattr("flext_core.decorators.time.sleep", lambda _s: None)
+
+    def _sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
 
     calls = {"n": 0}
 

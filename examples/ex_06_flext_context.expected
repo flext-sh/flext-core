@@ -1,5 +1,5 @@
 [core_context_methods]
-create.instance: True
+create.instance: 'FlextContext'
 create.has.operation: True
 create.has.user: True
 set.success: True
@@ -14,10 +14,9 @@ merge.get: 'merged'
 clone.get: 'v1'
 validate.success: True
 get_metadata: 'meta_value'
-export.min.has_global: True
-export.full.has_statistics: True
-export.full.has_metadata: True
-iter_scope_vars: ['global', 'session', 'user']
+export.min.type: 'ContextExport'
+export.full.type: 'ContextExport'
+iter_scope_vars: 'global,session,user'
 clear.keys: 0
 
 [container_and_service]
@@ -32,26 +31,26 @@ service_context.version: '1.2.3'
 service_context.restored: True
 
 [variables_and_domains]
-var.correlation_id: True
-var.parent_correlation_id: True
-var.service_name: True
-var.service_version: True
-var.user_id: True
-var.request_id: True
-var.request_timestamp: True
-var.operation_name: True
-var.operation_start: True
-var.operation_metadata: True
-alias.correlation: True
-alias.parent_correlation: True
-alias.service_name: True
-alias.service_version: True
-alias.user_id: True
-alias.request_id: True
-alias.request_timestamp: True
-alias.operation_name: True
-alias.operation_start: True
-alias.operation_metadata: True
+var.correlation_id: 'StructlogProxyContextVar'
+var.parent_correlation_id: 'StructlogProxyContextVar'
+var.service_name: 'StructlogProxyContextVar'
+var.service_version: 'StructlogProxyContextVar'
+var.user_id: 'StructlogProxyContextVar'
+var.request_id: 'StructlogProxyContextVar'
+var.request_timestamp: 'StructlogProxyContextVar'
+var.operation_name: 'StructlogProxyContextVar'
+var.operation_start: 'StructlogProxyContextVar'
+var.operation_metadata: 'StructlogProxyContextVar'
+alias.correlation: 'StructlogProxyContextVar'
+alias.parent_correlation: 'StructlogProxyContextVar'
+alias.service_name: 'StructlogProxyContextVar'
+alias.service_version: 'StructlogProxyContextVar'
+alias.user_id: 'StructlogProxyContextVar'
+alias.request_id: 'StructlogProxyContextVar'
+alias.request_timestamp: 'StructlogProxyContextVar'
+alias.operation_name: 'StructlogProxyContextVar'
+alias.operation_start: 'StructlogProxyContextVar'
+alias.operation_metadata: 'StructlogProxyContextVar'
 correlation.get_set: 'cid-1'
 correlation.new.value: 'cid-2'
 correlation.new.current: 'cid-2'
@@ -62,5 +61,5 @@ serialization.has_correlation_key: True
 serialization.has_operation_name: 'bulk-sync'
 timed_operation.has_end: True
 timed_operation.has_duration: True
-utilities.clear_context.correlation: None
+utilities.clear_context.correlation: ''
 utilities.ensure_correlation_id.non_empty: True

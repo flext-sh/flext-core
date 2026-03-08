@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t
 
@@ -133,7 +133,7 @@ class Ex12FlextRegistry(Examples):
         self.check("get_plugin.missing", plugin_get_missing.is_failure)
         self.check(
             "list_plugins.transports",
-            sorted(cast("list[str]", plugin_list.unwrap_or([]))),
+            sorted(plugin_list.unwrap_or([])),
         )
         self.check("unregister_plugin.ok", plugin_unreg_ok.is_success)
         self.check("unregister_plugin.missing", plugin_unreg_missing.is_failure)

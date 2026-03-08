@@ -262,6 +262,10 @@ known-first-party = [
 extraPaths = [
   "src",
 ]
+executionEnvironments = [
+  { root = "src", reportPrivateUsage = "error" },
+  { root = "tests", reportPrivateUsage = "none" },
+]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 typeCheckingMode = "strict"

@@ -547,7 +547,7 @@ class FlextInfraRefactorMROImportRewriter:
 
         rendered = ast.unparse(ast.fix_missing_locations(rewritten))
         if apply_changes and rendered != source:
-            file_path.write_text(f"{rendered}\n", encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(file_path, f"{rendered}\n", encoding=c.Infra.Encoding.DEFAULT)
         return m.Infra.Refactor.MRORewriteResult(
             file=str(file_path),
             replacements=rewriter.replacements,

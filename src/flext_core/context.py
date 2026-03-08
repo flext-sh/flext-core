@@ -521,26 +521,16 @@ class FlextContext(FlextRuntime):
 
         def normalize_plain(raw_value: t.ContainerValue) -> t.ContainerValue:
             mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
-            try:
-                normalized_map = m.ConfigMap.model_validate(mapped_value)
-            except (TypeError, ValueError, AttributeError) as exc:
-                FlextContext._logger.debug(
-                    "Context value is not a valid ConfigMap on first validation pass",
-                    exc_info=exc,
-                )
-                root_value = getattr(mapped_value, "root", None)
-                try:
-                    normalized_map = m.ConfigMap.model_validate(root_value)
-                except (TypeError, ValueError, AttributeError) as root_exc:
-                    FlextContext._logger.debug(
-                        "Context value root payload is not a valid ConfigMap",
-                        exc_info=root_exc,
+            if isinstance(mapped_value, Mapping):
+                return {
+                    str(item_key): normalize_plain(
+                        FlextRuntime.normalize_to_general_value(item_value),
                     )
-                    return mapped_value
-            return {
-                str(item_key): normalize_plain(item_value)
-                for item_key, item_value in normalized_map.items()
-            }
+                    for item_key, item_value in mapped_value.items()
+                }
+            if isinstance(mapped_value, list):
+                return [normalize_plain(item) for item in mapped_value]
+            return mapped_value
 
         return r[t.ContainerValue].ok(normalize_plain(value))
 

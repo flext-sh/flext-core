@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from types import ModuleType
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, r
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, r, u
 
 from .shared import Examples
 
@@ -69,10 +69,10 @@ class Ex08FlextContainer(Examples):
         max_services = config_map["max_services"]
         enable_factory_caching = config_map["enable_factory_caching"]
 
-        max_services_num = max_services if isinstance(max_services, int) else -1
+        max_services_num = max_services if u.Guards.is_type(max_services, int) else -1
         factory_cache_flag = (
             enable_factory_caching
-            if isinstance(enable_factory_caching, bool)
+            if u.Guards.is_type(enable_factory_caching, bool)
             else False
         )
 
@@ -146,7 +146,7 @@ class Ex08FlextContainer(Examples):
 
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"
-        _ = container.register(removable_name, self.rand_int(1, 1000))
+        container.register(removable_name, self.rand_int(1, 1000))
         unregister_ok = container.unregister(removable_name)
         unregister_missing = container.unregister(missing_remove_name)
         self.check("unregister.existing.success", unregister_ok.is_success)

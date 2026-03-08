@@ -104,16 +104,6 @@ class FlextUtilitiesParser:
         return r[str].ok(str(value))
 
     @staticmethod
-    def _convert_fallback[T](
-        value: t.ContainerValue,
-        target_type: type[T],
-        default: T,
-    ) -> T:
-        """Fallback: try direct type constructor."""
-        # Guard: t.ContainerValue type doesn't accept constructor arguments
-        return default
-
-    @staticmethod
     def _convert_to_bool(value: t.ContainerValue, *, default: bool) -> bool:
         """Convert value to bool with fallback."""
         if isinstance(value, bool):

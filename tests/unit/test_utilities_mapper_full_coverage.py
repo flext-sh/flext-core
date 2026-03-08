@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from flext_core import c, m, p, r, t, u
 
 Cache = u.Cache
-Mapper = u.Mapper.__mro__[1]
+Mapper = u.Mapper
 
 
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
@@ -84,8 +84,24 @@ def _times_two(value: t.ContainerValue) -> t.ContainerValue:
     return cast("int", value) * 2
 
 
-def _identity(value: t.ContainerValue) -> t.ContainerValue:
-    return value
+def _raise_value_error(_value: object) -> object:
+    msg = "x"
+    raise ValueError(msg)
+
+
+def _normalize_not_dict(_value: object) -> str:
+    return "not-a-dict"
+
+
+def _negative(value: int) -> bool:
+    return value < 0
+
+
+def test_bad_string_and_bad_bool_raise_value_error() -> None:
+    with pytest.raises(ValueError, match="cannot stringify"):
+        _ = str(BadString())
+    with pytest.raises(ValueError, match="cannot bool"):
+        _ = bool(BadBool())
 
 
 class ExplodingLenList(UserList[object]):
@@ -349,30 +365,25 @@ def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
 
 
 @pytest.mark.parametrize(
-    ("convert_spec", "value", "expected"),
+    ("value", "convert_spec", "expected"),
     [
-        (int, "bad", 0),
-        (float, "bad", 0.0),
-        (str, BadString(), ""),
-        (bool, BadBool(), False),
-        (list, 1, []),
-        (dict, 1, {}),
-        (tuple, 1, ()),
-        (set, 1, []),
-        (lambda _x: (_ for _ in ()).throw(ValueError("x")), 1, 1),
+        pytest.param("bad", int, 0, id="int-fallback"),
+        pytest.param("bad", float, 0.0, id="float-fallback"),
+        pytest.param(1, list, [], id="list-fallback"),
+        pytest.param(1, dict, {}, id="dict-fallback"),
+        pytest.param(1, tuple, (), id="tuple-fallback"),
+        pytest.param(1, set, [], id="set-fallback"),
+        pytest.param(1, _raise_value_error, 1, id="callable-error-fallback"),
     ],
 )
 def test_convert_default_fallback_matrix(
     mapper: type[Mapper],
-    convert_spec: Callable[[object], object] | type,
     value: t.ContainerValue,
+    convert_spec: Callable[[object], object] | type,
     expected: t.ContainerValue,
 ) -> None:
-    result = mapper._build_apply_convert(
-        value,
-        cast("Mapping[str, t.ContainerValue]", {"convert": convert_spec}),
-    )
-    assert result == expected
+    operations = cast("Mapping[str, t.ContainerValue]", {"convert": convert_spec})
+    assert mapper._build_apply_convert(value, operations) == expected
 
 
 def test_convert_sequence_branch_returns_tuple(mapper: type[Mapper]) -> None:
@@ -404,7 +415,7 @@ def test_transform_option_extract_and_step_helpers(
     monkeypatch.setattr(
         Cache,
         "normalize_component",
-        staticmethod(lambda _x: "not-a-dict"),
+        staticmethod(_normalize_not_dict),
     )
     assert mapper._apply_normalize({"a": 1}, normalize=True) == {"a": 1}
 
@@ -429,34 +440,25 @@ def test_build_apply_transform_and_process_error_paths(
     def explode_transform_steps(
         _result: Mapping[str, t.ContainerValue],
         *,
-        normalize: bool,
-        map_keys: Mapping[str, str] | None,
-        filter_keys: set[str] | None,
-        exclude_keys: set[str] | None,
-        strip_none: bool,
-        strip_empty: bool,
-        to_json: bool,
+        _normalize: bool,
+        _map_keys: Mapping[str, str] | None,
+        _filter_keys: set[str] | None,
+        _exclude_keys: set[str] | None,
+        _strip_none: bool,
+        _strip_empty: bool,
+        _to_json: bool,
     ) -> dict[str, t.ContainerValue]:
-        _ = (
-            normalize,
-            map_keys,
-            filter_keys,
-            exclude_keys,
-            strip_none,
-            strip_empty,
-            to_json,
-        )
         raise RuntimeError(msg)
 
     msg = "explode transform"
     monkeypatch.setattr(
-        Mapper,
+        mapper,
         "_apply_transform_steps",
         staticmethod(explode_transform_steps),
     )
-    assert (
-        mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "stop") == "d"
-    )
+    assert mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "stop") == {
+        "a": 1,
+    }
     assert mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "skip") == {
         "a": 1,
     }
@@ -464,14 +466,14 @@ def test_build_apply_transform_and_process_error_paths(
     assert mapper._build_apply_process(1, {"process": 1}, 0, "stop") == 1
     process_map_ops = cast(
         "Mapping[str, t.ContainerValue]",
-        {"process": lambda x: x + 1},
+        {"process": _plus_one},
     )
     assert mapper._build_apply_process({"a": 1}, process_map_ops, 0, "stop") == {
         "a": 2,
     }
     process_fail_ops = cast(
         "Mapping[str, t.ContainerValue]",
-        {"process": lambda _x: (_ for _ in ()).throw(ValueError("x"))},
+        {"process": _raise_value_error},
     )
     assert mapper._build_apply_process(1, process_fail_ops, 7, "stop") == 7
     assert mapper._build_apply_process(1, process_fail_ops, 7, "skip") == 1
@@ -495,7 +497,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
 
     bad_sort_ops = cast(
         "Mapping[str, t.ContainerValue]",
-        {"sort": lambda _x: (_ for _ in ()).throw(ValueError("x"))},
+        {"sort": _raise_value_error},
     )
     bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)
     assert bad_sort == [1, 2]
@@ -544,7 +546,7 @@ def test_construct_transform_and_deep_eq_branches(
         "Mapping[str, t.ContainerValue]",
         {
             "name": {"field": "name", "ops": "skip-ops"},
-            "n": {"field": "n", "ops": {"map": lambda x: x + 1}},
+            "n": {"field": "n", "ops": {"map": _plus_one}},
             "literal": 5,
         },
     )
@@ -681,7 +683,7 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     }
     found_callable = mapper.find_callable(predicates, 1)
     assert found_callable.is_success and found_callable.value == "yes"
-    not_found_callable = mapper.find_callable({"no": lambda value: value < 0}, 1)
+    not_found_callable = mapper.find_callable({"no": _negative}, 1)
     assert not_found_callable.is_failure
 
 
@@ -822,7 +824,9 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
     assert mapper.as_(1, int) == 1
     assert mapper.as_("1", int, strict=True, default=0) == 0
     assert mapper.as_("1", int) == 1
-    assert mapper.as_("1.5", float) == pytest.approx(1.5)
+    float_value = mapper.as_("1.5", float)
+    assert isinstance(float_value, float)
+    assert abs(float_value - 1.5) < 1e-9
     assert mapper.as_("true", bool) is True
     assert mapper.as_("maybe", bool, default=False) is False
     assert mapper.as_(None, int, default=3) == 3
@@ -850,14 +854,14 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     ) == [1, 2]
     assert mapper._build_apply_map(
         [1, 2],
-        cast("Mapping[str, t.ContainerValue]", {"map": lambda x: x + 1}),
+        cast("Mapping[str, t.ContainerValue]", {"map": _plus_one}),
     ) == [2, 3]
     assert mapper._apply_map_keys({"a": 1}, map_keys={"b": "B"}) == {"a": 1}
     assert mapper._apply_strip_none({"a": None, "b": 1}, strip_none=True) == {"b": 1}
     assert mapper._apply_strip_empty({"a": "", "b": 1}, strip_empty=True) == {"b": 1}
     process_list_ops = cast(
         "Mapping[str, t.ContainerValue]",
-        {"process": lambda x: x + 1},
+        {"process": _plus_one},
     )
     assert mapper._build_apply_process([1, 2], process_list_ops, 0, "stop") == [2, 3]
 
@@ -871,7 +875,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
 
     sorted_ok = mapper._build_apply_sort(
         [3, 1, 2],
-        cast("Mapping[str, t.ContainerValue]", {"sort": lambda x: x}),
+        cast("Mapping[str, t.ContainerValue]", {"sort": int}),
     )
     assert sorted_ok == [1, 2, 3]
     assert mapper._build_apply_sort([3, 1], {"sort": True}) == [1, 3]
@@ -941,9 +945,6 @@ def test_remaining_uncovered_branches(
     terminal_default = mapper.extract({"a": None}, "a", default="fallback")
     assert terminal_default.is_success
     assert terminal_default.value == "fallback"
-
-    class HasNone:
-        x: None = None
 
     class MaybeModel(BaseModel):
         x: str | None = None

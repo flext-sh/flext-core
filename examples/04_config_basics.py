@@ -174,7 +174,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             print(f"✅ Environment debug: {env_config.debug}")
 
             for key in env_vars:
-                _ = os.environ.pop(key, None)
+                os.environ.pop(key, None)
             return FlextResult[bool].ok(value=True)
 
         return set_env_vars().flat_map(create_and_display_config)
@@ -209,7 +209,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             """Test valid configuration."""
             print("\n=== Configuration Validation ===")
             try:
-                _ = AppConfig(
+                AppConfig(
                     database_url=f"postgresql://{c.Platform.DEFAULT_HOST}/db",
                     api_timeout=c.Network.DEFAULT_TIMEOUT,
                 )
@@ -247,7 +247,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             AppConfig.reset_for_testing()
             try:
                 invalid_data = {"log_level": "INVALID"}
-                _ = AppConfig.model_validate(invalid_data)
+                AppConfig.model_validate(invalid_data)
                 print("⚠️  Note: Log level validation handled by field_validator")
                 print("✅ Config created (validation handled by type system)")
                 return FlextResult[bool].ok(value=True)
@@ -313,7 +313,7 @@ def demonstrate_file_config() -> FlextResult[bool]:
         """Create temporary config file safely."""
         config_file = Path("example_config.json")
         try:
-            _ = config_file.write_text(
+            config_file.write_text(
                 f'{{"database_url": "postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb", "api_timeout": {c.Network.DEFAULT_TIMEOUT}}}',
                 encoding=FlextConstants.Utilities.DEFAULT_ENCODING,
             )

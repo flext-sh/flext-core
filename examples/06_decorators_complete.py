@@ -29,6 +29,7 @@ from flext_core import (
     m,
     r,
     s,
+    u,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -249,18 +250,18 @@ def main() -> None:
         data = result.value
         decorators = (
             data.root.get("decorators_demonstrated")
-            if isinstance(data.root, dict)
+            if u.is_type(data.root, dict)
             else None
         )
         categories = (
             data.root.get("decorator_categories")
-            if isinstance(data.root, dict)
+            if u.is_type(data.root, dict)
             else None
         )
         if (
             decorators is not None
             and categories is not None
-            and isinstance(decorators, (list, tuple))
+            and u.is_type(decorators, (list, tuple))
         ):
             decorators_list = list(decorators)
             print(f"\n✅ Demonstrated {categories} decorator categories")

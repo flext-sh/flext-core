@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping
-from typing import Protocol, TypeAlias, runtime_checkable
+from typing import Protocol, TypeAlias, TypeVar, runtime_checkable
 
 from pydantic import BaseModel
 
@@ -54,6 +54,8 @@ _DispatchableHandler: TypeAlias = (
     | HandleProtocol
     | ExecuteProtocol
 )
+
+_DispatchValueT = TypeVar("_DispatchValueT")
 
 
 class FlextDispatcher:
@@ -110,6 +112,20 @@ class FlextDispatcher:
             )
 
         return self._execute_handler(handler, message, route_name)
+
+    def dispatch_typed(
+        self,
+        message: p.Routable,
+        expected_type: type[_DispatchValueT],
+    ) -> r[_DispatchValueT]:
+        """Dispatch a message and return a strongly typed payload.
+
+        This is the canonical ergonomic API for examples and application code that
+        expects a concrete payload type and should avoid ad-hoc narrowing logic.
+        """
+        return self.dispatch(message).flat_map(
+            lambda value: self._coerce_dispatch_value(value, expected_type)
+        )
 
     def publish(
         self,
@@ -223,10 +239,6 @@ class FlextDispatcher:
                 result_raw = handler(
                     message,
                 )
-            else:
-                return r[t.ContainerValue].fail(
-                    f"Handler for {route_name} is not callable",
-                )
 
             # Handle ResultLike returns natively
             if isinstance(result_raw, p.ResultLike):
@@ -258,6 +270,19 @@ class FlextDispatcher:
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
+
+    @staticmethod
+    def _coerce_dispatch_value(
+        value: t.ContainerValue,
+        expected_type: type[_DispatchValueT],
+    ) -> r[_DispatchValueT]:
+        """Coerce dispatcher payload to expected type with typed result."""
+        if isinstance(value, expected_type):
+            return r[_DispatchValueT].ok(value)
+        return r[_DispatchValueT].fail(
+            f"Dispatch returned {type(value).__name__}; expected {expected_type.__name__}",
+            error_code=c.Errors.VALIDATION_ERROR,
+        )
 
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection."""

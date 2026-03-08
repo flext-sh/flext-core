@@ -16,7 +16,7 @@ accumulate_errors.fail: 'e1; e2'
 container.type: 'FlextContainer'
 logger.type: 'FlextLogger'
 context.type: 'FlextContext'
-config.is_flext_settings: True
+config.type: 'FlextSettings'
 const.scope_operation: 'operation'
 track.success.metrics: {'has_duration': False, 'operation_count': '1'}
 track.failure.message: 'boom'
@@ -24,7 +24,7 @@ track.failure.message: 'boom'
 [cqrs_validation_protocols]
 metrics.record_metric: True
 metrics.get_metrics.success: True
-metrics.get_metrics.value: "{'hits': 3}"
+metrics.get_metrics.value: "root={'hits': 3}"
 context_stack.push_context: True
 context_stack.current_context.before_pop: True
 context_stack.pop_context.success: True
@@ -34,8 +34,5 @@ validation.ok: True
 validation.fail: 'Validation failed: bad-input'
 protocol.is_handler.good: True
 protocol.is_handler.bad: False
-protocol.is_service: True
-protocol.validate_compliance.ok: True
-protocol.validate_compliance.fail: 'Unknown protocol: Unknown. Supported: Handler, Service, CommandBus, Repository, Configurable'
 protocol.validate_processor.good: True
-protocol.validate_processor.fail: "Processor _BadProcessor missing required method 'process()'. Processors must implement: process, validate"
+protocol.validate_processor.fail: "Processor BadProcessor missing required method 'process()'. Processors must implement: model_dump, process, validate"

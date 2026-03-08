@@ -300,9 +300,17 @@ class FlextUtilitiesGenerators:
             if isinstance(normalized, Mapping):
                 try:
                     return dict(normalized.items())
-                except (TypeError, ValueError, AttributeError):
-                    return {}
-            return {}
+                except (TypeError, ValueError, AttributeError) as e:
+                    msg = (
+                        f"Failed to convert normalized BaseModel {value.__class__.__name__} "
+                        f"to dict: {e}"
+                    )
+                    raise TypeError(msg) from e
+            msg = (
+                f"Normalized BaseModel {value.__class__.__name__} "
+                f"is not mapping-like ({normalized.__class__.__name__})"
+            )
+            raise TypeError(msg)
 
         msg = f"Cannot convert {value.__class__.__name__} to dict"
         raise TypeError(msg)

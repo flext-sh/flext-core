@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
-from returns.io import IOFailure, IOResult, IOSuccess
+from returns.io import IOFailure, IOSuccess
 from returns.maybe import Nothing, Some
 
 from examples.shared import Examples
@@ -107,7 +107,7 @@ class Ex01FlextResult(Examples):
 
         from_io_ok = r[int].from_io_result(IOSuccess(11))
         from_io_fail = r[int].from_io_result(IOFailure("x"))
-        from_io_bad = r[int].from_io_result(cast("IOResult[int, str]", "bad-io-result"))
+        from_io_bad = r[int].from_io_result("bad-io-result")
         self.check("from_io_result.success", from_io_ok.is_success)
         self.check("from_io_result.failure", from_io_fail.error)
         self.check("from_io_result.invalid", from_io_bad.error)
@@ -204,7 +204,7 @@ class Ex01FlextResult(Examples):
 
         self.check("unwrap.success", success.unwrap())
         try:
-            _ = failure.unwrap()
+            failure.unwrap()
             self.check("unwrap.failure.raises", False)
         except RuntimeError as exc:
             self.check("unwrap.failure.raises", True)

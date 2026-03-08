@@ -115,7 +115,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             if code != 0:
                 failures += 1
             log = output_dir / f"build-{name}.log"
-            log.write_text(output + "\n", encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(log, output + "\n", encoding=c.Infra.Encoding.DEFAULT)
             records.append({
                 c.Infra.Toml.PROJECT: name,
                 c.Infra.Toml.PATH: str(path),
@@ -545,7 +545,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
 
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(
+            u.write_file(
+                output_path,
                 "\n".join(lines).rstrip() + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
@@ -601,10 +602,10 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 updated = existing
 
             changelog_path.parent.mkdir(parents=True, exist_ok=True)
-            changelog_path.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(changelog_path, updated, encoding=c.Infra.Encoding.DEFAULT)
             latest_path.parent.mkdir(parents=True, exist_ok=True)
-            latest_path.write_text(notes_text, encoding=c.Infra.Encoding.DEFAULT)
-            tagged_path.write_text(notes_text, encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(latest_path, notes_text, encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(tagged_path, notes_text, encoding=c.Infra.Encoding.DEFAULT)
 
             logger.info("release_changelog_written", path=str(changelog_path))
             logger.info("release_tagged_notes_written", path=str(tagged_path))

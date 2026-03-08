@@ -2,380 +2,327 @@
 
 from __future__ import annotations
 
-import sys
-from collections.abc import Mapping
-from dataclasses import dataclass
-from pathlib import Path
+from typing import override
 
-from flext_core import FlextDispatcher, r, u
+from pydantic import BaseModel
 
-_RESULTS: list[str] = []
+from flext_core import FlextDispatcher, m, p, r, t
 
-
-def _check(label: str, value: object) -> None:
-    _RESULTS.append(f"{label}: {_ser(value)}")
+from .shared import Examples
 
 
-def _section(name: str) -> None:
-    if _RESULTS:
-        _RESULTS.append("")
-    _RESULTS.append(f"[{name}]")
+class Ex04FlextDispatcher(Examples):
+    """Golden-file tests for ``FlextDispatcher`` public API."""
 
+    # -- Message models (Pydantic, Routable) -----------------------------------
 
-def _ser(v: object) -> str:
-    if v is None:
-        return "None"
-    if isinstance(v, bool):
-        return str(v)
-    if isinstance(v, (int, float)):
-        return str(v)
-    if isinstance(v, str):
-        return repr(v)
-    if u.is_list(v):
-        return "[" + ", ".join(_ser(x) for x in v) + "]"
-    if u.is_dict_like(v):
-        pairs = ", ".join(
-            f"{_ser(k)}: {_ser(val)}"
-            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
-        return "{" + pairs + "}"
-    if isinstance(v, type):
-        return v.__name__
-    return type(v).__name__
+    class CreateUser(BaseModel):
+        """Command model for user creation."""
 
+        username: str
+        command_type: str = "create_user"
+        query_type: str = ""
+        event_type: str = ""
 
-def _verify() -> None:
-    actual = "\n".join(_RESULTS).strip() + "\n"
-    me = Path(__file__)
-    expected_path = me.with_suffix(".expected")
-    n = sum(1 for line in _RESULTS if ": " in line and not line.startswith("["))
-    if expected_path.exists():
-        expected = expected_path.read_text(encoding="utf-8")
-        if actual == expected:
-            sys.stdout.write(f"PASS: {me.stem} ({n} checks)\n")
-        else:
-            actual_path = me.with_suffix(".actual")
-            actual_path.write_text(actual, encoding="utf-8")
-            sys.stdout.write(
-                f"FAIL: {me.stem} — diff {expected_path.name} {actual_path.name}\n"
+    class GetUser(BaseModel):
+        """Query model for user retrieval."""
+
+        username: str
+        command_type: str = ""
+        query_type: str = "get_user"
+        event_type: str = ""
+
+    class DeleteUser(BaseModel):
+        """Command model for user deletion."""
+
+        username: str
+        command_type: str = "delete_user"
+        query_type: str = ""
+        event_type: str = ""
+
+    class FailingDelete(BaseModel):
+        """Command model that intentionally fails."""
+
+        username: str
+        command_type: str = "failing_delete"
+        query_type: str = ""
+        event_type: str = ""
+
+    class AutoCommand(BaseModel):
+        """Command routed through can_handle auto-discovery."""
+
+        payload: str
+        command_type: str = "auto_command"
+        query_type: str = ""
+        event_type: str = ""
+
+    class Ping(BaseModel):
+        """Command handled by a callable returning plain value."""
+
+        value: str
+        command_type: str = "ping"
+        query_type: str = ""
+        event_type: str = ""
+
+    class UnknownQuery(BaseModel):
+        """Query model with no registered handler."""
+
+        payload: str
+        command_type: str = ""
+        query_type: str = "unknown_query"
+        event_type: str = ""
+
+    class UserCreated(BaseModel):
+        """Event model published to subscribers."""
+
+        username: str
+        command_type: str = ""
+        query_type: str = ""
+        event_type: str = "user_created"
+
+    class NoSubscriberEvent(BaseModel):
+        """Event model without registered subscribers."""
+
+        marker: str
+        command_type: str = ""
+        query_type: str = ""
+        event_type: str = "no_subscribers"
+
+    # -- Handler classes -------------------------------------------------------
+
+    class CreateUserHandler:
+        """HandleProtocol handler for CreateUser commands."""
+
+        message_type: type[p.Routable]
+
+        def __init__(self) -> None:
+            """Bind handler to CreateUser message type."""
+            self.message_type = Ex04FlextDispatcher.CreateUser
+
+        def handle(self, message: p.Routable) -> t.ContainerValue:
+            """Create a deterministic response for CreateUser."""
+            typed_message = Ex04FlextDispatcher.CreateUser.model_validate(message)
+            return f"created:{typed_message.username}"
+
+    class GetUserDispatcher:
+        """DispatchMessageProtocol handler for GetUser queries."""
+
+        message_type: type[p.Routable]
+
+        def __init__(self) -> None:
+            """Bind dispatcher to GetUser query type."""
+            self.message_type = Ex04FlextDispatcher.GetUser
+
+        def dispatch_message(self, message: p.Routable) -> t.ContainerValue:
+            """Return deterministic user payload for GetUser."""
+            typed_message = Ex04FlextDispatcher.GetUser.model_validate(message)
+            return m.ConfigMap(
+                root={"state": "active", "username": typed_message.username}
             )
-            sys.exit(1)
-    else:
-        expected_path.write_text(actual, encoding="utf-8")
-        sys.stdout.write(f"GENERATED: {expected_path.name} ({n} checks)\n")
 
+    class DeleteExecutor:
+        """ExecuteProtocol handler for DeleteUser commands."""
 
-@dataclass(slots=True)
-class CreateUser:
-    """Command model for user creation."""
+        message_type: type[p.Routable]
 
-    username: str
-    command_type: str = "create_user"
-    query_type: str = ""
-    event_type: str = ""
+        def __init__(self) -> None:
+            """Bind executor to DeleteUser command type."""
+            self.message_type = Ex04FlextDispatcher.DeleteUser
 
+        def execute(self, message: p.Routable) -> t.ContainerValue:
+            """Create deterministic deletion output."""
+            typed_message = Ex04FlextDispatcher.DeleteUser.model_validate(message)
+            return f"deleted:{typed_message.username}"
 
-@dataclass(slots=True)
-class GetUser:
-    """Query model for user retrieval."""
+    class FailingDeleteCallable:
+        """Callable handler that returns a failure result."""
 
-    username: str
-    command_type: str = ""
-    query_type: str = "get_user"
-    event_type: str = ""
+        message_type: type[p.Routable]
 
+        def __init__(self) -> None:
+            """Bind callable to FailingDelete command type."""
+            self.message_type = Ex04FlextDispatcher.FailingDelete
 
-@dataclass(slots=True)
-class DeleteUser:
-    """Command model for user deletion."""
+        def __call__(self, message: p.Routable) -> r[str]:
+            """Reject deletion to exercise dispatcher failure handling."""
+            typed_message = Ex04FlextDispatcher.FailingDelete.model_validate(message)
+            return r[str].fail(f"deletion blocked for {typed_message.username}")
 
-    username: str
-    command_type: str = "delete_user"
-    query_type: str = ""
-    event_type: str = ""
+    class PingCallable:
+        """Callable handler that returns a bare value."""
 
+        message_type: type[p.Routable]
 
-@dataclass(slots=True)
-class FailingDelete:
-    """Command model that intentionally fails."""
+        def __init__(self) -> None:
+            """Bind callable to Ping command type."""
+            self.message_type = Ex04FlextDispatcher.Ping
 
-    username: str
-    command_type: str = "failing_delete"
-    query_type: str = ""
-    event_type: str = ""
+        def __call__(self, message: p.Routable) -> str:
+            """Return a bare pong value to test automatic wrapping."""
+            typed_message = Ex04FlextDispatcher.Ping.model_validate(message)
+            return f"pong:{typed_message.value}"
 
+    class AutoHandler:
+        """Auto-discovery handler selected through can_handle."""
 
-@dataclass(slots=True)
-class AutoCommand:
-    """Command routed through can_handle auto-discovery."""
+        def can_handle(self, message: type | p.Routable) -> bool:
+            """Report support for AutoCommand class or instance."""
+            return bool(message)
 
-    payload: str
-    command_type: str = "auto_command"
-    query_type: str = ""
-    event_type: str = ""
+        def handle(self, message: p.Routable) -> t.ContainerValue:
+            """Handle discovered command and return a synthetic payload."""
+            typed_message = Ex04FlextDispatcher.AutoCommand.model_validate(message)
+            return f"auto:{typed_message.payload}"
 
+    class UserCreatedSubscriber:
+        """Event subscriber implementing HandleProtocol."""
 
-@dataclass(slots=True)
-class Ping:
-    """Command handled by a callable returning plain value."""
+        event_type: type[p.Routable]
 
-    value: str
-    command_type: str = "ping"
-    query_type: str = ""
-    event_type: str = ""
+        def __init__(self) -> None:
+            """Create an in-memory event sink."""
+            self.event_type = Ex04FlextDispatcher.UserCreated
+            self.events: list[str] = []
 
+        def handle(self, message: p.Routable) -> t.ContainerValue:
+            """Store event entries when receiving UserCreated."""
+            typed_message = Ex04FlextDispatcher.UserCreated.model_validate(message)
+            self.events.append(f"user:{typed_message.username}")
+            return True
 
-@dataclass(slots=True)
-class UnknownQuery:
-    """Query model with no registered handler."""
+    class AuditSubscriber:
+        """Event subscriber implementing DispatchMessageProtocol."""
 
-    payload: str
-    command_type: str = ""
-    query_type: str = "unknown_query"
-    event_type: str = ""
+        event_type: type[p.Routable]
 
+        def __init__(self) -> None:
+            """Create an in-memory audit sink."""
+            self.event_type = Ex04FlextDispatcher.UserCreated
+            self.events: list[str] = []
 
-@dataclass(slots=True)
-class UserCreated:
-    """Event model published to subscribers."""
+        def dispatch_message(self, message: p.Routable) -> t.ContainerValue:
+            """Store audit entries when receiving UserCreated."""
+            typed_message = Ex04FlextDispatcher.UserCreated.model_validate(message)
+            self.events.append(f"audit:{typed_message.username}")
+            return True
 
-    username: str
-    command_type: str = ""
-    query_type: str = ""
-    event_type: str = "user_created"
 
+class _Ex04Exercise(Ex04FlextDispatcher):
+    """Exercise runner — separated to keep bindings above the exercise logic."""
 
-@dataclass(slots=True)
-class NoSubscriberEvent:
-    """Event model without registered subscribers."""
+    @override
+    def exercise(self) -> None:
+        """Run all scenarios and record deterministic golden output."""
+        self._exercise_register_and_dispatch()
+        self._exercise_auto_discovery()
+        self._exercise_error_cases()
+        self._exercise_event_publishing()
 
-    marker: str
-    command_type: str = ""
-    query_type: str = ""
-    event_type: str = "no_subscribers"
+    def _exercise_register_and_dispatch(self) -> None:
+        """Cover constructor, register_handler and dispatch happy paths."""
+        self.section("register_and_dispatch")
 
+        dispatcher = FlextDispatcher()
+        self.check("constructor.type", type(dispatcher).__name__)
 
-class CreateUserHandler:
-    """HandleProtocol handler for CreateUser commands."""
+        reg_handle = dispatcher.register_handler(self.CreateUserHandler())
+        self.check("register(HandleProtocol).is_success", reg_handle.is_success)
 
-    message_type = CreateUser
+        reg_dispatch_msg = dispatcher.register_handler(
+            self.GetUserDispatcher(), is_event=False
+        )
+        self.check(
+            "register(DispatchMessageProtocol).is_success",
+            reg_dispatch_msg.is_success,
+        )
 
-    def handle(self, message: object) -> str:
-        """Return confirmation for a supported create command."""
-        if isinstance(message, CreateUser):
-            return f"created:{message.username}"
-        return "created:"
+        reg_execute = dispatcher.register_handler(self.DeleteExecutor())
+        self.check("register(ExecuteProtocol).is_success", reg_execute.is_success)
 
+        reg_callable = dispatcher.register_handler(self.PingCallable())
+        self.check("register(callable).is_success", reg_callable.is_success)
 
-class GetUserDispatcher:
-    """DispatchMessageProtocol handler for GetUser queries."""
+        create_r = dispatcher.dispatch(self.CreateUser(username="alice"))
+        self.check("dispatch(command).is_success", create_r.is_success)
+        self.check("dispatch(command).value", create_r.value)
 
-    message_type = GetUser
+        get_r = dispatcher.dispatch(self.GetUser(username="alice"))
+        self.check("dispatch(query).is_success", get_r.is_success)
+        self.check("dispatch(query).value", get_r.value)
 
-    def dispatch_message(self, message: object) -> Mapping[str, str]:
-        """Return a synthetic user payload for supported query."""
-        if isinstance(message, GetUser):
-            return {"state": "active", "username": message.username}
-        return {"state": "active", "username": ""}
+        delete_r = dispatcher.dispatch(self.DeleteUser(username="alice"))
+        self.check("dispatch(execute).is_success", delete_r.is_success)
+        self.check("dispatch(execute).value", delete_r.value)
 
+        ping_r = dispatcher.dispatch(self.Ping(value="x"))
+        self.check("dispatch(callable).is_success", ping_r.is_success)
+        self.check("dispatch(callable).value", ping_r.value)
 
-class DeleteExecutor:
-    """ExecuteProtocol handler for DeleteUser commands."""
+    def _exercise_auto_discovery(self) -> None:
+        """Cover can_handle route discovery for dispatch fallback."""
+        self.section("auto_discovery")
 
-    message_type = DeleteUser
+        dispatcher = FlextDispatcher()
 
-    def execute(self, message: object) -> str:
-        """Return deletion status for supported command."""
-        if isinstance(message, DeleteUser):
-            return f"deleted:{message.username}"
-        return "deleted:"
+        reg_auto = dispatcher.register_handler(self.AutoHandler())
+        self.check("register(can_handle).is_success", reg_auto.is_success)
 
+        auto_r = dispatcher.dispatch(self.AutoCommand(payload="fallback"))
+        self.check("dispatch(auto_discovery).is_success", auto_r.is_success)
+        self.check("dispatch(auto_discovery).value", auto_r.value)
 
-class FailingDeleteCallable:
-    """Callable handler that returns a failure result."""
+    def _exercise_error_cases(self) -> None:
+        """Cover registration and dispatch failure paths."""
+        self.section("error_cases")
 
-    message_type = FailingDelete
+        dispatcher = FlextDispatcher()
 
-    def __call__(self, message: object) -> r[str]:
-        """Reject deletion to exercise dispatcher failure handling."""
-        if isinstance(message, FailingDelete):
-            return r[str].fail(f"deletion blocked for {message.username}")
-        return r[str].fail("deletion blocked")
+        def _invalid_handler(message: p.Routable) -> str:
+            """Return a value but lacks route metadata for registration."""
+            return type(message).__name__
 
+        reg_invalid = dispatcher.register_handler(_invalid_handler)
+        self.check("register(no_route_attrs).is_failure", reg_invalid.is_failure)
 
-class PingCallable:
-    """Callable handler that returns a bare value."""
+        no_handler_r = dispatcher.dispatch(self.UnknownQuery(payload="none"))
+        self.check("dispatch(no_handler).is_failure", no_handler_r.is_failure)
 
-    message_type = Ping
+        reg_fail_handler = dispatcher.register_handler(self.FailingDeleteCallable())
+        self.check("register(failing_callable).is_success", reg_fail_handler.is_success)
 
-    def __call__(self, message: object) -> str:
-        """Return a bare pong value to test automatic wrapping."""
-        if isinstance(message, Ping):
-            return f"pong:{message.value}"
-        return "pong:"
+        failing_r = dispatcher.dispatch(self.FailingDelete(username="alice"))
+        self.check("dispatch(handler_returns_fail).is_failure", failing_r.is_failure)
 
+    def _exercise_event_publishing(self) -> None:
+        """Cover event registration and publish paths."""
+        self.section("event_publishing")
 
-class AutoHandler:
-    """Auto-discovery handler selected through can_handle."""
+        dispatcher = FlextDispatcher()
+        subscriber = self.UserCreatedSubscriber()
+        audit_subscriber = self.AuditSubscriber()
 
-    def can_handle(self, message: object) -> bool:
-        """Report support for AutoCommand class or instance."""
-        if isinstance(message, type):
-            return issubclass(message, AutoCommand)
-        return isinstance(message, AutoCommand)
+        reg_user = dispatcher.register_handler(subscriber, is_event=True)
+        self.check("register(event_subscriber).is_success", reg_user.is_success)
 
-    def handle(self, message: object) -> str:
-        """Handle discovered command and return a synthetic payload."""
-        if isinstance(message, AutoCommand):
-            return f"auto:{message.payload}"
-        return "auto:"
+        reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
+        self.check("register(audit_subscriber).is_success", reg_audit.is_success)
 
+        pub_one = dispatcher.publish(self.UserCreated(username="alice"))
+        self.check("publish(single).is_success", pub_one.is_success)
 
-class UserCreatedSubscriber:
-    """Event subscriber implementing HandleProtocol."""
+        pub_many = dispatcher.publish([
+            self.UserCreated(username="bruno"),
+            self.UserCreated(username="carla"),
+        ])
+        self.check("publish(list).is_success", pub_many.is_success)
 
-    event_type = UserCreated
+        self.check("subscriber.events", subscriber.events)
+        self.check("audit_subscriber.events", audit_subscriber.events)
 
-    def __init__(self) -> None:
-        """Create an in-memory event sink."""
-        self.events: list[str] = []
-
-    def handle(self, message: object) -> bool:
-        """Store event entries when receiving UserCreated."""
-        if isinstance(message, UserCreated):
-            self.events.append(f"user:{message.username}")
-        return True
-
-
-class AuditSubscriber:
-    """Event subscriber implementing DispatchMessageProtocol."""
-
-    event_type = UserCreated
-
-    def __init__(self) -> None:
-        """Create an in-memory audit sink."""
-        self.events: list[str] = []
-
-    def dispatch_message(self, message: object) -> bool:
-        """Store audit entries when receiving UserCreated."""
-        if isinstance(message, UserCreated):
-            self.events.append(f"audit:{message.username}")
-        return True
-
-
-def invalid_handler(message: object) -> str:
-    """Return a value but lacks route metadata for registration."""
-    return type(message).__name__
-
-
-def demo_register_and_dispatch() -> None:
-    """Cover constructor, register_handler and dispatch happy paths."""
-    _section("register_and_dispatch")
-
-    dispatcher = FlextDispatcher()
-    _check("constructor.type", type(dispatcher))
-
-    reg_handle = dispatcher.register_handler(CreateUserHandler())
-    _check("register(HandleProtocol).is_success", reg_handle.is_success)
-
-    reg_dispatch_msg = dispatcher.register_handler(GetUserDispatcher(), is_event=False)
-    _check("register(DispatchMessageProtocol).is_success", reg_dispatch_msg.is_success)
-
-    reg_execute = dispatcher.register_handler(DeleteExecutor())
-    _check("register(ExecuteProtocol).is_success", reg_execute.is_success)
-
-    reg_callable = dispatcher.register_handler(PingCallable())
-    _check("register(callable).is_success", reg_callable.is_success)
-
-    create_r = dispatcher.dispatch(CreateUser(username="alice"))
-    _check("dispatch(command).is_success", create_r.is_success)
-    _check("dispatch(command).value", create_r.value)
-
-    get_r = dispatcher.dispatch(GetUser(username="alice"))
-    _check("dispatch(query).is_success", get_r.is_success)
-    _check("dispatch(query).value", get_r.value)
-
-    delete_r = dispatcher.dispatch(DeleteUser(username="alice"))
-    _check("dispatch(execute).is_success", delete_r.is_success)
-    _check("dispatch(execute).value", delete_r.value)
-
-    ping_r = dispatcher.dispatch(Ping(value="x"))
-    _check("dispatch(callable).is_success", ping_r.is_success)
-    _check("dispatch(callable).value", ping_r.value)
-
-
-def demo_auto_discovery() -> None:
-    """Cover can_handle route discovery for dispatch fallback."""
-    _section("auto_discovery")
-
-    dispatcher = FlextDispatcher()
-
-    reg_auto = dispatcher.register_handler(AutoHandler())
-    _check("register(can_handle).is_success", reg_auto.is_success)
-
-    auto_r = dispatcher.dispatch(AutoCommand(payload="fallback"))
-    _check("dispatch(auto_discovery).is_success", auto_r.is_success)
-    _check("dispatch(auto_discovery).value", auto_r.value)
-
-
-def demo_error_cases() -> None:
-    """Cover registration and dispatch failure paths."""
-    _section("error_cases")
-
-    dispatcher = FlextDispatcher()
-
-    reg_invalid = dispatcher.register_handler(invalid_handler)
-    _check("register(no_route_attrs).is_failure", reg_invalid.is_failure)
-
-    no_handler_r = dispatcher.dispatch(UnknownQuery(payload="none"))
-    _check("dispatch(no_handler).is_failure", no_handler_r.is_failure)
-
-    reg_fail_handler = dispatcher.register_handler(FailingDeleteCallable())
-    _check("register(failing_callable).is_success", reg_fail_handler.is_success)
-
-    failing_r = dispatcher.dispatch(FailingDelete(username="alice"))
-    _check("dispatch(handler_returns_fail).is_failure", failing_r.is_failure)
-
-
-def demo_event_publishing() -> None:
-    """Cover event registration and publish paths."""
-    _section("event_publishing")
-
-    dispatcher = FlextDispatcher()
-    subscriber = UserCreatedSubscriber()
-    audit_subscriber = AuditSubscriber()
-
-    reg_user = dispatcher.register_handler(subscriber, is_event=True)
-    _check("register(event_subscriber).is_success", reg_user.is_success)
-
-    reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
-    _check("register(audit_subscriber).is_success", reg_audit.is_success)
-
-    pub_one = dispatcher.publish(UserCreated(username="alice"))
-    _check("publish(single).is_success", pub_one.is_success)
-
-    pub_many = dispatcher.publish([
-        UserCreated(username="bruno"),
-        UserCreated(username="carla"),
-    ])
-    _check("publish(list).is_success", pub_many.is_success)
-
-    _check("subscriber.events", subscriber.events)
-    _check("audit_subscriber.events", audit_subscriber.events)
-
-    pub_none = dispatcher.publish(NoSubscriberEvent(marker="ok"))
-    _check("publish(no_subscribers).is_success", pub_none.is_success)
-    _check("publish(no_subscribers).value", pub_none.value)
-
-
-def main() -> None:
-    """Run all scenarios and verify against golden file."""
-    demo_register_and_dispatch()
-    demo_auto_discovery()
-    demo_error_cases()
-    demo_event_publishing()
-    _verify()
+        pub_none = dispatcher.publish(self.NoSubscriberEvent(marker="ok"))
+        self.check("publish(no_subscribers).is_success", pub_none.is_success)
+        self.check("publish(no_subscribers).value", pub_none.value)
 
 
 if __name__ == "__main__":
-    main()
+    _Ex04Exercise(__file__).run()

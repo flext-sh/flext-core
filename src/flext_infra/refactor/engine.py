@@ -705,7 +705,7 @@ class FlextInfraRefactorEngine:
             result_code = tree.code
             modified = file_rule_modified or (result_code != original_source)
             if not dry_run and modified:
-                file_path.write_text(result_code, encoding=c.Infra.Encoding.DEFAULT)
+                u.write_file(file_path, result_code, encoding=c.Infra.Encoding.DEFAULT)
 
             return m.Infra.Refactor.Result(
                 file_path=file_path,

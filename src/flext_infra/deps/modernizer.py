@@ -37,23 +37,6 @@ def _normalize_container_value(
     return normalized
 
 
-def _as_container_dict(
-    value: t.ContainerValue
-    | Item
-    | TOMLDocument
-    | Mapping[str, t.ContainerValue]
-    | None,
-) -> dict[str, t.ContainerValue]:
-    """Validate and normalize mapping-like values to typed container dict."""
-    normalized = _normalize_container_value(value)
-    if normalized is None:
-        return {}
-    try:
-        return _CONTAINER_DICT_ADAPTER.validate_python(normalized)
-    except ValidationError:
-        return {}
-
-
 def _as_container_list(value: t.ContainerValue | Item | None) -> list[t.ContainerValue]:
     """Validate and normalize list-like values to typed container list."""
     normalized = _normalize_container_value(value)
@@ -158,6 +141,21 @@ def _ensure_table(parent: Table, key: str) -> Table:
     table = tomlkit.table()
     parent[key] = table
     return table
+
+
+def _ensure_pyright_execution_envs(
+    pyright: Table,
+    expected: list[dict[str, str]],
+    changes: list[str],
+) -> None:
+    """Ensure pyright executionEnvironments matches expected; append to changes if updated."""
+    raw = _unwrap_item(pyright.get("executionEnvironments"))
+    current: Sequence[t.ContainerValue] = raw if isinstance(raw, list) else []
+    if list(current) != expected:
+        pyright["executionEnvironments"] = expected
+        changes.append(
+            "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
+        )
 
 
 def _read_doc(path: Path) -> tomlkit.TOMLDocument | None:
@@ -474,15 +472,7 @@ class EnsurePyrightConfigPhase:
             if _unwrap_item(pyright.get("typeCheckingMode")) != c.Infra.Modes.STRICT:
                 pyright["typeCheckingMode"] = c.Infra.Modes.STRICT
                 changes.append("tool.pyright.typeCheckingMode set to strict")
-            current_envs_raw = _unwrap_item(pyright.get("executionEnvironments"))
-            current_envs = (
-                current_envs_raw if isinstance(current_envs_raw, list) else []
-            )
-            if current_envs != expected_envs:
-                pyright["executionEnvironments"] = expected_envs
-                changes.append(
-                    "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
-                )
+            _ensure_pyright_execution_envs(pyright, expected_envs, changes)
             return changes
 
         # Sub-projects: ensure minimal strict settings
@@ -491,14 +481,7 @@ class EnsurePyrightConfigPhase:
                 pyright[key] = value
                 changes.append(f"tool.pyright.{key} set to {value}")
 
-        current_envs_raw = _unwrap_item(pyright.get("executionEnvironments"))
-        current_envs = current_envs_raw if isinstance(current_envs_raw, list) else []
-        if current_envs != expected_envs:
-            pyright["executionEnvironments"] = expected_envs
-            changes.append(
-                "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
-            )
-
+        _ensure_pyright_execution_envs(pyright, expected_envs, changes)
         return changes
 
 

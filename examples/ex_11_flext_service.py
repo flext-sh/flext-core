@@ -5,12 +5,13 @@ from __future__ import annotations
 import sys
 from collections import UserDict
 from collections.abc import Mapping
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import (
     FlextContext,
+    FlextDispatcher,
     FlextExceptions,
     FlextService,
     FlextSettings,
@@ -19,6 +20,7 @@ from flext_core import (
     r,
     s,
     t,
+    u,
 )
 
 from .shared import Examples
@@ -103,7 +105,7 @@ class _RuntimeFactoryService(s[str]):
         return cls._create_runtime(
             config_type=FlextSettings,
             config_overrides={},
-            context=cast("p.Context", FlextContext.create()),
+            context=FlextContext.create(),
             subproject="examples",
             services={"svc_name": "service-value"},
             factories={"factory_name": lambda: "factory-value"},
@@ -305,15 +307,10 @@ class Ex11FlextService(Examples):
         stack = s.CQRS.ContextStack()
         self.check(
             "CQRS.ContextStack.push.dict",
-            stack.push_context(
-                cast(
-                    "t.Container",
-                    {
-                        "handler_name": ctx_handler_name,
-                        "handler_mode": "query",
-                    },
-                )
-            ).is_success,
+            stack.push_context({
+                "handler_name": ctx_handler_name,
+                "handler_mode": "query",
+            }).is_success,
         )
         current = stack.current_context()
         self.check(
@@ -324,13 +321,11 @@ class Ex11FlextService(Examples):
         self.check("CQRS.ContextStack.pop.handler_name", popped.get("handler_name"))
         self.check("CQRS.ContextStack.pop.empty", stack.pop_context().unwrap_or({}))
 
-        proto_handler = s.ProtocolValidation.is_handler(
-            cast("t.Container", _HandlerLike())
-        )
+        proto_handler = s.ProtocolValidation.is_handler(_HandlerLike())
         service_like = _ServiceLike()
         is_service_fn = getattr(s.ProtocolValidation, "is_service")
         proto_service = bool(is_service_fn(service_like))
-        proto_bus = s.ProtocolValidation.is_command_bus()
+        proto_bus = s.ProtocolValidation.is_command_bus(FlextDispatcher())
         validate_protocol_fn = getattr(
             s.ProtocolValidation, "validate_protocol_compliance"
         )
@@ -352,12 +347,12 @@ class Ex11FlextService(Examples):
         self.check("ProtocolValidation.processor_bad", processor_bad.error)
 
         def _validator_len(data: t.ContainerValue) -> r[bool]:
-            if isinstance(data, str) and len(data) >= 3:
+            if u.Guards.is_type(data, str) and len(data) >= 3:
                 return r[bool].ok(True)
             return r[bool].fail("too-short")
 
         def _validator_upper(data: t.ContainerValue) -> r[bool]:
-            if isinstance(data, str) and data.isupper():
+            if u.Guards.is_type(data, str) and data.isupper():
                 return r[bool].ok(True)
             return r[bool].fail("not-upper")
 
@@ -675,8 +670,8 @@ class Ex11FlextService(Examples):
 
         failing = _FailingService()
         try:
-            _ = failing.result
             self.check("result.failure.raises", False)
+            self.check("result.failure.value", failing.result)
         except FlextExceptions.BaseError as exc:
             self.check("result.failure.raises", True)
             self.check("result.failure.type", type(exc).__name__)

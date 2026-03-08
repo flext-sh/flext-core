@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraCommandRunner, c, output
+from flext_infra import FlextInfraCommandRunner, c, output, u
 
 
 class FlextInfraCodegenLazyInit(s[int]):
@@ -154,7 +154,7 @@ class FlextInfraCodegenLazyInit(s[int]):
             inline_constants,
             current_pkg,
         )
-        path.write_text(generated, encoding=c.Infra.Encoding.DEFAULT)
+        u.write_file(path, generated, encoding=c.Infra.Encoding.DEFAULT)
 
         _run_ruff_fix(path)
 

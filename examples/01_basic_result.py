@@ -298,16 +298,16 @@ class RailwayService(s[DemonstrationResult]):
         print("\n=== Value Extraction ===")
 
         # Use example data from constants with centralized t
-        success = r[dict[str, str]].ok(
-            {"name": "John", "email": "john@example.com"},
+        success = r[m.ConfigMap].ok(
+            m.ConfigMap(root={"name": "John", "email": "john@example.com"}),
         )
         failure: r[str] = r[str].fail("Not found")
 
         # Value extraction patterns
         user_data = success.value
-        print(f".value success: {user_data[c.Mixins.FIELD_NAME]}")
+        print(f".value success: {user_data.get(c.Mixins.FIELD_NAME, '')}")
         print(f".unwrap_or() failure: {failure.unwrap_or('default')}")
-        print(f".value property: {user_data['email']}")
+        print(f".value property: {user_data.get('email', '')}")
         print(f".value: {success.value}")
 
     @staticmethod

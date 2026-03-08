@@ -115,11 +115,18 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     raw = {"a": 1}
     assert u.Generators.ensure_dict(raw) is raw
 
+    def _normalize_stub(_value: t.ContainerValue) -> t.ContainerValue:
+        return "not-a-dict"
+
     monkeypatch.setattr(
         "flext_core.runtime.FlextRuntime.normalize_to_general_value",
-        staticmethod(lambda value: "not-a-dict"),
+        staticmethod(_normalize_stub),
     )
-    assert u.Generators.ensure_dict(_GoodModel(value=5)) == {}
+    with pytest.raises(
+        TypeError,
+        match=r"Normalized BaseModel .* is not mapping-like",
+    ):
+        u.Generators.ensure_dict(_GoodModel(value=5))
 
     with pytest.raises(TypeError, match="Failed to convert Mapping"):
         u.Generators.ensure_dict(_BrokenMapping())

@@ -13,6 +13,7 @@ from tomlkit.items import Array, Table
 from flext_infra.deps.modernizer import (
     ConsolidateGroupsPhase,
     EnsurePyreflyConfigPhase,
+    EnsurePyrightConfigPhase,
     EnsurePytestConfigPhase,
     FlextInfraPyprojectModernizer,
     InjectCommentsPhase,
@@ -1318,3 +1319,51 @@ class TestModernizerUncoveredLines:
                 with patch.object(modernizer, "process_file", return_value=[]):
                     result = modernizer.run(args)
                     assert result == 0
+
+
+class TestEnsurePyrightConfigPhase:
+    """Test pyright standardization including test private-usage suppression."""
+
+    def test_apply_root_sets_execution_environments(self) -> None:
+        """Root pyright config should enforce tests reportPrivateUsage=none."""
+        doc = tomlkit.document()
+        phase = EnsurePyrightConfigPhase()
+
+        changes = phase.apply(doc, is_root=True)
+
+        tool = doc.get("tool")
+        assert isinstance(tool, MutableMapping)
+        pyright = tool.get("pyright")
+        assert isinstance(pyright, MutableMapping)
+        envs = _unwrap_item(pyright.get("executionEnvironments"))
+        assert isinstance(envs, list)
+        assert envs == [
+            {"root": "src", "reportPrivateUsage": "error"},
+            {"root": "tests", "reportPrivateUsage": "none"},
+        ]
+        assert (
+            "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
+            in changes
+        )
+
+    def test_apply_subproject_sets_execution_environments(self) -> None:
+        """Subproject pyright config should enforce tests reportPrivateUsage=none."""
+        doc = tomlkit.document()
+        phase = EnsurePyrightConfigPhase()
+
+        changes = phase.apply(doc, is_root=False)
+
+        tool = doc.get("tool")
+        assert isinstance(tool, MutableMapping)
+        pyright = tool.get("pyright")
+        assert isinstance(pyright, MutableMapping)
+        envs = _unwrap_item(pyright.get("executionEnvironments"))
+        assert isinstance(envs, list)
+        assert envs == [
+            {"root": "src", "reportPrivateUsage": "error"},
+            {"root": "tests", "reportPrivateUsage": "none"},
+        ]
+        assert (
+            "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
+            in changes
+        )

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
-from typing import cast, override
+from typing import override
 
 from pydantic import Field
 
@@ -138,7 +138,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         map_result: r[Mapping[str, t.ContainerValue]] = r[t.ConfigurationMapping].fail(
             "Invalid data types"
         )
-        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
+        if u.is_type(source_value, Mapping) and u.is_type(mapping_value, Mapping):
             source_dict = {str(k): v for k, v in source_value.items()}
             mapped_dict = u.transform_values(source_dict, str)
             key_mapping_dict: dict[str, str] = {
@@ -163,7 +163,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         }
         flags_result = u.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
-            flags_dict = cast("dict[str, bool]", flags_result.value)
+            flags_dict = flags_result.value
             print(f"✅ Flags dict: {list(flags_dict.keys())}")
 
     @staticmethod
@@ -218,10 +218,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = model_result.value
             status_value = (
                 user.status.value
-                if not isinstance(
-                    u.guard(user.status, StatusEnum, return_value=True),
-                    r,
-                )
+                if not u.is_type(u.guard(user.status, StatusEnum, return_value=True), r)
                 else str(user.status)
             )
             print(f"✅ Model from dict: {user.name} ({status_value})")
@@ -237,10 +234,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = kwargs_result.value
             status_value = (
                 user.status.value
-                if not isinstance(
-                    u.guard(user.status, StatusEnum, return_value=True),
-                    r,
-                )
+                if not u.is_type(u.guard(user.status, StatusEnum, return_value=True), r)
                 else str(user.status)
             )
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
@@ -256,10 +250,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = merge_result.value
             status_value = (
                 user.status.value
-                if not isinstance(
-                    u.guard(user.status, StatusEnum, return_value=True),
-                    r,
-                )
+                if not u.is_type(u.guard(user.status, StatusEnum, return_value=True), r)
                 else str(user.status)
             )
             print(f"✅ Merged defaults: {user.name} ({status_value})")
@@ -288,7 +279,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             max_page_size=c.Pagination.MAX_PAGE_SIZE,
         )
         if validate_result.is_success:
-            params = cast("dict[str, int]", validate_result.value)
+            params = validate_result.value
             print(f"✅ Validated params: {params}")
 
     @staticmethod
@@ -402,9 +393,9 @@ def main() -> None:
         utilities = data.root["utilities_demonstrated"]
         categories = data.root["utility_categories"]
         if (
-            isinstance(utilities, Sequence)
-            and not isinstance(utilities, str | bytes | bytearray)
-            and isinstance(categories, int)
+            u.is_type(utilities, Sequence)
+            and not u.is_type(utilities, str | bytes | bytearray)
+            and u.is_type(categories, int)
         ):
             utilities_list = list(utilities)
             print(f"\n✅ Demonstrated {categories} utility categories")

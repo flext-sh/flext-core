@@ -19,14 +19,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import cast, override
+from typing import override
 
 from pydantic import PrivateAttr
 
 from flext_core import (
     FlextContext,
-    FlextRuntime,
     c,
     m,
     r,
@@ -315,8 +313,8 @@ class AutomationService(s[m.ConfigMap]):
         def validate(
             data: m.ConfigMap,
         ) -> r[m.ConfigMap]:
-            task_type = data.get("task_type", "")
-            if not isinstance(task_type, str) or not task_type:
+            task_type = str(data.get("task_type", ""))
+            if not task_type:
                 return r[m.ConfigMap].fail("Task type required")
             return r[m.ConfigMap].ok(data)
 
@@ -343,14 +341,8 @@ class AutomationService(s[m.ConfigMap]):
             r[m.ConfigMap]
             .ok(automation_input)
             .flow_through(
-                cast(
-                    "Callable[[m.ConfigMap], FlextRuntime.RuntimeResult[m.ConfigMap]]",
-                    validate,
-                ),
-                cast(
-                    "Callable[[m.ConfigMap], FlextRuntime.RuntimeResult[m.ConfigMap]]",
-                    enrich,
-                ),
+                validate,
+                enrich,
             )
         )
 
@@ -377,8 +369,9 @@ class AutomationService(s[m.ConfigMap]):
                     "status": "success",
                 },
             )
-            records = u.get(task_data, "records_processed", default=0) or 0
-            if isinstance(u.guard(records, int, return_value=True), r) or records == 0:
+            records_text = str(u.get(task_data, "records_processed", default=0) or 0)
+            records = int(records_text) if records_text.isdigit() else 0
+            if records == 0:
                 msg = "No records to process"
                 raise ValueError(msg)
             return task_data
@@ -416,16 +409,14 @@ class AutomationService(s[m.ConfigMap]):
         """Configuration with Lazy Loading."""
         print("\n--- Configuration with Lazy Loading ---")
 
-        cache: dict[str, t.Container] = {}
+        cache = m.ConfigMap(root={})
 
         def load_config() -> m.ConfigMap:
-            if not cache:
+            if not cache.root:
                 print("   📄 Loading configuration from file...")
-                cache.update({
-                    "database_url": "postgresql://localhost:5432/testdb",
-                    "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
-                })
-            return m.ConfigMap(root=dict(cache))
+                cache.root["database_url"] = "postgresql://localhost:5432/testdb"
+                cache.root["cache_ttl"] = c.Defaults.DEFAULT_CACHE_TTL
+            return cache
 
         fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail(
             "No cached config",
@@ -434,7 +425,7 @@ class AutomationService(s[m.ConfigMap]):
         config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
 
-        _ = load_config()
+        load_config()
         print("✅ Second config access used cached version (no file loading)")
 
     @staticmethod
@@ -478,15 +469,8 @@ class AutomationService(s[m.ConfigMap]):
         )
         engine = create_engine() if fail_result.is_failure else fail_result.value
         engine_id = str(engine.get("engine_id", "unknown"))
-        worker_count_val = engine.get("worker_count", 0)
-        if isinstance(worker_count_val, int):
-            worker_count = worker_count_val
-        elif isinstance(worker_count_val, float) or (
-            isinstance(worker_count_val, str) and worker_count_val.isdigit()
-        ):
-            worker_count = int(worker_count_val)
-        else:
-            worker_count = 0
+        worker_count_text = str(engine.get("worker_count", 0))
+        worker_count = int(worker_count_text) if worker_count_text.isdigit() else 0
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")
 

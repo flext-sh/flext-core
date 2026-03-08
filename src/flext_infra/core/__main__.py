@@ -22,7 +22,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextRuntime, t
+from flext_core import FlextRuntime, t, u
 from flext_infra import c, m, output
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra.core.inventory import FlextInfraInventoryService
@@ -105,32 +105,38 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
 
         if args.failed:
             failed_cases = _extract_diag_entries(data, "failed_cases")
-            Path(args.failed).write_text(
+            u.write_file(
+                Path(args.failed),
                 "\n\n".join(failed_cases) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.errors:
             error_traces = _extract_diag_entries(data, "error_traces")
-            Path(args.errors).write_text(
+            u.write_file(
+                Path(args.errors),
                 "\n\n".join(error_traces) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.warnings:
             warning_lines = _extract_diag_entries(data, "warning_lines")
-            Path(args.warnings).write_text(
+            u.write_file(
+                Path(args.warnings),
                 "\n".join(warning_lines) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.slowest:
             slow_entries = _extract_diag_entries(data, "slow_entries")
-            Path(args.slowest).write_text(
+            u.write_file(
+                Path(args.slowest),
                 "\n".join(slow_entries) + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         if args.skips:
             skip_cases = _extract_diag_entries(data, "skip_cases")
-            Path(args.skips).write_text(
-                "\n".join(skip_cases) + "\n", encoding=c.Infra.Encoding.DEFAULT
+            u.write_file(
+                Path(args.skips),
+                "\n".join(skip_cases) + "\n",
+                encoding=c.Infra.Encoding.DEFAULT,
             )
 
         return 0
