@@ -386,11 +386,8 @@ class FlextUtilitiesMapper:
                 ),
             )
             if converted_result.is_success:
-                return (
-                    converted_result.value
-                    if converted_result.value is not None
-                    else fallback
-                )
+                result_val: t.ContainerValue = converted_result.value  # type: ignore[assignment]
+                return result_val if result_val is not None else fallback
             return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
 
         if isinstance(current, (list, tuple)):
@@ -688,7 +685,8 @@ class FlextUtilitiesMapper:
         process_result = r[t.ContainerValue].create_from_callable(_process_current)
         if process_result.is_failure:
             return default if on_error == "stop" else current
-        return process_result.value if process_result.value is not None else current
+        process_val: t.ContainerValue = process_result.value  # type: ignore[assignment]
+        return process_val if process_val is not None else current
 
     @staticmethod
     def _build_apply_slice(

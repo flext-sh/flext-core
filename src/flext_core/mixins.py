@@ -238,13 +238,7 @@ class FlextMixins(FlextRuntime):
             logger_result = container.get(logger_key, type_cls=FlextLogger)
 
             if logger_result.is_success:
-                # Use .value directly - FlextResult never returns None on success
-                # Explicit annotation: get returns r[RegisterableService] but we know it's FlextLogger
-                logger: FlextLogger = (
-                    logger_result.value
-                    if isinstance(logger_result.value, FlextLogger)
-                    else FlextLogger(logger_name)
-                )
+                logger: FlextLogger = logger_result.value
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
@@ -916,7 +910,7 @@ class FlextMixins(FlextRuntime):
         """Runtime protocol compliance validation utilities."""
 
         @staticmethod
-        def is_command_bus(obj: BaseModel) -> bool:
+        def is_command_bus(obj: object) -> bool:
             """Check if *obj* satisfies ``p.CommandBus`` structurally."""
             return (
                 hasattr(obj, "dispatch")
@@ -929,7 +923,7 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def is_handler(
-            obj: BaseModel,
+            obj: object,
         ) -> bool:
             """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
@@ -940,7 +934,7 @@ class FlextMixins(FlextRuntime):
             )
 
         @staticmethod
-        def is_service(obj: BaseModel) -> bool:
+        def is_service(obj: object) -> bool:
             """Check if *obj* satisfies ``p.Service`` structurally."""
             return (
                 hasattr(obj, "execute")
@@ -952,7 +946,7 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_processor_protocol(
-            obj: BaseModel,
+            obj: object,
         ) -> r[bool]:
             """Validate *obj* has ``model_dump``, ``process``, and ``validate``."""
             required_methods = ["model_dump", "process", "validate"]
@@ -975,7 +969,7 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_protocol_compliance(
-            obj: BaseModel,
+            obj: object,
             protocol_name: str,
         ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""

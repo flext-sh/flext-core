@@ -373,9 +373,7 @@ def main() -> None:
 
     with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        logger.info(
-            "Starting demonstration", correlation_id=str(correlation_id or "")
-        )
+        logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
         user_data: m.ConfigMap = m.ConfigMap(

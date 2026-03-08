@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_infra import t
+from flext_infra.refactor._models import FlextInfraRefactorModels as m_r
 from flext_infra.refactor.dependency_analyzer import DependencyAnalyzer
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
@@ -79,14 +79,14 @@ class UtilityHelper:
 """)
 
         scanner = FlextInfraRefactorLooseClassScanner()
-        all_violations: list[t.Infra.ContainerDict] = []
+        all_violations: list[m_r.LooseClassViolation] = []
 
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success
             all_violations.extend(
                 cast(
-                    "list[t.Infra.ContainerDict]",
+                    "list[m_r.LooseClassViolation]",
                     result.value.get("violations", []),
                 )
             )
@@ -94,5 +94,5 @@ class UtilityHelper:
         assert len(all_violations) >= 3
 
         for v in all_violations:
-            assert "confidence" in v
-            assert v["confidence"] in {"high", "medium", "low"}
+            assert hasattr(v, "confidence")
+            assert v.confidence in {"high", "medium", "low"}
