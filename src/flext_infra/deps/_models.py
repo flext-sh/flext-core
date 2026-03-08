@@ -8,7 +8,7 @@ from flext_core import FlextModels
 
 
 class FlextInfraDepsModels:
-    """Models for dependency detection and management."""
+    """Models for dependency detection and modernization reporting."""
 
     class DependencyReport(FlextModels.ArbitraryTypesModel):
         """Report of dependency detection for a single project."""
@@ -23,6 +23,12 @@ class FlextInfraDepsModels:
         outdated: list[str] = Field(
             default_factory=list, description="Outdated dependencies"
         )
+
+    class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):
+        """Modernizer changes for one pyproject file."""
+
+        file: str = Field(min_length=1, description="Relative pyproject path")
+        changes: list[str] = Field(default_factory=list, description="Applied changes")
 
 
 __all__ = ["FlextInfraDepsModels"]
