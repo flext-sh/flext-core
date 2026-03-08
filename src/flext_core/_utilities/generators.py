@@ -55,10 +55,8 @@ class FlextUtilitiesGenerators:
         """
         if prefix is not None:
             return r[str].ok(prefix)
-
         if kind is None:
             return r[str].fail("No kind provided for prefix resolution")
-
         kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
             "entity": "ent",
@@ -68,7 +66,6 @@ class FlextUtilitiesGenerators:
             "event": "evt",
             "command": "cmd",
             "query": "qry",
-            # "aggregate": None,  # Requires prefix parameter - removed to avoid dict type error
         }
         resolved_prefix = kind_prefix_map.get(kind)
         if resolved_prefix is None:
@@ -94,12 +91,8 @@ class FlextUtilitiesGenerators:
             context_dict["trace_id"] = FlextUtilitiesGenerators._generate_id()
         if "span_id" not in context_dict:
             context_dict["span_id"] = FlextUtilitiesGenerators._generate_id()
-
-        # Optionally ensure correlation_id
         if include_correlation_id and "correlation_id" not in context_dict:
             context_dict["correlation_id"] = FlextUtilitiesGenerators._generate_id()
-
-        # Optionally ensure timestamp (ISO 8601 format)
         if include_timestamp and "timestamp" not in context_dict:
             context_dict["timestamp"] = (
                 FlextUtilitiesGenerators.generate_iso_timestamp()
@@ -109,8 +102,6 @@ class FlextUtilitiesGenerators:
     def _generate_id() -> str:
         """Generate a unique ID using UUID4 (private helper)."""
         return str(uuid.uuid4())
-
-    # NOTE: create_dynamic_type_subclass is available as static method - no nested Type class needed
 
     @staticmethod
     def _generate_prefixed_id(
@@ -168,30 +159,21 @@ class FlextUtilitiesGenerators:
 
         """
         if context is None:
-            msg = (
-                "Context cannot be None. Use explicit empty dict {} "
-                "or handle None in calling code."
-            )
+            msg = "Context cannot be None. Use explicit empty dict {} or handle None in calling code."
             raise TypeError(msg)
-
         if isinstance(context, Mapping):
             try:
                 return dict(context.items())
             except (TypeError, ValueError, AttributeError) as e:
                 msg = f"Failed to convert Mapping {context.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
-
         try:
             model_data = FlextRuntime.normalize_to_general_value(context.model_dump())
             if FlextUtilitiesGenerators._is_config_mapping(model_data):
                 return dict(model_data.items())
         except (AttributeError, TypeError) as e:
-            msg = (
-                f"Failed to dump BaseModel {context.__class__.__name__}: "
-                f"{e.__class__.__name__}: {e}"
-            )
+            msg = f"Failed to dump BaseModel {context.__class__.__name__}: {e.__class__.__name__}: {e}"
             raise TypeError(msg) from e
-
         msg = f"Context must be dict, Mapping, or BaseModel, got {context.__class__.__name__}"
         raise TypeError(msg)
 
@@ -211,9 +193,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def create_dynamic_type_subclass(
-        name: str,
-        base_class: type,  # Base class for dynamic subclass
-        attributes: m.ConfigMap | t.ConfigurationMapping,
+        name: str, base_class: type, attributes: m.ConfigMap | t.ConfigurationMapping
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -229,12 +209,6 @@ class FlextUtilitiesGenerators:
             The dynamically created subclass
 
         """
-        # pyrefly doesn't understand type() for dynamic class creation
-        # This is valid Python metaprogramming
-        # Runtime validation: base_class parameter is typed as type
-        # Type system ensures base_class is a type, so no runtime check needed
-        # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
-        # Convert to dict for type() call
         attributes_dict = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
@@ -284,34 +258,24 @@ class FlextUtilitiesGenerators:
                 return default
             msg = "Value cannot be None"
             raise TypeError(msg)
-
         if isinstance(value, dict):
             return value
-
         if isinstance(value, Mapping):
             try:
                 return dict(value.items())
             except (TypeError, ValueError, AttributeError) as e:
                 msg = f"Failed to convert Mapping {value.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
-
         if isinstance(value, BaseModel):
             normalized = FlextRuntime.normalize_to_general_value(value)
             if isinstance(normalized, Mapping):
                 try:
                     return dict(normalized.items())
                 except (TypeError, ValueError, AttributeError) as e:
-                    msg = (
-                        f"Failed to convert normalized BaseModel {value.__class__.__name__} "
-                        f"to dict: {e}"
-                    )
+                    msg = f"Failed to convert normalized BaseModel {value.__class__.__name__} to dict: {e}"
                     raise TypeError(msg) from e
-            msg = (
-                f"Normalized BaseModel {value.__class__.__name__} "
-                f"is not mapping-like ({normalized.__class__.__name__})"
-            )
+            msg = f"Normalized BaseModel {value.__class__.__name__} is not mapping-like ({normalized.__class__.__name__})"
             raise TypeError(msg)
-
         msg = f"Cannot convert {value.__class__.__name__} to dict"
         raise TypeError(msg)
 
@@ -360,7 +324,6 @@ class FlextUtilitiesGenerators:
 
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
-        # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
         context_dict: MutableMapping[str, str] = {
             k: str(v) for k, v in normalized_dict.items()
         }
@@ -404,53 +367,36 @@ class FlextUtilitiesGenerators:
         actual_prefix = (
             actual_prefix_result.value if actual_prefix_result.is_success else None
         )
-
-        # Handle UUID/ULID/id special cases
         if FlextUtilitiesGenerators._should_generate_uuid(kind, actual_prefix):
             return FlextUtilitiesGenerators._generate_id()
-
         if kind == "ulid":
             ulid_length = (
                 length if length is not None else c.Utilities.SHORT_UUID_LENGTH
             )
             return FlextUtilitiesGenerators.Random.generate_short_id(ulid_length)
-
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
-
-        # Generate prefixed ID
         if actual_prefix is not None:
-            # Build parts list
             all_parts: list[t.ContainerValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
             if parts:
                 all_parts.extend(parts)
-
             id_length = length if length is not None else c.Utilities.SHORT_UUID_LENGTH
-
-            # Custom separator requires manual construction
             if separator != "_" or include_timestamp:
                 uuid_part = str(uuid.uuid4())[:id_length]
                 if all_parts:
                     middle = str(separator).join(str(p) for p in all_parts)
                     return f"{actual_prefix}{separator}{middle}{separator}{uuid_part}"
                 return f"{actual_prefix}{separator}{uuid_part}"
-
-            # Standard prefixed ID generation (separator is "_")
             if all_parts:
                 return FlextUtilitiesGenerators._generate_prefixed_id(
-                    actual_prefix,
-                    *all_parts,
-                    length=id_length,
+                    actual_prefix, *all_parts, length=id_length
                 )
             return FlextUtilitiesGenerators._generate_prefixed_id(
-                actual_prefix,
-                length=id_length,
+                actual_prefix, length=id_length
             )
-
-        # Fallback: UUID
         return FlextUtilitiesGenerators._generate_id()
 
     @staticmethod
@@ -498,6 +444,4 @@ class FlextUtilitiesGenerators:
         return f"{message_type}_{message_id}_{timestamp}"
 
 
-__all__ = [
-    "FlextUtilitiesGenerators",
-]
+__all__ = ["FlextUtilitiesGenerators"]

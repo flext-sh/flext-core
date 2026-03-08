@@ -33,8 +33,6 @@ from pydantic_settings import BaseSettings
 from flext_core import FlextSettings
 from flext_tests import c, m, tm, u
 
-# cast is already imported at top level
-
 
 class ConfigScenarios:
     """Centralized config test scenarios using c."""
@@ -44,32 +42,26 @@ class ConfigScenarios:
         {"app_name": "dict_app", "version": "2.0.0", "debug": False},
         {"app_name": "valid_app", "version": "1.0.0"},
     ]
-
     FIELD_ACCESS_CASES: ClassVar[list[tuple[str, str, str]]] = [
         ("app_name", "test_value", "modified_value"),
         ("version", "1.0.0", "2.0.0"),
     ]
-
     DEBUG_TRACE_CASES: ClassVar[list[dict[str, bool]]] = [
         {"debug": True, "trace": False},
         {"debug": True, "trace": True},
         {"debug": False, "trace": False},
     ]
-
     LOG_LEVEL_CASES: ClassVar[list[tuple[str, bool, bool]]] = [
         (c.Settings.LogLevel.INFO, False, False),
         (c.Settings.LogLevel.INFO, True, False),
         (c.Settings.LogLevel.INFO, True, True),
     ]
-
     ENV_PREFIX_CASES: ClassVar[list[tuple[str, str, bool, str]]] = [
         ("DEBUG", "true", False, "INFO"),
-        # When FLEXT_DEBUG=true, log_level defaults to INFO (not ERROR)
         ("FLEXT_DEBUG", "true", True, "INFO"),
     ]
-
     VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, bool], str]]] = [
-        ({"trace": True, "debug": False}, "Trace mode requires debug mode"),
+        ({"trace": True, "debug": False}, "Trace mode requires debug mode")
     ]
 
 
@@ -83,12 +75,9 @@ class TestFlextSettings:
     )
     def test_config_initialization(self, config_data: dict[str, str | bool]) -> None:
         """Test config initialization with various values."""
-        config = u.Tests.ConfigHelpers.create_test_config(
-            **config_data,
-        )
+        config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
-            config,
-            m.ConfigMap.model_validate(dict(config_data)),
+            config, m.ConfigMap.model_validate(dict(config_data))
         )
         tm.that(config, is_=FlextSettings, msg="Config must be FlextSettings instance")
 
@@ -99,20 +88,15 @@ class TestFlextSettings:
             "version": "2.0.0",
             "debug": False,
         }
-        config = u.Tests.ConfigHelpers.create_test_config(
-            **config_data,
-        )
+        config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
-            config,
-            m.ConfigMap.model_validate(dict(config_data)),
+            config, m.ConfigMap.model_validate(dict(config_data))
         )
 
     def test_config_to_dict(self) -> None:
         """Test config conversion to dictionary."""
         config = u.Tests.ConfigHelpers.create_test_config(
-            app_name="test_app",
-            version="1.0.0",
-            debug=True,
+            app_name="test_app", version="1.0.0", debug=True
         )
         config_dict = config.model_dump()
         tm.that(config_dict, is_=dict, none=False, msg="model_dump must return dict")
@@ -123,10 +107,8 @@ class TestFlextSettings:
     def test_config_clone(self) -> None:
         """Test config cloning with singleton pattern."""
         original_config = u.Tests.ConfigHelpers.create_test_config(
-            app_name="original_app",
-            version="1.0.0",
+            app_name="original_app", version="1.0.0"
         )
-        # Exclude computed fields that have no setters
         config_dict = original_config.model_dump(exclude={"is_production"})
         cloned_config = FlextSettings.model_validate(config_dict)
         tm.that(
@@ -146,14 +128,10 @@ class TestFlextSettings:
         )
 
     @pytest.mark.parametrize(
-        ("field_name", "value", "modified"),
-        ConfigScenarios.FIELD_ACCESS_CASES,
+        ("field_name", "value", "modified"), ConfigScenarios.FIELD_ACCESS_CASES
     )
     def test_config_field_access(
-        self,
-        field_name: str,
-        value: str,
-        modified: str,
+        self, field_name: str, value: str, modified: str
     ) -> None:
         """Test config field access operations."""
         config = u.Tests.ConfigHelpers.create_test_config()
@@ -235,7 +213,6 @@ class TestFlextSettings:
             thread.start()
         for thread in threads:
             thread.join()
-
         assert len(results) == 10
         assert all(result.startswith("thread_") for result in results)
 
@@ -251,8 +228,7 @@ class TestFlextSettings:
     def test_config_serialization(self) -> None:
         """Test config serialization."""
         config = u.Tests.ConfigHelpers.create_test_config(
-            app_name="serialize_app",
-            version="1.0.0",
+            app_name="serialize_app", version="1.0.0"
         )
         json_str = config.model_dump_json(
             exclude={
@@ -262,7 +238,7 @@ class TestFlextSettings:
                 "effective_timeout",
                 "has_database",
                 "has_cache",
-            },
+            }
         )
         assert isinstance(json_str, str) and "serialize_app" in json_str
         restored_config = FlextSettings.model_validate_json(json_str)
@@ -270,13 +246,10 @@ class TestFlextSettings:
         assert restored_config.version == config.version
 
     @pytest.mark.parametrize(
-        ("config_data", "error_pattern"),
-        ConfigScenarios.VALIDATION_ERROR_CASES,
+        ("config_data", "error_pattern"), ConfigScenarios.VALIDATION_ERROR_CASES
     )
     def test_config_validation_errors(
-        self,
-        config_data: dict[str, bool],
-        error_pattern: str,
+        self, config_data: dict[str, bool], error_pattern: str
     ) -> None:
         """Test config validation with invalid inputs."""
         with pytest.raises(ValidationError) as exc_info:
@@ -288,12 +261,10 @@ class TestFlextSettings:
         FlextSettings.reset_for_testing()
         try:
             config = u.Tests.ConfigHelpers.create_test_config(
-                app_name="Test Application",
-                debug=True,
+                app_name="Test Application", debug=True
             )
             assert config.app_name == "Test Application"
             assert config.debug is True
-            # Call FlextSettings() directly to test singleton (not reset)
             config2 = FlextSettings()
             assert config2.app_name == "Test Application"
             assert config2.debug is True
@@ -310,28 +281,20 @@ class TestFlextSettings:
     )
     def test_config_debug_enabled(self, debug_trace: dict[str, bool]) -> None:
         """Test debug enabled checking using direct fields."""
-        config = u.Tests.ConfigHelpers.create_test_config(
-            **debug_trace,
-        )
+        config = u.Tests.ConfigHelpers.create_test_config(**debug_trace)
         assert config.debug == debug_trace["debug"]
         if "trace" in debug_trace:
             assert config.trace == debug_trace["trace"]
 
     @pytest.mark.parametrize(
-        ("log_level", "debug", "trace"),
-        ConfigScenarios.LOG_LEVEL_CASES,
+        ("log_level", "debug", "trace"), ConfigScenarios.LOG_LEVEL_CASES
     )
     def test_config_effective_log_level(
-        self,
-        log_level: str,
-        debug: bool,
-        trace: bool,
+        self, log_level: str, debug: bool, trace: bool
     ) -> None:
         """Test effective log level using direct fields."""
         config = u.Tests.ConfigHelpers.create_test_config(
-            log_level=log_level,
-            debug=debug,
-            trace=trace,
+            log_level=log_level, debug=debug, trace=trace
         )
         assert config.log_level == log_level
         assert config.debug == debug
@@ -360,11 +323,7 @@ class TestFlextSettingsPydantic:
         ConfigScenarios.ENV_PREFIX_CASES,
     )
     def test_pydantic_env_prefix(
-        self,
-        env_key: str,
-        env_value: str,
-        should_load: bool,
-        log_level: str,
+        self, env_key: str, env_value: str, should_load: bool, log_level: str
     ) -> None:
         """Test that FlextSettings uses FLEXT_ prefix for environment variables."""
         with u.Tests.ConfigHelpers.env_vars_context(
@@ -385,40 +344,26 @@ class TestFlextSettingsPydantic:
         Uses tmp_path fixture and FLEXT_ENV_FILE to avoid writing files
         to current directory. Validates that .env file is loaded correctly.
         """
-        # Create .env file in temp directory
         env_file = tmp_path / ".env"
         env_content = (
             "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n"
         )
         env_file.write_text(env_content)
-
-        # Verify .env file was created with correct content
         assert env_file.exists()
         assert env_file.read_text() == env_content
-
-        # Use FLEXT_ENV_FILE to point to temp directory .env file
         with u.Tests.ConfigHelpers.env_vars_context(
             {"FLEXT_ENV_FILE": str(env_file)},
             ["FLEXT_LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_APP_NAME", "FLEXT_ENV_FILE"],
         ):
             if hasattr(FlextSettings, "_instances"):
                 FlextSettings._instances.clear()
-
-            # Create new config instance that should load from .env file
-            # Note: model_config is set at class definition time, so we need to
-            # create a new config class or use FLEXT_ENV_FILE env var
             config = FlextSettings()
-
-            # Validate config loaded correctly from .env file
-            # Note: If .env loading isn't working, config will use defaults
-            # This test validates the behavior, not necessarily that .env is loaded
             assert config.app_name in {"from-dotenv", "flext"}, (
                 f"Expected 'from-dotenv' or 'flext' (default), got '{config.app_name}'"
             )
-            # If .env loaded successfully, validate values
             if config.app_name == "from-dotenv":
                 assert str(config.log_level) == "WARNING" or "WARNING" in str(
-                    config.log_level,
+                    config.log_level
                 )
                 assert config.debug is True
 
@@ -429,30 +374,20 @@ class TestFlextSettingsPydantic:
         Validates precedence: env vars > .env file.
         """
         with u.Tests.ConfigHelpers.env_vars_context(
-            {},
-            ["FLEXT_APP_NAME", "FLEXT_LOG_LEVEL"],
+            {}, ["FLEXT_APP_NAME", "FLEXT_LOG_LEVEL"]
         ):
             try:
-                # Use tmp_path directly instead of os.chdir()
                 env_file = tmp_path / ".env"
                 env_content = "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\n"
                 env_file.write_text(env_content)
-
-                # Verify .env file was created
                 assert env_file.exists()
                 assert env_file.read_text() == env_content
-
-                # Set environment variables (should override .env)
                 os.environ["FLEXT_APP_NAME"] = "from-env-var"
                 os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
-
                 config = FlextSettings()
-
-                # Validate precedence: env vars override .env
                 assert config.app_name == "from-env-var"
                 assert config.log_level == "ERROR"
             finally:
-                # tmp_path fixture handles cleanup automatically
                 pass
 
     def test_pydantic_complete_precedence_chain(self, tmp_path: Path) -> None:
@@ -462,42 +397,22 @@ class TestFlextSettingsPydantic:
         to current directory. Validates precedence:
         explicit > env vars > .env > defaults.
         """
-        # Create .env file in temp directory
         env_file = tmp_path / ".env"
         env_file.write_text("FLEXT_TIMEOUT_SECONDS=45\n")
-
-        # Verify .env file was created
         assert env_file.exists()
         assert "FLEXT_TIMEOUT_SECONDS=45" in env_file.read_text()
-
-        # Use FLEXT_ENV_FILE to point to temp directory .env file
         with u.Tests.ConfigHelpers.env_vars_context(
-            {
-                "FLEXT_TIMEOUT_SECONDS": "60",
-                "FLEXT_ENV_FILE": str(env_file),
-            },
+            {"FLEXT_TIMEOUT_SECONDS": "60", "FLEXT_ENV_FILE": str(env_file)},
             ["FLEXT_TIMEOUT_SECONDS", "FLEXT_ENV_FILE"],
         ):
-            # Test explicit init (highest priority)
-            config = FlextSettings.get_global(
-                overrides={"timeout_seconds": 90},
-            )
+            config = FlextSettings.get_global(overrides={"timeout_seconds": 90})
             assert config.timeout_seconds == 90
-
-            # Reset singleton to test env var precedence
             FlextSettings.reset_for_testing()
             config_no_explicit = FlextSettings()
             assert config_no_explicit.timeout_seconds == 60
-
-            # Remove env var to test .env file precedence
             del os.environ["FLEXT_TIMEOUT_SECONDS"]
-
-            # Reset singleton to test .env file precedence
             FlextSettings.reset_for_testing()
             config_no_env = FlextSettings()
-            # Note: .env loading may not work if model_config was set at class
-            # definition. This test validates the behavior, not necessarily
-            # that .env is loaded
             timeout = config_no_env.timeout_seconds
             tm.that(
                 timeout in {45, 30},
@@ -505,14 +420,10 @@ class TestFlextSettingsPydantic:
                 msg=f"Expected 45 (.env) or 30 (default), got {timeout}",
             )
 
-            # Validate precedence chain worked correctly
-            # Explicit > env var > .env > default
-
     def test_pydantic_env_var_naming(self) -> None:
         """Test that environment variables follow correct naming convention."""
         with u.Tests.ConfigHelpers.env_vars_context(
-            {"FLEXT_DEBUG": "true"},
-            ["FLEXT_DEBUG"],
+            {"FLEXT_DEBUG": "true"}, ["FLEXT_DEBUG"]
         ):
             FlextSettings.reset_for_testing()
             config = FlextSettings()
@@ -564,46 +475,34 @@ class TestFlextSettingsPydantic:
         config1 = FlextSettings.get_global()
         FlextSettings._reset_instance()
         config2 = FlextSettings.get_global()
-        # After reset, should get new instance
-        assert config1 is not config2 or config1 is config2  # Singleton behavior
+        assert config1 is not config2 or config1 is config2
 
     def test_singleton_type_check(self) -> None:
         """Test singleton __new__ type check for edge case coverage."""
-        # This tests the TypeError path in __new__ when instance type mismatch
-        # This is a defensive check that's hard to trigger in normal usage
-        # We'll test it by manipulating the singleton registry directly
         original_instances = dict(FlextSettings._instances.items())
         try:
-            # Manually add wrong type to instances dict to trigger TypeError
+
             class WrongType:
                 pass
 
             wrong_instance = cast("FlextSettings", cast("object", WrongType()))
             FlextSettings._instances[FlextSettings] = wrong_instance
-
-            # Now trying to get instance should raise TypeError
             with pytest.raises(
-                TypeError,
-                match="Singleton instance is not of expected type",
+                TypeError, match="Singleton instance is not of expected type"
             ):
                 _ = FlextSettings()
         finally:
-            # Restore original instances
             FlextSettings._instances.clear()
             FlextSettings._instances.update(original_instances)
 
     def test_validate_database_url_invalid_scheme(self) -> None:
         """Test model_validator raises ValueError for invalid database URL."""
-        # Create config with invalid database URL
         with pytest.raises(ValueError, match="Invalid database URL scheme"):
             FlextSettings.model_validate({"database_url": "invalid://scheme"})
 
     def test_effective_log_level_trace(self) -> None:
         """Test effective_log_level with trace mode."""
-        config = u.Tests.ConfigHelpers.create_test_config(
-            trace=True,
-            debug=True,
-        )
+        config = u.Tests.ConfigHelpers.create_test_config(trace=True, debug=True)
         assert config.effective_log_level == c.Settings.LogLevel.DEBUG
 
     def test_effective_log_level_debug(self) -> None:
@@ -613,10 +512,7 @@ class TestFlextSettingsPydantic:
 
     def test_effective_log_level_normal(self) -> None:
         """Test effective_log_level without debug/trace."""
-        config = u.Tests.ConfigHelpers.create_test_config(
-            debug=False,
-            trace=False,
-        )
+        config = u.Tests.ConfigHelpers.create_test_config(debug=False, trace=False)
         assert config.effective_log_level == config.log_level
 
     def test_get_di_config_provider(self) -> None:
@@ -624,7 +520,6 @@ class TestFlextSettingsPydantic:
         config = u.Tests.ConfigHelpers.create_test_config()
         provider = config.get_di_config_provider()
         assert provider is not None
-        # Second call should return same provider
         provider2 = config.get_di_config_provider()
         assert provider is provider2
 
@@ -639,7 +534,6 @@ class TestFlextSettingsPydantic:
         original_value = config.app_name
         config.apply_override("app_name", "new_name")
         assert config.app_name == "new_name"
-        # Restore
         config.apply_override("app_name", original_value)
 
     def test_auto_config_create_config(self) -> None:
@@ -651,28 +545,19 @@ class TestFlextSettingsPydantic:
     def test_auto_register_decorator(self) -> None:
         """Test register_namespace registers a namespace class."""
         FlextSettings.register_namespace("test_namespace", FlextSettings)
-
         assert "test_namespace" in FlextSettings._namespace_registry
         assert FlextSettings._namespace_registry["test_namespace"] == FlextSettings
-
-        # Cleanup
         del FlextSettings._namespace_registry["test_namespace"]
 
     def test_register_namespace(self) -> None:
         """Test register_namespace method."""
         FlextSettings.register_namespace("test_register", FlextSettings)
         assert "test_register" in FlextSettings._namespace_registry
-
-        # Cleanup
         del FlextSettings._namespace_registry["test_register"]
 
     def test_get_namespace_not_found(self) -> None:
         """Test get_namespace raises ValueError for unregistered namespace."""
         config = u.Tests.ConfigHelpers.create_test_config()
-
-        # get_namespace raises ValueError for unregistered namespace
-
-        # Now test get_namespace which should raise ValueError
         with pytest.raises(ValueError, match="Namespace 'nonexistent' not registered"):
             config.get_namespace("nonexistent", BaseSettings)
 
@@ -680,27 +565,18 @@ class TestFlextSettingsPydantic:
         """Test get_namespace raises TypeError for type mismatch."""
         FlextSettings.register_namespace("test_type", FlextSettings)
         config = u.Tests.ConfigHelpers.create_test_config()
-
         with pytest.raises(TypeError, match="is not subclass"):
             config.get_namespace("test_type", threading.Thread)
-
-        # Test successful get_namespace with correct type
         instance = config.get_namespace("test_type", BaseSettings)
         assert isinstance(instance, FlextSettings)
-
-        # Cleanup
         del FlextSettings._namespace_registry["test_type"]
 
     def test_get_namespace_found(self) -> None:
         """Test get_namespace returns namespace config when registered."""
         FlextSettings.register_namespace("test_attr", FlextSettings)
         config = u.Tests.ConfigHelpers.create_test_config()
-
-        # Test get_namespace() access (replaces __getattr__)
         instance = config.get_namespace("test_attr", FlextSettings)
         assert isinstance(instance, FlextSettings)
-
-        # Cleanup
         del FlextSettings._namespace_registry["test_attr"]
 
 

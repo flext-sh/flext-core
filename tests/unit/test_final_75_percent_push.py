@@ -19,13 +19,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import (
-    FlextContainer,
-    FlextExceptions,
-    FlextResult,
-    p,
-    u,
-)
+from flext_core import FlextContainer, FlextExceptions, FlextResult, p, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,45 +54,25 @@ class CoverageScenarios:
         ResultOperationScenario("lash_failure", None, ["lash"], True, 99),
         ResultOperationScenario("chaining", 10, ["map", "map"], True, 40),
         ResultOperationScenario(
-            "failure_propagation",
-            None,
-            ["map", "map"],
-            False,
-            None,
+            "failure_propagation", None, ["map", "map"], False, None
         ),
     ]
-
     EXCEPTION_TYPES: ClassVar[list[ExceptionTypeScenario]] = [
         ExceptionTypeScenario("base", FlextExceptions.BaseError, "test", "test"),
         ExceptionTypeScenario(
-            "validation",
-            FlextExceptions.ValidationError,
-            "invalid",
-            "VALIDATION_ERROR",
+            "validation", FlextExceptions.ValidationError, "invalid", "VALIDATION_ERROR"
         ),
         ExceptionTypeScenario(
-            "type_error",
-            FlextExceptions.TypeError,
-            "wrong type",
-            "TYPE_ERROR",
+            "type_error", FlextExceptions.TypeError, "wrong type", "TYPE_ERROR"
         ),
         ExceptionTypeScenario(
-            "operation",
-            FlextExceptions.OperationError,
-            "failed",
-            "OPERATION_ERROR",
+            "operation", FlextExceptions.OperationError, "failed", "OPERATION_ERROR"
         ),
         ExceptionTypeScenario(
-            "auth",
-            FlextExceptions.AuthenticationError,
-            "auth issue",
-            "AUTH",
+            "auth", FlextExceptions.AuthenticationError, "auth issue", "AUTH"
         ),
         ExceptionTypeScenario(
-            "config",
-            FlextExceptions.ConfigurationError,
-            "config issue",
-            "CONFIG",
+            "config", FlextExceptions.ConfigurationError, "config issue", "CONFIG"
         ),
         ExceptionTypeScenario(
             "connection",
@@ -107,10 +81,7 @@ class CoverageScenarios:
             "CONNECTION",
         ),
         ExceptionTypeScenario(
-            "timeout",
-            FlextExceptions.TimeoutError,
-            "timeout issue",
-            "TIMEOUT",
+            "timeout", FlextExceptions.TimeoutError, "timeout issue", "TIMEOUT"
         ),
     ]
 
@@ -131,9 +102,7 @@ class TestCoveragePush75Percent:
         assert r.error == "error"
 
     @pytest.mark.parametrize(
-        "scenario",
-        CoverageScenarios.RESULT_OPERATIONS,
-        ids=lambda s: s.name,
+        "scenario", CoverageScenarios.RESULT_OPERATIONS, ids=lambda s: s.name
     )
     def test_result_operations(self, scenario: ResultOperationScenario) -> None:
         """Test FlextResult operations with various scenarios."""
@@ -205,9 +174,7 @@ class TestCoveragePush75Percent:
         assert c.get("svc2").value == "val2"
 
     @pytest.mark.parametrize(
-        "scenario",
-        CoverageScenarios.EXCEPTION_TYPES,
-        ids=lambda s: s.name,
+        "scenario", CoverageScenarios.EXCEPTION_TYPES, ids=lambda s: s.name
     )
     def test_exception_types(self, scenario: ExceptionTypeScenario) -> None:
         """Test exception types."""
@@ -271,16 +238,13 @@ class TestCoveragePush75Percent:
     def test_result_safe_factory(self) -> None:
         """Test safe factory method."""
 
-        # Use cast to match VariadicCallable signature
         def divide(a: int, b: int) -> int:
             return a // b
 
-        # Cast function to match protocol signature before applying decorator
         divide_func = cast("p.VariadicCallable[int]", divide)
         divide_wrapped: p.VariadicCallable[FlextResult[int]] = FlextResult.safe(
-            divide_func,
+            divide_func
         )
-
         r: FlextResult[int] = divide_wrapped(10, 2)
         assert r.is_success
         assert r.value == 5

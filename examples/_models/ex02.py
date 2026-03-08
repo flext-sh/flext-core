@@ -44,6 +44,6 @@ class Ex02EmailService(m.Value):
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
 
     def send(self, to: str, subject: str, body: str) -> r[bool]:
-        if not to or not subject or not body:
+        if not to or not subject or (not body):
             return r[bool].fail("invalid email payload")
         return r[bool].ok(True)

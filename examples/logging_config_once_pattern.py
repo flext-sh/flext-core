@@ -33,19 +33,11 @@ class DatabaseService(s[m.ConfigMap]):
             r[dict]: Operation results
 
         """
-        # Set operation context WITHOUT config
         self._with_operation_context(
-            "database_query",
-            operation_type="select",
-            table="users",
+            "database_query", operation_type="select", table="users"
         )
-
-        # This log will NOT include config - only operation context
         self.logger.info("Executing database query")
-
-        # Simulate query
         results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
-
         return r[m.ConfigMap].ok(results)
 
     @override
@@ -57,12 +49,7 @@ class DatabaseService(s[m.ConfigMap]):
 
         """
         super().model_post_init(__context)
-
-        # ✅ CORRECT: Log config ONCE, doesn't appear in all subsequent logs
         self._log_config_once(self.db_config, message="Database configuration loaded")
-
-        # ❌ WRONG: DO NOT pass config to _with_operation_context
-        # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
 
 class MigrationService(s[m.ConfigMap]):
@@ -78,8 +65,6 @@ class MigrationService(s[m.ConfigMap]):
 
         """
         super().__init__()
-
-        # Build config dict
         config = m.ConfigMap(
             root={
                 "input_dir": input_dir,
@@ -87,10 +72,8 @@ class MigrationService(s[m.ConfigMap]):
                 "sync": sync,
                 "batch_size": 100,
                 "max_workers": 4,
-            },
+            }
         )
-
-        # ✅ CORRECT: Log config ONCE at initialization
         self._log_config_once(config, message="Migration configuration loaded")
 
     @override
@@ -101,21 +84,12 @@ class MigrationService(s[m.ConfigMap]):
             r[dict]: Migration results
 
         """
-        # Set operation context with business data (NOT config)
         self._with_operation_context(
-            "migration_process",
-            total_entries=1000,
-            batch_count=10,
+            "migration_process", total_entries=1000, batch_count=10
         )
-
-        # Config is NOT in this log or any subsequent logs
         self.logger.info("Starting migration process")
-
-        # Simulate migration
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
-        # Config does NOT repeat in these logs!
-
         return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
@@ -128,27 +102,19 @@ def main() -> None:
             "port": 5432,
             "database": "mydb",
             "pool_size": 10,
-        },
+        }
     )
-
     db_service = DatabaseService(db_config=db_config)
     result = db_service.execute()
-
     if result.is_success:
         print(f"✅ Database query successful: {result.value}")
-
     print("\n=== Example 2: Migration Service ===")
     migration_service = MigrationService(
-        input_dir="/data/input",
-        output_dir="/data/output",
-        sync=True,
+        input_dir="/data/input", output_dir="/data/output", sync=True
     )
-
     result = migration_service.execute()
-
     if result.is_success:
         print(f"✅ Migration successful: {result.value}")
-
     print("\n=== Key Observations ===")
     print("1. Config logged ONCE when service initialized")
     print("2. Config does NOT appear in subsequent logs")

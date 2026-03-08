@@ -29,11 +29,7 @@ def test_detector_detects_workspace_mode_with_parent_git(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
-    # Test with actual git command (will fail gracefully in test env)
     result = detector.detect(project_root)
-
-    # Should return standalone since we can't actually run git in test
     assert result.is_success
 
 
@@ -45,11 +41,7 @@ def test_detector_detects_standalone_mode_without_parent_git(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
-    # Test with actual git command (will fail gracefully in test env)
     result = detector.detect(project_root)
-
-    # Should return standalone since we can't actually run git in test
     assert result.is_success
 
 
@@ -59,9 +51,7 @@ def test_detector_returns_standalone_when_no_parent_git(
     """Test detection returns standalone when no parent .git exists."""
     project_root = tmp_path / "project"
     project_root.mkdir()
-
     result = detector.detect(project_root)
-
     assert result.is_success
     assert result.value == WorkspaceMode.STANDALONE
 
@@ -74,11 +64,7 @@ def test_detector_handles_git_command_errors(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
-    # Test with actual git command (will fail gracefully in test env)
     result = detector.detect(project_root)
-
-    # Should return standalone since git command will fail
     assert result.is_success
 
 
@@ -118,13 +104,10 @@ def test_detector_handles_empty_origin_url(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].ok("")
     detector._git = mock_git
-
     result = detector.detect(project_root)
-
     assert result.is_success
     assert result.value == WorkspaceMode.STANDALONE
 
@@ -137,13 +120,10 @@ def test_detector_handles_git_command_failure(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].fail("git config failed")
     detector._git = mock_git
-
     result = detector.detect(project_root)
-
     assert result.is_success
     assert result.value == WorkspaceMode.STANDALONE
 
@@ -156,15 +136,12 @@ def test_detector_detects_workspace_mode_with_flext_repo(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].ok(
         "https://github.com/flext-sh/flext.git"
     )
     detector._git = mock_git
-
     result = detector.detect(project_root)
-
     assert result.is_success
     assert result.value == WorkspaceMode.WORKSPACE
 
@@ -177,15 +154,12 @@ def test_detector_detects_standalone_with_non_flext_repo(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].ok(
         "https://github.com/other-org/other-repo.git"
     )
     detector._git = mock_git
-
     result = detector.detect(project_root)
-
     assert result.is_success
     assert result.value == WorkspaceMode.STANDALONE
 
@@ -198,13 +172,10 @@ def test_detector_handles_runner_failure(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].fail("no remote")
     detector._git = mock_git
-
     result = detector.detect(project_root)
-
     assert result.is_success
     assert result.value == WorkspaceMode.STANDALONE
 
@@ -217,13 +188,10 @@ def test_detector_handles_exception_during_detection(
     project_root.mkdir()
     parent_git = tmp_path / ".git"
     parent_git.mkdir()
-
     mock_git = Mock()
     mock_git.config_get.side_effect = RuntimeError("Command failed")
     detector._git = mock_git
-
     result = detector.detect(project_root)
-
     assert result.is_failure
     assert isinstance(result.error, str)
     assert "Detection failed" in result.error

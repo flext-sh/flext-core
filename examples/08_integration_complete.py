@@ -39,10 +39,6 @@ from flext_core import (
     u,
 )
 
-# ═══════════════════════════════════════════════════════════════════
-# DOMAIN MODELS
-# ═══════════════════════════════════════════════════════════════════
-
 
 class User(m.Entity):
     """User entity."""
@@ -56,14 +52,7 @@ class Order(m.AggregateRoot):
 
     customer_id: str
     items: list[str] = Field(default_factory=list)
-    status: c.Cqrs.CommonStatus = Field(
-        default=c.Cqrs.CommonStatus.PENDING,
-    )
-
-
-# ═══════════════════════════════════════════════════════════════════
-# SERVICE IMPLEMENTATION
-# ═══════════════════════════════════════════════════════════════════
+    status: c.Cqrs.CommonStatus = Field(default=c.Cqrs.CommonStatus.PENDING)
 
 
 class IntegrationService(s[m.ConfigMap]):
@@ -73,7 +62,6 @@ class IntegrationService(s[m.ConfigMap]):
     def _demonstrate_config_integration() -> None:
         """Show FlextSettings integration."""
         print("\n=== FlextSettings Integration ===")
-
         config = FlextSettings.get_global()
         log_level = config.log_level
         print(f"✅ Config access: log_level={log_level}")
@@ -82,11 +70,9 @@ class IntegrationService(s[m.ConfigMap]):
     def _demonstrate_container_integration() -> None:
         """Show FlextContainer integration."""
         print("\n=== FlextContainer Integration ===")
-
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
         container.register("logger", logger)
-
         logger_result = container.get("logger")
         if logger_result.is_success:
             print("✅ Container service resolution")
@@ -95,7 +81,6 @@ class IntegrationService(s[m.ConfigMap]):
     def _demonstrate_context_integration() -> None:
         """Show FlextContext integration."""
         print("\n=== FlextContext Integration ===")
-
         with FlextContext.Correlation.new_correlation():
             correlation_id = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
@@ -119,7 +104,6 @@ class IntegrationService(s[m.ConfigMap]):
     def _demonstrate_logger_integration() -> None:
         """Show FlextLogger integration."""
         print("\n=== FlextLogger Integration ===")
-
         logger = FlextLogger.create_module_logger(__name__)
         logger.info("Integration demonstration", component="logger")
         print("✅ Structured logging")
@@ -128,25 +112,19 @@ class IntegrationService(s[m.ConfigMap]):
     def _demonstrate_models_integration() -> None:
         """Show m integration."""
         print("\n=== m Integration ===")
-
         user = User(
             unique_id=u.generate("entity"),
             name="Integration User",
             email="integration@example.com",
         )
         print(f"✅ Entity created: {user.name}")
-
-        order = Order(
-            unique_id=u.generate("entity"),
-            customer_id=user.entity_id,
-        )
+        order = Order(unique_id=u.generate("entity"), customer_id=user.entity_id)
         print(f"✅ Aggregate created: {order.status.value}")
 
     @staticmethod
     def _demonstrate_registry_dispatcher_integration() -> None:
         """Show FlextRegistry and FlextDispatcher integration."""
         print("\n=== Registry/Dispatcher Integration ===")
-
         _registry = FlextRegistry()
         print("✅ Registry/Dispatcher initialized")
 
@@ -161,7 +139,6 @@ class IntegrationService(s[m.ConfigMap]):
         def add_processed(x: str) -> r[str]:
             return r[str].ok(f"{x}_processed")
 
-        # Railway pattern
         result = r[str].ok("initial").map(to_upper).flat_map(add_processed)
         if result.is_success:
             print(f"✅ Railway pattern: {result.value}")
@@ -170,31 +147,20 @@ class IntegrationService(s[m.ConfigMap]):
     def _demonstrate_utilities_integration() -> None:
         """Show u integration."""
         print("\n=== u Integration ===")
-
-        # Validation
         email_result = u.validate_pattern(
-            "test@example.com",
-            c.Platform.PATTERN_EMAIL,
-            "email",
+            "test@example.com", c.Platform.PATTERN_EMAIL, "email"
         )
         if email_result.is_success:
             print("✅ Validation utility")
-
-        # ID generation
         correlation_id = u.generate("correlation")
         print(f"✅ ID generation: {correlation_id[:12]}...")
-
-        # Text processing
         cleaned = u.clean_text("  test  ")
         print(f"✅ Text processing: '{cleaned}'")
 
     @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute complete integration demonstration."""
         print("Starting complete integration demonstration")
-
         try:
             self._demonstrate_result_patterns()
             self._demonstrate_container_integration()
@@ -205,7 +171,6 @@ class IntegrationService(s[m.ConfigMap]):
             self._demonstrate_decorators_integration()
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
-
             return r[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
@@ -233,10 +198,9 @@ class IntegrationService(s[m.ConfigMap]):
                             "utility_functions",
                         ],
                         "total_components": 10,
-                    },
-                ),
+                    }
+                )
             )
-
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
             return r[m.ConfigMap].fail(error_msg)
@@ -248,13 +212,10 @@ def main() -> None:
     print("FLEXT COMPLETE INTEGRATION DEMONSTRATION")
     print("All components working together")
     print("=" * 60)
-
     service = IntegrationService()
     result = service.execute()
-
     if result.is_success:
         data = result.value
-
         root_data: dict[str, t.ContainerValue] = (
             data.root if isinstance(data.root, dict) else {}
         )
@@ -262,7 +223,7 @@ def main() -> None:
         total = root_data.get("total_components", 0)
         if (
             isinstance(components, Sequence)
-            and not isinstance(components, (str, bytes, bytearray))
+            and (not isinstance(components, (str, bytes, bytearray)))
             and isinstance(total, int)
         ):
             components_list = list(components)
@@ -270,7 +231,6 @@ def main() -> None:
             print(f"✅ Demonstrated {len(components_list)} integration patterns")
     else:
         print(f"\n❌ Failed: {result.error}")
-
     print("\n" + "=" * 60)
     print("🎯 Complete Integration: All flext-core components")
     print("🎯 Patterns: Railway, DI, Context, Logging, CQRS")

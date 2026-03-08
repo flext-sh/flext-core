@@ -83,11 +83,7 @@ def _extract_requirement_name(entry: str) -> str | None:
 
 
 def _rewrite_pep621(
-    doc: TOMLDocument,
-    *,
-    is_root: bool,
-    mode: str,
-    internal_names: set[str],
+    doc: TOMLDocument, *, is_root: bool, mode: str, internal_names: set[str]
 ) -> list[str]:
     project_raw = doc.get(c.Infra.Toml.PROJECT, None)
     if not isinstance(project_raw, Mapping):
@@ -96,29 +92,24 @@ def _rewrite_pep621(
     if not isinstance(deps_raw, list):
         return []
     deps = _STRING_LIST_ADAPTER.validate_python(deps_raw)
-
     changes: list[str] = []
     updated_deps: list[str] = []
     for item_raw in deps:
         item = item_raw
-
         marker = ""
         requirement_part = item
         if ";" in item:
             requirement_part, marker_part = item.split(";", 1)
             marker = f" ;{marker_part}"
-
         dep_name = _extract_requirement_name(requirement_part)
         if not dep_name or dep_name not in internal_names:
             continue
-
         if " @ " in requirement_part:
             match = c.Infra.Deps.PEP621_PATH_DEP_RE.match(requirement_part)
             if not match:
                 continue
             raw_path = match.group("path").strip()
             dep_name = extract_dep_name(raw_path)
-
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
         path_prefix = "./" if is_root else ""
         new_entry = f"{dep_name} @ file:{path_prefix}{new_path}{marker}"
@@ -143,7 +134,6 @@ def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]
     if not isinstance(deps_raw, Mapping):
         return []
     deps = deps_raw
-
     changes: list[str] = []
     for dep_key_raw in deps:
         dep_key = dep_key_raw
@@ -174,28 +164,22 @@ def rewrite_dep_paths(
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
         return r[list[str]].fail(doc_result.error or "failed to read TOML document")
-
     doc = doc_result.unwrap()
     changes = _rewrite_pep621(
-        doc,
-        is_root=is_root,
-        mode=mode,
-        internal_names=internal_names,
+        doc, is_root=is_root, mode=mode, internal_names=internal_names
     )
     changes += _rewrite_poetry(doc, is_root=is_root, mode=mode)
-
-    if changes and not dry_run:
+    if changes and (not dry_run):
         write_result = toml_service.write_document(pyproject_path, doc)
         if write_result.is_failure:
             return r[list[str]].fail(write_result.error or "failed to write TOML")
-
     return r[list[str]].ok(changes)
 
 
 def main() -> int:
     """Execute dependency path rewriting from command line."""
     parser = argparse.ArgumentParser(
-        description="Rewrite internal FLEXT dependency paths for workspace/standalone mode.",
+        description="Rewrite internal FLEXT dependency paths for workspace/standalone mode."
     )
     _ = parser.add_argument(
         "--mode",
@@ -204,9 +188,7 @@ def main() -> int:
         help="Target mode (default: auto-detect)",
     )
     _ = parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print changes without writing",
+        "--dry-run", action="store_true", help="Print changes without writing"
     )
     _ = parser.add_argument(
         "--project",
@@ -216,15 +198,12 @@ def main() -> int:
         help="Specific project(s) to process (default: all)",
     )
     args = parser.parse_args()
-
     mode = args.mode
     if mode == "auto":
         mode = detect_mode(ROOT)
         output.info(f"[sync-dep-paths] auto-detected mode: {mode}")
-
     total_changes = 0
     toml_service = FlextInfraTomlService()
-
     internal_names: set[str] = set()
     root_pyproject = ROOT / c.Infra.Files.PYPROJECT_FILENAME
     if root_pyproject.exists():
@@ -237,7 +216,6 @@ def main() -> int:
                 root_name = _mapping_str_value(root_project_map, c.Infra.Toml.NAME)
                 if root_name is not None:
                     internal_names.add(root_name)
-
     if not args.projects and root_pyproject.exists():
         changes_result = rewrite_dep_paths(
             root_pyproject,
@@ -260,7 +238,6 @@ def main() -> int:
             for change in changes:
                 output.info(change)
             total_changes += len(changes)
-
     discover_result = FlextInfraDiscoveryService().discover_projects(ROOT)
     if discover_result.is_failure:
         logger.error(
@@ -269,13 +246,11 @@ def main() -> int:
             error=discover_result.error,
         )
         return 1
-
     all_project_dirs = [project.path for project in discover_result.unwrap()]
     if args.projects:
         project_dirs = [ROOT / project for project in args.projects]
     else:
         project_dirs = all_project_dirs
-
     for project_dir in all_project_dirs:
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
@@ -291,7 +266,6 @@ def main() -> int:
         project_name = _mapping_str_value(project_obj_map, c.Infra.Toml.NAME)
         if project_name is not None:
             internal_names.add(project_name)
-
     for project_dir in project_dirs:
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
@@ -307,7 +281,6 @@ def main() -> int:
         project_name = _mapping_str_value(project_obj_map, c.Infra.Toml.NAME)
         if project_name is not None:
             internal_names.add(project_name)
-
     for project_dir in sorted(project_dirs):
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
@@ -333,10 +306,9 @@ def main() -> int:
             for change in changes:
                 output.info(change)
             total_changes += len(changes)
-
     if total_changes == 0:
         output.info(
-            "[sync-dep-paths] No changes needed - all paths already match target mode.",
+            "[sync-dep-paths] No changes needed - all paths already match target mode."
         )
     else:
         action = "would change" if args.dry_run else "changed"
@@ -346,11 +318,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
-__all__ = [
-    "detect_mode",
-    "extract_dep_name",
-    "main",
-    "rewrite_dep_paths",
-]
+__all__ = ["detect_mode", "extract_dep_name", "main", "rewrite_dep_paths"]

@@ -11,8 +11,7 @@ class ExConfigAppConfig(FlextSettings):
     """Application settings model for configuration examples."""
 
     database_url: str = Field(
-        default=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
-        min_length=1,
+        default=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb", min_length=1
     )
     api_timeout: float = Field(default=c.Network.DEFAULT_TIMEOUT, gt=0)
     debug: bool = Field(default=False)

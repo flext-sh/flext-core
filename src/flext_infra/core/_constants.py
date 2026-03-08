@@ -10,7 +10,6 @@ from typing import Final
 class FlextInfraCoreConstants:
     """Core infrastructure constants."""
 
-    # From namespace_validator.py
     EXEMPT_FILENAMES: Final[frozenset[str]] = frozenset({
         "__init__.py",
         "conftest.py",
@@ -44,22 +43,18 @@ class FlextInfraCoreConstants:
         "dict",
         "list",
     })
-
-    # From skill_validator.py
     SKILLS_DIR: Final[Path] = Path(".claude/skills")
     REPORT_DEFAULT: Final[str] = ".claude/skills/{skill}/report.json"
     BASELINE_DEFAULT: Final[str] = ".claude/skills/{skill}/baseline.json"
     CACHE_TTL_SECONDS: Final[int] = 300
-
-    # From stub_chain.py
     MISSING_IMPORT_RE: Final[re.Pattern[str]] = re.compile(
-        r"Cannot find module `([^`]+)` \[missing-import\]"
+        "Cannot find module `([^`]+)` \\[missing-import\\]"
     )
     MYPY_HINT_RE: Final[re.Pattern[str]] = re.compile(
-        r"note:\s+(?:hint|note):\s+.*?`(types-\S+)`"
+        "note:\\s+(?:hint|note):\\s+.*?`(types-\\S+)`"
     )
     MYPY_STUB_RE: Final[re.Pattern[str]] = re.compile(
-        r"Library stubs not installed for ['\"](\S+?)['\"]"
+        "Library stubs not installed for ['\\\"](\\S+?)['\\\"]"
     )
     INTERNAL_PREFIXES: Final[tuple[str, ...]] = ("flext_", "flext-")
 

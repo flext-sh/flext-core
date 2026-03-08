@@ -306,7 +306,6 @@ class TestCommands:
             DepositCommand(account_id="ACC-001", amount=-50.0)
 
 
-# Define Query classes at module level using direct import
 class GetUserQuery(m.Query):
     """Query to get a user."""
 
@@ -333,8 +332,7 @@ class TestQueries:
     def test_query_creation(self) -> None:
         """Test creating a query."""
         query = GetUserQuery(
-            filters=m.Dict(root={"user_id": "USER-001"}),
-            query_type="get_user",
+            filters=m.Dict(root={"user_id": "USER-001"}), query_type="get_user"
         )
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
@@ -351,9 +349,7 @@ class TestQueries:
     def test_query_with_filters(self) -> None:
         """Test query with filtering."""
         query = SearchProductsQuery(
-            keyword="laptop",
-            category="electronics",
-            min_price=500.0,
+            keyword="laptop", category="electronics", min_price=500.0
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
@@ -369,7 +365,7 @@ class TestDomainEvents:
             event_type="UserCreated",
             aggregate_id="USER-001",
             data=_ComparableConfigMap(
-                root={"user_id": "USER-001", "email": "user@example.com"},
+                root={"user_id": "USER-001", "email": "user@example.com"}
             ),
         )
         assert event.event_type == "UserCreated"
@@ -384,16 +380,12 @@ class TestDomainEvents:
         event1 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data=_ComparableConfigMap(
-                root={"tracking_number": "TRACK-123"},
-            ),
+            data=_ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
         )
         event2 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data=_ComparableConfigMap(
-                root={"tracking_number": "TRACK-123"},
-            ),
+            data=_ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
         )
         assert event1.unique_id != event2.unique_id
         assert event1.event_type == event2.event_type
@@ -433,20 +425,13 @@ class TestMetadata:
 
     def test_metadata_creation(self) -> None:
         """Test creating metadata."""
-        metadata = m.Metadata(
-            attributes={"user_id": "123", "operation": "create"},
-        )
+        metadata = m.Metadata(attributes={"user_id": "123", "operation": "create"})
         assert metadata.attributes["user_id"] == "123"
 
     def test_metadata_with_various_types(self) -> None:
         """Test metadata with different attribute types."""
         metadata = m.Metadata(
-            attributes={
-                "string": "value",
-                "number": 42,
-                "float": math.pi,
-                "bool": True,
-            },
+            attributes={"string": "value", "number": 42, "float": math.pi, "bool": True}
         )
         assert metadata.attributes["string"] == "value"
         assert metadata.attributes["number"] == 42
@@ -536,9 +521,7 @@ class TestModelSerialization:
             body: str
 
         cmd = SendEmailCommand(
-            recipient="user@example.com",
-            subject="Test",
-            body="Message body",
+            recipient="user@example.com", subject="Test", body="Message body"
         )
         dumped = cmd.model_dump()
         assert dumped["recipient"] == "user@example.com"
@@ -578,8 +561,6 @@ class TestModelIntegration:
             email: str
 
         customer = Customer(name="John", email="john@example.com")
-        # Create dict with only actual model fields (exclude computed fields)
-        # In Pydantic v2, iterate model_fields and only include existing keys
         dumped = customer.model_dump()
         customer_dict = {
             k: dumped[k] for k in type(customer).model_fields if k in dumped

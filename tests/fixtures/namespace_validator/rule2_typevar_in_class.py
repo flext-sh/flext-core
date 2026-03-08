@@ -8,8 +8,8 @@ from typing import TypeVar
 class FlextTestTypes:
     """Types with TypeVar inside class — WRONG."""
 
-    T = TypeVar("T")  # VIOLATION — TypeVar must be at module level
-    E = TypeVar("E")  # VIOLATION
+    T = TypeVar("T")
+    E = TypeVar("E")
 
 
 t = FlextTestTypes

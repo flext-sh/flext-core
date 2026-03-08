@@ -45,26 +45,16 @@ class FlextInfraUtilitiesTerminal:
 
         """
         target = stream if stream is not None else sys.stderr
-
-        # 1. NO_COLOR takes absolute precedence (https://no-color.org/)
         if os.environ.get("NO_COLOR") is not None:
             return False
-
-        # 2. FORCE_COLOR overrides all detection
         if os.environ.get("FORCE_COLOR") is not None:
             return True
-
-        # 3. CI environments generally don't support colors well
         ci_vars = ("CI", "GITHUB_ACTIONS", "GITLAB_CI")
         if any(os.environ.get(var) is not None for var in ci_vars):
             return False
-
-        # 4. Check if stream is a TTY
         if hasattr(target, "isatty") and target.isatty():
-            # 5. TERM=dumb or empty → no colors
             term = os.environ.get("TERM", "")
             return term not in {"dumb", ""}
-
         return False
 
     @staticmethod

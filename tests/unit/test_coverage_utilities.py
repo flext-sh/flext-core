@@ -32,10 +32,6 @@ from flext_core import FlextExceptions, FlextResult, m, p, t, u
 
 from ..test_utils import assertion_helpers
 
-# =========================================================================
-# Test Data and Scenarios
-# =========================================================================
-
 
 class UtilityOperationType(StrEnum):
     """Utility operation types for parametrization."""
@@ -65,7 +61,6 @@ class UtilityTestCase:
 class UtilityScenarios:
     """Centralized utility test scenarios."""
 
-    # Type guard test cases
     TYPE_GUARD_CASES: ClassVar[list[UtilityTestCase]] = [
         UtilityTestCase(
             operation=UtilityOperationType.TYPE_GUARD_STRING,
@@ -131,21 +126,14 @@ class UtilityScenarios:
             description="None fails list guard",
         ),
     ]
-
-    # Generator test cases
     ID_GENERATOR_CASES: ClassVar[list[tuple[str, str | None]]] = [
         ("generate_id", None),
-        (
-            "generate_iso_timestamp",
-            None,
-        ),  # Returns full ISO timestamp, no simple prefix - uses u.Generators.generate_iso_timestamp()
+        ("generate_iso_timestamp", None),
         ("generate_correlation_id", "corr_"),
         ("generate_entity_id", None),
         ("generate_saga_id", None),
         ("generate_event_id", None),
     ]
-
-    # Cache test cases
     CACHE_NORMALIZATION_CASES: ClassVar[list[tuple[object, type]]] = [
         ({"a": 1, "b": 2}, dict),
         ([1, 2, 3], list),
@@ -153,9 +141,7 @@ class UtilityScenarios:
     ]
 
     @staticmethod
-    def create_mock_config(
-        **kwargs: t.ContainerValue,
-    ) -> p.HasModelDump:
+    def create_mock_config(**kwargs: t.ContainerValue) -> p.HasModelDump:
         """Create mock config object."""
         result: dict[str, t.ContainerValue] = {}
         for key, value in kwargs.items():
@@ -195,10 +181,7 @@ class UtilityScenarios:
         return CustomObject()
 
     @staticmethod
-    def create_flaky_operation() -> tuple[
-        list[int],
-        Callable[[], FlextResult[str]],
-    ]:
+    def create_flaky_operation() -> tuple[list[int], Callable[[], FlextResult[str]]]:
         """Create flaky operation that eventually succeeds."""
         attempt_count = [0]
 
@@ -208,20 +191,11 @@ class UtilityScenarios:
                 return FlextResult[str].fail("Temporary failure")
             return FlextResult[str].ok("success")
 
-        return attempt_count, flaky_op
-
-
-# =========================================================================
-# Test Suite - u Comprehensive Coverage
-# =========================================================================
+        return (attempt_count, flaky_op)
 
 
 class Testu:
     """Unified test suite for u - ALL REAL FUNCTIONALITY."""
-
-    # =====================================================================
-    # Type Guards Tests
-    # =====================================================================
 
     @pytest.mark.parametrize(
         "case",
@@ -265,10 +239,6 @@ class Testu:
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
-    # =====================================================================
-    # Generators Tests
-    # =====================================================================
-
     def test_generate_id_uniqueness(self) -> None:
         """Test ID generation produces unique values."""
         id1 = u.generate()
@@ -278,16 +248,13 @@ class Testu:
         assert id1 != id2
 
     @pytest.mark.parametrize(
-        ("method_name", "prefix"),
-        UtilityScenarios.ID_GENERATOR_CASES,
+        ("method_name", "prefix"), UtilityScenarios.ID_GENERATOR_CASES
     )
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
         if method_name == "generate_iso_timestamp":
-            # Special case - this method still exists
             result = u.Generators.generate_iso_timestamp()
         elif method_name == "generate_id":
-            # Use unified generate() without kind
             result = u.generate()
         elif method_name == "generate_correlation_id":
             result = u.generate("correlation")
@@ -298,7 +265,6 @@ class Testu:
         elif method_name == "generate_event_id":
             result = u.generate("event")
         else:
-            # Fallback for any other methods
             method = getattr(u.Generators, method_name, None)
             if method is None:
                 pytest.skip(f"Method {method_name} not available")
@@ -313,10 +279,6 @@ class Testu:
         short_id = u.generate("ulid", length=8)
         assert isinstance(short_id, str)
         assert len(short_id) == 8
-
-    # =====================================================================
-    # Text Processor Tests
-    # =====================================================================
 
     def test_text_processor_clean(self) -> None:
         """Test text cleaning - returns str directly."""
@@ -342,18 +304,11 @@ class Testu:
         with pytest.raises(ValueError):
             u.Text.safe_string("")
 
-    # =====================================================================
-    # Cache Tests
-    # =====================================================================
-
     @pytest.mark.parametrize(
-        ("input_data", "expected_type"),
-        UtilityScenarios.CACHE_NORMALIZATION_CASES,
+        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZATION_CASES
     )
     def test_cache_normalize_component(
-        self,
-        input_data: t.ContainerValue | None,
-        expected_type: type,
+        self, input_data: t.ContainerValue | None, expected_type: type
     ) -> None:
         """Test cache component normalization."""
         result = u.Cache.normalize_component(input_data)
@@ -382,20 +337,16 @@ class Testu:
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        # Type narrowing: obj is object, but clear_object_cache expects t.ContainerValue
-        # Since obj has model_dump, it's compatible
         if isinstance(obj, BaseModel):
             result = u.Cache.clear_object_cache(obj)
         else:
-            # For non-BaseModel objects, convert to dict-like structure
             obj_dict: dict[str, t.ContainerValue] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (
                         v
                         if isinstance(
-                            v,
-                            (str, int, float, bool, type(None), list, dict),
+                            v, (str, int, float, bool, type(None), list, dict)
                         )
                         else str(v)
                     )
@@ -405,22 +356,14 @@ class Testu:
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to t.ContainerValue for type checker
         obj_typed: t.ContainerValue = cast("t.ContainerValue", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
-        # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to t.ContainerValue for type checker
         obj_typed: t.ContainerValue = cast("t.ContainerValue", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is False
-
-    # =====================================================================
-    # Reliability Tests
-    # =====================================================================
 
     def test_reliability_timeout_success(self) -> None:
         """Test timeout with successful operation."""
@@ -455,21 +398,13 @@ class Testu:
         """Test retry with eventual success."""
         attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
         result: FlextResult[str] = u.Reliability.retry(
-            flaky_op,
-            max_attempts=3,
-            delay_seconds=0.01,
+            flaky_op, max_attempts=3, delay_seconds=0.01
         )
         assertion_helpers.assert_flext_result_success(result)
         assert attempt_count[0] >= 2
 
-    # =====================================================================
-    # Type Checker Tests
-    # =====================================================================
-
     def test_type_checker_object_accepts_all(self) -> None:
         """Test type checking with object (accepts all)."""
-        # MessageTypeSpecifier = str | type[t.ContainerValue]
-        # object is not a valid MessageTypeSpecifier, use str instead
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         assert u.Checker.can_handle_message_type(accepted, str) is True
 
@@ -488,23 +423,15 @@ class Testu:
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
         assert u.Checker.can_handle_message_type(accepted, str) is False
 
-    # =====================================================================
-    # Configuration Tests
-    # =====================================================================
-
     def test_configuration_get_parameter(self) -> None:
         """Test parameter retrieval from config."""
         config = UtilityScenarios.create_mock_config(timeout=30)
-        # get_parameter expects HasModelDump | ConfigurationMapping | None
-        # TestConfig has model_dump method, so it's compatible
         value = u.Configuration.get_parameter(config, "timeout")
         assert value == 30
 
     def test_configuration_get_parameter_missing(self) -> None:
         """Test parameter retrieval for missing parameter."""
         config = UtilityScenarios.create_mock_config(timeout=30)
-        # get_parameter expects HasModelDump | ConfigurationMapping | None
-        # TestConfig has model_dump method, so it's compatible
         with pytest.raises(FlextExceptions.NotFoundError):
             u.Configuration.get_parameter(config, "missing")
 

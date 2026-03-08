@@ -14,7 +14,6 @@ from typing import Annotated, Final, Self
 
 from pydantic import (
     AliasChoices,
-    BaseModel,
     ConfigDict,
     Field,
     TypeAdapter,
@@ -50,13 +49,10 @@ class FlextModelsConfig:
         """Enhanced processing request with advanced validation."""
 
         model_config = ConfigDict(
-            validate_assignment=False,  # Allow invalid values to be set for testing
+            validate_assignment=False,
             use_enum_values=True,
             arbitrary_types_allowed=True,
         )
-
-        # Note: default_factory requires a callable that returns a value
-        # Using lambda is necessary here as Pydantic calls the factory function
         operation_id: str = Field(
             default_factory=FlextRuntime.generate_id,
             min_length=c.Reliability.RETRY_COUNT_MIN,
@@ -78,13 +74,13 @@ class FlextModelsConfig:
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description=("Operation timeout from c (Constants default)"),
+            description="Operation timeout from c (Constants default)",
         )
         retry_attempts: int = Field(
             default=c.Reliability.MAX_RETRY_ATTEMPTS,
             ge=c.ZERO,
             le=c.Reliability.MAX_RETRY_ATTEMPTS,
-            description=("Maximum retry attempts from c (Constants default)"),
+            description="Maximum retry attempts from c (Constants default)",
         )
         enable_validation: bool = True
 
@@ -98,9 +94,7 @@ class FlextModelsConfig:
             ConfigurationDict since str is a subtype.
             """
             return FlextRuntime.ensure_trace_context(
-                v,
-                include_correlation_id=True,
-                include_timestamp=True,
+                v, include_correlation_id=True, include_timestamp=True
             )
 
     class RetryConfiguration(
@@ -116,9 +110,8 @@ class FlextModelsConfig:
             alias="max_attempts",
             validation_alias=AliasChoices("max_attempts", "max_retries"),
             serialization_alias="max_attempts",
-            description=("Maximum retry attempts from c (Constants default)"),
+            description="Maximum retry attempts from c (Constants default)",
         )
-
         exponential_backoff: bool = True
         backoff_multiplier: float = Field(
             default=c.DEFAULT_BACKOFF_MULTIPLIER,
@@ -126,8 +119,7 @@ class FlextModelsConfig:
             description="Backoff multiplier for exponential backoff",
         )
         retry_on_exceptions: list[type[BaseException]] = Field(
-            default_factory=list,
-            description="Exception types to retry on",
+            default_factory=list, description="Exception types to retry on"
         )
         retry_on_status_codes: list[int] = Field(
             default_factory=list,
@@ -137,10 +129,7 @@ class FlextModelsConfig:
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
-        def validate_backoff_strategy(
-            cls,
-            v: list[int] | list[t.Scalar],
-        ) -> list[int]:
+        def validate_backoff_strategy(cls, v: list[int] | list[t.Scalar]) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             codes_for_validation: list[int] = []
             for item in v:
@@ -164,8 +153,6 @@ class FlextModelsConfig:
                     else f"{base_msg} (invalid status code)"
                 )
                 raise ValueError(error_msg)
-            # Return validated list[int] - FlextResult never returns None on success
-            # Use .value directly - FlextResult never returns None on success
             validated_codes: list[int] = result.value
             return validated_codes
 
@@ -200,8 +187,7 @@ class FlextModelsConfig:
         @field_validator("custom_validators", mode="after")
         @classmethod
         def validate_additional_validators(
-            cls,
-            v: list[t.ContainerValue],
+            cls, v: list[t.ContainerValue]
         ) -> list[t.ContainerValue]:
             """Validate custom validators are callable."""
             for validator in v:
@@ -217,7 +203,7 @@ class FlextModelsConfig:
         batch_size: int = Field(
             default=c.Performance.MAX_BATCH_SIZE,
             le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
-            description=("Batch size from c (Constants default)"),
+            description="Batch size from c (Constants default)",
         )
         max_workers: int = Field(
             default=c.Processing.DEFAULT_MAX_WORKERS,
@@ -242,8 +228,7 @@ class FlextModelsConfig:
 
         @classmethod
         def validate_batch(
-            cls,
-            models: list[t.ContainerValue],
+            cls, models: list[t.ContainerValue]
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
             try:
                 validated = TypeAdapter(list[FlextModelsConfig.BatchProcessingConfig])
@@ -260,7 +245,6 @@ class FlextModelsConfig:
         def validate_cross_fields(self) -> Self:
             adjusted_workers = min(self.max_workers, self.batch_size)
             self.max_workers = adjusted_workers
-
             return self
 
     class HandlerExecutionConfig(FlextModelsCollections.Config):
@@ -295,7 +279,7 @@ class FlextModelsConfig:
             description="Max retries (default from constants)",
         )
 
-    class MiddlewareConfig(BaseModel):
+    class MiddlewareConfig:
         """Configuration for middleware execution.
 
         Provides configuration options for middleware ordering and priority
@@ -306,12 +290,9 @@ class FlextModelsConfig:
             arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "MiddlewareConfig",
-                "description": (
-                    "Configuration for middleware execution in request processing"
-                ),
+                "description": "Configuration for middleware execution in request processing",
             },
         )
-
         enabled: bool = Field(default=True, description="Whether middleware is enabled")
         order: int = Field(
             default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
@@ -329,7 +310,7 @@ class FlextModelsConfig:
         middleware_id: str
         middleware_type: str
 
-    class RateLimiterState(BaseModel):
+    class RateLimiterState:
         """State tracking for rate limiter functionality.
 
         Tracks request counts, windows, and blocking state for rate limiting
@@ -340,17 +321,13 @@ class FlextModelsConfig:
             json_schema_extra={
                 "title": "RateLimiterState",
                 "description": "State tracking for rate limiter functionality",
-            },
+            }
         )
-
         processor_name: str = Field(
-            default="",
-            description="Name of the rate limiter processor",
+            default="", description="Name of the rate limiter processor"
         )
         count: int = Field(
-            default=c.ZERO,
-            ge=c.ZERO,
-            description="Current request count in window",
+            default=c.ZERO, ge=c.ZERO, description="Current request count in window"
         )
         window_start: float = Field(
             default=c.INITIAL_TIME,
@@ -382,20 +359,16 @@ class FlextModelsConfig:
         """
 
         capture_output: bool = Field(
-            default=True,
-            description="Whether to capture stdout/stderr",
+            default=True, description="Whether to capture stdout/stderr"
         )
         check: bool = Field(
-            default=True,
-            description="Whether to raise exception on non-zero exit code",
+            default=True, description="Whether to raise exception on non-zero exit code"
         )
         env: FlextModelsContainers.ConfigMap | None = Field(
-            default=None,
-            description="Environment variables for the command",
+            default=None, description="Environment variables for the command"
         )
         cwd: str | None = Field(
-            default=None,
-            description="Working directory for command execution",
+            default=None, description="Working directory for command execution"
         )
         timeout_seconds: float | None = Field(
             default=None,
@@ -404,12 +377,10 @@ class FlextModelsConfig:
             description="Command timeout in seconds (max 5 min)",
         )
         command_input: str | bytes | None = Field(
-            default=None,
-            description="Input to send to command stdin",
+            default=None, description="Input to send to command stdin"
         )
         text: bool | None = Field(
-            default=None,
-            description="Whether to decode stdout/stderr as text",
+            default=None, description="Whether to decode stdout/stderr as text"
         )
 
     class StructlogConfig(FlextModelsCollections.Config):
@@ -423,10 +394,7 @@ class FlextModelsConfig:
             default_factory=FlextRuntime.get_log_level_from_config,
             ge=c.ZERO,
             le=c.Validation.MAX_CUSTOM_VALIDATORS,
-            description=(
-                "Numeric log level (DEBUG=10, INFO=20, WARNING=30, "
-                "ERROR=40, CRITICAL=50) - default from constants"
-            ),
+            description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
         )
         console_renderer: bool = Field(
             default=True,
@@ -437,12 +405,10 @@ class FlextModelsConfig:
             description="Optional extra processors after standard FLEXT processors",
         )
         wrapper_class_factory: Callable[[], type] | None = Field(
-            default=None,
-            description="Custom wrapper factory for structlog",
+            default=None, description="Custom wrapper factory for structlog"
         )
         logger_factory: p.VariadicCallable[t.ContainerValue] | None = Field(
-            default=None,
-            description="Custom logger factory for structlog",
+            default=None, description="Custom logger factory for structlog"
         )
         cache_logger_on_first_use: bool = Field(
             default=True,
@@ -461,16 +427,13 @@ class FlextModelsConfig:
             description="Log level (default from constants, can be overridden)",
         )
         service_name: str | None = Field(
-            default=None,
-            description="Service name for distributed tracing context",
+            default=None, description="Service name for distributed tracing context"
         )
         service_version: str | None = Field(
-            default=None,
-            description="Service version for distributed tracing context",
+            default=None, description="Service version for distributed tracing context"
         )
         correlation_id: str | None = Field(
-            default=None,
-            description="Correlation ID for distributed tracing",
+            default=None, description="Correlation ID for distributed tracing"
         )
         force_new: bool = Field(
             default=False,
@@ -489,13 +452,10 @@ class FlextModelsConfig:
             description="Optional execution context metadata (Pydantic model)",
         )
         correlation_id: str | None = Field(
-            default=None,
-            description="Optional correlation ID for distributed tracing",
+            default=None, description="Optional correlation ID for distributed tracing"
         )
         timeout_override: int | None = Field(
-            default=None,
-            ge=c.ZERO,
-            description="Optional timeout override in seconds",
+            default=None, ge=c.ZERO, description="Optional timeout override in seconds"
         )
 
     class ExecuteDispatchAttemptOptions(FlextModelsCollections.Config):
@@ -506,24 +466,18 @@ class FlextModelsConfig:
         """
 
         message_type: str = Field(
-            description="Message type name for routing and circuit breaker",
+            description="Message type name for routing and circuit breaker"
         )
         metadata: t.ContainerValue | None = Field(
-            default=None,
-            description="Optional execution context metadata",
+            default=None, description="Optional execution context metadata"
         )
         correlation_id: str | None = Field(
-            default=None,
-            description="Optional correlation ID for distributed tracing",
+            default=None, description="Optional correlation ID for distributed tracing"
         )
         timeout_override: int | None = Field(
-            default=None,
-            ge=c.ZERO,
-            description="Optional timeout override in seconds",
+            default=None, ge=c.ZERO, description="Optional timeout override in seconds"
         )
-        operation_id: str = Field(
-            description="Operation ID for timeout tracking",
-        )
+        operation_id: str = Field(description="Operation ID for timeout tracking")
 
     class RuntimeScopeOptions(FlextModelsCollections.Config):
         """Options for runtime_scope (Pydantic v2).
@@ -533,28 +487,22 @@ class FlextModelsConfig:
         """
 
         config_overrides: Mapping[str, t.ContainerValue] | None = Field(
-            default=None,
-            description="Optional configuration overrides",
+            default=None, description="Optional configuration overrides"
         )
         context: p.Context | None = Field(
-            default=None,
-            description="Optional context protocol instance",
+            default=None, description="Optional context protocol instance"
         )
         subproject: str | None = Field(
-            default=None,
-            description="Optional subproject name",
+            default=None, description="Optional subproject name"
         )
         services: Mapping[str, t.ContainerValue] | None = Field(
-            default=None,
-            description="Optional container services mapping",
+            default=None, description="Optional container services mapping"
         )
         factories: Mapping[str, Callable[[], t.ContainerValue]] | None = Field(
-            default=None,
-            description="Optional container factories mapping",
+            default=None, description="Optional container factories mapping"
         )
         container_services: Mapping[str, t.ContainerValue] | None = Field(
-            default=None,
-            description="Optional container services (alias for services)",
+            default=None, description="Optional container services (alias for services)"
         )
         container_factories: Mapping[str, Callable[[], t.ContainerValue]] | None = (
             Field(
@@ -571,30 +519,20 @@ class FlextModelsConfig:
         """
 
         config_overrides: Mapping[str, t.ContainerValue] | None = Field(
-            default=None,
-            description="Optional configuration overrides",
+            default=None, description="Optional configuration overrides"
         )
         service_name: str | None = Field(
-            default=None,
-            description="Optional service name",
+            default=None, description="Optional service name"
         )
-        version: str | None = Field(
-            default=None,
-            description="Optional version string",
-        )
+        version: str | None = Field(default=None, description="Optional version string")
         correlation_id: str | None = Field(
-            default=None,
-            description="Optional correlation ID for tracing",
+            default=None, description="Optional correlation ID for tracing"
         )
         container_services: Mapping[str, t.ContainerValue] | None = Field(
-            default=None,
-            description="Optional container services mapping",
+            default=None, description="Optional container services mapping"
         )
         container_factories: Mapping[str, Callable[[], t.ContainerValue]] | None = (
-            Field(
-                default=None,
-                description="Optional container factories mapping",
-            )
+            Field(default=None, description="Optional container factories mapping")
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):
@@ -605,24 +543,19 @@ class FlextModelsConfig:
         """
 
         error_code: str | None = Field(
-            default=None,
-            description="Error code for categorization",
+            default=None, description="Error code for categorization"
         )
         correlation_id: str | None = Field(
-            default=None,
-            description="Correlation ID for distributed tracing",
+            default=None, description="Correlation ID for distributed tracing"
         )
         metadata: FlextModelFoundation.Metadata | None = Field(
-            default=None,
-            description="Additional metadata (Pydantic model)",
+            default=None, description="Additional metadata (Pydantic model)"
         )
         auto_log: bool = Field(
-            default=False,
-            description="Whether to automatically log exception",
+            default=False, description="Whether to automatically log exception"
         )
         auto_correlation: bool = Field(
-            default=False,
-            description="Whether to auto-generate correlation ID",
+            default=False, description="Whether to auto-generate correlation ID"
         )
         extra_kwargs: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
@@ -636,166 +569,134 @@ class FlextModelsConfig:
         """
 
         error: str | None = Field(
-            default=None,
-            description="Error message for failure case",
+            default=None, description="Error message for failure case"
         )
         error_code: str | None = Field(
-            default=None,
-            description="Error code for categorization",
+            default=None, description="Error code for categorization"
         )
         error_data: FlextModelFoundation.Metadata | None = Field(
-            default=None,
-            description="Additional error data (Pydantic model)",
+            default=None, description="Additional error data (Pydantic model)"
         )
 
-    # Exception-specific configs that extend ExceptionConfig
     class ValidationErrorConfig(ExceptionConfig):
         """Configuration for ValidationError (Pydantic v2)."""
 
         field: str | None = Field(
-            default=None,
-            description="Field name that failed validation",
+            default=None, description="Field name that failed validation"
         )
         value: t.ContainerValue | None = Field(
-            default=None,
-            description="Value that failed validation",
+            default=None, description="Value that failed validation"
         )
 
     class ConfigurationErrorConfig(ExceptionConfig):
         """Configuration for ConfigurationError (Pydantic v2)."""
 
         config_key: str | None = Field(
-            default=None,
-            description="Configuration key that caused error",
+            default=None, description="Configuration key that caused error"
         )
         config_source: str | None = Field(
-            default=None,
-            description="Source of configuration (file, env, etc.)",
+            default=None, description="Source of configuration (file, env, etc.)"
         )
 
     class ConnectionErrorConfig(ExceptionConfig):
         """Configuration for ConnectionError (Pydantic v2)."""
 
         host: str | None = Field(
-            default=None,
-            description="Host that connection failed to",
+            default=None, description="Host that connection failed to"
         )
         port: int | None = Field(
-            default=None,
-            description="Port that connection failed to",
+            default=None, description="Port that connection failed to"
         )
         timeout: float | None = Field(
-            default=None,
-            description="Timeout value that was exceeded",
+            default=None, description="Timeout value that was exceeded"
         )
 
     class TimeoutErrorConfig(ExceptionConfig):
         """Configuration for TimeoutError (Pydantic v2)."""
 
         timeout_seconds: float | None = Field(
-            default=None,
-            description="Timeout in seconds that was exceeded",
+            default=None, description="Timeout in seconds that was exceeded"
         )
         operation: str | None = Field(
-            default=None,
-            description="Operation that timed out",
+            default=None, description="Operation that timed out"
         )
 
     class AuthenticationErrorConfig(ExceptionConfig):
         """Configuration for AuthenticationError (Pydantic v2)."""
 
         auth_method: str | None = Field(
-            default=None,
-            description="Authentication method that failed",
+            default=None, description="Authentication method that failed"
         )
         user_id: str | None = Field(
-            default=None,
-            description="User ID that authentication failed for",
+            default=None, description="User ID that authentication failed for"
         )
 
     class AuthorizationErrorConfig(ExceptionConfig):
         """Configuration for AuthorizationError (Pydantic v2)."""
 
         user_id: str | None = Field(
-            default=None,
-            description="User ID that authorization failed for",
+            default=None, description="User ID that authorization failed for"
         )
         resource: str | None = Field(
-            default=None,
-            description="Resource that access was denied to",
+            default=None, description="Resource that access was denied to"
         )
         permission: str | None = Field(
-            default=None,
-            description="Permission that was denied",
+            default=None, description="Permission that was denied"
         )
 
     class NotFoundErrorConfig(ExceptionConfig):
         """Configuration for NotFoundError (Pydantic v2)."""
 
         resource_type: str | None = Field(
-            default=None,
-            description="Type of resource that was not found",
+            default=None, description="Type of resource that was not found"
         )
         resource_id: str | None = Field(
-            default=None,
-            description="ID of resource that was not found",
+            default=None, description="ID of resource that was not found"
         )
 
     class ConflictErrorConfig(ExceptionConfig):
         """Configuration for ConflictError (Pydantic v2)."""
 
         resource_type: str | None = Field(
-            default=None,
-            description="Type of resource that conflicted",
+            default=None, description="Type of resource that conflicted"
         )
         resource_id: str | None = Field(
-            default=None,
-            description="ID of resource that conflicted",
+            default=None, description="ID of resource that conflicted"
         )
         conflict_reason: str | None = Field(
-            default=None,
-            description="Reason for the conflict",
+            default=None, description="Reason for the conflict"
         )
 
     class RateLimitErrorConfig(ExceptionConfig):
         """Configuration for RateLimitError (Pydantic v2)."""
 
         limit: int | None = Field(
-            default=None,
-            description="Rate limit that was exceeded",
+            default=None, description="Rate limit that was exceeded"
         )
         window_seconds: int | None = Field(
-            default=None,
-            description="Time window for rate limit",
+            default=None, description="Time window for rate limit"
         )
         retry_after: float | None = Field(
-            default=None,
-            description="Seconds to wait before retrying",
+            default=None, description="Seconds to wait before retrying"
         )
 
     class InternalErrorConfig(ExceptionConfig):
         """Configuration for InternalError (Pydantic v2)."""
 
         component: str | None = Field(
-            default=None,
-            description="Component where internal error occurred",
+            default=None, description="Component where internal error occurred"
         )
         operation: str | None = Field(
-            default=None,
-            description="Operation that caused internal error",
+            default=None, description="Operation that caused internal error"
         )
 
     class TypeErrorConfig(ExceptionConfig):
         """Configuration for TypeError (Pydantic v2)."""
 
         expected_type: str | None = Field(
-            default=None,
-            description="Expected type name",
+            default=None, description="Expected type name"
         )
-        actual_type: str | None = Field(
-            default=None,
-            description="Actual type name",
-        )
+        actual_type: str | None = Field(default=None, description="Actual type name")
 
     class TypeErrorOptions(FlextModelsCollections.Config):
         """Options for TypeError initialization (Pydantic v2).
@@ -804,74 +705,56 @@ class FlextModelsConfig:
         """
 
         expected_type: type | None = Field(
-            default=None,
-            description="Expected type class",
+            default=None, description="Expected type class"
         )
-        actual_type: type | None = Field(
-            default=None,
-            description="Actual type class",
-        )
+        actual_type: type | None = Field(default=None, description="Actual type class")
         context: Mapping[str, t.MetadataValue] | None = Field(
-            default=None,
-            description="Additional context for error",
+            default=None, description="Additional context for error"
         )
         metadata: (
             FlextModelFoundation.Metadata | Mapping[str, t.MetadataValue] | None
-        ) = Field(
-            default=None,
-            description="Metadata for error",
-        )
+        ) = Field(default=None, description="Metadata for error")
 
     class ValueErrorConfig(ExceptionConfig):
         """Configuration for ValueError (Pydantic v2)."""
 
         expected_value: str | None = Field(
-            default=None,
-            description="Expected value description",
+            default=None, description="Expected value description"
         )
         actual_value: t.ContainerValue | None = Field(
-            default=None,
-            description="Actual value that caused error",
+            default=None, description="Actual value that caused error"
         )
 
     class CircuitBreakerErrorConfig(ExceptionConfig):
         """Configuration for CircuitBreakerError (Pydantic v2)."""
 
         service_name: str | None = Field(
-            default=None,
-            description="Service name where circuit breaker opened",
+            default=None, description="Service name where circuit breaker opened"
         )
         failure_count: int | None = Field(
             default=None,
             description="Number of failures that triggered circuit breaker",
         )
         reset_timeout: float | None = Field(
-            default=None,
-            description="Timeout before circuit breaker resets",
+            default=None, description="Timeout before circuit breaker resets"
         )
 
     class OperationErrorConfig(ExceptionConfig):
         """Configuration for OperationError (Pydantic v2)."""
 
-        operation: str | None = Field(
-            default=None,
-            description="Operation that failed",
-        )
+        operation: str | None = Field(default=None, description="Operation that failed")
         reason: str | None = Field(
-            default=None,
-            description="Reason for operation failure",
+            default=None, description="Reason for operation failure"
         )
 
     class AttributeAccessErrorConfig(ExceptionConfig):
         """Configuration for AttributeAccessError (Pydantic v2)."""
 
         attribute_name: str | None = Field(
-            default=None,
-            description="Attribute name that access failed for",
+            default=None, description="Attribute name that access failed for"
         )
         object_type: str | None = Field(
-            default=None,
-            description="Type of object that attribute access failed on",
+            default=None, description="Type of object that attribute access failed on"
         )
 
     class OperationExtraConfig(FlextModelsCollections.Config):
@@ -884,29 +767,22 @@ class FlextModelsConfig:
         func_name: str = Field(description="Function name for logging")
         func_module: str = Field(description="Function module for logging")
         correlation_id: str | None = Field(
-            default=None,
-            description="Correlation ID for distributed tracing",
+            default=None, description="Correlation ID for distributed tracing"
         )
         success: bool | None = Field(
-            default=None,
-            description="Operation success status",
+            default=None, description="Operation success status"
         )
         error: str | None = Field(
-            default=None,
-            description="Error message if operation failed",
+            default=None, description="Error message if operation failed"
         )
-        error_type: str | None = Field(
-            default=None,
-            description="Error type name",
-        )
+        error_type: str | None = Field(default=None, description="Error type name")
         start_time: float = Field(
             default=c.INITIAL_TIME,
             ge=c.INITIAL_TIME,
             description="Operation start time for performance tracking",
         )
         track_perf: bool = Field(
-            default=False,
-            description="Whether to track performance metrics",
+            default=False, description="Whether to track performance metrics"
         )
 
     class LogOperationFailureConfig(FlextModelsCollections.Config):
@@ -920,8 +796,7 @@ class FlextModelsConfig:
         func_name: str = Field(description="Function name")
         func_module: str = Field(description="Function module")
         correlation_id: str | None = Field(
-            default=None,
-            description="Correlation ID for distributed tracing",
+            default=None, description="Correlation ID for distributed tracing"
         )
         exc: Exception = Field(description="Exception that caused failure")
         start_time: float = Field(
@@ -930,8 +805,7 @@ class FlextModelsConfig:
             description="Operation start time",
         )
         track_perf: bool = Field(
-            default=False,
-            description="Whether to track performance metrics",
+            default=False, description="Whether to track performance metrics"
         )
 
     class RetryLoopConfig(FlextModelFoundation.ArbitraryTypesModel):
@@ -942,13 +816,11 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
-
         func: p.VariadicCallable[t.ContainerValue] = Field(
-            description="Function to execute",
+            description="Function to execute"
         )
         args: tuple[t.ContainerValue, ...] = Field(
-            default_factory=tuple,
-            description="Positional arguments for function",
+            default_factory=tuple, description="Positional arguments for function"
         )
         call_kwargs: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
@@ -970,10 +842,7 @@ class FlextModelsConfig:
         )
         strategy: str = Field(
             default=c.Reliability.DEFAULT_BACKOFF_STRATEGY,
-            description=(
-                "Retry strategy: 'exponential' or 'linear' "
-                "(used if retry_config is None)"
-            ),
+            description="Retry strategy: 'exponential' or 'linear' (used if retry_config is None)",
         )
 
     class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
@@ -984,63 +853,42 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            extra="forbid",
+            validate_assignment=True, use_enum_values=True, extra="forbid"
         )
-
         dispatcher_timeout_seconds: float = Field(
             default=30.0,
             gt=0,
             description="Timeout in seconds for dispatcher operations",
         )
         executor_workers: int = Field(
-            default=4,
-            ge=1,
-            le=256,
-            description="Number of executor worker threads",
+            default=4, ge=1, le=256, description="Number of executor worker threads"
         )
         circuit_breaker_threshold: int = Field(
-            default=5,
-            ge=1,
-            description="Circuit breaker failure threshold",
+            default=5, ge=1, description="Circuit breaker failure threshold"
         )
         rate_limit_max_requests: int = Field(
-            default=1000,
-            ge=1,
-            description="Maximum requests for rate limiting",
+            default=1000, ge=1, description="Maximum requests for rate limiting"
         )
         rate_limit_window_seconds: float = Field(
-            default=60.0,
-            gt=0,
-            description="Rate limit window in seconds",
+            default=60.0, gt=0, description="Rate limit window in seconds"
         )
         max_retry_attempts: int = Field(
-            default=3,
-            ge=0,
-            le=10,
-            description="Maximum retry attempts",
+            default=3, ge=0, le=10, description="Maximum retry attempts"
         )
         retry_delay: float = Field(
-            default=1.0,
-            ge=0,
-            description="Delay between retries in seconds",
+            default=1.0, ge=0, description="Delay between retries in seconds"
         )
         enable_timeout_executor: bool = Field(
-            default=True,
-            description="Enable timeout executor",
+            default=True, description="Enable timeout executor"
         )
         dispatcher_enable_logging: bool = Field(
-            default=True,
-            description="Enable dispatcher logging",
+            default=True, description="Enable dispatcher logging"
         )
         dispatcher_auto_context: bool = Field(
-            default=True,
-            description="Automatically add context to messages",
+            default=True, description="Automatically add context to messages"
         )
         dispatcher_enable_metrics: bool = Field(
-            default=True,
-            description="Enable dispatcher metrics collection",
+            default=True, description="Enable dispatcher metrics collection"
         )
 
     DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
@@ -1052,13 +900,7 @@ class FlextModelsConfig:
         arbitrary_types_allowed=False,
         extra="forbid",
     )
-    """Domain model configuration defaults.
-
-    Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
-    constants.py cannot import ConfigDict from pydantic.
-
-    Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
-    """
+    "Domain model configuration defaults.\n\n    Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because\n    constants.py cannot import ConfigDict from pydantic.\n\n    Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.\n    "
 
 
 __all__ = ["FlextModelsConfig"]

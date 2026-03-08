@@ -21,19 +21,7 @@ from __future__ import annotations
 import time
 from typing import override
 
-from flext_core import (
-    FlextContainer,
-    FlextDecorators,
-    FlextLogger,
-    c,
-    m,
-    r,
-    s,
-)
-
-# ═══════════════════════════════════════════════════════════════════
-# SERVICE IMPLEMENTATION
-# ═══════════════════════════════════════════════════════════════════
+from flext_core import FlextContainer, FlextDecorators, FlextLogger, c, m, r, s
 
 
 class DecoratorsService(s[m.ConfigMap]):
@@ -43,8 +31,6 @@ class DecoratorsService(s[m.ConfigMap]):
     def _demonstrate_combined() -> None:
         """Show combined decorator."""
         print("\n=== Combined Decorator ===")
-
-        # Setup container for combined decorator
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
         container.register("logger", logger)
@@ -57,7 +43,6 @@ class DecoratorsService(s[m.ConfigMap]):
         )
         def combined_operation(value: int) -> r[int]:
             """Operation with all decorators combined."""
-            # Logger is injected automatically
             if value < 0:
                 return r[int].fail("Value must be positive")
             return r[int].ok(value * 2)
@@ -70,8 +55,6 @@ class DecoratorsService(s[m.ConfigMap]):
     def _demonstrate_inject() -> None:
         """Show dependency injection decorator."""
         print("\n=== Dependency Injection Decorator ===")
-
-        # Setup container
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
         container.register("logger", logger)
@@ -79,7 +62,6 @@ class DecoratorsService(s[m.ConfigMap]):
         @FlextDecorators.inject(logger="logger")
         def process_with_logger(message: str) -> str:
             """Process with injected logger."""
-            # Logger is injected automatically
             return f"Processed: {message}"
 
         result = process_with_logger("test message")
@@ -121,7 +103,6 @@ class DecoratorsService(s[m.ConfigMap]):
         success_result = railway_operation(5)
         if success_result.is_success:
             print(f"✅ Railway success: {success_result.value}")
-
         failure_result = railway_operation(-1)
         if failure_result.is_failure:
             print(f"✅ Railway failure: {failure_result.error}")
@@ -131,11 +112,8 @@ class DecoratorsService(s[m.ConfigMap]):
         """Show retry and timeout decorators with composition."""
         print("\n=== Retry and Timeout Decorators ===")
 
-        # Retry decorator with exponential backoff
         @FlextDecorators.retry(
-            max_attempts=3,
-            delay_seconds=0.1,
-            backoff_strategy="exponential",
+            max_attempts=3, delay_seconds=0.1, backoff_strategy="exponential"
         )
         @FlextDecorators.railway(error_code=c.Errors.CONNECTION_ERROR)
         def unreliable_operation(attempt_count: list[int]) -> r[str]:
@@ -150,19 +128,17 @@ class DecoratorsService(s[m.ConfigMap]):
         if result.is_success:
             print(f"✅ Retry succeeded: {result.value}")
 
-        # Timeout decorator
         @FlextDecorators.timeout(timeout_seconds=0.5)
         @FlextDecorators.railway(error_code=c.Errors.TIMEOUT_ERROR)
         def fast_operation() -> r[str]:
             """Fast operation that completes within timeout."""
-            time.sleep(0.1)  # Quick operation
+            time.sleep(0.1)
             return r[str].ok("Operation completed")
 
         timeout_result = fast_operation()
         if timeout_result.is_success:
             print(f"✅ Timeout protection: {timeout_result.value}")
 
-        # Composition: Retry + Timeout + Railway
         @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
         @FlextDecorators.timeout(timeout_seconds=1.0)
         @FlextDecorators.railway(error_code=c.Errors.CONNECTION_ERROR)
@@ -190,12 +166,9 @@ class DecoratorsService(s[m.ConfigMap]):
         print(f"✅ Context operation: {result}")
 
     @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute decorators demonstrations."""
         print("Starting decorators demonstration")
-
         try:
             self._demonstrate_inject()
             self._demonstrate_log_operation()
@@ -203,7 +176,6 @@ class DecoratorsService(s[m.ConfigMap]):
             self._demonstrate_with_context()
             self._demonstrate_retry_timeout()
             self._demonstrate_combined()
-
             return r[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
@@ -226,10 +198,9 @@ class DecoratorsService(s[m.ConfigMap]):
                             "timeout_enforcement",
                             "composition",
                         ],
-                    },
-                ),
+                    }
+                )
             )
-
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
             return r[m.ConfigMap].fail(error_msg)
@@ -241,10 +212,8 @@ def main() -> None:
     print("FLEXT DECORATORS - COMPREHENSIVE DEMONSTRATION")
     print("Inject, log_operation, railway, with_context, retry, timeout, combined")
     print("=" * 60)
-
     service = DecoratorsService()
     result = service.execute()
-
     if result.is_success:
         data = result.value
         decorators = (
@@ -267,13 +236,12 @@ def main() -> None:
             print(f"✅ Covered {len(decorators_list)} decorator types")
     else:
         print(f"\n❌ Failed: {result.error}")
-
     print("\n" + "=" * 60)
     print(
-        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined",
+        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined"
     )
     print(
-        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability",
+        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability"
     )
     print("🎯 Composition: Retry + Timeout + Railway working together")
     print("🎯 Python 3.13+: PEP 695 type aliases, collections.abc")

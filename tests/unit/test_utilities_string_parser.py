@@ -28,19 +28,13 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import (
-    FlextResult as r,
-    m,
-    t,
-)
+from flext_core import FlextResult as r, m, t
 from flext_tests import t as tests_t, u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 from tests.utilities import TestsFlextUtilities
 
 _ContainerValue = tests_t.Tests.ContainerValue
-
-# Test case dataclasses from tests.models
 NormalizeWhitespaceCase = TestsFlextModels.NormalizeWhitespaceCase
 ObjectKeyCase = TestsFlextModels.ObjectKeyCase
 ParseDelimitedCase = TestsFlextModels.ParseDelimitedCase
@@ -56,132 +50,122 @@ class StringParserTestFactory:
     def parse_delimited_cases() -> list[ParseDelimitedCase]:
         """Generate comprehensive parse_delimited test cases."""
         return [
-            # Basic cases
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 description="basic",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.WITH_SPACES,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.WITH_SPACES,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 description="with spaces",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.EMPTY,
-                TestsFlextConstants.Delimiters.COMMA,
-                [],
+                text=TestsFlextConstants.Strings.EMPTY,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=[],
                 description="empty string",
             ),
-            # Options cases
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.WITH_SPACES,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.WITH_SPACES,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 options=ParseOptions(strip=True, remove_empty=True),
                 description="with options",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.WITH_SPACES,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", " b", " c"],
+                text=TestsFlextConstants.Strings.WITH_SPACES,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", " b", " c"],
                 options=ParseOptions(strip=False, remove_empty=True),
                 description="options no strip",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.WITH_EMPTY,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "", "c"],
+                text=TestsFlextConstants.Strings.WITH_EMPTY,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "", "c"],
                 options=ParseOptions(strip=True, remove_empty=False),
                 description="options no remove empty",
             ),
-            # Validator cases (validator filters, doesn't fail)
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 options=ParseOptions(
-                    strip=True,
-                    remove_empty=True,
-                    validator=lambda s: len(s) > 0,
+                    strip=True, remove_empty=True, validator=lambda s: len(s) > 0
                 ),
                 description="validator success",
             ),
             ParseDelimitedCase(
-                "a,b",
-                TestsFlextConstants.Delimiters.COMMA,
-                [],  # Validator filters out single-char components
+                text="a,b",
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=[],
                 options=ParseOptions(
-                    strip=True,
-                    remove_empty=True,
-                    validator=lambda s: len(s) > 1,  # Filter single char
+                    strip=True, remove_empty=True, validator=lambda s: len(s) > 1
                 ),
                 description="validator filters components",
             ),
-            # Legacy parameter cases
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.WITH_SPACES,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.WITH_SPACES,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 strip=True,
                 remove_empty=True,
                 use_legacy=True,
                 description="legacy params",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 validator=lambda s: "x" not in s,
                 use_legacy=True,
                 description="legacy validator",
             ),
-            # Edge cases
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 description="no spaces",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.EXCESSIVE_SPACES,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.EXCESSIVE_SPACES,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 description="excessive spaces",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.LEADING_TRAILING,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
+                text=TestsFlextConstants.Strings.LEADING_TRAILING,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
                 description="leading/trailing delimiters",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.SINGLE_CHAR,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a"],
+                text=TestsFlextConstants.Strings.SINGLE_CHAR,
+                delimiter=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a"],
                 description="single component",
             ),
-            # Invalid delimiter cases
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                "",
-                None,
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter="",
+                expected=None,
                 expected_error=TestsFlextConstants.TestErrors.DELIMITER_EMPTY,
                 description="empty delimiter",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                ",,",
-                None,
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter=",,",
+                expected=None,
                 expected_error=TestsFlextConstants.TestErrors.DELIMITER_MULTI,
                 description="multi-char delimiter",
             ),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                " ",
-                None,
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                delimiter=" ",
+                expected=None,
                 expected_error=TestsFlextConstants.TestErrors.DELIMITER_WHITESPACE,
                 description="whitespace delimiter",
             ),
@@ -190,77 +174,72 @@ class StringParserTestFactory:
     @staticmethod
     def split_escape_cases() -> list[SplitEscapeCase]:
         """Generate comprehensive split_on_char_with_escape test cases."""
-        # Note: split_with_escape removes escape char, so "a\\,b" becomes "a,b"
         return [
-            # Basic cases
             SplitEscapeCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
+                text=TestsFlextConstants.Strings.BASIC_LIST,
+                split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="basic",
             ),
             SplitEscapeCase(
-                "a\\,b,c",
-                TestsFlextConstants.Delimiters.COMMA,
-                expected=["a,b", "c"],  # Escape char removed
+                text="a\\,b,c",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a,b", "c"],
                 description="escaped delimiter",
             ),
             SplitEscapeCase(
-                TestsFlextConstants.Strings.EMPTY,
-                TestsFlextConstants.Delimiters.COMMA,
+                text=TestsFlextConstants.Strings.EMPTY,
+                split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=[""],
                 description="empty string",
             ),
-            # Custom escape char
             SplitEscapeCase(
-                "a#b,c",
-                TestsFlextConstants.Delimiters.COMMA,
+                text="a#b,c",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
                 escape_char=TestsFlextConstants.EscapeChars.HASH,
-                expected=["ab", "c"],  # Escape char removed, next char is literal
+                expected=["ab", "c"],
                 description="custom escape char",
             ),
-            # Edge cases
             SplitEscapeCase(
-                "a,b\\",
-                TestsFlextConstants.Delimiters.COMMA,
-                expected=["a", "b\\"],  # Escape at end is treated as regular char
+                text="a,b\\",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a", "b\\"],
                 description="escape at end",
             ),
             SplitEscapeCase(
-                "a\\\\,b",
-                TestsFlextConstants.Delimiters.COMMA,
-                expected=["a\\", "b"],  # Escaped escape becomes single escape
+                text="a\\\\,b",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
+                expected=["a\\", "b"],
                 description="escaped escape char",
             ),
             SplitEscapeCase(
-                "a,b,c,d",
-                TestsFlextConstants.Delimiters.COMMA,
+                text="a,b,c,d",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c", "d"],
                 description="multiple components",
             ),
             SplitEscapeCase(
-                "\\,a,b",
-                TestsFlextConstants.Delimiters.COMMA,
-                expected=[",a", "b"],  # Escape char removed
+                text="\\,a,b",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
+                expected=[",a", "b"],
                 description="escaped at start",
             ),
-            # Invalid cases
             SplitEscapeCase(
-                "a,b",
-                "",
+                text="a,b",
+                split_char="",
                 expected_error=TestsFlextConstants.TestErrors.SPLIT_EMPTY,
                 description="empty split char",
             ),
             SplitEscapeCase(
-                "a,b",
-                TestsFlextConstants.Delimiters.COMMA,
+                text="a,b",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
                 escape_char="",
                 expected_error=TestsFlextConstants.TestErrors.ESCAPE_EMPTY,
                 description="empty escape char",
             ),
             SplitEscapeCase(
-                "a,b",
-                TestsFlextConstants.Delimiters.COMMA,
+                text="a,b",
+                split_char=TestsFlextConstants.Delimiters.COMMA,
                 escape_char=TestsFlextConstants.Delimiters.COMMA,
                 expected_error=TestsFlextConstants.TestErrors.SPLIT_ESCAPE_SAME,
                 description="same split and escape",
@@ -271,50 +250,42 @@ class StringParserTestFactory:
     def normalize_whitespace_cases() -> list[NormalizeWhitespaceCase]:
         """Generate comprehensive normalize_whitespace test cases."""
         return [
-            # Basic cases
             NormalizeWhitespaceCase(
-                "  hello   world  ",
-                expected="hello world",
-                description="basic",
+                text="  hello   world  ", expected="hello world", description="basic"
             ),
             NormalizeWhitespaceCase(
-                TestsFlextConstants.Strings.EMPTY,
+                text=TestsFlextConstants.Strings.EMPTY,
                 expected=TestsFlextConstants.Strings.EMPTY,
                 description="empty string",
             ),
-            # Custom pattern
             NormalizeWhitespaceCase(
-                "hello---world",
+                text="hello---world",
                 pattern=TestsFlextConstants.Patterns.DASH,
                 replacement=TestsFlextConstants.Replacements.DASH,
                 expected="hello-world",
                 description="custom pattern",
             ),
-            # Custom replacement
             NormalizeWhitespaceCase(
-                "hello   world",
+                text="hello   world",
                 replacement=TestsFlextConstants.Replacements.UNDERSCORE,
                 expected="hello_world",
                 description="custom replacement",
             ),
-            # Edge cases
             NormalizeWhitespaceCase(
-                "hello\t\n\rworld",
+                text="hello\t\n\rworld",
                 expected="hello world",
                 description="various whitespace",
             ),
             NormalizeWhitespaceCase(
-                "   ",
-                expected="",
-                description="only whitespace",
+                text="   ", expected="", description="only whitespace"
             ),
             NormalizeWhitespaceCase(
-                TestsFlextConstants.Strings.SINGLE_CHAR,
+                text=TestsFlextConstants.Strings.SINGLE_CHAR,
                 expected=TestsFlextConstants.Strings.SINGLE_CHAR,
                 description="single char",
             ),
             NormalizeWhitespaceCase(
-                "hello\n\n\nworld",
+                text="hello\n\n\nworld",
                 expected="hello world",
                 description="multiple newlines",
             ),
@@ -324,34 +295,32 @@ class StringParserTestFactory:
     def regex_pipeline_cases() -> list[RegexPipelineCase]:
         """Generate comprehensive apply_regex_pipeline test cases."""
         return [
-            # Basic cases
             RegexPipelineCase(
-                "hello   world",
-                [
+                text="hello   world",
+                patterns=[
                     (
                         TestsFlextConstants.Patterns.WHITESPACE,
                         TestsFlextConstants.Replacements.SPACE,
                     ),
-                    (r"=", "="),
+                    ("=", "="),
                 ],
                 expected="hello world",
                 description="basic",
             ),
             RegexPipelineCase(
-                TestsFlextConstants.Strings.EMPTY,
-                [
+                text=TestsFlextConstants.Strings.EMPTY,
+                patterns=[
                     (
                         TestsFlextConstants.Patterns.WHITESPACE,
                         TestsFlextConstants.Replacements.SPACE,
-                    ),
+                    )
                 ],
                 expected=TestsFlextConstants.Strings.EMPTY,
                 description="empty string",
             ),
-            # Multiple patterns - note: patterns apply sequentially
             RegexPipelineCase(
-                "cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
-                [
+                text="cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
+                patterns=[
                     (
                         TestsFlextConstants.Patterns.EQUALS_SPACE,
                         TestsFlextConstants.Replacements.EQUALS,
@@ -368,16 +337,12 @@ class StringParserTestFactory:
                 expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
                 description="multiple patterns",
             ),
-            # Edge cases
             RegexPipelineCase(
-                "test",
-                [],
-                expected="test",
-                description="empty patterns",
+                text="test", patterns=[], expected="test", description="empty patterns"
             ),
             RegexPipelineCase(
-                "a=b=c",
-                [(r"=", ":"), (r":", "=")],
+                text="a=b=c",
+                patterns=[("=", ":"), (":", "=")],
                 expected="a=b=c",
                 description="pattern chaining",
             ),
@@ -406,41 +371,33 @@ class StringParserTestFactory:
             id = "TestId"
 
         return [
-            ObjectKeyCase(int, expected_exact="int", description="type"),
-            ObjectKeyCase(TestClass, expected_exact="TestClass", description="class"),
+            ObjectKeyCase(obj=int, expected_exact="int", description="type"),
             ObjectKeyCase(
-                test_function,
+                obj=TestClass, expected_exact="TestClass", description="class"
+            ),
+            ObjectKeyCase(
+                obj=test_function,
                 expected_exact="test_function",
                 description="function",
             ),
+            ObjectKeyCase(obj={}, expected_exact="dict", description="instance"),
+            ObjectKeyCase(obj="test", expected_exact="test", description="string"),
             ObjectKeyCase(
-                {},  # Empty dict - valid t.ContainerValue, tests dict instance behavior
-                expected_exact="dict",
-                description="instance",
-            ),
-            ObjectKeyCase("test", expected_exact="test", description="string"),
-            ObjectKeyCase(
-                NoStr(),
-                expected_contains=["NoStr"],
-                description="no str method",
+                obj=NoStr(), expected_contains=["NoStr"], description="no str method"
             ),
             ObjectKeyCase(
-                WithName(),
-                expected_exact="TestName",
-                description="with name attr",
+                obj=WithName(), expected_exact="TestName", description="with name attr"
             ),
             ObjectKeyCase(
-                WithId(),
-                expected_exact="TestId",
-                description="with id attr",
+                obj=WithId(), expected_exact="TestId", description="with id attr"
             ),
             ObjectKeyCase(
-                {"name": "DictName"},
+                obj={"name": "DictName"},
                 expected_exact="DictName",
                 description="dict with name",
             ),
             ObjectKeyCase(
-                {"id": "DictId"},
+                obj={"id": "DictId"},
                 expected_exact="DictId",
                 description="dict with id",
             ),
@@ -459,35 +416,27 @@ class TestuStringParser:
         """Test parse_delimited method."""
 
         @pytest.mark.parametrize(
-            "case",
-            StringParserTestFactory.parse_delimited_cases(),
+            "case", StringParserTestFactory.parse_delimited_cases()
         )
         def test_parse_delimited(
-            self,
-            parser: u.Parser,
-            case: ParseDelimitedCase,
+            self, parser: u.Parser, case: ParseDelimitedCase
         ) -> None:
             """Test parse_delimited with parametrized cases."""
 
             def operation() -> r[list[str]]:
                 """Execute parse_delimited based on case configuration."""
                 if case.use_legacy:
-                    # Legacy params not supported, use options instead
                     options = m.CollectionsParseOptions(
                         strip=case.strip or True,
                         remove_empty=case.remove_empty or True,
                         validator=case.validator,
                     )
                     return parser.parse_delimited(
-                        case.text,
-                        case.delimiter,
-                        options=options,
+                        case.text, case.delimiter, options=options
                     )
                 if case.options:
                     return parser.parse_delimited(
-                        case.text,
-                        case.delimiter,
-                        options=case.options,
+                        case.text, case.delimiter, options=case.options
                     )
                 return parser.parse_delimited(case.text, case.delimiter)
 
@@ -500,16 +449,11 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u.Parser) -> None:
             """Test parsing exception handling with bad object."""
-            # Intentionally pass bad object that fails on split() to test error handling
             bad_obj = TestsFlextUtilities.CoreBadObjects.create_for_split()
-            # Runtime: parser receives bad object that fails on split()
-            # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.parse_delimited(
-                bad_str,
-                TestsFlextConstants.Delimiters.COMMA,
+                bad_str, TestsFlextConstants.Delimiters.COMMA
             )
-            # Type narrowing: assert_failure expects r[t.ContainerValue], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_PARSE,
@@ -521,18 +465,14 @@ class TestuStringParser:
 
         @pytest.mark.parametrize("case", StringParserTestFactory.split_escape_cases())
         def test_split_with_escape(
-            self,
-            parser: u.Parser,
-            case: SplitEscapeCase,
+            self, parser: u.Parser, case: SplitEscapeCase
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.split_on_char_with_escape(
-                        case.text,
-                        case.split_char,
-                        escape_char=case.escape_char,
+                        case.text, case.split_char, escape_char=case.escape_char
                     ),
                 ),
                 expected_value=case.expected,
@@ -542,17 +482,11 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u.Parser) -> None:
             """Test split exception handling with bad object."""
-            # Intentionally pass bad object that fails on __getitem__()
-            # to test error handling
             bad_obj = TestsFlextUtilities.CoreBadObjects.create_for_index()
-            # Runtime: parser receives bad object that fails on indexing
-            # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.split_on_char_with_escape(
-                bad_str,
-                TestsFlextConstants.Delimiters.COMMA,
+                bad_str, TestsFlextConstants.Delimiters.COMMA
             )
-            # Type narrowing: assert_failure expects r[t.ContainerValue], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_SPLIT,
@@ -563,22 +497,17 @@ class TestuStringParser:
         """Test normalize_whitespace method."""
 
         @pytest.mark.parametrize(
-            "case",
-            StringParserTestFactory.normalize_whitespace_cases(),
+            "case", StringParserTestFactory.normalize_whitespace_cases()
         )
         def test_normalize_whitespace(
-            self,
-            parser: u.Parser,
-            case: NormalizeWhitespaceCase,
+            self, parser: u.Parser, case: NormalizeWhitespaceCase
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.normalize_whitespace(
-                        case.text,
-                        pattern=case.pattern,
-                        replacement=case.replacement,
+                        case.text, pattern=case.pattern, replacement=case.replacement
                     ),
                 ),
                 expected_value=case.expected,
@@ -588,13 +517,9 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u.Parser) -> None:
             """Test normalization exception handling with bad object."""
-            # Intentionally pass bad object that fails on str() to test error handling
             bad_obj = TestsFlextUtilities.CoreBadObjects.create_for_str()
-            # Runtime: parser receives bad object that fails on str conversion
-            # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
-            # Type narrowing: assert_failure expects r[t.ContainerValue], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
@@ -606,9 +531,7 @@ class TestuStringParser:
 
         @pytest.mark.parametrize("case", StringParserTestFactory.regex_pipeline_cases())
         def test_apply_regex_pipeline(
-            self,
-            parser: u.Parser,
-            case: RegexPipelineCase,
+            self, parser: u.Parser, case: RegexPipelineCase
         ) -> None:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
@@ -623,14 +546,9 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u.Parser) -> None:
             """Test pipeline exception handling."""
-            # Intentionally create invalid pattern with None for error testing
-            # Type checker: cast to bypass type checking for runtime error testing
             invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
-            patterns: list[tuple[str, str] | tuple[str, str, int]] = [
-                invalid_pattern,
-            ]  # Runtime allows this
+            patterns: list[tuple[str, str] | tuple[str, str, int]] = [invalid_pattern]
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[t.ContainerValue], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_PIPELINE,
@@ -640,10 +558,9 @@ class TestuStringParser:
         def test_invalid_pattern(self, parser: u.Parser) -> None:
             """Test pipeline with invalid regex pattern."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [
-                (r"[invalid", "replacement"),
+                ("[invalid", "replacement")
             ]
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[t.ContainerValue], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.INVALID_REGEX,
@@ -652,45 +569,41 @@ class TestuStringParser:
 
         def test_none_text(self, parser: u.Parser) -> None:
             """Test pipeline with None text."""
-            # Intentionally pass None for text to test error handling
-            # Type checker: cast to str to test runtime error handling
             text = cast("str", cast("object", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.apply_regex_pipeline(
-                        text,  # Runtime: None, triggers error handling
+                        text,
                         [
                             (
                                 TestsFlextConstants.Patterns.WHITESPACE,
                                 TestsFlextConstants.Replacements.SPACE,
-                            ),
+                            )
                         ],
                     ),
                 ),
-                expected_error="None",  # Expects failure with "None" in error
+                expected_error="None",
                 description="none text",
             )
 
         def test_invalid_text_type(self, parser: u.Parser) -> None:
             """Test pipeline with invalid text type."""
-            # Intentionally pass int for text to test error handling
-            # Type checker: cast to str to test runtime error handling
             text = cast("str", cast("object", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.apply_regex_pipeline(
-                        text,  # Runtime: 123, triggers error handling
+                        text,
                         [
                             (
                                 TestsFlextConstants.Patterns.WHITESPACE,
                                 TestsFlextConstants.Replacements.SPACE,
-                            ),
+                            )
                         ],
                     ),
                 ),
-                expected_error="str",  # Expects failure with "str" in error
+                expected_error="str",
                 description="invalid text type",
             )
 
@@ -698,26 +611,16 @@ class TestuStringParser:
             """Test pipeline with empty patterns list."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
-            # Empty pattern list should result in unchanged text
-            u.Tests.Result.assert_success_with_value(
-                result,
-                "test",
-            )
+            u.Tests.Result.assert_success_with_value(result, "test")
 
     class TestGetObjectKey:
         """Test get_object_key method."""
 
         @pytest.mark.parametrize("case", StringParserTestFactory.object_key_cases())
-        def test_get_object_key(
-            self,
-            parser: u.Parser,
-            case: ObjectKeyCase,
-        ) -> None:
+        def test_get_object_key(self, parser: u.Parser, case: ObjectKeyCase) -> None:
             """Test get_object_key with parametrized cases."""
             key = parser.get_object_key(cast("t.ContainerValue", case.obj))
-
             assert isinstance(key, str), f"Key must be string for: {case.description}"
-
             if case.expected_exact:
                 assert key == case.expected_exact, (
                     f"Exact match failed for: {case.description}"

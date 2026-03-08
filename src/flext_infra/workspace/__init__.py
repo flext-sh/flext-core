@@ -21,8 +21,6 @@ if TYPE_CHECKING:
     from flext_infra.workspace.migrator import FlextInfraProjectMigrator
     from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
     from flext_infra.workspace.sync import FlextInfraSyncService
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraOrchestratorService": (
         "flext_infra.workspace.orchestrator",
@@ -39,7 +37,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "WorkspaceMode": ("flext_infra.workspace.detector", "WorkspaceMode"),
 }
-
 __all__ = [
     "FlextInfraOrchestratorService",
     "FlextInfraProjectMigrator",
@@ -49,7 +46,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

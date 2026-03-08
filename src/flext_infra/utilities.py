@@ -61,5 +61,4 @@ class FlextInfraUtilities(FlextUtilities):
 
 
 u = FlextInfraUtilities
-
 __all__ = ["FlextInfraUtilities", "u"]

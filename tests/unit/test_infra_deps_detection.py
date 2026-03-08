@@ -188,13 +188,10 @@ class TestRunDeptry:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-
-        # Write JSON output file
         out_file = project / ".deptry-report.json"
         out_file.write_text(
             json.dumps([{"error": {"code": "DEP001"}, "module": "foo"}])
         )
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
@@ -236,10 +233,8 @@ class TestRunDeptry:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-
         out_file = project / ".deptry-report.json"
         out_file.write_text("not valid json")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
@@ -255,10 +250,8 @@ class TestRunDeptry:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-
         out_file = project / ".deptry-report.json"
         out_file.write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
@@ -274,7 +267,6 @@ class TestRunDeptry:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, extend_exclude=["tests", "docs"])
@@ -289,16 +281,12 @@ class TestRunDeptry:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-
-        # Create the default output file
         default_out = project / ".deptry-report.json"
         default_out.write_text("[]")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin)
         assert result.is_success
-        # File should be cleaned up (no explicit json_output_path)
         assert not default_out.exists()
 
 
@@ -321,7 +309,6 @@ class TestRunPipCheck:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
-
         cmd_out = Mock(
             exit_code=1, stdout="pkg1 has requirement\npkg2 conflict\n", stderr=""
         )
@@ -350,7 +337,6 @@ class TestRunPipCheck:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
@@ -530,7 +516,6 @@ class TestRunMypyStubHints:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         cmd_out = Mock(
             exit_code=0,
             stdout='note: hint: "pip install types-pyyaml"',
@@ -560,9 +545,7 @@ class TestModuleToTypesPackage:
         """Test limits override default mapping."""
         service = FlextInfraDependencyDetectionService()
         limits = {
-            "typing_libraries": {
-                "module_to_package": {"yaml": "custom-types-yaml"},
-            },
+            "typing_libraries": {"module_to_package": {"yaml": "custom-types-yaml"}}
         }
         result = service.module_to_types_package("yaml", limits)
         assert result == "custom-types-yaml"
@@ -595,11 +578,11 @@ class TestGetCurrentTypingsFromPyproject:
                             "dependencies": {
                                 "types-pyyaml": "^6.0",
                                 "types-requests": "^2.28",
-                            },
-                        },
-                    },
-                },
-            },
+                            }
+                        }
+                    }
+                }
+            }
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -612,12 +595,9 @@ class TestGetCurrentTypingsFromPyproject:
         service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "project": {
                 "optional-dependencies": {
-                    "typings": [
-                        "types-pyyaml>=6.0",
-                        "types-requests[extra]==2.28",
-                    ],
-                },
-            },
+                    "typings": ["types-pyyaml>=6.0", "types-requests[extra]==2.28"]
+                }
+            }
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -628,11 +608,7 @@ class TestGetCurrentTypingsFromPyproject:
         service = FlextInfraDependencyDetectionService()
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, t.Any]].ok({
-            "project": {
-                "optional-dependencies": {
-                    "typings": {"types-pyyaml": ">=6.0"},
-                },
-            },
+            "project": {"optional-dependencies": {"typings": {"types-pyyaml": ">=6.0"}}}
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -665,21 +641,14 @@ class TestGetRequiredTypings:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
-        # Mock mypy output
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
-
-        # Mock toml reads
         service.toml.read.side_effect = [
-            # load_dependency_limits
             r[dict[str, t.Any]].ok({}),
-            # get_current_typings_from_pyproject
             r[dict[str, t.Any]].ok({
                 "project": {"optional-dependencies": {"typings": list[str]()}}
             }),
         ]
-
         result = service.get_required_typings(tmp_path, venv_bin)
         assert result.is_success
 
@@ -689,12 +658,10 @@ class TestGetRequiredTypings:
         service.toml = Mock()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
-
         service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({}),
             r[dict[str, t.Any]].ok({}),
         ]
-
         result = service.get_required_typings(tmp_path, venv_bin, include_mypy=False)
         assert result.is_success
 
@@ -706,10 +673,8 @@ class TestGetRequiredTypings:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         service.runner.run_raw.return_value = r[Mock].fail("mypy crash")
         service.toml.read.return_value = r[dict[str, t.Any]].ok({})
-
         result = service.get_required_typings(tmp_path, venv_bin)
         assert result.is_failure
 
@@ -721,19 +686,14 @@ class TestGetRequiredTypings:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
-
         service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({
-                "typing_libraries": {
-                    "exclude": ["types-excluded"],
-                },
+                "typing_libraries": {"exclude": ["types-excluded"]}
             }),
             r[dict[str, t.Any]].ok({}),
         ]
-
         result = service.get_required_typings(tmp_path, venv_bin)
         assert result.is_success
 
@@ -745,15 +705,12 @@ class TestGetRequiredTypings:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
-
         service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({"python": {"version": "3.13"}}),
             r[dict[str, t.Any]].ok({}),
         ]
-
         result = service.get_required_typings(tmp_path, venv_bin)
         assert result.is_success
         assert result.value.python_version == "3.13"
@@ -800,10 +757,8 @@ class TestDetectionUncoveredLines:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-
         out_file = project / ".deptry-report.json"
         out_file.write_text(json.dumps(["not_a_dict", {"error": {"code": "DEP001"}}]))
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_deptry(project, venv_bin, json_output_path=out_file)
@@ -818,7 +773,6 @@ class TestDetectionUncoveredLines:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
@@ -838,9 +792,7 @@ class TestDetectionUncoveredLines:
         """Test module_to_types_package with custom limits (line 481)."""
         service = FlextInfraDependencyDetectionService()
         limits = {
-            "typing_libraries": {
-                "module_to_package": {"custom_module": "types-custom"},
-            },
+            "typing_libraries": {"module_to_package": {"custom_module": "types-custom"}}
         }
         result = service.module_to_types_package("custom_module", limits)
         assert result == "types-custom"
@@ -863,15 +815,12 @@ class TestDetectionUncoveredLines:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
-
         service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({"python": {"version": "3.13"}}),
             r[dict[str, t.Any]].ok({}),
         ]
-
         result = service.get_required_typings(tmp_path, venv_bin)
         assert result.is_success
         assert result.value.limits_applied is True
@@ -883,10 +832,8 @@ class TestDetectionUncoveredLines:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
-
         result = service.run_mypy_stub_hints(tmp_path, venv_bin, timeout=600)
         assert result.is_success
         service.runner.run_raw.assert_called_once()
@@ -901,36 +848,26 @@ class TestDetectionUncoveredLines:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
-
         service.toml.read.side_effect = [
-            r[dict[str, t.Any]].ok({}),  # limits file
-            r[dict[str, t.Any]].ok({}),  # pyproject
+            r[dict[str, t.Any]].ok({}),
+            r[dict[str, t.Any]].ok({}),
         ]
-
-        # Mock run_mypy_stub_hints to return missing modules
         with patch.object(service, "run_mypy_stub_hints") as mock_mypy:
             mock_mypy.return_value = r[tuple[t.Any, ...]].ok((
                 list[str](),
                 ["requests"],
-            ))  # hinted, missing_modules
-            # Mock module_to_types_package to return a types package
+            ))
             with patch.object(service, "module_to_types_package") as mock_module:
                 mock_module.return_value = "types-requests"
                 result = service.get_required_typings(tmp_path, venv_bin)
                 assert result.is_success
-                # Verify that module_to_types_package was called for the missing module
                 mock_module.assert_called()
-
-
-# Tests for module-level wrapper functions
 
 
 def test_discover_projects_wrapper(tmp_path: Path) -> None:
     """Test discover_projects wrapper function (line 455)."""
-    # detection module already imported at top
     with patch.object(detection, "_service") as mock_service:
         mock_service.discover_projects.return_value = r[list[t.Any]].ok([tmp_path])
         result = detection.discover_projects(tmp_path)
@@ -942,7 +879,6 @@ def test_discover_projects_wrapper(tmp_path: Path) -> None:
 
 def test_run_deptry_wrapper(tmp_path: Path) -> None:
     """Test run_deptry wrapper function (line 467)."""
-    # detection module already imported at top
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
     with patch.object(detection, "_service") as mock_service:
@@ -957,7 +893,6 @@ def test_run_deptry_wrapper(tmp_path: Path) -> None:
 
 def test_run_pip_check_wrapper(tmp_path: Path) -> None:
     """Test run_pip_check wrapper function (line 481)."""
-    # detection module already imported at top
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
     with patch.object(detection, "_service") as mock_service:
@@ -972,7 +907,6 @@ def test_run_pip_check_wrapper(tmp_path: Path) -> None:
 
 def test_run_mypy_stub_hints_wrapper(tmp_path: Path) -> None:
     """Test run_mypy_stub_hints wrapper function (line 511)."""
-    # detection module already imported at top
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
     with patch.object(detection, "_service") as mock_service:
@@ -986,7 +920,6 @@ def test_run_mypy_stub_hints_wrapper(tmp_path: Path) -> None:
 
 def test_get_current_typings_from_pyproject_wrapper(tmp_path: Path) -> None:
     """Test get_current_typings_from_pyproject wrapper function (line 524)."""
-    # detection module already imported at top
     with patch.object(detection, "_service") as mock_service:
         mock_service.get_current_typings_from_pyproject.return_value = [
             "types-requests"
@@ -1000,7 +933,6 @@ def test_get_current_typings_from_pyproject_wrapper(tmp_path: Path) -> None:
 
 def test_get_required_typings_wrapper(tmp_path: Path) -> None:
     """Test get_required_typings wrapper function (line 535)."""
-    # detection module already imported at top
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
     with patch.object(detection, "_service") as mock_service:

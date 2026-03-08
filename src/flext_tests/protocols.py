@@ -59,10 +59,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def remove(
-                    self,
-                    *,
-                    force: bool = False,
-                    **kwargs: t.Tests.ContainerValue,
+                    self, *, force: bool = False, **kwargs: t.Tests.ContainerValue
                 ) -> None:
                     """Remove the container.
 
@@ -101,9 +98,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Get network collection."""
                     ...
 
-                def volumes(
-                    self,
-                ) -> FlextTestsProtocols.Tests.Docker.VolumeCollection:
+                def volumes(self) -> FlextTestsProtocols.Tests.Docker.VolumeCollection:
                     """Get volume collection."""
                     ...
 
@@ -112,8 +107,7 @@ class FlextTestsProtocols(FlextProtocols):
                 """Protocol for container collection operations."""
 
                 def get(
-                    self,
-                    container_id: str,
+                    self, container_id: str
                 ) -> FlextTestsProtocols.Tests.Docker.Container:
                     """Get container by ID."""
                     ...
@@ -240,8 +234,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def get(
-                    self,
-                    network_id: str,
+                    self, network_id: str
                 ) -> FlextTestsProtocols.Tests.Docker.Network:
                     """Get network by ID."""
                     ...
@@ -299,8 +292,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def get(
-                    self,
-                    volume_id: str,
+                    self, volume_id: str
                 ) -> FlextTestsProtocols.Tests.Docker.Volume:
                     """Get volume by ID."""
                     ...
@@ -343,10 +335,9 @@ class FlextTestsProtocols(FlextProtocols):
                 """
 
                 compose: t.ContainerValue
-                """Compose API access (python-on-whales style)."""
-
+                "Compose API access (python-on-whales style)."
                 client_config: Mapping[str, t.ContainerValue]
-                """Client configuration (python-on-whales style)."""
+                "Client configuration (python-on-whales style)."
 
                 def down(
                     self,
@@ -420,10 +411,7 @@ class FlextTestsProtocols(FlextProtocols):
                 """
 
                 def __call__(
-                    self,
-                    kind: str = ...,
-                    # All parameters via kwargs - validated by ModelFactoryParams
-                    **kwargs: t.Tests.ContainerValue,
+                    self, kind: str = ..., **kwargs: t.Tests.ContainerValue
                 ) -> (
                     t.Tests.ContainerValue
                     | list[t.Tests.ContainerValue]
@@ -466,7 +454,6 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     kind: str = "ok",
                     value: TValue | None = None,
-                    # All parameters via kwargs - validated by ResultFactoryParams
                     **kwargs: t.Tests.ContainerValue,
                 ) -> (
                     FlextProtocols.Result[TValue] | list[FlextProtocols.Result[TValue]]
@@ -503,8 +490,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def dict[K, V](
                     self,
-                    source: (Mapping[K, V] | t.Tests.ContainerValue) = "user",
-                    # All parameters via kwargs - validated by DictFactoryParams
+                    source: Mapping[K, V] | t.Tests.ContainerValue = "user",
                     **kwargs: t.Tests.ContainerValue,
                 ) -> Mapping[K, V] | FlextResult[Mapping[K, V]]:
                     """Create typed dict from source.
@@ -527,7 +513,6 @@ class FlextTestsProtocols(FlextProtocols):
                 def list[T](
                     self,
                     source: t.Tests.ContainerValue = "user",
-                    # All parameters via kwargs - validated by ListFactoryParams
                     **kwargs: t.Tests.ContainerValue,
                 ) -> list[T] | FlextResult[list[T]]:
                     """Create typed list from source.
@@ -557,10 +542,7 @@ class FlextTestsProtocols(FlextProtocols):
                 """
 
                 def __call__[T](
-                    self,
-                    type_: type[T],
-                    # All parameters via kwargs - validated by GenericFactoryParams
-                    **kwargs: t.Tests.ContainerValue,
+                    self, type_: type[T], **kwargs: t.Tests.ContainerValue
                 ) -> T | list[T] | FlextResult[T] | FlextResult[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
@@ -602,11 +584,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is success and return value."""
                     ...
 
-                def assert_that(
-                    self,
-                    value: T,
-                    **kwargs: T,
-                ) -> None:
+                def assert_that(self, value: T, **kwargs: T) -> None:
                     """Assert value satisfies conditions."""
                     ...
 
@@ -649,9 +627,7 @@ class FlextTestsProtocols(FlextProtocols):
                 """
 
                 def validate(
-                    self,
-                    value: t.ContainerValue,
-                    spec: int | tuple[int, int],
+                    self, value: t.ContainerValue, spec: int | tuple[int, int]
                 ) -> bool:
                     """Validate length against spec.
 
@@ -677,9 +653,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def eq(
-                    self,
-                    expected: t.ContainerValue,
-                    msg: str | None = None,
+                    self, expected: t.ContainerValue, msg: str | None = None
                 ) -> Self:
                     """Assert value equals expected."""
                     ...
@@ -689,9 +663,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def fail(
-                    self,
-                    error: str | None = None,
-                    msg: str | None = None,
+                    self, error: str | None = None, msg: str | None = None
                 ) -> Self:
                     """Assert result is failure."""
                     ...
@@ -724,10 +696,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def scope(
-                    self,
-                    **kwargs: T,
-                ) -> T:
+                def scope(self, **kwargs: T) -> T:
                     """Enter test execution scope with **kwargs pattern.
 
                     Args:
@@ -891,8 +860,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def build(
-                    self,
-                    **kwargs: t.Tests.ContainerValue,
+                    self, **kwargs: t.Tests.ContainerValue
                 ) -> (
                     Mapping[str, t.Tests.ContainerValue]
                     | BaseModel
@@ -983,8 +951,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def scenarios(
-                    self,
-                    *cases: tuple[str, Mapping[str, t.Tests.ContainerValue]],
+                    self, *cases: tuple[str, Mapping[str, t.Tests.ContainerValue]]
                 ) -> list[tuple[str, Mapping[str, t.Tests.ContainerValue]]]:
                     """Build pytest.mark.parametrize compatible scenarios.
 
@@ -1020,8 +987,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def to_result[T](
-                    self,
-                    **kwargs: t.Tests.ContainerValue,
+                    self, **kwargs: t.Tests.ContainerValue
                 ) -> (
                     FlextResult[T]
                     | FlextResult[Mapping[str, t.Tests.ContainerValue]]
@@ -1066,5 +1032,4 @@ class FlextTestsProtocols(FlextProtocols):
 
 
 p = FlextTestsProtocols
-
 __all__ = ["FlextTestsProtocols", "p"]

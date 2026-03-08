@@ -45,18 +45,16 @@ class FlextInfraCodegenTransforms:
         for stmt in tree.body:
             if not isinstance(stmt, ast.AnnAssign):
                 continue
-
             annotation = stmt.annotation
             if isinstance(annotation, ast.Name) and annotation.id == "Final":
                 if not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree):
                     matches.append(stmt)
                 continue
-
             if (
                 isinstance(annotation, ast.Subscript)
                 and isinstance(annotation.value, ast.Name)
-                and annotation.value.id == "Final"
-                and not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree)
+                and (annotation.value.id == "Final")
+                and (not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree))
             ):
                 matches.append(stmt)
         return matches
@@ -68,12 +66,11 @@ class FlextInfraCodegenTransforms:
         for stmt in tree.body:
             if not isinstance(stmt, ast.AnnAssign):
                 continue
-
             annotation = stmt.annotation
             if (
                 isinstance(annotation, ast.Name)
                 and annotation.id == "TypeAlias"
-                and not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree)
+                and (not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree))
             ):
                 matches.append(stmt)
         return matches
@@ -87,16 +84,14 @@ class FlextInfraCodegenTransforms:
                 continue
             if not isinstance(stmt.value, ast.Call):
                 continue
-
             func = stmt.value.func
             is_typevar = False
             if (isinstance(func, ast.Name) and func.id == "TypeVar") or (
                 isinstance(func, ast.Attribute) and func.attr == "TypeVar"
             ):
                 is_typevar = True
-
-            if is_typevar and not FlextInfraCodegenTransforms.is_used_in_context(
-                stmt, tree
+            if is_typevar and (
+                not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree)
             ):
                 matches.append(stmt)
         return matches
@@ -107,22 +102,7 @@ class FlextInfraCodegenTransforms:
     ) -> str:
         """Generate a minimal base module file with correct imports."""
         import_line = FlextInfraCodegenTransforms._resolve_base_class_import(base_class)
-        return f'''"""Module skeleton for {class_name}.
-
-{docstring}
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
-{import_line}
-
-
-class {class_name}({base_class}):
-    """{docstring}"""
-'''
+        return f'"""Module skeleton for {class_name}.\n\n{docstring}\n\nCopyright (c) 2025 FLEXT Team. All rights reserved.\nSPDX-License-Identifier: MIT\n"""\n\nfrom __future__ import annotations\n\n{import_line}\n\n\nclass {class_name}({base_class}):\n    """{docstring}"""\n'
 
     @staticmethod
     def is_used_in_context(node: ast.stmt, tree: ast.Module) -> bool:
@@ -135,10 +115,8 @@ class {class_name}({base_class}):
                     break
         elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
             name = node.target.id
-
         if name is None:
             return False
-
         for stmt in ast.walk(tree):
             if isinstance(stmt, ast.ClassDef):
                 bases_module = ast.fix_missing_locations(
@@ -150,7 +128,6 @@ class {class_name}({base_class}):
                 for base_node in ast.walk(bases_module):
                     if isinstance(base_node, ast.Name) and base_node.id == name:
                         return True
-
                 keywords_module = ast.fix_missing_locations(
                     ast.Module(
                         body=[ast.Expr(value=kw.value) for kw in stmt.keywords],
@@ -160,7 +137,6 @@ class {class_name}({base_class}):
                 for kw_node in ast.walk(keywords_module):
                     if isinstance(kw_node, ast.Name) and kw_node.id == name:
                         return True
-
         return False
 
     @staticmethod

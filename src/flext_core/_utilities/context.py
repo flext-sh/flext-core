@@ -39,10 +39,7 @@ class FlextUtilitiesContext:
             p.DI: Scoped container instance.
 
         """
-        return container.scoped(
-            subproject=scope_id,
-            services=overrides,
-        )
+        return container.scoped(subproject=scope_id, services=overrides)
 
     @staticmethod
     def clone_runtime[T](
@@ -88,8 +85,7 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_datetime_proxy(
-        key: str,
-        default: datetime | None = None,
+        key: str, default: datetime | None = None
     ) -> m.StructlogProxyContextVar[datetime]:
         """Create StructlogProxyContextVar[datetime] instance.
 
@@ -110,19 +106,14 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns datetime instance
 
         """
-        # Explicit instantiation with full type
         proxy: m.StructlogProxyContextVar[datetime] = m.StructlogProxyContextVar[
             datetime
-        ](
-            key,
-            default=default,
-        )
+        ](key, default=default)
         return proxy
 
     @staticmethod
     def create_dict_proxy(
-        key: str,
-        default: m.ConfigMap | None = None,
+        key: str, default: m.ConfigMap | None = None
     ) -> m.StructlogProxyContextVar[m.ConfigMap]:
         """Create StructlogProxyContextVar[dict] instance.
 
@@ -142,19 +133,14 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns dict
 
         """
-        # Explicit instantiation with full type
         proxy: m.StructlogProxyContextVar[m.ConfigMap] = m.StructlogProxyContextVar[
             m.ConfigMap
-        ](
-            key,
-            default=default,
-        )
+        ](key, default=default)
         return proxy
 
     @staticmethod
     def create_str_proxy(
-        key: str,
-        default: str | None = None,
+        key: str, default: str | None = None
     ) -> m.StructlogProxyContextVar[str]:
         """Create StructlogProxyContextVar[str] instance.
 
@@ -174,13 +160,10 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns "abc-123"
 
         """
-        # Explicit instantiation with full type
         proxy: m.StructlogProxyContextVar[str] = m.StructlogProxyContextVar[str](
             key, default=default
         )
         return proxy
 
 
-__all__ = [
-    "FlextUtilitiesContext",
-]
+__all__ = ["FlextUtilitiesContext"]

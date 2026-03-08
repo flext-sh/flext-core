@@ -28,10 +28,7 @@ class CircuitBreakerManager:
     """
 
     def __init__(
-        self,
-        threshold: int,
-        recovery_timeout: float,
-        success_threshold: int,
+        self, threshold: int, recovery_timeout: float, success_threshold: int
     ) -> None:
         """Initialize circuit breaker manager.
 
@@ -57,7 +54,7 @@ class CircuitBreakerManager:
         """Attempt recovery if circuit is open."""
         if self.is_open(message_type):
             opened_at = self._opened_at.get(message_type, 0.0)
-            if (time.time() - opened_at) >= self._recovery_timeout:
+            if time.time() - opened_at >= self._recovery_timeout:
                 self.transition_to_half_open(message_type)
 
     def check_before_dispatch(self, message_type: str) -> r[bool]:
@@ -79,7 +76,7 @@ class CircuitBreakerManager:
                         "message_type": message_type,
                         "state": self.get_state(message_type),
                         "failure_count": self.get_failure_count(message_type),
-                    },
+                    }
                 ),
             )
         return r[bool].ok(value=True)
@@ -118,24 +115,18 @@ class CircuitBreakerManager:
             self._recovery_successes.get(mt, 0) for mt in self._states
         )
         recovery_success_rate = (
-            (
-                total_recovery_successes
-                / total_recovery_attempts
-                * c.PERCENTAGE_MULTIPLIER
-            )
+            total_recovery_successes / total_recovery_attempts * c.PERCENTAGE_MULTIPLIER
             if total_recovery_attempts > 0
             else 0.0
         )
-
         total_failures = sum(self._failures.values())
         total_successes = sum(self._total_successes.values())
         total_operations = total_failures + total_successes
         failure_rate = (
-            (total_failures / total_operations * c.PERCENTAGE_MULTIPLIER)
+            total_failures / total_operations * c.PERCENTAGE_MULTIPLIER
             if total_operations > 0
             else 0.0
         )
-
         return {
             "failures": len(self._failures),
             "states": len(self._states),
@@ -158,10 +149,7 @@ class CircuitBreakerManager:
             Current circuit breaker state for the message type.
 
         """
-        return self._states.get(
-            message_type,
-            c.Reliability.CircuitBreakerState.CLOSED,
-        )
+        return self._states.get(message_type, c.Reliability.CircuitBreakerState.CLOSED)
 
     def get_threshold(self) -> int:
         """Get circuit breaker threshold."""
@@ -181,7 +169,6 @@ class CircuitBreakerManager:
         current_state = self.get_state(message_type)
         current_failures = self._failures.get(message_type, 0) + 1
         self._failures[message_type] = current_failures
-
         if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
             self._recovery_failures[message_type] = (
                 self._recovery_failures.get(message_type, 0) + 1
@@ -199,17 +186,14 @@ class CircuitBreakerManager:
         self._total_successes[message_type] = (
             self._total_successes.get(message_type, 0) + 1
         )
-
         if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
             success_count = self._success_counts.get(message_type, 0) + 1
             self._success_counts[message_type] = success_count
-
             if success_count >= self._success_threshold:
                 self._recovery_successes[message_type] = (
                     self._recovery_successes.get(message_type, 0) + 1
                 )
                 self.transition_to_closed(message_type)
-
         elif current_state == c.Reliability.CircuitBreakerState.CLOSED:
             self._failures[message_type] = 0
 
@@ -219,24 +203,17 @@ class CircuitBreakerManager:
 
     def transition_to_closed(self, message_type: str) -> None:
         """Transition to CLOSED state."""
-        self.transition_to_state(
-            message_type,
-            c.Reliability.CircuitBreakerState.CLOSED,
-        )
+        self.transition_to_state(message_type, c.Reliability.CircuitBreakerState.CLOSED)
 
     def transition_to_half_open(self, message_type: str) -> None:
         """Transition to HALF_OPEN state."""
         self.transition_to_state(
-            message_type,
-            c.Reliability.CircuitBreakerState.HALF_OPEN,
+            message_type, c.Reliability.CircuitBreakerState.HALF_OPEN
         )
 
     def transition_to_open(self, message_type: str) -> None:
         """Transition to OPEN state."""
-        self.transition_to_state(
-            message_type,
-            c.Reliability.CircuitBreakerState.OPEN,
-        )
+        self.transition_to_state(message_type, c.Reliability.CircuitBreakerState.OPEN)
 
     def transition_to_state(self, message_type: str, new_state: str) -> None:
         """Transition to specified state."""
@@ -257,10 +234,7 @@ class RateLimiterManager:
     """Enforce per-message rate limits with a sliding window algorithm."""
 
     def __init__(
-        self,
-        max_requests: int,
-        window_seconds: float,
-        jitter_factor: float = 0.1,
+        self, max_requests: int, window_seconds: float, jitter_factor: float = 0.1
     ) -> None:
         """Initialize rate limiter manager.
 
@@ -285,11 +259,9 @@ class RateLimiterManager:
         """
         current_time = time.time()
         window_start, count = self._windows.get(message_type, (current_time, 0))
-
         if current_time - window_start >= self._window_seconds:
             window_start = current_time
             count = 0
-
         if count >= self._max_requests:
             elapsed = current_time - window_start
             retry_after = max(0, int(self._window_seconds - elapsed))
@@ -303,10 +275,9 @@ class RateLimiterManager:
                         "window_seconds": self._window_seconds,
                         "current_count": count,
                         "retry_after": retry_after,
-                    },
+                    }
                 ),
             )
-
         self._windows[message_type] = (window_start, count + 1)
         return r[bool].ok(value=True)
 
@@ -331,7 +302,6 @@ class RateLimiterManager:
         """
         if base_delay <= 0.0 or self._jitter_factor <= 0.0:
             return base_delay
-
         secure_random = secrets.SystemRandom()
         variance = (2.0 * secure_random.random() - 1.0) * self._jitter_factor
         jittered = base_delay * (1.0 + variance)
@@ -361,7 +331,6 @@ class RetryPolicy:
         """Check if an error is retriable."""
         if error is None:
             return False
-
         retriable_patterns = (
             "Temporary failure",
             "timeout",
@@ -379,10 +348,7 @@ class RetryPolicy:
         """Calculate exponential backoff delay for given attempt."""
         if self._base_delay <= 0.0:
             return 0.0
-
-        exponential_delay = self._base_delay * (
-            self._exponential_factor**attempt_number
-        )
+        exponential_delay = self._base_delay * self._exponential_factor**attempt_number
         return min(exponential_delay, self._max_delay)
 
     def get_max_attempts(self) -> int:

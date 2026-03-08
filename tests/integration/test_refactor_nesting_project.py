@@ -12,39 +12,18 @@ class TestProjectLevelRefactor:
 
     def test_project_processes_without_errors(self, tmp_path: Path) -> None:
         """Test that full project processes without errors."""
-        # Create a mock project structure
         src_dir = tmp_path / "src" / "test_project"
         src_dir.mkdir(parents=True)
-
-        # Create a file with loose classes
         test_file = src_dir / "dispatcher.py"
-        test_file.write_text("""
-class TimeoutEnforcer:
-    pass
-
-class RateLimiter:
-    pass
-""")
-
-        # Create mappings config
+        test_file.write_text(
+            "\nclass TimeoutEnforcer:\n    pass\n\nclass RateLimiter:\n    pass\n"
+        )
         config_file = tmp_path / "mappings.yml"
-        config_file.write_text("""
-class_nesting:
-  - loose_name: TimeoutEnforcer
-    current_file: src/test_project/dispatcher.py
-    target_namespace: FlextDispatcher
-    target_name: TimeoutEnforcer
-    confidence: high
-  - loose_name: RateLimiter
-    current_file: src/test_project/dispatcher.py
-    target_namespace: FlextDispatcher
-    target_name: RateLimiter
-    confidence: high
-""")
-
+        config_file.write_text(
+            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n"
+        )
         rule = ClassNestingRefactorRule(config_file)
         result = rule.apply(test_file, dry_run=True)
-
         assert result.success
         assert result.modified is True
 
@@ -52,32 +31,17 @@ class_nesting:
         """Verify no type errors are introduced by refactoring."""
         src_dir = tmp_path / "src"
         src_dir.mkdir()
-
         test_file = src_dir / "test.py"
-        test_file.write_text("""
-from typing import Optional
-
-class Helper:
-    def process(self, x: Optional[int] = None) -> int:
-        return x or 0
-""")
-
-        # After refactoring, types should still be valid
+        test_file.write_text(
+            "\nfrom typing import Optional\n\nclass Helper:\n    def process(self, x: Optional[int] = None) -> int:\n        return x or 0\n"
+        )
         config_file = tmp_path / "mappings.yml"
-        config_file.write_text("""
-class_nesting:
-  - loose_name: Helper
-    current_file: src/test.py
-    target_namespace: FlextUtilities
-    target_name: Helper
-    confidence: high
-""")
-
+        config_file.write_text(
+            "\nclass_nesting:\n  - loose_name: Helper\n    current_file: src/test.py\n    target_namespace: FlextUtilities\n    target_name: Helper\n    confidence: high\n"
+        )
         rule = ClassNestingRefactorRule(config_file)
         result = rule.apply(test_file, dry_run=True)
-
         assert result.success
-        # Verify type hints preserved in output
         assert result.refactored_code is not None
         assert (
             "Optional[int]" in result.refactored_code or "int" in result.refactored_code

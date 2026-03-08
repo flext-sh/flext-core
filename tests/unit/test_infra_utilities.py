@@ -41,11 +41,8 @@ class TestFlextInfraUtilitiesImport:
 
     def test_flext_infra_utilities_has_inherited_methods(self) -> None:
         """Test that FlextInfraUtilities inherits methods from FlextUtilities."""
-        # Check that at least some methods are inherited
         flext_utils_methods = {m for m in dir(FlextUtilities) if not m.startswith("_")}
         infra_utils_methods = {
             m for m in dir(FlextInfraUtilities) if not m.startswith("_")
         }
-
-        # Infra utilities should have at least the same public methods as FlextUtilities
         assert len(infra_utils_methods) >= len(flext_utils_methods)

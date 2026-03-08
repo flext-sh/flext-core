@@ -8,6 +8,3 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-# Following FLEXT rules: No lazy imports, minimal imports only when necessary
-# Unit tests import required modules directly

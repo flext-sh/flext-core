@@ -49,21 +49,13 @@ class Examples:
     is fully deterministic and golden-file comparison works reliably.
     """
 
-    # ------------------------------------------------------------------
-    # Lifecycle
-    # ------------------------------------------------------------------
-
     SEED: int = 42
 
     def __init__(self, caller_file: str) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
         self._results: list[str] = []
         self._caller = Path(caller_file)
-        self._rng = random.Random(self.SEED)  # noqa: S311
-
-    # ------------------------------------------------------------------
-    # Recording helpers
-    # ------------------------------------------------------------------
+        self._rng = random.Random(self.SEED)
 
     def check(self, label: str, value: t.ContainerValue | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
@@ -88,10 +80,6 @@ class Examples:
         """Return a deterministic pseudo-random float rounded to 4 decimals."""
         return round(self._rng.uniform(lo, hi), 4)
 
-    # ------------------------------------------------------------------
-    # Random value generators (deterministic via fixed seed)
-    # ------------------------------------------------------------------
-
     def rand_int(self, lo: int = -1000, hi: int = 1000) -> int:
         """Return a deterministic pseudo-random integer in ``[lo, hi]``."""
         return self._rng.randint(lo, hi)
@@ -115,10 +103,6 @@ class Examples:
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    # ------------------------------------------------------------------
-    # Serialisation
-    # ------------------------------------------------------------------
-
     def ser(self, v: t.ContainerValue | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
@@ -138,8 +122,10 @@ class Examples:
                 return "[" + ", ".join(self.ser(item) for item in values) + "]"
             case dict() as mapping:
                 pairs = ", ".join(
-                    f"{self.ser(k)}: {self.ser(val)}"
-                    for k, val in sorted(mapping.items(), key=lambda kv: str(kv[0]))
+                    (
+                        f"{self.ser(k)}: {self.ser(val)}"
+                        for k, val in sorted(mapping.items(), key=lambda kv: str(kv[0]))
+                    )
                 )
                 return "{" + pairs + "}"
             case datetime() as value:
@@ -148,10 +134,6 @@ class Examples:
                 return str(value)
             case _:
                 return type(v).__name__
-
-    # ------------------------------------------------------------------
-    # Golden-file verification
-    # ------------------------------------------------------------------
 
     def verify(self) -> None:
         """Compare accumulated results against the ``.expected`` golden file.
@@ -163,29 +145,21 @@ class Examples:
         actual = "\n".join(self._results).strip() + "\n"
         expected_path = self._caller.with_suffix(".expected")
         checks = sum(
-            1 for line in self._results if ": " in line and not line.startswith("[")
+            1 for line in self._results if ": " in line and (not line.startswith("["))
         )
-
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
                 sys.stdout.write(f"PASS: {self._caller.stem} ({checks} checks)\n")
                 return
-
             actual_path = self._caller.with_suffix(".actual")
             actual_path.write_text(actual, encoding="utf-8")
             sys.stdout.write(
-                f"FAIL: {self._caller.stem}"
-                f" — diff {expected_path.name} {actual_path.name}\n"
+                f"FAIL: {self._caller.stem} — diff {expected_path.name} {actual_path.name}\n"
             )
             sys.exit(1)
-
         expected_path.write_text(actual, encoding="utf-8")
         sys.stdout.write(f"GENERATED: {expected_path.name} ({checks} checks)\n")
-
-    # ------------------------------------------------------------------
-    # Shared example models
-    # ------------------------------------------------------------------
 
     class Person(m.Value):
         """Tiny Pydantic model used across several examples."""
@@ -197,13 +171,8 @@ class Examples:
         """Tiny model used to exercise ``with_resource``."""
 
         model_config = ConfigDict(frozen=False)
-
         value: int
         cleaned: bool = False
-
-    # ------------------------------------------------------------------
-    # Probe helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def bind_probe(result_obj: FlextResult[int], delta: int) -> t.ContainerValue:

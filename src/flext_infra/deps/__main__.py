@@ -45,12 +45,10 @@ def main() -> int:
             and sys.argv[1] in {"-h", "--help"}
             else 1
         )
-
     subcommand = sys.argv[1]
     if subcommand not in _SUBCOMMANDS:
         output.error(f"flext-infra deps: unknown subcommand '{subcommand}'")
         return 1
-
     sys.argv = [f"flext-infra deps {subcommand}"] + sys.argv[2:]
     module = importlib.import_module(_SUBCOMMANDS[subcommand])
     exit_code = module.main()

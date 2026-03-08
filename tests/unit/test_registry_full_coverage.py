@@ -64,9 +64,7 @@ def test_execute_and_register_handler_failure_paths(
             return r[m.Handler.RegistrationResult].fail("dispatcher-fail")
 
     setattr(
-        registry,
-        "_dispatcher",
-        cast("p.CommandBus", cast("object", _FailDispatcher())),
+        registry, "_dispatcher", cast("p.CommandBus", cast("object", _FailDispatcher()))
     )
     reg_result = registry.register_handler(_as_registry_handler(_Handler()))
     assert reg_result.is_failure
@@ -76,30 +74,22 @@ def test_execute_and_register_handler_failure_paths(
         def register_handler(self, *_args: object) -> r[m.Handler.RegistrationResult]:
             return r[m.Handler.RegistrationResult].ok(
                 m.Handler.RegistrationResult(
-                    handler_name="h",
-                    status="active",
-                    mode="command",
-                ),
+                    handler_name="h", status="active", mode="command"
+                )
             )
 
     setattr(
-        registry,
-        "_dispatcher",
-        cast("p.CommandBus", cast("object", _OkDispatcher())),
+        registry, "_dispatcher", cast("p.CommandBus", cast("object", _OkDispatcher()))
     )
     monkeypatch.setattr(
-        FlextRegistry,
-        "_create_registration_details",
-        lambda *_args: None,
+        FlextRegistry, "_create_registration_details", lambda *_args: None
     )
     fallback = registry.register_handler(_as_registry_handler(_Handler()))
     assert fallback.is_success
     assert fallback.value.registration_id != ""
 
 
-def test_create_auto_discover_and_mode_mapping(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
     discovered_handler = _Handler()
 
     def fake_scan(
@@ -113,12 +103,11 @@ def test_create_auto_discover_and_mode_mapping(
         FlextRegistry,
         "register_handler",
         lambda self, handler: r[m.HandlerRegistrationDetails].ok(
-            _success_details(getattr(handler, "__name__", "h")),
+            _success_details(getattr(handler, "__name__", "h"))
         ),
     )
     created = FlextRegistry.create(auto_discover_handlers=True)
     assert isinstance(created, FlextRegistry)
-
     registry = FlextRegistry()
     query_details = registry._create_registration_details(
         m.HandlerRegistrationResult(handler_name="q", status="active", mode="query"),
@@ -139,11 +128,9 @@ def test_summary_error_paths_and_bindings_failures(
     msg = FlextRegistry._add_registration_error("k", "", summary)
     assert msg == ""
     assert summary.errors[0].startswith("Failed to register handler")
-
     registry = FlextRegistry()
     finalize = registry._finalize_summary(summary)
     assert finalize.is_failure
-
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",
@@ -168,7 +155,6 @@ def test_summary_error_paths_and_bindings_failures(
     )
     failed = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert failed.is_failure
-
     setattr(
         registry,
         "_dispatcher",
@@ -184,20 +170,14 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
     registry = FlextRegistry()
     registry._registered_keys.add("cat::name")
     monkeypatch.setattr(
-        registry.container,
-        "get",
-        lambda _key: r[t.JsonValue].fail("missing"),
+        registry.container, "get", lambda _key: r[t.JsonValue].fail("missing")
     )
     missing = registry.get_plugin("cat", "name")
     assert missing.is_failure
-
     metadata_result = registry.register(
-        "svc",
-        "service",
-        metadata=m.Metadata(attributes={"k": "v"}),
+        "svc", "service", metadata=m.Metadata(attributes={"k": "v"})
     )
     assert metadata_result.is_success
-
     monkeypatch.setattr(
         registry.container,
         "register",

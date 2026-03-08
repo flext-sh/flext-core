@@ -28,15 +28,7 @@ class DictToMappingTransformer(cst.CSTTransformer):
             param_names.add(parameters.star_arg.name.value)
         if parameters.star_kwarg is not None:
             param_names.add(parameters.star_kwarg.name.value)
-
-        mutating_methods = {
-            "clear",
-            "copy",
-            "pop",
-            "popitem",
-            "setdefault",
-            "update",
-        }
+        mutating_methods = {"clear", "copy", "pop", "popitem", "setdefault", "update"}
 
         class MutableParamVisitor(cst.CSTVisitor):
             def __init__(self) -> None:
@@ -86,28 +78,22 @@ class DictToMappingTransformer(cst.CSTTransformer):
 
     @override
     def leave_FunctionDef(
-        self,
-        original_node: cst.FunctionDef,
-        updated_node: cst.FunctionDef,
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
     ) -> cst.BaseStatement:
         if self._is_overload_function(original_node):
             return updated_node
         mutated_names = self._collect_mutated_params(original_node)
         parameters = updated_node.params
-
         star_arg_updated = parameters.star_arg
         if isinstance(star_arg_updated, cst.Param):
             star_arg_updated = self._rewrite_param_if_safe(
                 star_arg_updated, mutated_names
             )
-
         star_kwarg_updated = parameters.star_kwarg
         if star_kwarg_updated is not None:
             star_kwarg_updated = self._rewrite_param_if_safe(
-                star_kwarg_updated,
-                mutated_names,
+                star_kwarg_updated, mutated_names
             )
-
         rewritten_params = parameters.with_changes(
             posonly_params=[
                 self._rewrite_param_if_safe(param, mutated_names)
@@ -124,7 +110,6 @@ class DictToMappingTransformer(cst.CSTTransformer):
             star_arg=star_arg_updated,
             star_kwarg=star_kwarg_updated,
         )
-
         working_node = updated_node.with_changes(params=rewritten_params)
         if not self._include_return_annotations:
             return working_node
@@ -140,20 +125,16 @@ class DictToMappingTransformer(cst.CSTTransformer):
 
     @override
     def leave_Module(
-        self,
-        original_node: cst.Module,
-        updated_node: cst.Module,
+        self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
         del original_node
         if not self.changes or self._has_mapping_import:
             return updated_node
-
         import_line: cst.SimpleStatementLine = cst.SimpleStatementLine(
             body=[
                 cst.ImportFrom(
                     module=cst.Attribute(
-                        value=cst.Name("collections"),
-                        attr=cst.Name("abc"),
+                        value=cst.Name("collections"), attr=cst.Name("abc")
                     ),
                     names=[cst.ImportAlias(name=cst.Name("Mapping"))],
                 )
@@ -172,7 +153,6 @@ class DictToMappingTransformer(cst.CSTTransformer):
                 insert_at = 1
                 if len(body) > 1 and isinstance(body[1], cst.EmptyLine):
                     insert_at = 2
-
         while insert_at < len(body):
             stmt = body[insert_at]
             if not isinstance(stmt, cst.SimpleStatementLine):
@@ -190,7 +170,7 @@ class DictToMappingTransformer(cst.CSTTransformer):
     @override
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
         module = node.module
-        if not isinstance(module, cst.Attribute) and not isinstance(module, cst.Name):
+        if not isinstance(module, cst.Attribute) and (not isinstance(module, cst.Name)):
             return
         module_name = cst.Module(body=[]).code_for_node(module)
         if module_name != "collections.abc":
@@ -204,8 +184,7 @@ class DictToMappingTransformer(cst.CSTTransformer):
                 self._has_mapping_import = True
 
     def _rewrite_annotation_expr(
-        self,
-        annotation: cst.BaseExpression,
+        self, annotation: cst.BaseExpression
     ) -> cst.BaseExpression:
         if not isinstance(annotation, cst.Subscript):
             return annotation
@@ -213,7 +192,6 @@ class DictToMappingTransformer(cst.CSTTransformer):
             return annotation
         if annotation.value.value != "dict":
             return annotation
-
         replacement: cst.BaseExpression = annotation.with_changes(
             value=cst.Name("Mapping")
         )
@@ -221,9 +199,7 @@ class DictToMappingTransformer(cst.CSTTransformer):
         return replacement
 
     def _rewrite_param_if_safe(
-        self,
-        param: cst.Param,
-        mutated_names: set[str],
+        self, param: cst.Param, mutated_names: set[str]
     ) -> cst.Param:
         if param.name.value in mutated_names:
             return param
@@ -245,9 +221,7 @@ class RedundantCastRemover(cst.CSTTransformer):
 
     @override
     def leave_Call(
-        self,
-        original_node: cst.Call,
-        updated_node: cst.Call,
+        self, original_node: cst.Call, updated_node: cst.Call
     ) -> cst.BaseExpression:
         del original_node
         func = updated_node.func
@@ -263,14 +237,12 @@ class RedundantCastRemover(cst.CSTTransformer):
             return updated_node
         if target not in self.removable_types:
             return updated_node
-
         if target == "type":
             unwrapped = self._unwrap_nested_object_cast(value_arg.value)
             if unwrapped is None:
                 return updated_node
             self.changes.append("Removed redundant cast chain for type/object")
             return unwrapped
-
         self.changes.append(f"Removed redundant cast for {target}")
         return value_arg.value
 
@@ -306,9 +278,7 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
+        self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         fix_action = (
             str(self.config.get(c.Infra.ReportKeys.FIX_ACTION, "")).strip().lower()
@@ -316,19 +286,17 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
         if fix_action == "convert_dict_to_mapping_annotations":
             include_returns = bool(self.config.get("include_return_annotations", False))
             dict_to_mapping_transformer = DictToMappingTransformer(
-                include_return_annotations=include_returns,
+                include_return_annotations=include_returns
             )
             updated = tree.visit(dict_to_mapping_transformer)
-            return updated, dict_to_mapping_transformer.changes
-
+            return (updated, dict_to_mapping_transformer.changes)
         if fix_action == "remove_redundant_casts":
             raw_types = self.config.get("redundant_type_targets", [])
             removable_types = set(u.Infra.Refactor.string_list(raw_types))
             cast_remover = RedundantCastRemover(removable_types=removable_types)
             updated = tree.visit(cast_remover)
-            return updated, cast_remover.changes
-
-        return tree, []
+            return (updated, cast_remover.changes)
+        return (tree, [])
 
 
 __all__ = ["FlextInfraRefactorPatternCorrectionsRule"]

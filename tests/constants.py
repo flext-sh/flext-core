@@ -87,13 +87,13 @@ class TestsFlextConstants(FlextTestsConstants):
     class Patterns:
         """Flext-core-specific regex patterns for string processing."""
 
-        WHITESPACE: Final[str] = r"\s+"
-        DASH: Final[str] = r"-+"
-        EQUALS_SPACE: Final[str] = r"\s+="
-        COMMA_SPACE: Final[str] = r",\s+"
-        EMAIL: Final[str] = r"^[^@]+@[^@]+\.[^@]+$"
-        ALPHA_ONLY: Final[str] = r"^[a-zA-Z]+$"
-        NUMERIC_ONLY: Final[str] = r"^\d+$"
+        WHITESPACE: Final[str] = "\\s+"
+        DASH: Final[str] = "-+"
+        EQUALS_SPACE: Final[str] = "\\s+="
+        COMMA_SPACE: Final[str] = ",\\s+"
+        EMAIL: Final[str] = "^[^@]+@[^@]+\\.[^@]+$"
+        ALPHA_ONLY: Final[str] = "^[a-zA-Z]+$"
+        NUMERIC_ONLY: Final[str] = "^\\d+$"
 
     class TestErrors:
         """Flext-core-specific error message patterns for validation."""
@@ -146,14 +146,8 @@ class TestsFlextConstants(FlextTestsConstants):
             NEGATE = "negate"
 
         type OperationLiteral = Literal[
-            "get_email",
-            "send_email",
-            "get_status",
-            "double",
-            "square",
-            "negate",
+            "get_email", "send_email", "get_status", "double", "square", "negate"
         ]
-
         OP_GET_EMAIL: Final[str] = Operation.GET_EMAIL
         OP_SEND_EMAIL: Final[str] = Operation.SEND_EMAIL
         OP_GET_STATUS: Final[str] = Operation.GET_STATUS
@@ -172,7 +166,6 @@ class TestsFlextConstants(FlextTestsConstants):
 
         type StatusLiteral = Literal[200, 404, 400]
         type MethodLiteral = Literal["GET", "POST"]
-
         STATUS_OK: Final[int] = 200
         STATUS_NOT_FOUND: Final[int] = 404
         STATUS_BAD_REQUEST: Final[int] = 400
@@ -236,10 +229,7 @@ class TestsFlextConstants(FlextTestsConstants):
         MISSING_VALUE: Final[str] = "Missing value"
         INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
         CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-        TEST_DATA: Final[m.ConfigMap] = m.ConfigMap({
-            "key": "value",
-            "value": 5,
-        })
+        TEST_DATA: Final[m.ConfigMap] = m.ConfigMap({"key": "value", "value": 5})
         TEST_DICT: Final[m.ConfigMap] = m.ConfigMap({"key": "value"})
         TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
         MAX_EXECUTION_TIME: Final[float] = 1.0
@@ -445,10 +435,5 @@ class TestsFlextConstants(FlextTestsConstants):
             batch_size: int = 100
 
 
-# Short alias per FLEXT convention
 tc: type[TestsFlextConstants] = TestsFlextConstants
-
-__all__ = [
-    "TestsFlextConstants",
-    "tc",
-]
+__all__ = ["TestsFlextConstants", "tc"]

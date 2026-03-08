@@ -50,5 +50,17 @@ class FlextInfraGithubModels:
         stdout: str | None = Field(default=None, description="Captured stdout")
         stderr: str | None = Field(default=None, description="Captured stderr")
 
+    class SyncOperation(FlextModels.ArbitraryTypesModel):
+        """Describe one workflow synchronization operation."""
+
+        model_config = {"frozen": True, "extra": "forbid"}
+
+        project: str = Field(..., description="Project name.")
+        path: str = Field(..., description="File path relative to project root.")
+        action: str = Field(
+            ..., description="Sync action (create, update, noop, prune)."
+        )
+        reason: str = Field(..., description="Reason for the action.")
+
 
 __all__ = ["FlextInfraGithubModels"]

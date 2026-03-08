@@ -107,7 +107,7 @@ class ResultHelpers:
                 if default is not None:
                     return r[list[T]].ok(default)
                 return r[list[T]].fail(
-                    items.error or "Failed to extract values from result",
+                    items.error or "Failed to extract values from result"
                 )
             return r[list[T]].ok(list(items.value.values()))
         if items:

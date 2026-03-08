@@ -40,10 +40,6 @@ class FlextInfraJsonService(s[bool]):
         """Execute the service (required by s base class)."""
         return r[bool].ok(True)
 
-    # ------------------------------------------------------------------
-    #  r-wrapped API
-    # ------------------------------------------------------------------
-
     def read(self, path: Path) -> r[Mapping[str, t.ContainerValue]]:
         """Read and parse a JSON **file**.
 
@@ -58,9 +54,7 @@ class FlextInfraJsonService(s[bool]):
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             )
             if not isinstance(loaded_obj, dict):
-                return r[t.ConfigurationMapping].fail(
-                    "JSON root must be object",
-                )
+                return r[t.ConfigurationMapping].fail("JSON root must be object")
             parser = TypeAdapter(dict[str, t.ContainerValue])
             data = parser.validate_python(loaded_obj, strict=True)
             return r[t.ConfigurationMapping].ok(data)
@@ -103,10 +97,7 @@ class FlextInfraJsonService(s[bool]):
             return r[bool].fail(f"JSON write error: {exc}")
         return r[bool].ok(True)
 
-    def parse(
-        self,
-        text: str,
-    ) -> r[t.ContainerValue]:
+    def parse(self, text: str) -> r[t.ContainerValue]:
         """Parse a JSON **string** (r-wrapped).
 
         Args:

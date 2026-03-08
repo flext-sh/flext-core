@@ -34,9 +34,7 @@ class TestFlextInfraDocFixer:
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         return FlextInfraDocScope(
-            name="test-project",
-            path=tmp_path,
-            report_dir=report_dir,
+            name="test-project", path=tmp_path, report_dir=report_dir
         )
 
     @pytest.fixture
@@ -240,9 +238,7 @@ class TestFlextInfraDocFixer:
         md_file = docs_dir / "README.md"
         md_file.write_text("# Test\n\n## Section\n")
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = fixer._fix_scope(scope, apply=False)
         assert report.scope == "test"
@@ -296,22 +292,17 @@ class TestFlextInfraDocFixer:
         """Test _maybe_fix_link fixes valid broken links."""
         md_file = tmp_path / "test.md"
         md_file.write_text("# Test")
-        # Test with a link that should be fixed
         result = fixer._maybe_fix_link(md_file, "[text](broken.md)")
-        # Should return fixed link or None
         assert result is None or isinstance(result, str)
 
     def test_maybe_fix_link_returns_fixed_link(
         self, fixer: FlextInfraDocFixer, tmp_path: Path
     ) -> None:
         """Test _maybe_fix_link returns fixed link when found."""
-        # Create a target file
         target = tmp_path / "target.md"
         target.write_text("# Target")
         md_file = tmp_path / "test.md"
-        # Test with a link that can be fixed
         result = fixer._maybe_fix_link(md_file, "[text](target.md)")
-        # Should return the link or None
         assert result is None or isinstance(result, str)
 
     def test_process_file_with_no_fixes_needed(
@@ -330,7 +321,6 @@ class TestFlextInfraDocFixer:
         """Test _build_toc when TOC marker already exists."""
         content = "<!-- TOC START -->\n<!-- TOC END -->\n\n# Section\n\n## Subsection"
         result = fixer._build_toc(content)
-        # Should return tuple or string
         assert result is not None
 
     def test_process_file_with_fixable_links(
@@ -338,19 +328,16 @@ class TestFlextInfraDocFixer:
     ) -> None:
         """Test _process_file counts fixed links correctly."""
         md_file = tmp_path / "test.md"
-        # Create a markdown file with a link that can be fixed
         md_file.write_text("# Test\n\n[Link](target.md)\n")
         target = tmp_path / "target.md"
         target.write_text("# Target")
         item = fixer._process_file(md_file, apply=False)
-        # Should detect the link
         assert "test.md" in item.file
 
     def test_build_toc_with_empty_anchor(self, fixer: FlextInfraDocFixer) -> None:
         """Test _build_toc skips headings with empty anchors."""
         content = "# Test\n\n## !!!Invalid!!!\n\n## Valid Section"
         result = fixer._build_toc(content)
-        # Should include valid section but skip invalid
         assert "Valid Section" in result
 
     def test_update_toc_without_h1_heading(self, fixer: FlextInfraDocFixer) -> None:
@@ -368,8 +355,6 @@ class TestFlextInfraDocFixer:
         md_file.parent.mkdir(parents=True)
         md_file.touch()
         (tmp_path / "docs" / "bar.md").touch()
-
-        # Link without .md extension should be fixed to bar.md
         result = fixer._maybe_fix_link(md_file, "bar")
         assert result == "bar.md"
 
@@ -379,14 +364,11 @@ class TestFlextInfraDocFixer:
         """Test _maybe_fix_link returns None for empty base (line 183)."""
         md_file = tmp_path / "README.md"
         md_file.touch()
-
-        # Empty link (just anchor)
         result = fixer._maybe_fix_link(md_file, "")
         assert result is None
 
     def test_anchorize_with_special_chars_only(self, fixer: FlextInfraDocFixer) -> None:
         """Test _anchorize returns empty string for heading with only special chars (line 207)."""
-        # Heading with only special characters
         anchor = fixer._anchorize("!!!")
         assert anchor == ""
 
@@ -397,7 +379,6 @@ class TestFlextInfraDocFixer:
         md_file = tmp_path / "README.md"
         (tmp_path / "target.md").touch()
         md_file.write_text("# Test\n\nSee [link](target) for details.\n")
-
         item = fixer._process_file(md_file, apply=False)
         assert item.links == 1
 
@@ -405,6 +386,5 @@ class TestFlextInfraDocFixer:
         """Test _build_toc skips headings that produce empty anchors (line 207)."""
         content = "## !!!\n\n## Valid Section\n"
         toc = fixer._build_toc(content)
-        # Should only include Valid Section, not !!!
         assert "Valid Section" in toc
         assert "!!!" not in toc

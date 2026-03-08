@@ -69,8 +69,8 @@ class FlextUtilitiesModel:
                     try:
                         normalized_items.append(
                             FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item,
-                            ),
+                                item
+                            )
                         )
                     except ValidationError:
                         normalized_items.append(str(item))
@@ -84,14 +84,13 @@ class FlextUtilitiesModel:
                     try:
                         normalized_tuple_items.append(
                             FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item,
-                            ),
+                                item
+                            )
                         )
                     except ValidationError:
                         normalized_tuple_items.append(str(item))
                 return normalized_tuple_items
             case _:
-                # Convert any other type to string representation
                 return str(value)
 
     @staticmethod
@@ -143,10 +142,7 @@ class FlextUtilitiesModel:
         )
 
     @staticmethod
-    def from_kwargs[M: BaseModel](
-        model_cls: type[M],
-        **kwargs: t.Scalar,
-    ) -> r[M]:
+    def from_kwargs[M: BaseModel](model_cls: type[M], **kwargs: t.Scalar) -> r[M]:
         """Create Pydantic model from kwargs with r.
 
         Accepts any type in kwargs - Pydantic 2 field_validators will handle
@@ -167,21 +163,14 @@ class FlextUtilitiesModel:
 
         """
         try:
-            # Pydantic 2 model_validate() accepts any dict-like structure
-            # field_validators in the model will handle type conversions automatically
-            # model_validate returns M (the model type)
             instance = model_cls.model_validate(kwargs)
-            # Type narrowing: instance is M from model_validate return type
             return r[M].ok(instance)
         except (ValidationError, TypeError, ValueError) as e:
             return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
     def load[T_Model: BaseModel](
-        model_cls: type[T_Model],
-        data: m.ConfigMap,
-        *,
-        strict: bool = False,
+        model_cls: type[T_Model], data: m.ConfigMap, *, strict: bool = False
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 
@@ -264,32 +253,18 @@ class FlextUtilitiesModel:
             Metadata(attributes={"a": 1})
 
         """
-        # Handle None - return empty Metadata
         if value is None:
             return m.Metadata(attributes={})
-
-        # Handle existing Metadata instance - return as-is
         if isinstance(value, m.Metadata):
             return value
-
         if isinstance(value, FlextModelFoundation.Metadata):
             return m.Metadata.model_validate(value.model_dump())
-
-        # Handle dict-like values (dict or m.ConfigMap)
         if FlextRuntime.is_dict_like(value):
             attributes = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
-
-            return m.Metadata.model_validate(
-                {"attributes": attributes},
-            )
-
-        # Invalid type - raise TypeError
-        msg = (
-            f"metadata must be None, dict, or FlextModelFoundation.Metadata, "
-            f"got {value.__class__.__name__}"
-        )
+            return m.Metadata.model_validate({"attributes": attributes})
+        msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 
     @staticmethod
@@ -325,10 +300,7 @@ class FlextUtilitiesModel:
         return result
 
     @staticmethod
-    def update[M: BaseModel](
-        instance: M,
-        **updates: t.JsonValue,
-    ) -> r[M]:
+    def update[M: BaseModel](instance: M, **updates: t.JsonValue) -> r[M]:
         """Update existing model with new values.
 
         Example:
@@ -338,16 +310,10 @@ class FlextUtilitiesModel:
 
         """
         try:
-            # Use model_copy with update - modern Pydantic approach
-            # This preserves the type M without needing casts or recreating
-            # model_copy returns M (same type as instance)
             updated_instance = instance.model_copy(update=updates)
-            # Type narrowing: updated_instance is M from model_copy return type
             return r[M].ok(updated_instance)
         except (AttributeError, TypeError, ValueError) as e:
             return r[M].fail(f"Model update failed: {e}")
 
 
-__all__ = [
-    "FlextUtilitiesModel",
-]
+__all__ = ["FlextUtilitiesModel"]

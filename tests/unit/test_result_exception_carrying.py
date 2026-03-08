@@ -36,7 +36,6 @@ class TestFailNoExceptionBackwardCompat:
         """Verify fail() works without exception parameter (backward compat)."""
         error_msg = "Operation failed"
         result: r[int] = r[int].fail(error_msg)
-
         assert result.is_failure
         assert result.error == error_msg
         assert result.exception is None
@@ -52,7 +51,6 @@ class TestFailWithException:
         error_msg = "Division by zero"
         exc = ZeroDivisionError("cannot divide by zero")
         result: r[float] = r[float].fail(error_msg, exception=exc)
-
         assert result.is_failure
         assert result.error == error_msg
         assert result.exception is exc
@@ -64,7 +62,6 @@ class TestFailWithException:
         error_code = "INVALID_INPUT"
         exc = ValueError("expected integer")
         result: r[str] = r[str].fail(error_msg, error_code=error_code, exception=exc)
-
         assert result.is_failure
         assert result.error == error_msg
         assert result.error_code == error_code
@@ -76,14 +73,10 @@ class TestFailWithException:
         error_data = {"field": "email", "reason": "invalid format"}
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
-            error_msg,
-            error_data=error_data,
-            exception=exc,
+            error_msg, error_data=error_data, exception=exc
         )
-
         assert result.is_failure
         assert result.error == error_msg
-        # RuntimeResult auto-wraps plain dicts into ConfigMap
         assert result.error_data == m.ConfigMap(root=error_data)
         assert result.exception is exc
 
@@ -91,7 +84,6 @@ class TestFailWithException:
         """Verify fail() converts None error to empty string, carries exception."""
         exc = RuntimeError("something went wrong")
         result: r[int] = r[int].fail(None, exception=exc)
-
         assert result.is_failure
         assert result.error == ""
         assert result.exception is exc
@@ -108,7 +100,6 @@ class TestSafeCarriesException:
             return a / b
 
         result: r[float] = divide(10, 0)
-
         assert result.is_failure
         assert result.error is not None and "division by zero" in result.error.lower()
         assert result.exception is not None
@@ -122,7 +113,6 @@ class TestSafeCarriesException:
             return a + b
 
         result: r[int] = add(5, 3)
-
         assert result.is_success
         assert result.value == 8
         assert result.exception is None
@@ -137,7 +127,6 @@ class TestSafeCarriesException:
             return int(s)
 
         result: r[int] = parse_int("abc")
-
         assert result.is_failure
         assert result.exception is not None
         assert isinstance(result.exception, ValueError)
@@ -157,7 +146,6 @@ class TestSafeCarriesException:
             return len(obj)
 
         result: r[int] = get_length(_BrokenSized())
-
         assert result.is_failure
         assert result.exception is not None
         assert isinstance(result.exception, TypeError)
@@ -174,7 +162,6 @@ class TestCreateFromCallableCarriesException:
             raise RuntimeError(msg)
 
         result: r[int] = r[int].create_from_callable(risky_operation)
-
         assert result.is_failure
         assert result.error is not None and "operation failed" in result.error
         assert result.exception is not None
@@ -187,7 +174,6 @@ class TestCreateFromCallableCarriesException:
             return "success"
 
         result: r[str] = r[str].create_from_callable(safe_operation)
-
         assert result.is_success
         assert result.value == "success"
         assert result.exception is None
@@ -200,10 +186,8 @@ class TestCreateFromCallableCarriesException:
             raise ValueError(msg)
 
         result: r[int] = r[int].create_from_callable(
-            failing_operation,
-            error_code="INVALID_VALUE",
+            failing_operation, error_code="INVALID_VALUE"
         )
-
         assert result.is_failure
         assert result.error_code == "INVALID_VALUE"
         assert result.exception is not None
@@ -217,7 +201,6 @@ class TestMapPropagatesException:
         exc = ValueError("original error")
         result: r[int] = r[int].fail("error", exception=exc)
         mapped: r[int] = result.map(lambda x: x * 2)
-
         assert mapped.is_failure
         assert mapped.exception is exc
 
@@ -225,7 +208,6 @@ class TestMapPropagatesException:
         """Verify map() on success has no exception."""
         result: r[int] = r[int].ok(5)
         mapped: r[int] = result.map(lambda x: x * 2)
-
         assert mapped.is_success
         assert mapped.value == 10
         assert mapped.exception is None
@@ -235,7 +217,6 @@ class TestMapPropagatesException:
         exc = RuntimeError("chain error")
         result: r[int] = r[int].fail("error", exception=exc)
         mapped: r[int] = result.map(lambda x: x + 1).map(lambda x: x * 2)
-
         assert mapped.is_failure
         assert mapped.exception is exc
 
@@ -248,7 +229,6 @@ class TestFlatMapPropagatesException:
         exc = TypeError("type error")
         result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped: r[str] = result.flat_map(lambda x: r[str].ok(str(x)))
-
         assert flat_mapped.is_failure
         assert flat_mapped.exception is exc
 
@@ -256,7 +236,6 @@ class TestFlatMapPropagatesException:
         """Verify flat_map() on success has no exception."""
         result: r[int] = r[int].ok(5)
         flat_mapped: r[str] = result.flat_map(lambda x: r[str].ok(str(x)))
-
         assert flat_mapped.is_success
         assert flat_mapped.value == "5"
         assert flat_mapped.exception is None
@@ -266,9 +245,8 @@ class TestFlatMapPropagatesException:
         exc = KeyError("missing key")
         result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped: r[str] = result.flat_map(lambda x: r[int].ok(x + 1)).flat_map(
-            lambda x: r[str].ok(str(x)),
+            lambda x: r[str].ok(str(x))
         )
-
         assert flat_mapped.is_failure
         assert flat_mapped.exception is exc
 
@@ -281,7 +259,6 @@ class TestAltPropagatesException:
         exc = ValueError("original")
         result: r[int] = r[int].fail("error", exception=exc)
         altered: r[int] = result.map_error(lambda e: f"transformed: {e}")
-
         assert altered.is_failure
         assert altered.exception is exc
         assert altered.error is not None and "transformed" in altered.error
@@ -290,7 +267,6 @@ class TestAltPropagatesException:
         """Verify alt() on success has no exception."""
         result: r[int] = r[int].ok(42)
         altered: r[int] = result.map_error(lambda e: f"error: {e}")
-
         assert altered.is_success
         assert altered.value == 42
         assert altered.exception is None
@@ -304,7 +280,6 @@ class TestLashPropagatesException:
         exc = RuntimeError("recovery needed")
         result: r[int] = r[int].fail("error", exception=exc)
         recovered = result.lash(lambda e: r[int].ok(0))
-
         assert recovered.is_success
         assert recovered.value == 0
 
@@ -314,9 +289,8 @@ class TestLashPropagatesException:
         result: r[int] = r[int].fail("error", exception=exc)
         recovery_exc = RuntimeError("recovery failed")
         recovered: r[int] = result.lash(
-            lambda e: r[int].fail(f"recovery failed: {e}", exception=recovery_exc),
+            lambda e: r[int].fail(f"recovery failed: {e}", exception=recovery_exc)
         )
-
         assert recovered.is_failure
         assert recovered.exception is recovery_exc
 
@@ -335,7 +309,6 @@ class TestTraversePropagatesException:
             return r[int].ok(x * 2)
 
         result = r[int].traverse(items, process_with_failure, fail_fast=True)
-
         assert result.is_failure
         assert result.exception is exc
 
@@ -353,7 +326,6 @@ class TestTraversePropagatesException:
             return r[int].ok(x * 2)
 
         result = r[int].traverse(items, process_with_failures, fail_fast=False)
-
         assert result.is_failure
         assert result.error is not None
         assert "error 1" in result.error and "error 2" in result.error
@@ -365,7 +337,6 @@ class TestFromIOResultCarriesException:
     def test_from_io_result_carries_exception(self) -> None:
         """Verify from_io_result() preserves exception from IOResult."""
         result = r[int].from_io_result(IOSuccess(42))
-
         assert result.is_success
         assert isinstance(result.value, IO)
 
@@ -375,15 +346,14 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import BaseModel, ValidationError  # noqa: PLC0415
+        from pydantic import ValidationError
 
-        class User(BaseModel):
+        class User:
             name: str
             age: int
 
         invalid_data = {"name": "Alice", "age": "not_an_int"}
         result = r[User].from_validation(invalid_data, User)
-
         assert result.is_failure
         assert result.exception is not None
         assert isinstance(result.exception, ValidationError)
@@ -396,7 +366,6 @@ class TestToIOChainsException:
         """Verify to_io() raises on failure."""
         exc = ValueError("conversion error")
         result: r[int] = r[int].fail("error", exception=exc)
-
         with pytest.raises(e.ValidationError):
             result.to_io()
 
@@ -408,10 +377,8 @@ class TestErrorOrPatternUnchanged:
         """Verify .error or 'fallback' pattern still works (31 sites)."""
         result_success = r[int].ok(42)
         result_failure: r[int] = r[int].fail("error message")
-
         error_success = result_success.error or "fallback"
         error_failure = result_failure.error or "fallback"
-
         assert error_success == "fallback"
         assert error_failure == "error message"
 
@@ -419,9 +386,7 @@ class TestErrorOrPatternUnchanged:
         """Verify .error or pattern works with exception carrying."""
         exc = RuntimeError("runtime error")
         result: r[int] = r[int].fail("error", exception=exc)
-
         error_msg = result.error or "fallback"
-
         assert error_msg == "error"
         assert result.exception is exc
 
@@ -438,7 +403,6 @@ class TestOkNoneGuardStillRaises:
         """Verify ok() with valid value succeeds."""
         value = 42
         result: r[int] = r[int].ok(value)
-
         assert result.is_success
         assert result.value == 42
         assert result.exception is None
@@ -456,7 +420,6 @@ class TestMonadicOperationsUnchanged:
             .flat_map(lambda x: r[int].ok(x + 1))
             .filter(lambda x: x > 5)
         )
-
         assert final.is_success
         assert final.value == 11
         assert final.exception is None
@@ -471,7 +434,6 @@ class TestMonadicOperationsUnchanged:
             .flat_map(lambda x: r[int].fail("error", exception=exc))
             .map(lambda x: x + 1)
         )
-
         assert final.is_failure
         assert final.exception is exc
 
@@ -480,7 +442,6 @@ class TestMonadicOperationsUnchanged:
         exc = RuntimeError("recovery needed")
         result: r[int] = r[int].fail("error", exception=exc)
         recovered: r[int] = result.recover(lambda e: 0)
-
         assert recovered.is_success
         assert recovered.value == 0
 
@@ -489,10 +450,8 @@ class TestMonadicOperationsUnchanged:
         exc = ValueError("fold error")
         result: r[int] = r[int].fail("error", exception=exc)
         folded: str = result.fold(
-            on_failure=lambda e: f"failed: {e}",
-            on_success=lambda v: f"success: {v}",
+            on_failure=lambda e: f"failed: {e}", on_success=lambda v: f"success: {v}"
         )
-
         assert folded == "failed: error"
 
     def test_tap_with_exception(self) -> None:
@@ -506,7 +465,6 @@ class TestMonadicOperationsUnchanged:
             side_effect_called = True
 
         tapped: r[int] = result.tap(side_effect)
-
         assert tapped.is_failure
         assert not side_effect_called
         assert tapped.exception is exc
@@ -522,7 +480,6 @@ class TestMonadicOperationsUnchanged:
             side_effect_called = True
 
         tapped: r[int] = result.tap_error(side_effect)
-
         assert tapped.is_failure
         assert side_effect_called
         assert tapped.exception is exc
@@ -535,7 +492,6 @@ class TestExceptionPropertyAccess:
         """Verify exception property is None on success."""
         result: r[int] = r[int].ok(42)
         exc = result.exception
-
         assert exc is None
 
     def test_exception_property_set_on_failure(self) -> None:
@@ -543,7 +499,6 @@ class TestExceptionPropertyAccess:
         exc = RuntimeError("test error")
         result: r[int] = r[int].fail("error", exception=exc)
         retrieved_exc = result.exception
-
         assert retrieved_exc is exc
         assert isinstance(retrieved_exc, RuntimeError)
 
@@ -552,7 +507,6 @@ class TestExceptionPropertyAccess:
         exc = ValueError("value error")
         result: r[int] = r[int].fail("error", exception=exc)
         retrieved_exc = result.exception
-
         assert isinstance(retrieved_exc, BaseException)
         assert isinstance(retrieved_exc, ValueError)
 
@@ -565,7 +519,6 @@ class TestExceptionPropertyAccess:
             KeyError("key error"),
             ZeroDivisionError("zero division"),
         ]
-
         for exc in exceptions:
             result: r[int] = r[int].fail("error", exception=exc)
             assert result.exception is exc

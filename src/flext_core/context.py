@@ -77,24 +77,10 @@ class FlextContext(FlextRuntime):
         """Return the protocol name for introspection."""
         return "FlextContext"
 
-    # =========================================================================
-    # HELPER METHODS (moved from module level for SRP compliance)
-    # =========================================================================
-
-    # Instance attributes
-    # Using direct import for mypy compatibility with nested class aliases
     _metadata: m.Metadata
 
-    # NOTE: _scope_vars is an instance attribute (see __init__)
-    # No property accessor needed - direct access via self._scope_vars
-
-    # =========================================================================
-    # LIFECYCLE METHODS
-    # =========================================================================
-
     def __init__(
-        self,
-        initial_data: m.ContextData | t.ConfigurationMapping | None = None,
+        self, initial_data: m.ContextData | t.ConfigurationMapping | None = None
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -113,56 +99,34 @@ class FlextContext(FlextRuntime):
                 context_data = m.ContextData.model_validate(initial_data)
             else:
                 context_data = m.ContextData(
-                    data=m.Dict(root=m.ConfigMap.model_validate(initial_data).root),
+                    data=m.Dict(root=m.ConfigMap.model_validate(initial_data).root)
                 )
-        # Initialize context-specific metadata (separate from ContextData.metadata)
-        # ContextData.metadata = generic creation/modification metadata (m.Metadata)
-        # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
         self._metadata = m.Metadata()
-
         self._hooks: MutableMapping[str, list[t.HandlerCallable]] = {}
-        # Use nested class from m
         self._statistics: m.ContextStatistics = m.ContextStatistics()
         self._active: bool = True
         self._suspended: bool = False
-
-        # Create instance-specific contextvars for isolation (required for clone())
-        # Note: Each instance gets its own contextvars to prevent state sharing
-        # Note: Using None default per B039 - mutable defaults cause issues
         self._scope_vars: MutableMapping[
-            str,
-            contextvars.ContextVar[m.ConfigMap | None],
+            str, contextvars.ContextVar[m.ConfigMap | None]
         ] = {
             c.Context.SCOPE_GLOBAL: contextvars.ContextVar(
-                "flext_global_context",
-                default=None,
+                "flext_global_context", default=None
             ),
             c.Context.SCOPE_USER: contextvars.ContextVar(
-                "flext_user_context",
-                default=None,
+                "flext_user_context", default=None
             ),
             c.Context.SCOPE_SESSION: contextvars.ContextVar(
-                "flext_session_context",
-                default=None,
+                "flext_session_context", default=None
             ),
         }
-
-        # Initialize contextvars with initial data if provided
-        # Note: No self._lock needed - contextvars are thread-safe by design
-        # Type narrowing: context_data is always m.ContextData at this point
         if context_data.data:
-            # Set initial data in global context
             self._set_in_contextvar(
-                c.Context.SCOPE_GLOBAL,
-                m.ConfigMap(root=context_data.data.root),
+                c.Context.SCOPE_GLOBAL, m.ConfigMap(root=context_data.data.root)
             )
 
     @overload
     @classmethod
-    def create(
-        cls,
-        initial_data: m.ConfigMap | None = None,
-    ) -> Self: ...
+    def create(cls, initial_data: m.ConfigMap | None = None) -> Self: ...
 
     @overload
     @classmethod
@@ -219,51 +183,38 @@ class FlextContext(FlextRuntime):
             >>> context = FlextContext.create(auto_correlation_id=False)
 
         """
-        # Handle overload: if operation_id/user_id/metadata are provided, use metadata-based creation
         if operation_id is not None or user_id is not None or metadata is not None:
             initial_data_dict: m.ConfigMap = m.ConfigMap(root={})
             if operation_id is not None:
                 initial_data_dict[c.Context.KEY_OPERATION_ID] = operation_id
             elif auto_correlation_id:
-                # Auto-generate correlation_id when not provided and auto_correlation_id=True
                 initial_data_dict[c.Context.KEY_OPERATION_ID] = u.generate(
-                    "correlation",
+                    "correlation"
                 )
             if user_id is not None:
                 initial_data_dict[c.Context.KEY_USER_ID] = user_id
-            # Merge metadata into initial_data
             if metadata is not None:
                 initial_data_dict.update(dict(metadata.items()))
             return cls(
-                initial_data=m.ContextData(data=m.Dict(root=initial_data_dict.root)),
+                initial_data=m.ContextData(data=m.Dict(root=initial_data_dict.root))
             )
-        # Default: use initial_data parameter
-        # Auto-generate correlation_id for zero-config setup
         data_map = (
             m.ConfigMap.model_validate(initial_data)
             if initial_data is not None
             else m.ConfigMap(root={})
         )
         if auto_correlation_id and c.Context.KEY_OPERATION_ID not in data_map:
-            # Convert initial_data to dict if needed
             initial_data_dict_new: m.ConfigMap = data_map.model_copy()
-            # Add auto-generated correlation_id
             initial_data_dict_new[c.Context.KEY_OPERATION_ID] = u.generate(
-                "correlation",
+                "correlation"
             )
             return cls(
-                initial_data=m.ContextData(
-                    data=m.Dict(root=initial_data_dict_new.root),
-                ),
+                initial_data=m.ContextData(data=m.Dict(root=initial_data_dict_new.root))
             )
         return cls(initial_data=m.ContextData(data=m.Dict(root=data_map.root)))
 
     @staticmethod
-    def _propagate_to_logger(
-        key: str,
-        value: t.ContainerValue,
-        scope: str,
-    ) -> None:
+    def _propagate_to_logger(key: str, value: t.ContainerValue, scope: str) -> None:
         """Propagate context changes to FlextLogger (DRY helper).
 
         Args:
@@ -276,15 +227,8 @@ class FlextContext(FlextRuntime):
             normalized = FlextRuntime.normalize_to_metadata_value(value)
             _ = FlextLogger.bind_global_context(**{key: normalized})
 
-    # =========================================================================
-    # Instance Methods - Core context operations
-    # =========================================================================
-
     @staticmethod
-    def _validate_set_inputs(
-        key: str,
-        value: t.ContainerValue,
-    ) -> r[bool]:
+    def _validate_set_inputs(key: str, value: t.ContainerValue) -> r[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -300,9 +244,7 @@ class FlextContext(FlextRuntime):
         if value is None:
             return r[bool].fail("Value cannot be None")
         guarded_value = u.guard(
-            value,
-            (str, int, float, bool, list, dict, m.ConfigMap),
-            return_value=True,
+            value, (str, int, float, bool, list, dict, m.ConfigMap), return_value=True
         )
         if isinstance(guarded_value, r):
             return r[bool].fail("Value must be serializable")
@@ -320,26 +262,18 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return
-
-        # Clear all contextvar scopes
         for scope_name, ctx_var in self._scope_vars.items():
             _ = ctx_var.set(m.ConfigMap(root={}))
-
-            # DELEGATION: Clear FlextLogger for global scope
             if scope_name == c.Context.SCOPE_GLOBAL:
                 _ = FlextLogger.clear_global_context()
-
-        # Reset metadata model (formerly in cleanup())
         self._metadata = m.Metadata()
-
-        # Update statistics using model (type-safe, no .get() needed)
         self._statistics.clears += 1
         operations = dict(self._statistics.operations.items())
         clear_value = operations.get(c.Context.OPERATION_CLEAR)
         if isinstance(clear_value, int):
             operations[c.Context.OPERATION_CLEAR] = clear_value + 1
             self._statistics = self._statistics.model_copy(
-                update={"operations": operations},
+                update={"operations": operations}
             )
 
     def clone(self) -> Self:
@@ -352,24 +286,17 @@ class FlextContext(FlextRuntime):
 
         """
         cloned: Self = self.__class__()
-        # Clone all scope data using public API
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
-                # Set all key-value pairs in the cloned context for this scope
                 result = cloned.set(
-                    m.ConfigMap.model_validate(scope_dict),
-                    scope=scope_name,
+                    m.ConfigMap.model_validate(scope_dict), scope=scope_name
                 )
                 if not result:
-                    # If setting fails, log warning but continue cloning
                     pass
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
         statistics_copy: m.ContextStatistics = self._statistics.model_copy()
         cloned.set_statistics_for_clone(statistics_copy)
-
-        # Type narrowing: cloned is FlextContext which implements p.Context protocol
-        # FlextContext structurally implements p.Context, so no cast needed
         return cloned
 
     def export(
@@ -391,82 +318,62 @@ class FlextContext(FlextRuntime):
 
         """
         all_data: m.ConfigMap = m.ConfigMap(root={})
-
-        # Collect all scope data
         all_scopes = self._get_all_scopes()
         all_data.update(dict(all_scopes.items()))
-
-        # Collect statistics if requested
         stats_dict_export: m.ConfigMap | None = None
         if include_statistics and self._statistics:
             stats_dict_export = m.ConfigMap(root=self._statistics.model_dump())
-
-        # Collect metadata if requested
         metadata_dict_export: dict[str, t.ContainerValue] | None = None
         if include_metadata:
             metadata_dict_export = self._get_all_metadata()
-
-        # Normalize metadata_dict values to MetadataAttributeDict
         metadata_for_model: m.ConfigMap | None = None
         if metadata_dict_export:
-            # Convert ConfigurationDict to MetadataAttributeDict
             normalized_metadata_map: dict[str, t.ContainerValue] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.ContainerValue = v
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap.model_validate(v)
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_general_value(
-                    FlextRuntime.normalize_to_metadata_value(metadata_value),
+                    FlextRuntime.normalize_to_metadata_value(metadata_value)
                 )
             metadata_for_model = m.ConfigMap(root=normalized_metadata_map)
-
-        # Create ContextExport model
-        # statistics expects ContextMetadataMapping (Mapping[str, t.ContainerValue])
         statistics_mapping: m.Dict = m.Dict(
-            root=dict((stats_dict_export or m.ConfigMap(root={})).items()),
+            root=dict((stats_dict_export or m.ConfigMap(root={})).items())
         )
-
-        # Return as dict if requested
         if as_dict:
             result_dict: dict[str, t.ContainerValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
                 metadata_container: t.ContainerValue = m.ConfigMap(
-                    root=metadata_dict_export,
+                    root=metadata_dict_export
                 )
                 result_dict["metadata"] = metadata_container
             return result_dict
-
         metadata_root: m.ConfigMap | None = (
             m.ConfigMap(
                 root={
                     k: FlextRuntime.normalize_to_general_value(v)
                     for k, v in metadata_for_model.items()
-                },
+                }
             )
             if metadata_for_model
             else None
         )
-
         return m.ContextExport(
             data=dict(all_data.items()),
             metadata=m.Metadata(
                 attributes={
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in metadata_root.items()
-                },
+                }
             )
             if metadata_root
             else None,
             statistics=dict(statistics_mapping.items()),
         )
 
-    def get(
-        self,
-        key: str,
-        scope: str = c.Context.SCOPE_GLOBAL,
-    ) -> r[t.ContainerValue]:
+    def get(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> r[t.ContainerValue]:
         """Get a value from the context.
 
         Fast fail: Returns r[t.ContainerValue] - fails if key not found.
@@ -499,24 +406,16 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return r[t.ContainerValue].fail("Context is not active")
-
-        # Get from contextvar (single source of truth)
         scope_data = self._get_from_contextvar(scope)
-
         if key not in scope_data:
             return r[t.ContainerValue].fail(
-                f"Context key '{key}' not found in scope '{scope}'",
+                f"Context key '{key}' not found in scope '{scope}'"
             )
-
         value = scope_data[key]
-
-        # Update statistics
         self._update_statistics(c.Context.OPERATION_GET)
-
-        # Handle None values - return failure since FlextResult.ok() cannot accept None
         if value is None:
             return r[t.ContainerValue].fail(
-                f"Context key '{key}' has None value in scope '{scope}'",
+                f"Context key '{key}' has None value in scope '{scope}'"
             )
 
         def normalize_plain(raw_value: t.ContainerValue) -> t.ContainerValue:
@@ -524,7 +423,7 @@ class FlextContext(FlextRuntime):
             if isinstance(mapped_value, Mapping):
                 return {
                     str(item_key): normalize_plain(
-                        FlextRuntime.normalize_to_general_value(item_value),
+                        FlextRuntime.normalize_to_general_value(item_value)
                     )
                     for item_key, item_value in mapped_value.items()
                 }
@@ -561,13 +460,11 @@ class FlextContext(FlextRuntime):
             >>> value = context.get_metadata("key").unwrap_or("default")
 
         """
-        # Access attributes directly - it's a dict[str, MetadataAttributeValue]
         if key not in self._metadata.attributes:
             return r[t.ContainerValue].fail(f"Metadata key '{key}' not found")
-
         raw_value: t.MetadataValue = self._metadata.attributes[key]
         normalized_value: t.ContainerValue = FlextRuntime.normalize_to_general_value(
-            raw_value,
+            raw_value
         )
         return r[t.ContainerValue].ok(normalized_value)
 
@@ -586,8 +483,6 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return False
-
-        # Check in contextvar (single source of truth)
         scope_data = self._get_from_contextvar(scope)
         return key in scope_data
 
@@ -604,17 +499,13 @@ class FlextContext(FlextRuntime):
             return []
         all_items: list[tuple[str, t.ContainerValue]] = []
         for ctx_var in self._scope_vars.values():
-            # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_items.extend(scope_dict.items())
         return all_items
 
     def iter_scope_vars(
         self,
-    ) -> Mapping[
-        str,
-        contextvars.ContextVar[m.ConfigMap | None],
-    ]:
+    ) -> Mapping[str, contextvars.ContextVar[m.ConfigMap | None]]:
         """Get scope context variables for iteration.
 
         This method provides read-only access to scope variables for merge/clone
@@ -637,18 +528,13 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return []
-
-        # Get keys from all contextvar scopes
         all_keys: set[str] = set()
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def merge(
-        self,
-        other: FlextContext | t.ConfigurationMapping,
-    ) -> Self:
+    def merge(self, other: FlextContext | t.ConfigurationMapping) -> Self:
         """Merge another context or dictionary into this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
@@ -663,7 +549,6 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return self
-
         export_callable = getattr(other, "export", None)
         if callable(export_callable):
             exported = export_callable(as_dict=True)
@@ -671,11 +556,9 @@ class FlextContext(FlextRuntime):
                 exported_map = m.ConfigMap.model_validate(exported)
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
-                    "Context export payload validation failed",
-                    exc_info=exc,
+                    "Context export payload validation failed", exc_info=exc
                 )
                 exported_map = m.ConfigMap(root={})
-
             for scope_name, scope_payload in exported_map.items():
                 if scope_name not in {
                     c.Context.SCOPE_GLOBAL,
@@ -687,57 +570,36 @@ class FlextContext(FlextRuntime):
                     scope_data = m.ConfigMap.model_validate(scope_payload)
                 except (TypeError, ValueError, AttributeError) as exc:
                     FlextContext._logger.debug(
-                        "Context scope payload validation failed",
-                        exc_info=exc,
+                        "Context scope payload validation failed", exc_info=exc
                     )
                     scope_data = None
                 if scope_data is not None:
                     self._set_in_contextvar(scope_name, scope_data)
         else:
             self._set_in_contextvar(
-                c.Context.SCOPE_GLOBAL,
-                m.ConfigMap.model_validate(other),
+                c.Context.SCOPE_GLOBAL, m.ConfigMap.model_validate(other)
             )
-
         return self
 
-    def remove(
-        self,
-        key: str,
-        scope: str = c.Context.SCOPE_GLOBAL,
-    ) -> None:
+    def remove(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> None:
         """Remove a key from the context."""
         if not self._active:
             return
         ctx_var = self._get_or_create_scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         if key in current:
-            # Use filter_dict for concise key removal
-            filtered = u.filter_dict(
-                current,
-                lambda k, _v: k != key,
-            )
+            filtered = u.filter_dict(current, lambda k, _v: k != key)
             _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
-            # Note: ContextVar.set() already cleared the key, no need to unbind from logger
-            # FlextLogger doesn't have unbind_global_context method
             self._update_statistics(c.Context.OPERATION_REMOVE)
 
     @overload
     def set(
-        self,
-        key_or_data: str,
-        value: t.ContainerValue,
-        *,
-        scope: str = ...,
+        self, key_or_data: str, value: t.ContainerValue, *, scope: str = ...
     ) -> r[bool]: ...
 
     @overload
     def set(
-        self,
-        key_or_data: m.ConfigMap,
-        value: None = ...,
-        *,
-        scope: str = ...,
+        self, key_or_data: m.ConfigMap, value: None = ..., *, scope: str = ...
     ) -> r[bool]: ...
 
     def set(
@@ -767,7 +629,6 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return r[bool].fail("Context is not active")
-
         if isinstance(key_or_data, m.ConfigMap):
             return self._set_bulk(key_or_data, scope)
         return self._set_single(key_or_data, value, scope)
@@ -784,22 +645,16 @@ class FlextContext(FlextRuntime):
             value: The metadata value
 
         """
-        # Normalize value to MetadataAttributeValue before setting
         normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata_value(
             value
         )
-        # Directly update attributes dict to avoid deprecation warning
-        # and object recreation
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
-            update={"attributes": updated_attributes},
+            update={"attributes": updated_attributes}
         )
 
-    def set_statistics_for_clone(
-        self,
-        statistics: m.ContextStatistics,
-    ) -> None:
+    def set_statistics_for_clone(self, statistics: m.ContextStatistics) -> None:
         """Set context statistics (used internally for cloning)."""
         self._statistics = statistics
 
@@ -817,7 +672,7 @@ class FlextContext(FlextRuntime):
         for ctx_var in self._scope_vars.values():
             try:
                 scope_dict = self._narrow_contextvar_to_configuration_dict(
-                    ctx_var.get(),
+                    ctx_var.get()
                 )
             except TypeError as e:
                 return r[bool].fail(str(e))
@@ -839,15 +694,12 @@ class FlextContext(FlextRuntime):
             return []
         all_values: list[t.ContainerValue] = []
         for ctx_var in self._scope_vars.values():
-            # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
         return all_values
 
     def _execute_hooks(
-        self,
-        event: str,
-        event_data: t.ContainerValue | m.ConfigMap,
+        self, event: str, event_data: t.ContainerValue | m.ConfigMap
     ) -> None:
         """Execute hooks for an event (DRY helper).
 
@@ -858,20 +710,13 @@ class FlextContext(FlextRuntime):
         """
         if event not in self._hooks:
             return
-
         hooks = self._hooks[event]
-        # Type narrowing: hooks is list[HandlerCallable], which is Sequence[Callable]
         for hook in hooks:
             if callable(hook):
-                # Note: Hooks should not raise exceptions
-                # All exceptions indicate a programming error in hook implementation
                 hook_data: t.Scalar
                 if event_data is None:
                     hook_data = ""
-                elif isinstance(
-                    event_data,
-                    (str, int, float, bool, datetime),
-                ):
+                elif isinstance(event_data, (str, int, float, bool, datetime)):
                     hook_data = event_data
                 else:
                     hook_data = str(event_data)
@@ -887,13 +732,12 @@ class FlextContext(FlextRuntime):
             Dictionary of all metadata (with custom_fields flattened)
 
         """
-        # Convert Pydantic model to dict
         data = dict(self._metadata.model_dump().items())
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: dict[str, t.ContainerValue] = {}
         try:
             custom_fields_dict = dict(
-                m.ConfigMap.model_validate(custom_fields_raw).items(),
+                m.ConfigMap.model_validate(custom_fields_raw).items()
             )
         except (TypeError, ValueError, AttributeError) as exc:
             FlextContext._logger.debug(
@@ -924,30 +768,21 @@ class FlextContext(FlextRuntime):
             return {}
         scopes: dict[str, dict[str, t.ContainerValue]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
-            # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 scopes[scope_name] = dict(scope_dict.items())
         return scopes
 
-    def _get_from_contextvar(
-        self,
-        scope: str,
-    ) -> m.ConfigMap:
+    def _get_from_contextvar(self, scope: str) -> m.ConfigMap:
         """Get all values from contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
         value = ctx_var.get()
         return m.ConfigMap.model_validate(
-            FlextContext._narrow_contextvar_to_configuration_dict(value),
+            FlextContext._narrow_contextvar_to_configuration_dict(value)
         )
 
-    # =========================================================================
-    # PRIVATE HELPERS - Context variable management and FlextLogger delegation
-    # =========================================================================
-
     def _get_or_create_scope_var(
-        self,
-        scope: str,
+        self, scope: str
     ) -> contextvars.ContextVar[m.ConfigMap | None]:
         """Get or create contextvar for scope.
 
@@ -959,23 +794,15 @@ class FlextContext(FlextRuntime):
 
         """
         if scope not in self._scope_vars:
-            # Create new contextvar for dynamic scope
-            # Note: Using None default per B039 - mutable defaults cause issues
             self._scope_vars[scope] = contextvars.ContextVar(
-                f"flext_{scope}_context",
-                default=None,
+                f"flext_{scope}_context", default=None
             )
         return self._scope_vars[scope]
 
-    def _set_bulk(
-        self,
-        data: m.ConfigMap,
-        scope: str,
-    ) -> r[bool]:
+    def _set_bulk(self, data: m.ConfigMap, scope: str) -> r[bool]:
         """Set multiple values in the context from a ConfigMap."""
         if not data:
             return r[bool].ok(value=True)
-
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -996,16 +823,11 @@ class FlextContext(FlextRuntime):
             )
             return r[bool].fail(error_msg)
 
-    def _set_in_contextvar(
-        self,
-        scope: str,
-        data: m.ConfigMap,
-    ) -> None:
+    def _set_in_contextvar(self, scope: str, data: m.ConfigMap) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
-        # Use helper for type narrowing to ConfigurationDict
         current = m.ConfigMap.model_validate(
-            self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
+            self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         )
         updated = current.model_copy()
         updated.update(data.root)
@@ -1018,19 +840,14 @@ class FlextContext(FlextRuntime):
             _ = FlextLogger.bind_global_context(**normalized_context)
 
     def _set_single(
-        self,
-        key: str,
-        value: t.ContainerValue | None,
-        scope: str,
+        self, key: str, value: t.ContainerValue | None, scope: str
     ) -> r[bool]:
         """Set a single key-value pair in the context."""
         if value is _SENTINEL or value is None:
             return r[bool].fail("Value is required for single-key set")
-
         validation_result = FlextContext._validate_set_inputs(key, value)
         if validation_result.is_failure:
             return r[bool].fail(validation_result.error or "Validation failed")
-
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -1040,8 +857,7 @@ class FlextContext(FlextRuntime):
             FlextContext._propagate_to_logger(key, value, scope)
             self._update_statistics(c.Context.OPERATION_SET)
             self._execute_hooks(
-                c.Context.OPERATION_SET,
-                m.ConfigMap(root={"key": key, "value": value}),
+                c.Context.OPERATION_SET, m.ConfigMap(root={"key": key, "value": value})
             )
             return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
@@ -1059,25 +875,17 @@ class FlextContext(FlextRuntime):
             operation: Operation name ('set', 'get', 'remove', etc')
 
         """
-        # Update primary counter using attribute name
         counter_attr: str = f"{operation}s"
         if hasattr(self._statistics, counter_attr):
             current_value: int = getattr(self._statistics, counter_attr, 0)
-            # Direct increment (statistics fields are always int)
             setattr(self._statistics, counter_attr, current_value + 1)
-
-        # Update operations dict if exists
         operations = dict(self._statistics.operations.items())
         value = operations.get(operation)
         if isinstance(value, int):
             operations[operation] = value + 1
             self._statistics = self._statistics.model_copy(
-                update={"operations": operations},
+                update={"operations": operations}
             )
-
-    # =========================================================================
-    # Container integration for dependency injection
-    # =========================================================================
 
     _container: p.DI | None = None
 
@@ -1103,10 +911,7 @@ class FlextContext(FlextRuntime):
 
         """
         if cls._container is None:
-            msg = (
-                "Container not initialized. Call FlextContext.set_container(container) "
-                "before using get_container()."
-            )
+            msg = "Container not initialized. Call FlextContext.set_container(container) before using get_container()."
             raise RuntimeError(msg)
         return cls._container
 
@@ -1115,10 +920,6 @@ class FlextContext(FlextRuntime):
         """Set the global container instance."""
         cls._container = container
 
-    # ==========================================================================
-    # Variables - Context Variables using structlog as Single Source of Truth
-    # ==========================================================================
-
     class Variables:
         """Context variables using structlog as single source of truth."""
 
@@ -1126,15 +927,11 @@ class FlextContext(FlextRuntime):
             """Correlation variables for distributed tracing."""
 
             CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    c.Context.KEY_CORRELATION_ID,
-                    default=None,
-                )
+                u.Context.create_str_proxy(c.Context.KEY_CORRELATION_ID, default=None)
             )
             PARENT_CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
-                    c.Context.KEY_PARENT_CORRELATION_ID,
-                    default=None,
+                    c.Context.KEY_PARENT_CORRELATION_ID, default=None
                 )
             )
 
@@ -1142,65 +939,38 @@ class FlextContext(FlextRuntime):
             """Service context variables for identification."""
 
             SERVICE_NAME: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    c.Context.KEY_SERVICE_NAME,
-                    default=None,
-                )
+                u.Context.create_str_proxy(c.Context.KEY_SERVICE_NAME, default=None)
             )
             SERVICE_VERSION: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    "service_version",
-                    default=None,
-                )
+                u.Context.create_str_proxy("service_version", default=None)
             )
 
         class Request:
             """Request context variables for metadata."""
 
             USER_ID: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    c.Context.KEY_USER_ID,
-                    default=None,
-                )
+                u.Context.create_str_proxy(c.Context.KEY_USER_ID, default=None)
             )
             REQUEST_ID: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    "request_id",
-                    default=None,
-                )
+                u.Context.create_str_proxy("request_id", default=None)
             )
             REQUEST_TIMESTAMP: Final[m.StructlogProxyContextVar[datetime]] = (
-                u.Context.create_datetime_proxy(
-                    "request_timestamp",
-                    default=None,
-                )
+                u.Context.create_datetime_proxy("request_timestamp", default=None)
             )
 
         class Performance:
             """Performance context variables for timing."""
 
             OPERATION_NAME: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    c.Context.KEY_OPERATION_NAME,
-                    default=None,
-                )
+                u.Context.create_str_proxy(c.Context.KEY_OPERATION_NAME, default=None)
             )
             OPERATION_START_TIME: Final[m.StructlogProxyContextVar[datetime]] = (
                 u.Context.create_datetime_proxy("operation_start_time", default=None)
             )
             OPERATION_METADATA: Final[m.StructlogProxyContextVar[m.ConfigMap]] = (
-                u.Context.create_dict_proxy(
-                    "operation_metadata",
-                    default=None,
-                )
+                u.Context.create_dict_proxy("operation_metadata", default=None)
             )
 
-        # =====================================================================
-        # Convenience Aliases - Flat access to nested context variables
-        # =====================================================================
-        # These aliases provide flat access (Variables.CorrelationId) to the
-        # nested structure (Variables.Correlation.CORRELATION_ID) for ergonomic
-        # API usage in FlextContext methods.
         CorrelationId: Final[m.StructlogProxyContextVar[str]] = (
             Correlation.CORRELATION_ID
         )
@@ -1224,10 +994,6 @@ class FlextContext(FlextRuntime):
             Performance.OPERATION_METADATA
         )
 
-    # =========================================================================
-    # Correlation Domain - Distributed tracing and correlation ID management
-    # =========================================================================
-
     class Correlation:
         """Distributed tracing and correlation ID management utilities."""
 
@@ -1240,48 +1006,29 @@ class FlextContext(FlextRuntime):
         @staticmethod
         @contextmanager
         def new_correlation(
-            correlation_id: str | None = None,
-            parent_id: str | None = None,
+            correlation_id: str | None = None, parent_id: str | None = None
         ) -> Generator[str]:
             """Create correlation context scope.
 
             Uses c.Context configuration for correlation ID generation.
             """
-            # Generate correlation ID if not provided using u
             if correlation_id is None:
                 correlation_id = u.generate("correlation")
-
-            # Save current context
             current_correlation = FlextContext.Variables.CorrelationId.get()
-
-            # Set new context
-            correlation_token = FlextContext.Variables.CorrelationId.set(
-                correlation_id,
-            )
-
-            # Set parent context
+            correlation_token = FlextContext.Variables.CorrelationId.set(correlation_id)
             parent_token = None
             if parent_id:
-                parent_token = FlextContext.Variables.ParentCorrelationId.set(
-                    parent_id,
-                )
+                parent_token = FlextContext.Variables.ParentCorrelationId.set(parent_id)
             elif isinstance(current_correlation, str):
-                # Current correlation becomes parent
                 parent_token = FlextContext.Variables.ParentCorrelationId.set(
-                    current_correlation,
+                    current_correlation
                 )
-
             try:
                 yield correlation_id
             finally:
-                # Restore previous context
-                FlextContext.Variables.CorrelationId.reset(
-                    correlation_token,
-                )
+                FlextContext.Variables.CorrelationId.reset(correlation_token)
                 if parent_token:
-                    FlextContext.Variables.ParentCorrelationId.reset(
-                        parent_token,
-                    )
+                    FlextContext.Variables.ParentCorrelationId.reset(parent_token)
 
         @staticmethod
         def set_correlation_id(correlation_id: str | None) -> None:
@@ -1292,17 +1039,11 @@ class FlextContext(FlextRuntime):
             """
             _ = FlextContext.Variables.CorrelationId.set(correlation_id)
 
-    # =========================================================================
-    # Service Domain - Service identification and lifecycle context
-    # =========================================================================
-
     class Service:
         """Service identification and lifecycle context management utilities."""
 
         @staticmethod
-        def get_service(
-            service_name: str,
-        ) -> r[t.ContainerValue]:
+        def get_service(service_name: str) -> r[t.ContainerValue]:
             """Resolve service from global container using FlextResult.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1321,31 +1062,20 @@ class FlextContext(FlextRuntime):
                 ...     result.value.info("Service retrieved")
 
             """
-            # get_container is a classmethod on FlextContext, access via class
             container: p.DI = FlextContext.get_container()
-            # Container.get returns p.ResultLike[RegisterableService]
-            # We need to convert to r[ContainerValue]
             service_result: p.ResultLike[object] = container.get(service_name)
-            # Convert protocol result to concrete FlextResult
             if service_result.is_success:
-                # Service value might be RegisterableService
                 service_value = service_result.value
                 if service_value is None:
                     return r[t.ContainerValue].ok("")
-                if isinstance(
-                    service_value,
-                    (str, int, float, bool, datetime),
-                ):
+                if isinstance(service_value, (str, int, float, bool, datetime)):
                     return r[t.ContainerValue].ok(service_value)
                 return r[t.ContainerValue].ok(str(service_value))
-            return r[t.ContainerValue].fail(
-                service_result.error or "Service not found",
-            )
+            return r[t.ContainerValue].fail(service_result.error or "Service not found")
 
         @staticmethod
         def register_service(
-            service_name: str,
-            service: t.ContainerValue | BaseModel,
+            service_name: str, service: t.ContainerValue | BaseModel
         ) -> r[bool]:
             """Register service in global container using FlextResult.
 
@@ -1368,11 +1098,8 @@ class FlextContext(FlextRuntime):
                 ...     print(f"Registration failed: {result.error}")
 
             """
-            # get_container is a classmethod on FlextContext, access via class
             container = FlextContext.get_container()
             try:
-                # Use container.with_service for fluent API
-                # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.register(service_name, service)
                 return r[bool].ok(value=True)
             except ValueError as e:
@@ -1381,33 +1108,21 @@ class FlextContext(FlextRuntime):
         @staticmethod
         @contextmanager
         def service_context(
-            service_name: str,
-            version: str | None = None,
+            service_name: str, version: str | None = None
         ) -> Generator[None]:
             """Create service context scope."""
-            # Save current context (for potential future use in logging/debugging)
             _ = FlextContext.Variables.ServiceName.get()
             _ = FlextContext.Variables.ServiceVersion.get()
-
-            # Set new context
             name_token = FlextContext.Variables.ServiceName.set(service_name)
             version_token = None
             if version:
-                version_token = FlextContext.Variables.ServiceVersion.set(
-                    version,
-                )
-
+                version_token = FlextContext.Variables.ServiceVersion.set(version)
             try:
                 yield
             finally:
-                # Restore previous context
                 FlextContext.Variables.ServiceName.reset(name_token)
                 if version_token:
                     FlextContext.Variables.ServiceVersion.reset(version_token)
-
-    # =========================================================================
-    # Request Domain - User and request metadata management
-    # =========================================================================
 
     class Request:
         """Request-level context management for user and operation metadata utilities."""
@@ -1426,10 +1141,6 @@ class FlextContext(FlextRuntime):
             """
             _ = FlextContext.Variables.OperationName.set(operation_name)
 
-    # =========================================================================
-    # Performance Domain - Operation timing and performance tracking
-    # =========================================================================
-
     class Performance:
         """Performance monitoring and timing context management utilities."""
 
@@ -1444,55 +1155,33 @@ class FlextContext(FlextRuntime):
                 root={
                     c.Context.METADATA_KEY_START_TIME: start_time.isoformat(),
                     c.Context.KEY_OPERATION_NAME: operation_name,
-                },
+                }
             )
-
-            # Save current context (for potential future use in logging/debugging)
             _ = FlextContext.Variables.OperationStartTime.get()
             _ = FlextContext.Variables.OperationMetadata.get()
             _ = FlextContext.Variables.OperationName.get()
-
-            # Set new context
-            start_token = FlextContext.Variables.OperationStartTime.set(
-                start_time,
-            )
+            start_token = FlextContext.Variables.OperationStartTime.set(start_time)
             metadata_token = FlextContext.Variables.OperationMetadata.set(
-                operation_metadata,
+                operation_metadata
             )
             operation_token = None
             if operation_name:
                 operation_token = FlextContext.Variables.OperationName.set(
-                    operation_name,
+                    operation_name
                 )
-
             try:
                 yield operation_metadata
             finally:
-                # Calculate duration with full precision
                 end_time = u.generate_datetime_utc()
                 duration = (end_time - start_time).total_seconds()
-                operation_metadata.update(
-                    {
-                        c.Context.METADATA_KEY_END_TIME: end_time.isoformat(),
-                        c.Context.METADATA_KEY_DURATION_SECONDS: duration,
-                    },
-                )
-
-                # Restore previous context
-                FlextContext.Variables.OperationStartTime.reset(
-                    start_token,
-                )
-                FlextContext.Variables.OperationMetadata.reset(
-                    metadata_token,
-                )
+                operation_metadata.update({
+                    c.Context.METADATA_KEY_END_TIME: end_time.isoformat(),
+                    c.Context.METADATA_KEY_DURATION_SECONDS: duration,
+                })
+                FlextContext.Variables.OperationStartTime.reset(start_token)
+                FlextContext.Variables.OperationMetadata.reset(metadata_token)
                 if operation_token:
-                    FlextContext.Variables.OperationName.reset(
-                        operation_token,
-                    )
-
-    # =========================================================================
-    # Serialization Domain - Context serialization for cross-service communication
-    # =========================================================================
+                    FlextContext.Variables.OperationName.reset(operation_token)
 
     class Serialization:
         """Context serialization and deserialization utilities."""
@@ -1509,21 +1198,15 @@ class FlextContext(FlextRuntime):
                 c.Context.KEY_USER_ID: context_vars.Request.USER_ID.get(),
                 c.Context.KEY_OPERATION_NAME: context_vars.Performance.OPERATION_NAME.get(),
                 c.Context.KEY_REQUEST_ID: context_vars.Request.REQUEST_ID.get(),
-                c.Context.KEY_OPERATION_START_TIME: (
-                    st.isoformat()
-                    if isinstance(
-                        (st := context_vars.Performance.OPERATION_START_TIME.get()),
-                        datetime,
-                    )
-                    else None
-                ),
+                c.Context.KEY_OPERATION_START_TIME: st.isoformat()
+                if isinstance(
+                    (st := context_vars.Performance.OPERATION_START_TIME.get()),
+                    datetime,
+                )
+                else None,
                 c.Context.KEY_OPERATION_METADATA: context_vars.Performance.OPERATION_METADATA.get(),
             }
             return {k: v for k, v in raw_context.items() if v is not None}
-
-    # =========================================================================
-    # Utilities Domain - Context utility methods and helpers
-    # =========================================================================
 
     class Utilities:
         """Context management utility methods."""
@@ -1535,7 +1218,6 @@ class FlextContext(FlextRuntime):
             Note: ContextVar.set() does not raise LookupError - it always succeeds.
             Setting to None effectively clears the variable.
             """
-            # Clear string context variables
             for context_var in [
                 FlextContext.Variables.CorrelationId,
                 FlextContext.Variables.ParentCorrelationId,
@@ -1546,13 +1228,9 @@ class FlextContext(FlextRuntime):
                 FlextContext.Variables.OperationName,
             ]:
                 _ = context_var.set(None)
-
-            # Clear typed context variables
             _ = FlextContext.Variables.OperationStartTime.set(None)
             _ = FlextContext.Variables.OperationMetadata.set(None)
             _ = FlextContext.Variables.RequestTimestamp.set(None)
-
-            # Note: All variables use structlog as single source (via FlextModels.StructlogProxyContextVar)
 
         @staticmethod
         def ensure_correlation_id() -> str:
@@ -1560,12 +1238,9 @@ class FlextContext(FlextRuntime):
             correlation_id_value = FlextContext.Variables.CorrelationId.get()
             if isinstance(correlation_id_value, str) and correlation_id_value:
                 return correlation_id_value
-            # Generate new correlation_id and set it in context
             new_correlation_id: str = u.generate("correlation")
             FlextContext.Correlation.set_correlation_id(new_correlation_id)
             return new_correlation_id
 
 
-__all__: list[str] = [
-    "FlextContext",
-]
+__all__: list[str] = ["FlextContext"]

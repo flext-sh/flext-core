@@ -34,7 +34,6 @@ def _run_workflows(argv: list[str]) -> int:
     _ = parser.add_argument("--prune", action="store_true", default=False)
     _ = parser.add_argument("--report", type=Path, default=None)
     args = parser.parse_args(argv)
-
     syncer = FlextInfraWorkflowSyncer()
     result: r[list[SyncOperation]] = syncer.sync_workspace(
         workspace_root=args.workspace_root.resolve(),
@@ -45,7 +44,6 @@ def _run_workflows(argv: list[str]) -> int:
     if result.is_failure:
         output.error(result.error or "workflow sync failed")
         return 1
-
     for _op in result.value:
         pass
     return 0
@@ -57,17 +55,13 @@ def _run_lint(argv: list[str]) -> int:
     _ = parser.add_argument("--report", type=Path, default=None)
     _ = parser.add_argument("--strict", action="store_true", default=False)
     args = parser.parse_args(argv)
-
     linter = FlextInfraWorkflowLinter()
     lint_result: r[m.Infra.Github.WorkflowLintResult] = linter.lint(
-        root=args.root.resolve(),
-        report_path=args.report,
-        strict=args.strict,
+        root=args.root.resolve(), report_path=args.report, strict=args.strict
     )
     if lint_result.is_failure:
         output.error(lint_result.error or "lint failed")
         return 1
-
     _ = lint_result.value.status
     return 0
 
@@ -98,7 +92,6 @@ def _run_pr_workspace(argv: list[str]) -> int:
     _ = parser.add_argument("--pr-checks-strict", type=int, default=0)
     _ = parser.add_argument("--pr-release-on-merge", type=int, default=1)
     args = parser.parse_args(argv)
-
     pr_args: Mapping[str, str] = {
         c.Infra.ReportKeys.ACTION: args.pr_action,
         "base": args.pr_base,
@@ -113,7 +106,6 @@ def _run_pr_workspace(argv: list[str]) -> int:
         "checks_strict": str(args.pr_checks_strict),
         "release_on_merge": str(args.pr_release_on_merge),
     }
-
     manager = FlextInfraPrWorkspaceManager()
     orch_result = manager.orchestrate(
         workspace_root=args.workspace_root.resolve(),
@@ -127,7 +119,6 @@ def _run_pr_workspace(argv: list[str]) -> int:
     if orch_result.is_failure:
         output.error(orch_result.error or "pr-workspace failed")
         return 1
-
     data = orch_result.value
     return 1 if data.fail else 0
 
@@ -152,13 +143,11 @@ def main() -> int:
             and sys.argv[1] in {"-h", "--help"}
             else 1
         )
-
     subcommand = sys.argv[1]
     handler = _SUBCOMMANDS.get(subcommand)
     if handler is None:
         output.error(f"unknown subcommand '{subcommand}'")
         return 1
-
     remaining = sys.argv[2:]
     return handler(remaining)
 

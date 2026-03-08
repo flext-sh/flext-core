@@ -30,6 +30,8 @@ from flext_tests import t, u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 
+from ._models import InputPayloadMap, TestCaseMap
+
 ComplexValue = TestsFlextModels.Core.ComplexValue
 CustomEntity = TestsFlextModels.Core.CustomEntity
 DomainTestEntity = TestsFlextModels.Core.DomainTestEntity
@@ -40,18 +42,11 @@ NoConfigNoSetattr = TestsFlextModels.Core.NoConfigNoSetattr
 NoDict = TestsFlextModels.Core.NoDict
 NoSetattr = TestsFlextModels.Core.NoSetattr
 SimpleValue = TestsFlextModels.Core.SimpleValue
-
-
-# Module-level helper functions (must be defined before class for @pytest.mark.parametrize)
 type TestPayload = t.Tests.ContainerValue
-type TestCaseMap = Mapping[str, TestPayload]
-type InputPayloadMap = dict[str, object]
 
 
 def _build_domain_test_entity(
-    *,
-    name: str,
-    value: TestPayload,
+    *, name: str, value: TestPayload
 ) -> TestsFlextModels.Core.DomainTestEntity:
     return DomainTestEntity(name=name, value=cast("int", value))
 
@@ -67,29 +62,20 @@ def _convert_to_general_value(obj: object) -> TestPayload:
 
     """
     if isinstance(obj, BaseModel):
-        # Convert Pydantic model to dict
         return obj.model_dump()
     if isinstance(obj, (str, int, float, bool, type(None))):
         return obj
     if isinstance(obj, dict):
-        # Recursively convert dict values
         return cast(
             "TestPayload",
             {str(k): _convert_to_general_value(v) for k, v in obj.items()},
         )
     if isinstance(obj, (list, tuple)):
-        # Recursively convert list items
-        return cast(
-            "TestPayload",
-            [_convert_to_general_value(item) for item in obj],
-        )
-    # For other objects, convert to string
+        return cast("TestPayload", [_convert_to_general_value(item) for item in obj])
     return str(obj)
 
 
-def _convert_expected_result(
-    expected: object,
-) -> TestPayload:
+def _convert_expected_result(expected: object) -> TestPayload:
     """Convert expected result to t.ContainerValue (handles type objects).
 
     Args:
@@ -100,11 +86,9 @@ def _convert_expected_result(
 
     """
     if isinstance(expected, type):
-        # Type objects are not t.ContainerValue, convert to string
         return expected.__name__
     if isinstance(expected, (str, int, float, bool, type(None))):
         return expected
-    # For other objects, convert to string
     return str(expected)
 
 
@@ -132,8 +116,6 @@ def _as_payload_map(value: InputPayloadMap) -> Mapping[str, TestPayload]:
 
 def create_compare_entities_cases() -> list[TestCaseMap]:
     """Create test cases for entity comparison using constants."""
-    # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-    # Create entities using u.Tests.DomainHelpers with batch creation
     entities_result = u.Tests.DomainHelpers.create_test_entities_batch(
         names=[
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -146,7 +128,7 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
         ],
         entity_class=_build_domain_test_entity,
-        remove_ids=[False, False, True],  # alice_no_id without ID
+        remove_ids=[False, False, True],
     )
     assert entities_result.is_success, (
         f"Failed to create entities: {entities_result.error}"
@@ -160,8 +142,6 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
     )
     custom1 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
     custom2 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
-
-    # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_same_id: InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": alice_entity,
@@ -178,11 +158,7 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
         "entity_a": alice_no_id,
         "entity_b": bob_entity,
     }
-    input_data_custom: InputPayloadMap = {
-        "entity_a": custom1,
-        "entity_b": custom2,
-    }
-
+    input_data_custom: InputPayloadMap = {"entity_a": custom1, "entity_b": custom2}
     return cast(
         "list[TestCaseMap]",
         [
@@ -227,8 +203,6 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
 
 def create_hash_entity_cases() -> list[TestCaseMap]:
     """Create test cases for entity hashing using constants."""
-    # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-    # Create entities using batch helper
     entities_result = u.Tests.DomainHelpers.create_test_entities_batch(
         names=[
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -239,7 +213,7 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
         ],
         entity_class=_build_domain_test_entity,
-        remove_ids=[False, True],  # alice_no_id without ID
+        remove_ids=[False, True],
     )
     assert entities_result.is_success, (
         f"Failed to create entities: {entities_result.error}"
@@ -247,18 +221,9 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
     entities = entities_result.value
     alice_entity, alice_no_id = entities
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
-
-    # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_with_id: InputPayloadMap = {
-        "entity": alice_entity,
-    }
-    input_data_no_id: InputPayloadMap = {
-        "entity": alice_no_id,
-    }
-    input_data_custom: InputPayloadMap = {
-        "entity": custom,
-    }
-
+    input_data_with_id: InputPayloadMap = {"entity": alice_entity}
+    input_data_no_id: InputPayloadMap = {"entity": alice_no_id}
+    input_data_custom: InputPayloadMap = {"entity": custom}
     return cast(
         "list[TestCaseMap]",
         [
@@ -289,8 +254,6 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
 
 def create_compare_value_objects_cases() -> list[TestCaseMap]:
     """Create test cases for value object comparison using constants."""
-    # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-    # Create value objects using batch helper
     value_objs = u.Tests.DomainHelpers.create_test_value_objects_batch(
         data_list=[
             TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
@@ -314,35 +277,14 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
     bad2 = u.Tests.BadObjects.BadModelDump()
     no_dict1 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
     no_dict2 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
-
-    # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_list: list[InputPayloadMap] = [
-        {
-            "obj_a": value1,
-            "obj_b": value1,
-        },
-        {
-            "obj_a": value1,
-            "obj_b": value2,
-        },
-        {
-            "obj_a": value1,
-            "obj_b": alice_entity,
-        },
-        {
-            "obj_a": simple1,
-            "obj_b": simple2,
-        },
-        {
-            "obj_a": bad1,
-            "obj_b": bad2,
-        },
-        {
-            "obj_a": no_dict1,
-            "obj_b": no_dict2,
-        },
+        {"obj_a": value1, "obj_b": value1},
+        {"obj_a": value1, "obj_b": value2},
+        {"obj_a": value1, "obj_b": alice_entity},
+        {"obj_a": simple1, "obj_b": simple2},
+        {"obj_a": bad1, "obj_b": bad2},
+        {"obj_a": no_dict1, "obj_b": no_dict2},
     ]
-
     return cast(
         "list[TestCaseMap]",
         u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
@@ -356,22 +298,13 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast("list[Mapping[str, TestPayload]]", input_data_list),
-            expected_results=[
-                True,
-                False,
-                False,
-                True,
-                _as_test_payload(bool),
-                True,
-            ],
+            expected_results=[True, False, False, True, _as_test_payload(bool), True],
         ),
     )
 
 
 def create_hash_value_object_cases() -> list[TestCaseMap]:
     """Create test cases for value object hashing using constants."""
-    # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-    # Create value object using helper
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
         count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
@@ -379,17 +312,11 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
     )
     simple_obj = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
     bad_obj = u.Tests.BadObjects.BadModelDump()
-    # Convert tuple to list for ComplexValue (expects list[str])
-    complex_items_list: list[str] = list(
-        TestsFlextConstants.TestDomain.COMPLEX_ITEMS,
-    )
+    complex_items_list: list[str] = list(TestsFlextConstants.TestDomain.COMPLEX_ITEMS)
     complex_obj = ComplexValue(
-        TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
-        complex_items_list,
+        TestsFlextConstants.TestDomain.VALUE_DATA_TEST, complex_items_list
     )
     no_dict_obj = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
-
-    # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_list_hash: list[InputPayloadMap] = [
         {"obj": value_obj},
         {"obj": simple_obj},
@@ -397,7 +324,6 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
         {"obj": complex_obj},
         {"obj": no_dict_obj},
     ]
-
     return cast(
         "list[TestCaseMap]",
         u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
@@ -410,8 +336,7 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, TestPayload]]",
-                input_data_list_hash,
+                "list[Mapping[str, TestPayload]]", input_data_list_hash
             ),
             expected_results=[
                 _as_test_payload(int),
@@ -426,8 +351,6 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
 
 def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
     """Create test cases for entity ID validation using constants."""
-    # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-    # Create entities using batch helper
     entities_result = u.Tests.DomainHelpers.create_test_entities_batch(
         names=[
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -438,7 +361,7 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
         ],
         entity_class=_build_domain_test_entity,
-        remove_ids=[False, True],  # alice_no_id without ID
+        remove_ids=[False, True],
     )
     assert entities_result.is_success, (
         f"Failed to create entities: {entities_result.error}"
@@ -446,18 +369,9 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
     entities = entities_result.value
     alice_entity, alice_no_id = entities
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
-
-    # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_has_id: InputPayloadMap = {
-        "entity": alice_entity,
-    }
-    input_data_no_id_validate: InputPayloadMap = {
-        "entity": alice_no_id,
-    }
-    input_data_custom_validate: InputPayloadMap = {
-        "entity": custom,
-    }
-
+    input_data_has_id: InputPayloadMap = {"entity": alice_entity}
+    input_data_no_id_validate: InputPayloadMap = {"entity": alice_no_id}
+    input_data_custom_validate: InputPayloadMap = {"entity": custom}
     return cast(
         "list[TestCaseMap]",
         [
@@ -488,8 +402,6 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
 
 def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
     """Create test cases for immutability validation using constants."""
-    # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-    # Create value object using helper
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
         count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
@@ -500,7 +412,6 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
     bad_config_obj = u.Tests.BadObjects.BadConfig()
     no_config_obj = NoConfigNoSetattr()
     no_setattr_obj = NoSetattr()
-
     return cast(
         "list[TestCaseMap]",
         u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
@@ -524,14 +435,7 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
                     {"obj": no_setattr_obj},
                 ],
             ),
-            expected_results=[
-                True,
-                False,
-                True,
-                False,
-                False,
-                False,
-            ],
+            expected_results=[True, False, True, False, False, False],
         ),
     )
 
@@ -539,32 +443,20 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
 class TestuDomain:
     """Comprehensive tests for u.Domain using FlextTestsUtilities and constants extensively."""
 
-    # ============================================================================
-    # Parametrized Tests - Using FlextTestsUtilities Extensively
-    # ============================================================================
-
     @pytest.mark.parametrize(
         "test_case",
         create_compare_entities_cases(),
         ids=lambda case: f"compare_entities_{case['description']}",
     )
-    def test_compare_entities_by_id(
-        self,
-        test_case: TestCaseMap,
-    ) -> None:
+    def test_compare_entities_by_id(self, test_case: TestCaseMap) -> None:
         """Test compare_entities_by_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
-        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
-            id_attr=_require_payload_str(
-                test_case.get("id_attr", "unique_id"),
-            ),
+            id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result,
-            test_case,
+            lambda: operation_result, test_case
         )
 
     @pytest.mark.parametrize(
@@ -572,17 +464,12 @@ class TestuDomain:
         create_hash_entity_cases(),
         ids=lambda case: f"hash_entity_{case['description']}",
     )
-    def test_hash_entity_by_id(
-        self,
-        test_case: TestCaseMap,
-    ) -> None:
+    def test_hash_entity_by_id(self, test_case: TestCaseMap) -> None:
         """Test hash_entity_by_id using FlextTestsUtilities."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
-            id_attr=_require_payload_str(
-                test_case.get("id_attr", "unique_id"),
-            ),
+            id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         expected: object = test_case.get("expected_result")
         if isinstance(expected, type):
@@ -597,13 +484,8 @@ class TestuDomain:
         create_compare_value_objects_cases(),
         ids=lambda case: f"compare_value_objects_{case['description']}",
     )
-    def test_compare_value_objects_by_value(
-        self,
-        test_case: TestCaseMap,
-    ) -> None:
+    def test_compare_value_objects_by_value(self, test_case: TestCaseMap) -> None:
         """Test compare_value_objects_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
-        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -623,18 +505,12 @@ class TestuDomain:
         create_hash_value_object_cases(),
         ids=lambda case: f"hash_value_object_{case['description']}",
     )
-    def test_hash_value_object_by_value(
-        self,
-        test_case: TestCaseMap,
-    ) -> None:
+    def test_hash_value_object_by_value(self, test_case: TestCaseMap) -> None:
         """Test hash_value_object_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
-        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
-        # hash_value_object_by_value returns an int; expected_result is the type `int`
         assert isinstance(operation_result, int), (
             f"Expected int, got {type(operation_result)}: {operation_result}"
         )
@@ -644,23 +520,15 @@ class TestuDomain:
         create_validate_entity_has_id_cases(),
         ids=lambda case: f"validate_entity_has_id_{case['description']}",
     )
-    def test_validate_entity_has_id(
-        self,
-        test_case: TestCaseMap,
-    ) -> None:
+    def test_validate_entity_has_id(self, test_case: TestCaseMap) -> None:
         """Test validate_entity_has_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
-        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
-            id_attr=_require_payload_str(
-                test_case.get("id_attr", "unique_id"),
-            ),
+            id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result,
-            test_case,
+            lambda: operation_result, test_case
         )
 
     @pytest.mark.parametrize(
@@ -668,25 +536,15 @@ class TestuDomain:
         create_validate_value_object_immutable_cases(),
         ids=lambda case: f"validate_value_object_immutable_{case['description']}",
     )
-    def test_validate_value_object_immutable(
-        self,
-        test_case: TestCaseMap,
-    ) -> None:
+    def test_validate_value_object_immutable(self, test_case: TestCaseMap) -> None:
         """Test validate_value_object_immutable using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
-        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result,
-            test_case,
+            lambda: operation_result, test_case
         )
-
-    # ============================================================================
-    # Special Cases Not Covered by Parametrized Tests
-    # ============================================================================
 
     def test_validate_immutable_config_type_error(self) -> None:
         """Test validation with config that raises TypeError using u.Domain directly."""
@@ -696,5 +554,4 @@ class TestuDomain:
             result = u.Domain.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:
-            # Exception propagation is also acceptable for coverage
             pass

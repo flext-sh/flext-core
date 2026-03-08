@@ -13,16 +13,10 @@ def test_models_handler_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
-
-    req = m.RegistrationRequest(
-        handler=lambda value: value,
-        handler_mode="command",
-    )
+    req = m.RegistrationRequest(handler=lambda value: value, handler_mode="command")
     assert req.handler_mode == "command"
-
     with pytest.raises(TypeError, match="Handler must be callable"):
         m.HandlerRegistration(name="bad", handler=1)
-
     ctx = m.HandlerExecutionContext.create_for_handler("h1", "command")
     assert ctx.execution_time_ms == pytest.approx(0.0)
     state = ctx.metrics_state
@@ -32,8 +26,6 @@ def test_models_handler_branches() -> None:
 
 
 def test_models_handler_uncovered_mode_and_reset_paths() -> None:
-    # validate_mode was a no-op and was removed; Literal type handles validation
-
     ctx = m.Handler.ExecutionContext.create_for_handler("h2", "query")
     assert ctx.is_running is False
     ctx.start_execution()

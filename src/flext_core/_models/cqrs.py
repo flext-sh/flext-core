@@ -14,7 +14,6 @@ from collections.abc import Mapping
 from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Discriminator,
     Field,
@@ -37,17 +36,15 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command(BaseModel):
+    class Command:
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
-
         message_type: Literal["command"] = Field(
             default="command",
             frozen=True,
             description="Message type discriminator (always 'command')",
         )
-
         command_type: str = Field(
             default=c.Cqrs.DEFAULT_COMMAND_TYPE,
             min_length=c.Reliability.RETRY_COUNT_MIN,
@@ -71,18 +68,15 @@ class FlextModelsCqrs:
             """Query type identifier (always None for commands)."""
             return None
 
-    class Pagination(BaseModel):
+    class Pagination:
         """Pagination model for query results."""
 
         model_config = ConfigDict(
             json_schema_extra={
                 "title": "Pagination",
-                "description": (
-                    "Pagination model for query results with computed fields"
-                ),
-            },
+                "description": "Pagination model for query results with computed fields",
+            }
         )
-
         page: Annotated[
             int,
             Field(
@@ -113,7 +107,7 @@ class FlextModelsCqrs:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
-    class Query(BaseModel):
+    class Query:
         """Query model for CQRS query operations."""
 
         model_config = ConfigDict(
@@ -123,15 +117,10 @@ class FlextModelsCqrs:
                 "description": "Query model for CQRS query operations",
             },
         )
-
         tag: ClassVar[Literal["query"]] = "query"
-
         message_type: Literal["query"] = Field(
-            default="query",
-            frozen=True,
-            description="Message type discriminator",
+            default="query", frozen=True, description="Message type discriminator"
         )
-
         filters: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Filter values that restrict which records are returned by the query.",
@@ -174,11 +163,7 @@ class FlextModelsCqrs:
             min_qualname_parts = 2
             if not models_module or len(parts) < min_qualname_parts:
                 return FlextModelsCqrs.Pagination
-            obj: t.ContainerValue | None = getattr(
-                models_module,
-                parts[0],
-                None,
-            )
+            obj: t.ContainerValue | None = getattr(models_module, parts[0], None)
             for part in parts[1:-1]:
                 if obj and hasattr(obj, part):
                     obj = getattr(obj, part)
@@ -187,9 +172,8 @@ class FlextModelsCqrs:
                 if (
                     pagination_cls_attr is not None
                     and isinstance(pagination_cls_attr, type)
-                    and FlextModelsCqrs.Pagination in pagination_cls_attr.__mro__
+                    and (FlextModelsCqrs.Pagination in pagination_cls_attr.__mro__)
                 ):
-                    # Type-safe narrowing: pagination_cls_attr is confirmed as subclass
                     result_cls: type[FlextModelsCqrs.Pagination] = pagination_cls_attr
                     return result_cls
             return FlextModelsCqrs.Pagination
@@ -214,12 +198,11 @@ class FlextModelsCqrs:
                 FlextModelsCqrs.Pagination
                 | FlextModelsContainers.Dict
                 | Mapping[str, t.Scalar]
-                | None,
+                | None
             )
             parsed_input = adapter.validate_python(v)
             if parsed_input is None:
                 return pagination_cls()
-
             try:
                 if isinstance(parsed_input, FlextModelsContainers.Dict):
                     return pagination_cls.model_validate(parsed_input.root)
@@ -229,34 +212,29 @@ class FlextModelsCqrs:
             except (ValidationError, TypeError, ValueError):
                 return pagination_cls()
 
-    class Bus(BaseModel):
+    class Bus:
         """Dispatcher configuration model for CQRS routing."""
 
         model_config = ConfigDict(
             json_schema_extra={
                 "title": "Dispatcher",
                 "description": "CQRS dispatcher configuration",
-            },
+            }
         )
         enable_middleware: bool = Field(
-            default=True,
-            description="Enable middleware pipeline",
+            default=True, description="Enable middleware pipeline"
         )
         enable_metrics: bool = Field(
-            default=True,
-            description="Enable metrics collection",
+            default=True, description="Enable metrics collection"
         )
         enable_caching: bool = Field(
-            default=True,
-            description="Enable query result caching",
+            default=True, description="Enable query result caching"
         )
         execution_timeout: int = Field(
-            default=c.Defaults.TIMEOUT,
-            description="Command execution timeout",
+            default=c.Defaults.TIMEOUT, description="Command execution timeout"
         )
         max_cache_size: int = Field(
-            default=c.Defaults.DEFAULT_MAX_CACHE_SIZE,
-            description="Maximum cache size",
+            default=c.Defaults.DEFAULT_MAX_CACHE_SIZE, description="Maximum cache size"
         )
         implementation_path: str = Field(
             default=c.Dispatcher.DEFAULT_DISPATCHER_PATH,
@@ -264,24 +242,22 @@ class FlextModelsCqrs:
             description="Implementation path",
         )
 
-    class Handler(BaseModel):
+    class Handler:
         """Handler configuration model with Builder pattern support."""
 
         model_config = ConfigDict(
             json_schema_extra={
                 "title": "Handler",
                 "description": "CQRS handler configuration",
-            },
+            }
         )
         handler_id: str = Field(description="Unique handler identifier")
         handler_name: str = Field(description="Human-readable handler name")
         handler_type: c.Cqrs.HandlerType = Field(
-            default=c.Cqrs.HandlerType.COMMAND,
-            description="Handler type",
+            default=c.Cqrs.HandlerType.COMMAND, description="Handler type"
         )
         handler_mode: c.Cqrs.HandlerType = Field(
-            default=c.Cqrs.HandlerType.COMMAND,
-            description="Handler mode",
+            default=c.Cqrs.HandlerType.COMMAND, description="Handler mode"
         )
         command_timeout: int = Field(
             default=c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
@@ -292,11 +268,10 @@ class FlextModelsCqrs:
             description="Maximum retry attempts from c (default). Models use Config values in initialization.",
         )
         metadata: FlextModelFoundation.Metadata | None = Field(
-            default=None,
-            description="Handler metadata (Pydantic model)",
+            default=None, description="Handler metadata (Pydantic model)"
         )
 
-        class ConfigParams(BaseModel):
+        class ConfigParams:
             """Parameter object for handler configuration (reduces parameter count)."""
 
             model_config = ConfigDict(
@@ -330,27 +305,22 @@ class FlextModelsCqrs:
                 self._data: FlextModelsContainers.Dict = FlextModelsContainers.Dict(
                     root={
                         "handler_type": handler_type,
-                        "handler_mode": (
-                            c.Dispatcher.HANDLER_MODE_COMMAND
-                            if handler_type == c.Cqrs.HandlerType.COMMAND
-                            else c.Dispatcher.HANDLER_MODE_QUERY
-                        ),
+                        "handler_mode": c.Dispatcher.HANDLER_MODE_COMMAND
+                        if handler_type == c.Cqrs.HandlerType.COMMAND
+                        else c.Dispatcher.HANDLER_MODE_QUERY,
                         "handler_id": f"{handler_type}_handler_{handler_short_id}",
                         "handler_name": f"{handler_type.title()} Handler",
                         "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
                         "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
                         "metadata": None,
-                    },
+                    }
                 )
 
             def build(self) -> FlextModelsCqrs.Handler:
                 """Build and validate Handler instance."""
                 return FlextModelsCqrs.Handler.model_validate(self._data.root)
 
-            def merge_config(
-                self,
-                config: FlextModelsContainers.ConfigMap,
-            ) -> Self:
+            def merge_config(self, config: FlextModelsContainers.ConfigMap) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.root.update(config.root)
                 return self
@@ -380,7 +350,7 @@ class FlextModelsCqrs:
                 self._data.root["command_timeout"] = timeout
                 return self
 
-    class Event(BaseModel):
+    class Event:
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.
@@ -388,16 +358,12 @@ class FlextModelsCqrs:
         """
 
         tag: ClassVar[Literal["event"]] = "event"
-
         message_type: Literal["event"] = Field(
             default="event",
             frozen=True,
             description="Message type discriminator (always 'event')",
         )
-
-        event_type: str = Field(
-            description="Event type identifier",
-        )
+        event_type: str = Field(description="Event type identifier")
 
         @property
         def command_type(self) -> str | None:
@@ -410,7 +376,7 @@ class FlextModelsCqrs:
             return None
 
         aggregate_id: str = Field(
-            description="ID of the aggregate that generated this event",
+            description="ID of the aggregate that generated this event"
         )
         event_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
@@ -419,8 +385,7 @@ class FlextModelsCqrs:
             examples=["evt_01HZX7Q0P5N6M2"],
         )
         data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Event payload data",
+            default_factory=FlextModelsContainers.Dict, description="Event payload data"
         )
         metadata: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
@@ -428,8 +393,7 @@ class FlextModelsCqrs:
         )
 
     type FlextMessage = Annotated[
-        Command | Query | Event,
-        Discriminator("message_type"),
+        Command | Query | Event, Discriminator("message_type")
     ]
 
     @staticmethod
@@ -438,7 +402,7 @@ class FlextModelsCqrs:
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
 
-    class HandlerBatchRegistrationResult(BaseModel):
+    class HandlerBatchRegistrationResult:
         """Result of batch handler registration."""
 
         status: str

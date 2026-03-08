@@ -63,7 +63,7 @@ def _as_string_list(value: t.ContainerValue | None) -> list[str]:
         return []
     if isinstance(value, str):
         return []
-    if isinstance(value, Sequence) and not isinstance(value, Mapping):
+    if isinstance(value, Sequence) and (not isinstance(value, Mapping)):
         return [str(item) for item in value]
     return [str(item) for item in _as_container_list(value)]
 
@@ -145,21 +145,16 @@ def get_dep_paths(doc: TOMLDocument, *, is_root: bool = False) -> list[str]:
 
 
 def sync_one(
-    pyproject_path: Path,
-    *,
-    dry_run: bool = False,
-    is_root: bool = False,
+    pyproject_path: Path, *, dry_run: bool = False, is_root: bool = False
 ) -> r[bool]:
     """Synchronize pyright and mypy paths for single pyproject.toml."""
     if not pyproject_path.exists():
         return r[bool].ok(False)
-
     toml_service = FlextInfraTomlService()
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
         return r[bool].fail(doc_result.error or f"failed to read {pyproject_path}")
     doc = doc_result.value
-
     dep_paths = get_dep_paths(doc, is_root=is_root)
     pyright_extra = (
         c.Infra.Deps.PYRIGHT_BASE_ROOT + dep_paths
@@ -171,32 +166,26 @@ def sync_one(
         if is_root
         else c.Infra.Deps.MYPY_BASE_PROJECT + dep_paths
     )
-
     doc_dict = _doc_as_container_dict(doc)
     tool_dict = _as_container_dict(doc_dict.get(c.Infra.Toml.TOOL))
     if not tool_dict:
         return r[bool].ok(False)
-
     pyright_dict = _as_container_dict(tool_dict.get(c.Infra.Toml.PYRIGHT))
     if not pyright_dict:
         return r[bool].ok(False)
-
     mypy_dict = _as_container_dict(tool_dict.get(c.Infra.Toml.MYPY))
     pyrefly_dict = _as_container_dict(tool_dict.get(c.Infra.Toml.PYREFLY))
-
     changed = False
     current_pyright = _as_string_list(pyright_dict.get("extraPaths"))
     if current_pyright != pyright_extra:
         pyright_dict["extraPaths"] = pyright_extra
         changed = True
-
     if mypy_dict:
         current_mypy = _as_string_list(mypy_dict.get("mypy_path"))
         if current_mypy != mypy_path:
             mypy_dict["mypy_path"] = mypy_path
             tool_dict[c.Infra.Toml.MYPY] = mypy_dict
             changed = True
-
     if not is_root and pyrefly_dict:
         base_search: list[str] = ["."] + dep_paths
         current_search = _as_string_list(pyrefly_dict.get(c.Infra.Toml.SEARCH_PATH))
@@ -209,47 +198,39 @@ def sync_one(
             pyrefly_dict[c.Infra.Toml.SEARCH_PATH] = base_search
             tool_dict[c.Infra.Toml.PYREFLY] = pyrefly_dict
             changed = True
-
     tool_dict[c.Infra.Toml.PYRIGHT] = pyright_dict
     doc[c.Infra.Toml.TOOL] = tool_dict
-
-    if changed and not dry_run:
+    if changed and (not dry_run):
         write_result = toml_service.write_document(pyproject_path, doc)
         if write_result.is_failure:
             return r[bool].fail(
-                write_result.error or f"failed to write {pyproject_path}",
+                write_result.error or f"failed to write {pyproject_path}"
             )
-
     return r[bool].ok(changed)
 
 
 def sync_extra_paths(
-    *,
-    dry_run: bool = False,
-    project_dirs: list[Path] | None = None,
+    *, dry_run: bool = False, project_dirs: list[Path] | None = None
 ) -> r[int]:
     """Synchronize extraPaths and mypy_path across projects."""
     if project_dirs:
         for project_dir in project_dirs:
             pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
             sync_result = sync_one(
-                pyproject,
-                dry_run=dry_run,
-                is_root=(project_dir == ROOT),
+                pyproject, dry_run=dry_run, is_root=project_dir == ROOT
             )
             if sync_result.is_failure:
                 return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
-            if sync_result.value and not dry_run:
+            if sync_result.value and (not dry_run):
                 output.info(f"Updated {pyproject}")
         return r[int].ok(0)
-
     pyproject = ROOT / c.Infra.Files.PYPROJECT_FILENAME
     if not pyproject.exists():
         return r[int].fail(f"Missing {pyproject}")
     sync_result = sync_one(pyproject, dry_run=dry_run, is_root=True)
     if sync_result.is_failure:
         return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
-    if sync_result.value and not dry_run:
+    if sync_result.value and (not dry_run):
         output.info("Updated extraPaths and mypy_path from path dependencies.")
     return r[int].ok(0)
 
@@ -258,9 +239,7 @@ def main() -> int:
     """Execute extra paths synchronization from command line."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print would-be changes only",
+        "--dry-run", action="store_true", help="Print would-be changes only"
     )
     _ = parser.add_argument(
         "--project",
@@ -270,11 +249,9 @@ def main() -> int:
         help="Project directory to sync (can be repeated); default is workspace root only",
     )
     args = parser.parse_args()
-
     project_dirs: list[Path] | None = None
     if args.projects:
         project_dirs = [ROOT / project for project in args.projects]
-
     result = sync_extra_paths(dry_run=args.dry_run, project_dirs=project_dirs)
     if result.is_success:
         return result.value
@@ -284,8 +261,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
 __all__ = [
     "ROOT",
     "get_dep_paths",

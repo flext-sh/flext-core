@@ -25,7 +25,6 @@ class TestRuntimeDictLike:
     def test_is_dict_like_with_exception_on_items(self) -> None:
         """Test is_dict_like when items() raises AttributeError."""
 
-        # Create object that has keys/items/get but items() raises AttributeError
         class BadDictLike:
             def keys(self) -> list[t.ContainerValue]:
                 return []
@@ -37,7 +36,6 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with t.ContainerValue at runtime
         obj = BadDictLike()
         obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -46,7 +44,6 @@ class TestRuntimeDictLike:
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
         """Test is_dict_like when items() raises TypeError."""
 
-        # Create object that has keys/items/get but items() raises TypeError
         class BadDictLike:
             def keys(self) -> list[t.ContainerValue]:
                 return []
@@ -58,7 +55,6 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with t.ContainerValue at runtime
         obj = BadDictLike()
         obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -76,7 +72,6 @@ class TestRuntimeDictLike:
         class NotDictLike:
             pass
 
-        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
         obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -92,7 +87,6 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
         obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -108,7 +102,6 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
         obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -124,7 +117,6 @@ class TestRuntimeDictLike:
             def items(self) -> list[tuple[object, object]]:
                 return []
 
-        # Business Rule: NotDictLike instances are compatible with t.ContainerValue at runtime
         obj = NotDictLike()
         obj_typed = cast("t.ContainerValue", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -137,7 +129,6 @@ class TestRuntimeTypeChecking:
     def test_extract_generic_args_with_type_mapping(self) -> None:
         """Test extract_generic_args with known type aliases."""
 
-        # Create mock type aliases that match the type_mapping
         class StringDict:
             __name__ = "StringDict"
 
@@ -153,7 +144,6 @@ class TestRuntimeTypeChecking:
         class NestedDict:
             __name__ = "NestedDict"
 
-        # Test each type alias
         assert FlextRuntime.extract_generic_args(StringDict) == (str, str)
         assert FlextRuntime.extract_generic_args(IntDict) == (str, int)
         assert FlextRuntime.extract_generic_args(FloatDict) == (str, float)
@@ -163,7 +153,6 @@ class TestRuntimeTypeChecking:
     def test_is_sequence_type_with_type_mapping(self) -> None:
         """Test is_sequence_type with known type aliases."""
 
-        # Create mock type aliases that match the type_mapping
         class StringList:
             __name__ = "StringList"
 
@@ -179,7 +168,6 @@ class TestRuntimeTypeChecking:
         class List:
             __name__ = "List"
 
-        # Test each type alias
         assert FlextRuntime.is_sequence_type(StringList) is True
         assert FlextRuntime.is_sequence_type(IntList) is True
         assert FlextRuntime.is_sequence_type(FloatList) is True
@@ -188,33 +176,20 @@ class TestRuntimeTypeChecking:
 
     def test_level_based_context_filter_malformed_prefix(self) -> None:
         """Test level_based_context_filter with malformed prefix."""
-        # Configure structlog first
         FlextRuntime.configure_structlog()
-
-        # Create event dict with malformed prefix
-        # Malformed prefix: starts with _level_ but doesn't have enough parts after split
-        # LEVEL_PREFIX_PARTS_COUNT is typically 4, so we need _level_<level>_<key>
-        # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
-        # Create a key that starts with _level_ but has fewer parts than required
-        malformed_key = "_level_"  # This will split into fewer parts than required
+        malformed_key = "_level_"
         event_dict: dict[str, t.ContainerValue] = {
-            malformed_key: "value1",  # Malformed - not enough parts after split
-            "normal_key": "value2",  # Not prefixed
+            malformed_key: "value1",
+            "normal_key": "value2",
         }
-
-        # Process with the filter
         logger = structlog.get_logger()
         result = FlextRuntime.level_based_context_filter(logger, "info", event_dict)
-
-        # Malformed prefix should be included as-is (line 491)
         assert malformed_key in result or "normal_key" in result
 
     def test_configure_structlog_with_config_object(self) -> None:
         """Test configure_structlog with config object."""
-        # Reset configuration
         FlextRuntime._structlog_configured = False
 
-        # Create config object with attributes
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = False
@@ -224,14 +199,11 @@ class TestRuntimeTypeChecking:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        # Convert Config object to Mapping for type compatibility
-        # Convert list[t.ContainerValue] to Sequence[t.ContainerValue] for type compatibility
         additional_processors_typed: Sequence[t.ContainerValue] = (
             cast("Sequence[t.ContainerValue]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to t.ContainerValue | None for type compatibility
         wrapper_class_factory_typed: t.ContainerValue | None = (
             cast("t.ContainerValue", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
@@ -251,18 +223,15 @@ class TestRuntimeTypeChecking:
             "cache_logger_on_first_use": config.cache_logger_on_first_use,
         }
         FlextRuntime.configure_structlog(config=config_dict)
-
         assert FlextRuntime._structlog_configured
 
     def test_enable_runtime_checking(self) -> None:
         """Test enable_runtime_checking method."""
-        # This should enable beartype runtime checking
         result = FlextRuntime.enable_runtime_checking()
         assert result is True
 
     def test_is_valid_json_exception_path(self) -> None:
         """Test is_valid_json when json.loads raises exception."""
-        # Invalid JSON that causes json.loads to raise
         invalid_json = "{invalid json}"
         result = FlextRuntime.is_valid_json(invalid_json)
         assert result is False
@@ -274,17 +243,14 @@ class TestRuntimeTypeChecking:
 
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
-        # Test with actual generic types
         args = FlextRuntime.extract_generic_args(list[str])
         assert args == (str,)
-
         args = FlextRuntime.extract_generic_args(dict[str, int])
         assert args == (str, int)
 
     def test_extract_generic_args_exception_path(self) -> None:
         """Test extract_generic_args exception handling."""
 
-        # Test with object that raises exception
         class BadType:
             @override
             def __getattribute__(self, name: str) -> object:
@@ -298,7 +264,6 @@ class TestRuntimeTypeChecking:
 
     def test_is_sequence_type_with_origin(self) -> None:
         """Test is_sequence_type with typing.get_origin returning Sequence."""
-        # Test with actual sequence types
         assert FlextRuntime.is_sequence_type(Sequence[str]) is True
         assert FlextRuntime.is_sequence_type(Sequence[int]) is True
 
@@ -325,7 +290,6 @@ class TestRuntimeTypeChecking:
     def test_is_sequence_type_exception_path(self) -> None:
         """Test is_sequence_type exception handling."""
 
-        # Test with object that raises exception
         class BadType:
             @override
             def __getattribute__(self, name: str) -> object:
@@ -340,39 +304,25 @@ class TestRuntimeTypeChecking:
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""
         FlextRuntime.configure_structlog()
-
-        # Create event dict with properly formatted level prefix
-        # Format: _level_<level>_<key> where parts_count = 4
-        # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
-        # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
         event_dict: Mapping[str, t.ContainerValue] = {
-            "_level_debug_config": {"key": "value"},  # DEBUG level (10)
-            "_level_info_status": "ok",  # INFO level (20)
-            "_level_error_stack": "trace",  # ERROR level (40)
+            "_level_debug_config": {"key": "value"},
+            "_level_info_status": "ok",
+            "_level_error_stack": "trace",
             "normal_key": "value",
         }
-
         logger = structlog.get_logger()
-        # Test with INFO level (20)
-        # Logic: if current_level >= required_level, include
-        # - DEBUG (10): INFO (20) >= DEBUG (10) = True, so config is included
-        # - INFO (20): INFO (20) >= INFO (20) = True, so status is included
-        # - ERROR (40): INFO (20) >= ERROR (40) = False, so stack is excluded
-        # - normal_key: always included (not prefixed)
         result = FlextRuntime.level_based_context_filter(logger, "info", event_dict)
-        assert "status" in result  # INFO level included (same level)
-        assert "normal_key" in result  # Normal key included
-        assert "config" in result  # DEBUG level included (INFO >= DEBUG)
-        assert "stack" not in result  # ERROR level excluded (INFO < ERROR)
+        assert "status" in result
+        assert "normal_key" in result
+        assert "config" in result
+        assert "stack" not in result
 
     def test_configure_structlog_with_config_additional_processors(self) -> None:
         """Test configure_structlog with config object having additional_processors."""
         FlextRuntime._structlog_configured = False
 
         def custom_processor(
-            logger: object,
-            method_name: str,
-            event_dict: dict[str, t.ContainerValue],
+            logger: object, method_name: str, event_dict: dict[str, t.ContainerValue]
         ) -> dict[str, t.ContainerValue]:
             event_dict["custom"] = True
             return event_dict
@@ -386,14 +336,11 @@ class TestRuntimeTypeChecking:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        # Convert Config object to Mapping for type compatibility
-        # Convert list[t.ContainerValue] to Sequence[t.ContainerValue] for type compatibility
         additional_processors_typed: Sequence[t.ContainerValue] = (
             cast("Sequence[t.ContainerValue]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to t.ContainerValue | None for type compatibility
         wrapper_class_factory_typed: t.ContainerValue | None = (
             cast("t.ContainerValue", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None

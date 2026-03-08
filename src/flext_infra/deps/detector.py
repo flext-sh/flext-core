@@ -43,9 +43,7 @@ class FlextInfraDependencyDetectorModels(m):
         """Workspace-level dependency analysis report aggregating all projects."""
 
         workspace: str
-        projects: dict[str, dict[str, t.ContainerValue]] = Field(
-            default_factory=dict,
-        )
+        projects: dict[str, dict[str, t.ContainerValue]] = Field(default_factory=dict)
         pip_check: FlextInfraDependencyDetectorModels.PipCheckReport | None = None
         dependency_limits: (
             FlextInfraDependencyDetectorModels.DependencyLimitsInfo | None
@@ -70,7 +68,7 @@ class FlextInfraRuntimeDevDependencyDetector:
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:
         """Create argument parser for CLI with deptry, pip-check, and typing options."""
         parser = argparse.ArgumentParser(
-            description="Detect runtime vs dev dependencies (deptry + pip check).",
+            description="Detect runtime vs dev dependencies (deptry + pip check)."
         )
         _ = parser.add_argument(
             "--project",
@@ -78,9 +76,7 @@ class FlextInfraRuntimeDevDependencyDetector:
             help="Run only for this project (directory name).",
         )
         _ = parser.add_argument(
-            "--projects",
-            metavar="NAMES",
-            help="Comma-separated list of project names.",
+            "--projects", metavar="NAMES", help="Comma-separated list of project names."
         )
         _ = parser.add_argument(
             "--no-pip-check",
@@ -88,9 +84,7 @@ class FlextInfraRuntimeDevDependencyDetector:
             help="Skip pip check (workspace-level).",
         )
         _ = parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="Do not write report files.",
+            "--dry-run", action="store_true", help="Do not write report files."
         )
         _ = parser.add_argument(
             "--json",
@@ -102,21 +96,13 @@ class FlextInfraRuntimeDevDependencyDetector:
             "-o",
             "--output",
             metavar="FILE",
-            help=(
-                "Write report to this path "
-                "(default: .reports/dependencies/detect-runtime-dev-latest.json)."
-            ),
+            help="Write report to this path (default: .reports/dependencies/detect-runtime-dev-latest.json).",
         )
         _ = parser.add_argument(
-            "-q",
-            "--quiet",
-            action="store_true",
-            help="Minimal output (summary only).",
+            "-q", "--quiet", action="store_true", help="Minimal output (summary only)."
         )
         _ = parser.add_argument(
-            "--no-fail",
-            action="store_true",
-            help="Always exit 0 (report only).",
+            "--no-fail", action="store_true", help="Always exit 0 (report only)."
         )
         _ = parser.add_argument(
             "--typings",
@@ -151,15 +137,12 @@ class FlextInfraRuntimeDevDependencyDetector:
         if root_result.is_failure:
             return r[int].fail(root_result.error or "workspace root resolution failed")
         root: Path = root_result.value
-
         venv_bin = root / c.Infra.Paths.VENV_BIN_REL
         limits_default = Path(__file__).resolve().parent / "dependency_limits.toml"
         parser = self._parser(limits_default)
         args = parser.parse_args(argv)
-
         projects_result = self._deps.discover_projects(
-            root,
-            projects_filter=self._project_filter(args),
+            root, projects_filter=self._project_filter(args)
         )
         if projects_result.is_failure:
             return r[int].fail(projects_result.error or "project discovery failed")
@@ -167,17 +150,14 @@ class FlextInfraRuntimeDevDependencyDetector:
         if not projects:
             logger.error("deps_no_projects_found")
             return r[int].ok(2)
-
         if not (venv_bin / c.Infra.Toml.DEPTRY).exists():
             logger.error(
                 "deps_deptry_missing", path=str(venv_bin / c.Infra.Toml.DEPTRY)
             )
             return r[int].ok(3)
-
         apply_typings = bool(args.apply_typings)
         do_typings = bool(args.typings) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
-
         projects_report: dict[str, dict[str, t.ContainerValue]] = {}
         report_model = ddm.WorkspaceDependencyReport(
             workspace=str(root),
@@ -185,7 +165,6 @@ class FlextInfraRuntimeDevDependencyDetector:
             pip_check=None,
             dependency_limits=None,
         )
-
         if do_typings:
             limits_data = self._deps.load_dependency_limits(limits_path)
             if limits_data:
@@ -197,15 +176,12 @@ class FlextInfraRuntimeDevDependencyDetector:
                     else None
                 )
                 report_model.dependency_limits = ddm.DependencyLimitsInfo(
-                    python_version=python_version,
-                    limits_path=str(limits_path),
+                    python_version=python_version, limits_path=str(limits_path)
                 )
-
         for project_path in projects:
             project_name = project_path.name
             if not args.quiet:
                 logger.info("deps_deptry_running", project=project_name)
-
             deptry_result = self._deps.run_deptry(project_path, venv_bin)
             if deptry_result.is_failure:
                 return r[int].fail(deptry_result.error or "deptry run failed")
@@ -214,25 +190,21 @@ class FlextInfraRuntimeDevDependencyDetector:
             project_payload = self._deps.build_project_report(project_name, issues)
             project_dict = project_payload.model_dump()
             projects_report[project_name] = project_dict
-
             if do_typings and (project_path / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir():
                 if not args.quiet:
                     logger.info("deps_typings_detect_running", project=project_name)
                 typings_result = self._deps.get_required_typings(
-                    project_path,
-                    venv_bin,
-                    limits_path=limits_path,
+                    project_path, venv_bin, limits_path=limits_path
                 )
                 if typings_result.is_failure:
                     return r[int].fail(
-                        typings_result.error or "typing dependency detection failed",
+                        typings_result.error or "typing dependency detection failed"
                     )
                 typings_report = typings_result.value
                 typing_dict = typings_report.model_dump()
                 projects_report[project_name][c.Infra.Directories.TYPINGS] = typing_dict
-
                 to_add: list[str] = typings_report.to_add
-                if apply_typings and to_add and not args.dry_run:
+                if apply_typings and to_add and (not args.dry_run):
                     env = {
                         **os.environ,
                         "VIRTUAL_ENV": str(venv_bin.parent),
@@ -265,7 +237,6 @@ class FlextInfraRuntimeDevDependencyDetector:
                                     project=project_name,
                                     package=package,
                                 )
-
         if not args.no_pip_check:
             if not args.quiet:
                 logger.info("deps_pip_check_running")
@@ -275,15 +246,11 @@ class FlextInfraRuntimeDevDependencyDetector:
             pip_value: tuple[list[str], int] = pip_result.value
             pip_lines, pip_exit = pip_value
             report_model.pip_check = ddm.PipCheckReport(
-                ok=pip_exit == 0,
-                lines=pip_lines,
+                ok=pip_exit == 0, lines=pip_lines
             )
-
         report_payload = report_model.model_dump()
-
         if args.json_stdout:
             return r[int].ok(0)
-
         out_path: Path | None = None
         if args.output:
             out_path = Path(args.output)
@@ -296,14 +263,12 @@ class FlextInfraRuntimeDevDependencyDetector:
             except OSError as exc:
                 return r[int].fail(f"failed to create report directory: {exc}")
             out_path = report_dir / "detect-runtime-dev-latest.json"
-
-        if out_path is not None and not args.dry_run:
+        if out_path is not None and (not args.dry_run):
             write_result = self._json.write(out_path, report_payload)
             if write_result.is_failure:
                 return r[int].fail(write_result.error or "failed to write report")
             if not args.quiet:
                 logger.info("deps_report_written", path=str(out_path))
-
         total_issues = 0
         for payload in projects_report.values():
             deptry_obj = payload.get(c.Infra.Toml.DEPTRY)
@@ -311,11 +276,9 @@ class FlextInfraRuntimeDevDependencyDetector:
                 raw_count = deptry_obj.get("raw_count", 0)
                 if isinstance(raw_count, int):
                     total_issues += raw_count
-
         pip_ok = (
             report_model.pip_check.ok if report_model.pip_check is not None else True
         )
-
         if not args.quiet:
             logger.info(
                 "deps_summary",
@@ -323,7 +286,6 @@ class FlextInfraRuntimeDevDependencyDetector:
                 deptry_issues=total_issues,
                 pip_check=c.Infra.ReportKeys.OK if pip_ok else "FAIL",
             )
-
         if args.no_fail:
             return r[int].ok(0)
         return r[int].ok(0 if total_issues == 0 and pip_ok else 1)
@@ -340,8 +302,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
 __all__ = [
     "FlextInfraDependencyDetectorModels",
     "FlextInfraRuntimeDevDependencyDetector",

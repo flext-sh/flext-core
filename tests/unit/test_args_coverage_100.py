@@ -96,8 +96,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def get_parse_kwargs_scenarios() -> Mapping[
-            str,
-            TestFlextUtilitiesArgs.ParseKwargsScenario,
+            str, TestFlextUtilitiesArgs.ParseKwargsScenario
         ]:
             """Get parse kwargs test scenarios."""
             status_enum = TestFlextUtilitiesArgs.StatusEnum
@@ -105,34 +104,24 @@ class TestFlextUtilitiesArgs:
             values = TestFlextUtilitiesArgs.Constants.Values
             errors = TestFlextUtilitiesArgs.Constants.Errors
             scenario_class = TestFlextUtilitiesArgs.ParseKwargsScenario
-
             return {
                 "valid_string_to_enum": scenario_class(
                     name="valid_string_to_enum",
-                    kwargs={
-                        "status": values.STATUS_ACTIVE,
-                        "name": values.NAME_JOHN,
-                    },
+                    kwargs={"status": values.STATUS_ACTIVE, "name": values.NAME_JOHN},
                     enum_fields={"status": status_enum},
                     expected_success=True,
                     expected_status=status_enum.ACTIVE,
                 ),
                 "already_enum": scenario_class(
                     name="already_enum",
-                    kwargs={
-                        "status": status_enum.PENDING,
-                        "name": values.NAME_JANE,
-                    },
+                    kwargs={"status": status_enum.PENDING, "name": values.NAME_JANE},
                     enum_fields={"status": status_enum},
                     expected_success=True,
                     expected_status=status_enum.PENDING,
                 ),
                 "invalid_enum_value": scenario_class(
                     name="invalid_enum_value",
-                    kwargs={
-                        "status": values.STATUS_INVALID,
-                        "name": values.NAME_BOB,
-                    },
+                    kwargs={"status": values.STATUS_INVALID, "name": values.NAME_BOB},
                     enum_fields={"status": status_enum},
                     expected_success=False,
                     expected_error=errors.INVALID_VALUES,
@@ -143,19 +132,13 @@ class TestFlextUtilitiesArgs:
                         "status": values.STATUS_ACTIVE,
                         "priority": values.PRIORITY_HIGH,
                     },
-                    enum_fields={
-                        "status": status_enum,
-                        "priority": priority_enum,
-                    },
+                    enum_fields={"status": status_enum, "priority": priority_enum},
                     expected_success=True,
                     expected_status=status_enum.ACTIVE,
                 ),
                 "no_enum_fields": scenario_class(
                     name="no_enum_fields",
-                    kwargs={
-                        "name": values.NAME_JOHN,
-                        "age": values.AGE_30,
-                    },
+                    kwargs={"name": values.NAME_JOHN, "age": values.AGE_30},
                     enum_fields={},
                     expected_success=True,
                 ),
@@ -163,15 +146,13 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def get_validated_scenarios() -> Mapping[
-            str,
-            TestFlextUtilitiesArgs.ValidatedScenario,
+            str, TestFlextUtilitiesArgs.ValidatedScenario
         ]:
             """Get validated decorator test scenarios."""
             status_enum = TestFlextUtilitiesArgs.StatusEnum
             values = TestFlextUtilitiesArgs.Constants.Values
             errors = TestFlextUtilitiesArgs.Constants.Errors
             scenario_class = TestFlextUtilitiesArgs.ValidatedScenario
-
             return {
                 "string_to_enum": scenario_class(
                     name="string_to_enum",
@@ -207,8 +188,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def create_validated_function() -> Callable[
-            [TestFlextUtilitiesArgs.StatusEnum],
-            str,
+            [TestFlextUtilitiesArgs.StatusEnum], str
         ]:
             """Create validated function for testing."""
 
@@ -220,8 +200,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def create_validated_with_result_function() -> Callable[
-            [TestFlextUtilitiesArgs.StatusEnum],
-            r[str],
+            [TestFlextUtilitiesArgs.StatusEnum], r[str]
         ]:
             """Create validated_with_result function for testing."""
 
@@ -230,28 +209,20 @@ class TestFlextUtilitiesArgs:
                 return r.ok(status.value)
 
             return cast(
-                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]",
-                process,
+                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]", process
             )
 
     class TestValidated:
         """Tests for u.Args.validated decorator."""
 
-        @pytest.mark.parametrize(
-            "scenario_name",
-            ["string_to_enum", "enum_value"],
-        )
-        def test_validated_decorator_success(
-            self,
-            scenario_name: str,
-        ) -> None:
+        @pytest.mark.parametrize("scenario_name", ["string_to_enum", "enum_value"])
+        def test_validated_decorator_success(self, scenario_name: str) -> None:
             """Test validated decorator with parametrized success scenarios."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_validated_scenarios()
             scenario = scenarios[scenario_name]
-
             process = TestFlextUtilitiesArgs.Factories.create_validated_function()
             status_value = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                scenario.input_value,
+                scenario.input_value
             )
             result = process(status_value)
             assert result == scenario.expected_result
@@ -260,10 +231,9 @@ class TestFlextUtilitiesArgs:
             """Test validated decorator with invalid enum."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_validated_scenarios()
             scenario = scenarios["invalid_enum"]
-
             with pytest.raises(ValueError):
                 _ = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                    scenario.input_value,
+                    scenario.input_value
                 )
 
         @staticmethod
@@ -280,7 +250,7 @@ class TestFlextUtilitiesArgs:
 
             values = TestFlextUtilitiesArgs.Constants.Values
             status_val = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE,
+                values.STATUS_ACTIVE
             )
             priority_val = TestFlextUtilitiesArgs.PriorityEnum(values.PRIORITY_HIGH)
             result = process(status_val, priority_val, values.NAME_JOHN)
@@ -300,29 +270,24 @@ class TestFlextUtilitiesArgs:
             )
             values = TestFlextUtilitiesArgs.Constants.Values
             status_val = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE,
+                values.STATUS_ACTIVE
             )
             result = process(status_val)
-            u.Tests.Result.assert_success_with_value(
-                result,
-                values.STATUS_ACTIVE,
-            )
+            u.Tests.Result.assert_success_with_value(result, values.STATUS_ACTIVE)
 
         @staticmethod
         def test_validated_with_result_invalid_enum() -> None:
             """Test validated_with_result with invalid enum."""
             values = TestFlextUtilitiesArgs.Constants.Values
-
             with pytest.raises(ValueError):
                 _ = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                    values.STATUS_INVALID,
+                    values.STATUS_INVALID
                 )
-
             process = (
                 TestFlextUtilitiesArgs.Factories.create_validated_with_result_function()
             )
             valid_status = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE,
+                values.STATUS_ACTIVE
             )
             result = process(valid_status)
             assertion_helpers.assert_flext_result_success(result)
@@ -339,12 +304,11 @@ class TestFlextUtilitiesArgs:
                 raise ValueError(errors.INTERNAL_ERROR)
 
             status_val = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE,
+                values.STATUS_ACTIVE
             )
             result = process(status_val)
             u.Tests.Result.assert_failure_with_error(
-                result,
-                expected_error=errors.INTERNAL_ERROR,
+                result, expected_error=errors.INTERNAL_ERROR
             )
 
     class TestParseKwargs:
@@ -363,7 +327,6 @@ class TestFlextUtilitiesArgs:
             """Test parse_kwargs with parametrized success scenarios."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios[scenario_name]
-
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             if scenario.expected_success:
                 u.Tests.Result.assert_success(result)
@@ -377,11 +340,9 @@ class TestFlextUtilitiesArgs:
             """Test parse_kwargs with invalid enum value."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios["invalid_enum_value"]
-
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             u.Tests.Result.assert_failure_with_error(
-                result,
-                expected_error=scenario.expected_error,
+                result, expected_error=scenario.expected_error
             )
 
     class TestGetEnumParams:
@@ -434,9 +395,7 @@ class TestFlextUtilitiesArgs:
         def test_get_enum_params_union() -> None:
             """Test get_enum_params with Union type."""
 
-            def process(
-                status: str | TestFlextUtilitiesArgs.StatusEnum,
-            ) -> bool:
+            def process(status: str | TestFlextUtilitiesArgs.StatusEnum) -> bool:
                 return True
 
             params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
@@ -461,7 +420,7 @@ class TestFlextUtilitiesArgs:
                 __annotations__ = {"invalid": object()}
 
             params = u.Args.get_enum_params(
-                cast("p.CallableWithHints", cast("object", BadFunction)),
+                cast("p.CallableWithHints", cast("object", BadFunction))
             )
             assert params == {}
 
@@ -471,8 +430,7 @@ class TestFlextUtilitiesArgs:
 
             def process(
                 status: Annotated[
-                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"],
-                    "meta2",
+                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2"
                 ],
             ) -> bool:
                 return True
@@ -487,8 +445,7 @@ class TestFlextUtilitiesArgs:
 
             def process(
                 status: Annotated[
-                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"],
-                    "meta2",
+                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2"
                 ],
             ) -> bool:
                 return True

@@ -43,13 +43,10 @@ class TestEntityCoverageEdgeCases:
         events = entity.uncommitted_events
         assert isinstance(events, list)
         assert len(events) == 0
-
         event_result = entity.add_domain_event(
-            "test_event",
-            m.ConfigMap(root={"key": "value"}),
+            "test_event", m.ConfigMap(root={"key": "value"})
         )
         assert event_result.is_success
-
         events = entity.uncommitted_events
         assert len(events) == 1
         assert events[0].event_type == "test_event"
@@ -65,7 +62,6 @@ class TestEntityCoverageEdgeCases:
         for i in range(max_events):
             result = entry.add_domain_event(f"event_{i}", m.ConfigMap(root={}))
             assert result.is_success
-
         fail_result = entry.add_domain_event("overflow_event", m.ConfigMap(root={}))
         assert fail_result.is_failure
         error_msg = fail_result.error or ""
@@ -81,9 +77,7 @@ class TestEntityCoverageEdgeCases:
         assert value.__eq__("not a model") is NotImplemented
         assert value.__eq__(123) is NotImplemented
         assert value.__eq__(None) is NotImplemented
-
         value2 = TestValue(data="test")
         assert value == value2
-
         value3 = TestValue(data="different")
         assert value != value3

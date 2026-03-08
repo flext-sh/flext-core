@@ -21,71 +21,55 @@ class TestFlextTestsMatchers:
     def test_assert_result_success_passes(self) -> None:
         """Test tm.ok() with successful result."""
         result = r[str].ok("success")
-
-        # Should not raise
         value = tm.ok(result)
         assert value == "success"
 
     def test_assert_result_success_fails(self) -> None:
         """Test tm.ok() with failed result."""
         result: r[str] = r[str].fail("error")
-
         with pytest.raises(AssertionError, match="Expected success but got failure"):
             tm.ok(result)
 
     def test_assert_result_success_custom_message(self) -> None:
         """Test tm.ok() with custom error message."""
         result: r[str] = r[str].fail("error")
-
         with pytest.raises(AssertionError, match="Custom message"):
             tm.ok(result, msg="Custom message")
 
     def test_assert_result_failure_passes(self) -> None:
         """Test tm.fail() with failed result."""
         result: r[str] = r[str].fail("error")
-
-        # Should not raise
         error = tm.fail(result)
         assert error == "error"
 
     def test_assert_result_failure_fails(self) -> None:
         """Test tm.fail() with successful result."""
         result = r[str].ok("success")
-
         with pytest.raises(AssertionError, match="Expected failure but got success"):
             tm.fail(result)
 
     def test_assert_result_failure_with_expected_error(self) -> None:
         """Test tm.fail() with expected error substring."""
         result: r[str] = r[str].fail("Database connection failed")
-
-        # Should not raise
         error = tm.fail(result, contains="connection")
         assert "connection" in error
 
     def test_assert_result_failure_expected_error_not_found(self) -> None:
         """Test tm.fail() when expected error substring not found."""
         result: r[str] = r[str].fail("Database error")
-
-        with pytest.raises(
-            AssertionError,
-            match=r"Expected.*to contain 'connection'",
-        ):
+        with pytest.raises(AssertionError, match="Expected.*to contain 'connection'"):
             tm.fail(result, contains="connection")
 
     def test_assert_dict_contains_passes(self) -> None:
         """Test tm.that() with contains parameter for dict."""
         data = {"key1": "value1", "key2": "value2"}
         expected = {"key1": "value1"}
-
-        # Should not raise - use kv for key-value pairs
         tm.that(data, kv=expected)
 
     def test_assert_dict_contains_missing_key(self) -> None:
         """Test tm.that() with missing key."""
         data = {"key1": "value1"}
         expected = {"key2": "value2"}
-
         with pytest.raises(AssertionError, match="Key 'key2' not found in mapping"):
             tm.that(data, kv=expected)
 
@@ -93,30 +77,24 @@ class TestFlextTestsMatchers:
         """Test tm.that() with wrong value."""
         data = {"key1": "value1"}
         expected = {"key1": "wrong_value"}
-
         with pytest.raises(
-            AssertionError,
-            match="expected 'wrong_value', got 'value1'",
+            AssertionError, match="expected 'wrong_value', got 'value1'"
         ):
             tm.that(data, kv=expected)
 
     def test_assert_list_contains_passes(self) -> None:
         """Test tm.that() with has parameter for list."""
         items = ["item1", "item2", "item3"]
-
-        # Should not raise
         tm.that(items, has="item2")
 
     def test_assert_list_contains_missing_item(self) -> None:
         """Test tm.that() with item not in list."""
         items = ["item1", "item2"]
-
-        with pytest.raises(AssertionError, match=r"Expected.*to contain 'item3'"):
+        with pytest.raises(AssertionError, match="Expected.*to contain 'item3'"):
             tm.that(items, has="item3")
 
     def test_assert_valid_email_passes(self) -> None:
         """Test tm.that() with email pattern match."""
-        # Should not raise
         tm.that("test@example.com", match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_valid_email_fails(self) -> None:
@@ -126,22 +104,10 @@ class TestFlextTestsMatchers:
 
     def test_assert_valid_email_edge_cases(self) -> None:
         """Test tm.that() with various email edge cases."""
-        valid_emails = [
-            "user.name@domain.co.uk",
-            "test+tag@example.com",
-            "a@b.co",
-        ]
-        invalid_emails = [
-            "invalid",
-            "@example.com",
-            "test@",
-            "test.example.com",  # Missing @
-        ]
-
+        valid_emails = ["user.name@domain.co.uk", "test+tag@example.com", "a@b.co"]
+        invalid_emails = ["invalid", "@example.com", "test@", "test.example.com"]
         for email in valid_emails:
-            # Should not raise
             tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
-
         for email in invalid_emails:
             with pytest.raises(AssertionError):
                 tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
@@ -153,26 +119,18 @@ class TestFlextTestsMatchers:
             "environment": "test",
             "timeout": 30,
         }
-
-        # Should not raise - validate keys and timeout
         tm.that(config, keys=["service_type", "environment", "timeout"])
         tm.that(config["timeout"], is_=int, gt=0)
 
     def test_assert_config_valid_missing_required_key(self) -> None:
         """Test tm.that() with missing required key."""
-        config = {"service_type": "api"}  # Missing environment
-
+        config = {"service_type": "api"}
         with pytest.raises(AssertionError, match="Missing required keys"):
             tm.that(config, keys=["service_type", "environment", "timeout"])
 
     def test_assert_config_valid_invalid_timeout(self) -> None:
         """Test tm.that() with invalid timeout type."""
-        config = {
-            "service_type": "api",
-            "environment": "test",
-            "timeout": "invalid",  # Should be positive int
-        }
-
+        config = {"service_type": "api", "environment": "test", "timeout": "invalid"}
         with pytest.raises(AssertionError, match="Assertion failed"):
             tm.that(config["timeout"], is_=int, gt=0)
 
@@ -181,15 +139,10 @@ class TestFlextTestsMatchers:
         config: dict[str, t.ContainerValue] = {
             "service_type": "api",
             "environment": "test",
-            "timeout": 0,  # Should be positive
+            "timeout": 0,
         }
-
         with pytest.raises(AssertionError, match="Assertion failed"):
             tm.that(config["timeout"], is_=int, gt=0)
-
-    # =========================================================================
-    # COMPREHENSIVE TESTS FOR ENHANCED tm.ok()
-    # =========================================================================
 
     def test_ok_with_eq_parameter(self) -> None:
         """Test tm.ok() with eq parameter."""
@@ -213,8 +166,7 @@ class TestFlextTestsMatchers:
         """Test tm.ok() with is_ parameter."""
         result = r[str].ok("test")
         value = tm.ok(
-            result,
-            where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str)),
+            result, where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str))
         )
         assert value == "test"
 
@@ -223,10 +175,7 @@ class TestFlextTestsMatchers:
         result = r[str].ok("test")
         value = tm.ok(
             result,
-            where=cast(
-                "t.Tests.ContainerValue",
-                lambda x: isinstance(x, str | bytes),
-            ),
+            where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str | bytes)),
         )
         assert value == "test"
 
@@ -279,7 +228,6 @@ class TestFlextTestsMatchers:
         data: dict[str, t.ContainerValue] = {"user": {"name": "John"}}
         result = r[dict[str, t.ContainerValue]].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
-        # path extraction returns the extracted value, not the original
         assert value == "John"
 
     def test_ok_with_where_parameter(self) -> None:
@@ -292,10 +240,7 @@ class TestFlextTestsMatchers:
         """Test tm.ok() with where parameter fails when predicate returns False."""
         result = r[int].ok(42)
         with pytest.raises(AssertionError):
-            tm.ok(
-                result,
-                where=cast("t.Tests.ContainerValue", lambda x: x < 0),
-            )
+            tm.ok(result, where=cast("t.Tests.ContainerValue", lambda x: x < 0))
 
     def test_ok_with_starts_parameter(self) -> None:
         """Test tm.ok() with starts parameter."""
@@ -312,7 +257,7 @@ class TestFlextTestsMatchers:
     def test_ok_with_match_parameter(self) -> None:
         """Test tm.ok() with match parameter."""
         result = r[str].ok("test@example.com")
-        value = tm.ok(result, match=r"^[\w.]+@[\w.]+$")
+        value = tm.ok(result, match="^[\\w.]+@[\\w.]+$")
         assert value == "test@example.com"
 
     def test_ok_with_gt_parameter(self) -> None:
@@ -351,10 +296,6 @@ class TestFlextTestsMatchers:
         value = tm.ok(result, empty=False)
         assert value == ["a"]
 
-    # =========================================================================
-    # COMPREHENSIVE TESTS FOR ENHANCED tm.fail()
-    # =========================================================================
-
     def test_fail_with_has_parameter(self) -> None:
         """Test tm.fail() with has parameter."""
         result: r[str] = r[str].fail("Database connection failed")
@@ -388,39 +329,28 @@ class TestFlextTestsMatchers:
     def test_fail_with_match_parameter(self) -> None:
         """Test tm.fail() with match parameter."""
         result: r[str] = r[str].fail("Error: 404")
-        error = tm.fail(result, match=r"Error: \d+")
+        error = tm.fail(result, match="Error: \\d+")
         assert error == "Error: 404"
 
     def test_fail_with_code_parameter(self) -> None:
         """Test tm.fail() with code parameter."""
-        result: r[str] = r[str].fail(
-            "error",
-            error_code="VALIDATION",
-        )
+        result: r[str] = r[str].fail("error", error_code="VALIDATION")
         error = tm.fail(result, code="VALIDATION")
         assert error == "error"
 
     def test_fail_with_code_has_parameter(self) -> None:
         """Test tm.fail() with code_has parameter."""
-        result: r[str] = r[str].fail(
-            "error",
-            error_code="VALIDATION_ERROR",
-        )
+        result: r[str] = r[str].fail("error", error_code="VALIDATION_ERROR")
         error = tm.fail(result, code_has="VALIDATION")
         assert error == "error"
 
     def test_fail_with_data_parameter(self) -> None:
         """Test tm.fail() with data parameter."""
         result: r[str] = r[str].fail(
-            "error",
-            error_data=m.ConfigMap(root={"field": "email"}),
+            "error", error_data=m.ConfigMap(root={"field": "email"})
         )
         error = tm.fail(result, data={"field": "email"})
         assert error == "error"
-
-    # =========================================================================
-    # COMPREHENSIVE TESTS FOR ENHANCED tm.that()
-    # =========================================================================
 
     def test_that_with_eq_parameter(self) -> None:
         """Test tm.that() with eq parameter."""
@@ -582,15 +512,11 @@ class TestFlextTestsMatchers:
 
     def test_that_with_all_alias_parameter(self) -> None:
         """Test tm.that() with all alias parameter (accepts both all_ and all)."""
-        tm.that(["a", "b", "c"], all=str)  # Using 'all' instead of 'all_'
+        tm.that(["a", "b", "c"], all=str)
 
     def test_that_with_any_alias_parameter(self) -> None:
         """Test tm.that() with any alias parameter (accepts both any_ and any)."""
-        tm.that(["a", 1, "c"], any=int)  # Using 'any' instead of 'any_'
-
-    # =========================================================================
-    # TESTS FOR tm.check() FLUENT API
-    # =========================================================================
+        tm.that(["a", 1, "c"], any=int)
 
     def test_check_returns_chain(self) -> None:
         """Test tm.check() returns Chain object."""
@@ -598,10 +524,6 @@ class TestFlextTestsMatchers:
         chain = tm.check(result)
         assert chain is not None
         assert hasattr(chain, "result")
-
-    # =========================================================================
-    # TESTS FOR tm.scope() CONTEXT MANAGER
-    # =========================================================================
 
     def test_scope_basic_usage(self) -> None:
         """Test tm.scope() basic usage."""
@@ -631,21 +553,21 @@ class TestFlextTestsMatchers:
         """Test tm.ok() with invalid parameter type raises ValueError."""
         result = r[int].ok(42)
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            tm.ok(result, len="invalid")  # len should be int or tuple[int, int]
+            tm.ok(result, len="invalid")
 
     def test_fail_invalid_parameter_type(self) -> None:
         """Test tm.fail() with invalid parameter type raises ValueError."""
         result: r[str] = r[str].fail("error")
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            tm.fail(result, code=123)  # code should be str
+            tm.fail(result, code=123)
 
     def test_that_invalid_parameter_type(self) -> None:
         """Test tm.that() with invalid parameter type raises ValueError."""
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            tm.that([1, 2, 3], len="invalid")  # len should be int or tuple[int, int]
+            tm.that([1, 2, 3], len="invalid")
 
     def test_scope_invalid_parameter_type(self) -> None:
         """Test tm.scope() with invalid parameter type raises ValueError."""
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            with tm.scope(env="invalid"):  # env should be Mapping[str, str]
+            with tm.scope(env="invalid"):
                 pass

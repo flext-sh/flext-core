@@ -91,6 +91,4 @@ class FlextTestsUtilityBase(FlextService[T]):
 
 
 s = FlextTestsServiceBase
-
-
 __all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s"]

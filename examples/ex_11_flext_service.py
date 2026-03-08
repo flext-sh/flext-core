@@ -8,6 +8,7 @@ from typing import ClassVar, override
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 
 from flext_core import (
+from ._models import _CommandBusStub, _EntityStub, _HandlerLike, _Payload, _ProcessorProtocolBad, _ProcessorProtocolGood
     FlextContext,
     FlextExceptions,
     FlextService,
@@ -22,9 +23,6 @@ from flext_core import (
 from .shared import Examples
 
 
-class _Payload(BaseModel):
-    text: str
-    count: int
 
 
 class _EchoService(s[str]):
@@ -117,14 +115,6 @@ class _RuntimeFactoryService(s[str]):
         return r[str].ok("factory")
 
 
-class _HandlerLike(BaseModel):
-    """Minimal handler-like BaseModel for protocol checks."""
-
-    model_config = ConfigDict(frozen=False)
-    data: dict[str, str] = {}
-
-    def handle(self) -> str:
-        return "ok"
 
 
 class _TinyType:
@@ -134,8 +124,6 @@ class _TinyType:
         self.initialized = True
 
 
-class _EntityStub(BaseModel):
-    unique_id: str
 
 
 class _ServiceLike:
@@ -164,38 +152,10 @@ class _ServiceLike:
         return "ServiceLike"
 
 
-class _ProcessorProtocolGood(BaseModel):
-    model_config = ConfigDict(frozen=False)
-    status: str = "ok"
-
-    def process(self) -> str:
-        return "ok"
-
-    def _protocol_name(self) -> str:
-        return "ProcessorProtocolGood"
 
 
-class _ProcessorProtocolBad(BaseModel):
-    model_config = ConfigDict(frozen=False)
-    status: str = "bad"
-
-    def _protocol_name(self) -> str:
-        return "ProcessorProtocolBad"
 
 
-class _CommandBusStub(BaseModel):
-    """Minimal BaseModel stub satisfying is_command_bus duck-typing."""
-
-    model_config = ConfigDict(frozen=False)
-
-    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(message)
-
-    def publish(self, _event: t.ContainerValue) -> None:
-        pass
-
-    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
-        return r[bool].ok(True)
 
 
 class Ex11FlextService(Examples):

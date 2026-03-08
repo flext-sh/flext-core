@@ -21,20 +21,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import override
 
-from flext_core import (
-    FlextDispatcher,
-    FlextRegistry,
-    c,
-    h,
-    m,
-    r,
-    s,
-    u,
-)
-
-# ═══════════════════════════════════════════════════════════════════
-# HANDLER IMPLEMENTATIONS
-# ═══════════════════════════════════════════════════════════════════
+from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, s, u
 
 
 class CreateUserCommand(m.Command):
@@ -61,10 +48,8 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
         user_id = u.generate("entity")
         return r[UserCreatedEvent].ok(
             UserCreatedEvent(
-                event_type="user_created",
-                aggregate_id=user_id,
-                name=message.name,
-            ),
+                event_type="user_created", aggregate_id=user_id, name=message.name
+            )
         )
 
 
@@ -78,10 +63,7 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
     """Handler for getting users."""
 
     @override
-    def handle(
-        self,
-        message: GetUserQuery,
-    ) -> r[m.ConfigMap]:
+    def handle(self, message: GetUserQuery) -> r[m.ConfigMap]:
         """Handle get user query."""
         return r[m.ConfigMap].ok(
             m.ConfigMap(
@@ -89,8 +71,8 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
                     "user_id": message.user_id,
                     "name": "Demo User",
                     "email": "demo@example.com",
-                },
-            ),
+                }
+            )
         )
 
 
@@ -103,11 +85,6 @@ class _DemoPlugin(m.Value):
         return f"demo-plugin::{self.name}"
 
 
-# ═══════════════════════════════════════════════════════════════════
-# SERVICE IMPLEMENTATION
-# ═══════════════════════════════════════════════════════════════════
-
-
 class RegistryDispatcherService(s[m.ConfigMap]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
@@ -115,11 +92,9 @@ class RegistryDispatcherService(s[m.ConfigMap]):
     def _demonstrate_dispatcher() -> None:
         """Show dispatcher operations."""
         print("\n=== Dispatcher Operations ===")
-
         dispatcher = FlextDispatcher()
         create_handler = CreateUserHandler()
         dispatcher.register_handler(create_handler)
-
         command = CreateUserCommand.model_validate({
             "name": "Alice",
             "email": "alice@example.com",
@@ -136,27 +111,16 @@ class RegistryDispatcherService(s[m.ConfigMap]):
     def _demonstrate_integration() -> None:
         """Show registry and dispatcher integration."""
         print("\n=== Registry/Dispatcher Integration ===")
-
         dispatcher = FlextDispatcher()
         registry = FlextRegistry()
-
         registry.register_plugin(
-            "handlers",
-            "create_user",
-            _DemoPlugin(name="create_user"),
+            "handlers", "create_user", _DemoPlugin(name="create_user")
         )
-        registry.register_plugin(
-            "handlers",
-            "get_user",
-            _DemoPlugin(name="get_user"),
-        )
-
+        registry.register_plugin("handlers", "get_user", _DemoPlugin(name="get_user"))
         create_handler = CreateUserHandler()
         get_handler = GetUserHandler()
         dispatcher.register_handler(create_handler)
         dispatcher.register_handler(get_handler)
-
-        # Dispatch command - Pydantic models as message payload
         command: CreateUserCommand = CreateUserCommand.model_validate({
             "name": "Bob",
             "email": "bob@example.com",
@@ -164,8 +128,6 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         command_result = dispatcher.dispatch(command)
         if command_result.is_success:
             print("✅ Command dispatched successfully")
-
-        # Dispatch query
         query: GetUserQuery = GetUserQuery.model_validate({"user_id": "user-123"})
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
@@ -177,40 +139,27 @@ class RegistryDispatcherService(s[m.ConfigMap]):
     def _demonstrate_registry() -> None:
         """Show registry operations."""
         print("\n=== Registry Operations ===")
-
         registry = FlextRegistry()
-
         create_plugin = _DemoPlugin(name="create_user")
         register_result = registry.register_plugin(
-            "handlers",
-            "create_user",
-            create_plugin,
+            "handlers", "create_user", create_plugin
         )
         if register_result.is_success:
             print("✅ Plugin registered successfully")
-
         query_plugin = _DemoPlugin(name="get_user")
-        registry.register_plugin(
-            "handlers",
-            "get_user",
-            query_plugin,
-        )
+        registry.register_plugin("handlers", "get_user", query_plugin)
         plugins_result = registry.list_plugins("handlers")
         if plugins_result.is_success:
             print(f"✅ Plugin catalog: {plugins_result.value}")
 
     @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute registry and dispatcher demonstrations."""
         print("Starting registry and dispatcher demonstration")
-
         try:
             self._demonstrate_registry()
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
-
             return r[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
@@ -231,10 +180,9 @@ class RegistryDispatcherService(s[m.ConfigMap]):
                             "dispatcher_integration",
                             "cqrs_patterns",
                         ],
-                    },
-                ),
+                    }
+                )
             )
-
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
             return r[m.ConfigMap].fail(error_msg)
@@ -246,10 +194,8 @@ def main() -> None:
     print("FLEXT REGISTRY & DISPATCHER - COMPREHENSIVE DEMONSTRATION")
     print("Handler registration, batch operations, CQRS patterns")
     print("=" * 60)
-
     service = RegistryDispatcherService()
     result = service.execute()
-
     if result.is_success:
         data = result.value
         patterns = (
@@ -257,14 +203,13 @@ def main() -> None:
             if isinstance(data.root, dict)
             else None
         )
-        if isinstance(patterns, Sequence) and not isinstance(
-            patterns, (str, bytes, bytearray)
+        if isinstance(patterns, Sequence) and (
+            not isinstance(patterns, (str, bytes, bytearray))
         ):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
     else:
         print(f"\n❌ Failed: {result.error}")
-
     print("\n" + "=" * 60)
     print("🎯 Registry Patterns: Registration, Batch, Idempotent")
     print("🎯 Dispatcher Patterns: Command, Query, Event Dispatch")

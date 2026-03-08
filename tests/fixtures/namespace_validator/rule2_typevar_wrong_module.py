@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-T = TypeVar("T")  # VIOLATION — TypeVars must be in typings.py
+T = TypeVar("T")
 
 
 class FlextTestModels:

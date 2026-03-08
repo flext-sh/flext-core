@@ -11,10 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextContainer, r, t
-from flext_infra.basemk import (
-    FlextInfraBaseMkGenerator,
-    FlextInfraBaseMkTemplateEngine,
-)
+from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.git import FlextInfraGitService
 from flext_infra.json_io import FlextInfraJsonService
@@ -45,9 +42,7 @@ def get_flext_infra_container() -> FlextContainer:
     return FlextContainer.get_global()
 
 
-def get_flext_infra_service(
-    service_name: str,
-) -> r[t.RegisterableService]:
+def get_flext_infra_service(service_name: str) -> r[t.RegisterableService]:
     """Get service from FLEXT DI container.
 
     Args:
@@ -86,8 +81,6 @@ def configure_flext_infra_dependencies() -> None:
 
     """
     container = get_flext_infra_container()
-
-    # Register factory services
     _ = container.register(
         "git_service", lambda: FlextInfraGitService(), kind="factory"
     )
@@ -111,19 +104,13 @@ def configure_flext_infra_dependencies() -> None:
     _ = container.register(
         "versioning", lambda: FlextInfraVersioningService(), kind="factory"
     )
-
-    # Register output singleton instance (not factory)
     _ = container.register("output", output)
-
-    # Register basemk services
     _ = container.register(
         "basemk_engine", lambda: FlextInfraBaseMkTemplateEngine(), kind="factory"
     )
     _ = container.register(
         "basemk_generator", lambda: FlextInfraBaseMkGenerator(), kind="factory"
     )
-
-    # Register workspace services
     _ = container.register(
         "workspace_detector", lambda: FlextInfraWorkspaceDetector(), kind="factory"
     )
@@ -138,13 +125,9 @@ def configure_flext_infra_dependencies() -> None:
     _ = container.register(
         "workspace_sync", lambda: FlextInfraSyncService(), kind="factory"
     )
-
-    # Register release services
     _ = container.register(
         "release_orchestrator", lambda: FlextInfraReleaseOrchestrator(), kind="factory"
     )
-
-    # Register maintenance services
     _ = container.register(
         "python_version_enforcer",
         lambda: FlextInfraPythonVersionEnforcer(),
@@ -152,5 +135,4 @@ def configure_flext_infra_dependencies() -> None:
     )
 
 
-# Initialize flext_infra dependencies on module import
 configure_flext_infra_dependencies()

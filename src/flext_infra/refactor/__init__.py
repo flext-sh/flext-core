@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
     from flext_infra.refactor.engine import FlextInfraRefactorEngine
+    from flext_infra.refactor.pydantic_centralizer import (
+        FlextInfraRefactorPydanticCentralizer,
+    )
     from flext_infra.refactor.rule import FlextInfraRefactorRule
     from flext_infra.refactor.rules.class_reconstructor import (
         FlextInfraRefactorClassReconstructorRule,
@@ -34,16 +37,12 @@ if TYPE_CHECKING:
         FlextInfraRefactorSignaturePropagationRule,
         FlextInfraRefactorSymbolPropagationRule,
     )
-
 _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
     "FlextInfraRefactorEngine": (
         "flext_infra.refactor.engine",
         "FlextInfraRefactorEngine",
     ),
-    "FlextInfraRefactorRule": (
-        "flext_infra.refactor.rule",
-        "FlextInfraRefactorRule",
-    ),
+    "FlextInfraRefactorRule": ("flext_infra.refactor.rule", "FlextInfraRefactorRule"),
     "FlextInfraRefactorClassReconstructorRule": (
         "flext_infra.refactor.rules.class_reconstructor",
         "FlextInfraRefactorClassReconstructorRule",
@@ -88,6 +87,10 @@ _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
         "flext_infra.refactor.migrate_to_class_mro",
         "FlextInfraRefactorMigrateToClassMRO",
     ),
+    "FlextInfraRefactorPydanticCentralizer": (
+        "flext_infra.refactor.pydantic_centralizer",
+        "FlextInfraRefactorPydanticCentralizer",
+    ),
 }
 
 
@@ -95,7 +98,6 @@ def __getattr__(name: str) -> object:
     if name not in _LAZY_IMPORTS:
         msg = f"module {__name__!r} has no attribute {name!r}"
         raise AttributeError(msg)
-
     module_name, symbol_name = _LAZY_IMPORTS[name]
     module = importlib.import_module(module_name)
     value = getattr(module, symbol_name)
@@ -112,6 +114,7 @@ __all__ = [
     "FlextInfraRefactorMROClassMigrationRule",
     "FlextInfraRefactorMRORedundancyChecker",
     "FlextInfraRefactorPatternCorrectionsRule",
+    "FlextInfraRefactorPydanticCentralizer",
     "FlextInfraRefactorRule",
     "FlextInfraRefactorSignaturePropagationRule",
     "FlextInfraRefactorSymbolPropagationRule",

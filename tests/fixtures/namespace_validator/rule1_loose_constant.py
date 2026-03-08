@@ -14,5 +14,5 @@ class FlextTestModels:
         pass
 
 
-MAX_RETRIES: Final[int] = 3  # VIOLATION — should be in Constants
-DEFAULT_TIMEOUT: Final[float] = 30.0  # VIOLATION
+MAX_RETRIES: Final[int] = 3
+DEFAULT_TIMEOUT: Final[float] = 30.0

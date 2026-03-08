@@ -36,7 +36,6 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.strict = 1
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
@@ -51,9 +50,7 @@ class TestRunAudit:
                 passed=True,
             )
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([report])
-
             result = _run_audit(args)
-
             assert result == 0
             mock_auditor.audit.assert_called_once()
 
@@ -66,7 +63,6 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.strict = 1
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
@@ -81,9 +77,7 @@ class TestRunAudit:
                 passed=False,
             )
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([report])
-
             result = _run_audit(args)
-
             assert result == 1
 
     def test_run_audit_failure(self) -> None:
@@ -95,17 +89,14 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.strict = 1
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             mock_auditor.audit.return_value = r[list[AuditReport]].fail("audit error")
-
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_audit(args)
-
             assert result == 1
 
     def test_run_audit_with_project_filter(self) -> None:
@@ -117,16 +108,13 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.strict = 1
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
             _run_audit(args)
-
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["project"] == "test-project"
 
@@ -139,16 +127,13 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.strict = 1
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
             _run_audit(args)
-
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["projects"] == "proj1,proj2"
 
@@ -161,16 +146,13 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "links"
         args.strict = 1
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
             _run_audit(args)
-
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["check"] == "links"
 
@@ -183,16 +165,13 @@ class TestRunAudit:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.strict = 0
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocAuditor"
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
             mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
             _run_audit(args)
-
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["strict"] is False
 
@@ -208,14 +187,11 @@ class TestRunFix:
         args.projects = None
         args.output_dir = ".reports/docs"
         args.apply = False
-
         with patch("flext_infra.docs.__main__.FlextInfraDocFixer") as mock_fixer_class:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
             mock_fixer.fix.return_value = r[list[object]].ok([])
-
             result = _run_fix(args)
-
             assert result == 0
 
     def test_run_fix_failure(self) -> None:
@@ -226,15 +202,12 @@ class TestRunFix:
         args.projects = None
         args.output_dir = ".reports/docs"
         args.apply = False
-
         with patch("flext_infra.docs.__main__.FlextInfraDocFixer") as mock_fixer_class:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
             mock_fixer.fix.return_value = r[list[object]].fail("fix error")
-
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_fix(args)
-
             assert result == 1
 
     def test_run_fix_with_apply_flag(self) -> None:
@@ -245,14 +218,11 @@ class TestRunFix:
         args.projects = None
         args.output_dir = ".reports/docs"
         args.apply = True
-
         with patch("flext_infra.docs.__main__.FlextInfraDocFixer") as mock_fixer_class:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
             mock_fixer.fix.return_value = r[list[object]].ok([])
-
             _run_fix(args)
-
             call_kwargs = mock_fixer.fix.call_args[1]
             assert call_kwargs["apply"] is True
 
@@ -267,7 +237,6 @@ class TestRunBuild:
         args.project = None
         args.projects = None
         args.output_dir = ".reports/docs"
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocBuilder"
         ) as mock_builder_class:
@@ -276,9 +245,7 @@ class TestRunBuild:
             mock_report = Mock()
             mock_report.result = "OK"
             mock_builder.build.return_value = r[list[object]].ok([mock_report])
-
             result = _run_build(args)
-
             assert result == 0
 
     def test_run_build_success_with_failures(self) -> None:
@@ -288,7 +255,6 @@ class TestRunBuild:
         args.project = None
         args.projects = None
         args.output_dir = ".reports/docs"
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocBuilder"
         ) as mock_builder_class:
@@ -297,9 +263,7 @@ class TestRunBuild:
             mock_report = Mock()
             mock_report.result = "FAIL"
             mock_builder.build.return_value = r[list[object]].ok([mock_report])
-
             result = _run_build(args)
-
             assert result == 1
 
     def test_run_build_failure(self) -> None:
@@ -309,17 +273,14 @@ class TestRunBuild:
         args.project = None
         args.projects = None
         args.output_dir = ".reports/docs"
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocBuilder"
         ) as mock_builder_class:
             mock_builder = Mock()
             mock_builder_class.return_value = mock_builder
             mock_builder.build.return_value = r[list[object]].fail("build error")
-
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_build(args)
-
             assert result == 1
 
 
@@ -334,16 +295,13 @@ class TestRunGenerate:
         args.projects = None
         args.output_dir = ".reports/docs"
         args.apply = False
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocGenerator"
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
             mock_gen.generate.return_value = r[list[object]].ok([])
-
             result = _run_generate(args)
-
             assert result == 0
 
     def test_run_generate_failure(self) -> None:
@@ -354,17 +312,14 @@ class TestRunGenerate:
         args.projects = None
         args.output_dir = ".reports/docs"
         args.apply = False
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocGenerator"
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
             mock_gen.generate.return_value = r[list[object]].fail("generate error")
-
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_generate(args)
-
             assert result == 1
 
     def test_run_generate_with_apply_flag(self) -> None:
@@ -375,16 +330,13 @@ class TestRunGenerate:
         args.projects = None
         args.output_dir = ".reports/docs"
         args.apply = True
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocGenerator"
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
             mock_gen.generate.return_value = r[list[object]].ok([])
-
             _run_generate(args)
-
             call_kwargs = mock_gen.generate.call_args[1]
             assert call_kwargs["apply"] is True
 
@@ -401,7 +353,6 @@ class TestRunValidate:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.apply = False
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocValidator"
         ) as mock_val_class:
@@ -410,9 +361,7 @@ class TestRunValidate:
             mock_report = Mock()
             mock_report.result = "OK"
             mock_val.validate.return_value = r[list[object]].ok([mock_report])
-
             result = _run_validate(args)
-
             assert result == 0
 
     def test_run_validate_success_with_failures(self) -> None:
@@ -424,7 +373,6 @@ class TestRunValidate:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.apply = False
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocValidator"
         ) as mock_val_class:
@@ -433,9 +381,7 @@ class TestRunValidate:
             mock_report = Mock()
             mock_report.result = "FAIL"
             mock_val.validate.return_value = r[list[object]].ok([mock_report])
-
             result = _run_validate(args)
-
             assert result == 1
 
     def test_run_validate_failure(self) -> None:
@@ -447,17 +393,14 @@ class TestRunValidate:
         args.output_dir = ".reports/docs"
         args.check = "all"
         args.apply = False
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocValidator"
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
             mock_val.validate.return_value = r[list[object]].fail("validate error")
-
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_validate(args)
-
             assert result == 1
 
     def test_run_validate_with_check_parameter(self) -> None:
@@ -469,16 +412,13 @@ class TestRunValidate:
         args.output_dir = ".reports/docs"
         args.check = "links"
         args.apply = False
-
         with patch(
             "flext_infra.docs.__main__.FlextInfraDocValidator"
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
             mock_val.validate.return_value = r[list[object]].ok([])
-
             _run_validate(args)
-
             call_kwargs = mock_val.validate.call_args[1]
             assert call_kwargs["check"] == "links"
 
@@ -495,9 +435,7 @@ class TestMain:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
                 mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
                 result = main()
-
                 assert result == 0
 
     def test_main_with_fix_command(self) -> None:
@@ -509,9 +447,7 @@ class TestMain:
                 mock_fixer = Mock()
                 mock_fixer_class.return_value = mock_fixer
                 mock_fixer.fix.return_value = r[list[object]].ok([])
-
                 result = main()
-
                 assert result == 0
 
     def test_main_with_build_command(self) -> None:
@@ -523,9 +459,7 @@ class TestMain:
                 mock_builder = Mock()
                 mock_builder_class.return_value = mock_builder
                 mock_builder.build.return_value = r[list[object]].ok([])
-
                 result = main()
-
                 assert result == 0
 
     def test_main_with_generate_command(self) -> None:
@@ -537,9 +471,7 @@ class TestMain:
                 mock_gen = Mock()
                 mock_gen_class.return_value = mock_gen
                 mock_gen.generate.return_value = r[list[object]].ok([])
-
                 result = main()
-
                 assert result == 0
 
     def test_main_with_validate_command(self) -> None:
@@ -551,16 +483,13 @@ class TestMain:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
                 mock_val.validate.return_value = r[list[object]].ok([])
-
                 result = main()
-
                 assert result == 0
 
     def test_main_with_no_command_prints_help(self) -> None:
         """Test main() prints help when no command given."""
         with patch("sys.argv", ["prog"]):
             result = main()
-
             assert result == 1
 
     def test_main_with_help_flag(self) -> None:
@@ -568,7 +497,6 @@ class TestMain:
         with patch("sys.argv", ["prog", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-
             assert exc_info.value.code == 0
 
     def test_main_with_audit_help(self) -> None:
@@ -576,7 +504,6 @@ class TestMain:
         with patch("sys.argv", ["prog", "audit", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-
             assert exc_info.value.code == 0
 
     def test_main_with_fix_help(self) -> None:
@@ -584,7 +511,6 @@ class TestMain:
         with patch("sys.argv", ["prog", "fix", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-
             assert exc_info.value.code == 0
 
     def test_main_with_build_help(self) -> None:
@@ -592,7 +518,6 @@ class TestMain:
         with patch("sys.argv", ["prog", "build", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-
             assert exc_info.value.code == 0
 
     def test_main_with_generate_help(self) -> None:
@@ -600,7 +525,6 @@ class TestMain:
         with patch("sys.argv", ["prog", "generate", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-
             assert exc_info.value.code == 0
 
     def test_main_with_validate_help(self) -> None:
@@ -608,7 +532,6 @@ class TestMain:
         with patch("sys.argv", ["prog", "validate", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-
             assert exc_info.value.code == 0
 
     def test_main_audit_with_custom_root(self) -> None:
@@ -620,9 +543,7 @@ class TestMain:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
                 mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
                 main()
-
                 call_args = mock_auditor.audit.call_args[1]
                 assert str(call_args["root"]).endswith("custom/path")
 
@@ -635,9 +556,7 @@ class TestMain:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
                 mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
                 main()
-
                 call_kwargs = mock_auditor.audit.call_args[1]
                 assert call_kwargs["project"] == "test-proj"
 
@@ -650,9 +569,7 @@ class TestMain:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
                 mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
                 main()
-
                 call_kwargs = mock_auditor.audit.call_args[1]
                 assert call_kwargs["strict"] is False
 
@@ -665,9 +582,7 @@ class TestMain:
                 mock_fixer = Mock()
                 mock_fixer_class.return_value = mock_fixer
                 mock_fixer.fix.return_value = r[list[object]].ok([])
-
                 main()
-
                 call_kwargs = mock_fixer.fix.call_args[1]
                 assert call_kwargs["apply"] is True
 
@@ -680,9 +595,7 @@ class TestMain:
                 mock_gen = Mock()
                 mock_gen_class.return_value = mock_gen
                 mock_gen.generate.return_value = r[list[object]].ok([])
-
                 main()
-
                 call_kwargs = mock_gen.generate.call_args[1]
                 assert call_kwargs["apply"] is True
 
@@ -695,9 +608,7 @@ class TestMain:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
                 mock_val.validate.return_value = r[list[object]].ok([])
-
                 main()
-
                 call_kwargs = mock_val.validate.call_args[1]
                 assert call_kwargs["apply"] is True
 
@@ -710,9 +621,7 @@ class TestMain:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
                 mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
-
                 main()
-
                 call_kwargs = mock_auditor.audit.call_args[1]
                 assert call_kwargs["check"] == "links"
 
@@ -725,8 +634,6 @@ class TestMain:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
                 mock_val.validate.return_value = r[list[object]].ok([])
-
                 main()
-
                 call_kwargs = mock_val.validate.call_args[1]
                 assert call_kwargs["check"] == "links"

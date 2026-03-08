@@ -6,7 +6,7 @@ from typing import TypeAlias
 
 from flext_core import t
 
-JsonValue: TypeAlias = t.Primitives | None  # VIOLATION
+JsonValue: TypeAlias = t.Primitives | None
 
 
 class FlextTestModels:

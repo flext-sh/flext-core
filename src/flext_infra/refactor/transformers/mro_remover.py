@@ -18,14 +18,11 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self,
-        original_node: cst.ClassDef,
-        updated_node: cst.ClassDef,
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
         del original_node
         if not isinstance(updated_node.body, cst.IndentedBlock):
             return updated_node
-
         new_body: list[cst.BaseStatement] = []
         for stmt in updated_node.body.body:
             if isinstance(stmt, cst.ClassDef) and stmt.bases:
@@ -35,7 +32,6 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
                     root_name = self._attribute_root_name(base.value)
                     if root_name != updated_node.name.value:
                         continue
-
                     message = f"Fixed MRO redeclaration: {stmt.name.value}"
                     self.changes.append(message)
                     if self._on_change is not None:
@@ -43,7 +39,6 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
                     stmt = stmt.with_changes(bases=(), lpar=(), rpar=())
                     break
             new_body.append(stmt)
-
         return updated_node.with_changes(
             body=updated_node.body.with_changes(body=new_body)
         )

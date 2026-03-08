@@ -319,9 +319,7 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
             validate_data: dict[str, object] = {"type_": type_, **kwargs}
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
-            params = m.Tests.Factory.GenericFactoryParams.model_validate(
-                validate_data,
-            )
+            params = m.Tests.Factory.GenericFactoryParams.model_validate(validate_data)
         except (TypeError, ValueError, AttributeError) as exc:
             return r[T].fail(f"Invalid parameters: {exc}")
         args = params.args or ()

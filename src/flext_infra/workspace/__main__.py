@@ -27,7 +27,6 @@ def _run_detect(args: argparse.Namespace) -> int:
     """Execute workspace detection."""
     detector = FlextInfraWorkspaceDetector()
     result = detector.detect(args.project_root)
-
     if result.is_success:
         return 0
     output.error(result.error or "detection failed")
@@ -38,7 +37,6 @@ def _run_sync(args: argparse.Namespace) -> int:
     """Execute base.mk sync."""
     service = FlextInfraSyncService(canonical_root=args.canonical_root)
     result = service.sync(project_root=args.project_root)
-
     if result.is_success:
         return 0
     output.error(result.error or "sync failed")
@@ -51,7 +49,6 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
     if not projects:
         output.error("no projects specified")
         return 1
-
     service = FlextInfraOrchestratorService()
     result = service.orchestrate(
         projects=projects,
@@ -59,7 +56,6 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
         fail_fast=args.fail_fast,
         make_args=args.make_arg,
     )
-
     if result.is_success:
         outputs = result.value
         failures = [o for o in outputs if o.exit_code != 0]
@@ -70,15 +66,10 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
 
 def _run_migrate(args: argparse.Namespace) -> int:
     service = FlextInfraProjectMigrator()
-    result = service.migrate(
-        workspace_root=args.workspace_root,
-        dry_run=args.dry_run,
-    )
-
+    result = service.migrate(workspace_root=args.workspace_root, dry_run=args.dry_run)
     if result.is_failure:
         output.error(result.error or "migration failed")
         return 1
-
     failed_projects = 0
     for migration in result.value:
         for _change in migration.changes:
@@ -87,7 +78,6 @@ def _run_migrate(args: argparse.Namespace) -> int:
             pass
         if migration.errors:
             failed_projects += 1
-
     return 1 if failed_projects else 0
 
 
@@ -96,58 +86,34 @@ def main(argv: list[str] | None = None) -> int:
     FlextRuntime.ensure_structlog_configured()
     parser = argparse.ArgumentParser(description="Workspace management utilities")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # detect subcommand
     detect_parser = subparsers.add_parser(
-        "detect",
-        help="Detect workspace or standalone mode",
+        "detect", help="Detect workspace or standalone mode"
     )
     _ = detect_parser.add_argument(
-        "--project-root",
-        required=True,
-        type=Path,
-        help="Path to the project directory",
+        "--project-root", required=True, type=Path, help="Path to the project directory"
     )
-
-    # sync subcommand
     sync_parser = subparsers.add_parser("sync", help="Sync base.mk to project root")
     _ = sync_parser.add_argument(
-        "--project-root",
-        required=True,
-        type=Path,
-        help="Path to the project directory",
+        "--project-root", required=True, type=Path, help="Path to the project directory"
     )
     _ = sync_parser.add_argument(
-        "--canonical-root",
-        type=Path,
-        default=None,
-        help="Canonical workspace root",
+        "--canonical-root", type=Path, default=None, help="Canonical workspace root"
     )
-
-    # orchestrate subcommand
     orch_parser = subparsers.add_parser(
-        "orchestrate",
-        help="Run make verb across projects",
+        "orchestrate", help="Run make verb across projects"
     )
     _ = orch_parser.add_argument("--verb", required=True, help="Make verb to execute")
     _ = orch_parser.add_argument(
-        "--fail-fast",
-        action="store_true",
-        help="Stop on first failure",
+        "--fail-fast", action="store_true", help="Stop on first failure"
     )
     _ = orch_parser.add_argument(
-        "--make-arg",
-        action="append",
-        default=[],
-        help="Additional make arguments",
+        "--make-arg", action="append", default=[], help="Additional make arguments"
     )
     _ = orch_parser.add_argument(
         "projects", nargs="*", help="Project directories to orchestrate"
     )
-
     migrate_parser = subparsers.add_parser(
-        "migrate",
-        help="Migrate workspace projects to flext_infra tooling",
+        "migrate", help="Migrate workspace projects to flext_infra tooling"
     )
     _ = migrate_parser.add_argument(
         "--workspace-root",
@@ -160,9 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Preview migration changes without writing files",
     )
-
     args = parser.parse_args(argv)
-
     if args.command == "detect":
         return _run_detect(args)
     if args.command == "sync":
@@ -171,7 +135,6 @@ def main(argv: list[str] | None = None) -> int:
         return _run_orchestrate(args)
     if args.command == "migrate":
         return _run_migrate(args)
-
     parser.print_help()
     return 1
 

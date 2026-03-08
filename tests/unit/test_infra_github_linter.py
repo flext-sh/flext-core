@@ -25,11 +25,9 @@ class TestFlextInfraWorkflowLinter:
         mock_output.stdout = "All workflows valid"
         mock_output.stderr = ""
         mock_runner.run.return_value = r[Mock].ok(mock_output)
-
         with patch("shutil.which", return_value="/usr/bin/actionlint"):
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path)
-
         assert result.is_success
         assert result.value.status == "ok"
         assert result.value.exit_code == 0
@@ -38,11 +36,9 @@ class TestFlextInfraWorkflowLinter:
         """Test linting skipped when actionlint is not available."""
         mock_runner = Mock()
         mock_json = Mock()
-
         with patch("shutil.which", return_value=None):
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path)
-
         assert result.is_success
         assert result.value.status == "skipped"
         assert (
@@ -59,12 +55,10 @@ class TestFlextInfraWorkflowLinter:
         mock_output.stdout = "Valid"
         mock_output.stderr = ""
         mock_runner.run.return_value = r[Mock].ok(mock_output)
-
         report_path = tmp_path / "report.json"
         with patch("shutil.which", return_value="/usr/bin/actionlint"):
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path, report_path=report_path)
-
         assert result.is_success
         mock_json.write.assert_called_once()
 
@@ -73,11 +67,9 @@ class TestFlextInfraWorkflowLinter:
         mock_runner = Mock()
         mock_json = Mock()
         mock_runner.run.return_value = r[Mock].fail("workflow has errors")
-
         with patch("shutil.which", return_value="/usr/bin/actionlint"):
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path, strict=True)
-
         assert result.is_failure
         assert result.error
 
@@ -92,10 +84,8 @@ class TestFlextInfraWorkflowLinter:
         mock_runner = Mock()
         mock_json = Mock()
         report_path = tmp_path / "report.json"
-
         with patch("shutil.which", return_value=None):
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path, report_path=report_path)
-
         assert result.is_success
         mock_json.write.assert_called_once()

@@ -25,18 +25,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import (
-    E,
-    FlextConstants,
-    P,
-    R,
-    ResultT,
-    T,
-    T_co,
-    T_contra,
-    U,
-    t,
-)
+from flext_core import E, FlextConstants, P, R, ResultT, T, T_co, T_contra, U, t
 from flext_tests import tm
 
 
@@ -70,24 +59,20 @@ class TypeScenarios:
         TypeVarTestCase("R", TypeVarCategory.CORE, R, True),
         TypeVarTestCase("ResultT", TypeVarCategory.CORE, ResultT, True),
     ]
-
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_co", TypeVarCategory.COVARIANT, T_co, True),
+        TypeVarTestCase("T_co", TypeVarCategory.COVARIANT, T_co, True)
     ]
-
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True),
+        TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True)
     ]
-
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
         TypeVarTestCase("Command", TypeVarCategory.CQRS, t.ContainerValue, True),
         TypeVarTestCase("Query", TypeVarCategory.CQRS, t.ContainerValue, True),
         TypeVarTestCase("Event", TypeVarCategory.CQRS, t.ContainerValue, True),
         TypeVarTestCase("Message", TypeVarCategory.CQRS, t.ContainerValue, True),
     ]
-
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("P", TypeVarCategory.PARAMSPEC, P, True),
+        TypeVarTestCase("P", TypeVarCategory.PARAMSPEC, P, True)
     ]
 
     @staticmethod
@@ -100,17 +85,13 @@ class TestFlextTypings:
     """Unified test suite for t and type system using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case",
-        TypeScenarios.CORE_TYPEVARS,
-        ids=lambda c: c.name,
+        "test_case", TypeScenarios.CORE_TYPEVARS, ids=lambda c: c.name
     )
     def test_core_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test core TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
-                none=False,
-                msg=f"{test_case.name} must not be None",
+                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -119,24 +100,19 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case",
-        TypeScenarios.COVARIANT_TYPEVARS,
-        ids=lambda c: c.name,
+        "test_case", TypeScenarios.COVARIANT_TYPEVARS, ids=lambda c: c.name
     )
     def test_covariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test covariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
-                none=False,
-                msg=f"{test_case.name} must not be None",
+                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
-            # Validate it's actually a TypeVar (not ParamSpec)
             tm.that(
                 isinstance(test_case.type_var, TypeVar),
                 eq=True,
@@ -144,24 +120,19 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case",
-        TypeScenarios.CONTRAVARIANT_TYPEVARS,
-        ids=lambda c: c.name,
+        "test_case", TypeScenarios.CONTRAVARIANT_TYPEVARS, ids=lambda c: c.name
     )
     def test_contravariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test contravariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
-                none=False,
-                msg=f"{test_case.name} must not be None",
+                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
-            # Validate it's actually a TypeVar (not ParamSpec)
             tm.that(
                 isinstance(test_case.type_var, TypeVar),
                 eq=True,
@@ -169,9 +140,7 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case",
-        TypeScenarios.CQRS_ALIASES,
-        ids=lambda c: c.name,
+        "test_case", TypeScenarios.CQRS_ALIASES, ids=lambda c: c.name
     )
     def test_cqrs_aliases(self, test_case: TypeVarTestCase) -> None:
         """Test CQRS type aliases are properly defined."""
@@ -181,7 +150,6 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
-            # CQRS aliases should all be t.ContainerValue
             tm.that(
                 test_case.type_var,
                 eq=t.ContainerValue,
@@ -189,17 +157,13 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case",
-        TypeScenarios.PARAMSPEC_ITEMS,
-        ids=lambda c: c.name,
+        "test_case", TypeScenarios.PARAMSPEC_ITEMS, ids=lambda c: c.name
     )
     def test_paramspec(self, test_case: TypeVarTestCase) -> None:
         """Test ParamSpec is properly defined and exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
-                none=False,
-                msg=f"{test_case.name} must not be None",
+                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
             )
             tm.that(
                 isinstance(test_case.type_var, ParamSpec),
@@ -210,12 +174,7 @@ class TestFlextTypings:
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible with real validation."""
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
-        # Verify flat type aliases are accessible
-        flat_types = [
-            "Container",
-            "Scalar",
-            "HandlerCallable",
-        ]
+        flat_types = ["Container", "Scalar", "HandlerCallable"]
         for type_alias in flat_types:
             tm.that(
                 hasattr(t, type_alias),
@@ -225,7 +184,6 @@ class TestFlextTypings:
 
     def test_all_exports_importable(self) -> None:
         """Test that all public exports can be imported and are valid."""
-        # Test all core TypeVars are importable and valid
         core_typevars = [T, U, E, R, ResultT, T_co, T_contra, P]
         for tv in core_typevars:
             tm.that(tv, none=False, msg="TypeVar must be importable and not None")
@@ -237,7 +195,6 @@ class TestFlextTypings:
 
     def test_module_structure(self) -> None:
         """Test that t has expected structure with real validation."""
-        # Validate core TypeVars
         for tv in [T, U, P, R]:
             tm.that(tv, none=False, msg="TypeVar must not be None")
             tm.that(
@@ -245,25 +202,22 @@ class TestFlextTypings:
                 eq=True,
                 msg="TypeVar must be TypeVar or ParamSpec instance",
             )
-        # Validate CQRS aliases all point to t.ContainerValue
         cqrs_aliases = [
-            t.ContainerValue,  # Command
-            t.ContainerValue,  # Event
-            t.ContainerValue,  # Query
-            t.ContainerValue,  # Message
+            t.ContainerValue,
+            t.ContainerValue,
+            t.ContainerValue,
+            t.ContainerValue,
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
-                alias,
-                eq=t.ContainerValue,
-                msg="CQRS alias must equal t.ContainerValue",
+                alias, eq=t.ContainerValue, msg="CQRS alias must equal t.ContainerValue"
             )
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
-            t.Validation.HostnameStr,
+            t.Validation.HostnameStr
         )
         result = hostname_adapter.validate_python(FlextConstants.Network.LOCALHOST)
         tm.that(
@@ -278,7 +232,6 @@ class TestFlextTypings:
             empty=False,
             msg="Result value must be non-empty string",
         )
-
         result = hostname_adapter.validate_python(FlextConstants.Network.LOOPBACK_IP)
         tm.that(
             result,
@@ -302,9 +255,8 @@ class TestFlextTypings:
             eq="",
             msg="Invalid hostname must be empty to fail HostnameStr",
         )
-
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
-            t.Validation.HostnameStr,
+            t.Validation.HostnameStr
         )
         with pytest.raises(PydanticValidationError):
             hostname_adapter.validate_python(invalid_hostname)

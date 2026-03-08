@@ -25,8 +25,7 @@ class TestCheckCommand:
     def test_check_command_creation_with_custom_values(self) -> None:
         """Test CheckCommand creation with custom values."""
         cmd = FlextInfraDispatcher.CheckCommand(
-            action="fix",
-            args=["--project", "flext-core"],
+            action="fix", args=["--project", "flext-core"]
         )
         assert cmd.command_type == "flext_infra.check"
         assert cmd.action == "fix"
@@ -51,10 +50,7 @@ class TestBaseMkCommand:
 
     def test_basemk_command_creation_with_custom_values(self) -> None:
         """Test BaseMkCommand creation with custom values."""
-        cmd = FlextInfraDispatcher.BaseMkCommand(
-            action="sync",
-            args=["--all"],
-        )
+        cmd = FlextInfraDispatcher.BaseMkCommand(action="sync", args=["--all"])
         assert cmd.command_type == "flext_infra.basemk"
         assert cmd.action == "sync"
         assert cmd.args == ["--all"]
@@ -73,8 +69,7 @@ class TestWorkspaceCommand:
     def test_workspace_command_creation_with_custom_values(self) -> None:
         """Test WorkspaceCommand creation with custom values."""
         cmd = FlextInfraDispatcher.WorkspaceCommand(
-            action="migrate",
-            args=["--from", "v1", "--to", "v2"],
+            action="migrate", args=["--from", "v1", "--to", "v2"]
         )
         assert cmd.command_type == "flext_infra.workspace"
         assert cmd.action == "migrate"
@@ -94,8 +89,7 @@ class TestReleaseCommand:
     def test_release_command_creation_with_custom_values(self) -> None:
         """Test ReleaseCommand creation with custom values."""
         cmd = FlextInfraDispatcher.ReleaseCommand(
-            action="execute",
-            args=["--version", "1.0.0"],
+            action="execute", args=["--version", "1.0.0"]
         )
         assert cmd.command_type == "flext_infra.release"
         assert cmd.action == "execute"
@@ -115,8 +109,7 @@ class TestDocsCommand:
     def test_docs_command_creation_with_custom_values(self) -> None:
         """Test DocsCommand creation with custom values."""
         cmd = FlextInfraDispatcher.DocsCommand(
-            action="generate",
-            args=["--format", "markdown"],
+            action="generate", args=["--format", "markdown"]
         )
         assert cmd.command_type == "flext_infra.docs"
         assert cmd.action == "generate"
@@ -136,8 +129,7 @@ class TestGithubCommand:
     def test_github_command_creation_with_custom_values(self) -> None:
         """Test GithubCommand creation with custom values."""
         cmd = FlextInfraDispatcher.GithubCommand(
-            action="sync",
-            args=["--repo", "flext"],
+            action="sync", args=["--repo", "flext"]
         )
         assert cmd.command_type == "flext_infra.github"
         assert cmd.action == "sync"
@@ -156,10 +148,7 @@ class TestCoreCommand:
 
     def test_core_command_creation_with_custom_values(self) -> None:
         """Test CoreCommand creation with custom values."""
-        cmd = FlextInfraDispatcher.CoreCommand(
-            action="diagnose",
-            args=["--verbose"],
-        )
+        cmd = FlextInfraDispatcher.CoreCommand(action="diagnose", args=["--verbose"])
         assert cmd.command_type == "flext_infra.core"
         assert cmd.action == "diagnose"
         assert cmd.args == ["--verbose"]
@@ -178,8 +167,7 @@ class TestDepsCommand:
     def test_deps_command_creation_with_custom_values(self) -> None:
         """Test DepsCommand creation with custom values."""
         cmd = FlextInfraDispatcher.DepsCommand(
-            action="modernize",
-            args=["--python", "3.13"],
+            action="modernize", args=["--python", "3.13"]
         )
         assert cmd.command_type == "flext_infra.deps"
         assert cmd.action == "modernize"
@@ -204,9 +192,7 @@ class TestFlextInfraDispatcher:
     def test_build_dispatcher_registers_handlers(self) -> None:
         """Test build_dispatcher registers all command handlers."""
         bus = FlextInfraDispatcher.build_dispatcher()
-        # Verify dispatcher is functional by checking it's not None
         assert bus is not None
-        # Dispatcher should have handlers registered
         assert hasattr(bus, "register_handler")
         assert hasattr(bus, "dispatch")
 
@@ -273,7 +259,6 @@ class TestCommandValidation:
     def test_command_type_is_literal(self) -> None:
         """Test command_type is properly typed as Literal."""
         cmd = FlextInfraDispatcher.CheckCommand()
-        # Verify command_type is the expected literal value
         assert cmd.command_type == "flext_infra.check"
 
     def test_all_commands_have_message_type(self) -> None:
@@ -310,8 +295,7 @@ class TestCommandValidation:
     def test_command_serialization(self) -> None:
         """Test command can be serialized to dict."""
         cmd = FlextInfraDispatcher.CheckCommand(
-            action="fix",
-            args=["--project", "test"],
+            action="fix", args=["--project", "test"]
         )
         data = cmd.model_dump()
         assert data["command_type"] == "flext_infra.check"

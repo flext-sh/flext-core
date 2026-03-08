@@ -16,24 +16,13 @@ NestedClassPropagationTransformer = getattr(
 
 
 def test_nested_class_propagation_updates_import_annotations_and_calls() -> None:
-    source = (
-        "from pkg import TimeoutEnforcer\n\n"
-        "class Child(TimeoutEnforcer):\n"
-        "    pass\n\n"
-        "def validate(x: TimeoutEnforcer) -> bool:\n"
-        "    if isinstance(x, TimeoutEnforcer):\n"
-        "        y = TimeoutEnforcer()\n"
-        "        return isinstance(y, pkg.TimeoutEnforcer)\n"
-        "    return False\n"
-    )
-
+    source = "from pkg import TimeoutEnforcer\n\nclass Child(TimeoutEnforcer):\n    pass\n\ndef validate(x: TimeoutEnforcer) -> bool:\n    if isinstance(x, TimeoutEnforcer):\n        y = TimeoutEnforcer()\n        return isinstance(y, pkg.TimeoutEnforcer)\n    return False\n"
     transformed = MetadataWrapper(cst.parse_module(source)).visit(
         NestedClassPropagationTransformer({
             "TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer"
         })
     )
     code = transformed.code
-
     assert "from pkg import FlextDispatcher" in code
     assert "class Child(FlextDispatcher.TimeoutEnforcer):" in code
     assert "def validate(x: FlextDispatcher.TimeoutEnforcer) -> bool:" in code
@@ -44,13 +33,11 @@ def test_nested_class_propagation_updates_import_annotations_and_calls() -> None
 
 def test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage() -> None:
     source = "from pkg import TimeoutEnforcer as TE\n\nvalue = TE()\n"
-
     transformed = MetadataWrapper(cst.parse_module(source)).visit(
         NestedClassPropagationTransformer({
             "TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer"
         })
     )
     code = transformed.code
-
     assert "from pkg import FlextDispatcher as TE" in code
     assert "value = TE.TimeoutEnforcer()" in code

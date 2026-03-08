@@ -23,7 +23,7 @@ class TestCorrelationDomain:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
-            correlation_id=explicit_id,
+            correlation_id=explicit_id
         ) as correlation_id:
             assert correlation_id == explicit_id
             assert FlextContext.Correlation.get_correlation_id() == explicit_id
@@ -68,7 +68,6 @@ class TestPerformanceDomain:
             start_time = metadata.get("start_time")
             assert start_time is not None
             assert isinstance(start_time, str)
-
         assert "end_time" in metadata
         assert "duration_seconds" in metadata
         duration_value = metadata["duration_seconds"]
@@ -80,12 +79,10 @@ class TestPerformanceDomain:
     def test_timed_operation_duration_calculation(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         expected_sleep = 0.05
-
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
             start_time = metadata.get("start_time")
             assert start_time is not None
             time.sleep(expected_sleep)
-
         duration = metadata.get("duration_seconds", 0)
         assert isinstance(duration, float)
         assert duration >= expected_sleep * 0.8
@@ -117,7 +114,7 @@ class TestContextDataModel:
 
     def test_context_with_context_data_model(self) -> None:
         context_data = m.ContextData(
-            data=m.Dict(root={"key1": "value1", "key2": "value2"}),
+            data=m.Dict(root={"key1": "value1", "key2": "value2"})
         )
         context = FlextContext(context_data)
         result1 = context.get("key1")

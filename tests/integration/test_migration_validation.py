@@ -52,16 +52,12 @@ class TestMigrationScenario1:
         def process_user(user_id: str) -> FlextResult[dict[str, str]]:
             if not user_id:
                 return FlextResult[dict[str, str]].fail("User ID required")
-
             user_data: dict[str, str] = {"id": user_id, "name": "Alice"}
             return FlextResult[dict[str, str]].ok(user_data)
 
-        # Test with .value (primary access - documented pattern)
         result = process_user("user_123")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"id": "user_123", "name": "Alice"}
-
-        # Verify value returns the data
         assert result.value["id"] == "user_123"
         assert result.value["name"] == "Alice"
 
@@ -73,12 +69,9 @@ class TestMigrationScenario1:
                 return FlextResult[str].fail("Invalid email format")
             return FlextResult[str].ok(email)
 
-        # Test failure case
         failure_result = validate_email("invalid")
         assert failure_result.is_failure
         assert failure_result.error and "Invalid email format" in failure_result.error
-
-        # Test success case
         success_result = validate_email("user@example.com")
         assert success_result.is_success
         assert success_result.value == "user@example.com"
@@ -91,8 +84,6 @@ class TestMigrationScenario2:
         """Verify FlextContainer() continues working."""
         container = FlextContainer()
         assert container is not None
-
-        # Verify singleton pattern
         container2 = FlextContainer()
         assert container is container2
 
@@ -100,17 +91,12 @@ class TestMigrationScenario2:
         """Verify service registration and resolution."""
         container = FlextContainer()
 
-        # Register a simple service
         class TestService(PydanticBaseModel):
             name: str = "test"
 
-        # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
-        # Explicit type annotation for container registration
         registration_result = container.register("test_migration_service", test_service)
-        assert registration_result is container  # Fluent interface returns Self
-
-        # Use correct API: get() for resolution
+        assert registration_result is container
         resolution_result = container.get("test_migration_service")
         assert resolution_result.is_success
         service = resolution_result.value
@@ -137,21 +123,17 @@ class TestMigrationScenario4:
                 return FlextResult[None].ok(None)
 
             def create_user(
-                self,
-                username: str,
-                email: str,
+                self, username: str, email: str
             ) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
                     return FlextResult[dict[str, str]].fail(
-                        "Username and email required",
+                        "Username and email required"
                     )
-
                 self._logger.info("Creating user", extra={"username": username})
                 user_data = {"username": username, "email": email}
                 return FlextResult[dict[str, str]].ok(user_data)
 
-        # Test service functionality
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
         assertion_helpers.assert_flext_result_success(result)
@@ -165,8 +147,6 @@ class TestMigrationScenario5:
         """Verify FlextLogger continues working."""
         logger = FlextLogger(__name__)
         assert logger is not None
-
-        # Test logging methods exist and are callable
         logger.info("Test message", extra={"test_key": "test_value"})
         logger.debug("Debug message")
         logger.warning("Warning message")
@@ -178,10 +158,6 @@ class TestBackwardCompatibility:
 
     def test_all_stable_apis_accessible(self) -> None:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
-        # Core foundation (Level 1: 100% stable)
-        # No longer using FlextCore facade
-
-        # Verify all imports successful
         assert FlextResult is not None
         assert FlextContainer is not None
         assert FlextModels is not None
@@ -201,43 +177,28 @@ class TestBackwardCompatibility:
 
     def test_flext_result_all_methods(self) -> None:
         """Verify all FlextResult methods work correctly."""
-        # Create success result
         success = FlextResult[str].ok("test_value")
-
-        # Test all documented methods and properties
         assert success.is_success
         assert not success.is_failure
         assert success.error is None
         assert success.value == "test_value"
         assert success.value == "test_value"
         assert success.unwrap_or("default") == "test_value"
-
-        # Create failure result
         failure: FlextResult[str] = FlextResult[str].fail("test_error")
-
         assert not failure.is_success
         assert failure.is_failure
         assert failure.error == "test_error"
-        # Note: Accessing .value on failure raises exception (by design for safety)
-        # Use .unwrap_or() for safe access with default
         assert failure.unwrap_or("default") == "default"
-
-        # Test map operation
         mapped = success.map(lambda x: x.upper())
         assert mapped.is_success
         assert mapped.value == "TEST_VALUE"
 
     def test_core_apis_work_correctly(self) -> None:
         """Verify core API patterns work correctly."""
-        # Test FlextResult with value access
         result = FlextResult[str].ok("test")
         assert result.value == "test"
-
-        # Test FlextResult operations
         mapped = result.map(str.upper)
         assert mapped.value == "TEST"
-
-        # Container patterns work
         container = FlextContainer()
         assert container is not None
 
@@ -248,7 +209,6 @@ class TestMigrationComplexity:
     def test_application_functionality_works(self) -> None:
         """Verify application functionality works correctly."""
 
-        # Simulate typical application code
         class ApplicationExample:
             """Example application using FlextResult and logging."""
 
@@ -258,15 +218,13 @@ class TestMigrationComplexity:
                 self.container = FlextContainer()
 
             def process_data(
-                self,
-                data: dict[str, str],
+                self, data: dict[str, str]
             ) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Typical data processing method."""
                 if not data:
                     return FlextResult[dict[str, t.ContainerValue]].fail(
-                        "Data required",
+                        "Data required"
                     )
-
                 self.logger.info("Processing data", extra={"size": len(data)})
                 processed: dict[str, t.ContainerValue] = {
                     "original": str(data),
@@ -274,30 +232,18 @@ class TestMigrationComplexity:
                 }
                 return FlextResult[dict[str, t.ContainerValue]].ok(processed)
 
-        # Test application works correctly
         app = ApplicationExample()
         result = app.process_data({"key": "value"})
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value["processed"] is True
 
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
-        # This test validates that core functionality is working correctly
-        # after the refactoring changes
-
-        # Test FlextResult works
         result = FlextResult[str].ok("test")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
-
-        # Test FlextContainer works
         container = FlextContainer()
         assert container is not None
-
-        # Test FlextLogger works
         logger = FlextLogger(__name__)
         logger.info("Test")
-
-        # All core APIs remain functional
         assert True

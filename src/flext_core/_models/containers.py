@@ -212,7 +212,7 @@ class FlextModelsContainers:
             description="Event validator callables keyed by event type or alias.",
         )
 
-    class BatchResultDict(BaseModel):
+    class BatchResultDict:
         """Result payload model for batch operation outputs."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -221,16 +221,13 @@ class FlextModelsContainers:
         results: list[t.Scalar | None] = []
         errors: list[tuple[int, str]] = []
         total: int = Field(
-            default=0,
-            description="Total number of batch items processed.",
+            default=0, description="Total number of batch items processed."
         )
         success_count: int = Field(
-            default=0,
-            description="Number of batch items processed successfully.",
+            default=0, description="Number of batch items processed successfully."
         )
         error_count: int = Field(
-            default=0,
-            description="Number of batch items that failed with errors.",
+            default=0, description="Number of batch items that failed with errors."
         )
 
 

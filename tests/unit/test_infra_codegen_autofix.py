@@ -19,10 +19,6 @@ import pytest
 
 from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 
 def _derive_prefix_static(project_root: Path) -> str:
     """Standalone reimplementation of _derive_prefix for testing.
@@ -42,10 +38,7 @@ def _derive_prefix_static(project_root: Path) -> str:
 
 
 def _create_project(
-    tmp_path: Path,
-    name: str,
-    pkg_name: str,
-    files: dict[str, str],
+    tmp_path: Path, name: str, pkg_name: str, files: dict[str, str]
 ) -> Path:
     """Scaffold a minimal project with given source files."""
     project = tmp_path / name
@@ -57,14 +50,10 @@ def _create_project(
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").touch()
     (pkg / "typings.py").write_text(
-        "from flext_core import FlextTypes\n"
-        f"class {_to_pascal(pkg_name)}Types(FlextTypes):\n"
-        "    pass\n"
+        f"from flext_core import FlextTypes\nclass {_to_pascal(pkg_name)}Types(FlextTypes):\n    pass\n"
     )
     (pkg / "constants.py").write_text(
-        "from flext_core import FlextConstants\n"
-        f"class {_to_pascal(pkg_name)}Constants(FlextConstants):\n"
-        "    pass\n"
+        f"from flext_core import FlextConstants\nclass {_to_pascal(pkg_name)}Constants(FlextConstants):\n    pass\n"
     )
     for filename, content in files.items():
         (pkg / filename).write_text(content)
@@ -78,20 +67,10 @@ def _to_pascal(snake: str) -> str:
 _PATCH_TARGET = "flext_infra.codegen.fixer.FlextInfraNamespaceValidator._derive_prefix"
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-
 @pytest.fixture
 def fixer(tmp_path: Path) -> FlextInfraCodegenFixer:
     """Create a fixer instance rooted at tmp_path."""
     return FlextInfraCodegenFixer(tmp_path)
-
-
-# ---------------------------------------------------------------------------
-# Test: Standalone TypeVar detected as fixable
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -104,27 +83,16 @@ def test_standalone_typevar_detected_as_fixable(
         name="test-proj",
         pkg_name="test_proj",
         files={
-            "base.py": (
-                "import typing\n"
-                "T = typing.TypeVar('T')\n"
-                "class TestProjBase:\n"
-                "    pass\n"
-            ),
+            "base.py": "import typing\nT = typing.TypeVar('T')\nclass TestProjBase:\n    pass\n"
         },
     )
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
     assert len(result.violations_fixed) >= 1
     typevar_violations = [v for v in result.violations_fixed if "TypeVar" in v.message]
     assert len(typevar_violations) == 1
     assert typevar_violations[0].fixable is True
     assert typevar_violations[0].rule == "NS-002"
-
-
-# ---------------------------------------------------------------------------
-# Test: In-context TypeVar (used by Generic class) is NOT flagged for move
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -135,29 +103,13 @@ def test_in_context_typevar_not_flagged(_mock_prefix: object, tmp_path: Path) ->
         name="test-proj",
         pkg_name="test_proj",
         files={
-            "base.py": (
-                "from typing import TypeVar, Generic\n"
-                "T = TypeVar('T')\n"
-                "class TestProjBase(Generic[T]):\n"
-                "    pass\n"
-            ),
+            "base.py": "from typing import TypeVar, Generic\nT = TypeVar('T')\nclass TestProjBase(Generic[T]):\n    pass\n"
         },
     )
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
-    # Should NOT appear in violations_fixed
     typevar_fixed = [v for v in result.violations_fixed if "TypeVar" in v.message]
     assert len(typevar_fixed) == 0
-
-    # The find_standalone_typevars already filters in-context usage,
-    # so it won't appear in skipped either — it's simply not detected
-    # as standalone at all.
-
-
-# ---------------------------------------------------------------------------
-# Test: Standalone Final constant detected as fixable
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -170,27 +122,16 @@ def test_standalone_final_detected_as_fixable(
         name="test-proj",
         pkg_name="test_proj",
         files={
-            "base.py": (
-                "from typing import Final\n"
-                "MAX_RETRIES: Final = 3\n"
-                "class TestProjBase:\n"
-                "    pass\n"
-            ),
+            "base.py": "from typing import Final\nMAX_RETRIES: Final = 3\nclass TestProjBase:\n    pass\n"
         },
     )
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
     final_violations = [v for v in result.violations_fixed if "Final" in v.message]
     assert len(final_violations) == 1
     assert final_violations[0].fixable is True
     assert final_violations[0].rule == "NS-001"
     assert "constants.py" in final_violations[0].message
-
-
-# ---------------------------------------------------------------------------
-# Test: Standalone TypeAlias detected as fixable
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -203,27 +144,16 @@ def test_standalone_typealias_detected_as_fixable(
         name="test-proj",
         pkg_name="test_proj",
         files={
-            "base.py": (
-                "from typing import TypeAlias\n"
-                "MyType: TypeAlias = str\n"
-                "class TestProjBase:\n"
-                "    pass\n"
-            ),
+            "base.py": "from typing import TypeAlias\nMyType: TypeAlias = str\nclass TestProjBase:\n    pass\n"
         },
     )
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
     alias_violations = [v for v in result.violations_fixed if "TypeAlias" in v.message]
     assert len(alias_violations) == 1
     assert alias_violations[0].fixable is True
     assert alias_violations[0].rule == "NS-002"
     assert "typings.py" in alias_violations[0].message
-
-
-# ---------------------------------------------------------------------------
-# Test: Files with SyntaxError are skipped (not crashed)
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -235,32 +165,19 @@ def test_syntax_error_files_skipped(_mock_prefix: object, tmp_path: Path) -> Non
         pkg_name="test_proj",
         files={
             "broken.py": "def foo(\n    # missing closing paren\n",
-            "base.py": (
-                "import typing\n"
-                "T = typing.TypeVar('T')\n"
-                "class TestProjBase:\n"
-                "    pass\n"
-            ),
+            "base.py": "import typing\nT = typing.TypeVar('T')\nclass TestProjBase:\n    pass\n",
         },
     )
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
-    # Should not crash and should still detect violations in valid files
     assert result.project == "test-proj"
     typevar_violations = [v for v in result.violations_fixed if "TypeVar" in v.message]
     assert len(typevar_violations) == 1
 
 
-# ---------------------------------------------------------------------------
-# Test: flexcore project is excluded
-# ---------------------------------------------------------------------------
-
-
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_flexcore_excluded_from_run(_mock_prefix: object, tmp_path: Path) -> None:
     """The 'flexcore' project is excluded from workspace-wide auto-fix."""
-    # Create flexcore project
     flexcore = tmp_path / "flexcore"
     flexcore.mkdir()
     (flexcore / "Makefile").touch()
@@ -272,33 +189,19 @@ def test_flexcore_excluded_from_run(_mock_prefix: object, tmp_path: Path) -> Non
     (pkg / "typings.py").write_text("pass\n")
     (pkg / "constants.py").write_text("pass\n")
     (pkg / "base.py").write_text("import typing\nT = typing.TypeVar('T')\n")
-
-    # Create a non-excluded project
     _create_project(
         tmp_path,
         name="test-proj",
         pkg_name="test_proj",
         files={
-            "base.py": (
-                "import typing\n"
-                "T = typing.TypeVar('T')\n"
-                "class TestProjBase:\n"
-                "    pass\n"
-            ),
+            "base.py": "import typing\nT = typing.TypeVar('T')\nclass TestProjBase:\n    pass\n"
         },
     )
-
     fixer = FlextInfraCodegenFixer(tmp_path)
     results = fixer.run()
-
     project_names = [res.project for res in results]
     assert "flexcore" not in project_names
     assert "test-proj" in project_names
-
-
-# ---------------------------------------------------------------------------
-# Test: Project without src/ returns empty result
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -311,19 +214,12 @@ def test_project_without_src_returns_empty(
     (project / "Makefile").touch()
     (project / "pyproject.toml").write_text("[project]\nname='no-src-proj'\n")
     (project / ".git").mkdir()
-
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
     assert result.project == "no-src-proj"
     assert result.violations_fixed == []
     assert result.violations_skipped == []
     assert result.files_modified == []
-
-
-# ---------------------------------------------------------------------------
-# Test: files_modified tracks affected files
-# ---------------------------------------------------------------------------
 
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
@@ -336,17 +232,11 @@ def test_files_modified_tracks_affected_files(
         name="test-proj",
         pkg_name="test_proj",
         files={
-            "base.py": (
-                "from typing import Final\n"
-                "MAX_RETRIES: Final = 3\n"
-                "class TestProjBase:\n"
-                "    pass\n"
-            ),
+            "base.py": "from typing import Final\nMAX_RETRIES: Final = 3\nclass TestProjBase:\n    pass\n"
         },
     )
     fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
-
     assert len(result.files_modified) == 2
     modified_str = " ".join(result.files_modified)
     assert "base.py" in modified_str

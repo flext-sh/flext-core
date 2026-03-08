@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 _DETECTOR_MODULE = "flext_infra.deps.detector"
-
 if TYPE_CHECKING:
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionModels,
@@ -42,8 +41,6 @@ if TYPE_CHECKING:
         extract_dep_name,
         rewrite_dep_paths,
     )
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EXTRA_PATHS_ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
     "FlextInfraDependencyDetectionModels": (
@@ -88,7 +85,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "sync_extra_paths": ("flext_infra.deps.extra_paths", "sync_extra_paths"),
     "sync_one": ("flext_infra.deps.extra_paths", "sync_one"),
 }
-
 __all__ = [
     "EXTRA_PATHS_ROOT",
     "FlextInfraDependencyDetectionModels",
@@ -111,7 +107,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

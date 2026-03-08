@@ -59,18 +59,12 @@ class TestAutomatedFlextMixins:
         ids=lambda case: case["description"],
     )
     def test_automated_mixins_comprehensive_scenarios(
-        self,
-        test_scenario: AutomatedTestScenario,
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for mixins functionality."""
         try:
-            # Create test instance using fixture factory
             instance = fixture_factory.create_test_mixins_instance()
-
-            # Execute operation with test data
             result = self._execute_mixins_operation(instance, test_scenario["input"])
-
-            # Assert using automated assertion helpers
             if test_scenario["expected_success"]:
                 assertion_helpers.assert_flext_result_success(
                     result,
@@ -81,41 +75,31 @@ class TestAutomatedFlextMixins:
                     result,
                     f"FlextMixins operation should fail: {test_scenario['description']}",
                 )
-
         except Exception as e:
             if not test_scenario["expected_success"]:
-                # Expected failure occurred
                 pass
             else:
-                # Unexpected error
                 pytest.fail(f"Unexpected error in mixins test: {e}")
 
     def test_automated_mixins_type_safety(self) -> None:
         """Test type safety compliance for mixins."""
         instance = fixture_factory.create_test_mixins_instance()
-
-        # Test with correct types
         result = self._execute_mixins_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextMixins type safety test",
+            result, "FlextMixins type safety test"
         )
 
     def test_automated_mixins_error_handling(self) -> None:
         """Test comprehensive error handling for mixins."""
         instance = fixture_factory.create_test_mixins_instance()
-
-        # Test various error conditions
         error_inputs = [
             None,
             dict[str, str](),
             {"invalid": "data"},
             {"malformed": True},
         ]
-
         for error_input in error_inputs:
             result = self._execute_mixins_operation(instance, error_input or {})
-            # Errors should be handled gracefully (either success or proper failure)
             assert result.is_success or result.is_failure, (
                 f"Unexpected result state: {result}"
             )
@@ -127,25 +111,18 @@ class TestAutomatedFlextMixins:
         def operation() -> object:
             return self._execute_mixins_operation(instance, {"performance_test": True})
 
-        # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextMixins performance test exceeded timeout",
+            result, "FlextMixins performance test exceeded timeout"
         )
 
     def test_automated_mixins_resource_management(self) -> None:
         """Test resource management and cleanup for mixins."""
         instance = fixture_factory.create_test_mixins_instance()
-
-        # Test normal operation
         result = self._execute_mixins_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextMixins resource test",
+            result, "FlextMixins resource test"
         )
-
-        # Test cleanup (if applicable)
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
@@ -156,9 +133,7 @@ class TestAutomatedFlextMixins:
                 )
 
     def _execute_mixins_operation(
-        self,
-        instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        self, instance: object, input_data: Mapping[str, t.ContainerValue]
     ) -> r[t.ContainerValue]:
         """Execute a test operation on mixins instance.
 
@@ -175,7 +150,6 @@ class TestAutomatedFlextMixins:
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 return cast("r[t.ContainerValue]", handle(dict(input_data)))
-            # Fallback: if no methods found, return the instance itself as success
             return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
         except Exception as e:
             return r[t.ContainerValue].fail(f"FlextMixins operation failed: {e}")

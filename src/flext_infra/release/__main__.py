@@ -42,7 +42,6 @@ def _parse_args() -> argparse.Namespace:
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     """Determine the target release version based on arguments."""
     versioning = FlextInfraVersioningService()
-
     if args.version:
         requested = str(args.version)
         parse_result = versioning.parse_semver(requested)
@@ -50,23 +49,19 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
             msg = parse_result.error or "invalid version"
             raise RuntimeError(msg)
         return requested
-
     current_result = versioning.current_workspace_version(root)
     if current_result.is_failure:
         msg = current_result.error or "cannot read current version"
         raise RuntimeError(msg)
     current = current_result.value
-
     if args.bump:
         bump_result = versioning.bump_version(current, args.bump)
         if bump_result.is_failure:
             msg = bump_result.error or "bump failed"
             raise RuntimeError(msg)
         return bump_result.value
-
     if args.interactive != 1:
         return current
-
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
         msg = "invalid bump type"
@@ -93,14 +88,12 @@ def main() -> int:
     """Orchestrate the release process through configured phases."""
     FlextRuntime.ensure_structlog_configured()
     args = _parse_args()
-
     resolver = FlextInfraPathResolver()
     root_result = resolver.workspace_root(args.root)
     if root_result.is_failure:
         output.error(root_result.error or "workspace root resolution failed")
         return 1
     root = root_result.value
-
     phases = (
         [
             c.Infra.Verbs.VALIDATE,
@@ -111,7 +104,6 @@ def main() -> int:
         if args.phase == "all"
         else [part.strip() for part in args.phase.split(",") if part.strip()]
     )
-
     needs_version = bool(
         {c.Infra.Toml.VERSION, c.Infra.Directories.BUILD, "publish"} & set(phases)
     )
@@ -123,9 +115,7 @@ def main() -> int:
             return 1
     else:
         version = args.version or "0.0.0"
-
     tag = _resolve_tag(args, version)
-
     service = FlextInfraReleaseOrchestrator()
     result = service.run_release(
         root=root,
@@ -140,7 +130,6 @@ def main() -> int:
         next_dev=args.next_dev,
         next_bump=args.next_bump,
     )
-
     if result.is_failure:
         output.error(result.error or "release failed")
         return 1

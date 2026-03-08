@@ -36,16 +36,10 @@ class TextLike:
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [
-        (Status.ACTIVE, True),
-        ("active", True),
-        ("unknown", False),
-        (123, False),
-    ],
+    [(Status.ACTIVE, True), ("active", True), ("unknown", False), (123, False)],
 )
 def test_private_is_member_by_value(
-    value: str | float | bool | Status,
-    expected: bool,
+    value: str | float | bool | Status, expected: bool
 ) -> None:
     assert u.Enum._is_member_by_value(value, Status) is expected
 
@@ -59,11 +53,9 @@ def test_private_parse_success_and_failure() -> None:
     parsed_enum = u.Enum._parse(Status, Status.PENDING)
     assert parsed_enum.is_success
     assert parsed_enum.value == Status.PENDING
-
     parsed_value = u.Enum._parse(Status, "active")
     assert parsed_value.is_success
     assert parsed_value.value == Status.ACTIVE
-
     parsed_invalid = u.Enum._parse(Status, "invalid")
     assert parsed_invalid.is_failure
     assert parsed_invalid.error is not None
@@ -82,7 +74,6 @@ def test_names_uses_cache_on_second_call() -> None:
     u.Enum._names_cache.clear()
     first = u.Enum.names(Status)
     second = u.Enum.names(Status)
-
     assert first == frozenset({"ACTIVE", "PENDING", "INACTIVE"})
     assert second == first
 
@@ -91,7 +82,6 @@ def test_members_uses_cache_on_second_call() -> None:
     u.Enum._members_cache.clear()
     first = u.Enum.members(Status)
     second = u.Enum.members(Status)
-
     assert first == frozenset({Status.ACTIVE, Status.PENDING, Status.INACTIVE})
     assert second == first
 
@@ -102,7 +92,6 @@ def test_get_enum_values_returns_immutable_sequence() -> None:
 
 def test_create_discriminated_union_multiple_enums() -> None:
     union_map = u.Enum.create_discriminated_union("kind", Status, Priority)
-
     assert union_map["active"] is Status
     assert union_map["pending"] is Status
     assert union_map["inactive"] is Status
@@ -117,7 +106,6 @@ def test_auto_value_lowercases_input() -> None:
 def test_bi_map_returns_forward_copy_and_inverse() -> None:
     source = {"one": "1", "two": "2"}
     forward, inverse = u.Enum.bi_map(source)
-
     assert forward == source
     assert forward is not source
     assert inverse == {"1": "one", "2": "two"}
@@ -131,7 +119,6 @@ def test_create_enum_executes_factory_path() -> None:
 
 def test_shortcuts_delegate_to_primary_methods() -> None:
     assert u.Enum.is_member(Status, "active") is True
-
     parsed = u.Enum.parse(Status, "inactive")
     assert parsed.is_success
     assert parsed.value == Status.INACTIVE
@@ -152,11 +139,9 @@ def test_dispatch_parse_mode_with_enum_string_and_other_object() -> None:
     parsed_from_enum = u.Enum.dispatch(Status.ACTIVE, Status, mode="parse")
     assert parsed_from_enum.is_success
     assert parsed_from_enum.value == Status.ACTIVE
-
     parsed_from_string = u.Enum.dispatch("pending", Status, mode="parse")
     assert parsed_from_string.is_success
     assert parsed_from_string.value == Status.PENDING
-
     parsed_from_other = u.Enum.dispatch(str(TextLike()), Status, mode="parse")
     assert parsed_from_other.is_success
     assert parsed_from_other.value == Status.ACTIVE
@@ -165,10 +150,8 @@ def test_dispatch_parse_mode_with_enum_string_and_other_object() -> None:
 def test_dispatch_coerce_mode_with_enum_string_and_other_object() -> None:
     from_enum = u.Enum.dispatch(Status.INACTIVE, Status, mode="coerce")
     assert from_enum == Status.INACTIVE
-
     from_string = u.Enum.dispatch("active", Status, mode="coerce")
     assert from_string == Status.ACTIVE
-
     from_other = u.Enum.dispatch(str(TextLike()), Status, mode="coerce")
     assert from_other == Status.ACTIVE
 

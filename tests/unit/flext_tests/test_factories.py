@@ -21,7 +21,6 @@ from tests.test_utils import assertion_helpers
 class TestFactoriesHelpers:
     """Shared aliases and helpers for factory tests."""
 
-    # Access models from centralized m.Tests.Factory namespace
     User = m.Tests.Factory.User
     Config = m.Tests.Factory.Config
     Service = m.Tests.Factory.Service
@@ -30,14 +29,12 @@ class TestFactoriesHelpers:
 
     @staticmethod
     def extract_model(
-        result: (
-            _BaseModel
-            | list[_BaseModel]
-            | Mapping[str, _BaseModel]
-            | r[_BaseModel]
-            | r[list[_BaseModel]]
-            | r[Mapping[str, _BaseModel]]
-        ),
+        result: _BaseModel
+        | list[_BaseModel]
+        | Mapping[str, _BaseModel]
+        | r[_BaseModel]
+        | r[list[_BaseModel]]
+        | r[Mapping[str, _BaseModel]],
     ) -> _BaseModel:
         """Extract BaseModel from union type returned by tt.model().
 
@@ -98,11 +95,8 @@ class TestUser:
     def test_user_creation_default(self) -> None:
         """Test User model creation with defaults."""
         user = TestFactoriesHelpers.User(
-            id="test-123",
-            name="Test User",
-            email="test@example.com",
+            id="test-123", name="Test User", email="test@example.com"
         )
-
         assert user.id == "test-123"
         assert user.name == "Test User"
         assert user.email == "test@example.com"
@@ -111,12 +105,8 @@ class TestUser:
     def test_user_creation_with_active(self) -> None:
         """Test User model creation with active flag."""
         user = TestFactoriesHelpers.User(
-            id="test-123",
-            name="Test User",
-            email="test@example.com",
-            active=False,
+            id="test-123", name="Test User", email="test@example.com", active=False
         )
-
         assert user.active is False
 
 
@@ -126,7 +116,6 @@ class TestConfig:
     def test_config_creation_default(self) -> None:
         """Test Config model creation with defaults."""
         config = TestFactoriesHelpers.Config()
-
         assert config.service_type == "api"
         assert config.environment == "test"
         assert config.debug is True
@@ -137,12 +126,8 @@ class TestConfig:
     def test_config_creation_custom(self) -> None:
         """Test Config model creation with custom values."""
         config = TestFactoriesHelpers.Config(
-            service_type="database",
-            environment="production",
-            debug=False,
-            timeout=60,
+            service_type="database", environment="production", debug=False, timeout=60
         )
-
         assert config.service_type == "database"
         assert config.environment == "production"
         assert config.debug is False
@@ -155,7 +140,6 @@ class TestService:
     def test_service_creation_minimal(self) -> None:
         """Test Service model creation with minimal fields."""
         service = TestFactoriesHelpers.Service(id="test-123")
-
         assert service.id == "test-123"
         assert service.type == "api"
         assert service.name == ""
@@ -164,12 +148,8 @@ class TestService:
     def test_service_creation_complete(self) -> None:
         """Test Service model creation with all fields."""
         service = TestFactoriesHelpers.Service(
-            id="test-123",
-            type="database",
-            name="Database Service",
-            status="inactive",
+            id="test-123", type="database", name="Database Service", status="inactive"
         )
-
         assert service.id == "test-123"
         assert service.type == "database"
         assert service.name == "Database Service"
@@ -192,10 +172,7 @@ class TestFlextTestsFactoriesModernAPI:
     def test_model_user_custom(self) -> None:
         """Test tt.model('user') with custom parameters."""
         user_result = tt.model(
-            "user",
-            model_id="custom-123",
-            name="Custom User",
-            email="custom@test.com",
+            "user", model_id="custom-123", name="Custom User", email="custom@test.com"
         )
         user = TestFactoriesHelpers.extract_model(user_result)
         assert isinstance(user, TestFactoriesHelpers.User)
@@ -205,11 +182,7 @@ class TestFlextTestsFactoriesModernAPI:
 
     def test_model_user_with_overrides(self) -> None:
         """Test tt.model('user') with overrides."""
-        user_result = tt.model(
-            "user",
-            name="Base User",
-            active=False,
-        )
+        user_result = tt.model("user", name="Base User", active=False)
         user = TestFactoriesHelpers.extract_model(user_result)
         assert isinstance(user, TestFactoriesHelpers.User)
         assert user.name == "Base User"
@@ -242,11 +215,7 @@ class TestFlextTestsFactoriesModernAPI:
 
     def test_model_config_with_overrides(self) -> None:
         """Test tt.model('config') with overrides."""
-        config_result = tt.model(
-            "config",
-            log_level="INFO",
-            max_retries=5,
-        )
+        config_result = tt.model("config", log_level="INFO", max_retries=5)
         config = TestFactoriesHelpers.extract_model(config_result)
         assert isinstance(config, TestFactoriesHelpers.Config)
         assert config.log_level == "INFO"
@@ -278,10 +247,7 @@ class TestFlextTestsFactoriesModernAPI:
 
     def test_model_service_with_overrides(self) -> None:
         """Test tt.model('service') with overrides."""
-        service_result = tt.model(
-            "service",
-            status="inactive",
-        )
+        service_result = tt.model("service", status="inactive")
         service = TestFactoriesHelpers.extract_model(service_result)
         assert isinstance(service, TestFactoriesHelpers.Service)
         assert service.status == "inactive"
@@ -318,7 +284,6 @@ class TestFlextTestsFactoriesModernAPI:
     def test_op_simple(self) -> None:
         """Test tt.op('simple') operation."""
         operation = tt.op("simple")
-
         assert callable(operation)
         result = operation()
         assert result == "success"
@@ -326,7 +291,6 @@ class TestFlextTestsFactoriesModernAPI:
     def test_op_add(self) -> None:
         """Test tt.op('add') operation."""
         operation = tt.op("add")
-
         assert callable(operation)
         result = operation(2, 3)
         assert result == 5
@@ -334,29 +298,20 @@ class TestFlextTestsFactoriesModernAPI:
     def test_op_format(self) -> None:
         """Test tt.op('format') operation."""
         operation = tt.op("format")
-
         assert callable(operation)
         result = operation("name", value=20)
         assert result == "name: 20"
 
     def test_op_error(self) -> None:
         """Test tt.op('error') operation."""
-        operation = tt.op(
-            "error",
-            error_message="Custom error",
-        )
-
+        operation = tt.op("error", error_message="Custom error")
         assert callable(operation)
         with pytest.raises(ValueError, match="Custom error"):
             operation()
 
     def test_op_type_error(self) -> None:
         """Test tt.op('type_error') operation."""
-        operation = tt.op(
-            "type_error",
-            error_message="Type mismatch",
-        )
-
+        operation = tt.op("type_error", error_message="Type mismatch")
         assert callable(operation)
         with pytest.raises(TypeError, match="Type mismatch"):
             operation()
@@ -365,11 +320,9 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.svc() with default type."""
         service_class = tt.svc()
         service = service_class()
-
         assert service.name is None
         assert service.amount is None
         assert service.enabled is None
-
         result = service.execute()
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"service_type": "test"}
@@ -378,7 +331,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.svc('user') with 'user' type."""
         service_class = tt.svc("user")
         service = service_class()
-
         result = service.execute()
         assertion_helpers.assert_flext_result_success(result)
         assert "user_id" in result.value
@@ -386,10 +338,8 @@ class TestFlextTestsFactoriesModernAPI:
 
     def test_svc_user_with_default(self) -> None:
         """Test tt.svc('user') with 'user' type and default flag."""
-        # default should be passed as override via svc() kwargs
         service_class = tt.svc("user", default=True)
         service = service_class()
-
         result = service.execute()
         assertion_helpers.assert_flext_result_success(result)
         assert result.value["user_id"] == "default_123"
@@ -398,7 +348,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.svc('complex') with valid data."""
         service_class = tt.svc("complex")
         service = service_class(name="Test", amount=100, enabled=True)
-
         result = service.execute()
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"result": "success"}
@@ -407,7 +356,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.svc('complex') with empty name."""
         service_class = tt.svc("complex")
         service = service_class(name="")
-
         result = service.execute()
         assertion_helpers.assert_flext_result_failure(result)
         assert "Name is required" in result.error
@@ -416,7 +364,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.svc('complex') with negative amount."""
         service_class = tt.svc("complex")
         service = service_class(amount=-10)
-
         result = service.execute()
         assertion_helpers.assert_flext_result_failure(result)
         assert "Amount must be non-negative" in result.error
@@ -425,7 +372,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.svc('complex') disabled with amount."""
         service_class = tt.svc("complex")
         service = service_class(enabled=False, amount=100)
-
         result = service.execute()
         assertion_helpers.assert_flext_result_failure(result)
         assert "Cannot have amount when disabled" in result.error
@@ -434,7 +380,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test validate_business_rules for complex service with valid data."""
         service_class = tt.svc("complex")
         service = service_class(name="Test", amount=100, enabled=True)
-
         result = service.validate_business_rules()
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
@@ -443,7 +388,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test validate_business_rules for complex service with invalid data."""
         service_class = tt.svc("complex")
         service = service_class(name="")
-
         result = service.validate_business_rules()
         assertion_helpers.assert_flext_result_failure(result)
         assert "Name is required" in result.error
@@ -452,7 +396,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test validate_config for complex service with valid data."""
         service_class = tt.svc("complex")
         service = service_class(name="Test", amount=100)
-
         result = service.validate_config()
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
@@ -462,7 +405,6 @@ class TestFlextTestsFactoriesModernAPI:
         service_class = tt.svc("complex")
         long_name = "a" * 51
         service = service_class(name=long_name)
-
         result = service.validate_config()
         assertion_helpers.assert_flext_result_failure(result)
         assert "Name too long" in result.error
@@ -471,7 +413,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test validate_config for complex service with amount too large."""
         service_class = tt.svc("complex")
         service = service_class(amount=1001)
-
         result = service.validate_config()
         assertion_helpers.assert_flext_result_failure(result)
         assert "Value too large" in result.error
@@ -480,7 +421,6 @@ class TestFlextTestsFactoriesModernAPI:
         """Test validate_config for non-complex service."""
         service_class = tt.svc("test")
         service = service_class()
-
         result = service.validate_config()
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
@@ -489,15 +429,10 @@ class TestFlextTestsFactoriesModernAPI:
         """Test validate_business_rules for non-complex service."""
         service_class = tt.svc("test")
         service = service_class()
-
         result = service.validate_business_rules()
-        # Should call super() which returns success
         assert isinstance(result, r)
 
 
-# =============================================================================
-# PHASE 7: Tests for Unified Factory Methods (tt.model, tt.res, tt.list, tt.dict, tt.generic)
-# =============================================================================
 class TestsFlextTestsFactoriesModel:
     """Tests for tt.model() unified method."""
 
@@ -603,7 +538,6 @@ class TestsFlextTestsFactoriesModel:
         user = TestFactoriesHelpers.extract_model(user_result)
         assert isinstance(user, TestFactoriesHelpers.User)
         assert user.active is True
-
         result_raw = tt.model(
             "user",
             active=False,
@@ -649,15 +583,10 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_fail_with_code(self) -> None:
         """Test failed result creation with error code."""
-        result_raw = tt.res(
-            "fail",
-            error="Error message",
-            error_code="ERR001",
-        )
+        result_raw = tt.res("fail", error="Error message", error_code="ERR001")
         result = TestFactoriesHelpers.as_single_payload_result(result_raw)
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
-        # Note: error_code may be stored in result metadata
 
     def test_res_from_value_success(self) -> None:
         """Test from_value with non-None value."""
@@ -671,11 +600,7 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_from_value_none(self) -> None:
         """Test from_value with None value."""
-        result_raw = tt.res(
-            "from_value",
-            value=None,
-            error_on_none="Value is required",
-        )
+        result_raw = tt.res("from_value", value=None, error_on_none="Value is required")
         result = TestFactoriesHelpers.as_single_payload_result(result_raw)
         assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error or ""
@@ -698,10 +623,7 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_batch_errors(self) -> None:
         """Test batch result creation from errors."""
-        results_raw = tt.res(
-            "fail",
-            errors=["err1", "err2"],
-        )
+        results_raw = tt.res("fail", errors=["err1", "err2"])
         results = results_raw if isinstance(results_raw, list) else [results_raw]
         assert isinstance(results, list)
         assert len(results) == 2
@@ -730,14 +652,11 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_with_transform(self) -> None:
         """Test result creation with transform function."""
-        # transform is a special kwarg processed by ResultFactoryParams
-        # Type ignore needed because transform is Callable, not TestResultValue
         result_raw = tt.res(
             "ok",
             value=5,
             transform=cast(
-                "t.Tests.TestResultValue",
-                cast("object", lambda x: cast("int", x) * 2),
+                "t.Tests.TestResultValue", cast("object", lambda x: cast("int", x) * 2)
             ),
         )
         result = cast(
@@ -773,13 +692,10 @@ class TestsFlextTestsFactoriesList:
 
     def test_list_from_sequence(self) -> None:
         """Test list creation from sequence."""
-        # transform is a special kwarg processed by ListFactoryParams
-        # Type ignore needed because transform is Callable, not TestResultValue
         doubled_raw = tt.list(
             [1, 2, 3],
             transform=cast(
-                "t.Tests.TestResultValue",
-                cast("object", lambda x: cast("int", x) * 2),
+                "t.Tests.TestResultValue", cast("object", lambda x: cast("int", x) * 2)
             ),
         )
         doubled = cast(
@@ -790,8 +706,6 @@ class TestsFlextTestsFactoriesList:
 
     def test_list_with_filter(self) -> None:
         """Test list creation with filter."""
-        # filter_ is a special kwarg processed by ListFactoryParams
-        # Type ignore needed because filter_ is Callable, not TestResultValue
         evens_raw = tt.list(
             [1, 2, 3, 4, 5],
             filter_=cast(
@@ -806,7 +720,6 @@ class TestsFlextTestsFactoriesList:
 
     def test_list_with_unique(self) -> None:
         """Test list creation with uniqueness."""
-        # Create list with duplicates
         items_raw = tt.list([1, 2, 2, 3, 3, 3], unique=True)
         items = cast(
             "list[int]", cast("object", TestFactoriesHelpers.as_payload_list(items_raw))
@@ -816,11 +729,7 @@ class TestsFlextTestsFactoriesList:
 
     def test_list_as_result(self) -> None:
         """Test list creation wrapped in result."""
-        result_raw = tt.list(
-            "user",
-            count=3,
-            as_result=True,
-        )
+        result_raw = tt.list("user", count=3, as_result=True)
         assert isinstance(result_raw, r)
         result = cast("r[list[TestFactoriesHelpers.User]]", cast("object", result_raw))
         assert isinstance(result, r)
@@ -833,10 +742,7 @@ class TestsFlextTestsFactoriesDict:
 
     def test_dict_from_model(self) -> None:
         """Test dict creation from model kind."""
-        users_raw = tt.dict_factory(
-            "user",
-            count=3,
-        )
+        users_raw = tt.dict_factory("user", count=3)
         users = cast(
             "dict[str, TestFactoriesHelpers.User]",
             cast("object", TestFactoriesHelpers.as_payload_mapping(users_raw)),
@@ -847,8 +753,6 @@ class TestsFlextTestsFactoriesDict:
 
     def test_dict_with_key_factory(self) -> None:
         """Test dict creation with key factory."""
-        # key_factory is a special kwarg processed by DictFactoryParams
-        # Type ignore needed because key_factory is Callable, not TestResultValue
         users_raw = tt.dict_factory(
             "user",
             count=3,
@@ -871,14 +775,11 @@ class TestsFlextTestsFactoriesDict:
                 id=key, name=f"User {key}", email=f"{key}@test.com"
             )
 
-        # value_factory is a special kwarg processed by DictFactoryParams
-        # Type ignore needed because value_factory is Callable, not TestResultValue
         users_raw = tt.dict_factory(
             "user",
             count=2,
             value_factory=cast(
-                "t.Tests.TestResultValue",
-                cast("object", value_factory),
+                "t.Tests.TestResultValue", cast("object", value_factory)
             ),
         )
         users = cast(
@@ -890,10 +791,7 @@ class TestsFlextTestsFactoriesDict:
     def test_dict_from_mapping(self) -> None:
         """Test dict creation from existing mapping."""
         existing = {"a": 1, "b": 2}
-        merged_raw = tt.dict_factory(
-            existing,
-            merge_with={"c": 3},
-        )
+        merged_raw = tt.dict_factory(existing, merge_with={"c": 3})
         merged = cast(
             "dict[str, int]",
             cast("object", TestFactoriesHelpers.as_payload_mapping(merged_raw)),
@@ -902,11 +800,7 @@ class TestsFlextTestsFactoriesDict:
 
     def test_dict_as_result(self) -> None:
         """Test dict creation wrapped in result."""
-        result_raw = tt.dict_factory(
-            "user",
-            count=3,
-            as_result=True,
-        )
+        result_raw = tt.dict_factory("user", count=3, as_result=True)
         assert isinstance(result_raw, r)
         result = cast(
             "r[dict[str, TestFactoriesHelpers.User]]", cast("object", result_raw)
@@ -987,7 +881,6 @@ class TestsFlextTestsFactoriesGeneric:
             obj = obj_result
         assert isinstance(obj, ValidatedClass)
         assert obj.age == 25
-
         with pytest.raises(ValueError, match="Validation failed"):
             tt.generic(
                 ValidatedClass,

@@ -17,12 +17,12 @@ from flext_infra.check.services import FlextInfraWorkspaceChecker, run_cli
 
 def test_resolve_gates_maps_type_alias() -> None:
     result = FlextInfraWorkspaceChecker.resolve_gates(["lint", "type", "lint"])
-
     assert result.is_success
     assert result.value == ["lint", "pyrefly"]
 
 
 def test_run_cli_run_returns_zero_for_pass(monkeypatch: MonkeyPatch) -> None:
+
     def _fake_run_projects(
         self: FlextInfraWorkspaceChecker,
         projects: list[str],
@@ -37,9 +37,7 @@ def test_run_cli_run_returns_zero_for_pass(monkeypatch: MonkeyPatch) -> None:
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
-
     exit_code = run_cli(["run", "--gates", "lint,type", "--project", "flext-core"])
-
     assert exit_code == 0
 
 
@@ -60,9 +58,7 @@ def test_run_cli_run_returns_one_for_fail(monkeypatch: MonkeyPatch) -> None:
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
-
     exit_code = run_cli(["run", "--gates", "lint", "--project", "flext-core"])
-
     assert exit_code == 1
 
 
@@ -83,9 +79,7 @@ def test_run_cli_run_returns_two_for_error(monkeypatch: MonkeyPatch) -> None:
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
-
     exit_code = run_cli(["run", "--gates", "lint", "--project", "flext-core"])
-
     assert exit_code == 2
 
 
@@ -108,7 +102,6 @@ def test_run_cli_with_multiple_projects(monkeypatch: MonkeyPatch) -> None:
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
-
     exit_code = run_cli([
         "run",
         "--gates",
@@ -118,7 +111,6 @@ def test_run_cli_with_multiple_projects(monkeypatch: MonkeyPatch) -> None:
         "--project",
         "proj2",
     ])
-
     assert exit_code == 0
     assert "proj1" in captured_projects
     assert "proj2" in captured_projects
@@ -143,7 +135,6 @@ def test_run_cli_with_fail_fast_flag(monkeypatch: MonkeyPatch) -> None:
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
-
     exit_code = run_cli([
         "run",
         "--gates",
@@ -152,6 +143,5 @@ def test_run_cli_with_fail_fast_flag(monkeypatch: MonkeyPatch) -> None:
         "--project",
         "flext-core",
     ])
-
     assert exit_code == 0
     assert captured_fail_fast[0] is True

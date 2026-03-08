@@ -20,12 +20,7 @@ from flext_core import c, t
 class TimeoutEnforcer:
     """Manage timeout enforcement and dispatcher thread-pool execution."""
 
-    def __init__(
-        self,
-        *,
-        use_timeout_executor: bool,
-        executor_workers: int,
-    ) -> None:
+    def __init__(self, *, use_timeout_executor: bool, executor_workers: int) -> None:
         """Initialize the timeout coordinator.
 
         Args:

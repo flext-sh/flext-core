@@ -21,16 +21,9 @@ class TestFlextInfraTextPatternScanner:
         """Test that scan returns success for matching patterns."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("hello world")
-
-        result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="hello", includes=["*.txt"])
         assert result.is_success
         assert result.value["violation_count"] == 1
 
@@ -38,16 +31,9 @@ class TestFlextInfraTextPatternScanner:
         """Test that scan returns result when no matches found."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("goodbye world")
-
-        result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="hello", includes=["*.txt"])
         assert result.is_success
         assert result.value["violation_count"] == 0
 
@@ -57,13 +43,7 @@ class TestFlextInfraTextPatternScanner:
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("content")
-
-        result = scanner.scan(
-            root,
-            pattern="content",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="content", includes=["*.txt"])
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
@@ -71,19 +51,13 @@ class TestFlextInfraTextPatternScanner:
         """Test that scan respects exclude patterns."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         included = root / "included.txt"
         included.write_text("hello")
         excluded = root / "excluded.log"
         excluded.write_text("hello")
-
         result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-            excludes=["*.log"],
+            root, pattern="hello", includes=["*.txt"], excludes=["*.log"]
         )
-
         assert result.is_success
         assert result.value["files_scanned"] == 1
 
@@ -91,17 +65,11 @@ class TestFlextInfraTextPatternScanner:
         """Test scan with absent match mode."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("goodbye")
-
         result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-            match_mode="absent",
+            root, pattern="hello", includes=["*.txt"], match_mode="absent"
         )
-
         assert result.is_success
         assert result.value["violation_count"] == 1
 
@@ -111,17 +79,11 @@ class TestFlextInfraTextPatternScanner:
         """Test absent mode returns no violation if pattern found."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("hello world")
-
         result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-            match_mode="absent",
+            root, pattern="hello", includes=["*.txt"], match_mode="absent"
         )
-
         assert result.is_success
         assert result.value["violation_count"] == 0
 
@@ -129,73 +91,42 @@ class TestFlextInfraTextPatternScanner:
         """Test scan with nonexistent root directory."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path / "nonexistent"
-
-        result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="hello", includes=["*.txt"])
         assert result.is_failure
 
     def test_scan_with_empty_includes_returns_failure(self, tmp_path: Path) -> None:
         """Test scan with empty includes list."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
-        result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=[],
-        )
-
+        result = scanner.scan(root, pattern="hello", includes=[])
         assert result.is_failure
 
     def test_scan_with_invalid_match_mode_returns_failure(self, tmp_path: Path) -> None:
         """Test scan with invalid match_mode."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-            match_mode="invalid",
+            root, pattern="hello", includes=["*.txt"], match_mode="invalid"
         )
-
         assert result.is_failure
 
     def test_scan_with_invalid_regex_returns_failure(self, tmp_path: Path) -> None:
         """Test scan with invalid regex pattern."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("content")
-
-        result = scanner.scan(
-            root,
-            pattern="[invalid",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="[invalid", includes=["*.txt"])
         assert result.is_failure
 
     def test_scan_with_multiple_files_counts_all_matches(self, tmp_path: Path) -> None:
         """Test scan counts matches across multiple files."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         (root / "file1.txt").write_text("hello world")
         (root / "file2.txt").write_text("hello again")
         (root / "file3.txt").write_text("goodbye")
-
-        result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="hello", includes=["*.txt"])
         assert result.is_success
         assert result.value["match_count"] == 2
 
@@ -203,16 +134,9 @@ class TestFlextInfraTextPatternScanner:
         """Test scan with multiline regex pattern."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("line1\nline2\nline3")
-
-        result = scanner.scan(
-            root,
-            pattern="^line",
-            includes=["*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="^line", includes=["*.txt"])
         assert result.is_success
         assert result.value["match_count"] == 3
 
@@ -220,17 +144,10 @@ class TestFlextInfraTextPatternScanner:
         """Test scan finds files in nested directories."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         subdir = root / "subdir"
         subdir.mkdir()
         (subdir / "nested.txt").write_text("hello")
-
-        result = scanner.scan(
-            root,
-            pattern="hello",
-            includes=["**/*.txt"],
-        )
-
+        result = scanner.scan(root, pattern="hello", includes=["**/*.txt"])
         assert result.is_success
         assert result.value["files_scanned"] == 1
 
@@ -238,17 +155,10 @@ class TestFlextInfraTextPatternScanner:
         """Test scan handles unreadable files gracefully."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("hello")
-
         with patch("pathlib.Path.read_text", side_effect=OSError("permission denied")):
-            result = scanner.scan(
-                root,
-                pattern="hello",
-                includes=["*.txt"],
-            )
-
+            result = scanner.scan(root, pattern="hello", includes=["*.txt"])
             assert result.is_success
 
     def test_collect_files_with_glob_patterns(self, tmp_path: Path) -> None:
@@ -257,7 +167,6 @@ class TestFlextInfraTextPatternScanner:
         (root / "file1.py").write_text("")
         (root / "file2.txt").write_text("")
         (root / "file3.py").write_text("")
-
         files = FlextInfraTextPatternScanner._collect_files(root, ["*.py"], [])
         assert len(files) == 2
 
@@ -267,7 +176,6 @@ class TestFlextInfraTextPatternScanner:
         (root / "file1.py").write_text("")
         (root / "file2.py").write_text("")
         (root / "test.py").write_text("")
-
         files = FlextInfraTextPatternScanner._collect_files(root, ["*.py"], ["test*"])
         assert len(files) == 2
 
@@ -276,7 +184,6 @@ class TestFlextInfraTextPatternScanner:
         root = tmp_path
         (root / "file.txt").write_text("")
         (root / "subdir").mkdir()
-
         files = FlextInfraTextPatternScanner._collect_files(root, ["*"], [])
         assert len(files) == 1
 
@@ -285,7 +192,6 @@ class TestFlextInfraTextPatternScanner:
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("hello hello hello")
-
         regex = re.compile(r"hello")
         count = FlextInfraTextPatternScanner._count_matches([test_file], regex)
         assert count == 3
@@ -295,7 +201,6 @@ class TestFlextInfraTextPatternScanner:
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("")
-
         regex = re.compile(r"hello")
         count = FlextInfraTextPatternScanner._count_matches([test_file], regex)
         assert count == 0
@@ -305,7 +210,6 @@ class TestFlextInfraTextPatternScanner:
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("hello")
-
         regex = re.compile(r"hello")
         with patch("pathlib.Path.read_text", side_effect=OSError("permission denied")):
             count = FlextInfraTextPatternScanner._count_matches([test_file], regex)
@@ -315,21 +219,14 @@ class TestFlextInfraTextPatternScanner:
         """Test scan handles OSError exception (lines 84-85)."""
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
-
         test_file = root / "test.txt"
         test_file.write_text("hello")
-
-        # Mock _collect_files to raise OSError
         with patch.object(
             FlextInfraTextPatternScanner,
             "_collect_files",
             side_effect=OSError("permission denied"),
         ):
-            result = scanner.scan(
-                root,
-                pattern="hello",
-                includes=["*.txt"],
-            )
+            result = scanner.scan(root, pattern="hello", includes=["*.txt"])
             assert result.is_failure
             assert isinstance(result.error, str)
             assert isinstance(result.error, str)

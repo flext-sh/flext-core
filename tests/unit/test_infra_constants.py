@@ -232,12 +232,10 @@ class TestFlextInfraConstantsImmutability:
 
     def test_excluded_dirs_are_immutable(self) -> None:
         excluded = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        # frozenset should not have add method
         assert not hasattr(excluded, "add")
 
     def test_check_dirs_are_immutable(self) -> None:
         dirs = FlextInfraConstants.Infra.Check.DEFAULT_CHECK_DIRS
-        # tuple should not have append method
         assert not hasattr(dirs, "append")
 
 
@@ -267,6 +265,5 @@ class TestFlextInfraConstantsConsistency:
     def test_excluded_dirs_no_duplicates(self) -> None:
         common = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
         doc = FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS
-        # frozenset automatically handles uniqueness
         assert len(common) == len(set(common))
         assert len(doc) == len(set(doc))

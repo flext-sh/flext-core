@@ -7,11 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextExceptions,
-    FlextResult,
-    m,
-)
+from flext_core import FlextExceptions, FlextResult, m
 
 
 class TestResultBasics:
@@ -65,8 +61,6 @@ class TestResultBasics:
         """Test .is_failure property."""
         r: FlextResult[int] = FlextResult[int].fail("error")
         assert r.is_failure is True
-
-    # Tests for FlextExceptions
 
     def test_exception_str_representation(self) -> None:
         """Test exception string representation."""
@@ -152,13 +146,10 @@ class TestResultTransformations:
 
     def test_result_error_data_property(self) -> None:
         """Test .error_data property."""
-        # Without error_data, it's None
         r_no_data: FlextResult[int] = FlextResult[int].fail("error")
         assert r_no_data.error_data is None
-        # With error_data, it's a ConfigMap
         r_with_data: FlextResult[int] = FlextResult[int].fail(
-            "error",
-            error_data=m.ConfigMap(root={"detail": "info"}),
+            "error", error_data=m.ConfigMap(root={"detail": "info"})
         )
         assert isinstance(r_with_data.error_data, m.ConfigMap)
         assert r_with_data.error_data["detail"] == "info"
@@ -176,8 +167,8 @@ class TestResultTransformations:
     def test_result_alt_on_failure(self) -> None:
         """Test .alt provides alternative on failure."""
         r: FlextResult[int] = FlextResult[int].fail("error")
-        r2 = r.map_error(lambda _: "recovered")  # alt transforms error, not value
-        assert r2.is_failure  # still failure but error is transformed
+        r2 = r.map_error(lambda _: "recovered")
+        assert r2.is_failure
         assert r2.error == "recovered"
 
     def test_result_alt_on_success(self) -> None:

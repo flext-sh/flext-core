@@ -101,24 +101,17 @@ class FlextModelsEntity:
             """
             if not event_type:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    "Domain event name must be a non-empty string",
+                    "Domain event name must be a non-empty string"
                 )
-
             if len(self.domain_events) >= c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
+                    f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}"
                 )
-
             data_map = FlextModelsDomainEvent.to_config_map(data)
             event = FlextModelsDomainEvent.Entry(
-                event_type=event_type,
-                aggregate_id=self.unique_id,
-                data=data_map,
+                event_type=event_type, aggregate_id=self.unique_id, data=data_map
             )
             self.domain_events.append(event)
-
-            # Call event handler if defined
-            # Use event_type from data if present, otherwise use argument
             handler_event_type_raw = data_map.get("event_type", event_type)
             handler_event_type = (
                 handler_event_type_raw
@@ -128,10 +121,8 @@ class FlextModelsEntity:
             handler_name = f"_apply_{handler_event_type}"
             handler = getattr(self, handler_name, None)
             if handler is not None and callable(handler):
-                # Swallow handler exceptions - event is still added
                 with contextlib.suppress(Exception):
                     _ = handler(data_map.root)
-
             return r[FlextModelsDomainEvent.Entry].ok(event)
 
         def add_domain_events_bulk(
@@ -147,30 +138,21 @@ class FlextModelsEntity:
                 FlextResult with list of created DomainEvents or error
 
             """
-            # Validate input is a valid sequence (list or tuple)
             if events.__class__ not in {list, tuple}:
                 return r[list[FlextModelsDomainEvent.Entry]].fail(
-                    "Events must be a list or tuple",
+                    "Events must be a list or tuple"
                 )
-
-            # Convert to list for iteration (ensures proper type)
             event_items = list(events)
-
-            # Check if adding all events would exceed limit
             total_after = len(self.domain_events) + len(event_items)
             if total_after > c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[list[FlextModelsDomainEvent.Entry]].fail(
-                    f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
+                    f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}"
                 )
-
-            # Validate all event names first
             for event_type, _ in event_items:
                 if not event_type:
                     return r[list[FlextModelsDomainEvent.Entry]].fail(
-                        "Event name must be non-empty string",
+                        "Event name must be non-empty string"
                     )
-
-            # Add all events
             created_events: list[FlextModelsDomainEvent.Entry] = []
             for event_type, data in event_items:
                 event = FlextModelsDomainEvent.Entry(
@@ -180,7 +162,6 @@ class FlextModelsEntity:
                 )
                 self.domain_events.append(event)
                 created_events.append(event)
-
             return r[list[FlextModelsDomainEvent.Entry]].ok(created_events)
 
         def clear_domain_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
@@ -238,23 +219,13 @@ class FlextModelsEntity:
         def validate_aggregate_consistency(self) -> Self:
             try:
                 self.check_invariants()
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 msg = f"Aggregate invariant violation: {e}"
                 raise ValueError(msg) from e
-
             if len(self.domain_events) > c.Validation.MAX_UNCOMMITTED_EVENTS:
                 max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
                 event_count = len(self.domain_events)
-                msg = (
-                    f"Too many uncommitted domain events: {event_count} "
-                    f"(max: {max_events})"
-                )
+                msg = f"Too many uncommitted domain events: {event_count} (max: {max_events})"
                 raise ValueError(msg)
             return self
 

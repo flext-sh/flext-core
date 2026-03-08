@@ -39,14 +39,12 @@ class Ex01FlextResult(Examples):
             "traverse.collect",
             r[list[int]].traverse([1, 3, 5], to_even, fail_fast=False).error,
         )
-
         acc_ok = r.accumulate_errors(r[int].ok(1), r[int].ok(2))
         acc_fail = r.accumulate_errors(
             r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
         )
         self.check("accumulate_errors.success", acc_ok.unwrap_or([]))
         self.check("accumulate_errors.failure", acc_fail.error)
-
         cleaned_values: list[int] = []
 
         def make_handle() -> Examples.Handle:
@@ -69,7 +67,6 @@ class Ex01FlextResult(Examples):
         no_cleanup_resource = r[int].with_resource(
             make_handle, lambda handle: r[int].ok(handle.value + 1)
         )
-
         self.check("with_resource.success", success_resource.unwrap_or(-1))
         self.check("with_resource.failure", failure_resource.error)
         self.check("with_resource.no_cleanup", no_cleanup_resource.unwrap_or(-1))
@@ -78,19 +75,14 @@ class Ex01FlextResult(Examples):
     def conversions_and_models(self) -> None:
         """Exercise conversion APIs and Pydantic model integration."""
         self.section("conversions_and_models")
-
         ok_value = r[int].ok(8)
         fail_value = r[int].fail("io-err")
-
         self.check("to_maybe.success", ok_value.to_maybe().unwrap())
         self.check("to_maybe.failure", fail_value.to_maybe().value_or(123))
-
         self.check(
-            "from_maybe.some",
-            r[str].from_maybe(Some("x"), "empty").unwrap_or("none"),
+            "from_maybe.some", r[str].from_maybe(Some("x"), "empty").unwrap_or("none")
         )
         self.check("from_maybe.nothing", r[str].from_maybe(Nothing, "empty").error)
-
         io_value = ok_value.to_io()
         self.check("to_io.success.type", type(io_value).__name__)
         try:
@@ -99,25 +91,20 @@ class Ex01FlextResult(Examples):
         except e.ValidationError as exc:
             self.check("to_io.failure.raises", True)
             self.check("to_io.failure.type", type(exc).__name__)
-
         self.check("to_io_result.success.type", type(ok_value.to_io_result()).__name__)
         self.check(
             "to_io_result.failure.type", type(fail_value.to_io_result()).__name__
         )
-
         from_io_ok = r[int].from_io_result(IOSuccess(11))
         from_io_fail = r[int].from_io_result(IOFailure("x"))
         self.check("from_io_result.success", from_io_ok.is_success)
         self.check("from_io_result.failure", from_io_fail.error)
         self.check(
-            "from_io_result.invalid",
-            r[str].from_io_result("bad-io-result").error,
+            "from_io_result.invalid", r[str].from_io_result("bad-io-result").error
         )
-
         valid_data: dict[str, t.Scalar] = {"name": "Ada", "age": 30}
         invalid_data: dict[str, t.Scalar] = {"name": "Ada", "age": "bad"}
         person_model = Examples.Person
-
         from_validation_ok = r[Examples.Person].from_validation(
             valid_data, person_model
         )
@@ -126,7 +113,6 @@ class Ex01FlextResult(Examples):
         )
         self.check("from_validation.success", from_validation_ok.is_success)
         self.check("from_validation.failure", from_validation_fail.is_failure)
-
         self.check(
             "to_model.success",
             r[dict[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
@@ -140,17 +126,11 @@ class Ex01FlextResult(Examples):
             r[dict[str, t.Container]].ok(invalid_data).to_model(self.Person).is_failure,
         )
 
-    # ------------------------------------------------------------------
-    # Sections
-    # ------------------------------------------------------------------
-
     def factories_and_guards(self) -> None:
         """Exercise factory constructors, decorator wrapping, and type guards."""
         self.section("factories_and_guards")
-
         ok_result = r[int].ok(10)
         self.check("ok.value", ok_result.value)
-
         failed = r[int].fail(
             "boom",
             error_code="E_DEMO",
@@ -178,15 +158,11 @@ class Ex01FlextResult(Examples):
             return None
 
         callable_ok = r[str].create_from_callable(lambda: "created")
-        callable_fail = r[str].create_from_callable(
-            func_fail,
-            error_code="E_CALL",
-        )
+        callable_fail = r[str].create_from_callable(func_fail, error_code="E_CALL")
         callable_none = r[str].create_from_callable(func_none, error_code="E_NONE")
         self.check("create_from_callable.success", callable_ok.unwrap_or("fallback"))
         self.check("create_from_callable.failure.code", callable_fail.error_code)
         self.check("create_from_callable.none.error", callable_none.error)
-
         self.check("is_success_result.ok", r.is_success_result(ok_result))
         self.check("is_success_result.fail", r.is_success_result(failed))
         self.check("is_failure_result.fail", r.is_failure_result(failed))
@@ -195,10 +171,8 @@ class Ex01FlextResult(Examples):
     def properties_and_unwrap(self) -> None:
         """Exercise result properties and unwrap behavior for both states."""
         self.section("properties_and_unwrap")
-
         success = r[str].ok("value")
         failure = r[str].fail("missing", error_code="E_PROP", error_data={"x": 1})
-
         self.check("prop.success.is_success", success.is_success)
         self.check("prop.success.is_failure", success.is_failure)
         self.check("prop.failure.is_success", failure.is_success)
@@ -208,7 +182,6 @@ class Ex01FlextResult(Examples):
         self.check("prop.failure.error", failure.error)
         self.check("prop.failure.error_code", failure.error_code)
         self.check("prop.failure.error_data", failure.error_data)
-
         self.check("unwrap.success", success.unwrap())
         try:
             failure.unwrap()
@@ -216,13 +189,8 @@ class Ex01FlextResult(Examples):
         except RuntimeError as exc:
             self.check("unwrap.failure.raises", True)
             self.check("unwrap.failure.type", type(exc).__name__)
-
         self.check("unwrap_or.success", success.unwrap_or("default"))
         self.check("unwrap_or.failure", failure.unwrap_or("default"))
-
-    # ------------------------------------------------------------------
-    # Runner
-    # ------------------------------------------------------------------
 
     @override
     def run(self) -> None:
@@ -238,23 +206,17 @@ class Ex01FlextResult(Examples):
     def side_effects_and_folds(self) -> None:
         """Exercise side-effect helpers, map_or, fold, and filter."""
         self.section("side_effects_and_folds")
-
         side_effects: list[int] = []
         error_effects: list[str] = []
-
         ok_value = r[int].ok(7)
         fail_value = r[int].fail("oops")
-
         self.check(
-            "tap.success",
-            ok_value.tap(lambda n: side_effects.append(n)).is_success,
+            "tap.success", ok_value.tap(lambda n: side_effects.append(n)).is_success
         )
         self.check(
-            "tap.failure",
-            fail_value.tap(lambda n: side_effects.append(n)).is_failure,
+            "tap.failure", fail_value.tap(lambda n: side_effects.append(n)).is_failure
         )
         self.check("tap.log", side_effects)
-
         self.check(
             "tap_error.failure",
             fail_value.tap_error(lambda e: error_effects.append(e)).is_failure,
@@ -264,27 +226,22 @@ class Ex01FlextResult(Examples):
             ok_value.tap_error(lambda e: error_effects.append(e)).is_success,
         )
         self.check("tap_error.log", error_effects)
-
         self.check("map_or.success_default", ok_value.map_or(0))
         self.check("map_or.failure_default", fail_value.map_or(0))
         self.check("map_or.success_func", ok_value.map_or("none", lambda n: f"n={n}"))
         self.check("map_or.failure_func", fail_value.map_or("none", lambda n: f"n={n}"))
-
         self.check(
             "fold.success",
             ok_value.fold(
-                on_failure=lambda e: f"fail:{e}",
-                on_success=lambda n: f"ok:{n}",
+                on_failure=lambda e: f"fail:{e}", on_success=lambda n: f"ok:{n}"
             ),
         )
         self.check(
             "fold.failure",
             fail_value.fold(
-                on_failure=lambda e: f"fail:{e}",
-                on_success=lambda n: f"ok:{n}",
+                on_failure=lambda e: f"fail:{e}", on_success=lambda n: f"ok:{n}"
             ),
         )
-
         self.check("filter.success_pass", ok_value.filter(lambda n: n > 0).is_success)
         self.check("filter.success_fail", ok_value.filter(lambda n: n < 0).is_failure)
         self.check(
@@ -294,10 +251,8 @@ class Ex01FlextResult(Examples):
     def transform_chain_and_recover(self) -> None:
         """Exercise transformation and chaining APIs for success/failure paths."""
         self.section("transform_chain_and_recover")
-
         base_ok = r[int].ok(5)
         base_fail = r[int].fail("bad-number")
-
         self.check("map.success", base_ok.map(lambda n: n + 1).unwrap_or(-1))
         self.check("map.failure", base_fail.map(lambda n: n + 1).is_failure)
         self.check(
@@ -306,7 +261,6 @@ class Ex01FlextResult(Examples):
                 lambda _: (_ for _ in ()).throw(ValueError("map exploded"))
             ).error,
         )
-
         self.check(
             "flat_map.success",
             base_ok.flat_map(lambda n: r[int].ok(n * 2)).unwrap_or(-1),
@@ -323,19 +277,16 @@ class Ex01FlextResult(Examples):
             "flat_map_chain.failure",
             base_fail.flat_map(lambda n: r[int].ok(n)).is_failure,
         )
-
         bind_ok = self.bind_probe(base_ok, 3)
         bind_fail = self.bind_probe(base_fail, 3)
         self.check("bind.success", self.bind_status(bind_ok))
         self.check("bind.failure", self.bind_status(bind_fail))
-
         self.check(
             "map_error.success_unchanged",
             base_ok.map_error(lambda e: f"alt:{e}").unwrap_or(-1),
         )
         self.check(
-            "map_error.failure_changed",
-            base_fail.map_error(lambda e: f"alt:{e}").error,
+            "map_error.failure_changed", base_fail.map_error(lambda e: f"alt:{e}").error
         )
         self.check(
             "map_error.failure_changed",
@@ -345,7 +296,6 @@ class Ex01FlextResult(Examples):
             "map_error.success_unchanged",
             base_ok.map_error(lambda e: f"mapped:{e}").unwrap_or(-1),
         )
-
         self.check(
             "lash.failure_recovered",
             base_fail.lash(lambda e: r[int].ok(len(e))).unwrap_or(-1),
@@ -354,10 +304,7 @@ class Ex01FlextResult(Examples):
             "lash.success_unchanged",
             base_ok.lash(lambda _: r[int].ok(99)).unwrap_or(-1),
         )
-        self.check(
-            "recover.failure",
-            base_fail.recover(lambda e: len(e)).unwrap_or(-1),
-        )
+        self.check("recover.failure", base_fail.recover(lambda e: len(e)).unwrap_or(-1))
         self.check("recover.success", base_ok.recover(lambda _: 0).unwrap_or(-1))
 
 

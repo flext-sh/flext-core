@@ -100,15 +100,8 @@ class FlextRegistry(s[bool]):
             """
             return not self.errors
 
-    # Private attributes using Pydantic v2 PrivateAttr pattern
     _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
-
-    # Class-level storage declarations (created per-subclass via __init_subclass__)
-    # These ClassVars are automatically created for each subclass to ensure
-    # per-subclass isolation (FlextApiRegistry, FlextAuthRegistry, FlextLdifServer
-    # each get their own storage, not inherited from parent)
-    # Uses t.RegistrablePlugin for type-safe plugin storage (includes callables)
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
@@ -125,8 +118,6 @@ class FlextRegistry(s[bool]):
 
         """
         super().__init__(**data)
-
-        # Create dispatcher instance if not provided
         if dispatcher is not None:
             self._dispatcher = dispatcher
         else:
@@ -138,8 +129,7 @@ class FlextRegistry(s[bool]):
                 raise TypeError(msg)
 
     def __init_subclass__(
-        cls,
-        **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
+        cls, **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar]
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -148,16 +138,9 @@ class FlextRegistry(s[bool]):
         register_plugin(..., scope="class") are visible across all instances of that
         subclass.
         """
-        # Filter kwargs - BaseModel.__init_subclass__ expects specific types
-        # but we accept broader types for registry customization
         super().__init_subclass__()
-        # Each subclass gets its OWN storage (not inherited from parent)
         cls._class_plugin_storage = {}
         cls._class_registered_keys = set()
-
-    # ------------------------------------------------------------------
-    # Factory Method with Auto-Discovery
-    # ------------------------------------------------------------------
 
     @classmethod
     def create(
@@ -188,37 +171,24 @@ class FlextRegistry(s[bool]):
 
         """
         instance = cls(dispatcher)
-
         if auto_discover_handlers:
-            # Get the caller's frame to discover handlers in calling module
             frame = inspect.currentframe()
             if frame and frame.f_back:
                 caller_globals = frame.f_back.f_globals
-                # Get module name from globals
                 module_name = caller_globals.get("__name__", "__main__")
-                # Get module object from globals
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
-                    # Scan module for handler-decorated functions
                     handlers = FlextHandlers.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, _handler_config in handlers:
-                        # Get actual handler from module
-                        # Check if handler_func is not None before checking callable
                         if handler_func is not None and callable(handler_func):
-                            # Register handler with deduplication built-in
-                            # Deduplication happens in register_handler() via _registered_keys
-                            # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
                             if FlextRegistry._is_protocol_handler(handler_typed):
                                 _ = instance.register_handler(handler_typed)
-
         return instance
 
     @staticmethod
     def _add_registration_error(
-        key: str,
-        error: str,
-        summary: FlextRegistry.Summary,
+        key: str, error: str, summary: FlextRegistry.Summary
     ) -> str:
         """Add registration error to summary.
 
@@ -226,8 +196,6 @@ class FlextRegistry(s[bool]):
             str: The error message that was added.
 
         """
-        # When is_failure is True, error is never None (fail() converts None to "")
-        # Use error or fallback message
         summary.errors.append(error or f"Failed to register handler '{key}'")
         return error
 
@@ -241,9 +209,6 @@ class FlextRegistry(s[bool]):
             and hasattr(value, "_protocol_name")
         )
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
         handler: p.Handler[t.ContainerValue, t.ContainerValue],
@@ -253,9 +218,7 @@ class FlextRegistry(s[bool]):
         return str(handler_id) if handler_id else handler.__class__.__name__
 
     @staticmethod
-    def _safe_get_handler_mode(
-        value: t.Scalar | BaseModel,
-    ) -> c.Cqrs.HandlerType:
+    def _safe_get_handler_mode(value: t.Scalar | BaseModel) -> c.Cqrs.HandlerType:
         """Safely extract and validate handler mode from value."""
         parse_result = u.parse(
             value,
@@ -270,9 +233,7 @@ class FlextRegistry(s[bool]):
         )
 
     @staticmethod
-    def _safe_get_status(
-        value: c.Cqrs.RegistrationStatus | str,
-    ) -> c.Cqrs.CommonStatus:
+    def _safe_get_status(value: c.Cqrs.RegistrationStatus | str) -> c.Cqrs.CommonStatus:
         """Safely extract and validate status from c.Cqrs.RegistrationStatus value."""
         if value == c.Cqrs.RegistrationStatus.ACTIVE:
             return c.Cqrs.CommonStatus.RUNNING
@@ -295,7 +256,6 @@ class FlextRegistry(s[bool]):
         handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> t.HandlerLike:
         """Convert handler to dispatcher-compatible callable."""
-        # Wrap handler.handle() to return ContainerValue | None
         handler_ref = handler_for_dispatch
 
         def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
@@ -304,7 +264,6 @@ class FlextRegistry(s[bool]):
                 return result.value if result.is_success else None
             return None
 
-        # Preserve message_type for route discovery via setattr
         message_type_attr = getattr(handler_for_dispatch, "message_type", None)
         if message_type_attr is not None:
             setattr(_dispatch_wrapper, "message_type", message_type_attr)
@@ -314,10 +273,10 @@ class FlextRegistry(s[bool]):
         can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
         if can_handle_attr is not None:
             setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
-        return _dispatch_wrapper  # type: ignore[return-value]
+        return _dispatch_wrapper
 
     @override
-    def execute(self) -> r[bool]:  # pyrefly: ignore[bad-override]
+    def execute(self) -> r[bool]:
         """Validate registry is properly initialized.
 
         Returns:
@@ -350,16 +309,14 @@ class FlextRegistry(s[bool]):
                     if k.startswith(f"{category}::")
                 ]
                 return r[t.RegisterableService | t.RegistrablePlugin].fail(
-                    f"{category} '{name}' not found. Available: {available}",
+                    f"{category} '{name}' not found. Available: {available}"
                 )
-
             raw_result = self.container.get(key)
             if raw_result.is_failure:
                 return r[t.RegisterableService | t.RegistrablePlugin].fail(
-                    f"Failed to retrieve {category} '{name}': {raw_result.error}",
+                    f"Failed to retrieve {category} '{name}': {raw_result.error}"
                 )
             return r[t.RegisterableService | t.RegistrablePlugin].ok(raw_result.value)
-
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [
@@ -368,17 +325,14 @@ class FlextRegistry(s[bool]):
                 if k.startswith(f"{category}::")
             ]
             return r[t.RegisterableService | t.RegistrablePlugin].fail(
-                f"{category} '{name}' not found. Available: {available}",
+                f"{category} '{name}' not found. Available: {available}"
             )
         return r[t.RegisterableService | t.RegistrablePlugin].ok(
             cls._class_plugin_storage[key]
         )
 
     def list_plugins(
-        self,
-        category: str,
-        *,
-        scope: Literal["instance", "class"] = "instance",
+        self, category: str, *, scope: Literal["instance", "class"] = "instance"
     ) -> r[list[str]]:
         """List all plugins in a category.
 
@@ -415,7 +369,6 @@ class FlextRegistry(s[bool]):
             r[bool]: Success (True) if registered or failure with error details.
 
         """
-        # Normalize metadata to dict for internal use
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
             raw_metadata: object
@@ -423,11 +376,7 @@ class FlextRegistry(s[bool]):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata
-            validated_metadata = m.ConfigMap.model_validate(
-                raw_metadata,
-            )
-
-        # Store metadata if provided (for future use)
+            validated_metadata = m.ConfigMap.model_validate(raw_metadata)
         if validated_metadata is not None:
             metadata_dict = m.ConfigMap.model_validate(validated_metadata)
             metadata_keys_str: str = ",".join(metadata_dict.keys())
@@ -438,12 +387,7 @@ class FlextRegistry(s[bool]):
                 has_metadata=True,
                 metadata_keys=metadata_keys_str,
             )
-
-        # Delegate to container (x.container returns FlextContainer)
-        # Use with_service for fluent API compatibility (returns Self)
         try:
-            # service is already valid registerable type (from method signature)
-            # with_service returns Self for fluent chaining, but we don't need the return value
             _ = self.container.register(name, service)
             return r[bool].ok(value=True)
         except ValueError as e:
@@ -453,8 +397,7 @@ class FlextRegistry(s[bool]):
     def register_bindings(
         self,
         bindings: Mapping[
-            RegistryBindingKey,
-            p.Handler[t.ContainerValue, t.ContainerValue],
+            RegistryBindingKey, p.Handler[t.ContainerValue, t.ContainerValue]
         ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
@@ -467,25 +410,10 @@ class FlextRegistry(s[bool]):
 
         """
         summary = FlextRegistry.Summary()
-
-        # This implementation delegates to dispatcher's register_handler for each binding
-        # But wait - register_handler takes (request, handler) or just (handler) if it's decorated
-        # FlextRegistry.register_handler only takes (handler).
-        # It seems FlextRegistry assumes handlers are self-describing (decorated) or we need to use dispatcher directly.
-
-        # If we look at dispatcher.register_handler signature:
-        # def register_handler(self, request: ..., handler: ... = None)
-
         for message_type, handler in bindings.items():
             message_type_name = getattr(message_type, "__name__", str(message_type))
             key = f"binding::{message_type_name}::{handler.__class__.__name__}"
-
-            # We use the dispatcher directly because registry's register_handler
-            # currently only supports single-argument (self-describing) handlers
-            # Use strict type checking for message_type (it's a type)
             try:
-                # Dispatcher return type is r[m.HandlerRegistrationResult]
-                # We need to adapt it to Registry logic
                 try:
                     m.HandlerRegistrationDetails.model_validate({
                         "registration_id": key,
@@ -495,44 +423,34 @@ class FlextRegistry(s[bool]):
                     })
                 except ValidationError:
                     _ = self._add_registration_error(
-                        key,
-                        "Handler validation failed",
-                        summary,
+                        key, "Handler validation failed", summary
                     )
                     continue
-                handler_for_dispatch: p.Handler[
-                    t.ContainerValue,
-                    t.ContainerValue,
-                ] = handler
+                handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = (
+                    handler
+                )
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
                     dispatcher_handler = FlextRegistry._to_dispatcher_handler(
-                        handler_for_dispatch,
+                        handler_for_dispatch
                     )
-                    # Handlers MUST self-describe via p.Handler protocol
                     if (
                         not getattr(dispatcher_handler, "message_type", None)
-                        and not getattr(dispatcher_handler, "event_type", None)
-                        and not getattr(dispatcher_handler, "query_type", None)
-                        and not getattr(dispatcher_handler, "command_type", None)
+                        and (not getattr(dispatcher_handler, "event_type", None))
+                        and (not getattr(dispatcher_handler, "query_type", None))
+                        and (not getattr(dispatcher_handler, "command_type", None))
                     ):
                         handler_name = getattr(
                             dispatcher_handler,
                             "__name__",
                             dispatcher_handler.__class__.__name__,
                         )
-                        msg = (
-                            f"Handler {handler_name} must implement p.Handler with self-describing "
-                            f"message_type, event_type, query_type, or command_type attribute"
-                        )
+                        msg = f"Handler {handler_name} must implement p.Handler with self-describing message_type, event_type, query_type, or command_type attribute"
                         raise TypeError(msg)
-
-                    raw_result = self._dispatcher.register_handler(
-                        dispatcher_handler,
-                    )
+                    raw_result = self._dispatcher.register_handler(dispatcher_handler)
                     if raw_result.is_failure:
                         reg_result = r[m.HandlerRegistrationResult].fail(
-                            raw_result.error or "Unknown error",
+                            raw_result.error or "Unknown error"
                         )
                     else:
                         reg_result = r[m.HandlerRegistrationResult].ok(
@@ -540,30 +458,26 @@ class FlextRegistry(s[bool]):
                                 handler_name=key,
                                 status=c.Cqrs.CommonStatus.RUNNING,
                                 mode="explicit",
-                            ),
+                            )
                         )
                 else:
-                    # Protocol path: handler must self-describe
                     if not getattr(handler_for_dispatch, "message_type", None):
                         handler_name = getattr(
                             handler_for_dispatch,
                             "__name__",
                             handler_for_dispatch.__class__.__name__,
                         )
-                        msg = (
-                            f"Handler {handler_name} must implement p.Handler with self-describing "
-                            f"message_type attribute for protocol-based registration"
-                        )
+                        msg = f"Handler {handler_name} must implement p.Handler with self-describing message_type attribute for protocol-based registration"
                         raise TypeError(msg)
                     handler_callable = FlextRegistry._to_dispatcher_handler(
                         handler_for_dispatch
                     )
                     protocol_result = self._dispatcher.register_handler(
-                        handler_callable,
+                        handler_callable
                     )
                     if protocol_result.is_failure:
                         reg_result = r[m.HandlerRegistrationResult].fail(
-                            protocol_result.error or "Unknown error",
+                            protocol_result.error or "Unknown error"
                         )
                     else:
                         reg_result = r[m.HandlerRegistrationResult].ok(
@@ -571,35 +485,24 @@ class FlextRegistry(s[bool]):
                                 handler_name=key,
                                 status=c.Cqrs.CommonStatus.RUNNING,
                                 mode="explicit",
-                            ),
+                            )
                         )
-
                 if reg_result.is_success:
-                    # Convert dispatcher result to Registry details
                     val = reg_result.value
                     details = self._create_registration_details(
-                        m.HandlerRegistrationResult.model_validate(val),
-                        key,
+                        m.HandlerRegistrationResult.model_validate(val), key
                     )
                     self._add_successful_registration(key, details, summary)
                 else:
                     self._add_registration_error(
-                        key,
-                        reg_result.error or "Unknown error",
-                        summary,
+                        key, reg_result.error or "Unknown error", summary
                     )
             except Exception as e:
                 self._add_registration_error(key, str(e), summary)
-
         return self._finalize_summary(summary)
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
     def register_handler(
-        self,
-        handler: p.Handler[t.ContainerValue, t.ContainerValue],
+        self, handler: p.Handler[t.ContainerValue, t.ContainerValue]
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -619,21 +522,15 @@ class FlextRegistry(s[bool]):
                 "status": c.Cqrs.CommonStatus.RUNNING,
             })
         except ValidationError:
-            return r[m.HandlerRegistrationDetails].fail(
-                "Handler validation failed",
-            )
-
-        # Propagate context for distributed tracing
+            return r[m.HandlerRegistrationDetails].fail("Handler validation failed")
         handler_name = handler.__class__.__name__
         self._propagate_context(f"register_handler_{handler_name}")
-
         self.logger.debug(
             "Starting handler registration",
             operation="register_handler",
             handler_name=handler_name,
             handler_type=handler.__class__.__name__,
         )
-
         key = FlextRegistry._resolve_handler_key(handler)
         if key in self._registered_keys:
             self.logger.debug(
@@ -642,39 +539,30 @@ class FlextRegistry(s[bool]):
                 handler_name=handler_name,
                 handler_key=key,
             )
-            # Return successful registration details for idempotent registration
             return r[m.HandlerRegistrationDetails].ok(
                 m.HandlerRegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
-                    timestamp="",  # Will be set by model if needed
+                    timestamp="",
                     status=c.Cqrs.CommonStatus.RUNNING,
-                ),
+                )
             )
-
-        # Handler is already the correct type
         self.logger.debug(
             "Registering handler with dispatcher",
             operation="register_handler",
             handler_name=handler_name,
             handler_key=key,
         )
-        # register_handler returns r[m.HandlerRegistrationResult]
-        # register_handler accepts t.ContainerValue | BaseModel, but h works via runtime check
-        # Type narrowing: handler is FlextHandlers which is compatible with t.ContainerValue
         handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = handler
         registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
-                handler_for_dispatch,
+                handler_for_dispatch
             )
-            # Use self-describing standard dispatcher handler
-            raw_result = self._dispatcher.register_handler(
-                dispatcher_handler,
-            )
+            raw_result = self._dispatcher.register_handler(dispatcher_handler)
             if raw_result.is_failure:
                 registration_result = r[m.HandlerRegistrationResult].fail(
-                    raw_result.error or "Unknown error",
+                    raw_result.error or "Unknown error"
                 )
             else:
                 registration_result = r[m.HandlerRegistrationResult].ok(
@@ -682,18 +570,16 @@ class FlextRegistry(s[bool]):
                         handler_name=key,
                         status=c.Cqrs.CommonStatus.RUNNING,
                         mode="explicit",
-                    ),
+                    )
                 )
         else:
             handler_callable = FlextRegistry._to_dispatcher_handler(
                 handler_for_dispatch
             )
-            protocol_result = self._dispatcher.register_handler(
-                handler_callable,
-            )
+            protocol_result = self._dispatcher.register_handler(handler_callable)
             if protocol_result.is_failure:
                 registration_result = r[m.HandlerRegistrationResult].fail(
-                    protocol_result.error or "Unknown error",
+                    protocol_result.error or "Unknown error"
                 )
             else:
                 protocol_value = protocol_result.value
@@ -701,21 +587,19 @@ class FlextRegistry(s[bool]):
                     normalized_result = protocol_value
                 elif isinstance(protocol_value, BaseModel):
                     normalized_result = m.HandlerRegistrationResult.model_validate(
-                        protocol_value.model_dump(),
+                        protocol_value.model_dump()
                     )
                 else:
                     normalized_result = m.HandlerRegistrationResult.model_validate(
-                        protocol_value,
+                        protocol_value
                     )
                 registration_result = r[m.HandlerRegistrationResult].ok(
-                    normalized_result,
+                    normalized_result
                 )
         if registration_result.is_success:
-            # Convert model result to RegistrationDetails
             reg_result = registration_result.value
             reg_details = self._create_registration_details(
-                m.HandlerRegistrationResult.model_validate(reg_result),
-                key,
+                m.HandlerRegistrationResult.model_validate(reg_result), key
             )
             if not reg_details:
                 reg_details = m.HandlerRegistrationDetails(
@@ -724,7 +608,6 @@ class FlextRegistry(s[bool]):
                     timestamp="",
                     status=c.Cqrs.CommonStatus.RUNNING,
                 )
-
             self._registered_keys.add(key)
             self.logger.debug(
                 "Handler registered successfully",
@@ -733,7 +616,6 @@ class FlextRegistry(s[bool]):
                 handler_key=key,
             )
             return r[m.HandlerRegistrationDetails].ok(reg_details)
-
         error_msg = registration_result.error
         self.logger.warning(
             "Handler registration failed",
@@ -743,13 +625,11 @@ class FlextRegistry(s[bool]):
             error=error_msg or "",
             consequence="Handler will not be available for dispatch",
         )
-        # Use error property for type-safe str
         error_str = registration_result.error or "Unknown error"
         return r[m.HandlerRegistrationDetails].fail(error_str)
 
     def register_handlers(
-        self,
-        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
+        self, handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]]
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -762,41 +642,24 @@ class FlextRegistry(s[bool]):
         """
         summary = FlextRegistry.Summary()
         for handler in handlers:
-            # We must determine a key BEFORE registration to track it properly
-            # The register_handler method recalculates this, but we need it here for consistent logging
-            # However, simpler to let register_handler do the work and check result
             result = self.register_handler(handler)
-
-            # Extract key/ID from handler for tracking
             key = FlextRegistry._resolve_handler_key(handler)
-
             if result.is_success:
-                # Type narrow: cast guarantees concrete type for Pyrefly
                 registration_details = result.value
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 self._add_registration_error(
-                    key,
-                    result.error or "Unknown error",
-                    summary,
+                    key, result.error or "Unknown error", summary
                 )
-
         return self._finalize_summary(summary)
 
-    # ------------------------------------------------------------------
-    # Generic Plugin Registry API
-    # ------------------------------------------------------------------
     def register_plugin(
         self,
         category: str,
         name: str,
         plugin: RegistrablePlugin,
         *,
-        validate: Callable[
-            [t.RegistrablePlugin],
-            r[bool],
-        ]
-        | None = None,
+        validate: Callable[[t.RegistrablePlugin], r[bool]] | None = None,
         scope: Literal["instance", "class"] = "instance",
     ) -> r[bool]:
         """Register a plugin with optional validation.
@@ -816,7 +679,6 @@ class FlextRegistry(s[bool]):
         """
         if not name:
             return r[bool].fail(f"{category} name cannot be empty")
-
         if validate:
             try:
                 validation_result = validate(plugin)
@@ -827,7 +689,6 @@ class FlextRegistry(s[bool]):
                     return r[bool].fail(f"Validation failed: {validation_result.error}")
             except (TypeError, ValueError, RuntimeError) as exc:
                 return r[bool].fail(f"Validation error: {exc}")
-
         key = f"{category}::{name}"
         if scope == "instance":
             if key in self._registered_keys:
@@ -837,12 +698,10 @@ class FlextRegistry(s[bool]):
                     name=name,
                 )
                 return r[bool].ok(value=True)
-
             self.container.register(key, plugin)
             self._registered_keys.add(key)
             self.logger.info("Registered %s: %s", category, name)
             return r[bool].ok(value=True)
-
         cls = type(self)
         if key in cls._class_registered_keys:
             self.logger.debug(
@@ -851,7 +710,6 @@ class FlextRegistry(s[bool]):
                 name=name,
             )
             return r[bool].ok(value=True)
-
         cls._class_plugin_storage[key] = plugin
         cls._class_registered_keys.add(key)
         self.logger.info("Registered class plugin %s: %s", category, name)
@@ -878,15 +736,12 @@ class FlextRegistry(s[bool]):
         if scope == "instance":
             if key not in self._registered_keys:
                 return r[bool].fail(f"{category} '{name}' not registered")
-
             self._registered_keys.discard(key)
             self.logger.info("Unregistered %s: %s", category, name)
             return r[bool].ok(value=True)
-
         cls = type(self)
         if key not in cls._class_registered_keys:
             return r[bool].fail(f"{category} '{name}' not registered")
-
         del cls._class_plugin_storage[key]
         cls._class_registered_keys.discard(key)
         self.logger.info("Unregistered class plugin %s: %s", category, name)
@@ -900,14 +755,10 @@ class FlextRegistry(s[bool]):
     ) -> None:
         """Add successful registration to summary."""
         self._registered_keys.add(key)
-        summary.registered.append(
-            registration,
-        )
+        summary.registered.append(registration)
 
     def _create_registration_details(
-        self,
-        reg_result: m.HandlerRegistrationResult,
-        key: str,
+        self, reg_result: m.HandlerRegistrationResult, key: str
     ) -> m.HandlerRegistrationDetails:
         """Create RegistrationDetails from registration result (DRY helper).
 
@@ -919,19 +770,14 @@ class FlextRegistry(s[bool]):
             RegistrationDetails: Validated registration details model
 
         """
-        # Map fields from result to details
         handler_mode_val = reg_result.mode
-        # Map internal mode strings to Cqrs.HandlerType if possible
         handler_mode = c.Cqrs.HandlerType.COMMAND
-        # If mode matches known types, use it (simplified mapping)
         if "query" in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.QUERY
         elif "event" in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.EVENT
-
         timestamp = getattr(reg_result, "timestamp", "")
         status = reg_result.status
-
         return m.HandlerRegistrationDetails(
             registration_id=key,
             handler_mode=FlextRegistry._safe_get_handler_mode(handler_mode),
@@ -940,8 +786,7 @@ class FlextRegistry(s[bool]):
         )
 
     def _finalize_summary(
-        self,
-        summary: FlextRegistry.Summary,
+        self, summary: FlextRegistry.Summary
     ) -> r[FlextRegistry.Summary]:
         """Finalize summary based on error state.
 
@@ -950,14 +795,8 @@ class FlextRegistry(s[bool]):
 
         """
         if summary.errors:
-            return r[FlextRegistry.Summary].fail(
-                "; ".join(summary.errors),
-            )
+            return r[FlextRegistry.Summary].fail("; ".join(summary.errors))
         return r[FlextRegistry.Summary].ok(summary)
-
-    # =========================================================================
-    # Protocol Implementations: RegistrationTracker, BatchProcessor
-    # =========================================================================
 
 
 __all__ = ["FlextRegistry"]

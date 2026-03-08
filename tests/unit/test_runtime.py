@@ -100,8 +100,6 @@ class RuntimeTestCase:
 
     name: str
     operation: RuntimeOperationType
-    # Business Rule: test_input supports both values and types for comprehensive testing
-    # t.ContainerValue | type[object] | None allows testing runtime type checking with various inputs
     test_input: t.ContainerValue | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
@@ -112,10 +110,7 @@ class RuntimeScenarios:
 
     DICT_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "dict_like_empty",
-            RuntimeOperationType.DICT_LIKE_VALID,
-            {},
-            True,
+            "dict_like_empty", RuntimeOperationType.DICT_LIKE_VALID, {}, True
         ),
         RuntimeTestCase(
             "dict_like_single_key",
@@ -130,10 +125,7 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "dict_like_invalid_list",
-            RuntimeOperationType.DICT_LIKE_INVALID,
-            [],
-            False,
+            "dict_like_invalid_list", RuntimeOperationType.DICT_LIKE_INVALID, [], False
         ),
         RuntimeTestCase(
             "dict_like_invalid_string",
@@ -142,10 +134,7 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "dict_like_invalid_int",
-            RuntimeOperationType.DICT_LIKE_INVALID,
-            123,
-            False,
+            "dict_like_invalid_int", RuntimeOperationType.DICT_LIKE_INVALID, 123, False
         ),
         RuntimeTestCase(
             "dict_like_invalid_none",
@@ -154,19 +143,12 @@ class RuntimeScenarios:
             False,
         ),
     ]
-
     LIST_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "list_like_empty",
-            RuntimeOperationType.LIST_LIKE_VALID,
-            [],
-            True,
+            "list_like_empty", RuntimeOperationType.LIST_LIKE_VALID, [], True
         ),
         RuntimeTestCase(
-            "list_like_integers",
-            RuntimeOperationType.LIST_LIKE_VALID,
-            [1, 2, 3],
-            True,
+            "list_like_integers", RuntimeOperationType.LIST_LIKE_VALID, [1, 2, 3], True
         ),
         RuntimeTestCase(
             "list_like_strings",
@@ -175,10 +157,7 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "list_like_invalid_dict",
-            RuntimeOperationType.LIST_LIKE_INVALID,
-            {},
-            False,
+            "list_like_invalid_dict", RuntimeOperationType.LIST_LIKE_INVALID, {}, False
         ),
         RuntimeTestCase(
             "list_like_invalid_string",
@@ -187,10 +166,7 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "list_like_invalid_int",
-            RuntimeOperationType.LIST_LIKE_INVALID,
-            123,
-            False,
+            "list_like_invalid_int", RuntimeOperationType.LIST_LIKE_INVALID, 123, False
         ),
         RuntimeTestCase(
             "list_like_invalid_none",
@@ -199,7 +175,6 @@ class RuntimeScenarios:
             False,
         ),
     ]
-
     JSON_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
             "json_valid_object",
@@ -208,28 +183,16 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "json_valid_empty_array",
-            RuntimeOperationType.JSON_VALID,
-            "[]",
-            True,
+            "json_valid_empty_array", RuntimeOperationType.JSON_VALID, "[]", True
         ),
         RuntimeTestCase(
-            "json_valid_array",
-            RuntimeOperationType.JSON_VALID,
-            "[1, 2, 3]",
-            True,
+            "json_valid_array", RuntimeOperationType.JSON_VALID, "[1, 2, 3]", True
         ),
         RuntimeTestCase(
-            "json_valid_string",
-            RuntimeOperationType.JSON_VALID,
-            '"string"',
-            True,
+            "json_valid_string", RuntimeOperationType.JSON_VALID, '"string"', True
         ),
         RuntimeTestCase(
-            "json_valid_null",
-            RuntimeOperationType.JSON_VALID,
-            "null",
-            True,
+            "json_valid_null", RuntimeOperationType.JSON_VALID, "null", True
         ),
         RuntimeTestCase(
             "json_invalid_plain_text",
@@ -244,10 +207,7 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "json_invalid_empty",
-            RuntimeOperationType.JSON_INVALID,
-            "",
-            False,
+            "json_invalid_empty", RuntimeOperationType.JSON_INVALID, "", False
         ),
         RuntimeTestCase(
             "json_non_string_dict",
@@ -262,13 +222,9 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "json_non_string_none",
-            RuntimeOperationType.JSON_NON_STRING,
-            None,
-            False,
+            "json_non_string_none", RuntimeOperationType.JSON_NON_STRING, None, False
         ),
     ]
-
     IDENTIFIER_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
             "identifier_valid_lowercase",
@@ -331,7 +287,6 @@ class RuntimeScenarios:
             False,
         ),
     ]
-
     GENERIC_ARGS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
             "extract_generic_list",
@@ -370,7 +325,6 @@ class RuntimeScenarios:
             (),
         ),
     ]
-
     SEQUENCE_TYPE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
             "sequence_type_list_of_str",
@@ -415,7 +369,6 @@ class RuntimeScenarios:
             False,
         ),
     ]
-
     SERIALIZATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
             "safe_get_attribute_exists",
@@ -436,13 +389,9 @@ class RuntimeScenarios:
             None,
         ),
     ]
-
     LIBRARY_ACCESS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "structlog_module",
-            RuntimeOperationType.STRUCTLOG_MODULE,
-            None,
-            structlog,
+            "structlog_module", RuntimeOperationType.STRUCTLOG_MODULE, None, structlog
         ),
         RuntimeTestCase(
             "dependency_providers",
@@ -473,11 +422,9 @@ class RuntimeScenarios:
             RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION,
         ),
         RuntimeTestCase(
-            "mixins_runtime_automation",
-            RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION,
+            "mixins_runtime_automation", RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION
         ),
     ]
-
     STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
             "configure_defaults",
@@ -515,15 +462,12 @@ class RuntimeScenarios:
             True,
         ),
     ]
-
     INTEGRATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "constants_patterns",
-            RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
+            "constants_patterns", RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS
         ),
         RuntimeTestCase(
-            "layer_hierarchy",
-            RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY,
+            "layer_hierarchy", RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY
         ),
         RuntimeTestCase(
             "track_service_resolution_success",
@@ -565,9 +509,7 @@ class TestFlextRuntime:
     """Unified test suite for FlextRuntime using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.DICT_LIKE_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.DICT_LIKE_SCENARIOS, ids=lambda c: c.name
     )
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
@@ -576,16 +518,12 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.ContainerValue
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to t.ContainerValue for type compatibility
-        # None and various types are compatible with t.ContainerValue at runtime
         test_input_typed = cast("t.ContainerValue", test_case.test_input)
         result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.LIST_LIKE_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.LIST_LIKE_SCENARIOS, ids=lambda c: c.name
     )
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
@@ -594,16 +532,12 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.ContainerValue
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to t.ContainerValue for type compatibility
-        # None and various types are compatible with t.ContainerValue at runtime
         test_input_typed = cast("t.ContainerValue", test_case.test_input)
         result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.JSON_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.JSON_SCENARIOS, ids=lambda c: c.name
     )
     def test_json_validation(self, test_case: RuntimeTestCase) -> None:
         """Test JSON string validation.
@@ -612,14 +546,12 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_json(
-            cast("t.ContainerValue", test_case.test_input),
+            cast("t.ContainerValue", test_case.test_input)
         )
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.IDENTIFIER_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.IDENTIFIER_SCENARIOS, ids=lambda c: c.name
     )
     def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
         """Test Python identifier validation.
@@ -628,14 +560,12 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_identifier(
-            cast("t.ContainerValue", test_case.test_input),
+            cast("t.ContainerValue", test_case.test_input)
         )
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.SERIALIZATION_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.SERIALIZATION_SCENARIOS, ids=lambda c: c.name
     )
     def test_safe_get_attribute(self, test_case: RuntimeTestCase) -> None:
         """Test safe attribute retrieval."""
@@ -645,10 +575,8 @@ class TestFlextRuntime:
                 attr = "value"
 
             test_obj = TestObj()
-            # Type narrowing: TestObj is compatible with t.ContainerValue
             test_obj_cast: t.ContainerValue = cast(
-                "t.ContainerValue",
-                cast("object", test_obj),
+                "t.ContainerValue", cast("object", test_obj)
             )
             result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
             assert result == "value"
@@ -661,15 +589,11 @@ class TestFlextRuntime:
                 pass
 
             test_obj_default_obj = TestObjDefault()
-            # Type narrowing: TestObjDefault is compatible with t.ContainerValue
             test_obj_default_cast: t.ContainerValue = cast(
-                "t.ContainerValue",
-                cast("object", test_obj_default_obj),
+                "t.ContainerValue", cast("object", test_obj_default_obj)
             )
             result = FlextRuntime.safe_get_attribute(
-                test_obj_default_cast,
-                "missing",
-                "default",
+                test_obj_default_cast, "missing", "default"
             )
             assert result == "default"
         elif (
@@ -680,19 +604,14 @@ class TestFlextRuntime:
             class TestObjNoDefault:
                 pass
 
-            # Business Rule: TestObjNoDefault instances are compatible with t.ContainerValue at runtime
-            # Cast to t.ContainerValue for type compatibility
             test_obj_no_default = cast(
-                "t.ContainerValue",
-                cast("object", TestObjNoDefault()),
+                "t.ContainerValue", cast("object", TestObjNoDefault())
             )
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
             assert result is None
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.GENERIC_ARGS_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.GENERIC_ARGS_SCENARIOS, ids=lambda c: c.name
     )
     def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
         """Test extraction of generic type arguments.
@@ -701,16 +620,12 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to TypeHintSpecifier
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to TypeHintSpecifier for type compatibility
-        # None and various types are compatible with TypeHintSpecifier at runtime
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         args = FlextRuntime.extract_generic_args(test_input_typed)
         assert args == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS, ids=lambda c: c.name
     )
     def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
         """Test sequence type detection.
@@ -719,16 +634,12 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to TypeHintSpecifier
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to TypeHintSpecifier for type compatibility
-        # None and various types are compatible with TypeHintSpecifier at runtime
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         result = FlextRuntime.is_sequence_type(test_input_typed)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS, ids=lambda c: c.name
     )
     def test_external_library_access(self, test_case: RuntimeTestCase) -> None:
         """Test external library access."""
@@ -749,18 +660,14 @@ class TestFlextRuntime:
         ):
             di_container = FlextRuntime.DependencyIntegration.create_container()
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
-                di_container,
-                m.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
+                di_container, m.ConfigMap(root={"database": {"dsn": "sqlite://"}})
             )
             assert isinstance(config_provider, providers.Configuration)
-            # Type narrowing: di_container.config is providers.Configuration
-            # Access nested attributes via getattr for mypy compatibility
             config = di_container.config
             database_config = getattr(config, "database", None)
             assert database_config is not None
             dsn_value = database_config.dsn()
             assert dsn_value == "sqlite://"
-
             module = ModuleType("di_config_module")
 
             @FlextRuntime.DependencyIntegration.inject
@@ -771,12 +678,9 @@ class TestFlextRuntime:
             ) -> str:
                 return dsn
 
-            # Type annotation for dynamic module attribute
             setattr(module, "read_config", read_config)
             di_container.wire(modules=[module])
             try:
-                # Type narrowing: module has read_config attribute after setattr
-                # Mypy limitation: can't infer dynamic module attributes
                 read_func = cast("Callable[[], str]", getattr(module, "read_config"))
                 assert callable(read_func)
                 result = read_func()
@@ -786,19 +690,14 @@ class TestFlextRuntime:
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES:
             di_container = FlextRuntime.DependencyIntegration.create_container()
             factory_provider = FlextRuntime.DependencyIntegration.register_factory(
-                di_container,
-                "token_factory",
-                lambda: {"token": "abc123"},
+                di_container, "token_factory", lambda: {"token": "abc123"}
             )
             object_provider = FlextRuntime.DependencyIntegration.register_object(
-                di_container,
-                "static_value",
-                42,
+                di_container, "static_value", 42
             )
             assert isinstance(factory_provider, providers.Singleton)
             assert factory_provider() == {"token": "abc123"}
             assert object_provider() == 42
-
             module = ModuleType("di_factory_module")
 
             @FlextRuntime.DependencyIntegration.inject
@@ -810,14 +709,11 @@ class TestFlextRuntime:
                     "static_value"
                 ],
             ) -> tuple[dict[str, str], int]:
-                return token, static
+                return (token, static)
 
-            # Type annotation for dynamic module attribute
             setattr(module, "consume", consume)
             di_container.wire(modules=[module])
             try:
-                # Type narrowing: module has consume attribute after setattr
-                # Mypy limitation: can't infer dynamic module attributes
                 consume_factory_func = cast(
                     "Callable[[], tuple[dict[str, str], int]]",
                     getattr(module, "consume"),
@@ -852,11 +748,9 @@ class TestFlextRuntime:
                     "api_client"
                 ],
             ) -> tuple[int, dict[str, int], bool, dict[str, bool]]:
-                return static_value, token, config_flag, resource
+                return (static_value, token, config_flag, resource)
 
-            # Type annotation for dynamic module attribute
             setattr(module, "consume", consume_automation)
-
             di_container = FlextRuntime.DependencyIntegration.create_container(
                 config=m.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
@@ -869,10 +763,7 @@ class TestFlextRuntime:
                 wire_modules=[module],
                 factory_cache=False,
             )
-
             try:
-                # Type narrowing: module has consume attribute after setattr
-                # Mypy limitation: can't infer dynamic module attributes
                 consume_automation_func = cast(
                     "Callable[[], tuple[int, dict[str, int], bool, dict[str, bool]]]",
                     getattr(module, "consume"),
@@ -882,7 +773,6 @@ class TestFlextRuntime:
                     consume_automation_func()
                 )
                 second_static, second_token, _, _ = consume_automation_func()
-
                 assert first_static == second_static == 7
                 assert config_enabled is True
                 assert resource_value == {"connected": True}
@@ -909,11 +799,9 @@ class TestFlextRuntime:
                     "api_client"
                 ],
             ) -> tuple[bool, dict[str, int], dict[str, bool]]:
-                return flag, token, resource
+                return (flag, token, resource)
 
-            # Type annotation for dynamic module attribute
             setattr(module, "consume", consume_service)
-
             runtime_raw = s._create_runtime(
                 config_overrides={"app_name": "runtime-service"},
                 services={"feature_flag": True},
@@ -925,12 +813,8 @@ class TestFlextRuntime:
                 },
                 wire_modules=[module],
             )
-            # Type narrowing: runtime is BaseModel, but is actually m.ServiceRuntime
             runtime = runtime_raw
-
             try:
-                # Type narrowing: module has consume attribute after setattr
-                # Mypy limitation: can't infer dynamic module attributes
                 consume_service_func = cast(
                     "Callable[[], tuple[bool, dict[str, int], dict[str, bool]]]",
                     getattr(module, "consume"),
@@ -938,15 +822,12 @@ class TestFlextRuntime:
                 assert callable(consume_service_func)
                 feature_flag, first_token, resource = consume_service_func()
                 _, second_token, _ = consume_service_func()
-
                 assert runtime.config.app_name == "runtime-service"
                 assert feature_flag is True
                 assert resource == {"connected": True}
                 assert first_token["count"] == 1
                 assert second_token["count"] == 2
             finally:
-                # Type narrowing: runtime.container is p.DI protocol
-                # Cast to FlextContainer to access private _di_bridge attribute
                 container = cast("FlextContainer", runtime.container)
                 container._di_bridge.unwire()
         elif test_case.operation == RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION:
@@ -955,6 +836,7 @@ class TestFlextRuntime:
                 @classmethod
                 @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+
                     def counter_factory() -> t.ContainerValue:
                         return cast("t.ContainerValue", {"count": 1})
 
@@ -965,52 +847,31 @@ class TestFlextRuntime:
                     )
 
             component = RuntimeAwareComponent()
-
             runtime_first = component._get_runtime()
             runtime_second = component._get_runtime()
-
             assert runtime_first is runtime_second
             assert component.config.app_name == "runtime-aware"
             assert component.context is runtime_first.context
-
-            # Type parameter must be explicit for mypy inference
-            # Mypy limitation: generic method syntax get[T]() not fully supported
-            # Call method directly and let runtime type inference work
-            # Mypy infers Result[Never] for generic methods without explicit type parameter
-            # Annotate explicitly to help mypy
             service_result_raw: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
-                component.container.get("preseed"),
+                "r[t.ContainerValue]", component.container.get("preseed")
             )
-            # Type narrowing: container.get returns r[T], cast to expected type
             service_result: r[t.ContainerValue] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
-
-            # Type parameter must be explicit for mypy inference
-            # Mypy limitation: generic method syntax get[T]() not fully supported
-            # Call method directly and let runtime type inference work
-            # Mypy infers Result[Never] for generic methods without explicit type parameter
-            # Annotate explicitly to help mypy
             factory_result_raw: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
-                component.container.get("counter"),
+                "r[t.ContainerValue]", component.container.get("counter")
             )
-            # Type narrowing: container.get returns r[T], cast to expected type
             factory_result: r[t.ContainerValue] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS, ids=lambda c: c.name
     )
     def test_structlog_configuration(self, test_case: RuntimeTestCase) -> None:
         """Test structlog configuration."""
         if test_case.should_reset_config:
             RuntimeScenarios.reset_structlog_config()
-
         if test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS:
             FlextRuntime.configure_structlog()
             assert FlextRuntime._structlog_configured is True
@@ -1039,11 +900,8 @@ class TestFlextRuntime:
                 event_dict["custom"] = True
                 return event_dict
 
-            # Business Rule: Callable processors are compatible with t.ContainerValue at runtime
-            # structlog accepts callable processors for custom processing
             processor_typed: t.ContainerValue = cast(
-                "t.ContainerValue",
-                custom_processor,
+                "t.ContainerValue", custom_processor
             )
             FlextRuntime.configure_structlog(additional_processors=[processor_typed])
             assert FlextRuntime._structlog_configured is True
@@ -1053,9 +911,7 @@ class TestFlextRuntime:
             assert FlextRuntime._structlog_configured is True
 
     @pytest.mark.parametrize(
-        "test_case",
-        RuntimeScenarios.INTEGRATION_SCENARIOS,
-        ids=lambda c: c.name,
+        "test_case", RuntimeScenarios.INTEGRATION_SCENARIOS, ids=lambda c: c.name
     )
     def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
         """Test FlextRuntime integration scenarios."""
@@ -1078,9 +934,7 @@ class TestFlextRuntime:
             FlextRuntime.configure_structlog()
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_service_resolution(
-                "cache",
-                resolved=False,
-                error_message="Connection refused",
+                "cache", resolved=False, error_message="Connection refused"
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -1125,8 +979,7 @@ class TestFlextRuntime:
         ):
             FlextRuntime.configure_structlog()
             FlextRuntime.Integration.setup_service_infrastructure(
-                service_name="minimal-service",
-                enable_context_correlation=True,
+                service_name="minimal-service", enable_context_correlation=True
             )
             assert FlextContext.Variables.ServiceName.get() == "minimal-service"
             assert FlextContext.Correlation.get_correlation_id() is not None

@@ -15,16 +15,13 @@ from flext_core import r, s, t
 from flext_tests import FlextTestsDomains
 from tests.test_utils import assertion_helpers
 
-# ==================== REAL SERVICE CLASSES ====================
-
-# Use shared TestDomainResult from flext_tests
 TestDomainResult = FlextTestsDomains.TestDomainResult
 
 
 class TestService(s[TestDomainResult]):
     """Test service for coverage tests."""
 
-    __test__ = False  # Not a test class, just a helper class
+    __test__ = False
 
     def __init__(self, **data: t.ContainerValue) -> None:
         """Initialize test service."""
@@ -39,7 +36,7 @@ class TestService(s[TestDomainResult]):
 class TestServiceWithValidation(s[TestDomainResult]):
     """Test service with validation."""
 
-    __test__ = False  # Not a test class, just a helper class
+    __test__ = False
 
     def __init__(self, **data: t.ContainerValue) -> None:
         """Initialize test service."""
@@ -51,9 +48,6 @@ class TestServiceWithValidation(s[TestDomainResult]):
         return self.ok(TestDomainResult("validated"))
 
 
-# ==================== COVERAGE TESTS ====================
-
-
 class TestService100Coverage:
     """Real tests to achieve 100% service coverage."""
 
@@ -61,33 +55,26 @@ class TestService100Coverage:
         """Test validate_business_rules."""
         service = TestService()
         result = service.validate_business_rules()
-
-        # Default implementation should succeed
         _ = assertion_helpers.assert_flext_result_success(result) or result.is_failure
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""
         service = TestService()
         is_valid = service.is_valid()
-
         assert isinstance(is_valid, bool)
 
     def test_get_service_info(self) -> None:
         """Test get_service_info."""
         service = TestService()
         info = service.get_service_info()
-
         assert isinstance(info, dict)
-        # Check for any of the possible keys that might be in service info
         assert len(info) > 0
-        # Service info should contain at least service_type or similar
         assert "service_type" in info or "service_name" in info or "class_name" in info
 
     def test_execute_success(self) -> None:
         """Test execute method."""
         service = TestService()
         result = service.execute()
-
         assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, TestDomainResult)
 
@@ -95,7 +82,6 @@ class TestService100Coverage:
         """Test ok method."""
         service = TestService()
         result = service.ok(TestDomainResult("test"))
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value.value == "test"
 
@@ -103,15 +89,11 @@ class TestService100Coverage:
         """Test result property."""
         service = TestService()
         result = service.result
-
         assert isinstance(result, TestDomainResult)
 
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""
         service = TestService()
-        # Note: auto_execute is not a default attribute in s base
-        # It's only present when explicitly defined as ClassVar in subclasses
-        # Default behavior is manual execution (auto_execute=False equivalent)
         assert (
             not hasattr(service, "auto_execute")
             or getattr(service, "auto_execute", False) is False
@@ -121,5 +103,4 @@ class TestService100Coverage:
         """Test validate_business_rules can be overridden."""
         service = TestServiceWithValidation()
         result = service.validate_business_rules()
-
         assert isinstance(result, r)

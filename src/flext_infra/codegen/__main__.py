@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -33,16 +32,12 @@ from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 def main(argv: list[str] | None = None) -> int:
     """Run codegen service CLI."""
     FlextRuntime.ensure_structlog_configured()
-
     parser = argparse.ArgumentParser(
-        description="Code generation tools for workspace standardization",
+        description="Code generation tools for workspace standardization"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # -- lazy-init subcommand ------------------------------------------------
     lazy_parser = subparsers.add_parser(
-        "lazy-init",
-        help="Generate/refresh PEP 562 lazy-import __init__.py files",
+        "lazy-init", help="Generate/refresh PEP 562 lazy-import __init__.py files"
     )
     _ = lazy_parser.add_argument(
         "--check",
@@ -55,11 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
-
-    # -- census subcommand --------------------------------------------------
     census_parser = subparsers.add_parser(
-        "census",
-        help="Count namespace violations across workspace projects",
+        "census", help="Count namespace violations across workspace projects"
     )
     _ = census_parser.add_argument(
         "--workspace",
@@ -74,11 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
-
-    # -- scaffold subcommand ------------------------------------------------
     scaffold_parser = subparsers.add_parser(
-        "scaffold",
-        help="Generate missing base modules in src/ and tests/",
+        "scaffold", help="Generate missing base modules in src/ and tests/"
     )
     _ = scaffold_parser.add_argument(
         "--workspace",
@@ -91,11 +80,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Report what would be created without writing files",
     )
-
-    # -- auto-fix subcommand ------------------------------------------------
     fix_parser = subparsers.add_parser(
-        "auto-fix",
-        help="Auto-fix namespace violations (move Finals/TypeVars)",
+        "auto-fix", help="Auto-fix namespace violations (move Finals/TypeVars)"
     )
     _ = fix_parser.add_argument(
         "--workspace",
@@ -108,8 +94,6 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Report what would be fixed without modifying files",
     )
-
-    # -- pipeline subcommand ------------------------------------------------
     pipeline_parser = subparsers.add_parser(
         "pipeline",
         help="Run full codegen pipeline: census → scaffold → auto-fix → lazy-init → census",
@@ -121,9 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Workspace root directory (default: cwd)",
     )
     _ = pipeline_parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report changes without modifying files",
+        "--dry-run", action="store_true", help="Report changes without modifying files"
     )
     _ = pipeline_parser.add_argument(
         "--format",
@@ -132,8 +114,6 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
-
-    # -- constants-quality-gate subcommand -----------------------------------
     quality_parser = subparsers.add_parser(
         "constants-quality-gate",
         help="Run constants migration quality gate and before/after diff",
@@ -164,9 +144,7 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
-
     args = parser.parse_args(argv)
-
     if args.command == "lazy-init":
         return _handle_lazy_init(args)
     if args.command == "census":
@@ -179,7 +157,6 @@ def main(argv: list[str] | None = None) -> int:
         return _handle_pipeline(args)
     if args.command == "constants-quality-gate":
         return _handle_constants_quality_gate(args)
-
     output.error(f"unknown command: {args.command}")
     return 1
 
@@ -198,24 +175,22 @@ def _handle_census(args: argparse.Namespace) -> int:
     """Handle the ``census`` subcommand."""
     census = FlextInfraCodegenCensus(workspace_root=args.workspace.resolve())
     reports = census.run()
-
     if args.output_format == "json":
-        data = {
+        {
             c.Infra.ReportKeys.PROJECTS: [rpt.model_dump() for rpt in reports],
             "total_violations": sum(rpt.total for rpt in reports),
             "total_fixable": sum(rpt.fixable for rpt in reports),
         }
-        print(json.dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         total_v = sum(rpt.total for rpt in reports)
         total_f = sum(rpt.fixable for rpt in reports)
         for rpt in reports:
             if rpt.total > 0:
                 output.info(
-                    f"  {rpt.project}: {rpt.total} violations ({rpt.fixable} fixable)",
+                    f"  {rpt.project}: {rpt.total} violations ({rpt.fixable} fixable)"
                 )
         output.info(
-            f"Total: {total_v} violations ({total_f} fixable) across {len(reports)} projects",
+            f"Total: {total_v} violations ({total_f} fixable) across {len(reports)} projects"
         )
     return 0
 
@@ -259,28 +234,17 @@ def _handle_auto_fix(args: argparse.Namespace) -> int:
 def _handle_pipeline(args: argparse.Namespace) -> int:
     """Handle the ``pipeline`` subcommand (full codegen cycle)."""
     workspace = args.workspace.resolve()
-
-    # Phase 1: Census before
     census = FlextInfraCodegenCensus(workspace_root=workspace)
     reports_before = census.run()
-
-    # Phase 2: Scaffold
     scaffolder = FlextInfraCodegenScaffolder(workspace_root=workspace)
     scaffold_results = scaffolder.run()
-
-    # Phase 3: Auto-fix
     fixer = FlextInfraCodegenFixer(workspace_root=workspace)
     fix_results = fixer.run()
-
-    # Phase 4: Lazy-init (with tests)
     generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
     generator.run(check_only=args.dry_run, scan_tests=True)
-
-    # Phase 5: Census after
     reports_after = census.run()
-
     if args.output_format == "json":
-        data = {
+        {
             "census_before": {
                 "total_violations": sum(r.total for r in reports_before),
                 "total_fixable": sum(r.fixable for r in reports_before),
@@ -298,16 +262,15 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
                 "total_fixable": sum(r.fixable for r in reports_after),
             },
         }
-        print(json.dumps(data))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         before_v = sum(r.total for r in reports_before)
         after_v = sum(r.total for r in reports_after)
         output.info(f"Census before: {before_v} violations")
         output.info(
-            f"Scaffold: {sum(len(r.files_created) for r in scaffold_results)} files created",
+            f"Scaffold: {sum(len(r.files_created) for r in scaffold_results)} files created"
         )
         output.info(
-            f"Auto-fix: {sum(len(r.violations_fixed) for r in fix_results)} violations fixed",
+            f"Auto-fix: {sum(len(r.violations_fixed) for r in fix_results)} violations fixed"
         )
         output.info(f"Census after: {after_v} violations")
         output.info(f"Improvement: {before_v - after_v} violations resolved")
@@ -322,12 +285,8 @@ def _handle_constants_quality_gate(args: argparse.Namespace) -> int:
         baseline_file=args.baseline_file,
     )
     report = gate.run()
-
     if args.output_format == "json":
-        print(json.dumps(report, ensure_ascii=True))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
-    else:
-        print(FlextInfraCodegenConstantsQualityGate.render_text(report), end="")  # noqa: T201  # JUSTIFIED: CLI text output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
-
+        pass
     verdict = str(report.get("verdict", "FAIL"))
     return 0 if FlextInfraCodegenConstantsQualityGate.is_success_verdict(verdict) else 1
 

@@ -77,7 +77,6 @@ class DependencyAnalyzer:
         """Build and cache the inter-project import graph."""
         if self._graph_cache is not None:
             return r[dict[str, list[str]]].ok(self._graph_cache)
-
         graph: dict[str, set[str]] = {p.name: set() for p in self._projects}
         for project in self._projects:
             files = self._find_import_candidate_files(project)
@@ -91,7 +90,6 @@ class DependencyAnalyzer:
                     dep = self._pkg_index.get(mod_root)
                     if dep and dep != project.name:
                         graph[project.name].add(dep)
-
         ordered = {k: sorted(v) for k, v in sorted(graph.items())}
         self._graph_cache = ordered
         return r[dict[str, list[str]]].ok(ordered)
@@ -121,8 +119,6 @@ class DependencyAnalyzer:
         except CycleError:
             return r[list[str]].ok(sorted(graph))
 
-    # ── private helpers ─────────────────────────────────────────
-
     def _discover_projects(self) -> list[m.Infra.Refactor.ProjectInfo]:
         projects: list[m.Infra.Refactor.ProjectInfo] = []
         for candidate in sorted(self._workspace_root.iterdir()):
@@ -151,7 +147,7 @@ class DependencyAnalyzer:
             elif (
                 p.is_file()
                 and p.suffix == c.Infra.Extensions.PYTHON
-                and p.stem != "__init__"
+                and (p.stem != "__init__")
             ):
                 roots.add(p.stem)
         return roots

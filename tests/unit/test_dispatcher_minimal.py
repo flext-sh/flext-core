@@ -10,11 +10,6 @@ from __future__ import annotations
 
 from flext_core import FlextDispatcher, c, m, t
 
-# ---------------------------------------------------------------------------
-# Test handlers — all must satisfy t.HandlerLike (Callable[..., ...])
-# by implementing __call__; keep handle() for HandleProtocol compatibility.
-# ---------------------------------------------------------------------------
-
 
 class EchoHandler:
     """Handler that echoes command_type back."""
@@ -77,11 +72,6 @@ class EventSubscriber:
         self.handle(event)
 
 
-# ---------------------------------------------------------------------------
-# Tests: register_handler
-# ---------------------------------------------------------------------------
-
-
 def test_register_handler_with_message_type() -> None:
     """Handler with message_type attribute registers successfully."""
     dispatcher = FlextDispatcher()
@@ -119,16 +109,10 @@ def test_register_handler_as_event_subscriber() -> None:
     assert res.is_success
 
 
-# ---------------------------------------------------------------------------
-# Tests: dispatch
-# ---------------------------------------------------------------------------
-
-
 def test_dispatch_command_success() -> None:
     """Dispatch a Command to its registered handler."""
     dispatcher = FlextDispatcher()
     dispatcher.register_handler(EchoHandler())
-
     cmd = m.Command(command_type="EchoRoute")
     result = dispatcher.dispatch(cmd)
     assert result.is_success
@@ -148,7 +132,6 @@ def test_dispatch_handler_exception_returns_failure() -> None:
     """Handler that raises returns a failure result."""
     dispatcher = FlextDispatcher()
     dispatcher.register_handler(ExplodingHandler())
-
     cmd = m.Command(command_type="ExplodeRoute")
     result = dispatcher.dispatch(cmd)
     assert result.is_failure
@@ -160,7 +143,6 @@ def test_dispatch_auto_discovery_handler() -> None:
     """Auto-discovery handler is found via can_handle fallback."""
     dispatcher = FlextDispatcher()
     dispatcher.register_handler(AutoDiscoveryHandler())
-
     cmd = AutoCommand()
     result = dispatcher.dispatch(cmd)
     assert result.is_success
@@ -172,16 +154,10 @@ def test_dispatch_after_handler_removal_fails() -> None:
     dispatcher = FlextDispatcher()
     dispatcher.register_handler(EchoHandler())
     dispatcher._handlers.clear()
-
     cmd = m.Command(command_type="EchoRoute")
     result = dispatcher.dispatch(cmd)
     assert result.is_failure
     assert result.error_code == c.Errors.COMMAND_HANDLER_NOT_FOUND
-
-
-# ---------------------------------------------------------------------------
-# Tests: publish
-# ---------------------------------------------------------------------------
 
 
 def test_publish_event_to_subscriber() -> None:
@@ -189,11 +165,7 @@ def test_publish_event_to_subscriber() -> None:
     dispatcher = FlextDispatcher()
     subscriber = EventSubscriber()
     dispatcher.register_handler(subscriber, is_event=True)
-
-    event = m.Event(
-        event_type="OrderCreated",
-        aggregate_id="order-1",
-    )
+    event = m.Event(event_type="OrderCreated", aggregate_id="order-1")
     res = dispatcher.publish(event)
     assert res.is_success
     assert len(subscriber.received) == 1
@@ -202,9 +174,6 @@ def test_publish_event_to_subscriber() -> None:
 def test_publish_no_subscribers_succeeds() -> None:
     """Publishing with no subscribers succeeds silently."""
     dispatcher = FlextDispatcher()
-    event = m.Event(
-        event_type="NobodyListening",
-        aggregate_id="agg-1",
-    )
+    event = m.Event(event_type="NobodyListening", aggregate_id="agg-1")
     res = dispatcher.publish(event)
     assert res.is_success

@@ -12,25 +12,16 @@ from pydantic import BaseModel
 
 from flext_core import c, m, r, u
 
-
-class _Cfg(BaseModel):
-    x: int = 0
-    y: str = "a"
-
-
-class _BadCopyModel(BaseModel):
-    x: int = 1
+from ._models import _BadCopyModel, _Cfg
 
 
 def test_merge_defaults_and_dump_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-
     merged = u.Model.merge_defaults(_Cfg, {"x": 1, "y": "a"}, {"x": 2})
     assert merged.is_success
     assert merged.value.x == 2
-
     dumped = u.Model.dump(_Cfg(x=3, y="z"), exclude_none=True)
     assert dumped["x"] == 3
 
@@ -48,12 +39,10 @@ def test_update_success_path_returns_ok_result() -> None:
 
 def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.Model.normalize_to_pydantic_dict(None) == {}
-
     data = m.ConfigMap(root={"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]})
     normalized = u.Model.normalize_to_pydantic_dict(data)
     assert normalized["a"] == 1
     assert isinstance(normalized["b"], str)
-
     assert u.Model._normalize_to_pydantic_value(None) == ""
     assert u.Model._normalize_to_pydantic_value(True) is True
     assert u.Model._normalize_to_pydantic_value(1) == 1

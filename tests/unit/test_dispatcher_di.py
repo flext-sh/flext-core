@@ -25,9 +25,6 @@ class TestDispatcherDI:
 
     def test_dispatcher_has_handlers(self) -> None:
         """Test dispatcher has handlers registry."""
-        # Act - FlextDispatcher creates handlers registry internally
         dispatcher = FlextDispatcher()
-
-        # Assert - dispatcher has handlers registry
         assert dispatcher._handlers is not None
         assert isinstance(dispatcher._handlers, dict)

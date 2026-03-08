@@ -30,15 +30,12 @@ class FlextInfraRefactorMigrateToClassMRO:
         normalized_target = self._normalize_target(target=target)
         scan_results, files_scanned = (
             FlextInfraRefactorMROMigrationScanner.scan_workspace(
-                workspace_root=self._workspace_root,
-                target=normalized_target,
+                workspace_root=self._workspace_root, target=normalized_target
             )
         )
-
         warnings: list[str] = []
         errors: list[str] = []
         stash_ref = ""
-
         if apply_changes:
             stash_result = self._safety.create_pre_transformation_stash(
                 self._workspace_root
@@ -47,7 +44,6 @@ class FlextInfraRefactorMigrateToClassMRO:
                 errors.append(stash_result.error or "failed to create rollback stash")
             else:
                 stash_ref = stash_result.unwrap()
-
         moved_index: dict[str, dict[str, str]] = {}
         migrations: list[m.Infra.Refactor.MROFileMigration] = []
         for scan_result in scan_results:
@@ -57,10 +53,9 @@ class FlextInfraRefactorMigrateToClassMRO:
                         scan_result=scan_result
                     )
                 )
-            except Exception as exc:  # pragma: no cover - defensive path
+            except Exception as exc:
                 errors.append(f"{scan_result.file}: {exc}")
                 continue
-
             if len(migration.moved_symbols) == 0:
                 continue
             migrations.append(migration)
@@ -71,7 +66,6 @@ class FlextInfraRefactorMigrateToClassMRO:
                     updated_source,
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
-
         rewrite_results = FlextInfraRefactorMROImportRewriter.rewrite_workspace(
             workspace_root=self._workspace_root,
             moved_index=moved_index,
@@ -79,24 +73,19 @@ class FlextInfraRefactorMigrateToClassMRO:
         )
         rewrites = tuple(
             m.Infra.Refactor.MRORewriteResult(
-                file=item.file,
-                replacements=item.replacements,
+                file=item.file, replacements=item.replacements
             )
             for item in rewrite_results
         )
-
         remaining_violations, mro_failures = (
             FlextInfraRefactorMROMigrationValidator.validate(
-                workspace_root=self._workspace_root,
-                target=normalized_target,
+                workspace_root=self._workspace_root, target=normalized_target
             )
         )
-
         if apply_changes and stash_ref:
             warnings.append(
                 f"Rollback available with: git stash apply --index {stash_ref}"
             )
-
         return m.Infra.Refactor.MROMigrationReport(
             workspace=str(self._workspace_root),
             target=normalized_target,
@@ -118,7 +107,7 @@ class FlextInfraRefactorMigrateToClassMRO:
         lines = [
             f"Workspace: {report.workspace}",
             f"Target: {report.target}",
-            f"Mode: {'dry-run' if report.dry_run else 'apply'}",
+            f"Mode: {('dry-run' if report.dry_run else 'apply')}",
             f"Files scanned: {report.files_scanned}",
             f"Files with candidates: {report.files_with_candidates}",
             f"Migrations: {len(report.migrations)}",

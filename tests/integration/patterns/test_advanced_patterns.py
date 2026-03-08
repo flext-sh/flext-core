@@ -21,12 +21,9 @@ import pytest
 from flext_core import FlextResult, t, u
 from tests.typings import TestsFlextTypes
 
-# TypedDict definitions from consolidated test typings
 FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
 FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
 MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
-
-# Type alias for test functions
 TestFunction = Callable[[object], None]
 
 
@@ -44,7 +41,6 @@ def mark_test_pattern[F: Callable[..., None]](pattern: str) -> Callable[[F], F]:
         Returns: The decorated function with pattern attribute.
 
         """
-        # Use setattr for dynamic attribute assignment
         setattr(func, "_test_pattern", pattern)
         return func
 
@@ -82,9 +78,7 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(
-        self,
-        _description: str,
-        **kwargs: t.ContainerValue,
+        self, _description: str, **kwargs: t.ContainerValue
     ) -> GivenWhenThenBuilder:
         """Given method.
 
@@ -96,9 +90,7 @@ class GivenWhenThenBuilder:
         return self
 
     def when(
-        self,
-        _description: str,
-        **kwargs: t.ContainerValue,
+        self, _description: str, **kwargs: t.ContainerValue
     ) -> GivenWhenThenBuilder:
         """When method.
 
@@ -110,9 +102,7 @@ class GivenWhenThenBuilder:
         return self
 
     def then(
-        self,
-        _description: str,
-        **kwargs: t.ContainerValue,
+        self, _description: str, **kwargs: t.ContainerValue
     ) -> GivenWhenThenBuilder:
         """Then method.
 
@@ -151,8 +141,6 @@ class GivenWhenThenBuilder:
 
         """
 
-        # Convert dict values to match MockScenarioData type requirements
-        # MockScenarioData expects dict[str, str | int | bool] for given/when/then
         def convert_dict_value(value: object) -> str | int | bool:
             """Convert object to str | int | bool."""
             if isinstance(value, (str, int, bool)):
@@ -161,12 +149,9 @@ class GivenWhenThenBuilder:
                 return int(value)
             return str(value)
 
-        # Use mapper to transform dict values and convert keys to strings
         given_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._given,
-                {k: str(k) for k in self._given},
-                keep_unmapped=True,
+                self._given, {k: str(k) for k in self._given}, keep_unmapped=True
             ).value
             if isinstance(self._given, dict)
             else {},
@@ -177,9 +162,7 @@ class GivenWhenThenBuilder:
         }
         when_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._when,
-                {k: str(k) for k in self._when},
-                keep_unmapped=True,
+                self._when, {k: str(k) for k in self._when}, keep_unmapped=True
             ).value
             if isinstance(self._when, dict)
             else {},
@@ -190,9 +173,7 @@ class GivenWhenThenBuilder:
         }
         then_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._then,
-                {k: str(k) for k in self._then},
-                keep_unmapped=True,
+                self._then, {k: str(k) for k in self._then}, keep_unmapped=True
             ).value
             if isinstance(self._then, dict)
             else {},
@@ -201,7 +182,6 @@ class GivenWhenThenBuilder:
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
-
         scenario_data: MockScenarioData = {
             "given": given_converted,
             "when": when_converted,
@@ -280,8 +260,6 @@ class FlextTestBuilder:
             FlextTestBuilder: Self for method chaining.
 
         """
-        # No-op stub to keep example API; could attach schema metadata here
-        # Store kwargs for potential future use
         self._validation_rules = kwargs
         return self
 
@@ -307,8 +285,7 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
-        self,
-        **kwargs: str | int | bool | list[str],
+        self, **kwargs: str | int | bool | list[str]
     ) -> ParameterizedTestBuilder:
         """add_case method.
 
@@ -320,8 +297,7 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self,
-        cases: list[FixtureCaseDict],
+        self, cases: list[FixtureCaseDict]
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -333,8 +309,7 @@ class ParameterizedTestBuilder:
         return self
 
     def add_failure_cases(
-        self,
-        cases: list[FixtureCaseDict],
+        self, cases: list[FixtureCaseDict]
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -427,14 +402,11 @@ class AssertionBuilder:
         """
 
         def assertion() -> None:
-            # Check if item is in the data container
             if isinstance(self.data, (list, tuple, set)):
-                # Type-safe check for sequence types
                 assert item in self.data
             elif isinstance(self.data, str):
                 assert str(item) in self.data
-            else:  # self.data is dict
-                # For dict, check if item is a key
+            else:
                 assert item in self.data
 
         self._assertions.append(assertion)
@@ -461,7 +433,7 @@ class AssertionBuilder:
                 list[t.ContainerValue]
                 | dict[str, t.ContainerValue]
                 | str
-                | tuple[object, ...],
+                | tuple[object, ...]
             ],
             bool,
         ],
@@ -510,7 +482,6 @@ class TestAdvancedPatterns:
             .with_priority("high")
             .build()
         )
-
         assert scenario.name == "user_registration"
         assert scenario.given["email"] == "test@example.com"
         assert scenario.when["action"] == "register"
@@ -529,8 +500,6 @@ class TestAdvancedPatterns:
             .with_metadata(environment="test", version="1.0")
             .build()
         )
-
-        # FixtureDataDict has total=False, so use .get() for optional fields
         assert test_data.get("id") == "test-123"
         assert test_data.get("correlation_id") == "corr-456"
         assert test_data.get("name") == "John Doe"
@@ -544,31 +513,19 @@ class TestAdvancedPatterns:
         """Test parameterized test builder pattern."""
         builder = (
             ParameterizedTestBuilder("email_validation")
-            .add_success_cases(
-                [
-                    {
-                        "email": "valid@example.com",
-                        "input": "valid@example.com",
-                    },
-                    {
-                        "email": "user.name@domain.co.uk",
-                        "input": "user.name@domain.co.uk",
-                    },
-                ],
-            )
-            .add_failure_cases(
-                [
-                    {"email": "invalid-email", "input": "invalid-email"},
-                    {"email": "@domain.com", "input": "@domain.com"},
-                ],
-            )
+            .add_success_cases([
+                {"email": "valid@example.com", "input": "valid@example.com"},
+                {"email": "user.name@domain.co.uk", "input": "user.name@domain.co.uk"},
+            ])
+            .add_failure_cases([
+                {"email": "invalid-email", "input": "invalid-email"},
+                {"email": "@domain.com", "input": "@domain.com"},
+            ])
         )
-
         params = builder.build_pytest_params()
         assert len(params) == 4
-        assert params[0][2] is True  # success case
-        assert params[2][2] is False  # failure case
-
+        assert params[0][2] is True
+        assert params[2][2] is False
         test_ids = builder.build_test_ids()
         assert len(test_ids) == 4
         assert "valid@example.com" in test_ids
@@ -581,15 +538,12 @@ class TestAdvancedPatterns:
             "age": 30,
             "active": True,
         }
-
         assertion_builder = (
             AssertionBuilder(test_data)
             .assert_type(dict)
             .assert_contains("name")
             .assert_equals({"name": "John", "age": 30, "active": True})
         )
-
-        # All assertions should pass
         assertion_builder.execute_all()
 
     @mark_test_pattern("mock_scenario")
@@ -602,12 +556,7 @@ class TestAdvancedPatterns:
             "tags": ["api", "integration"],
             "priority": "medium",
         }
-
-        scenario = MockScenario(
-            "api_request",
-            scenario_data,
-        )
-
+        scenario = MockScenario("api_request", scenario_data)
         assert scenario.name == "api_request"
         assert scenario.given["user"] == "authenticated"
         assert scenario.when["action"] == "request_data"
@@ -618,7 +567,6 @@ class TestAdvancedPatterns:
     def test_advanced_service_patterns(self) -> None:
         """Test advanced service patterns with real functionality."""
 
-        # Real service implementation demonstrating state transitions
         class ProcessingService:
             """Real service for testing state transitions."""
 
@@ -631,42 +579,26 @@ class TestAdvancedPatterns:
             def process(self, data: str) -> FlextResult[dict[str, str]]:
                 """Process data with state transitions."""
                 self.call_count += 1
-
-                # First call: processing state
                 if self.call_count == 1:
                     return FlextResult[dict[str, str]].ok({"status": "processing"})
-
-                # Second call: completed state
                 if self.call_count == 2:
                     return FlextResult[dict[str, str]].ok({"status": "completed"})
-
-                # Third call: error state
                 return FlextResult[dict[str, str]].fail("Service unavailable")
 
-        # Create real service instance
         service = ProcessingService()
-
-        # Test successful processing state
         result1 = service.process("data1")
         assert result1.is_success
         assert result1.value["status"] == "processing"
-
-        # Test completed state
         result2 = service.process("data2")
         assert result2.is_success
         assert result2.value["status"] == "completed"
-
-        # Verify call count
         assert service.call_count == 2
-
-        # Test error state
         result3 = service.process("data3")
         assert result3.is_failure
         assert result3.error is not None and "Service unavailable" in result3.error
 
     def test_complex_test_data_generation(self) -> None:
         """Test complex test data generation."""
-        # Generate multiple test scenarios
         scenarios: list[MockScenario] = []
         for i in range(3):
             scenario = (
@@ -677,7 +609,6 @@ class TestAdvancedPatterns:
                 .build()
             )
             scenarios.append(scenario)
-
         assert len(scenarios) == 3
         assert scenarios[0].name == "scenario_0"
         value = scenarios[1].given.get("value")
@@ -686,7 +617,6 @@ class TestAdvancedPatterns:
 
     def test_nested_builder_patterns(self) -> None:
         """Test nested builder patterns."""
-        # Create a complex nested structure
         main_data = (
             FlextTestBuilder()
             .with_id("main-123")
@@ -694,20 +624,16 @@ class TestAdvancedPatterns:
                 nested_data=FlextTestBuilder()
                 .with_id("nested-456")
                 .with_user_data("Jane", "jane@example.com")
-                .build(),
+                .build()
             )
             .build()
         )
-
-        # FixtureDataDict has total=False, so use .get() for optional fields
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
         assert isinstance(nested_data, dict)
-        # nested_data is dict[str, NestedDataDict] according to FixtureDataDict
         nested_dict = nested_data.get("id") if isinstance(nested_data, dict) else None
         assert nested_dict is not None or "id" in nested_data
-        # Access nested_data safely - cast to object for runtime comparison
         if isinstance(nested_data, dict) and "id" in nested_data:
             id_value: object = nested_data["id"]
             assert id_value == "nested-456"
@@ -717,28 +643,18 @@ class TestAdvancedPatterns:
 
     def test_fluent_interface_pattern(self) -> None:
         """Test fluent interface pattern."""
-        # Demonstrate fluent interface with method chaining
         result = (
             AssertionBuilder([1, 2, 3, 4, 5])
             .assert_type(list)
             .assert_contains(3)
-            .satisfies(
-                lambda x: len(x) == 5,
-                "should have 5 elements",
-            )
+            .satisfies(lambda x: len(x) == 5, "should have 5 elements")
         )
-
-        # Execute the assertions
         result.execute_all()
-
-        # Verify method chaining returns self
         assert isinstance(result, AssertionBuilder)
 
     def test_test_pattern_marking(self) -> None:
         """Test test pattern marking functionality."""
-        # This test should have the pattern attribute set
         test_func = self.test_mock_scenario_pattern
         assert hasattr(test_func, "_test_pattern")
-        # Use getattr to safely access the attribute
         pattern_value = getattr(test_func, "_test_pattern", None)
         assert pattern_value == "mock_scenario"

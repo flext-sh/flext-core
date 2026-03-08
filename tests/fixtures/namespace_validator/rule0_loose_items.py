@@ -11,7 +11,7 @@ class FlextTestConstants:
     VALUE = 1
 
 
-MAX_RETRIES = 3  # loose constant — NOT in allowlist
+MAX_RETRIES = 3
 
 
 def helper() -> None:

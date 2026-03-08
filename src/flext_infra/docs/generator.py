@@ -31,8 +31,8 @@ class FlextInfraDocGenerator:
     def _normalize_anchor(value: str) -> str:
         """Convert a heading to a GitHub-compatible anchor slug."""
         text = value.strip().lower()
-        text = re.sub(r"[^a-z0-9\s-]", "", text)
-        text = re.sub(r"\s+", "-", text)
+        text = re.sub("[^a-z0-9\\s-]", "", text)
+        text = re.sub("\\s+", "-", text)
         text = re.sub(r"-+", "-", text)
         return text.strip("-")
 
@@ -51,10 +51,7 @@ class FlextInfraDocGenerator:
 
     @staticmethod
     def _write_if_needed(
-        path: Path,
-        content: str,
-        *,
-        apply: bool,
+        path: Path, content: str, *, apply: bool
     ) -> m.Infra.Docs.GeneratedFile:
         """Write content to path only when changed and apply is True."""
         exists = path.exists()
@@ -89,21 +86,16 @@ class FlextInfraDocGenerator:
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(
-            root=root,
-            project=project,
-            projects=projects,
-            output_dir=output_dir,
+            root=root, project=project, projects=projects, output_dir=output_dir
         )
         if scopes_result.is_failure:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
                 scopes_result.error or "scope error"
             )
-
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
             report = self._generate_scope(scope, apply=apply, workspace_root=root)
             reports.append(report)
-
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
     def _build_toc(self, content: str) -> str:
@@ -143,18 +135,13 @@ class FlextInfraDocGenerator:
             )
             files.append(
                 self._write_if_needed(
-                    scope.path / "docs/guides" / source.name,
-                    rendered,
-                    apply=apply,
-                ),
+                    scope.path / "docs/guides" / source.name, rendered, apply=apply
+                )
             )
         return files
 
     def _generate_project_mkdocs(
-        self,
-        scope: m.Infra.Docs.FlextInfraDocScope,
-        *,
-        apply: bool,
+        self, scope: m.Infra.Docs.FlextInfraDocScope, *, apply: bool
     ) -> list[m.Infra.Docs.GeneratedFile]:
         """Generate mkdocs.yml for projects that do not have one yet."""
         mkdocs_path = scope.path / "mkdocs.yml"
@@ -192,36 +179,27 @@ class FlextInfraDocGenerator:
         return [self._write_if_needed(mkdocs_path, content, apply=apply)]
 
     def _generate_root_docs(
-        self,
-        scope: m.Infra.Docs.FlextInfraDocScope,
-        *,
-        apply: bool,
+        self, scope: m.Infra.Docs.FlextInfraDocScope, *, apply: bool
     ) -> list[m.Infra.Docs.GeneratedFile]:
         """Generate placeholder docs at the workspace root."""
         changelog = self._update_toc(
-            "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n",
+            "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n"
         )
         release = self._update_toc(
-            "# Latest Release\n\nNo tagged release notes were generated yet.\n",
+            "# Latest Release\n\nNo tagged release notes were generated yet.\n"
         )
         roadmap = self._update_toc(
-            "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n",
+            "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n"
         )
         return [
             self._write_if_needed(
-                scope.path / "docs/CHANGELOG.md",
-                changelog,
-                apply=apply,
+                scope.path / "docs/CHANGELOG.md", changelog, apply=apply
             ),
             self._write_if_needed(
-                scope.path / "docs/releases/latest.md",
-                release,
-                apply=apply,
+                scope.path / "docs/releases/latest.md", release, apply=apply
             ),
             self._write_if_needed(
-                scope.path / "docs/roadmap/index.md",
-                roadmap,
-                apply=apply,
+                scope.path / "docs/roadmap/index.md", roadmap, apply=apply
             ),
         ]
 
@@ -238,13 +216,10 @@ class FlextInfraDocGenerator:
             source = "root-generated-artifacts"
         else:
             files = self._generate_project_guides(
-                scope=scope,
-                workspace_root=workspace_root,
-                apply=apply,
+                scope=scope, workspace_root=workspace_root, apply=apply
             )
             files.extend(self._generate_project_mkdocs(scope=scope, apply=apply))
             source = "workspace-docs-guides"
-
         generated = sum(1 for item in files if item.written)
         _ = u.Infra.Io.write_json(
             scope.report_dir / "generate-summary.json",
@@ -280,7 +255,6 @@ class FlextInfraDocGenerator:
             result=result,
             reason=reason,
         )
-
         return m.Infra.Docs.DocsPhaseReport(
             phase="generate",
             scope=scope.name,
@@ -289,9 +263,7 @@ class FlextInfraDocGenerator:
             source=source,
             items=[
                 m.Infra.Docs.DocsPhaseItem(
-                    phase="generate",
-                    path=file.path,
-                    written=file.written,
+                    phase="generate", path=file.path, written=file.written
                 )
                 for file in files
             ],
@@ -301,10 +273,7 @@ class FlextInfraDocGenerator:
         )
 
     def _project_guide_content(
-        self,
-        content: str,
-        project: str,
-        source_name: str,
+        self, content: str, project: str, source_name: str
     ) -> str:
         """Render workspace guide content with project-specific heading."""
         lines = content.splitlines()
@@ -346,7 +315,7 @@ class FlextInfraDocGenerator:
         lines = content.splitlines()
         if lines and lines[0].startswith("# "):
             insert_at = 1
-            while insert_at < len(lines) and not lines[insert_at].strip():
+            while insert_at < len(lines) and (not lines[insert_at].strip()):
                 insert_at += 1
             lines.insert(insert_at, "")
             lines.insert(insert_at + 1, toc)

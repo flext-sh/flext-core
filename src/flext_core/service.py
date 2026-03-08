@@ -18,12 +18,7 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import override
 
-from pydantic import (
-    ConfigDict,
-    PrivateAttr,
-    ValidationError,
-    computed_field,
-)
+from pydantic import ConfigDict, PrivateAttr, ValidationError, computed_field
 
 from flext_core import (
     FlextContainer,
@@ -43,9 +38,7 @@ from flext_core._models.service import FlextModelsService
 
 
 class FlextService[TDomainResult](
-    FlextModelFoundation.ArbitraryTypesModel,
-    FlextMixins,
-    ABC,
+    FlextModelFoundation.ArbitraryTypesModel, FlextMixins, ABC
 ):
     """Base class for domain services in FLEXT applications.
 
@@ -75,9 +68,6 @@ class FlextService[TDomainResult](
         use_enum_values=True,
         validate_assignment=True,
     )
-
-    # self.logger inherited from FlextMixins
-
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
@@ -94,29 +84,20 @@ class FlextService[TDomainResult](
 
         """
         runtime = self._create_initial_runtime()
-
         with FlextContext.create().Service.service_context(
-            self.__class__.__name__,
-            runtime.config.version,
+            self.__class__.__name__, runtime.config.version
         ):
             super().__init__()
-
         if not isinstance(runtime.context, FlextContext):
             msg = "Expected FlextContext"
             raise TypeError(msg)
         if not isinstance(runtime.config, FlextSettings):
             msg = "Expected FlextSettings"
             raise TypeError(msg)
-
-        # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
         self._config = runtime.config
         self._container = runtime.container
         self._runtime = runtime
-
-        # Auto-discovery of handler-decorated methods for zero-config handler setup
-        # Discovers all methods marked with @h.handler() decorator
-        # Makes them available for dispatcher routing without explicit registration
         self._discovered_handlers = (
             FlextHandlers.Discovery.scan_class(self.__class__)
             if FlextHandlers.Discovery.has_handlers(self.__class__)
@@ -127,27 +108,21 @@ class FlextService[TDomainResult](
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
         if self._execution_result is None:
-            # Lazy execution for services without auto_execute
             self._execution_result = self.execute()
-
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
             result_value: TDomainResult = execution_result.unwrap()
             return result_value
-        # On failure, raise exception
         raise FlextExceptions.BaseError(
             execution_result.error or "Service execution failed"
         )
 
-    # Use PrivateAttr for private attributes (Pydantic v2 pattern)
-    # PrivateAttr allows setting attributes without validation and bypasses __setattr__
-    # Type annotations using PrivateAttr with explicit type hints
     _context: p.Context | None = PrivateAttr(default=None)
     _config: FlextSettings | None = PrivateAttr(default=None)
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
-        default_factory=lambda: list[tuple[str, m.HandlerDecoratorConfig]](),
+        default_factory=lambda: list[tuple[str, m.HandlerDecoratorConfig]]()
     )
 
     @property
@@ -169,9 +144,7 @@ class FlextService[TDomainResult](
         return u.require_initialized(self._context, "Context")
 
     @computed_field
-    def runtime(
-        self,
-    ) -> m.ServiceRuntime:
+    def runtime(self) -> m.ServiceRuntime:
         """View of the runtime triple for this service instance."""
         return u.require_initialized(self._runtime, "Runtime")
 
@@ -189,9 +162,8 @@ class FlextService[TDomainResult](
         """Build the initial runtime triple for a new service instance."""
         config_type = cls._get_service_config_type()
         options = cls._normalize_runtime_bootstrap_options(
-            cls._runtime_bootstrap_options(),
+            cls._runtime_bootstrap_options()
         )
-
         config_type_raw = options.config_type
         config_type_val: type[FlextSettings] | None
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
@@ -203,18 +175,15 @@ class FlextService[TDomainResult](
             context_val_raw
             if context_val_raw is not None
             and getattr(context_val_raw, "set", None) is not None
-            and getattr(context_val_raw, "get", None) is not None
+            and (getattr(context_val_raw, "get", None) is not None)
             else None
         )
-
         return cls._create_runtime(
             config_type=config_type_val,
             config_overrides=options.config_overrides,
             context=context_val,
             subproject=options.subproject,
-            services=cls._normalize_scoped_services(
-                options.services,
-            ),
+            services=cls._normalize_scoped_services(options.services),
             factories=options.factories,
             resources=options.resources,
             container_overrides=options.container_overrides,
@@ -262,19 +231,11 @@ class FlextService[TDomainResult](
         This method is called by :meth:`_create_initial_runtime` which uses
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
-        # 1. Config materialization with overrides
         config_cls = config_type or FlextSettings
-        # Pydantic v2: Use model_validate for proper validation with overrides
         runtime_config = config_cls.model_validate(config_overrides or {})
-
-        # 2. Context creation with initial data
         runtime_context_input = (
             context if context is not None else FlextContext.create()
         )
-
-        # 3. Container creation with registrations
-        # runtime_config is FlextSettings which implements "p.Config" structurally
-        # No cast needed - FlextSettings implements "p.Config" protocol
         runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
@@ -284,17 +245,12 @@ class FlextService[TDomainResult](
             factories=factories,
             resources=resources,
         )
-
         if container_overrides:
             runtime_container.configure(container_overrides)
-
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(
-                modules=wire_modules,
-                packages=wire_packages,
-                classes=wire_classes,
+                modules=wire_modules, packages=wire_packages, classes=wire_classes
             )
-
         return m.ServiceRuntime.model_validate({
             "config": runtime_config,
             "context": runtime_container.context,
@@ -312,12 +268,11 @@ class FlextService[TDomainResult](
             type[FlextSettings]: The config class to use for this service
 
         """
-        return FlextSettings  # Runtime return needs concrete class
+        return FlextSettings
 
     @classmethod
     def _normalize_runtime_bootstrap_options(
-        cls,
-        options_raw: p.RuntimeBootstrapOptions,
+        cls, options_raw: p.RuntimeBootstrapOptions
     ) -> p.RuntimeBootstrapOptions:
         del cls
         if isinstance(options_raw, FlextModelsService.RuntimeBootstrapOptions):
@@ -328,8 +283,7 @@ class FlextService[TDomainResult](
 
     @classmethod
     def _normalize_scoped_services(
-        cls,
-        services: Mapping[str, t.RegisterableService] | None,
+        cls, services: Mapping[str, t.RegisterableService] | None
     ) -> Mapping[str, t.RegisterableService] | None:
         """Normalize and validate scoped services using Pydantic model."""
         del cls
@@ -338,14 +292,9 @@ class FlextService[TDomainResult](
         normalized: dict[str, t.RegisterableService] = {}
         for name, service in services.items():
             try:
-                # Validate service using ServiceRegistration model
-                m.ServiceRegistration(
-                    name=str(name),
-                    service=service,
-                )
+                m.ServiceRegistration(name=str(name), service=service)
                 normalized[str(name)] = service
             except ValidationError:
-                # Skip invalid services
                 continue
         return normalized or None
 
@@ -424,20 +373,14 @@ class FlextService[TDomainResult](
 
     def get_service_info(self) -> Mapping[str, t.Scalar]:
         """Get service metadata and configuration information."""
-        return {
-            "service_type": self.__class__.__name__,
-        }
+        return {"service_type": self.__class__.__name__}
 
     def is_valid(self) -> bool:
         """Check if service is in valid state for execution."""
         try:
             return self.validate_business_rules().is_success
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
-            self.logger.debug(
-                "Service business rule validation failed",
-                exc_info=exc,
-            )
-            # Validation failed due to exception - consider invalid
+            self.logger.debug("Service business rule validation failed", exc_info=exc)
             return False
 
     def validate_business_rules(self) -> r[bool]:
@@ -462,11 +405,8 @@ class FlextService[TDomainResult](
             ...         return r[bool].ok(True)
 
         """
-        # Base implementation - accept all (no validation)
-        # Subclasses should override for specific business rules
         return r[bool].ok(value=True)
 
 
 s = FlextService
-
 __all__ = ["FlextService", "s"]

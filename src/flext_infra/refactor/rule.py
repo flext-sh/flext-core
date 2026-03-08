@@ -31,7 +31,7 @@ class FlextInfraRefactorRule:
         self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         """Apply the rule to a CST module and return transformed tree plus changes."""
-        return tree, []
+        return (tree, [])
 
     def matches_filter(self, filter_pattern: str) -> bool:
         """Return whether the rule matches a case-insensitive filter string."""

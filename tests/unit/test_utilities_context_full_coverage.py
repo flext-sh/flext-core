@@ -13,9 +13,9 @@ from datetime import UTC, datetime
 from typing import cast
 from unittest.mock import MagicMock
 
-from pydantic import BaseModel
-
 from flext_core import m, p, t, u
+
+from ._models import _FakeConfig
 
 
 class TestCreateStrProxy:
@@ -65,16 +65,6 @@ class TestCreateDictProxy:
         assert proxy._default == default_val
 
 
-class _FakeConfig(BaseModel):
-    """Fake config with model_copy support."""
-
-    timeout: int = 10
-
-    @property
-    def data(self) -> dict[str, object]:
-        return {"timeout": self.timeout}
-
-
 class _FakeRuntime:
     """Fake runtime class with all expected attributes."""
 
@@ -90,7 +80,7 @@ class _FakeContext:
         return _FakeContext()
 
     def set(self, key: str, value: t.ContainerValue) -> None:
-        _ = key, value
+        _ = (key, value)
 
     def get(self, key: str) -> object:
         _ = key
@@ -117,8 +107,7 @@ class TestCloneRuntime:
         runtime = _FakeRuntime()
         new_context = _FakeContext()
         cloned = u.Context.clone_runtime(
-            runtime,
-            context=cast("p.Context", cast("object", new_context)),
+            runtime, context=cast("p.Context", cast("object", new_context))
         )
         assert cloned._context is new_context
 
@@ -132,8 +121,7 @@ class TestCloneRuntime:
         """When config_overrides provided, model_copy is called with them."""
         runtime = _FakeRuntime()
         cloned = u.Context.clone_runtime(
-            runtime,
-            config_overrides=m.ConfigMap(root={"timeout": 30}),
+            runtime, config_overrides=m.ConfigMap(root={"timeout": 30})
         )
         assert isinstance(cloned._config, _FakeConfig)
         assert cloned._config.data["timeout"] == 30
@@ -163,15 +151,11 @@ class TestCloneContainer:
         container = MagicMock()
         expected = MagicMock()
         container.scoped.return_value = expected
-
         result = u.Context.clone_container(
-            container,
-            scope_id="test-scope",
-            overrides={"service": "mock"},
+            container, scope_id="test-scope", overrides={"service": "mock"}
         )
         container.scoped.assert_called_once_with(
-            subproject="test-scope",
-            services={"service": "mock"},
+            subproject="test-scope", services={"service": "mock"}
         )
         assert result is expected
 
@@ -179,7 +163,4 @@ class TestCloneContainer:
         """With no args, scoped() is called with None defaults."""
         container = MagicMock()
         u.Context.clone_container(container)
-        container.scoped.assert_called_once_with(
-            subproject=None,
-            services=None,
-        )
+        container.scoped.assert_called_once_with(subproject=None, services=None)

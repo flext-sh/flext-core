@@ -35,9 +35,7 @@ class TestFlextInfraDocAuditor:
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         return FlextInfraDocScope(
-            name="test-project",
-            path=tmp_path,
-            report_dir=report_dir,
+            name="test-project", path=tmp_path, report_dir=report_dir
         )
 
     def test_audit_returns_flext_result(
@@ -480,14 +478,12 @@ class TestFlextInfraDocAuditor:
         When scope is 'root', only files under docs/ should be checked.
         """
         auditor = FlextInfraDocAuditor()
-        # Create a markdown file NOT in docs/
         md_file = tmp_path / "README.md"
         md_file.write_text("# Test")
         scope = FlextInfraDocScope(
             name="root", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.forbidden_term_issues(scope)
-        # Should skip README.md since it's not in docs/
         assert isinstance(issues, list)
 
     def test_forbidden_term_issues_non_flext_scope(self, tmp_path: Path) -> None:
@@ -502,7 +498,6 @@ class TestFlextInfraDocAuditor:
             name="other-project", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.forbidden_term_issues(scope)
-        # Should skip because scope doesn't start with 'flext-'
         assert isinstance(issues, list)
 
     def test_broken_link_issues_with_external_link(self, tmp_path: Path) -> None:
@@ -519,7 +514,6 @@ class TestFlextInfraDocAuditor:
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.broken_link_issues(scope)
-        # Should not report external links as broken
         assert isinstance(issues, list)
 
     def test_broken_link_issues_with_fragment_only(self, tmp_path: Path) -> None:
@@ -536,7 +530,6 @@ class TestFlextInfraDocAuditor:
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.broken_link_issues(scope)
-        # Should not report fragment-only links
         assert isinstance(issues, list)
 
     def test_load_audit_budgets_with_float_values(self, tmp_path: Path) -> None:
@@ -670,13 +663,11 @@ class TestFlextInfraDocAuditor:
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
-        # Create a link that should be skipped (comma-separated, no .md, no /)
         md_file.write_text("[a, b]")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.broken_link_issues(scope)
-        # Should not report because _should_skip_target returns True
         assert isinstance(issues, list)
 
     def test_broken_link_issues_with_missing_target(self, tmp_path: Path) -> None:
@@ -688,13 +679,11 @@ class TestFlextInfraDocAuditor:
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
-        # Create a link to a non-existent file
         md_file.write_text("[link](missing.md)")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.broken_link_issues(scope)
-        # Should report the broken link
         assert len(issues) > 0
         assert any("missing.md" in issue.message for issue in issues)
 
@@ -708,9 +697,7 @@ class TestFlextInfraDocAuditor:
         config_file = arch_dir / "architecture_config.json"
         config_data = {
             "docs_validation": {
-                "audit_gate": {
-                    "max_issues_by_scope": {"test-project": 3},
-                }
+                "audit_gate": {"max_issues_by_scope": {"test-project": 3}}
             }
         }
         config_file.write_text(json.dumps(config_data))
@@ -734,7 +721,6 @@ class TestFlextInfraDocAuditor:
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
             mock_audit.return_value = r[list[AuditReport]].ok([passed_report])
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
-                # main() returns an int, not raises SystemExit
                 result = main()
                 assert result == 0
 
@@ -750,13 +736,11 @@ class TestFlextInfraDocAuditor:
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
-        # Create a link with space and no .md extension (should be skipped)
         md_file.write_text("[some text]")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.broken_link_issues(scope)
-        # Should not report because _should_skip_target returns True for space-separated text
         assert isinstance(issues, list)
 
     def test_main_as_script_entry_point(self, tmp_path: Path) -> None:
@@ -764,9 +748,6 @@ class TestFlextInfraDocAuditor:
 
         This tests that the if __name__ == '__main__' block works correctly.
         """
-        # We can't directly test the __main__ block, but we can verify
-        # that main() function works correctly when called directly
-
         passed_report = AuditReport(
             phase="audit",
             scope="test",
@@ -778,7 +759,6 @@ class TestFlextInfraDocAuditor:
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
             mock_audit.return_value = r[list[AuditReport]].ok([passed_report])
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
-                # Call main() directly (simulating __main__ execution)
                 result = main()
                 assert result == 0
 
@@ -792,13 +772,10 @@ class TestFlextInfraDocAuditor:
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
-        # Create a link with space in URL (should be skipped)
         md_file.write_text("[link](some text)")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         issues = auditor.broken_link_issues(scope)
-        # Should not report because _should_skip_target returns True for 'some text'
         assert isinstance(issues, list)
-        # Verify no issues were reported for this link
         assert len(issues) == 0

@@ -99,7 +99,6 @@ class TestMainHelpAndErrors:
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
                 ):
                     main()
-                    # Check that info was called with subcommand names
                     calls = [str(call) for call in mock_info.call_args_list]
                     assert any("detect" in str(call) for call in calls)
 
@@ -111,7 +110,6 @@ class TestMainSubcommandDispatch:
         """Test main with detect subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -128,7 +126,6 @@ class TestMainSubcommandDispatch:
         """Test main with extra-paths subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "extra-paths"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -145,7 +142,6 @@ class TestMainSubcommandDispatch:
         """Test main with internal-sync subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "internal-sync"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -162,7 +158,6 @@ class TestMainSubcommandDispatch:
         """Test main with modernize subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "modernize"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -179,7 +174,6 @@ class TestMainSubcommandDispatch:
         """Test main with path-sync subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "path-sync"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -200,7 +194,6 @@ class TestMainReturnValues:
         """Test main when subcommand returns None."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=None)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -216,7 +209,6 @@ class TestMainReturnValues:
         """Test main when subcommand returns 0."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -232,7 +224,6 @@ class TestMainReturnValues:
         """Test main when subcommand returns non-zero."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=42)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -248,7 +239,6 @@ class TestMainReturnValues:
         """Test main when subcommand returns string '0'."""
         mock_module = Mock()
         mock_module.main = Mock(return_value="0")
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -264,7 +254,6 @@ class TestMainReturnValues:
         """Test main when subcommand returns False."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=False)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -280,7 +269,6 @@ class TestMainReturnValues:
         """Test main when subcommand returns True."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=True)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -300,7 +288,6 @@ class TestMainModuleImport:
         """Test main imports correct module for detect."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -316,7 +303,6 @@ class TestMainModuleImport:
         """Test main imports correct module for modernize."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "modernize"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -332,7 +318,6 @@ class TestMainModuleImport:
         """Test main imports correct module for path-sync."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "path-sync"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",
@@ -352,7 +337,6 @@ class TestMainSysArgvModification:
         """Test main modifies sys.argv for subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         original_argv = ["prog", "detect", "--arg1", "value1"]
         with patch("sys.argv", original_argv.copy()):
             with patch(
@@ -363,14 +347,12 @@ class TestMainSysArgvModification:
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
                 ):
                     main()
-                    # sys.argv should be modified to include subcommand name
                     assert "detect" in sys.argv[0]
 
     def test_main_passes_remaining_args_to_subcommand(self) -> None:
         """Test main passes remaining arguments to subcommand."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         original_argv = ["prog", "detect", "-q", "--no-fail"]
         with patch("sys.argv", original_argv.copy()):
             with patch(
@@ -381,7 +363,6 @@ class TestMainSysArgvModification:
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
                 ):
                     main()
-                    # Check that remaining args are in sys.argv
                     assert "-q" in sys.argv
                     assert "--no-fail" in sys.argv
 
@@ -393,7 +374,6 @@ class TestMainStructlogConfiguration:
         """Test main ensures structlog is configured."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
@@ -439,7 +419,6 @@ class TestMainExceptionHandling:
         """Test main propagates subcommand exceptions."""
         mock_module = Mock()
         mock_module.main = Mock(side_effect=Exception("Test error"))
-
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
                 "flext_infra.deps.__main__.importlib.import_module",

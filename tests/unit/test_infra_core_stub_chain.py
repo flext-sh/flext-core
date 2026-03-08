@@ -31,11 +31,9 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
         workspace_root = tmp_path.parent
-
         project_dir.mkdir(exist_ok=True)
         pyproject = project_dir / "pyproject.toml"
         pyproject.write_text("[project]\nname = 'test'")
-
         with patch.object(chain, "_run_mypy_hints", return_value=[]):
             with patch.object(chain, "_run_pyrefly_missing", return_value=[]):
                 result = chain.analyze(project_dir, workspace_root)
@@ -47,7 +45,6 @@ class TestFlextInfraStubSupplyChain:
         project_dir = tmp_path
         workspace_root = tmp_path.parent
         project_dir.mkdir(exist_ok=True)
-
         with patch.object(chain, "_run_mypy_hints", return_value=[]):
             with patch.object(chain, "_run_pyrefly_missing", return_value=[]):
                 result = chain.analyze(project_dir, workspace_root)
@@ -60,12 +57,10 @@ class TestFlextInfraStubSupplyChain:
         project_dir = tmp_path
         workspace_root = tmp_path.parent
         project_dir.mkdir(exist_ok=True)
-
         src_dir = project_dir / "src"
         src_dir.mkdir()
         py_file = src_dir / "main.py"
         py_file.write_text("import missing_module")
-
         with patch.object(chain, "_run_mypy_hints", return_value=[]):
             with patch.object(
                 chain, "_run_pyrefly_missing", return_value=["missing_module"]
@@ -79,7 +74,6 @@ class TestFlextInfraStubSupplyChain:
         project_dir = tmp_path / "flext_test"
         workspace_root = tmp_path
         project_dir.mkdir(parents=True)
-
         with patch.object(chain, "_run_mypy_hints", return_value=[]):
             with patch.object(
                 chain, "_run_pyrefly_missing", return_value=["flext_test"]
@@ -93,7 +87,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path / "nonexistent"
         workspace_root = tmp_path
-
         result = chain.analyze(project_dir, workspace_root)
         assert result.is_success
 
@@ -102,7 +95,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
         workspace_root.mkdir(exist_ok=True)
-
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
@@ -114,7 +106,6 @@ class TestFlextInfraStubSupplyChain:
                 total_missing=0,
             )
             mock_analyze.return_value = mock_result
-
             result = chain.validate(workspace_root)
             assert result.is_success
 
@@ -123,7 +114,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
         workspace_root.mkdir(exist_ok=True)
-
         result = chain.validate(workspace_root)
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
@@ -133,10 +123,8 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
         workspace_root.mkdir(exist_ok=True)
-
         project_dir = workspace_root / "project1"
         project_dir.mkdir()
-
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
@@ -148,7 +136,6 @@ class TestFlextInfraStubSupplyChain:
                 total_missing=0,
             )
             mock_analyze.return_value = mock_result
-
             result = chain.validate(workspace_root, project_dirs=[project_dir])
             assert result.is_success
 
@@ -157,10 +144,8 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
         workspace_root.mkdir(exist_ok=True)
-
         project_dir = workspace_root / "flext_test"
         project_dir.mkdir()
-
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
@@ -172,7 +157,6 @@ class TestFlextInfraStubSupplyChain:
                 total_missing=1,
             )
             mock_analyze.return_value = mock_result
-
             result = chain.validate(workspace_root, project_dirs=[project_dir])
             assert result.is_success
             assert not result.value.passed
@@ -182,10 +166,8 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
         workspace_root.mkdir(exist_ok=True)
-
         project_dir = workspace_root / "project1"
         project_dir.mkdir()
-
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = False
@@ -197,7 +179,6 @@ class TestFlextInfraStubSupplyChain:
                 total_missing=1,
             )
             mock_analyze.return_value = mock_result
-
             result = chain.validate(workspace_root, project_dirs=[project_dir])
             assert result.is_success
             assert not result.value.passed
@@ -207,16 +188,13 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
         workspace_root.mkdir(exist_ok=True)
-
         project_dir = workspace_root / "project1"
         project_dir.mkdir()
-
         with patch.object(chain, "analyze") as mock_analyze:
             mock_result = Mock()
             mock_result.is_failure = True
             mock_result.error = "analysis failed"
             mock_analyze.return_value = mock_result
-
             result = chain.validate(workspace_root, project_dirs=[project_dir])
             assert result.is_success
             assert not result.value.passed
@@ -225,7 +203,6 @@ class TestFlextInfraStubSupplyChain:
         """Test validate handles exceptions."""
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path / "nonexistent"
-
         result = chain.validate(workspace_root)
         assert result.is_failure
 
@@ -234,7 +211,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
         runner = getattr(chain, "_runner")
-
         with patch.object(
             type(runner),
             "run",
@@ -250,7 +226,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
         runner = getattr(chain, "_runner")
-
         with patch.object(type(runner), "run", return_value=Mock(is_success=False)):
             hints = self.run_mypy_hints(chain, project_dir)
             assert hints == []
@@ -260,7 +235,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
         runner = getattr(chain, "_runner")
-
         with patch.object(
             type(runner),
             "run",
@@ -279,7 +253,6 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
         runner = getattr(chain, "_runner")
-
         with patch.object(type(runner), "run", return_value=Mock(is_success=False)):
             imports = self.run_pyrefly_missing(chain, project_dir)
             assert imports == []
@@ -307,7 +280,6 @@ class TestFlextInfraStubSupplyChain:
         typings_dir = tmp_path / "typings"
         typings_dir.mkdir()
         (typings_dir / "requests.pyi").write_text("")
-
         assert self.stub_exists("requests", tmp_path)
 
     def test_stub_exists_with_package_init(self, tmp_path: Path) -> None:
@@ -316,7 +288,6 @@ class TestFlextInfraStubSupplyChain:
         pkg_dir = typings_dir / "requests"
         pkg_dir.mkdir(parents=True)
         (pkg_dir / "__init__.pyi").write_text("")
-
         assert self.stub_exists("requests", tmp_path)
 
     def test_stub_exists_with_generated_stubs(self, tmp_path: Path) -> None:
@@ -324,7 +295,6 @@ class TestFlextInfraStubSupplyChain:
         gen_dir = tmp_path / "typings" / "generated"
         gen_dir.mkdir(parents=True)
         (gen_dir / "requests.pyi").write_text("")
-
         assert self.stub_exists("requests", tmp_path)
 
     def test_stub_exists_returns_false_for_missing(self, tmp_path: Path) -> None:
@@ -337,12 +307,10 @@ class TestFlextInfraStubSupplyChain:
         proj1.mkdir()
         (proj1 / "pyproject.toml").write_text("")
         (proj1 / "src").mkdir()
-
         proj2 = tmp_path / "project2"
         proj2.mkdir()
         (proj2 / "pyproject.toml").write_text("")
         (proj2 / "src").mkdir()
-
         projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 2
 
@@ -352,7 +320,6 @@ class TestFlextInfraStubSupplyChain:
         hidden.mkdir()
         (hidden / "pyproject.toml").write_text("")
         (hidden / "src").mkdir()
-
         projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 0
 
@@ -361,7 +328,6 @@ class TestFlextInfraStubSupplyChain:
         proj = tmp_path / "project"
         proj.mkdir()
         (proj / "pyproject.toml").write_text("")
-
         projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 0
 
@@ -370,7 +336,6 @@ class TestFlextInfraStubSupplyChain:
         proj = tmp_path / "project"
         proj.mkdir()
         (proj / "src").mkdir()
-
         projects = self.discover_stub_projects(tmp_path)
         assert len(projects) == 0
 
@@ -380,12 +345,8 @@ class TestFlextInfraStubSupplyChain:
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path / "project"
         project_dir.mkdir()
-
-        # Mock _run_mypy_hints to raise an exception
         with patch.object(
-            chain,
-            "_run_mypy_hints",
-            side_effect=ValueError("test error"),
+            chain, "_run_mypy_hints", side_effect=ValueError("test error")
         ):
             result = chain.analyze(project_dir, tmp_path)
             assert result.is_failure

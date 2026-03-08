@@ -40,7 +40,7 @@ class FlextInfraVersioningService(s[str]):
                 continue
             if not in_project_section or not line.startswith(c.Infra.Toml.VERSION):
                 continue
-            match = re.match(r'^version\s*=\s*["\']([^"\']+)["\']\s*$', line)
+            match = re.match("^version\\s*=\\s*[\"\\']([^\"\\']+)[\"\\']\\s*$", line)
             if match:
                 return match.group(1)
         return None
@@ -67,7 +67,7 @@ class FlextInfraVersioningService(s[str]):
             if (
                 in_project_section
                 and line.startswith(c.Infra.Toml.VERSION)
-                and not replaced
+                and (not replaced)
             ):
                 line_ending = "\n" if raw_line.endswith("\n") else ""
                 updated_lines.append(f'version = "{version}"{line_ending}')
@@ -78,11 +78,7 @@ class FlextInfraVersioningService(s[str]):
             return None
         return "".join(updated_lines)
 
-    def bump_version(
-        self,
-        version: str,
-        bump_type: str,
-    ) -> r[str]:
+    def bump_version(self, version: str, bump_type: str) -> r[str]:
         """Bump a semantic version string.
 
         Args:
@@ -95,11 +91,9 @@ class FlextInfraVersioningService(s[str]):
         """
         if bump_type not in c.Infra.Versioning.VALID_BUMP_TYPES:
             return r[str].fail(f"invalid bump type: {bump_type}")
-
         result = self.parse_semver(version)
         if result.is_failure:
             return r[str].fail(result.error or "parse failed")
-
         major, minor, patch = result.value
         if bump_type == "major":
             major += 1
@@ -110,13 +104,9 @@ class FlextInfraVersioningService(s[str]):
             patch = 0
         else:
             patch += 1
-
         return r[str].ok(f"{major}.{minor}.{patch}")
 
-    def current_workspace_version(
-        self,
-        workspace_root: Path,
-    ) -> r[str]:
+    def current_workspace_version(self, workspace_root: Path) -> r[str]:
         """Read the current version from the main pyproject.toml.
 
         Args:
@@ -131,7 +121,6 @@ class FlextInfraVersioningService(s[str]):
             content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"read failed: {exc}")
-
         version = self._extract_project_version_from_text(content)
         if version is None or not version.strip():
             return r[str].fail("version not found in pyproject.toml")
@@ -147,10 +136,7 @@ class FlextInfraVersioningService(s[str]):
         """
         return r[str].ok("")
 
-    def parse_semver(
-        self,
-        version: str,
-    ) -> r[tuple[int, int, int]]:
+    def parse_semver(self, version: str) -> r[tuple[int, int, int]]:
         """Parse a semantic version string into (major, minor, patch).
 
         Args:
@@ -162,12 +148,12 @@ class FlextInfraVersioningService(s[str]):
         """
         match = c.Infra.Versioning.SEMVER_RE.match(version)
         if not match:
-            return r[tuple[int, int, int]].fail(
-                f"invalid semver: {version}",
-            )
-        return r[tuple[int, int, int]].ok(
-            (int(match.group(1)), int(match.group(2)), int(match.group(3))),
-        )
+            return r[tuple[int, int, int]].fail(f"invalid semver: {version}")
+        return r[tuple[int, int, int]].ok((
+            int(match.group(1)),
+            int(match.group(2)),
+            int(match.group(3)),
+        ))
 
     def release_tag_from_branch(self, branch: str) -> r[str]:
         """Extract a release tag name from a branch name.
@@ -188,15 +174,9 @@ class FlextInfraVersioningService(s[str]):
         match = c.Infra.Versioning.DEV_BRANCH_RE.match(branch)
         if match:
             return r[str].ok(f"v{match.group(1)}")
-        return r[str].fail(
-            f"branch '{branch}' does not match release pattern",
-        )
+        return r[str].fail(f"branch '{branch}' does not match release pattern")
 
-    def replace_project_version(
-        self,
-        project_path: Path,
-        version: str,
-    ) -> r[bool]:
+    def replace_project_version(self, project_path: Path, version: str) -> r[bool]:
         """Update the version field in a project's pyproject.toml.
 
         Args:
@@ -212,15 +192,11 @@ class FlextInfraVersioningService(s[str]):
             content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"read failed: {exc}")
-
         if not self._has_project_table(content):
             return r[bool].fail(f"missing [project] table in {pyproject}")
-
         updated_content = self._replace_project_version_in_text(content, version)
         if updated_content is None:
-            return r[bool].fail(
-                f"missing [project] version in {pyproject}",
-            )
+            return r[bool].fail(f"missing [project] version in {pyproject}")
         try:
             _ = pyproject.write_text(updated_content, encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:

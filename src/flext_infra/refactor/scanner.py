@@ -24,9 +24,7 @@ class TopLevelClassCollector(cst.CSTVisitor):
         is_top_level = self._depth == 0
         self.classes.append(
             m.Infra.Refactor.ClassOccurrence(
-                name=node.name.value,
-                line=0,
-                is_top_level=is_top_level,
+                name=node.name.value, line=0, is_top_level=is_top_level
             )
         )
         self._depth += 1
@@ -47,30 +45,24 @@ class FlextInfraRefactorLooseClassScanner:
             return r[t.ConfigurationMapping].fail(
                 files_result.error or "discovery failed"
             )
-
         discovered_files: list[Path] = files_result.value
-
         grep_result = self._scan_with_ast_grep(project_root)
         grep_index: dict[Path, dict[str, int]] = (
             grep_result.value if grep_result.is_success else {}
         )
-
         violations: list[m.Infra.Refactor.LooseClassViolation] = []
         targets_found = dict.fromkeys(c.Infra.Refactor.REQUIRED_CLASS_TARGETS, False)
         classes_scanned = 0
-
         for fp in discovered_files:
             parsed = self._scan_file_with_libcst(fp)
             if parsed.is_failure:
                 continue
             occurrences: list[m.Infra.Refactor.ClassOccurrence] = parsed.value
             classes_scanned += len(occurrences)
-
             rel = self._relative_module_path(project_root, fp)
             if rel.is_failure:
                 continue
             rel_path: Path = rel.value
-
             for occ in occurrences:
                 viol = self._build_violation(rel_path, occ, grep_index.get(fp, {}))
                 if viol is None:
@@ -78,7 +70,6 @@ class FlextInfraRefactorLooseClassScanner:
                 violations.append(viol)
                 if viol.class_name in targets_found:
                     targets_found[viol.class_name] = True
-
         counters = Counter(v.confidence for v in violations)
         return r[t.ConfigurationMapping].ok({
             "rule": c.Infra.ReportKeys.CLASS_NESTING,
@@ -89,8 +80,6 @@ class FlextInfraRefactorLooseClassScanner:
             "required_targets": targets_found,
             c.Infra.ReportKeys.VIOLATIONS: violations,
         })
-
-    # ── private helpers ─────────────────────────────────────────
 
     def _build_violation(
         self,
@@ -103,25 +92,21 @@ class FlextInfraRefactorLooseClassScanner:
         prefix = self._expected_prefix_for_module(rel_path)
         if prefix and occ.name.startswith(prefix):
             return None
-
         confidence = self._confidence_from_location(rel_path)
         score = c.Infra.Refactor.CONFIDENCE_TO_SCORE[confidence]
         line = occ.line
         if occ.name in grep_hits:
             score = min(score + 0.02, 0.99)
             line = grep_hits[occ.name]
-
         return m.Infra.Refactor.LooseClassViolation(
             file=rel_path.as_posix(),
             line=max(line, 1),
             class_name=occ.name,
             expected_prefix=prefix,
             rule=c.Infra.ReportKeys.CLASS_NESTING,
-            reason=(
-                "top_level_class_in_private_directory"
-                if self._has_private_directory(rel_path)
-                else "top_level_class_without_namespace_prefix"
-            ),
+            reason="top_level_class_in_private_directory"
+            if self._has_private_directory(rel_path)
+            else "top_level_class_without_namespace_prefix",
             confidence=confidence,
             score=round(score, 2),
         )
@@ -140,7 +125,7 @@ class FlextInfraRefactorLooseClassScanner:
             fp
             for fp in sorted(src.rglob(c.Infra.Extensions.PYTHON_GLOB))
             if "__pycache__" not in fp.parts
-            and not (fp.name.startswith("__") and fp.name != c.Infra.Files.INIT_PY)
+            and (not (fp.name.startswith("__") and fp.name != c.Infra.Files.INIT_PY))
         ])
 
     def _expected_prefix_for_module(self, rel_path: Path) -> str:
@@ -195,14 +180,12 @@ class FlextInfraRefactorLooseClassScanner:
             )
         if not capture.value:
             return r[dict[Path, dict[str, int]]].ok({})
-
         try:
             entries = TypeAdapter(
                 list[m.Infra.Refactor.AstGrepMatchEnvelope]
             ).validate_json(capture.value)
         except ValidationError as exc:
             return r[dict[Path, dict[str, int]]].fail(str(exc))
-
         idx: dict[Path, dict[str, int]] = {}
         for entry in entries:
             name = entry.symbol_name
@@ -218,6 +201,4 @@ class FlextInfraRefactorLooseClassScanner:
         return r[dict[Path, dict[str, int]]].ok(idx)
 
 
-__all__ = [
-    "FlextInfraRefactorLooseClassScanner",
-]
+__all__ = ["FlextInfraRefactorLooseClassScanner"]

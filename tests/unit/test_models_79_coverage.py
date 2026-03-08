@@ -18,7 +18,6 @@ from flext_core._models.domain_event import _ComparableConfigMap
 from tests.test_utils import assertion_helpers
 
 
-# Define Query and Command classes using dataclasses to avoid Pydantic circular dependencies
 @dataclass
 class CreateUserCommand:
     user_id: str
@@ -54,9 +53,6 @@ class GetUserQuery:
     user_id: str
 
 
-# Dataclasses don't need model_rebuild
-
-
 class TestFlextModelsEntity:
     """Test FlextModels.Entity functionality."""
 
@@ -89,11 +85,10 @@ class TestFlextModelsEntity:
                 return self.unique_id == other.unique_id
 
         user1 = User(unique_id="user-1", name="Alice")
-        user2 = User(unique_id="user-1", name="Bob")  # Different name, same ID
+        user2 = User(unique_id="user-1", name="Bob")
         user3 = User(unique_id="user-2", name="Alice")
-
-        assert user1 == user2  # Same ID
-        assert user1 != user3  # Different ID
+        assert user1 == user2
+        assert user1 != user3
 
     def test_entity_version(self) -> None:
         """Test entity versioning."""
@@ -103,7 +98,7 @@ class TestFlextModelsEntity:
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
         initial_version = order.version
-        assert initial_version >= 1  # VersionableMixin default is 1
+        assert initial_version >= 1
 
 
 class TestFlextModelsValue:
@@ -119,9 +114,8 @@ class TestFlextModelsValue:
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
         email3 = Email(address="other@example.com")
-
-        assert email1 == email2  # Same value
-        assert email1 != email3  # Different value
+        assert email1 == email2
+        assert email1 != email3
 
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
@@ -132,9 +126,6 @@ class TestFlextModelsValue:
             currency: str
 
         price = Price(amount=Decimal("10.00"), currency="USD")
-
-        # Value objects are immutable - Pydantic frozen models prevent assignment
-        # Just verify the value is present and correct
         assert price.amount == Decimal("10.00")
         assert price.currency == "USD"
 
@@ -152,9 +143,7 @@ class TestFlextModelsAggregateRoot:
             balance: Decimal
 
         account = Account(
-            unique_id="acc-1",
-            owner_name="Alice",
-            balance=Decimal("1000.00"),
+            unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00")
         )
         assert account.unique_id == "acc-1"
         assert account.owner_name == "Alice"
@@ -167,11 +156,8 @@ class TestFlextModelsAggregateRoot:
             balance: Decimal
 
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
-
-        # Add domain event
         result = account.add_domain_event(
-            "MoneyDeposited",
-            m.ConfigMap(root={"amount": 100}),
+            "MoneyDeposited", m.ConfigMap(root={"amount": 100})
         )
         assertion_helpers.assert_flext_result_success(result)
 
@@ -182,8 +168,6 @@ class TestFlextModelsAggregateRoot:
             total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
-
-        # Add event with valid empty dict
         result = order.add_domain_event("OrderPlaced", m.ConfigMap(root={}))
         assertion_helpers.assert_flext_result_success(result)
 
@@ -194,11 +178,8 @@ class TestFlextModelsAggregateRoot:
             status: str = "pending"
 
         order = Order(unique_id="order-1", status="pending")
-
-        # Add event
         result = order.add_domain_event(
-            "OrderCreated",
-            m.ConfigMap(root={"timestamp": "2025-01-01"}),
+            "OrderCreated", m.ConfigMap(root={"timestamp": "2025-01-01"})
         )
         assertion_helpers.assert_flext_result_success(result)
         assert len(order.domain_events) > 0
@@ -243,9 +224,7 @@ class TestFlextModelsCommand:
     def test_command_creation(self) -> None:
         """Test command creation."""
         cmd = CreateUserCommand(
-            user_id="user-1",
-            name="Alice",
-            email="alice@example.com",
+            user_id="user-1", name="Alice", email="alice@example.com"
         )
         assert cmd.user_id == "user-1"
         assert cmd.name == "Alice"
@@ -294,13 +273,12 @@ class TestFlextModelsEdgeCases:
             customer_id: str
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
-        # Aggregate roots typically contain collections of value objects
         assert cart.customer_id == "cust-1"
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
         large_data: m.ConfigMap = m.ConfigMap(
-            root={f"field_{i}": f"value_{i}" for i in range(100)},
+            root={f"field_{i}": f"value_{i}" for i in range(100)}
         )
         event = m.DomainEvent(
             event_type="BulkDataImported",
@@ -331,15 +309,10 @@ class TestFlextModelsIntegration:
         class User(m.Entity):
             name: str
 
-        # Create command
         cmd = CreateUserCmd(user_id="user-1", name="Alice")
         assert cmd.user_id == "user-1"
-
-        # Create entity
         user = User(unique_id="user-1", name="Alice")
         assert user.name == "Alice"
-
-        # Create query
         query = GetUserQuery(user_id="user-1")
         assert query.user_id == "user-1"
 
@@ -350,18 +323,12 @@ class TestFlextModelsIntegration:
             items_count: int = 0
             status: str = "new"
 
-        # Create aggregate
         order = Order(unique_id="order-1", status="new", items_count=0)
         assert order.status == "new"
-
-        # Add domain event
         event_result = order.add_domain_event(
-            "ItemAdded",
-            m.ConfigMap(root={"item_id": "item-1"}),
+            "ItemAdded", m.ConfigMap(root={"item_id": "item-1"})
         )
         assert event_result.is_success
-
-        # Check domain events
         assert len(order.domain_events) >= 0
 
 

@@ -110,7 +110,7 @@ class FlextInfraUtilitiesRefactor:
                 continue
             has_pyproject = (entry / c.Infra.Files.PYPROJECT_FILENAME).exists()
             has_gomod = (entry / c.Infra.Files.GO_MOD).exists()
-            if not has_pyproject and not has_gomod:
+            if not has_pyproject and (not has_gomod):
                 continue
             roots.append(entry)
         if (
@@ -125,6 +125,8 @@ class FlextInfraUtilitiesRefactor:
         *,
         workspace_root: Path,
         include_tests: bool = True,
+        include_examples: bool = True,
+        include_scripts: bool = True,
     ) -> list[Path]:
         """Iterate Python files across all projects in a workspace.
 
@@ -137,13 +139,25 @@ class FlextInfraUtilitiesRefactor:
 
         """
         roots = FlextInfraUtilitiesRefactor.discover_project_roots(
-            workspace_root=workspace_root,
+            workspace_root=workspace_root
         )
         files: list[Path] = []
         for project_root in roots:
             src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
             if src_dir.is_dir():
                 files.extend(sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)))
+            if include_examples:
+                examples_dir = project_root / c.Infra.Directories.EXAMPLES
+                if examples_dir.is_dir():
+                    files.extend(
+                        sorted(examples_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                    )
+            if include_scripts:
+                scripts_dir = project_root / c.Infra.Directories.SCRIPTS
+                if scripts_dir.is_dir():
+                    files.extend(
+                        sorted(scripts_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                    )
             if include_tests:
                 tests_dir = project_root / c.Infra.Directories.TESTS
                 if tests_dir.is_dir():

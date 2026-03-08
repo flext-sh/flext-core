@@ -55,8 +55,6 @@ if TYPE_CHECKING:
         U,
     )
     from flext_core.utilities import FlextUtilities, FlextUtilities as u
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "E": ("flext_core.typings", "E"),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
@@ -102,7 +100,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }
-
 __all__ = [
     "E",
     "FlextConstants",

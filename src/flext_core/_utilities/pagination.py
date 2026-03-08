@@ -29,8 +29,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: Mapping[str, t.ContainerValue],
-        message: str | None = None,
+        pagination_data: Mapping[str, t.ContainerValue], message: str | None = None
     ) -> r[Mapping[str, t.ContainerValue]]:
         """Build paginated response dictionary.
 
@@ -44,25 +43,18 @@ class FlextUtilitiesPagination:
         """
         data = pagination_data.get("data")
         pagination = pagination_data.get("pagination")
-
         if data is None or pagination is None:
-            return r[t.ConfigurationMapping].fail(
-                "Invalid pagination data structure",
-            )
-
+            return r[t.ConfigurationMapping].fail("Invalid pagination data structure")
         if not FlextRuntime.is_list_like(data):
             data = str(data)
         if not FlextRuntime.is_dict_like(pagination):
             pagination = str(pagination)
-
         response: Mapping[str, t.ContainerValue] = {
             "data": data,
             "pagination": pagination,
         }
-
         if message is not None:
             response = {**response, "message": message}
-
         return r[t.ConfigurationMapping].ok(response)
 
     @staticmethod
@@ -85,26 +77,21 @@ class FlextUtilitiesPagination:
             r with (page, page_size) tuple or error
 
         """
-        # StringDict values are always str, so isinstance is redundant
         page_str = str(default_page)
         if "page" in query_params:
             page_str = query_params["page"]
-
         page_size_str = str(default_page_size)
         if "page_size" in query_params:
             page_size_str = query_params["page_size"]
-
         try:
             page = int(page_str)
             page_size = int(page_size_str)
-
             if page < 1:
                 return r[tuple[int, int]].fail("Page must be >= 1")
             if page_size < 1:
                 return r[tuple[int, int]].fail("Page size must be >= 1")
             if page_size > max_page_size:
                 return r[tuple[int, int]].fail(f"Page size must be <= {max_page_size}")
-
             return r[tuple[int, int]].ok((page, page_size))
         except ValueError as e:
             return r[tuple[int, int]].fail(f"Invalid page parameters: {e}")
@@ -122,12 +109,9 @@ class FlextUtilitiesPagination:
             Dictionary with pagination config values
 
         """
-        # Default values
         default_page_size = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
         max_page_size = c.Pagination.MAX_PAGE_SIZE_EXAMPLE
-
         if config is not None:
-            # Use getattr to safely access attributes without type narrowing issues
             default_page_size_attr = getattr(config, "default_page_size", None)
             if default_page_size_attr is not None:
                 match default_page_size_attr:
@@ -135,7 +119,6 @@ class FlextUtilitiesPagination:
                         default_page_size = page_size
                     case _:
                         pass
-
             max_page_size_attr = getattr(config, "max_page_size", None)
             if max_page_size_attr is not None:
                 match max_page_size_attr:
@@ -143,11 +126,7 @@ class FlextUtilitiesPagination:
                         max_page_size = page_size
                     case _:
                         pass
-
-        return {
-            "default_page_size": default_page_size,
-            "max_page_size": max_page_size,
-        }
+        return {"default_page_size": default_page_size, "max_page_size": max_page_size}
 
     @staticmethod
     def prepare_pagination_data(
@@ -171,25 +150,18 @@ class FlextUtilitiesPagination:
         """
         if data is None:
             data = []
-
-        # Calculate pagination metadata
         total_count = total if total is not None else len(data)
-        total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
-
-        # Ensure page is within bounds
+        total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
             return r[t.ConfigurationMapping].fail(
-                f"Page {page} exceeds total pages {total_pages}",
+                f"Page {page} exceeds total pages {total_pages}"
             )
-
         has_next = page < total_pages
         has_prev = page > 1
-
         data_list: list[t.ContainerValue] = []
         for item in data:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
-
         return r[t.ConfigurationMapping].ok({
             "data": data_list,
             "pagination": {
@@ -204,10 +176,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def validate_pagination_params(
-        *,
-        page: int,
-        page_size: int | None,
-        max_page_size: int,
+        *, page: int, page_size: int | None, max_page_size: int
     ) -> r[Mapping[str, int]]:
         """Validate pagination parameters.
 
@@ -222,17 +191,12 @@ class FlextUtilitiesPagination:
         """
         if page < 1:
             return r[Mapping[str, int]].fail("Page must be >= 1")
-
         effective_page_size = page_size if page_size is not None else 20
-
         if effective_page_size < 1:
             return r[Mapping[str, int]].fail("Page size must be >= 1")
         if effective_page_size > max_page_size:
             return r[Mapping[str, int]].fail(f"Page size must be <= {max_page_size}")
-
         return r[Mapping[str, int]].ok({"page": page, "page_size": effective_page_size})
 
 
-__all__ = [
-    "FlextUtilitiesPagination",
-]
+__all__ = ["FlextUtilitiesPagination"]

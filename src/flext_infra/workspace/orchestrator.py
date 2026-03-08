@@ -78,25 +78,17 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
             failed = 0
             skipped = 0
             started_total = time.monotonic()
-
             for idx, project in enumerate(projects, start=1):
                 output.progress(idx, total, project, verb)
                 if skipped:
                     results.append(
                         m.Infra.Core.CommandOutput(
-                            stdout="",
-                            stderr="",
-                            exit_code=0,
-                            duration=0.0,
-                        ),
+                            stdout="", stderr="", exit_code=0, duration=0.0
+                        )
                     )
                     continue
-
                 output_result = self._run_project(
-                    project,
-                    verb,
-                    idx,
-                    make_args=list(make_args),
+                    project, verb, idx, make_args=list(make_args)
                 )
                 if output_result.is_failure:
                     failed += 1
@@ -106,12 +98,11 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
                             stderr=output_result.error or "project execution failed",
                             exit_code=1,
                             duration=0.0,
-                        ),
+                        )
                     )
                     if fail_fast:
                         skipped = total - idx
                     continue
-
                 output_value = output_result.value
                 cmd_output: m.Infra.Core.CommandOutput = output_value
                 results.append(cmd_output)
@@ -119,26 +110,18 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
                     success += 1
                 else:
                     failed += 1
-
                 if cmd_output.exit_code != 0 and fail_fast:
                     skipped = total - idx
-
             elapsed_total = time.monotonic() - started_total
             output.summary(verb, total, success, failed, skipped, elapsed_total)
             return r[list[m.Infra.Core.CommandOutput]].ok(results)
-
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
             return r[list[m.Infra.Core.CommandOutput]].fail(
                 f"Orchestration failed: {exc}"
             )
 
     def _run_project(
-        self,
-        project: str,
-        verb: str,
-        _index: int,
-        *,
-        make_args: list[str],
+        self, project: str, verb: str, _index: int, *, make_args: list[str]
     ) -> r[m.Infra.Core.CommandOutput]:
         """Execute make verb for a single project.
 
@@ -153,14 +136,10 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
 
         """
         log_path = self._reporting.get_report_path(
-            Path.cwd(),
-            c.Infra.ReportKeys.WORKSPACE,
-            verb,
-            f"{project}.log",
+            Path.cwd(), c.Infra.ReportKeys.WORKSPACE, verb, f"{project}.log"
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()
-
         proc_result = self._runner.run_to_file(
             [c.Infra.Cli.MAKE, "-C", project, verb, *make_args],
             log_path,
@@ -168,25 +147,20 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
         )
         proc_value = proc_result.value if proc_result.is_success else None
         return_code: int = proc_value if isinstance(proc_value, int) else 1
-        stderr = "" if proc_result.is_success else (proc_result.error or "")
-
+        stderr = "" if proc_result.is_success else proc_result.error or ""
         elapsed = time.monotonic() - started
-        # Output project completion status
         status_symbol = "✓" if return_code == 0 else "✗"
         output.info(
-            f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})",
+            f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})"
         )
-
         return r[m.Infra.Core.CommandOutput].ok(
             m.Infra.Core.CommandOutput(
                 stdout=str(log_path),
                 stderr=stderr,
                 exit_code=return_code,
                 duration=round(elapsed, 2),
-            ),
+            )
         )
 
 
-__all__ = [
-    "FlextInfraOrchestratorService",
-]
+__all__ = ["FlextInfraOrchestratorService"]

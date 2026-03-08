@@ -29,7 +29,7 @@ class FlextTestsDomains:
         Implements ResultLike protocol for compatibility with FlextResult operations.
         """
 
-        __test__ = False  # Not a test class, just a helper class
+        __test__ = False
 
         def __init__(self, value: str) -> None:
             """Initialize domain result."""
@@ -78,23 +78,16 @@ class FlextTestsDomains:
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
         }
-
         if include_data:
             response["data"] = {"test": "data"}
-
         if status == "error":
-            response["error"] = {
-                "code": "TEST_ERROR",
-                "message": "Test error message",
-            }
-
+            response["error"] = {"code": "TEST_ERROR", "message": "Test error message"}
         response.update(custom_fields)
         return response
 
     @staticmethod
     def batch_users(
-        count: int = 5,
-        **user_overrides: str | bool,
+        count: int = 5, **user_overrides: str | bool
     ) -> list[MutableMapping[str, str | bool]]:
         """Create a batch of test users.
 
@@ -132,11 +125,8 @@ class FlextTestsDomains:
 
         """
         config_result = tt.model(
-            "config",
-            service_type=service_type,
-            environment=environment,
+            "config", service_type=service_type, environment=environment
         )
-        # Extract attributes using getattr with defaults for type safety
         base_config: MutableMapping[str, t.Tests.ContainerValue] = {
             "service_type": getattr(config_result, "service_type", service_type),
             "environment": getattr(config_result, "environment", environment),
@@ -154,8 +144,7 @@ class FlextTestsDomains:
 
     @staticmethod
     def create_payload(
-        data_type: str = "user",
-        **custom_fields: t.Tests.ContainerValue,
+        data_type: str = "user", **custom_fields: t.Tests.ContainerValue
     ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test payload data.
 
@@ -188,15 +177,13 @@ class FlextTestsDomains:
                 "body": None,
             },
         }
-
         payload = dict(payloads.get(data_type, {}))
         payload.update(custom_fields)
         return payload
 
     @staticmethod
     def create_service(
-        service_type: str = "api",
-        **config: t.Tests.ContainerValue,
+        service_type: str = "api", **config: t.Tests.ContainerValue
     ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test service configuration.
 
@@ -231,14 +218,9 @@ class FlextTestsDomains:
         first_name = str(overrides.get("first_name", "Test"))
         last_name = str(overrides.get("last_name", "User"))
         email = str(overrides.get("email", "test@example.com"))
-
         user_model_result = tt.model(
-            "user",
-            name=f"{first_name} {last_name}",
-            email=email,
+            "user", name=f"{first_name} {last_name}", email=email
         )
-        # Type narrowing: tt.model("user") returns m.Tests.Factory.User
-        # Extract attributes safely using getattr
         user: MutableMapping[str, str | bool] = {
             "id": getattr(user_model_result, "id", ""),
             "username": str(overrides.get("username", "testuser")),

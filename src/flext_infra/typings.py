@@ -29,7 +29,6 @@ class FlextInfraTypes(FlextTypes):
     transparently from ``FlextTypes`` via MRO.
     """
 
-    # -- Infra-specific type layers ----------------------------------
     class Infra:
         """Infrastructure-domain type aliases.
 
@@ -37,88 +36,57 @@ class FlextInfraTypes(FlextTypes):
         for infrastructure payload contracts and common patterns.
         """
 
-        # -- Payload types -------------------------------------------
         Payload: TypeAlias = (
             FlextTypes.Scalar
             | Mapping[str, FlextTypes.Scalar]
             | Sequence[FlextTypes.Scalar]
         )
-        """Infrastructure payload: scalar, scalar mapping, or scalar sequence."""
-
+        "Infrastructure payload: scalar, scalar mapping, or scalar sequence."
         PayloadMap: TypeAlias = Mapping[str, Payload]
-        """Infrastructure payload map: string-keyed mapping of payloads."""
-
-        # -- String collection aliases -------------------------------
+        "Infrastructure payload map: string-keyed mapping of payloads."
         Lines: TypeAlias = list[str]
-        """List of string lines (log output, violation messages, etc.)."""
-
+        "List of string lines (log output, violation messages, etc.)."
         StrMap: TypeAlias = dict[str, str]
-        """Mutable string-to-string mapping (symbol replacements, renames)."""
-
+        "Mutable string-to-string mapping (symbol replacements, renames)."
         StrMapping: TypeAlias = Mapping[str, str]
-        """Immutable string-to-string mapping (env vars, keyword renames)."""
-
+        "Immutable string-to-string mapping (env vars, keyword renames)."
         MutableStrMap: TypeAlias = MutableMapping[str, str]
-        """Mutable string-to-string mapping for accumulation patterns."""
-
+        "Mutable string-to-string mapping for accumulation patterns."
         ContainerDict: TypeAlias = dict[str, FlextTypes.ContainerValue]
-        """Dict with string keys and container values (project reports, etc.)."""
-
+        "Dict with string keys and container values (project reports, etc.)."
         ContainerReport: TypeAlias = dict[str, ContainerDict]
-        """Nested container dict (project-level reports)."""
-
-        # -- Lazy import registry ------------------------------------
+        "Nested container dict (project-level reports)."
         LazyImportEntry: TypeAlias = tuple[str, str]
-        """A (module_path, attr_name) pair for lazy imports."""
-
+        "A (module_path, attr_name) pair for lazy imports."
         LazyImportMap: TypeAlias = dict[str, LazyImportEntry]
-        """Mapping of export names to (module_path, attr_name) pairs."""
-
-        # -- Callable patterns ---------------------------------------
+        "Mapping of export names to (module_path, attr_name) pairs."
         ChangeCallback: TypeAlias = Callable[[str], None]
-        """Callback invoked when a refactoring change is applied."""
-
+        "Callback invoked when a refactoring change is applied."
         EnvMap: TypeAlias = Mapping[str, str] | None
-        """Optional environment variable mapping for subprocess execution."""
-
-        # -- Path types ----------------------------------------------
+        "Optional environment variable mapping for subprocess execution."
         PathLike: TypeAlias = str | Path
-        """Flexible path representation (str or Path)."""
-
-        # -- Dependency detection types -------------------------------
+        "Flexible path representation (str or Path)."
         InfraValue: TypeAlias = FlextTypes.ContainerValue
-        """Recursive infrastructure value: primitive, nested list/mapping, or null."""
-
+        "Recursive infrastructure value: primitive, nested list/mapping, or null."
         IssueMap: TypeAlias = Mapping[str, InfraValue]
-        """Dependency issue mapping: string-keyed mapping of infra values."""
-
-        # -- Config / rule types -------------------------------------
+        "Dependency issue mapping: string-keyed mapping of infra values."
         RuleConfig: TypeAlias = dict[str, InfraValue]
-        """A single rule configuration dict (parsed from TOML/YAML)."""
-
+        "A single rule configuration dict (parsed from TOML/YAML)."
         RuleConfigList: TypeAlias = list[RuleConfig]
-        """List of rule configuration dicts."""
-
-        # -- PR / orchestration types --------------------------------
+        "List of rule configuration dicts."
         OrchestrationSummary: TypeAlias = Mapping[
             str, int | list[Mapping[str, FlextTypes.Scalar]]
         ]
-        """Workspace PR orchestration summary."""
-
-        # -- Refactor / MRO types ------------------------------------
+        "Workspace PR orchestration summary."
         FacadeFamily: TypeAlias = Literal["c", "t", "p", "m", "u"]
-        """Facade family identifier for MRO chain resolution."""
-
+        "Facade family identifier for MRO chain resolution."
         ExpectedBase: TypeAlias = type | str
-        """Expected MRO base: a class or its qualified name."""
-
+        "Expected MRO base: a class or its qualified name."
         PolicyContext: TypeAlias = Mapping[str, ContainerDict]
-        """Class-nesting policy matrix keyed by module family."""
-
+        "Class-nesting policy matrix keyed by module family."
         ClassFamilyMap: TypeAlias = Mapping[str, str]
-        """Mapping from symbol name to resolved module family."""
+        "Mapping from symbol name to resolved module family."
 
 
 t = FlextInfraTypes
-
 __all__ = ["FlextInfraTypes", "t"]

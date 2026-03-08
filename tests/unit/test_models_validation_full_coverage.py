@@ -25,10 +25,6 @@ from typing import cast
 from flext_core import c, m, r, t, u
 from flext_core._models.base import FlextModelFoundation
 
-# ---------------------------------------------------------------------------
-# Validators.strip_whitespace
-# ---------------------------------------------------------------------------
-
 
 def test_strip_whitespace_trims_leading_trailing() -> None:
     assert m.Validators.strip_whitespace("  hello  ") == "hello"
@@ -42,13 +38,8 @@ def test_strip_whitespace_returns_empty_on_spaces() -> None:
     assert m.Validators.strip_whitespace("   ") == ""
 
 
-# ---------------------------------------------------------------------------
-# Validators.ensure_utc_datetime
-# ---------------------------------------------------------------------------
-
-
 def test_ensure_utc_datetime_adds_tzinfo_when_naive() -> None:
-    naive = datetime(2025, 1, 1, 12, 0, 0)  # noqa: DTZ001
+    naive = datetime(2025, 1, 1, 12, 0, 0)
     result = m.Validators.ensure_utc_datetime(naive)
     assert result is not None
     assert result.tzinfo is UTC
@@ -62,11 +53,6 @@ def test_ensure_utc_datetime_preserves_aware() -> None:
 
 def test_ensure_utc_datetime_returns_none_on_none() -> None:
     assert m.Validators.ensure_utc_datetime(None) is None
-
-
-# ---------------------------------------------------------------------------
-# Validators.normalize_to_list
-# ---------------------------------------------------------------------------
 
 
 def test_normalize_to_list_wraps_scalar() -> None:
@@ -84,11 +70,6 @@ def test_normalize_to_list_wraps_int() -> None:
     assert result == [42]
 
 
-# ---------------------------------------------------------------------------
-# Validators.validate_config_dict
-# ---------------------------------------------------------------------------
-
-
 def test_validate_config_dict_normalizes_dict() -> None:
     result = m.Validators.validate_config_dict(
         cast("t.ContainerValue", {"key": "value"})
@@ -97,17 +78,11 @@ def test_validate_config_dict_normalizes_dict() -> None:
     assert result["key"] == "value"
 
 
-# ---------------------------------------------------------------------------
-# Validators.validate_tags_list
-# ---------------------------------------------------------------------------
-
-
 def test_validate_tags_list_normalizes() -> None:
     result = m.Validators.validate_tags_list(
         cast("t.ContainerValue", ["tag1", "  TAG1  ", "tag2"])
     )
     assert isinstance(result, list)
-    # Tags should be deduplicated and cleaned
     assert len(result) <= 3
 
 
@@ -117,11 +92,6 @@ def test_validate_tags_list_from_string() -> None:
     )
     assert "hello" in result
     assert "world" in result
-
-
-# ---------------------------------------------------------------------------
-# Smoke: confirm facade binding
-# ---------------------------------------------------------------------------
 
 
 def test_facade_binding_is_correct() -> None:

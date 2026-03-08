@@ -118,7 +118,7 @@ class FlextInfraUtilitiesCodegen:
                                 if isinstance(elt, ast.Constant)
                                 and isinstance(elt.value, str)
                             )
-        return has_all, exports
+        return (has_all, exports)
 
     @staticmethod
     def extract_inline_constants(tree: ast.Module) -> dict[str, str]:
@@ -167,7 +167,7 @@ class FlextInfraUtilitiesCodegen:
                 if (
                     isinstance(key, ast.Constant)
                     and isinstance(val, ast.Tuple)
-                    and len(val.elts) == lazy_import_pair_size
+                    and (len(val.elts) == lazy_import_pair_size)
                     and isinstance(val.elts[0], ast.Constant)
                     and isinstance(val.elts[1], ast.Constant)
                 ):
@@ -184,17 +184,15 @@ class FlextInfraUtilitiesCodegen:
             elif (
                 isinstance(node, ast.AnnAssign)
                 and isinstance(node.target, ast.Name)
-                and node.target.id == "_LAZY_IMPORTS"
-                and node.value is not None
+                and (node.target.id == "_LAZY_IMPORTS")
+                and (node.value is not None)
             ):
                 _extract(node.value)
-
         return result
 
     @staticmethod
     def derive_lazy_map(
-        tree: ast.Module,
-        current_pkg: str,
+        tree: ast.Module, current_pkg: str
     ) -> dict[str, tuple[str, str]]:
         """Derive lazy import mappings from import statements in the AST.
 
@@ -207,7 +205,6 @@ class FlextInfraUtilitiesCodegen:
 
         """
         lazy_map: dict[str, tuple[str, str]] = {}
-
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
                 raw_module = node.module or ""
@@ -229,8 +226,6 @@ class FlextInfraUtilitiesCodegen:
                     if name in c.Infra.Codegen.SKIP_STDLIB:
                         continue
                     lazy_map[asname] = (name, "")
-
-        # Capture assignment aliases: `c = FlextConstants`
         for node in tree.body:
             if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name):
                 rhs = node.value.id
@@ -239,18 +234,15 @@ class FlextInfraUtilitiesCodegen:
                     for target in node.targets:
                         if isinstance(target, ast.Name):
                             lazy_map[target.id] = (mod, attr)
-
-        # Fix single-letter aliases imported alongside facade classes.
         for a_name, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
             if a_name not in lazy_map:
                 continue
             alias_mod, alias_attr = lazy_map[a_name]
             if alias_attr == a_name:
                 for name, (mod, _) in lazy_map.items():
-                    if mod == alias_mod and name.endswith(suffix) and len(name) > 1:
+                    if mod == alias_mod and name.endswith(suffix) and (len(name) > 1):
                         lazy_map[a_name] = (mod, name)
                         break
-
         return lazy_map
 
     @staticmethod
@@ -274,7 +266,6 @@ class FlextInfraUtilitiesCodegen:
         unmapped = exports_set - set(filtered)
         if not unmapped:
             return
-
         for alias in sorted(unmapped):
             if alias in c.Infra.Codegen.ALIAS_TO_SUFFIX:
                 suffix = c.Infra.Codegen.ALIAS_TO_SUFFIX[alias]
@@ -320,17 +311,13 @@ class FlextInfraUtilitiesCodegen:
 
         def _emit_module(mod: str) -> None:
             items = groups[mod]
-            sorted_items = sorted(
-                items,
-                key=lambda x: (x[1], x[0] != x[1]),
-            )
+            sorted_items = sorted(items, key=lambda x: (x[1], x[0] != x[1]))
             parts: list[str] = []
             for export_name, attr_name in sorted_items:
                 if export_name == attr_name:
                     parts.append(export_name)
                 else:
                     parts.append(f"{attr_name} as {export_name}")
-
             joined = ", ".join(parts)
             line = f"    from {mod} import {joined}"
             if len(line) > c.Infra.Codegen.MAX_LINE_LENGTH:
@@ -348,7 +335,6 @@ class FlextInfraUtilitiesCodegen:
                 lines.append("")
             _emit_module(mod)
             prev_top = top
-
         return lines
 
     @staticmethod
@@ -376,23 +362,15 @@ class FlextInfraUtilitiesCodegen:
         for export_name in sorted(filtered):
             mod, attr = filtered[export_name]
             groups[mod].append((export_name, attr))
-
         out: list[str] = []
-
         if docstring_source:
             out.extend([docstring_source, ""])
-
-        # flext_core itself must use _utilities.lazy (avoid circular import)
         if current_pkg == c.Infra.Packages.CORE_UNDERSCORE:
-            lazy_import = (
-                "from flext_core._utilities.lazy import "
-                "cleanup_submodule_namespace, lazy_getattr"
-            )
+            lazy_import = "from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr"
         else:
             lazy_import = (
                 "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
             )
-
         out.extend([
             "from __future__ import annotations",
             "",
@@ -401,15 +379,12 @@ class FlextInfraUtilitiesCodegen:
             lazy_import,
             "",
         ])
-
         out.extend(FlextInfraUtilitiesCodegen.generate_type_checking(groups))
         out.append("")
-
         for name, value in sorted(inline_constants.items()):
             out.append(f'{name} = "{value}"')
         if inline_constants:
             out.append("")
-
         out.extend([
             "# Lazy import mapping: export_name -> (module_path, attr_name)",
             "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
@@ -419,11 +394,9 @@ class FlextInfraUtilitiesCodegen:
                 mod, attr = filtered[exp]
                 out.append(f'    "{exp}": ("{mod}", "{attr}"),')
         out.extend(["}", ""])
-
         out.append("__all__ = [")
         out.extend(f'    "{exp}",' for exp in sorted(exports))
         out.extend(["]", "", ""])
-
         out.extend([
             "def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/",
             '    """Lazy-load module attributes on first access (PEP 562)."""',
@@ -438,7 +411,6 @@ class FlextInfraUtilitiesCodegen:
             "cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)",
             "",
         ])
-
         return "\n".join(out)
 
     @staticmethod

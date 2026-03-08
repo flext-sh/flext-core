@@ -1,0 +1,366 @@
+"""AST-driven centralizer for Pydantic models and dict-like type contracts."""
+
+from __future__ import annotations
+
+import ast
+import operator
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass(slots=True, frozen=True)
+class _ClassMove:
+    name: str
+    start: int
+    end: int
+    source: str
+    kind: str
+
+
+@dataclass(slots=True, frozen=True)
+class _AliasMove:
+    name: str
+    start: int
+    end: int
+    alias_expr: str
+
+
+class FlextInfraRefactorPydanticCentralizer:
+    """Centralize model-like contracts into `models.py`/`_models.py` files."""
+
+    _SCOPE_DIRS: tuple[str, ...] = ("src", "tests", "scripts", "examples")
+
+    @staticmethod
+    def _is_target_python(file_path: Path) -> bool:
+        if file_path.suffix != ".py":
+            return False
+        parts = set(file_path.parts)
+        return (
+            len(parts.intersection(FlextInfraRefactorPydanticCentralizer._SCOPE_DIRS))
+            > 0
+        )
+
+    @staticmethod
+    def _is_allowed_model_path(file_path: Path) -> bool:
+        posix = file_path.as_posix()
+        return posix.endswith(("/models.py", "/_models.py")) or "/models/" in posix
+
+    @staticmethod
+    def _class_base_names(node: ast.ClassDef) -> set[str]:
+        names: set[str] = set()
+        for base in node.bases:
+            if isinstance(base, ast.Name):
+                names.add(base.id)
+            elif isinstance(base, ast.Attribute):
+                names.add(base.attr)
+        return names
+
+    class _DisallowedModelBaseNormalizer(ast.NodeTransformer):
+        @staticmethod
+        def _base_name(base: ast.expr) -> str:
+            if isinstance(base, ast.Name):
+                return base.id
+            if isinstance(base, ast.Attribute):
+                return base.attr
+            return ""
+
+        def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
+            updated = self.generic_visit(node)
+            if not isinstance(updated, ast.ClassDef):
+                return updated
+            updated.bases = [
+                base
+                for base in updated.bases
+                if self._base_name(base) not in {"BaseModel", "TypedDict"}
+            ]
+            updated.keywords = [
+                kw
+                for kw in updated.keywords
+                if not (
+                    kw.arg == "total"
+                    and isinstance(kw.value, ast.Constant)
+                    and isinstance(kw.value.value, bool)
+                )
+            ]
+            return updated
+
+    @staticmethod
+    def _is_top_level_model_class(node: ast.stmt) -> bool:
+        if not isinstance(node, ast.ClassDef):
+            return False
+        base_names = FlextInfraRefactorPydanticCentralizer._class_base_names(node)
+        return "BaseModel" in base_names or "TypedDict" in base_names
+
+    @staticmethod
+    def _is_dict_like_alias(node: ast.stmt, source: str) -> _AliasMove | None:
+        keys = (
+            "dict",
+            "payload",
+            "schema",
+            "entry",
+            "config",
+            "metadata",
+            "fixture",
+            "case",
+        )
+        match node:
+            case ast.TypeAlias():
+                alias_name = node.name.id
+                if not any(token in alias_name.lower() for token in keys):
+                    return None
+                expr = ast.get_source_segment(source, node.value)
+                if expr is None:
+                    return None
+                if "dict[" not in expr and "Mapping[" not in expr:
+                    return None
+                return _AliasMove(
+                    name=alias_name,
+                    start=node.lineno,
+                    end=node.end_lineno or node.lineno,
+                    alias_expr=expr,
+                )
+            case _:
+                return None
+
+    @staticmethod
+    def _typed_dict_total_false(node: ast.ClassDef) -> bool:
+        for keyword in node.keywords:
+            if keyword.arg == "total" and isinstance(keyword.value, ast.Constant):
+                return bool(keyword.value.value) is False
+        return False
+
+    @staticmethod
+    def _build_model_from_typed_dict(node: ast.ClassDef, source: str) -> str:
+        total_false = FlextInfraRefactorPydanticCentralizer._typed_dict_total_false(
+            node
+        )
+        fields: list[str] = []
+        for stmt in node.body:
+            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                ann = ast.get_source_segment(source, stmt.annotation)
+                if ann is None:
+                    continue
+                if total_false:
+                    fields.append(
+                        f"    {stmt.target.id}: {ann} | None = Field(default=None)"
+                    )
+                else:
+                    fields.append(f"    {stmt.target.id}: {ann}")
+        if len(fields) == 0:
+            fields.append("    pass")
+        body = "\n".join(fields)
+        return f'class {node.name}(BaseModel):\n    model_config = ConfigDict(extra="forbid")\n{body}\n'
+
+    @staticmethod
+    def _collect_moves(file_path: Path) -> tuple[list[_ClassMove], list[_AliasMove]]:
+        source = file_path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        lines = source.splitlines()
+        class_moves: list[_ClassMove] = []
+        alias_moves: list[_AliasMove] = []
+        for stmt in tree.body:
+            if FlextInfraRefactorPydanticCentralizer._is_top_level_model_class(stmt):
+                assert isinstance(stmt, ast.ClassDef)
+                start = stmt.lineno
+                end = stmt.end_lineno or stmt.lineno
+                snippet = "\n".join(lines[start - 1 : end])
+                base_names = FlextInfraRefactorPydanticCentralizer._class_base_names(
+                    stmt
+                )
+                kind = "typed_dict" if "TypedDict" in base_names else "base_model"
+                if kind == "typed_dict":
+                    snippet = FlextInfraRefactorPydanticCentralizer._build_model_from_typed_dict(
+                        stmt, source
+                    )
+                class_moves.append(
+                    _ClassMove(
+                        name=stmt.name, start=start, end=end, source=snippet, kind=kind
+                    )
+                )
+                continue
+            alias_move = FlextInfraRefactorPydanticCentralizer._is_dict_like_alias(
+                stmt, source
+            )
+            if alias_move is not None:
+                alias_moves.append(alias_move)
+        return (class_moves, alias_moves)
+
+    @staticmethod
+    def _dest_import_statement(file_path: Path, names: list[str]) -> str:
+        joined = ", ".join(sorted(set(names)))
+        if (file_path.parent / "__init__.py").exists():
+            return f"from ._models import {joined}"
+        return f"from _models import {joined}"
+
+    @staticmethod
+    def _insert_import(source: str, import_stmt: str) -> str:
+        if import_stmt in source:
+            return source
+        lines = source.splitlines()
+        insert_idx = 0
+        for idx, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith("from __future__ import"):
+                insert_idx = idx + 1
+                continue
+            if stripped.startswith(("import ", "from ")):
+                insert_idx = idx + 1
+                continue
+            if stripped == "" and insert_idx > 0:
+                continue
+            if insert_idx > 0:
+                break
+        lines.insert(insert_idx, import_stmt)
+        return "\n".join(lines) + ("\n" if source.endswith("\n") else "")
+
+    @staticmethod
+    def _rewrite_source(
+        file_path: Path, class_moves: list[_ClassMove], alias_moves: list[_AliasMove]
+    ) -> str:
+        source = file_path.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        ranges = sorted(
+            [(m.start, m.end) for m in class_moves]
+            + [(a.start, a.end) for a in alias_moves],
+            key=operator.itemgetter(0),
+            reverse=True,
+        )
+        for start, end in ranges:
+            del lines[start - 1 : end]
+        moved_names = [m.name for m in class_moves] + [a.name for a in alias_moves]
+        updated = "\n".join(lines)
+        if len(moved_names) > 0:
+            import_stmt = FlextInfraRefactorPydanticCentralizer._dest_import_statement(
+                file_path, moved_names
+            )
+            updated = FlextInfraRefactorPydanticCentralizer._insert_import(
+                updated, import_stmt
+            )
+        if source.endswith("\n") and (not updated.endswith("\n")):
+            updated += "\n"
+        return updated
+
+    @staticmethod
+    def _ensure_dest_header(dest_path: Path) -> str:
+        if dest_path.exists():
+            return dest_path.read_text(encoding="utf-8")
+        return (
+            '"""Auto-generated centralized models."""\n\n'
+            "from __future__ import annotations\n\n"
+            "from pydantic import BaseModel, ConfigDict, Field, RootModel\n\n"
+            "class FlextAutoConstants:\n    pass\n\n"
+            "class FlextAutoTypes:\n    pass\n\n"
+            "class FlextAutoProtocols:\n    pass\n\n"
+            "class FlextAutoUtilities:\n    pass\n\n"
+            "class FlextAutoModels:\n    pass\n\n"
+            "c = FlextAutoConstants\n"
+            "t = FlextAutoTypes\n"
+            "p = FlextAutoProtocols\n"
+            "u = FlextAutoUtilities\n"
+            "m = FlextAutoModels\n\n"
+        )
+
+    @staticmethod
+    def _append_unique_blocks(
+        existing: str, blocks: list[str], names: list[str]
+    ) -> str:
+        updated = existing
+        for name, block in zip(names, blocks, strict=True):
+            if f"class {name}(" in updated:
+                continue
+            updated = updated.rstrip() + "\n\n" + block.rstrip() + "\n"
+        return updated
+
+    @staticmethod
+    def _alias_as_root_model(alias_move: _AliasMove) -> str:
+        return (
+            f"class {alias_move.name}(RootModel[{alias_move.alias_expr}]):\n    pass\n"
+        )
+
+    @staticmethod
+    def _normalize_disallowed_bases(file_path: Path, *, apply_changes: bool) -> bool:
+        source = file_path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        normalizer = (
+            FlextInfraRefactorPydanticCentralizer._DisallowedModelBaseNormalizer()
+        )
+        normalized = normalizer.visit(tree)
+        ast.fix_missing_locations(normalized)
+        rewritten = ast.unparse(normalized)
+        if rewritten == source:
+            return False
+        if apply_changes:
+            file_path.write_text(rewritten + "\n", encoding="utf-8")
+        return True
+
+    @staticmethod
+    def centralize_workspace(
+        workspace_root: Path, *, apply_changes: bool, normalize_remaining: bool
+    ) -> dict[str, int]:
+        moved_classes = 0
+        moved_aliases = 0
+        normalized_files = 0
+        touched_files = 0
+        scanned_files = 0
+        for file_path in workspace_root.rglob("*.py"):
+            if not FlextInfraRefactorPydanticCentralizer._is_target_python(file_path):
+                continue
+            if FlextInfraRefactorPydanticCentralizer._is_allowed_model_path(file_path):
+                continue
+            scanned_files += 1
+            try:
+                class_moves, alias_moves = (
+                    FlextInfraRefactorPydanticCentralizer._collect_moves(file_path)
+                )
+            except (SyntaxError, UnicodeDecodeError, OSError):
+                continue
+            if len(class_moves) == 0 and len(alias_moves) == 0:
+                continue
+            dest_path = file_path.parent / "_models.py"
+            class_blocks = [m.source for m in class_moves]
+            class_names = [m.name for m in class_moves]
+            alias_blocks = [
+                FlextInfraRefactorPydanticCentralizer._alias_as_root_model(a)
+                for a in alias_moves
+            ]
+            alias_names = [a.name for a in alias_moves]
+            existing_dest = FlextInfraRefactorPydanticCentralizer._ensure_dest_header(
+                dest_path
+            )
+            updated_dest = FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
+                existing_dest, class_blocks + alias_blocks, class_names + alias_names
+            )
+            updated_source = FlextInfraRefactorPydanticCentralizer._rewrite_source(
+                file_path, class_moves, alias_moves
+            )
+            moved_classes += len(class_moves)
+            moved_aliases += len(alias_moves)
+            touched_files += 1
+            if apply_changes:
+                dest_path.write_text(updated_dest, encoding="utf-8")
+                file_path.write_text(updated_source, encoding="utf-8")
+        if normalize_remaining:
+            for file_path in workspace_root.rglob("*.py"):
+                if not FlextInfraRefactorPydanticCentralizer._is_target_python(
+                    file_path
+                ):
+                    continue
+                if FlextInfraRefactorPydanticCentralizer._is_allowed_model_path(
+                    file_path
+                ):
+                    continue
+                try:
+                    changed = FlextInfraRefactorPydanticCentralizer._normalize_disallowed_bases(
+                        file_path, apply_changes=apply_changes
+                    )
+                except (SyntaxError, UnicodeDecodeError, OSError):
+                    continue
+                if changed:
+                    normalized_files += 1
+        return {
+            "scanned_files": scanned_files,
+            "touched_files": touched_files,
+            "moved_classes": moved_classes,
+            "moved_aliases": moved_aliases,
+            "normalized_files": normalized_files,
+        }

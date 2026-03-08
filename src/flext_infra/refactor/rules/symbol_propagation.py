@@ -22,14 +22,11 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
+        self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         target_modules_raw = self.config.get("target_modules", [])
         module_renames_raw = self.config.get("module_renames", {})
         symbol_renames_raw = self.config.get("import_symbol_renames", {})
-
         target_modules = set(u.Infra.Refactor.string_list(target_modules_raw))
         try:
             module_renames = TypeAdapter(dict[str, str]).validate_python(
@@ -43,17 +40,15 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
             )
         except ValidationError:
             symbol_renames: dict[str, str] = {}
-
-        if not target_modules and not module_renames and not symbol_renames:
-            return tree, []
-
+        if not target_modules and (not module_renames) and (not symbol_renames):
+            return (tree, [])
         transformer = FlextInfraRefactorSymbolPropagator(
             target_modules=target_modules,
             module_renames=module_renames,
             import_symbol_renames=symbol_renames,
         )
         wrapper = MetadataWrapper(tree)
-        return wrapper.visit(transformer), transformer.changes
+        return (wrapper.visit(transformer), transformer.changes)
 
 
 class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
@@ -74,39 +69,28 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
 
     @override
     def leave_Call(
-        self,
-        original_node: cst.Call,
-        updated_node: cst.Call,
+        self, original_node: cst.Call, updated_node: cst.Call
     ) -> cst.BaseExpression:
         qualified_names = {
             item.name
             for item in self.get_metadata(
-                QualifiedNameProvider,
-                original_node.func,
-                default=set(),
+                QualifiedNameProvider, original_node.func, default=set()
             )
         }
-
         simple_name = self._simple_callable_name(original_node.func)
         result_call = updated_node
-
         for migration in self._migrations:
             if not self._matches_migration(
-                migration,
-                qualified_names=qualified_names,
-                simple_name=simple_name,
+                migration, qualified_names=qualified_names, simple_name=simple_name
             ):
                 continue
-
             migration_id = str(migration.id)
             keyword_renames = self._keyword_renames(migration)
             remove_keywords = self._remove_keywords(migration)
             add_keywords = self._add_keywords(migration)
-
             next_args: list[cst.Arg] = []
             changed = False
             seen_keyword_names: set[str] = set()
-
             for arg in list(result_call.args):
                 keyword_name = self._keyword_name(arg)
                 if keyword_name is not None and keyword_name in remove_keywords:
@@ -115,7 +99,6 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
                         f"[{migration_id}] Removed keyword: {keyword_name}"
                     )
                     continue
-
                 if keyword_name is not None and keyword_name in keyword_renames:
                     renamed = keyword_renames[keyword_name]
                     next_args.append(arg.with_changes(keyword=cst.Name(renamed)))
@@ -125,11 +108,9 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
                         f"[{migration_id}] Renamed keyword: {keyword_name} -> {renamed}"
                     )
                     continue
-
                 next_args.append(arg)
                 if keyword_name is not None:
                     seen_keyword_names.add(keyword_name)
-
             for key, value_literal in add_keywords.items():
                 if key in seen_keyword_names:
                     continue
@@ -142,10 +123,8 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
                 self._record_change(
                     f"[{migration_id}] Added keyword: {key}={value_literal}"
                 )
-
             if changed:
                 result_call = result_call.with_changes(args=tuple(next_args))
-
         return result_call
 
     def _add_keywords(
@@ -188,11 +167,10 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
     ) -> bool:
         target_qualified = set(migration.target_qualified_names)
         target_simple = set(migration.target_simple_names)
-
         if target_qualified and qualified_names.intersection(target_qualified):
             return True
         return bool(
-            simple_name is not None and target_simple and simple_name in target_simple
+            simple_name is not None and target_simple and (simple_name in target_simple)
         )
 
     def _record_change(self, message: str) -> None:
@@ -218,9 +196,7 @@ class FlextInfraRefactorSignaturePropagationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
+        self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         migrations_raw = self.config.get("signature_migrations", [])
         try:
@@ -228,14 +204,13 @@ class FlextInfraRefactorSignaturePropagationRule(FlextInfraRefactorRule):
                 list[m.Infra.Refactor.RuleConfigs.SignatureMigration]
             ).validate_python(migrations_raw)
         except ValidationError:
-            return tree, []
+            return (tree, [])
         migrations = [item for item in parsed if item.enabled]
         if not migrations:
-            return tree, []
-
+            return (tree, [])
         transformer = FlextInfraRefactorSignaturePropagator(migrations=migrations)
         wrapper = MetadataWrapper(tree)
-        return wrapper.visit(transformer), transformer.changes
+        return (wrapper.visit(transformer), transformer.changes)
 
 
 __all__ = [

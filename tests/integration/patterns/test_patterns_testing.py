@@ -24,10 +24,13 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, t
 
-type FixtureCaseDict = dict[str, str]
-type FixtureDataDict = dict[str, t.ContainerValue]
-type FixtureFixturesDict = dict[str, t.ContainerValue]
-type FixtureSuiteDict = dict[str, t.ContainerValue]
+from ._models import (
+    FixtureCaseDict,
+    FixtureDataDict,
+    FixtureFixturesDict,
+    FixtureSuiteDict,
+)
+
 type MockScenarioData = dict[str, t.ContainerValue]
 
 
@@ -62,8 +65,6 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[..., object]) -> Callable[..., object]:
-        # Use setattr for dynamic attribute setting to avoid type checker issues
-        # Type ignore needed because Callable doesn't have _test_pattern attribute
         setattr(func, "_test_pattern", pattern)
         return func
 
@@ -71,11 +72,6 @@ def mark_test_pattern(
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
-
-
-# ============================================================================
-# STUB CLASSES FOR ADVANCED PATTERNS DEMONSTRATION
-# ============================================================================
 
 
 class MockScenario:
@@ -91,8 +87,7 @@ class MockScenario:
         self.then = _to_general_mapping(mapper.get(data, "then", default={}))
         self.tags = _to_string_list(mapper.get(data, "tags", default=[]))
         self.priority = _to_string(
-            mapper.get(data, "priority", default="normal"),
-            default="normal",
+            mapper.get(data, "priority", default="normal"), default="normal"
         )
 
 
@@ -110,27 +105,21 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(
-        self,
-        _description: str,
-        **kwargs: FlextTypes.Container,
+        self, _description: str, **kwargs: FlextTypes.Container
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
         return self
 
     def when(
-        self,
-        _description: str,
-        **kwargs: FlextTypes.Container,
+        self, _description: str, **kwargs: FlextTypes.Container
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
         return self
 
     def then(
-        self,
-        _description: str,
-        **kwargs: FlextTypes.Container,
+        self, _description: str, **kwargs: FlextTypes.Container
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -195,7 +184,6 @@ class FlextTestBuilder:
 
     def with_validation_rules(self) -> FlextTestBuilder:
         """Add validation rules to the test data (no-op stub)."""
-        # No-op stub to keep example API; could attach schema metadata here
         return self
 
     def build(self) -> FixtureDataDict:
@@ -215,9 +203,7 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
-        self,
-        email: str | None = None,
-        input_value: str | None = None,
+        self, email: str | None = None, input_value: str | None = None
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
         case: FixtureCaseDict = {}
@@ -229,16 +215,14 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self,
-        cases: list[FixtureCaseDict],
+        self, cases: list[FixtureCaseDict]
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
         return self
 
     def add_failure_cases(
-        self,
-        cases: list[FixtureCaseDict],
+        self, cases: list[FixtureCaseDict]
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
@@ -306,7 +290,6 @@ class AssertionBuilder:
 
     def assert_all(self) -> None:
         """Execute all accumulated assertions."""
-        # All checks are executed inline in this simple stub
         return
 
 
@@ -381,18 +364,12 @@ class FixtureBuilder:
         self._teardowns.append(func)
         return self
 
-    def add_fixture(
-        self,
-        key: str,
-        value: FlextTypes.Container,
-    ) -> FixtureBuilder:
+    def add_fixture(self, key: str, value: FlextTypes.Container) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
         return self
 
-    def setup_context(
-        self,
-    ) -> Callable[[], ContextManager[FixtureFixturesDict]]:
+    def setup_context(self) -> Callable[[], ContextManager[FixtureFixturesDict]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
@@ -418,6 +395,7 @@ def arrange_act_assert(
     """Decorator for AAA pattern testing."""
 
     def decorator(_test_func: Callable[[], object]) -> Callable[[], object]:
+
         def wrapper() -> object:
             data = _arrange_func()
             result = _act_func(data)
@@ -429,11 +407,6 @@ def arrange_act_assert(
     return decorator
 
 
-# ============================================================================
-# PROPERTY-BASED TESTING DEMONSTRATIONS
-# ============================================================================
-
-
 class TestPropertyBasedPatterns:
     """Demonstrate property-based testing with custom strategies."""
 
@@ -441,7 +414,6 @@ class TestPropertyBasedPatterns:
     @given(st.emails())
     def test_email_property_based(self, email: str) -> None:
         """Property-based test for email handling."""
-        # Basic email validation properties
         assert "@" in email
         assert len(email) > 3
         assert not email.startswith("@")
@@ -453,16 +425,13 @@ class TestPropertyBasedPatterns:
             "id": st.uuids().map(str),
             "name": st.text(),
             "email": st.emails(),
-        }),
+        })
     )
     def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
         """Property-based test for user profiles."""
-        # Verify required fields
         assert "id" in profile
         assert "name" in profile
         assert "email" in profile
-
-        # Verify data types
         assert isinstance(profile["id"], str)
         assert isinstance(profile["name"], str)
         assert isinstance(profile["email"], str)
@@ -471,52 +440,29 @@ class TestPropertyBasedPatterns:
     @given(st.text(min_size=10, max_size=100))
     def test_string_performance_property_based(self, large_string: str) -> None:
         """Property-based test for string processing performance."""
-        # Measure basic operations
         start_time = time.perf_counter()
-
-        # Simulate string processing
         processed = large_string.lower().strip()
         word_count = len(processed.split())
-
         end_time = time.perf_counter()
         duration = end_time - start_time
-
-        # Performance properties
-        assert duration < 1.0  # Should complete within 1 second
+        assert duration < 1.0
         assert word_count >= 0
-        # Note: Unicode transformations may change string length, so we don't assert length
 
     @given(
         st.text(
             alphabet=st.characters(exclude_categories=("C", "Cs")),
             min_size=1,
             max_size=100,
-        ),
+        )
     )
     def test_unicode_handling_property_based(self, unicode_text: str) -> None:
         """Property-based test for Unicode handling."""
-        # Should handle Unicode gracefully without crashing
         result = unicode_text.encode("utf-8").decode("utf-8")
-        # result is already typed as str, no need for isinstance check
-
-        # Length might differ due to Unicode normalization
         assert len(result) >= 0
-
-
-# ============================================================================
-# PERFORMANCE AND COMPLEXITY ANALYSIS
-# ============================================================================
 
 
 class TestPerformanceAnalysis:
     """Demonstrate performance testing and complexity analysis."""
-
-    # NOTE: test_complexity_analysis_linear removed - flaky timing test
-    # Timing of very small operations (empty for loops) is unreliable due to:
-    # - Measurement precision limitations for microsecond-level operations
-    # - System noise and CPU scheduling interference
-    # - Python interpreter optimizations and JIT effects
-    # For reliable performance tests, use actual operations with measurable work
 
     def test_stress_testing_load(self) -> None:
         """Demonstrate stress testing with load patterns."""
@@ -525,20 +471,16 @@ class TestPerformanceAnalysis:
             """Simple operation for stress testing."""
             return "test_result"
 
-        # Run load test manually
         iterations = 1000
         successes = 0
-
         start_time = time.perf_counter()
         for _ in range(iterations):
             result = simple_operation()
             if result == "test_result":
                 successes += 1
         end_time = time.perf_counter()
-
         duration = end_time - start_time
         operations_per_second = iterations / duration if duration > 0 else 0
-
         assert successes == iterations
         assert operations_per_second > 0
 
@@ -549,45 +491,31 @@ class TestPerformanceAnalysis:
             """Operation that uses some memory."""
             return list(range(100))
 
-        # Run for a short time (reduced from 2 seconds for faster testing)
-        duration_target = 0.5  # seconds
+        duration_target = 0.5
         start_time = time.perf_counter()
         iterations = 0
-
         while time.perf_counter() - start_time < duration_target:
             _ = memory_operation()
             iterations += 1
-
         actual_duration = time.perf_counter() - start_time
         operations_per_second = (
             iterations / actual_duration if actual_duration > 0 else 0
         )
-
-        assert actual_duration >= duration_target * 0.8  # Allow some variance
+        assert actual_duration >= duration_target * 0.8
         assert iterations > 0
         assert operations_per_second > 0
 
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
-        # Simple memory profiling without external library
-        _ = gc.collect()  # Clean up before measurement
-
-        # Create and manipulate large data structures
+        _ = gc.collect()
         large_list = list(range(10000))
         filtered_list = list(
-            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0),
+            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0)
         )
         sorted_list = sorted(filtered_list, reverse=True)
-
-        # Verify operations completed
         assert len(large_list) == 10000
         assert len(filtered_list) == 5000
         assert sorted_list[0] > sorted_list[-1]
-
-
-# ============================================================================
-# ADVANCED TEST PATTERNS
-# ============================================================================
 
 
 class TestAdvancedPatterns:
@@ -606,7 +534,6 @@ class TestAdvancedPatterns:
             .with_priority("high")
             .build()
         )
-
         assert scenario.name == "user_registration"
         assert "email" in scenario.given
         assert "action" in scenario.when
@@ -624,9 +551,7 @@ class TestAdvancedPatterns:
             .with_timestamp()
             .with_validation_rules()
         )
-
         data = builder.build()
-
         assert data.get("id") == "test_123"
         assert data.get("correlation_id") == "corr_456"
         assert data.get("name") == "John Doe"
@@ -637,30 +562,19 @@ class TestAdvancedPatterns:
     def test_parametrized_builder(self) -> None:
         """Demonstrate parametrized test builder."""
         param_builder = ParameterizedTestBuilder("email_validation")
-
-        # Add various test cases
-        _ = param_builder.add_success_cases(
-            [
-                {"email": "test@example.com", "input": "valid_email_1"},
-                {"email": "user@domain.org", "input": "valid_email_2"},
-            ],
-        )
-
-        _ = param_builder.add_failure_cases(
-            [
-                {"email": "invalid-email", "input": "invalid_email_1"},
-                {"email": "@domain.com", "input": "invalid_email_2"},
-            ],
-        )
-
+        _ = param_builder.add_success_cases([
+            {"email": "test@example.com", "input": "valid_email_1"},
+            {"email": "user@domain.org", "input": "valid_email_2"},
+        ])
+        _ = param_builder.add_failure_cases([
+            {"email": "invalid-email", "input": "invalid_email_1"},
+            {"email": "@domain.com", "input": "invalid_email_2"},
+        ])
         params = param_builder.build_pytest_params()
         test_ids = param_builder.build_test_ids()
-
         assert len(params) == 4
         assert len(test_ids) == 4
-        assert all(
-            len(param) == 3 for param in params
-        )  # email, input, expected_success
+        assert all(len(param) == 3 for param in params)
 
     def test_assertion_builder(self) -> None:
         """Demonstrate assertion builder pattern."""
@@ -670,16 +584,11 @@ class TestAdvancedPatterns:
             """Check if all items in a list are strings."""
             if not isinstance(x, list):
                 return False
-            # x is verified as list by isinstance check above
             return all(isinstance(item, str) for item in x)
 
-        # Build complex assertions
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
-            "banana",
-        ).satisfies(
-            check_all_strings,
-            "all items should be strings",
-        ).assert_all()
+            "banana"
+        ).satisfies(check_all_strings, "all items should be strings").assert_all()
 
     @mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
@@ -704,22 +613,12 @@ class TestAdvancedPatterns:
                 if isinstance(numbers, list):
                     assert len(numbers) == 5
 
-        @arrange_act_assert(
-            arrange_data,
-            act_on_data,
-            assert_result,
-        )
+        @arrange_act_assert(arrange_data, act_on_data, assert_result)
         def test_sum_calculation() -> None:
-            pass  # Logic is in the decorator
+            pass
 
-        # Execute the decorated test
         result = test_sum_calculation()
         assert result == 15
-
-
-# ============================================================================
-# INTEGRATION OF ALL PATTERNS
-# ============================================================================
 
 
 class TestComprehensiveIntegration:
@@ -727,10 +626,7 @@ class TestComprehensiveIntegration:
 
     def test_complete_test_suite_builder(self) -> None:
         """Demonstrate complete test suite construction."""
-        # Create multiple scenarios
         scenarios: list[MockScenario] = []
-
-        # Scenario 1: Success case
         scenario1 = (
             GivenWhenThenBuilder("successful_operation")
             .given("valid input data", data_valid=True)
@@ -740,8 +636,6 @@ class TestComprehensiveIntegration:
             .build()
         )
         scenarios.append(scenario1)
-
-        # Scenario 2: Failure case
         scenario2 = (
             GivenWhenThenBuilder("failed_operation")
             .given("invalid input data", data_valid=False)
@@ -751,9 +645,6 @@ class TestComprehensiveIntegration:
             .build()
         )
         scenarios.append(scenario2)
-
-        # Build complete test suite
-        # Convert scenarios to list[t.ContainerValue] explicitly
         scenario_list: Sequence[object] = scenarios
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
@@ -762,7 +653,6 @@ class TestComprehensiveIntegration:
             .with_tag("integration")
             .build()
         )
-
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
         tags_value = suite["tags"]
@@ -774,33 +664,24 @@ class TestComprehensiveIntegration:
             assert env_value == "test"
 
 
-# ============================================================================
-# REAL-WORLD SCENARIO SIMULATION
-# ============================================================================
-
-
 class TestRealWorldScenarios:
     """Simulate real-world testing scenarios."""
 
     def test_api_request_processing(self) -> None:
         """Simulate API request processing with comprehensive testing."""
-        # Create test fixtures
         fixture_builder = FixtureBuilder()
 
-        # Setup
         def setup_api_environment() -> None:
-            pass  # Setup API mock environment
+            pass
 
         def teardown_api_environment() -> None:
-            pass  # Cleanup
+            pass
 
         _ = fixture_builder.add_setup(setup_api_environment)
         _ = fixture_builder.add_teardown(teardown_api_environment)
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
-
         with fixture_builder.setup_context()():
-            # Use a fixed test request instead of Hypothesis example
             test_request: dict[str, FlextTypes.ContainerValue] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
@@ -809,7 +690,6 @@ class TestRealWorldScenarios:
                 "body": {"name": "test"},
             }
 
-            # Simulate API processing
             def process_api_request(
                 request: dict[str, FlextTypes.ContainerValue],
             ) -> dict[str, FlextTypes.ContainerValue]:
@@ -821,28 +701,24 @@ class TestRealWorldScenarios:
                     "processed_at": time.time(),
                 }
 
-            # Execute without external performance monitoring
             result = process_api_request(test_request)
 
             def check_status_success(x: object) -> bool:
                 """Check if status is success."""
                 if not isinstance(x, dict):
                     return False
-                # x is verified as dict by isinstance check above
                 return x.get("status") == "success"
 
             def check_correlation_id(x: object) -> bool:
                 """Check if correlation_id exists."""
                 if not isinstance(x, dict):
                     return False
-                # Type-safe dictionary access
                 return "correlation_id" in x
 
             def check_valid_method(x: object) -> bool:
                 """Check if method is valid HTTP method."""
                 if not isinstance(x, dict):
                     return False
-                # x is verified as dict by isinstance check above
                 method = x.get("method")
                 return isinstance(method, str) and method in {
                     "GET",
@@ -852,16 +728,10 @@ class TestRealWorldScenarios:
                     "PATCH",
                 }
 
-            # Comprehensive assertions
             AssertionBuilder(result).is_not_none().satisfies(
-                check_status_success,
-                "should be successful",
-            ).satisfies(
-                check_correlation_id,
-                "should have correlation ID",
-            ).satisfies(
-                check_valid_method,
-                "should have valid HTTP method",
+                check_status_success, "should be successful"
+            ).satisfies(check_correlation_id, "should have correlation ID").satisfies(
+                check_valid_method, "should have valid HTTP method"
             ).assert_all()
 
     @given(
@@ -870,37 +740,21 @@ class TestRealWorldScenarios:
             database_url=st.text(),
             debug=st.booleans(),
             timeout_seconds=st.integers(min_value=1, max_value=300),
-            environment=st.sampled_from([
-                "development",
-                "staging",
-                "production",
-            ]),
-        ),
+            environment=st.sampled_from(["development", "staging", "production"]),
+        )
     )
     @settings()
     def test_configuration_validation_comprehensive(
-        self,
-        config: dict[str, FlextTypes.Container],
+        self, config: dict[str, FlextTypes.Container]
     ) -> None:
         """Comprehensive configuration validation testing."""
-        # Validate configuration structure
         required_fields = ["database_url", "debug", "timeout_seconds"]
         for field in required_fields:
             assert field in config, f"Missing required field: {field}"
-
-        # Validate data types
         assert isinstance(config["debug"], bool)
         assert isinstance(config["timeout_seconds"], int)
         assert config["timeout_seconds"] > 0
-
-        # Validate environment
-        assert config["environment"] in {
-            "development",
-            "staging",
-            "production",
-        }
-
-        # Build test scenario for this configuration
+        assert config["environment"] in {"development", "staging", "production"}
         scenario = (
             GivenWhenThenBuilder("configuration_validation")
             .given(
@@ -911,6 +765,5 @@ class TestRealWorldScenarios:
             .with_tag("configuration")
             .build()
         )
-
         assert scenario.given.get("config_environment") == config["environment"]
         assert "configuration" in scenario.tags

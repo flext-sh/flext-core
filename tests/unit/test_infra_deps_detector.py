@@ -6,10 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from flext_core import r
-from flext_infra.deps.detector import (
-    FlextInfraRuntimeDevDependencyDetector,
-    ddm,
-)
+from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector, ddm
 
 
 class TestFlextInfraDependencyDetectorModels:
@@ -128,13 +125,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """Test run() when no projects are discovered."""
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([])
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -149,15 +143,12 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """Test run() when deptry is not installed."""
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -173,7 +164,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """Test run() processes projects when deptry is available."""
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -185,10 +175,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -207,10 +195,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         src_dir = tmp_path / "proj-a" / "src"
         src_dir.mkdir(parents=True)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -229,13 +215,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_runner = Mock()
         mock_runner.run_raw.return_value = r[object].ok(Mock(exit_code=0))
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -253,7 +236,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                             "--no-pip-check",
                         ])
                         assert result.is_success
-                        # Verify poetry add was called
                         mock_runner.run_raw.assert_called_once()
 
     def test_run_with_apply_typings_non_string_package(self, tmp_path: Path) -> None:
@@ -263,10 +245,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         src_dir = tmp_path / "proj-a" / "src"
         src_dir.mkdir(parents=True)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -278,7 +258,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
-        # Return typing dict with non-string package in to_add list
         mock_deps.get_required_typings.return_value = r[object].ok(
             Mock(
                 model_dump=Mock(return_value={"to_add": ["types-requests", 123, None]})
@@ -288,13 +267,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_runner = Mock()
         mock_runner.run_raw.return_value = r[object].ok(Mock(exit_code=0))
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -312,7 +288,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                             "--no-pip-check",
                         ])
                         assert result.is_success
-                        # Verify run_raw was called only for string packages
                         assert mock_runner.run_raw.call_count == 1
 
     def test_run_with_apply_typings_poetry_add_failure(self, tmp_path: Path) -> None:
@@ -322,10 +297,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         src_dir = tmp_path / "proj-a" / "src"
         src_dir.mkdir(parents=True)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -344,14 +317,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_runner = Mock()
-        # Simulate poetry add failure with non-zero exit code
         mock_runner.run_raw.return_value = r[object].ok(Mock(exit_code=1))
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -379,10 +348,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         src_dir = tmp_path / "proj-a" / "src"
         src_dir.mkdir(parents=True)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -401,14 +368,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_runner = Mock()
-        # Simulate poetry add failure with failure result
         mock_runner.run_raw.return_value = r[object].fail("poetry add failed")
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -434,7 +397,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -450,15 +412,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_json = Mock()
         mock_json.write.return_value = r[str].ok("written")
-
         custom_output = tmp_path / "custom_report.json"
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -476,7 +434,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                             "--no-pip-check",
                         ])
                         assert result.is_success
-                        # Verify write was called with custom path
                         mock_json.write.assert_called_once()
                         call_args = mock_json.write.call_args
                         assert call_args[0][0] == custom_output
@@ -488,7 +445,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -504,10 +460,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             1,
         ))
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -517,7 +471,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                     detector = FlextInfraRuntimeDevDependencyDetector()
                     result = detector.run(["--dry-run", "--no-pip-check"])
                     assert result.is_success
-                    assert result.value == 1  # Has issues and pip failed
+                    assert result.value == 1
 
     def test_run_with_workspace_root_resolution_failure(self) -> None:
         """Test run() when workspace root resolution fails (line 140).
@@ -528,10 +482,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_paths.workspace_root_from_file.return_value = r[Path].fail(
             "root not found"
         )
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             detector = FlextInfraRuntimeDevDependencyDetector()
             result = detector.run([])
@@ -549,15 +501,12 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].fail(
             "discovery failed"
         )
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -579,7 +528,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -587,10 +535,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].fail(
             "deptry failed"
         )
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -613,10 +559,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         src_dir = tmp_path / "proj-a" / "src"
         src_dir.mkdir(parents=True)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -631,10 +575,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.get_required_typings.return_value = r[object].fail(
             "typing detection failed"
         )
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -657,7 +599,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -673,13 +614,10 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "readonly"
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -707,7 +645,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -723,16 +660,12 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         mock_json = Mock()
         mock_json.write.return_value = r[str].fail("write failed")
-
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -764,7 +697,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -780,10 +712,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             1,
         ))
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",
@@ -793,7 +723,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                     detector = FlextInfraRuntimeDevDependencyDetector()
                     result = detector.run(["--no-fail", "--dry-run", "--no-pip-check"])
                     assert result.is_success
-                    assert result.value == 0  # Always returns 0 with --no-fail
+                    assert result.value == 0
 
     def test_run_with_json_stdout_flag(self, tmp_path: Path) -> None:
         """Test run() with --json flag returns 0 without writing (line 266).
@@ -802,7 +732,6 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         """
         mock_paths = Mock()
         mock_paths.workspace_root_from_file.return_value = r[Path].ok(tmp_path)
-
         mock_deps = Mock()
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
@@ -818,10 +747,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             list[str](),
             0,
         ))
-
         with patch(
-            "flext_infra.deps.detector.FlextInfraPathResolver",
-            return_value=mock_paths,
+            "flext_infra.deps.detector.FlextInfraPathResolver", return_value=mock_paths
         ):
             with patch(
                 "flext_infra.deps.detector.FlextInfraDependencyDetectionService",

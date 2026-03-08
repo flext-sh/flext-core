@@ -16,10 +16,7 @@ def _read_fixture(name: str) -> str:
 
 
 def _make_project_with_module(
-    tmp_path: Path,
-    *,
-    module_source: str,
-    module_name: str,
+    tmp_path: Path, *, module_source: str, module_name: str
 ) -> Path:
     project_root = tmp_path / "project"
     package_dir = project_root / "src" / "flext_test"
@@ -39,9 +36,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_valid.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert result.value.passed
         assert result.value.violations == []
@@ -53,9 +48,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_multiple_classes.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any("Multiple outer classes found" in v for v in result.value.violations)
@@ -67,9 +60,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_no_class.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any("No outer class found" in v for v in result.value.violations)
@@ -81,9 +72,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_wrong_prefix.py"),
             module_name="constants.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any(
@@ -98,9 +87,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_loose_items.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any(
@@ -110,21 +97,11 @@ class TestFlextInfraNamespaceValidator:
 
     def test_rule1_valid_constants_passes(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
-        module_source = (
-            "from __future__ import annotations\n"
-            "\n"
-            "class FlextTestConstants(Constants):\n"
-            "    class Limits:\n"
-            "        MAX_RETRIES = 3\n"
-        )
+        module_source = "from __future__ import annotations\n\nclass FlextTestConstants(Constants):\n    class Limits:\n        MAX_RETRIES = 3\n"
         root = _make_project_with_module(
-            tmp_path,
-            module_source=module_source,
-            module_name="constants.py",
+            tmp_path, module_source=module_source, module_name="constants.py"
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert result.value.passed
 
@@ -135,9 +112,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule1_loose_constant.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any("Loose Final constant" in v for v in result.value.violations)
@@ -149,9 +124,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule1_loose_enum.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any("Multiple outer classes found" in v for v in result.value.violations)
@@ -163,9 +136,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule1_method_in_constants.py"),
             module_name="constants.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any(
@@ -180,32 +151,18 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule1_magic_number.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any("Loose collection constant" in v for v in result.value.violations)
 
     def test_rule2_valid_types_passes(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
-        module_source = (
-            "from __future__ import annotations\n"
-            "from typing import TypeVar\n"
-            "\n"
-            'T = TypeVar("T")\n'
-            "\n"
-            "class FlextTestTypes(Types):\n"
-            "    pass\n"
-        )
+        module_source = 'from __future__ import annotations\nfrom typing import TypeVar\n\nT = TypeVar("T")\n\nclass FlextTestTypes(Types):\n    pass\n'
         root = _make_project_with_module(
-            tmp_path,
-            module_source=module_source,
-            module_name="typings.py",
+            tmp_path, module_source=module_source, module_name="typings.py"
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert result.value.passed
 
@@ -216,9 +173,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule2_typevar_in_class.py"),
             module_name="typings.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any(
@@ -232,9 +187,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule2_typevar_wrong_module.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any(
@@ -248,9 +201,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule2_composite_type_loose.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any(
@@ -265,9 +216,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule2_protocol_in_types.py"),
             module_name="typings.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert not result.value.passed
         assert any("Inner class 'Serializable'" in v for v in result.value.violations)
@@ -286,9 +235,7 @@ class TestFlextInfraNamespaceValidator:
         _ = (package_dir / "_private.py").write_text(
             _read_fixture("rule0_no_class.py"), encoding="utf-8"
         )
-
         result = validator.validate(project_root)
-
         assert result.is_success
         assert result.value.passed
         assert result.value.violations == []
@@ -301,9 +248,7 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_valid.py"),
             module_name="constants.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert isinstance(result.value, m.Infra.Core.ValidationReport)
         assert "files checked" in result.value.summary
@@ -315,10 +260,10 @@ class TestFlextInfraNamespaceValidator:
             module_source=_read_fixture("rule0_no_class.py"),
             module_name="models.py",
         )
-
         result = validator.validate(root)
-
         assert result.is_success
         assert result.value.violations
         first = result.value.violations[0]
-        assert re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None
+        assert (
+            re.search("^\\[NS-\\d{3}-\\d{3}\\] .+\\.py:\\d+ — .+$", first) is not None
+        )

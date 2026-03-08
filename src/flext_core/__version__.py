@@ -32,12 +32,10 @@ class FlextVersion:
             "License": "",
             "Home-Page": "",
         }
-
     __version__ = _metadata["Version"]
     __version_info__ = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")
     )
-
     __title__ = _metadata["Name"]
     __description__ = _metadata.get("Summary", "")
     __author__ = _metadata.get("Author", "")
@@ -99,7 +97,6 @@ __author__ = FlextVersion.__author__
 __author_email__ = FlextVersion.__author_email__
 __license__ = FlextVersion.__license__
 __url__ = FlextVersion.__url__
-
 __all__ = [
     "FlextVersion",
     "__author__",

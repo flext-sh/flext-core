@@ -16,6 +16,8 @@ from pydantic import BaseModel
 
 from flext_core import m, t, u
 
+from ._models import _GoodModel
+
 generators_module = importlib.import_module("flext_core._utilities.generators")
 
 
@@ -38,10 +40,6 @@ class _BrokenMapping(Mapping[str, t.JsonValue]):
         raise TypeError(msg)
 
 
-class _GoodModel(BaseModel):
-    value: int = 7
-
-
 class _BrokenModel:
     def __init__(self) -> None:
         self.model_dump = lambda: (_ for _ in ()).throw(TypeError("dump-failed"))
@@ -50,24 +48,18 @@ class _BrokenModel:
 def test_normalize_context_to_dict_error_paths() -> None:
     with pytest.raises(TypeError, match="Failed to convert Mapping"):
         u.Generators._normalize_context_to_dict(_BrokenMapping())
-
     with pytest.raises(TypeError, match="Failed to dump BaseModel"):
         u.Generators._normalize_context_to_dict(
             cast(
                 "Mapping[str, t.JsonValue] | BaseModel | None",
                 cast("object", _BrokenModel()),
-            ),
+            )
         )
-
     with pytest.raises(TypeError, match="Context cannot be None"):
         u.Generators._normalize_context_to_dict(None)
-
     with pytest.raises(TypeError, match="Failed to dump BaseModel int"):
         u.Generators._normalize_context_to_dict(
-            cast(
-                "Mapping[str, t.JsonValue] | BaseModel | None",
-                cast("object", 42),
-            ),
+            cast("Mapping[str, t.JsonValue] | BaseModel | None", cast("object", 42))
         )
 
 
@@ -85,18 +77,14 @@ def test_enrich_and_ensure_trace_context_branches(
         "generate_iso_timestamp",
         staticmethod(lambda: "2026-01-01T00:00:00+00:00"),
     )
-
     enriched = u.Generators.ensure_trace_context(
-        _GoodModel(value=9),
-        include_correlation_id=True,
-        include_timestamp=True,
+        _GoodModel(value=9), include_correlation_id=True, include_timestamp=True
     )
     assert enriched["value"] == "9"
     assert enriched["trace_id"] == "trace-x"
     assert enriched["span_id"] == "span-x"
     assert enriched["correlation_id"] == "corr-x"
     assert enriched["timestamp"] == "2026-01-01T00:00:00+00:00"
-
     existing = {
         "trace_id": "already-trace",
         "span_id": "already-span",
@@ -104,9 +92,7 @@ def test_enrich_and_ensure_trace_context_branches(
         "timestamp": "already-ts",
     }
     preserved = u.Generators.ensure_trace_context(
-        existing,
-        include_correlation_id=True,
-        include_timestamp=True,
+        existing, include_correlation_id=True, include_timestamp=True
     )
     assert preserved == existing
 
@@ -122,20 +108,13 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
         "flext_core.runtime.FlextRuntime.normalize_to_general_value",
         staticmethod(_normalize_stub),
     )
-    with pytest.raises(
-        TypeError,
-        match=r"Normalized BaseModel .* is not mapping-like",
-    ):
+    with pytest.raises(TypeError, match="Normalized BaseModel .* is not mapping-like"):
         u.Generators.ensure_dict(_GoodModel(value=5))
-
     with pytest.raises(TypeError, match="Failed to convert Mapping"):
         u.Generators.ensure_dict(_BrokenMapping())
-
     assert u.Generators.ensure_dict(None, default={"x": "y"}) == {"x": "y"}
-
     with pytest.raises(TypeError, match="Value cannot be None"):
         u.Generators.ensure_dict(None)
-
     with pytest.raises(TypeError, match="Cannot convert int to dict"):
         u.Generators.ensure_dict(123)
 
@@ -146,7 +125,6 @@ def test_generate_special_paths_and_dynamic_subclass(
     generated = u.Generators.generate(kind="id")
     assert isinstance(generated, str)
     assert len(generated) > 0
-
     fixed_ts = datetime(2026, 1, 2, tzinfo=UTC)
 
     class _FixedDatetime:
@@ -157,22 +135,14 @@ def test_generate_special_paths_and_dynamic_subclass(
 
     monkeypatch.setattr("flext_core._utilities.generators.datetime", _FixedDatetime)
     custom = u.Generators.generate(
-        kind="command",
-        include_timestamp=True,
-        separator="-",
-        parts=("part",),
-        length=8,
+        kind="command", include_timestamp=True, separator="-", parts=("part",), length=8
     )
     assert custom.startswith("cmd-")
     assert "-part-" in custom
-
     fallback = u.Generators.generate(kind="aggregate")
     assert isinstance(fallback, str)
-
     dynamic = u.Generators.create_dynamic_type_subclass(
-        "DynCls",
-        object,
-        m.ConfigMap(root={"value": 10}).root,
+        "DynCls", object, m.ConfigMap(root={"value": 10}).root
     )
     instance = dynamic()
     assert getattr(instance, "value") == 10
@@ -182,15 +152,14 @@ def test_generators_additional_missed_paths() -> None:
     mapping_ctx: Mapping[str, t.JsonValue] = {"a": 1}
     normalized = u.Generators._normalize_context_to_dict(mapping_ctx)
     assert normalized == {"a": 1}
-
     ensured = u.Generators.ensure_dict(_GoodModel(value=3))
     assert ensured == {"value": 3}
-
     generated = u.Generators.generate(kind="event", separator="-")
     assert generated.startswith("evt-")
 
 
 def test_generators_mapping_non_dict_normalization_path() -> None:
+
     class _SimpleMapping(Mapping[str, t.JsonValue]):
         @override
         def __getitem__(self, key: str) -> t.JsonValue:

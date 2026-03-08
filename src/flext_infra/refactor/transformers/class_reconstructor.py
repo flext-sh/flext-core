@@ -32,34 +32,27 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self,
-        original_node: cst.ClassDef,
-        updated_node: cst.ClassDef,
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
         """Sort methods in every contiguous method block of a class body."""
         if not isinstance(updated_node.body, cst.IndentedBlock):
             return updated_node
-
         body = list(updated_node.body.body)
         if not body:
             return updated_node
-
         new_body: list[cst.BaseStatement] = list(body)
         block_start = 0
         changed_blocks = 0
         reordered_methods_total = 0
-
         while block_start < len(body):
             if not isinstance(body[block_start], cst.FunctionDef):
                 block_start += 1
                 continue
-
             block_end = block_start
             while block_end < len(body) and isinstance(
                 body[block_end], cst.FunctionDef
             ):
                 block_end += 1
-
             method_indices = list(range(block_start, block_end))
             methods: list[m.Infra.Refactor.MethodInfo] = []
             for idx in method_indices:
@@ -67,25 +60,18 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 if isinstance(block_item, cst.FunctionDef):
                     methods.append(self._analyze_method(block_item))
             sorted_methods = self._sort_methods(methods)
-
             original_method_names = [method.name for method in methods]
             sorted_method_names = [method.name for method in sorted_methods]
-
             if original_method_names != sorted_method_names:
                 changed_blocks += 1
                 reordered_methods_total += len(methods)
                 for idx, method in zip(method_indices, sorted_methods, strict=False):
                     new_body[idx] = method.node
-
             block_start = block_end
-
         if changed_blocks == 0:
             return updated_node
-
         self._record_change(
-            "Reordered "
-            f"{reordered_methods_total} methods in class {original_node.name.value} "
-            f"across {changed_blocks} contiguous block(s)"
+            f"Reordered {reordered_methods_total} methods in class {original_node.name.value} across {changed_blocks} contiguous block(s)"
         )
         return updated_node.with_changes(
             body=updated_node.body.with_changes(body=new_body)
@@ -94,26 +80,17 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
     def _analyze_method(self, node: cst.FunctionDef) -> m.Infra.Refactor.MethodInfo:
         name = node.name.value
         decorators: list[str] = []
-
         for dec in node.decorators:
             if isinstance(dec.decorator, cst.Name):
                 decorators.append(dec.decorator.value)
             elif isinstance(dec.decorator, cst.Attribute):
                 decorators.append(dec.decorator.attr.value)
-
         category = self._categorize(name, decorators)
         return m.Infra.Refactor.MethodInfo(
-            name=name,
-            category=category,
-            node=node,
-            decorators=decorators,
+            name=name, category=category, node=node, decorators=decorators
         )
 
-    def _categorize(
-        self,
-        name: str,
-        decorators: list[str],
-    ) -> c.Infra.Refactor.MethodCategory:
+    def _categorize(self, name: str, decorators: list[str]) -> str:
         if any(
             decorator_name in decorators
             for decorator_name in ["property", "cached_property", "computed_field"]
@@ -137,9 +114,9 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             self._on_change(message)
 
     def _sort_methods(
-        self,
-        methods: list[m.Infra.Refactor.MethodInfo],
+        self, methods: list[m.Infra.Refactor.MethodInfo]
     ) -> list[m.Infra.Refactor.MethodInfo]:
+
         def matches_rule(
             method: m.Infra.Refactor.MethodInfo,
             rule_config: m.Infra.Refactor.RuleConfigs.MethodOrderRule,
@@ -148,23 +125,20 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             exclude_decorators = set(rule_config.exclude_decorators)
             if exclude_decorators and decorators.intersection(exclude_decorators):
                 return False
-
             visibility = rule_config.visibility
             if visibility == "public" and method.name.startswith("_"):
                 return False
-            if visibility == "protected" and not (
-                method.name.startswith("_") and not method.name.startswith("__")
+            if visibility == "protected" and (
+                not (method.name.startswith("_") and (not method.name.startswith("__")))
             ):
                 return False
-            if visibility == "private" and not (
-                method.name.startswith("__") and not method.name.endswith("__")
+            if visibility == "private" and (
+                not (method.name.startswith("__") and (not method.name.endswith("__")))
             ):
                 return False
-
             rule_decorators = rule_config.decorators
-            if rule_decorators and not decorators.intersection(rule_decorators):
+            if rule_decorators and (not decorators.intersection(rule_decorators)):
                 return False
-
             patterns = rule_config.patterns
             if patterns:
                 matched = False
@@ -173,11 +147,9 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                         if re.match(pattern, method.name):
                             matched = True
                         continue
-
                     regex = pattern.regex
                     if regex and re.match(regex, method.name):
                         matched = True
-
                     pattern_decorators = pattern.decorators
                     if pattern_decorators and decorators.intersection(
                         pattern_decorators
@@ -185,7 +157,6 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                         matched = True
                 if not matched:
                     return False
-
             return True
 
         def sort_key(method: m.Infra.Refactor.MethodInfo) -> tuple[int, int, str]:

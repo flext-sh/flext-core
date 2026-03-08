@@ -22,7 +22,6 @@ class TestTextLogger:
         text_util = u.Text()
         logger = text_util.logger
         assert logger is not None
-        # Structlog loggers have standard methods
         assert hasattr(logger, "info")
 
 

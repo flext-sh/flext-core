@@ -19,12 +19,9 @@ def main(argv: list[str] | None = None) -> int:
     _ = parser.add_argument("--dry-run", action="store_true")
     _ = parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
-
     fixer = FlextInfraConfigFixer()
     result = fixer.run(
-        projects=args.projects,
-        dry_run=args.dry_run,
-        verbose=args.verbose,
+        projects=args.projects, dry_run=args.dry_run, verbose=args.verbose
     )
     if result.is_failure:
         output.error(result.error or "pyrefly config fix failed")

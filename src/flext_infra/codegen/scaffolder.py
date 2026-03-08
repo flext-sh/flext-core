@@ -24,7 +24,7 @@ __all__ = ["FlextInfraCodegenScaffolder"]
 class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
     """Generates missing base modules in src/ and tests/ directories."""
 
-    def __init__(self, workspace_root: Path) -> None:  # noqa: D107  # JUSTIFIED: pydocstyle allows __init__ omission in internal service classes — https://docs.astral.sh/ruff/rules/undocumented-public-init/
+    def __init__(self, workspace_root: Path) -> None:
         super().__init__()
         self._workspace_root = workspace_root
 
@@ -55,7 +55,6 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
         projects_result = discovery.discover_projects(self._workspace_root)
         if not projects_result.is_success:
             return []
-
         results: list[m.Infra.Codegen.ScaffoldResult] = []
         discovered: list[m.Infra.Workspace.ProjectInfo] = projects_result.unwrap()
         projects = discovered
@@ -81,15 +80,10 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
         prefix = FlextInfraNamespaceValidator.derive_prefix(project_path)
         if not prefix:
             return m.Infra.Codegen.ScaffoldResult(
-                project=project_path.name,
-                files_created=[],
-                files_skipped=[],
+                project=project_path.name, files_created=[], files_skipped=[]
             )
-
         files_created: list[str] = []
         files_skipped: list[str] = []
-
-        # Scaffold src/ modules
         pkg_dir = self._find_package_dir(project_path)
         if pkg_dir is not None:
             self._scaffold_dir(
@@ -100,8 +94,6 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
                 files_created=files_created,
                 files_skipped=files_skipped,
             )
-
-        # Scaffold tests/ modules
         tests_dir = project_path / c.Infra.Directories.TESTS
         if tests_dir.is_dir():
             self._scaffold_dir(
@@ -112,7 +104,6 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
                 files_created=files_created,
                 files_skipped=files_skipped,
             )
-
         return m.Infra.Codegen.ScaffoldResult(
             project=project_path.name,
             files_created=files_created,
@@ -135,15 +126,11 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
             if filepath.exists():
                 files_skipped.append(str(filepath))
                 continue
-
             class_name = f"{test_prefix}{prefix}{suffix}"
             docstring = f"{doc_suffix} for {prefix.lower()}."
             content = FlextInfraCodegenTransforms.generate_module_skeleton(
-                class_name=class_name,
-                base_class=base_class,
-                docstring=docstring,
+                class_name=class_name, base_class=base_class, docstring=docstring
             )
-
             u.write_file(filepath, content, encoding=c.Infra.Encoding.DEFAULT)
             FlextInfraCodegenTransforms.run_ruff_fix(filepath)
             files_created.append(str(filepath))

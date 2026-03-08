@@ -20,28 +20,23 @@ class FlextInfraRefactorClassReconstructorRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
+        self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         """Apply method reordering transformer when order config is available."""
         order_config_raw = self.config.get("method_order") or self.config.get(
             "order", []
         )
-
         try:
             order_config = TypeAdapter(list[t.Infra.RuleConfig]).validate_python(
                 order_config_raw
             )
         except ValidationError:
-            return tree, []
-
+            return (tree, [])
         if not order_config:
-            return tree, []
-
+            return (tree, [])
         transformer = FlextInfraRefactorClassReconstructor(order_config=order_config)
         new_tree = tree.visit(transformer)
-        return new_tree, transformer.changes
+        return (new_tree, transformer.changes)
 
 
 __all__ = ["FlextInfraRefactorClassReconstructorRule"]

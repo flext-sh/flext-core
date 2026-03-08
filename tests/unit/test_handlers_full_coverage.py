@@ -7,7 +7,6 @@ from types import ModuleType
 from typing import cast, override
 
 import pytest
-from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
 
@@ -32,14 +31,6 @@ class _EventHandler(_Handler):
     def validate(self, data: t.JsonValue) -> FlextResult[bool]:
         _ = data
         return r[bool].ok(True)
-
-
-class _MsgWithCommandId(BaseModel):
-    command_id: str = "cmd-1"
-
-
-class _MsgWithMessageId(BaseModel):
-    message_id: str = "msg-1"
 
 
 def test_handler_type_literal_and_invalid() -> None:
@@ -77,24 +68,17 @@ def test_create_from_callable_branches() -> None:
         ),
     )
     assert handler_from_config.handler_name == "cfg"
-
     enum_mode_handler = h.create_from_callable(
-        lambda msg: msg,
-        mode=c.Cqrs.HandlerType.QUERY,
+        lambda msg: msg, mode=c.Cqrs.HandlerType.QUERY
     )
     assert enum_mode_handler.mode == c.Cqrs.HandlerType.QUERY
-
     str_mode_handler = h.create_from_callable(lambda msg: msg, mode="event")
     assert str_mode_handler.mode == c.Cqrs.HandlerType.EVENT
-
     invalid_general = h.create_from_callable(lambda msg: msg)
-    # General handler returns the message as-is wrapped in ok()
     invalid_general_result = invalid_general.handle(cast("t.Scalar", "{1, 2, 3}"))
     assert invalid_general_result.is_success
     assert invalid_general_result.value == "{1, 2, 3}"
-
     tuple_result = invalid_general.handle(cast("t.Scalar", "('x', 'y')"))
-    # String input (not a real tuple) succeeds - handler returns as-is
     assert tuple_result.is_success
 
 
@@ -105,18 +89,17 @@ def test_run_pipeline_query_and_event_paths() -> None:
             handler_name="q2",
             handler_type=c.Cqrs.HandlerType.QUERY,
             handler_mode=c.Cqrs.HandlerType.QUERY,
-        ),
+        )
     )
     qr = qh._run_pipeline("query", operation=c.Dispatcher.HANDLER_MODE_QUERY)
     assert qr.is_success
-
     eh = _EventHandler(
         config=m.Handler(
             handler_id="e2",
             handler_name="e2",
             handler_type=c.Cqrs.HandlerType.EVENT,
             handler_mode=c.Cqrs.HandlerType.EVENT,
-        ),
+        )
     )
     er = eh._run_pipeline("event", operation=c.Cqrs.HandlerType.EVENT.value)
     assert er.is_success

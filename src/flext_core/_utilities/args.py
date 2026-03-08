@@ -12,14 +12,7 @@ from collections.abc import Callable, Mapping
 from enum import Enum, StrEnum
 from functools import wraps
 from types import UnionType
-from typing import (
-    Annotated,
-    ParamSpec,
-    TypeVar,
-    get_args,
-    get_origin,
-    get_type_hints,
-)
+from typing import Annotated, ParamSpec, TypeVar, get_args, get_origin, get_type_hints
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
@@ -54,19 +47,13 @@ class FlextUtilitiesArgs:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return r[type[StrEnum]].ok(
-                FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate),
+                FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate)
             )
         except ValidationError:
             return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
 
-    # ─────────────────────────────────────────────────────────────
-    # METHOD 3: Signature introspection for auto-parsing
-    # ─────────────────────────────────────────────────────────────
-
     @staticmethod
-    def get_enum_params(
-        func: p.CallableWithHints,
-    ) -> Mapping[str, type[StrEnum]]:
+    def get_enum_params(func: p.CallableWithHints) -> Mapping[str, type[StrEnum]]:
         """Extract parameters that are StrEnum from function signature.
 
         Example:
@@ -80,43 +67,29 @@ class FlextUtilitiesArgs:
             hints = get_type_hints(func)
         except (NameError, TypeError, AttributeError):
             return {}
-
         enum_params: dict[str, type[StrEnum]] = {}
-
         for name, hint in hints.items():
             if name == "return":
                 continue
-
-            # Unwrap Annotated
             current_hint = hint
             origin = get_origin(hint)
             if origin is Annotated:
                 current_hint = get_args(hint)[0]
                 origin = get_origin(current_hint)
-
-            # Check if it's a StrEnum
             validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
             if validated_hint.is_success:
                 enum_params[name] = validated_hint.value
-
-            # Check Union types (str | Status) - Python 3.10+ uses UnionType
             elif origin is UnionType:
                 for arg in get_args(current_hint):
                     validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
                     if validated_arg.is_success:
                         enum_params[name] = validated_arg.value
                         break
-
         return enum_params
-
-    # ─────────────────────────────────────────────────────────────
-    # METHOD 2: Parse kwargs to typed dict
-    # ─────────────────────────────────────────────────────────────
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.ContainerValue],
-        enum_fields: Mapping[str, type[E]],
+        kwargs: Mapping[str, t.ContainerValue], enum_fields: Mapping[str, type[E]]
     ) -> r[Mapping[str, t.ContainerValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
@@ -129,10 +102,8 @@ class FlextUtilitiesArgs:
                  # result.value = {"status": Status.ACTIVE, "name": "John"}
 
         """
-        # Convert Mapping to dict for mutability
         parsed = dict(kwargs)
         errors: list[str] = []
-
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]
@@ -144,16 +115,11 @@ class FlextUtilitiesArgs:
                     enum_members = list(members_dict.values())
                     valid = ", ".join(m.value for m in enum_members)
                     errors.append(f"{field}: '{value}' not in [{valid}]")
-
         if errors:
             return r[t.ConfigurationMapping].fail(
-                f"Invalid values: {'; '.join(errors)}",
+                f"Invalid values: {'; '.join(errors)}"
             )
         return r[t.ConfigurationMapping].ok(parsed)
-
-    # ─────────────────────────────────────────────────────────────
-    # METHOD 1: @validate_call from Pydantic (recommended)
-    # ─────────────────────────────────────────────────────────────
 
     @staticmethod
     def validated(
@@ -186,17 +152,12 @@ class FlextUtilitiesArgs:
         - Validation error → ValidationError (can be caught)
         """
         return validate_call(
-            config=ConfigDict(
-                arbitrary_types_allowed=True,
-                use_enum_values=False,  # Keep enum, don't convert to string
-            ),
+            config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
             validate_return=False,
         )(func)
 
     @staticmethod
-    def validated_with_result[V, **P](
-        func: Callable[P, r[V]],
-    ) -> Callable[P, r[V]]:
+    def validated_with_result[V, **P](func: Callable[P, r[V]]) -> Callable[P, r[V]]:
         """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
@@ -213,29 +174,18 @@ class FlextUtilitiesArgs:
 
         """
         validated_func: Callable[P, r[V]] = validate_call(
-            config=ConfigDict(
-                arbitrary_types_allowed=True,
-                use_enum_values=False,
-            ),
+            config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
             validate_return=False,
         )(func)
 
         @wraps(func)
-        def wrapper(
-            *args: P.args,
-            **kwargs: P.kwargs,
-        ) -> r[V]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[V]:
             try:
-                # Type safe call via Pydantic validated_func
                 return validated_func(*args, **kwargs)
             except (ValidationError, TypeError, ValueError) as e:
-                # Return failed result with error message
-                return r[V].fail(str(e))  # FlextResult[V] matches return type
+                return r[V].fail(str(e))
 
-        # wrapper has correct type via @wraps preserving signature
         return wrapper
 
 
-__all__ = [
-    "FlextUtilitiesArgs",
-]
+__all__ = ["FlextUtilitiesArgs"]

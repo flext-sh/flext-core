@@ -53,7 +53,6 @@ class FlextInfraMainCLI(s[int]):
         c.Infra.ReportKeys.RELEASE: "flext_infra.release.__main__",
         c.Infra.ReportKeys.WORKSPACE: "flext_infra.workspace.__main__",
     })
-
     DESCRIPTIONS: ClassVar[Mapping[str, str]] = MappingProxyType({
         "basemk": "Base.mk template generation",
         c.Infra.Verbs.CHECK: "Lint gates and pyrefly config management",
@@ -92,16 +91,12 @@ class FlextInfraMainCLI(s[int]):
                 if len(sys.argv) >= c.Infra.MIN_ARGV and sys.argv[1] in {"-h", "--help"}
                 else 1
             )
-
         group = sys.argv[1]
         if group not in FlextInfraMainCLI.GROUPS:
             output.error(f"unknown group '{group}'")
             FlextInfraMainCLI._print_help()
             return 1
-
-        # Rewrite argv so each group's argparse sees the correct prog name
         sys.argv = [f"flext-infra {group}"] + sys.argv[2:]
-
         module = importlib.import_module(FlextInfraMainCLI.GROUPS[group])
         exit_code = module.main()
         return int(exit_code) if exit_code is not None else 0

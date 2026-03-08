@@ -22,9 +22,7 @@ from typing import ClassVar, override
 from flext_core import c, e, m, p, r, t, u, x
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    x,
-):
+class FlextHandlers[MessageT_contra, ResultT](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
@@ -75,11 +73,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         ...         return r[bool].ok(True)
     """
 
-    # Class variables for message type expectations (configurable via inheritance)
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
-    # self.logger inherited from FlextMixins (x)
-
     _HANDLER_TYPE_LITERALS: ClassVar[
         Mapping[c.Cqrs.HandlerType, c.Cqrs.HandlerTypeLiteral]
     ] = {
@@ -90,11 +85,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         c.Cqrs.HandlerType.SAGA: "saga",
     }
 
-    def __init__(
-        self,
-        *,
-        config: m.Handler | None = None,
-    ) -> None:
+    def __init__(self, *, config: m.Handler | None = None) -> None:
         """Initialize handler with configuration and context.
 
         Sets up the handler with optional configuration parameters.
@@ -104,22 +95,14 @@ class FlextHandlers[MessageT_contra, ResultT](
             config: Optional handler configuration model
 
         """
-        # Do not pass kwargs to super() - x and ABC don't accept them
         super().__init__()
-        # Store config model if provided, otherwise create default
         if config is not None:
             self._config_model = config
         else:
-            # Create default config if not provided
             self._config_model = m.Handler(
-                handler_id=f"handler_{id(self)}",
-                handler_name=self.__class__.__name__,
+                handler_id=f"handler_{id(self)}", handler_name=self.__class__.__name__
             )
-
-        # Initialize execution context
-        # HandlerType (StrEnum) is compatible with HandlerTypeLiteral - use directly
         handler_type = self._config_model.handler_mode
-        # Validate handler_type is a valid HandlerType
         valid_handler_types = {
             c.Cqrs.HandlerType.COMMAND,
             c.Cqrs.HandlerType.QUERY,
@@ -130,17 +113,11 @@ class FlextHandlers[MessageT_contra, ResultT](
         if handler_type not in valid_handler_types:
             error_msg = f"Invalid handler mode: {handler_type}"
             raise e.ValidationError(error_msg)
-        # handler_type is validated - HandlerType StrEnum values are compatible with HandlerTypeLiteral
-        # After validation, we know handler_type is one of the valid HandlerType values
-        # Business Rule: HandlerType StrEnum members are runtime-compatible with HandlerTypeLiteral
-        # Use helper function for type-safe conversion
         handler_mode_literal = self._handler_type_to_literal(handler_type)
         self._execution_context = m.ExecutionContext.create_for_handler(
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
-
-        # Initialize handler state
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
@@ -152,8 +129,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         return self.handle(message)
 
     def __init_subclass__(
-        cls,
-        **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
+        cls, **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar]
     ) -> None:
         """Validate non-abstract subclasses implement a handle() method.
 
@@ -166,10 +142,8 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
         super().__init_subclass__(**kwargs)
-        # Skip abstract subclasses — they are intermediate bases
         if getattr(cls, "__abstractmethods__", frozenset()):
             return
-        # Walk MRO: if handle is found before FlextHandlers, it was overridden
         for klass in cls.__mro__:
             if klass is FlextHandlers:
                 msg = f"{cls.__qualname__} must implement a handle() method"
@@ -200,10 +174,7 @@ class FlextHandlers[MessageT_contra, ResultT](
     @classmethod
     def create_from_callable(
         cls,
-        handler_callable: Callable[
-            [t.Scalar],
-            t.Scalar,
-        ],
+        handler_callable: Callable[[t.Scalar], t.Scalar],
         handler_name: str | None = None,
         handler_type: c.Cqrs.HandlerType | None = None,
         mode: c.Cqrs.HandlerType | str | None = None,
@@ -235,26 +206,16 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
 
-        # Create a concrete handler class dynamically
-        class CallableHandler(
-            FlextHandlers[t.Scalar, t.Scalar],
-        ):
+        class CallableHandler(FlextHandlers[t.Scalar, t.Scalar]):
             """Dynamic handler created from callable."""
 
-            _handler_fn: Callable[
-                [t.Scalar],
-                t.Scalar,
-            ]
+            _handler_fn: Callable[[t.Scalar], t.Scalar]
 
             def __init__(
                 self,
-                handler_fn: Callable[
-                    [t.Scalar],
-                    t.Scalar,
-                ],
+                handler_fn: Callable[[t.Scalar], t.Scalar],
                 config: m.Handler | None = None,
             ) -> None:
-                # Call parent __init__ with config as keyword argument
                 super().__init__(config=config)
                 self._handler_fn = handler_fn
 
@@ -269,7 +230,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                         return result
                     if isinstance(result, set):
                         return r[t.Scalar].fail(
-                            "Result must be compatible with ContainerValue",
+                            "Result must be compatible with ContainerValue"
                         )
                     return r[t.Scalar].ok(result)
                 except (
@@ -279,45 +240,32 @@ class FlextHandlers[MessageT_contra, ResultT](
                     AttributeError,
                     RuntimeError,
                 ) as exc:
-                    self.logger.debug(
-                        "Callable handler execution failed",
-                        exc_info=exc,
-                    )
+                    self.logger.debug("Callable handler execution failed", exc_info=exc)
                     return r[t.Scalar].fail(str(exc))
 
-        # Use handler_config if provided
         if handler_config is not None:
             return CallableHandler(handler_fn=handler_callable, config=handler_config)
-
-        # Resolve handler type from mode or handler_type
         resolved_type: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND
         if mode is not None:
-            # Handle both HandlerType enum and string (HandlerType is StrEnum, so values are strings)
             if isinstance(mode, c.Cqrs.HandlerType):
                 resolved_type = mode
             elif mode not in u.values(c.Cqrs.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
             else:
-                # Type narrowing: mode is valid string, HandlerType constructor accepts it
                 resolved_type = c.Cqrs.HandlerType(str(mode))
         elif handler_type is not None:
             resolved_type = handler_type
-
-        # Use getattr for callable attribute access (not mapper.get which is for dict/model)
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler")
-            or "unknown_handler",
+            or "unknown_handler"
         )
-
-        # Create config
         config = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
             handler_name=resolved_name,
             handler_type=resolved_type,
             handler_mode=resolved_type,
         )
-
         return CallableHandler(handler_fn=handler_callable, config=config)
 
     @staticmethod
@@ -366,13 +314,9 @@ class FlextHandlers[MessageT_contra, ResultT](
             When multiple @h.handler() decorators are stacked, the first (innermost)
             one to run takes precedence.
             """
-            # Only set if not already set (innermost decorator wins)
             if not hasattr(func, c.Discovery.HANDLER_ATTR):
                 config = m.HandlerDecoratorConfig(
-                    command=command,
-                    priority=priority,
-                    timeout=timeout,
-                    middleware=[],
+                    command=command, priority=priority, timeout=timeout, middleware=[]
                 )
                 if middleware is not None:
                     config = config.model_copy(update={"middleware": list(middleware)})
@@ -408,9 +352,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
         if self._expected_message_type is None:
-            # Flexible handler - accepts any message type
             return True
-
         return self._expected_message_type in message_type.__mro__
 
     def dispatch_message(
@@ -465,7 +407,6 @@ class FlextHandlers[MessageT_contra, ResultT](
             ...     print(f"Failed: {result.error}")
 
         """
-        # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
         validation = self.validate(message)
         if validation.is_failure:
             return r.fail(validation.error or "Validation failed")
@@ -495,27 +436,24 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Pop execution context from the local handler stack."""
         if not self._stack:
             return r[m.ConfigMap].ok(m.ConfigMap(root={}))
-
         popped = self._stack.pop()
         if isinstance(popped, m.ExecutionContext):
             context_dict: m.ConfigMap = m.ConfigMap(
                 root={
                     "handler_name": popped.handler_name,
                     "handler_mode": popped.handler_mode,
-                },
+                }
             )
             return r[m.ConfigMap].ok(context_dict)
         return r[m.ConfigMap].ok(popped)
 
     def push_context(
-        self,
-        ctx: m.ExecutionContext | dict[str, t.ContainerValue],
+        self, ctx: m.ExecutionContext | dict[str, t.ContainerValue]
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext | m.ConfigMap):
             self._stack.append(ctx)
             return r[bool].ok(value=True)
-
         handler_name_raw = ctx.get("handler_name", "unknown")
         handler_name = (
             str(handler_name_raw) if handler_name_raw is not None else "unknown"
@@ -536,8 +474,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             else "operation"
         )
         execution_ctx = m.ExecutionContext.create_for_handler(
-            handler_name=handler_name,
-            handler_mode=handler_mode_literal,
+            handler_name=handler_name, handler_mode=handler_mode_literal
         )
         self._stack.append(execution_ctx)
         return r[bool].ok(value=True)
@@ -547,10 +484,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._metrics[name] = value
         return r[bool].ok(value=True)
 
-    def validate(
-        self,
-        data: MessageT_contra,
-    ) -> r[bool]:
+    def validate(self, data: MessageT_contra) -> r[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -577,19 +511,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         this base implementation doesn't use instance state.
 
         """
-        # Reject None values directly
         if data is None:
             return r[bool].fail("Message cannot be None")
-
-        # Base validation - accept any AcceptableMessageType
-        # Subclasses should override for specific validation rules
         return r[bool].ok(value=True)
 
     def _record_execution_metrics(
-        self,
-        *,
-        success: bool,
-        error: str | None = None,
+        self, *, success: bool, error: str | None = None
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
@@ -600,15 +527,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                 exec_time = 0.0
         except (TypeError, ValueError):
             exec_time = 0.0
-        # Mixin record_metric() returns r[bool], assign to _ to indicate intentional
-        _ = self.record_metric(
-            "execution_time_ms",
-            exec_time,
-        )
-        _ = self.record_metric(
-            "success",
-            success,
-        )
+        _ = self.record_metric("execution_time_ms", exec_time)
+        _ = self.record_metric("success", success)
         if error is not None:
             _ = self.record_metric("error", error)
 
@@ -631,11 +551,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             r[ResultT]: Handler execution result
 
         """
-        # Validate handler mode matches operation
         handler_mode = getattr(
-            self._config_model.handler_mode,
-            "value",
-            self._config_model.handler_mode,
+            self._config_model.handler_mode, "value", self._config_model.handler_mode
         )
         valid_operations = {
             c.Dispatcher.HANDLER_MODE_COMMAND,
@@ -643,51 +560,30 @@ class FlextHandlers[MessageT_contra, ResultT](
             c.Cqrs.HandlerType.EVENT.value,
         }
         if operation != handler_mode and operation in valid_operations:
-            error_msg = (
-                f"Handler with mode '{handler_mode}' "
-                f"cannot execute {operation} pipelines"
-            )
+            error_msg = f"Handler with mode '{handler_mode}' cannot execute {operation} pipelines"
             return r.fail(error_msg)
-
-        # Check if handler can handle message type
         message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
             return r.fail(error_msg)
-
-        # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
-        # Validate message based on operation type
         validation = self.validate(message)
-
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"
             return r.fail(error_msg)
-
-        # Start execution timing
         self._execution_context.start_execution()
-
-        # Push execution context using ExecutionContext from mixin
-        # Mixin push_context expects m.ExecutionContext, use existing _execution_context
         _ = self.push_context(self._execution_context)
-
         try:
-            # Execute handler
             result = self.handle(message)
-
-            # Record execution metrics - extract helper method to reduce locals
             self._record_execution_metrics(success=result.is_success)
-
             return result
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
             self.logger.warning("Critical handler pipeline failure", exc_info=exc)
-            # Record failure metrics
             self._record_execution_metrics(success=False, error=str(exc))
             error_msg = f"Critical handler failure: {exc}"
             return r.fail(error_msg)
         finally:
-            # Pop execution context
             _ = self.pop_context()
 
     class Discovery:
@@ -775,17 +671,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
                     config: m.HandlerDecoratorConfig = getattr(
-                        method,
-                        c.Discovery.HANDLER_ATTR,
+                        method, c.Discovery.HANDLER_ATTR
                     )
                     handlers.append((name, config))
-
-            # Sort by priority (descending)
-            return sorted(
-                handlers,
-                key=lambda x: x[1].priority,
-                reverse=True,
-            )
+            return sorted(handlers, key=lambda x: x[1].priority, reverse=True)
 
         @staticmethod
         def scan_module(
@@ -828,8 +717,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if not callable(func):
                     continue
                 config: m.HandlerDecoratorConfig = getattr(
-                    func,
-                    c.Discovery.HANDLER_ATTR,
+                    func, c.Discovery.HANDLER_ATTR
                 )
                 callable_func: Callable[..., object] = func
 
@@ -846,22 +734,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                         return result
                     return ""
 
-                setattr(
-                    narrowed_func,
-                    c.Discovery.HANDLER_ATTR,
-                    config,
-                )
-
+                setattr(narrowed_func, c.Discovery.HANDLER_ATTR, config)
                 handlers.append((name, narrowed_func, config))
-
-            # Sort by priority (descending), then by name for stability
-            return sorted(
-                handlers,
-                key=lambda x: (-x[2].priority, x[0]),
-            )
+            return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
 
 
 h = FlextHandlers
-
-
 __all__ = ["FlextHandlers", "h"]

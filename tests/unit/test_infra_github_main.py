@@ -26,10 +26,7 @@ def _orchestration_result(
     *, fail: int = 0, total: int = 1
 ) -> m.Infra.Github.PrOrchestrationResult:
     return m.Infra.Github.PrOrchestrationResult(
-        total=total,
-        success=max(total - fail, 0),
-        fail=fail,
-        results=[],
+        total=total, success=max(total - fail, 0), fail=fail, results=[]
     )
 
 
@@ -44,10 +41,8 @@ class TestRunWorkflows:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-
             argv = ["--workspace-root", str(tmp_path)]
             result = run_workflows(argv)
-
             assert result == 0
 
     def test_run_workflows_failure(self, tmp_path: Path) -> None:
@@ -60,10 +55,8 @@ class TestRunWorkflows:
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].fail(
                 "sync failed"
             )
-
             argv = ["--workspace-root", str(tmp_path)]
             result = run_workflows(argv)
-
             assert result == 1
 
     def test_run_workflows_with_apply_flag(self, tmp_path: Path) -> None:
@@ -74,10 +67,8 @@ class TestRunWorkflows:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-
             argv = ["--workspace-root", str(tmp_path), "--apply"]
             result = run_workflows(argv)
-
             assert result == 0
             mock_syncer.sync_workspace.assert_called_once()
             call_kwargs = mock_syncer.sync_workspace.call_args[1]
@@ -91,10 +82,8 @@ class TestRunWorkflows:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-
             argv = ["--workspace-root", str(tmp_path), "--prune"]
             result = run_workflows(argv)
-
             assert result == 0
             call_kwargs = mock_syncer.sync_workspace.call_args[1]
             assert call_kwargs["prune"] is True
@@ -107,11 +96,9 @@ class TestRunWorkflows:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-
             report_path = tmp_path / "report.json"
             argv = ["--workspace-root", str(tmp_path), "--report", str(report_path)]
             result = run_workflows(argv)
-
             assert result == 0
             call_kwargs = mock_syncer.sync_workspace.call_args[1]
             assert call_kwargs["report_path"] == report_path
@@ -130,10 +117,8 @@ class TestRunLint:
             mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
                 m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
             )
-
             argv = ["--root", str(tmp_path)]
             result = run_lint(argv)
-
             assert result == 0
 
     def test_run_lint_failure(self, tmp_path: Path) -> None:
@@ -144,10 +129,8 @@ class TestRunLint:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
             mock_linter.lint.return_value = r[dict[str, object]].fail("lint failed")
-
             argv = ["--root", str(tmp_path)]
             result = run_lint(argv)
-
             assert result == 1
 
     def test_run_lint_with_report(self, tmp_path: Path) -> None:
@@ -160,11 +143,9 @@ class TestRunLint:
             mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
                 m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
             )
-
             report_path = tmp_path / "report.json"
             argv = ["--root", str(tmp_path), "--report", str(report_path)]
             result = run_lint(argv)
-
             assert result == 0
             call_kwargs = mock_linter.lint.call_args[1]
             assert call_kwargs["report_path"] == report_path
@@ -179,10 +160,8 @@ class TestRunLint:
             mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
                 m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
             )
-
             argv = ["--root", str(tmp_path), "--strict"]
             result = run_lint(argv)
-
             assert result == 0
             call_kwargs = mock_linter.lint.call_args[1]
             assert call_kwargs["strict"] is True
@@ -195,10 +174,8 @@ class TestRunPr:
         """Test that _run_pr delegates to pr_main."""
         with patch("flext_infra.github.__main__.pr_main") as mock_pr_main:
             mock_pr_main.return_value = 0
-
             argv = ["--repo-root", "/tmp", "--action", "status"]
             result = run_pr(argv)
-
             assert result == 0
             mock_pr_main.assert_called_once()
 
@@ -208,11 +185,8 @@ class TestRunPr:
         try:
             with patch("flext_infra.github.__main__.pr_main") as mock_pr_main:
                 mock_pr_main.return_value = 0
-
                 argv = ["--repo-root", "/tmp", "--action", "status"]
                 run_pr(argv)
-
-                # sys.argv should be set with the command and remaining args
                 assert sys.argv[0] == "flext-infra github pr"
                 assert "--repo-root" in sys.argv
         finally:
@@ -232,10 +206,8 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=0))
-
             argv = ["--workspace-root", str(tmp_path)]
             result = run_pr_workspace(argv)
-
             assert result == 0
 
     def test_run_pr_workspace_failure(self, tmp_path: Path) -> None:
@@ -248,10 +220,8 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].fail("orchestration failed")
-
             argv = ["--workspace-root", str(tmp_path)]
             result = run_pr_workspace(argv)
-
             assert result == 1
 
     def test_run_pr_workspace_with_failures(self, tmp_path: Path) -> None:
@@ -264,10 +234,8 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=2, total=2))
-
             argv = ["--workspace-root", str(tmp_path)]
             result = run_pr_workspace(argv)
-
             assert result == 1
 
     def test_run_pr_workspace_with_projects(self, tmp_path: Path) -> None:
@@ -280,7 +248,6 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=0, total=2))
-
             argv = [
                 "--workspace-root",
                 str(tmp_path),
@@ -290,7 +257,6 @@ class TestRunPrWorkspace:
                 "proj2",
             ]
             result = run_pr_workspace(argv)
-
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
             assert call_kwargs["projects"] == ["proj1", "proj2"]
@@ -305,10 +271,8 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=0))
-
             argv = ["--workspace-root", str(tmp_path), "--branch", "feature/test"]
             result = run_pr_workspace(argv)
-
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
             assert call_kwargs["branch"] == "feature/test"
@@ -323,10 +287,8 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=0))
-
             argv = ["--workspace-root", str(tmp_path), "--checkpoint", "1"]
             result = run_pr_workspace(argv)
-
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
             assert call_kwargs["checkpoint"] is True
@@ -341,10 +303,8 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=0))
-
             argv = ["--workspace-root", str(tmp_path), "--fail-fast", "1"]
             result = run_pr_workspace(argv)
-
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
             assert call_kwargs["fail_fast"] is True
@@ -359,7 +319,6 @@ class TestRunPrWorkspace:
             mock_manager.orchestrate.return_value = r[
                 m.Infra.Github.PrOrchestrationResult
             ].ok(_orchestration_result(fail=0))
-
             argv = [
                 "--workspace-root",
                 str(tmp_path),
@@ -371,7 +330,6 @@ class TestRunPrWorkspace:
                 "feature/test",
             ]
             result = run_pr_workspace(argv)
-
             assert result == 0
             call_kwargs = mock_manager.orchestrate.call_args[1]
             pr_args = call_kwargs["pr_args"]
@@ -413,7 +371,6 @@ class TestMain:
                 mock_syncer = Mock()
                 mock_syncer_class.return_value = mock_syncer
                 mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-
                 sys.argv = [
                     "flext-infra",
                     "workflows",
@@ -437,7 +394,6 @@ class TestMain:
                 mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
                     m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
                 )
-
                 sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                 result = main()
                 assert result == 0
@@ -450,7 +406,6 @@ class TestMain:
         try:
             with patch("flext_infra.github.__main__.pr_main") as mock_pr_main:
                 mock_pr_main.return_value = 0
-
                 sys.argv = [
                     "flext-infra",
                     "pr",
@@ -476,7 +431,6 @@ class TestMain:
                 mock_manager.orchestrate.return_value = r[
                     m.Infra.Github.PrOrchestrationResult
                 ].ok(_orchestration_result(fail=0))
-
                 sys.argv = [
                     "flext-infra",
                     "pr-workspace",
@@ -515,15 +469,8 @@ class TestMain:
                             "status": "ok"
                         })
                     )
-
-                    sys.argv = [
-                        "flext-infra",
-                        "lint",
-                        "--root",
-                        str(tmp_path),
-                    ]
+                    sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                     main()
-
                     mock_runtime.ensure_structlog_configured.assert_called_once()
         finally:
             sys.argv = original_argv
@@ -537,8 +484,6 @@ class TestMain:
             ) as mock_syncer_class:
                 mock_syncer = Mock()
                 mock_syncer_class.return_value = mock_syncer
-                # Return multiple operations to ensure iteration
-
                 ops = [
                     SyncOperation(
                         project="p1", path="ci.yml", action="create", reason="new"

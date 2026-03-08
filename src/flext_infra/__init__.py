@@ -28,7 +28,6 @@ _LAZY_SUBMODULES = frozenset({
     "release",
     "workspace",
 })
-
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
     from flext_infra.basemk import (
@@ -40,10 +39,7 @@ if TYPE_CHECKING:
         FlextInfraWorkspaceChecker as FlextInfraCheckWorkspaceChecker,
     )
     from flext_infra.codegen import FlextInfraCodegenLazyInit
-    from flext_infra.constants import (
-        FlextInfraConstants,
-        FlextInfraConstants as c,
-    )
+    from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
     from flext_infra.container import (
         configure_flext_infra_dependencies,
         get_flext_infra_container,
@@ -81,8 +77,6 @@ if TYPE_CHECKING:
     from flext_infra.typings import FlextInfraTypes, t
     from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
     from flext_infra.versioning import FlextInfraVersioningService
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "FlextInfraBaseMkGenerator"),
     "FlextInfraBaseMkTemplateEngine": (
@@ -114,19 +108,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraInventoryService",
     ),
     "FlextInfraJsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
-    "FlextInfraCodegenLazyInit": (
-        "flext_infra.codegen",
-        "FlextInfraCodegenLazyInit",
-    ),
+    "FlextInfraCodegenLazyInit": ("flext_infra.codegen", "FlextInfraCodegenLazyInit"),
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
     "FlextInfraOutput": ("flext_infra.output", "FlextInfraOutput"),
     "FlextInfraPathResolver": ("flext_infra.paths", "FlextInfraPathResolver"),
     "FlextInfraPatterns": ("flext_infra.patterns", "FlextInfraPatterns"),
     "FlextInfraPrManager": (_GITHUB_MODULE, "FlextInfraPrManager"),
-    "FlextInfraPrWorkspaceManager": (
-        _GITHUB_MODULE,
-        "FlextInfraPrWorkspaceManager",
-    ),
+    "FlextInfraPrWorkspaceManager": (_GITHUB_MODULE, "FlextInfraPrWorkspaceManager"),
     "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
     "FlextInfraProtocols": ("flext_infra.protocols", "FlextInfraProtocols"),
     "FlextInfraPytestDiagExtractor": (
@@ -183,7 +171,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "t": ("flext_infra.typings", "FlextInfraTypes"),
     "u": ("flext_infra.utilities", "FlextInfraUtilities"),
 }
-
 __all__ = [
     "FlextInfraBaseMkGenerator",
     "FlextInfraBaseMkTemplateEngine",
@@ -235,7 +222,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     if name in _LAZY_SUBMODULES:
         module = importlib.import_module(f"{__name__}.{name}")

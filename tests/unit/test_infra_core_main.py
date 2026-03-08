@@ -563,8 +563,7 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "basemk-validate", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_basemk_validate",
-                    return_value=0,
+                    "flext_infra.core.__main__._run_basemk_validate", return_value=0
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -601,16 +600,7 @@ class TestCoreMainFlow:
         with patch.object(
             sys,
             "argv",
-            [
-                "prog",
-                "scan",
-                "--root",
-                ".",
-                "--pattern",
-                "TODO",
-                "--include",
-                "*.py",
-            ],
+            ["prog", "scan", "--root", ".", "--pattern", "TODO", "--include", "*.py"],
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
@@ -663,11 +653,10 @@ class TestCoreMainFlow:
     def test_main_entry_point_via_sys_exit(self) -> None:
         """Test __main__ entry point via sys.exit (line 242)."""
         result = subprocess.run(
-            ["python", "-m", "flext_infra.core", "--help"],  # noqa: S607
+            ["python", "-m", "flext_infra.core", "--help"],
             capture_output=True,
             text=True,
             cwd="/home/marlonsc/flext/flext-core",
             check=False,
         )
-        # Should succeed with help output
         assert result.returncode == 0

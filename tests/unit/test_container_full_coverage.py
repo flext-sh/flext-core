@@ -37,7 +37,7 @@ class _BridgeBadProvide:
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:  # noqa: N802
+    def Provide(name: str) -> str:
         return name
 
 
@@ -48,7 +48,7 @@ def _scan_factory_module(
         (
             "the_factory",
             m.HandlerFactoryDecoratorConfig(name="x", singleton=False, lazy=True),
-        ),
+        )
     ]
 
 
@@ -59,11 +59,9 @@ def _scan_factory_module_captured(
         (
             "factory_fn",
             m.HandlerFactoryDecoratorConfig(
-                name="factory.captured",
-                singleton=False,
-                lazy=True,
+                name="factory.captured", singleton=False, lazy=True
             ),
-        ),
+        )
     ]
 
 
@@ -105,9 +103,8 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
 
     fake_module = types.SimpleNamespace(the_factory=factory)
     frame = types.SimpleNamespace(
-        f_back=types.SimpleNamespace(f_globals={"__name__": "fake_mod"}),
+        f_back=types.SimpleNamespace(f_globals={"__name__": "fake_mod"})
     )
-
     monkeypatch.setitem(sys.modules, "fake_mod", cast("types.ModuleType", fake_module))
     monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
     monkeypatch.setattr(
@@ -115,12 +112,7 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
         _scan_factory_module,
     )
 
-    def _register(
-        name: str,
-        _impl: object,
-        *,
-        kind: str = "service",
-    ) -> FlextContainer:
+    def _register(name: str, _impl: object, *, kind: str = "service") -> FlextContainer:
         if kind == "factory":
             called.append(name)
         return container
@@ -131,11 +123,8 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
         return container
 
     monkeypatch.setattr(
-        "flext_core.container.FlextContainer.__call__",
-        _call_container,
-        raising=False,
+        "flext_core.container.FlextContainer.__call__", _call_container, raising=False
     )
-
     created = FlextContainer.create(auto_register_factories=True)
     assert isinstance(created, FlextContainer)
     assert "x" in called
@@ -146,11 +135,9 @@ def test_provide_property_paths() -> None:
     c_any: Any = c
     c_any._di_bridge = _BridgeGoodProvide()
     assert c.provide("x") == "x"
-
     c_any._di_bridge = _BridgeBadProvide()
     with pytest.raises(RuntimeError):
         _ = c.provide
-
     c_any._di_bridge = _BridgeNoProvide()
     with pytest.raises(RuntimeError):
         _ = c.provide
@@ -163,21 +150,17 @@ def test_config_context_properties_and_defaults(
     c._config = None
     with pytest.raises(RuntimeError):
         _ = c.config
-
     c._context = None
     with pytest.raises(RuntimeError):
         _ = c.context
-
     monkeypatch.setattr(
-        "flext_core.container.FlextSettings.get_global",
-        lambda: FlextSettings(),
+        "flext_core.container.FlextSettings.get_global", lambda: FlextSettings()
     )
     assert isinstance(c._get_default_config(), FlextSettings)
 
 
 def test_initialize_di_components_error_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
-
     bad_bridge = types.SimpleNamespace(config="not-provider")
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.create_layered_bridge",
@@ -197,24 +180,18 @@ def test_sync_config_namespace_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         max_services=10,
         max_factories=10,
     )
-
     monkeypatch.setattr(type(c._config), "_namespace_registry", {"x": object()})
     monkeypatch.setattr(c, "has_service", _has_service_false)
 
     def _capture_register(
-        _name: str,
-        _impl: object,
-        *,
-        kind: str = "service",
+        _name: str, _impl: object, *, kind: str = "service"
     ) -> FlextContainer:
         _ = kind
         return c
 
     monkeypatch.setattr(c, "register", _capture_register)
     monkeypatch.setattr(
-        type(c._config),
-        "get_namespace_config",
-        staticmethod(_namespace_config_none),
+        type(c._config), "get_namespace_config", staticmethod(_namespace_config_none)
     )
     c.sync_config_to_di()
 
@@ -224,24 +201,14 @@ def test_register_existing_providers_skips_and_register_core_fallback(
 ) -> None:
     c = FlextContainer.create()
     c._services = {
-        "svc": m.ServiceRegistration(
-            name="svc",
-            service="v",
-            service_type="str",
-        ),
+        "svc": m.ServiceRegistration(name="svc", service="v", service_type="str")
     }
-    c._factories = {
-        "fac": m.FactoryRegistration(name="fac", factory=lambda: "v"),
-    }
-    c._resources = {
-        "res": m.ResourceRegistration(name="res", factory=lambda: "v"),
-    }
-
+    c._factories = {"fac": m.FactoryRegistration(name="fac", factory=lambda: "v")}
+    c._resources = {"res": m.ResourceRegistration(name="res", factory=lambda: "v")}
     setattr(c._di_services, "svc", object())
     setattr(c._di_services, "fac", object())
     setattr(c._di_resources, "res", object())
     c.register_existing_providers()
-
     c_any: Any = c
     c_any._config = _FalseConfig()
     c_any._context = None
@@ -260,28 +227,22 @@ def test_configure_with_resource_register_and_factory_error_paths(
         max_services=100,
         max_factories=100,
     )
-
     c.configure({"enable_factory_caching": True})
     assert c._global_config.enable_factory_caching is True
-
     c.register("res", lambda: "x", kind="resource")
     assert "res" in c._resources
-
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_object",
         _raise_register_object,
     )
     c.register("x", "y")
-
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_factory",
         _raise_register_factory,
     )
     c.register("x2", lambda: "v", kind="factory")
-
     setattr(c._di_resources, "dup", object())
     c.register("dup", lambda: "v", kind="resource")
-
     delattr(c._di_resources, "dup")
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_resource",
@@ -294,41 +255,29 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
     c = FlextContainer.create()
     c._factories = {
         "f": m.FactoryRegistration(
-            name="f",
-            factory=lambda: (_ for _ in ()).throw(ValueError("x")),
-        ),
+            name="f", factory=lambda: (_ for _ in ()).throw(ValueError("x"))
+        )
     }
     c._resources = {
         "r": m.ResourceRegistration(
-            name="r",
-            factory=lambda: (_ for _ in ()).throw(ValueError("x")),
-        ),
+            name="r", factory=lambda: (_ for _ in ()).throw(ValueError("x"))
+        )
     }
     assert c.get("r").is_failure
-
-    c._factories = {
-        "f2": m.FactoryRegistration(name="f2", factory=lambda: "abc"),
-    }
+    c._factories = {"f2": m.FactoryRegistration(name="f2", factory=lambda: "abc")}
     assert c.get("f2", type_cls=dict).is_failure
-
-    c._resources = {
-        "r2": m.ResourceRegistration(name="r2", factory=lambda: "abc"),
-    }
+    c._resources = {"r2": m.ResourceRegistration(name="r2", factory=lambda: "abc")}
     assert c.get("r2", type_cls=dict).is_failure
-
     c._factories = {
         "f3": m.FactoryRegistration(
-            name="f3",
-            factory=lambda: (_ for _ in ()).throw(ValueError("err")),
-        ),
+            name="f3", factory=lambda: (_ for _ in ()).throw(ValueError("err"))
+        )
     }
     assert c.get("f3", type_cls=str).is_failure
-
     c._resources = {
         "r3": m.ResourceRegistration(
-            name="r3",
-            factory=lambda: (_ for _ in ()).throw(ValueError("err")),
-        ),
+            name="r3", factory=lambda: (_ for _ in ()).throw(ValueError("err"))
+        )
     }
     assert c.get("r3", type_cls=str).is_failure
 
@@ -337,12 +286,9 @@ def test_misc_unregistration_clear_and_reset() -> None:
     c = FlextContainer.create()
     _ = c.register("resx", lambda: "ok", kind="resource")
     assert c.create_module_logger().logger is not None
-
     assert c.unregister("resx").is_success
-
     _ = c.register("r1", lambda: "ok", kind="resource")
     c.clear_all()
-
     FlextContainer.reset_for_testing()
     instance = FlextContainer.create()
     assert instance._global_instance is instance
@@ -362,7 +308,6 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     )
     c._config = FlextSettings(app_name="base")
     c._context = FlextContext()
-
     captured: dict[str, Any] = {}
 
     def _fake_create_scoped_instance(**kwargs: object) -> FlextContainer:
@@ -373,13 +318,10 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
         "flext_core.container.FlextContainer._create_scoped_instance",
         _fake_create_scoped_instance,
     )
-
     _ = c.scoped(subproject="sub")
     assert isinstance(captured["config"], FlextSettings)
-
     _ = c.scoped(
-        config=cast("Any", _FalseConfig()),
-        context=cast("Any", _ContextNoClone()),
+        config=cast("Any", _FalseConfig()), context=cast("Any", _ContextNoClone())
     )
     assert isinstance(captured["context"], FlextContext)
 
@@ -394,19 +336,16 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
 
     fake_module = types.SimpleNamespace(factory_fn=factory_fn)
     frame = types.SimpleNamespace(
-        f_back=types.SimpleNamespace(f_globals={"__name__": "fake_factory_mod"}),
+        f_back=types.SimpleNamespace(f_globals={"__name__": "fake_factory_mod"})
     )
     monkeypatch.setitem(
-        sys.modules,
-        "fake_factory_mod",
-        cast("types.ModuleType", fake_module),
+        sys.modules, "fake_factory_mod", cast("types.ModuleType", fake_module)
     )
     monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
     monkeypatch.setattr(
         "flext_core.container.FactoryDecoratorsDiscovery.scan_module",
         _scan_factory_module_captured,
     )
-
     original_register = FlextContainer.register
 
     def capture_register(
@@ -462,12 +401,12 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
         def get_namespace_config(namespace: str) -> type[BaseModel]:
             if namespace == "alpha":
 
-                class _Model(BaseModel):
+                class _Model:
                     v: str = "ok"
 
                 return _Model
 
-            class _Model2(BaseModel):
+            class _Model2:
                 v: str = "ok2"
 
             return _Model2
@@ -488,12 +427,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
     registered: dict[str, Callable[..., object]] = {}
     c_any.has_service = _has_service_false
 
-    def _register(
-        name: str,
-        impl: object,
-        *,
-        kind: str = "service",
-    ) -> FlextContainer:
+    def _register(name: str, impl: object, *, kind: str = "service") -> FlextContainer:
         if kind == "factory" and callable(impl):
             registered[name] = impl
         return c
@@ -509,29 +443,19 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
 def test_register_existing_providers_full_paths_and_misc_methods() -> None:
     c = FlextContainer.create()
     c._services = {
-        "s1": m.ServiceRegistration(
-            name="s1",
-            service="v",
-            service_type="str",
-        ),
+        "s1": m.ServiceRegistration(name="s1", service="v", service_type="str")
     }
-    c._factories = {
-        "f1": m.FactoryRegistration(name="f1", factory=lambda: "fv"),
-    }
-    c._resources = {
-        "r1": m.ResourceRegistration(name="r1", factory=lambda: "rv"),
-    }
+    c._factories = {"f1": m.FactoryRegistration(name="f1", factory=lambda: "fv")}
+    c._resources = {"r1": m.ResourceRegistration(name="r1", factory=lambda: "rv")}
     c.register_existing_providers()
     assert hasattr(c._di_container, "s1")
     assert hasattr(c._di_container, "f1")
     assert hasattr(c._di_container, "r1")
-
     c_any: Any = c
     c_any._context = FlextContext()
     c_any.has_service = _has_service_false
     c.register_core_services()
     assert c.has_service("context") is False or True
-
     c.wire_modules(modules=[])
     assert c.get("r1").is_success
     assert c.get("f1", type_cls=str).is_success
@@ -555,7 +479,6 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         ),
     )
     assert isinstance(scoped, FlextContainer)
-
     base_any: Any = base
     base_any._config = _FalseConfig()
     base_any._context = FlextContext()
@@ -566,7 +489,6 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         factories={"fx": lambda: "fv"},
         resources={"rx": lambda: "rv"},
     )
-
     base_any._config = _FalseConfig()
     base_any._context = _ContextNoClone()
     _ = base.scoped()
@@ -580,14 +502,11 @@ def test_additional_container_branches_cover_fluent_and_lookup_paths() -> None:
         max_services=10,
         max_factories=10,
     )
-
     global_instance = FlextContainer.get_global()
     assert isinstance(global_instance, FlextContainer)
-
     assert c.configure({"enable_factory_caching": True}) is c
     c.register("svc-x", "value")
     c.register("fac-x", lambda: "v", kind="factory")
-
     assert c.get_config().root
     c.register("", "x")
     assert c.get("svc-x").is_success
@@ -604,17 +523,13 @@ def test_additional_register_factory_and_unregister_paths() -> None:
         max_services=10,
         max_factories=10,
     )
-
     c.register("fac-ok", lambda: 1, kind="factory")
     c.register("fac-ok", lambda: 2, kind="factory")
     c.register("fac-bad", cast("Any", 123), kind="factory")
-
     assert FlextContainer._narrow_factory_result("x") == "x"
-
     _ = c.register("svc-remove", "v")
     _ = c.register("res-remove", lambda: "r", kind="resource")
     _ = c.register("fac-remove", lambda: "f", kind="factory")
-
     assert c.unregister("svc-remove").is_success
     assert c.unregister("fac-remove").is_success
     assert c.unregister("res-remove").is_success
@@ -643,7 +558,8 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
-            class _Model(BaseModel):
+
+            class _Model:
                 v: str = "x"
 
             return _Model
@@ -653,7 +569,8 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
-            class _Model(BaseModel):
+
+            class _Model:
                 v: str = "x"
 
             return _Model
@@ -667,7 +584,8 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
-            class _Model(BaseModel):
+
+            class _Model:
                 v: str = "x"
 
             return _Model
@@ -681,10 +599,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     c_any.has_service = _has_service_false
 
     def _capture_register(
-        name: str,
-        impl: object,
-        *,
-        kind: str = "service",
+        name: str, impl: object, *, kind: str = "service"
     ) -> FlextContainer:
         if kind == "factory" and callable(impl):
             captured[name] = impl
@@ -692,19 +607,14 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
 
     c_any.register = _capture_register
     c.sync_config_to_di()
-
     c_any._config = _CfgBadNamespace()
     c.sync_config_to_di()
-
     c_any._config = _CfgGoodNamespace()
     c.sync_config_to_di()
-
     assert isinstance(captured["config.n2"](), BaseModel)
     assert isinstance(captured["config.n3"](), BaseModel)
     assert isinstance(captured["config.n4"](), BaseModel)
-
     delattr(c_any, "register")
-
     c2 = FlextContainer.create()
     c2._global_config = m.ContainerConfig(
         enable_singleton=True,
@@ -714,40 +624,27 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     )
     c2.register("fac-call", lambda: "value", kind="factory")
     assert c2._factories["fac-call"].factory() == "value"
-
     c2._factories = {
         "boom": m.FactoryRegistration(
-            name="boom",
-            factory=lambda: (_ for _ in ()).throw(RuntimeError("boom")),
-        ),
+            name="boom", factory=lambda: (_ for _ in ()).throw(RuntimeError("boom"))
+        )
     }
     assert c2.get("boom").is_failure
-
     c2._factories = {
-        "ok-factory": m.FactoryRegistration(
-            name="ok-factory",
-            factory=lambda: "ok",
-        ),
+        "ok-factory": m.FactoryRegistration(name="ok-factory", factory=lambda: "ok")
     }
     assert c2.get("ok-factory").is_success
-
     c2._services = {
         "svc-int": m.ServiceRegistration(
-            name="svc-int",
-            service="str",
-            service_type="str",
-        ),
+            name="svc-int", service="str", service_type="str"
+        )
     }
     assert c2.get("svc-int", type_cls=int).is_failure
-
     executed: list[str] = []
     c_any.has_service = _has_service_false
 
     def _track_register(
-        _name: str,
-        impl: object,
-        *,
-        kind: str = "service",
+        _name: str, impl: object, *, kind: str = "service"
     ) -> FlextContainer:
         if kind == "factory" and callable(impl):
             executed.append(type(impl()).__name__)

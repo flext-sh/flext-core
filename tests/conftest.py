@@ -1,4 +1,3 @@
-# mypy: disable-error-code=misc
 """Comprehensive test configuration and utilities for flext-core.
 
 Provides highly automated testing infrastructure following strict
@@ -18,15 +17,7 @@ from typing import TypeVar, cast
 import pytest
 from pydantic import ConfigDict
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextResult,
-    FlextSettings,
-    m,
-    r,
-    t,
-)
+from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r, t
 from tests.helpers.scenarios import (
     ParserScenario,
     ParserScenarios,
@@ -37,7 +28,6 @@ from tests.helpers.scenarios import (
 )
 from tests.test_utils import assertion_helpers
 
-# Type variables for test automation
 T = TypeVar("T")
 TestResult = FlextResult[T]
 
@@ -54,8 +44,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def assert_result_success[TResult](
-        result: FlextResult[TResult],
-        context: str = "",
+        result: FlextResult[TResult], context: str = ""
     ) -> TResult:
         """Assert FlextResult is success and return value.
 
@@ -71,8 +60,7 @@ class FlextTestAutomationFramework:
 
         """
         assertion_helpers.assert_flext_result_success(
-            result,
-            f"{context}: Expected success, got failure: {result.error}",
+            result, f"{context}: Expected success, got failure: {result.error}"
         )
         return result.value
 
@@ -109,9 +97,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def create_test_entity(
-        unique_id: str,
-        name: str,
-        **kwargs: t.ContainerValue,
+        unique_id: str, name: str, **kwargs: t.ContainerValue
     ) -> TestResult[m.Entity]:
         """Create test entity with real functionality.
 
@@ -141,8 +127,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def create_test_value_object(
-        value: object,
-        value_type: Callable[[object], T],
+        value: object, value_type: Callable[[object], T]
     ) -> TestResult[T]:
         """Create test value object with real validation.
 
@@ -162,8 +147,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def execute_with_timeout(
-        func: Callable[..., object],
-        timeout_seconds: float = 5.0,
+        func: Callable[..., object], timeout_seconds: float = 5.0
     ) -> TestResult[object]:
         """Execute function with timeout for performance testing.
 
@@ -189,11 +173,9 @@ class FlextTestAutomationFramework:
             worker.join(timeout=timeout_seconds)
             if worker.is_alive():
                 return r[object].fail(f"Operation timed out after {timeout_seconds}s")
-
             succeeded, payload = result_queue.get_nowait()
             if succeeded:
                 return r[object].ok(payload)
-
             return r[object].fail(f"Execution failed: {payload}")
         except queue.Empty:
             return r[object].fail("Execution failed: no result produced")
@@ -212,13 +194,10 @@ class FlextTestAutomationFramework:
 
         """
         return pytest.mark.parametrize(
-            "test_data",
-            test_cases,
-            ids=lambda case: case.get("description", str(case)),
+            "test_data", test_cases, ids=lambda case: case.get("description", str(case))
         )
 
 
-# Global test utilities instance
 test_framework = FlextTestAutomationFramework()
 
 
@@ -233,8 +212,7 @@ class FlextScenarioRunner:
 
     @staticmethod
     def execute_validation_scenario(
-        validator_func: Callable[..., FlextResult[object]],
-        scenario: ValidationScenario,
+        validator_func: Callable[..., FlextResult[object]], scenario: ValidationScenario
     ) -> FlextResult[object]:
         """Execute validation scenario and return result.
 
@@ -257,8 +235,7 @@ class FlextScenarioRunner:
 
     @staticmethod
     def execute_parser_scenario(
-        parser_func: Callable[[str], FlextResult[object]],
-        scenario: ParserScenario,
+        parser_func: Callable[[str], FlextResult[object]], scenario: ParserScenario
     ) -> FlextResult[object]:
         """Execute parser scenario and return result.
 
@@ -295,7 +272,6 @@ class FlextScenarioRunner:
             "expected_error_contains",
             getattr(scenario, "error_contains", None),
         )
-
         if scenario.should_succeed:
             assert result.is_success, (
                 f"{context}: Expected success, got failure: {result.error}"
@@ -310,9 +286,7 @@ class FlextScenarioRunner:
             )
             if expected_error_contains:
                 assert expected_error_contains in str(result.error), (
-                    f"{context}: Expected error containing "
-                    f"'{expected_error_contains}', "
-                    f"got '{result.error}'"
+                    f"{context}: Expected error containing '{expected_error_contains}', got '{result.error}'"
                 )
 
 
@@ -325,9 +299,7 @@ class FlextResultAssertionHelper:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[object],
-        expected_value: object = None,
-        context: str = "",
+        result: FlextResult[object], expected_value: object = None, context: str = ""
     ) -> object:
         """Assert result is success.
 
@@ -365,8 +337,7 @@ class FlextResultAssertionHelper:
         )
         if expected_error:
             assert expected_error in str(result.error), (
-                f"{context}: Expected error containing "
-                f"'{expected_error}', got '{result.error}'"
+                f"{context}: Expected error containing '{expected_error}', got '{result.error}'"
             )
         return str(result.error)
 
@@ -415,7 +386,6 @@ class FlextConsolidationContext:
         }
 
 
-# Pytest fixtures for automated testing
 @pytest.fixture
 def automation_framework() -> FlextTestAutomationFramework:
     """Provide automated test framework instance."""
@@ -466,7 +436,6 @@ class FunctionalExternalService:
             self.call_count += 1
             if not isinstance(input_data, str):
                 return r[str].fail(f"Invalid input type: {type(input_data)}")
-
             processed = f"processed_{input_data}"
             self.processed_items.append(processed)
             return r[str].ok(processed)
@@ -476,25 +445,6 @@ class FunctionalExternalService:
     def get_call_count(self) -> int:
         """Get number of times process() was called."""
         return self.call_count
-
-
-# NOTE: Forward references resolved through proper imports instead of model_rebuild
-# @pytest.fixture(autouse=True)
-# def _rebuild_pydantic_models() -> None:
-#     """Auto-rebuild Pydantic models before each test.
-#
-#     Pydantic v2 requires model_rebuild() when using forward references
-#     (from __future__ import annotations). This fixture ensures all
-#     FlextModels subclasses are rebuilt before tests run.
-#     """
-#     # Provide namespace for forward reference resolution
-#     types_namespace = {
-#         "FlextModelsEntity": flext_models_entity.FlextModelsEntity,
-#         "FlextModels": m,
-#     }
-#
-#     # NOTE: model_rebuild calls removed to comply with FLEXT standards
-#     # Forward references should be resolved through proper imports instead
 
 
 @pytest.fixture
@@ -523,8 +473,7 @@ def _reset_global_container() -> Generator[None]:
     that persist across tests. Without this, tests interfere with each other
     due to shared global state.
     """
-    yield  # Run the test
-    # After the test completes, reset the global instances
+    yield
     FlextContainer._global_instance = cast("FlextContainer | None", None)
     FlextSettings.reset_for_testing()
 
@@ -580,11 +529,6 @@ def flext_result_failure() -> r[object]:
     return r[object].fail("Test error")
 
 
-# =========================================================================
-# Advanced Fixtures for Test Consolidation and Scenario Testing
-# =========================================================================
-
-
 @pytest.fixture
 def validation_scenarios() -> type[ValidationScenarios]:
     """Access to all centralized validation scenarios."""
@@ -621,38 +565,16 @@ def consolidation_context() -> FlextConsolidationContext:
     return FlextConsolidationContext()
 
 
-# =========================================================================
-# PYDANTIC V2 VALIDATION FIXTURES - Test Data for Annotated Types
-# =========================================================================
-# Comprehensive test fixtures for validating Pydantic v2 patterns.
-# Covers: PortNumber, UriString, HostnameStr, and string/numeric validators.
-
-
 @pytest.fixture
 def valid_port_numbers() -> list[int]:
     """Valid port numbers for PortNumber validation (1-65535)."""
-    return [
-        1,  # Minimum valid port
-        80,  # HTTP
-        443,  # HTTPS
-        8080,  # Common development port
-        3306,  # MySQL
-        5432,  # PostgreSQL
-        27017,  # MongoDB
-        65535,  # Maximum valid port
-    ]
+    return [1, 80, 443, 8080, 3306, 5432, 27017, 65535]
 
 
 @pytest.fixture
 def invalid_port_numbers() -> list[int]:
     """Invalid port numbers for PortNumber validation."""
-    return [
-        0,  # Below minimum
-        -1,  # Negative
-        -8080,  # Negative port
-        65536,  # Above maximum
-        100000,  # Way above maximum
-    ]
+    return [0, -1, -8080, 65536, 100000]
 
 
 @pytest.fixture
@@ -676,13 +598,13 @@ def valid_uris() -> list[str]:
 def invalid_uris() -> list[str]:
     """Invalid URIs for UriString validation."""
     return [
-        "",  # Empty string
-        "   ",  # Whitespace only
-        "localhost",  # Missing scheme
-        "example.com",  # Missing scheme
-        "://example.com",  # Missing scheme name
-        "http://",  # Missing host
-        "http://:8080",  # Missing host
+        "",
+        "   ",
+        "localhost",
+        "example.com",
+        "://example.com",
+        "http://",
+        "http://:8080",
     ]
 
 
@@ -697,8 +619,8 @@ def valid_hostnames() -> list[str]:
         "server-01",
         "api-gateway-v2",
         "db.prod.internal",
-        "a",  # Single character
-        "a.b",  # Minimal subdomain
+        "a",
+        "a.b",
     ]
 
 
@@ -706,14 +628,14 @@ def valid_hostnames() -> list[str]:
 def invalid_hostnames() -> list[str]:
     """Invalid hostnames for HostnameStr validation."""
     return [
-        "",  # Empty string
-        "   ",  # Whitespace only
-        "-invalid",  # Starts with hyphen
-        "invalid-",  # Ends with hyphen
-        "invalid..com",  # Double dots
-        "invalid .com",  # Contains space
-        "invalid@com",  # Contains invalid character
-        "invalid_com",  # Contains underscore
+        "",
+        "   ",
+        "-invalid",
+        "invalid-",
+        "invalid..com",
+        "invalid .com",
+        "invalid@com",
+        "invalid_com",
     ]
 
 
@@ -721,7 +643,7 @@ def invalid_hostnames() -> list[str]:
 def valid_strings() -> list[str]:
     """Valid non-empty strings for string validation."""
     return [
-        "a",  # Single character
+        "a",
         "hello",
         "Hello World",
         "test-value",
@@ -737,57 +659,35 @@ def valid_strings() -> list[str]:
 @pytest.fixture
 def empty_strings() -> list[str]:
     """Empty strings for validation."""
-    return [
-        "",  # Empty string
-    ]
+    return [""]
 
 
 @pytest.fixture
 def whitespace_strings() -> list[str]:
     """Whitespace-only strings for validation."""
-    return [
-        " ",  # Single space
-        "   ",  # Multiple spaces
-        "\t",  # Tab
-        "\n",  # Newline
-        "  \t  \n  ",  # Mixed whitespace
-    ]
+    return [" ", "   ", "\t", "\n", "  \t  \n  "]
 
 
 @pytest.fixture
 def valid_ranges() -> list[tuple[int, int, int]]:
     """Valid numeric ranges (value, min, max) for range validation."""
     return [
-        (0, 0, 10),  # At minimum
-        (5, 0, 10),  # In middle
-        (10, 0, 10),  # At maximum
-        (100, 0, 1000),  # Large range
-        (-5, -10, 0),  # Negative range
-        (-5, -10, 10),  # Range crossing zero
+        (0, 0, 10),
+        (5, 0, 10),
+        (10, 0, 10),
+        (100, 0, 1000),
+        (-5, -10, 0),
+        (-5, -10, 10),
     ]
 
 
 @pytest.fixture
 def out_of_range() -> list[tuple[int, int, int]]:
     """Out-of-range numeric values (value, min, max) for range validation."""
-    return [
-        (-1, 0, 10),  # Below minimum
-        (11, 0, 10),  # Above maximum
-        (100, 0, 50),  # Way above maximum
-        (-100, 0, 10),  # Way below minimum
-    ]
+    return [(-1, 0, 10), (11, 0, 10), (100, 0, 50), (-100, 0, 10)]
 
 
-# =========================================================================
-# VALIDATION HELPER FUNCTIONS
-# =========================================================================
-
-
-def assert_validates(
-    model_class: type,
-    field_name: str,
-    value: object,
-) -> object:
+def assert_validates(model_class: type, field_name: str, value: object) -> object:
     """Validate a value against a model field and return the validated value.
 
     Args:
@@ -803,7 +703,6 @@ def assert_validates(
 
     """
     try:
-        # Create instance with the field value
         instance = model_class(**{field_name: value})
         return getattr(instance, field_name)
     except Exception as e:
@@ -834,20 +733,14 @@ def assert_rejects(
     try:
         instance = model_class(**{field_name: value})
         pytest.fail(
-            (
-                f"Expected validation to fail for {field_name}={value}, "
-                f"but got: {getattr(instance, field_name)}"
-            ),
+            f"Expected validation to fail for {field_name}={value}, but got: {getattr(instance, field_name)}",
             pytrace=False,
         )
     except Exception as e:
         error_msg = str(e)
-        if error_type and not isinstance(e, error_type):
+        if error_type and (not isinstance(e, error_type)):
             pytest.fail(
-                (
-                    f"Expected {error_type.__name__}, "
-                    f"but got {type(e).__name__}: {error_msg}"
-                ),
+                f"Expected {error_type.__name__}, but got {type(e).__name__}: {error_msg}",
                 pytrace=False,
             )
         return error_msg

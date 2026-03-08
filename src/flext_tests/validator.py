@@ -65,7 +65,6 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
         result = tv.all(Path("src"))
     """
 
-    # Re-export models for convenience via m.Tests.Validator namespace
     Violation: ClassVar[type[m.Tests.Validator.Violation]] = m.Tests.Validator.Violation
     ScanResult: ClassVar[type[m.Tests.Validator.ScanResult]] = (
         m.Tests.Validator.ScanResult
@@ -73,9 +72,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
 
     @classmethod
     def _discover_files(
-        cls,
-        path: Path,
-        exclude_patterns: list[str] | None = None,
+        cls, path: Path, exclude_patterns: list[str] | None = None
     ) -> list[Path]:
         """Discover Python files to scan.
 
@@ -88,13 +85,10 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
 
         """
         excludes = exclude_patterns or list(c.Tests.Validator.Defaults.EXCLUDE_PATTERNS)
-
         if path.is_file():
             return [path] if path.suffix == ".py" else []
-
         files: list[Path] = []
         for py_file in path.rglob("*.py"):
-            # Check if file matches any exclude pattern
             file_str = str(py_file)
             excluded = False
             for pattern in excludes:
@@ -103,7 +97,6 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
                     break
             if not excluded:
                 files.append(py_file)
-
         return files
 
     @classmethod
@@ -131,42 +124,36 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
         """
         all_violations: list[m.Tests.Validator.Violation] = []
         total_files = 0
-
-        # Run each validator
         validators: list[tuple[str, r[m.Tests.Validator.ScanResult]]] = [
             ("imports", cls.imports(path, exclude_patterns, approved_exceptions)),
             ("types", cls.types(path, exclude_patterns, approved_exceptions)),
             ("bypass", cls.bypass(path, exclude_patterns, approved_exceptions)),
             ("layer", cls.layer(path, exclude_patterns, approved_exceptions)),
         ]
-
         if include_tests_validation:
             validators.append((
                 "tests",
                 cls.tests(path, exclude_patterns, approved_exceptions),
             ))
-
         if pyproject_path and pyproject_path.exists():
             validators.append((
                 "config",
                 cls.validate_config(pyproject_path, approved_exceptions),
             ))
-
         for name, result in validators:
             if result.is_failure:
                 return r[m.Tests.Validator.ScanResult].fail(
-                    f"Validator '{name}' failed: {result.error}",
+                    f"Validator '{name}' failed: {result.error}"
                 )
             scan_result = result.value
             all_violations.extend(scan_result.violations)
             total_files = max(total_files, scan_result.files_scanned)
-
         return r[m.Tests.Validator.ScanResult].ok(
             m.Tests.Validator.ScanResult.create(
                 validator_name="all",
                 files_scanned=total_files,
                 violations=all_violations,
-            ),
+            )
         )
 
     @classmethod
@@ -328,7 +315,5 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
         return FlextValidatorSettings.validate(pyproject_path, approved_exceptions)
 
 
-# Short alias for convenient usage
 tv = FlextTestsValidator
-
 __all__ = ["FlextTestsValidator", "tv"]

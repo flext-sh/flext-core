@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-# mypy: follow_imports=skip, disable-error-code=valid-type
-# pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 from datetime import UTC, datetime
-from typing import override
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from flext_core import c, m, r, u
+
+from ._models import _BrokenDumpModel
 
 
 class _FrozenValue(m.FrozenStrictModel):
@@ -26,23 +25,14 @@ class _Timestampable(m.TimestampableMixin):
     pass
 
 
-class _BrokenDumpModel(BaseModel):
-    value: int = 1
-
-    @override
-    def __getattribute__(self, name: str) -> object:
-        if name == "model_dump":
-            return lambda *args, **kwargs: [1]
-        return super().__getattribute__(name)
-
-
 def test_metadata_attributes_accepts_none() -> None:
     model = m.Metadata.model_validate({"attributes": None})
     assert model.attributes == {}
 
 
 def test_metadata_attributes_accepts_basemodel_mapping() -> None:
-    class _Attrs(BaseModel):
+
+    class _Attrs:
         key: str
 
     model = m.Metadata.model_validate({"attributes": _Attrs(key="value")})
@@ -76,8 +66,7 @@ def test_frozen_value_model_equality_and_hash() -> None:
 
 def test_identifiable_unique_id_empty_rejected() -> None:
     with pytest.raises(
-        ValidationError,
-        match="String should have at least 1 character",
+        ValidationError, match="String should have at least 1 character"
     ):
         _Identifiable(unique_id="   ")
 

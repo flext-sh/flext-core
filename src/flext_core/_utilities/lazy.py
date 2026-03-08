@@ -40,8 +40,7 @@ def lazy_getattr(
 
 
 def cleanup_submodule_namespace(
-    module_name: str,
-    lazy_imports: Mapping[str, tuple[str, str]],
+    module_name: str, lazy_imports: Mapping[str, tuple[str, str]]
 ) -> None:
     """Remove submodules from namespace to force __getattr__ usage.
 
@@ -56,7 +55,6 @@ def cleanup_submodule_namespace(
     current_module = sys.modules.get(module_name)
     if current_module is None:
         return
-
     submodule_names: set[str] = set()
     current_parts = module_name.split(".")
     for mod_path, _ in lazy_imports.values():
@@ -67,7 +65,6 @@ def cleanup_submodule_namespace(
                 and parts[: len(current_parts)] == current_parts
             ):
                 submodule_names.add(parts[len(current_parts)])
-
     for sub_name in submodule_names:
         attr = getattr(current_module, sub_name, None)
         if attr is not None and isinstance(attr, type(sys)):

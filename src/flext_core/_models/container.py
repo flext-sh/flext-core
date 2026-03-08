@@ -37,7 +37,7 @@ def _is_metadata_instance(
     return (
         v is not None
         and hasattr(v, "model_dump")
-        and FlextModelFoundation.Metadata in v.__class__.__mro__
+        and (FlextModelFoundation.Metadata in v.__class__.__mro__)
     )
 
 
@@ -47,10 +47,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
     if _is_metadata_instance(value):
         return value
     if not FlextRuntime.is_dict_like(value):
-        msg = (
-            f"metadata must be None, dict, or FlextModelFoundation.Metadata, "
-            f"got {value.__class__.__name__}"
-        )
+        msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
     normalized_attrs: dict[str, t.MetadataValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
@@ -61,14 +58,14 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
         )
     }
     return FlextModelFoundation.Metadata.model_validate({
-        "attributes": normalized_attrs,
+        "attributes": normalized_attrs
     })
 
 
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    class ServiceRegistration(BaseModel):
+    class ServiceRegistration:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
@@ -76,23 +73,15 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
+            frozen=False, validate_assignment=True, arbitrary_types_allowed=True
         )
-
         name: str = Field(
             ...,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
-        # Service instance - uses RegisterableService Protocol union type
-        # ARCHITECTURAL NOTE: DI containers accept any registerable service.
-        # SkipValidation needed because Protocol types can't be validated by Pydantic.
-        # Type safety is enforced at container API level via get_typed().
         service: Annotated[t.RegisterableService, SkipValidation] = Field(
-            ...,
-            description="Service instance (protocols, models, callables)",
+            ..., description="Service instance (protocols, models, callables)"
         )
         registration_time: datetime = Field(
             default_factory=FlextRuntime.generate_datetime_utc,
@@ -101,16 +90,13 @@ class FlextModelsContainer:
         metadata: (
             FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
         ) = Field(
-            default=None,
-            description="Additional service metadata (JSON-serializable)",
+            default=None, description="Additional service metadata (JSON-serializable)"
         )
         service_type: str | None = Field(
-            default=None,
-            description="Service type name (e.g., 'DatabaseService')",
+            default=None, description="Service type name (e.g., 'DatabaseService')"
         )
         tags: list[str] = Field(
-            default_factory=list,
-            description="Service tags for categorization",
+            default_factory=list, description="Service tags for categorization"
         )
 
         @field_validator("metadata", mode="before")
@@ -127,30 +113,24 @@ class FlextModelsContainer:
             RegisterableService includes: str, int, float, bool, datetime, None,
             BaseModel, Path, Sequence, Mapping, callables, and objects with __dict__.
             """
-            # Scalars
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
-            # Models and paths
             if isinstance(v, (BaseModel, Path)):
                 return v
-            # Callables
             if callable(v):
                 return v
-            # Collections
             if isinstance(v, Mapping):
                 return v
-            if isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray)):
+            if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
                 return v
-            # Objects with __dict__ or protocol-like attributes
             if hasattr(v, "__dict__"):
                 return v
             if hasattr(v, "bind") and hasattr(v, "info"):
                 return v
-            # Reject invalid types
             msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
             raise ValueError(msg)
 
-    class FactoryRegistration(BaseModel):
+    class FactoryRegistration:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -158,40 +138,30 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
+            frozen=False, validate_assignment=True, arbitrary_types_allowed=True
         )
-
         name: str = Field(
             ...,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Factory identifier/name",
         )
-        # Factory returns RegisterableService for type-safe factory resolution
-        # Supports all registerable types: ContainerValue, protocols, callables
-        # SkipValidation needed because Pydantic can't validate callable types
         factory: Annotated[t.FactoryCallable, SkipValidation] = Field(
-            ...,
-            description="Factory function that creates service instances",
+            ..., description="Factory function that creates service instances"
         )
         registration_time: datetime = Field(
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
-            default=False,
-            description="Whether factory creates singleton instances",
+            default=False, description="Whether factory creates singleton instances"
         )
         cached_instance: t.RegisterableService | None = Field(
-            default=None,
-            description="Cached singleton instance (if is_singleton=True)",
+            default=None, description="Cached singleton instance (if is_singleton=True)"
         )
         metadata: (
             FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
         ) = Field(
-            default=None,
-            description="Additional factory metadata (JSON-serializable)",
+            default=None, description="Additional factory metadata (JSON-serializable)"
         )
         invocation_count: int = Field(
             default=c.ZERO,
@@ -205,7 +175,7 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
-    class ResourceRegistration(BaseModel):
+    class ResourceRegistration:
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories that dependency-injector should wrap via
@@ -213,19 +183,15 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
+            frozen=False, validate_assignment=True, arbitrary_types_allowed=True
         )
-
         name: str = Field(
             ...,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Resource identifier/name",
         )
         factory: Annotated[t.ResourceCallable, SkipValidation] = Field(
-            ...,
-            description="Factory returning the lifecycle-managed resource",
+            ..., description="Factory returning the lifecycle-managed resource"
         )
         registration_time: datetime = Field(
             default_factory=FlextRuntime.generate_datetime_utc,
@@ -234,8 +200,7 @@ class FlextModelsContainer:
         metadata: (
             FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
         ) = Field(
-            default=None,
-            description="Additional resource metadata (JSON-serializable)",
+            default=None, description="Additional resource metadata (JSON-serializable)"
         )
 
         @field_validator("metadata", mode="before")
@@ -244,25 +209,19 @@ class FlextModelsContainer:
             """Normalize resource metadata to Metadata model."""
             return _normalize_metadata(v)
 
-    class ContainerConfig(BaseModel):
+    class ContainerConfig:
         """Model for container configuration.
 
         Replaces: m.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 
-        model_config = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-        )
-
+        model_config = ConfigDict(frozen=False, validate_assignment=True)
         enable_singleton: bool = Field(
-            default=True,
-            description="Enable singleton pattern for factories",
+            default=True, description="Enable singleton pattern for factories"
         )
         enable_factory_caching: bool = Field(
-            default=True,
-            description="Enable caching of factory-created instances",
+            default=True, description="Enable caching of factory-created instances"
         )
         max_services: int = Field(
             default=c.Container.DEFAULT_MAX_SERVICES,
@@ -285,11 +244,10 @@ class FlextModelsContainer:
             description="Enable lifecycle hooks (on_register, on_get, etc.)",
         )
         lazy_loading: bool = Field(
-            default=True,
-            description="Enable lazy loading of services",
+            default=True, description="Enable lazy loading of services"
         )
 
-    class FactoryDecoratorConfig(BaseModel):
+    class FactoryDecoratorConfig:
         """Configuration extracted from @d.factory() decorator.
 
         Used by factory discovery to auto-register factories with FlextContainer.
@@ -314,15 +272,13 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(frozen=True)
-
         name: str = Field(
             ...,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Name to register this factory under in the container",
         )
         singleton: bool = Field(
-            default=False,
-            description="Whether factory creates singleton instances",
+            default=False, description="Whether factory creates singleton instances"
         )
         lazy: bool = Field(
             default=True,

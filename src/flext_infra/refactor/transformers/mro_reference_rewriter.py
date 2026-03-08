@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 from typing import override
 
-from flext_infra import c, m
+from flext_infra import m
 
 
 class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):
@@ -36,10 +36,7 @@ class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):
         self.replacements += 1
         return ast.copy_location(
             ast.Attribute(
-                value=ast.Name(
-                    id=c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
-                    ctx=ast.Load(),
-                ),
+                value=ast.Name(id=imported.facade_name, ctx=ast.Load()),
                 attr=imported.symbol,
                 ctx=node.ctx,
             ),
@@ -67,10 +64,7 @@ class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):
         self.replacements += 1
         return ast.copy_location(
             ast.Attribute(
-                value=ast.Name(
-                    id=c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
-                    ctx=ast.Load(),
-                ),
+                value=ast.Name(id=rewritten.value.id, ctx=ast.Load()),
                 attr=new_symbol,
                 ctx=rewritten.ctx,
             ),

@@ -34,9 +34,7 @@ class TestFlextInfraDocBuilder:
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         return FlextInfraDocScope(
-            name="test-project",
-            path=tmp_path,
-            report_dir=report_dir,
+            name="test-project", path=tmp_path, report_dir=report_dir
         )
 
     def test_build_returns_flext_result(
@@ -138,9 +136,7 @@ class TestFlextInfraDocBuilder:
         mkdocs_file = tmp_path / "mkdocs.yml"
         mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = builder._build_scope(scope)
         assert report.scope == "test"
@@ -150,9 +146,7 @@ class TestFlextInfraDocBuilder:
     ) -> None:
         """Test _build_scope without mkdocs.yml returns SKIP."""
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = builder._build_scope(scope)
         assert report.result == "SKIP"
@@ -162,9 +156,7 @@ class TestFlextInfraDocBuilder:
     ) -> None:
         """Test _run_mkdocs returns SKIP when mkdocs.yml not found."""
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = builder._run_mkdocs(scope)
         assert report.result == "SKIP"
@@ -176,11 +168,7 @@ class TestFlextInfraDocBuilder:
         """Test _write_reports creates both JSON and markdown files."""
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
-        scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=report_dir,
-        )
+        scope = FlextInfraDocScope(name="test", path=tmp_path, report_dir=report_dir)
         report = BuildReport(
             phase="build",
             scope="test",
@@ -199,9 +187,7 @@ class TestFlextInfraDocBuilder:
         mkdocs_file = tmp_path / "mkdocs.yml"
         mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = builder._run_mkdocs(scope)
         assert report.scope == "test"
@@ -215,7 +201,6 @@ class TestFlextInfraDocBuilder:
     ) -> None:
         """Test build returns failure when scope building fails."""
 
-        # Mock FlextInfraDocsShared.build_scopes to return failure
         def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
             return r[list[object]].fail("Scope error")
 
@@ -233,18 +218,14 @@ class TestFlextInfraDocBuilder:
         mkdocs_file = tmp_path / "mkdocs.yml"
         mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
-        # Mock the runner to return success
         mock_runner = Mock()
         mock_output = Mock()
         mock_output.exit_code = 0
         mock_output.stdout = "Build successful"
         mock_output.stderr = ""
         mock_runner.run_raw.return_value = r[Mock].ok(mock_output)
-
         builder._runner = mock_runner
         report = builder._run_mkdocs(scope)
         assert report.result == "OK"

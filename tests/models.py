@@ -15,11 +15,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from enum import StrEnum
 from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels, m, p, t
+
+from .constants import TestsFlextConstants
 
 
 class TestsFlextModels:
@@ -49,6 +52,33 @@ class TestsFlextModels:
 
     class Core:
         """flext-core-specific test models namespace."""
+
+        class ServiceTestType(StrEnum):
+            GET_USER = "get_user"
+            VALIDATE = "validate"
+            FAIL = "fail"
+
+        class User(m.Entity):
+            """Shared user model for tests."""
+
+            model_config = ConfigDict(frozen=False)
+
+            user_id: str
+            name: str
+            email: str
+            is_active: bool = True
+
+        class ServiceTestCase(BaseModel):
+            """Service execution case model for tests."""
+
+            model_config = ConfigDict(frozen=True)
+
+            service_type: TestsFlextModels.Core.ServiceTestType
+            input_value: str
+            expected_success: bool = True
+            expected_error: str | None = None
+            extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
+            description: str = ""
 
         class DomainTestEntity(m.Entity):
             """Test entity for domain tests."""
@@ -209,7 +239,37 @@ class AutomatedTestScenario(BaseModel):
     expected_success: bool
 
 
+class StandardTestCaseModel(BaseModel):
+    """Standard operation case model for shared test utilities."""
+
+    description: str
+    input_data: t.ConfigurationMapping
+    expected_result: t.ContainerValue
+    expected_success: bool = True
+    error_contains: str | None = None
+
+
+class UtilityEntityModel(m.Entity):
+    """Shared entity model for generic test fixtures."""
+
+    model_config = ConfigDict(frozen=False)
+
+    name: str
+    value: t.ContainerValue
+
+
+class UtilityValueModel(m.Value):
+    """Shared value model for generic test fixtures."""
+
+    model_config = ConfigDict(frozen=True)
+
+    value: t.ContainerValue
+
+
 __all__ = [
     "AutomatedTestScenario",
+    "StandardTestCaseModel",
     "TestsFlextModels",
+    "UtilityEntityModel",
+    "UtilityValueModel",
 ]

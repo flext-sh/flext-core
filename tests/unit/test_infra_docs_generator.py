@@ -34,9 +34,7 @@ class TestFlextInfraDocGenerator:
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         return FlextInfraDocScope(
-            name="test-project",
-            path=tmp_path,
-            report_dir=report_dir,
+            name="test-project", path=tmp_path, report_dir=report_dir
         )
 
     def test_generate_returns_flext_result(
@@ -181,9 +179,7 @@ class TestFlextInfraDocGenerator:
     ) -> None:
         """Test _generate_scope with root scope."""
         scope = FlextInfraDocScope(
-            name="root",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="root", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = generator._generate_scope(scope, apply=False, workspace_root=tmp_path)
         assert report.scope == "root"
@@ -193,9 +189,7 @@ class TestFlextInfraDocGenerator:
     ) -> None:
         """Test _generate_scope with project scope."""
         scope = FlextInfraDocScope(
-            name="test-project",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test-project", path=tmp_path, report_dir=tmp_path / "reports"
         )
         report = generator._generate_scope(scope, apply=False, workspace_root=tmp_path)
         assert report.scope == "test-project"
@@ -205,21 +199,17 @@ class TestFlextInfraDocGenerator:
     ) -> None:
         """Test _generate_root_docs creates placeholder files."""
         scope = FlextInfraDocScope(
-            name="root",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="root", path=tmp_path, report_dir=tmp_path / "reports"
         )
         files = generator._generate_root_docs(scope, apply=False)
-        assert len(files) == 3  # CHANGELOG, releases/latest, roadmap
+        assert len(files) == 3
 
     def test_generate_project_guides_no_source(
         self, generator: FlextInfraDocGenerator, tmp_path: Path
     ) -> None:
         """Test _generate_project_guides with no source guides."""
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         files = generator._generate_project_guides(
             scope, workspace_root=tmp_path, apply=False
@@ -231,9 +221,7 @@ class TestFlextInfraDocGenerator:
     ) -> None:
         """Test _generate_project_mkdocs creates mkdocs.yml."""
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         files = generator._generate_project_mkdocs(scope, apply=False)
         assert len(files) == 1
@@ -246,9 +234,7 @@ class TestFlextInfraDocGenerator:
         mkdocs_file = tmp_path / "mkdocs.yml"
         mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path,
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         files = generator._generate_project_mkdocs(scope, apply=False)
         assert files == []
@@ -341,9 +327,7 @@ class TestFlextInfraDocGenerator:
         guide_file = guides_dir / "test.md"
         guide_file.write_text("# Test Guide\n\nContent.\n")
         scope = FlextInfraDocScope(
-            name="test",
-            path=tmp_path / "project",
-            report_dir=tmp_path / "reports",
+            name="test", path=tmp_path / "project", report_dir=tmp_path / "reports"
         )
         files = generator._generate_project_guides(
             scope, workspace_root=tmp_path, apply=False

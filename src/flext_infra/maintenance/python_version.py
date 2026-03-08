@@ -64,20 +64,16 @@ class FlextInfraPythonVersionEnforcer(s[int]):
         """
         self.check_only = check_only
         self.verbose = verbose
-
         root = self._workspace_root_from_file(__file__)
         required_minor = self._read_required_minor(root)
         projects = self._discover_projects(root)
         mode = "Checking" if check_only else "Enforcing"
-
         logger.info(
             "python_version_enforcement_started",
             mode=mode,
             required_minor=required_minor,
             project_count=len(projects),
         )
-
-        # Workspace root pyproject.toml
         if not self._ensure_python_version_file(root, required_minor):
             logger.error(
                 "python_version_enforcement_failed",
@@ -85,7 +81,6 @@ class FlextInfraPythonVersionEnforcer(s[int]):
                 required_minor=required_minor,
             )
             return r[int].fail("enforcement failed")
-
         for project in projects:
             if not self._ensure_python_version_file(project, required_minor):
                 logger.error(
@@ -95,7 +90,6 @@ class FlextInfraPythonVersionEnforcer(s[int]):
                     project=project.name,
                 )
                 return r[int].fail("enforcement failed")
-
         logger.info(
             "python_version_enforcement_completed",
             project_count=len(projects),
@@ -136,8 +130,6 @@ class FlextInfraPythonVersionEnforcer(s[int]):
 
         """
         local_minor = self._read_required_minor(project)
-
-        # 1. Validate pyproject.toml
         if local_minor != required_minor:
             if self.check_only:
                 logger.error(
@@ -158,8 +150,6 @@ class FlextInfraPythonVersionEnforcer(s[int]):
                     file=f"{project.name}/pyproject.toml",
                 )
             return False
-
-        # 2. Validate current runtime
         runtime_minor = sys.version_info.minor
         if runtime_minor != required_minor:
             logger.error(
@@ -169,14 +159,12 @@ class FlextInfraPythonVersionEnforcer(s[int]):
                 project=project.name,
             )
             return False
-
         if self.verbose:
             logger.info(
                 "python_version_validated",
                 required_minor=required_minor,
                 project=project.name,
             )
-
         return True
 
     def _read_required_minor(self, workspace_root: Path) -> int:
@@ -195,7 +183,7 @@ class FlextInfraPythonVersionEnforcer(s[int]):
         if not pyproject.is_file():
             return 13
         content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        match = re.search(r'requires-python\s*=\s*"[>!=]*(\d+)\.(\d+)', content)
+        match = re.search('requires-python\\s*=\\s*"[>!=]*(\\d+)\\.(\\d+)', content)
         if match is None:
             return 13
         return int(match.group(2))
@@ -218,8 +206,6 @@ class FlextInfraPythonVersionEnforcer(s[int]):
         current = Path(file).resolve()
         if current.is_file():
             current = current.parent
-
-        # Walk up the directory tree
         for parent in [current] + list(current.parents):
             markers = {
                 c.Infra.Git.DIR,
@@ -228,6 +214,5 @@ class FlextInfraPythonVersionEnforcer(s[int]):
             }
             if all((parent / marker).exists() for marker in markers):
                 return parent
-
         msg = f"workspace root not found from {file}"
         raise RuntimeError(msg)

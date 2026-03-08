@@ -29,7 +29,6 @@ class TestFlextInfraInitLazyLoading:
         """Test that accessing nonexistent attribute raises AttributeError."""
         with pytest.raises(AttributeError) as exc_info:
             _ = flext_infra.NonexistentAttribute
-
         assert "NonexistentAttribute" in str(exc_info.value)
 
     def test_getattr_invalid_name_raises_attribute_error(self) -> None:

@@ -59,18 +59,12 @@ class TestAutomatedFlextContainer:
         ids=lambda case: case["description"],
     )
     def test_automated_container_comprehensive_scenarios(
-        self,
-        test_scenario: AutomatedTestScenario,
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for container functionality."""
         try:
-            # Create test instance using fixture factory
             instance = fixture_factory.create_test_container_instance()
-
-            # Execute operation with test data
             result = self._execute_container_operation(instance, test_scenario["input"])
-
-            # Assert using automated assertion helpers
             if test_scenario["expected_success"]:
                 assertion_helpers.assert_flext_result_success(
                     result,
@@ -81,41 +75,31 @@ class TestAutomatedFlextContainer:
                     result,
                     f"FlextContainer operation should fail: {test_scenario['description']}",
                 )
-
         except Exception as e:
             if not test_scenario["expected_success"]:
-                # Expected failure occurred
                 pass
             else:
-                # Unexpected error
                 pytest.fail(f"Unexpected error in container test: {e}")
 
     def test_automated_container_type_safety(self) -> None:
         """Test type safety compliance for container."""
         instance = fixture_factory.create_test_container_instance()
-
-        # Test with correct types
         result = self._execute_container_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextContainer type safety test",
+            result, "FlextContainer type safety test"
         )
 
     def test_automated_container_error_handling(self) -> None:
         """Test comprehensive error handling for container."""
         instance = fixture_factory.create_test_container_instance()
-
-        # Test various error conditions
         error_inputs = [
             None,
             dict[str, str](),
             {"invalid": "data"},
             {"malformed": True},
         ]
-
         for error_input in error_inputs:
             result = self._execute_container_operation(instance, error_input or {})
-            # Errors should be handled gracefully (either success or proper failure)
             assert result.is_success or result.is_failure, (
                 f"Unexpected result state: {result}"
             )
@@ -126,29 +110,21 @@ class TestAutomatedFlextContainer:
 
         def operation() -> object:
             return self._execute_container_operation(
-                instance,
-                {"performance_test": True},
+                instance, {"performance_test": True}
             )
 
-        # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextContainer performance test exceeded timeout",
+            result, "FlextContainer performance test exceeded timeout"
         )
 
     def test_automated_container_resource_management(self) -> None:
         """Test resource management and cleanup for container."""
         instance = fixture_factory.create_test_container_instance()
-
-        # Test normal operation
         result = self._execute_container_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextContainer resource test",
+            result, "FlextContainer resource test"
         )
-
-        # Test cleanup (if applicable)
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
@@ -159,9 +135,7 @@ class TestAutomatedFlextContainer:
                 )
 
     def _execute_container_operation(
-        self,
-        instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        self, instance: object, input_data: Mapping[str, t.ContainerValue]
     ) -> r[t.ContainerValue]:
         """Execute a test operation on container instance.
 
@@ -169,7 +143,6 @@ class TestAutomatedFlextContainer:
         For now, it provides a generic implementation that can be adapted.
         """
         try:
-            # Generic operation - adapt based on actual container interface
             process = getattr(instance, "process", None)
             if callable(process):
                 return cast("r[t.ContainerValue]", process(dict(input_data)))
@@ -179,7 +152,6 @@ class TestAutomatedFlextContainer:
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 return cast("r[t.ContainerValue]", handle(dict(input_data)))
-            # Fallback: if no methods found, return the instance itself as success
             return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
         except Exception as e:
             return r[t.ContainerValue].fail(f"FlextContainer operation failed: {e}")

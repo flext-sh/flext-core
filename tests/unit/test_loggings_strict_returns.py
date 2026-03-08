@@ -28,7 +28,6 @@ class TestDebugReturnsResultBool:
         """Verify debug() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.debug("test debug message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected debug() to return success result"
         assert result.value is True, "Expected debug() result value to be True"
@@ -37,7 +36,6 @@ class TestDebugReturnsResultBool:
         """Verify debug() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.debug("test message", user_id="123", action="login")
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -50,7 +48,6 @@ class TestInfoReturnsResultBool:
         """Verify info() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.info("test info message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected info() to return success result"
         assert result.value is True, "Expected info() result value to be True"
@@ -59,7 +56,6 @@ class TestInfoReturnsResultBool:
         """Verify info() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.info("test message", request_id="abc-123", status="ok")
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -72,7 +68,6 @@ class TestWarningReturnsResultBool:
         """Verify warning() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.warning("test warning message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected warning() to return success result"
         assert result.value is True, "Expected warning() result value to be True"
@@ -81,7 +76,6 @@ class TestWarningReturnsResultBool:
         """Verify warning() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.warning("test message", threshold=100, actual=150)
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -94,7 +88,6 @@ class TestErrorReturnsResultBool:
         """Verify error() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test error message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected error() to return success result"
         assert result.value is True, "Expected error() result value to be True"
@@ -103,7 +96,6 @@ class TestErrorReturnsResultBool:
         """Verify error() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test message", error_code="ERR_001", details="failed")
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -116,7 +108,6 @@ class TestCriticalReturnsResultBool:
         """Verify critical() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.critical("test critical message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected critical() to return success result"
         assert result.value is True, "Expected critical() result value to be True"
@@ -125,7 +116,6 @@ class TestCriticalReturnsResultBool:
         """Verify critical() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.critical("test message", severity="CRITICAL", action="shutdown")
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -138,7 +128,6 @@ class TestExceptionReturnsResultBool:
         """Verify exception() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test exception message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected exception() to return success result"
         assert result.value is True, "Expected exception() result value to be True"
@@ -147,7 +136,6 @@ class TestExceptionReturnsResultBool:
         """Verify exception() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test message", operation="sync", retry_count=3)
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -160,7 +148,6 @@ class TestTraceReturnsResultBool:
         """Verify trace() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.trace("test trace message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected trace() to return success result"
         assert result.value is True, "Expected trace() result value to be True"
@@ -169,7 +156,6 @@ class TestTraceReturnsResultBool:
         """Verify trace() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.trace("test message", depth=5, scope="operation")
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -182,7 +168,6 @@ class TestLogReturnsResultBool:
         """Verify log() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.log("info", "test log message")
-
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected log() to return success result"
         assert result.value is True, "Expected log() result value to be True"
@@ -192,7 +177,6 @@ class TestLogReturnsResultBool:
         logger = FlextLogger.create_module_logger(__name__)
         context = {"request_id": "req-123", "user": "alice"}
         result = logger.log("debug", "test message", _context=context)
-
         assert isinstance(result, r)
         assert result.is_success
         assert result.value is True
@@ -200,7 +184,6 @@ class TestLogReturnsResultBool:
     def test_log_with_different_levels_returns_result_bool(self) -> None:
         """Verify log() works with different log levels."""
         logger = FlextLogger.create_module_logger(__name__)
-
         for level in ["debug", "info", "warning", "error", "critical"]:
             result = logger.log(level, "test %s message", level)
             assert isinstance(result, r), f"log({level}) should return r[bool]"
@@ -214,7 +197,6 @@ class TestBackwardCompatDiscardReturnValue:
     def test_debug_discard_return_value(self) -> None:
         """Verify debug() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        # This should not raise an exception
         logger.debug("test message")
 
     def test_info_discard_return_value(self) -> None:
@@ -259,18 +241,13 @@ class TestProtocolComplianceStructlogLogger:
     def test_flext_logger_implements_structlog_logger_protocol(self) -> None:
         """Verify FlextLogger implements p.Log.StructlogLogger protocol."""
         logger = FlextLogger.create_module_logger(__name__)
-
-        # Check that logger is an instance of the protocol
         assert isinstance(logger, p.Log.StructlogLogger), (
-            f"FlextLogger should implement p.Log.StructlogLogger protocol, "
-            f"got {type(logger)}"
+            f"FlextLogger should implement p.Log.StructlogLogger protocol, got {type(logger)}"
         )
 
     def test_all_protocol_methods_return_result_bool(self) -> None:
         """Verify all protocol methods return r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
-
-        # Test all methods defined in p.Log.StructlogLogger
         protocol_methods = [
             "debug",
             "info",
@@ -279,13 +256,10 @@ class TestProtocolComplianceStructlogLogger:
             "critical",
             "exception",
         ]
-
         for method_name in protocol_methods:
             method = getattr(logger, method_name, None)
             assert method is not None, f"Logger should have {method_name} method"
             assert callable(method), f"{method_name} should be callable"
-
-            # Call method and verify return type
             result = method(f"test {method_name} message")
             assert isinstance(result, r), (
                 f"{method_name}() should return r[bool], got {type(result)}"
@@ -296,27 +270,15 @@ class TestProtocolComplianceStructlogLogger:
     def test_protocol_method_signatures_match(self) -> None:
         """Verify method signatures match protocol definition."""
         logger = FlextLogger.create_module_logger(__name__)
-
-        # Verify debug signature: msg, *args, **kw -> r[bool]
-        result = logger.debug("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.debug("msg", "arg1", key="value")
         assert isinstance(result, r)
-
-        # Verify info signature: msg, *args, **kw -> r[bool]
-        result = logger.info("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.info("msg", "arg1", key="value")
         assert isinstance(result, r)
-
-        # Verify warning signature: msg, *args, **kw -> r[bool]
-        result = logger.warning("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.warning("msg", "arg1", key="value")
         assert isinstance(result, r)
-
-        # Verify error signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.error("msg", "arg1", key="value")
         assert isinstance(result, r)
-
-        # Verify critical signature: msg, *args, **kw -> r[bool]
-        result = logger.critical("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.critical("msg", "arg1", key="value")
         assert isinstance(result, r)
-
-        # Verify exception signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.error("msg", "arg1", key="value")
         assert isinstance(result, r)

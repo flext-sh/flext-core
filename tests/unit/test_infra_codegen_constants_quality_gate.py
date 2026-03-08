@@ -14,13 +14,11 @@ from flext_infra.codegen.constants_quality_gate import (
 def test_main_constants_quality_gate_dispatch(tmp_path: Path) -> None:
     """main() dispatches constants-quality-gate command to handler."""
     argv = ["constants-quality-gate", "--workspace", str(tmp_path)]
-
     with patch(
         "flext_infra.codegen.__main__._handle_constants_quality_gate"
     ) as mock_handle:
         mock_handle.return_value = 0
         result = codegen_main.main(argv)
-
     assert result == 0
     assert mock_handle.call_count == 1
 
@@ -37,13 +35,11 @@ def test_main_constants_quality_gate_parses_before_report(tmp_path: Path) -> Non
         "--format",
         "json",
     ]
-
     with patch(
         "flext_infra.codegen.__main__._handle_constants_quality_gate"
     ) as mock_handle:
         mock_handle.return_value = 0
         result = codegen_main.main(argv)
-
     assert result == 0
     args = mock_handle.call_args[0][0]
     assert args.before_report == baseline
@@ -55,14 +51,7 @@ def test_handle_constants_quality_gate_json_conditional_pass_exits_zero(
     tmp_path: Path,
 ) -> None:
     """JSON mode returns success for CONDITIONAL_PASS verdict."""
-    argv = [
-        "constants-quality-gate",
-        "--workspace",
-        str(tmp_path),
-        "--format",
-        "json",
-    ]
-
+    argv = ["constants-quality-gate", "--workspace", str(tmp_path), "--format", "json"]
     with patch(
         "flext_infra.codegen.__main__.FlextInfraCodegenConstantsQualityGate"
     ) as mock_gate_cls:
@@ -73,10 +62,8 @@ def test_handle_constants_quality_gate_json_conditional_pass_exits_zero(
             "improvement": {"violations_delta": 0},
         }
         mock_gate_cls.return_value = gate_instance
-
         with patch("builtins.print") as mock_print:
             result = codegen_main.main(argv)
-
     assert result == 0
     assert mock_print.call_count == 1
 
@@ -84,7 +71,6 @@ def test_handle_constants_quality_gate_json_conditional_pass_exits_zero(
 def test_handle_constants_quality_gate_text_fail_exits_one(tmp_path: Path) -> None:
     """Text mode returns failure for FAIL verdict."""
     argv = ["constants-quality-gate", "--workspace", str(tmp_path), "--format", "text"]
-
     with patch(
         "flext_infra.codegen.__main__.FlextInfraCodegenConstantsQualityGate"
     ) as mock_gate_cls:
@@ -97,10 +83,8 @@ def test_handle_constants_quality_gate_text_fail_exits_one(tmp_path: Path) -> No
         mock_gate_cls.return_value = gate_instance
         mock_gate_cls.render_text.return_value = "failed\n"
         mock_gate_cls.is_success_verdict.return_value = False
-
         with patch("builtins.print") as mock_print:
             result = codegen_main.main(argv)
-
     assert result == 1
     mock_print.assert_called_once_with("failed\n", end="")
 

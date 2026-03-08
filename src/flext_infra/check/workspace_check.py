@@ -19,18 +19,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     _ = parser.add_argument("--fail-fast", action="store_true")
     args = parser.parse_args(argv)
-
     if not args.projects:
         output.error("no projects specified")
         return 1
-
     checker = FlextInfraWorkspaceChecker()
     gates = FlextInfraWorkspaceChecker.parse_gate_csv(args.gates)
-
     reports_dir = Path(args.reports_dir).expanduser()
     if not reports_dir.is_absolute():
         reports_dir = (Path.cwd() / reports_dir).resolve()
-
     result = checker.run_projects(
         projects=args.projects,
         gates=gates,
@@ -40,7 +36,6 @@ def main(argv: list[str] | None = None) -> int:
     if result.is_failure:
         output.error(result.error or "workspace check failed")
         return 2
-
     projects = result.value
     failed_projects = [project for project in projects if not project.passed]
     return 1 if failed_projects else 0

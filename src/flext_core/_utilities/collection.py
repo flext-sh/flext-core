@@ -34,7 +34,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _coerce_guard_value(value: t.ContainerValue) -> t.ContainerValue:
         guard_value_adapter: TypeAdapter[t.ContainerValue] = TypeAdapter(
-            t.ContainerValue,
+            t.ContainerValue
         )
         try:
             return guard_value_adapter.validate_python(value)
@@ -60,7 +60,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _coerce_value_to_int(value: t.ContainerValue) -> int:
         """Coerce a value to int."""
-        if isinstance(value, int) and not isinstance(value, bool):
+        if isinstance(value, int) and (not isinstance(value, bool)):
             return value
         return int(str(value))
 
@@ -82,10 +82,6 @@ class FlextUtilitiesCollection:
             return len(value) == 0
         return False
 
-    # =========================================================================
-    # Type Guards for Runtime Type Narrowing
-    # =========================================================================
-
     @staticmethod
     def _is_general_value_dict(
         value: t.ContainerValue,
@@ -102,9 +98,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: MutableMapping[str, t.ContainerValue],
-        key: str,
-        value: t.ContainerValue,
+        result: MutableMapping[str, t.ContainerValue], key: str, value: t.ContainerValue
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -113,24 +107,18 @@ class FlextUtilitiesCollection:
             and FlextUtilitiesCollection._is_general_value_dict(current_val)
             and FlextUtilitiesCollection._is_general_value_dict(value)
         ):
-            merged = FlextUtilitiesCollection.merge(
-                current_val,
-                value,
-                strategy="deep",
-            )
+            merged = FlextUtilitiesCollection.merge(current_val, value, strategy="deep")
             if merged.is_success and merged.value is not None:
                 result[key] = merged.value
                 return r[bool].ok(value=True)
             return r[bool].fail(
-                f"Failed to merge nested dict for key {key}: {merged.error}",
+                f"Failed to merge nested dict for key {key}: {merged.error}"
             )
         result[key] = value
         return r[bool].ok(value=True)
 
     @staticmethod
-    def _to_batch_scalar(
-        value: t.ContainerValue,
-    ) -> t.Scalar:
+    def _to_batch_scalar(value: t.ContainerValue) -> t.Scalar:
         if value is None:
             return ""
         if isinstance(value, t.Scalar):
@@ -138,9 +126,7 @@ class FlextUtilitiesCollection:
         return str(value)
 
     @staticmethod
-    def _to_batch_scalars(
-        values: Sequence[t.ContainerValue],
-    ) -> list[t.Scalar | None]:
+    def _to_batch_scalars(values: Sequence[t.ContainerValue]) -> list[t.Scalar | None]:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
@@ -178,17 +164,13 @@ class FlextUtilitiesCollection:
         results: list[t.ContainerValue] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
-
         for processed, item in enumerate(items, 1):
-            # Pre-validate if validator provided
             item_typed: T = item
-            if pre_validate is not None and not pre_validate(item_typed):
+            if pre_validate is not None and (not pre_validate(item_typed)):
                 results.append(None)
                 continue
-
             try:
                 result_raw = operation(item)
-                # Handle both direct returns and FlextResult returns
                 if FlextUtilitiesGuards.is_result_like(result_raw):
                     is_success = bool(getattr(result_raw, "is_success", False))
                     result_value = getattr(result_raw, "value", None)
@@ -199,14 +181,14 @@ class FlextUtilitiesCollection:
                                 if FlextUtilitiesGuards.is_general_value_type(item):
                                     results.append(
                                         FlextUtilitiesCollection._coerce_guard_value(
-                                            item,
-                                        ),
+                                            item
+                                        )
                                     )
                                 else:
                                     results.append(str(item))
                             continue
                         value = FlextUtilitiesCollection._coerce_guard_value(
-                            result_value,
+                            result_value
                         )
                         if (
                             do_flatten
@@ -219,55 +201,44 @@ class FlextUtilitiesCollection:
                         error_msg = result_error or "Unknown error"
                         if error_mode == "fail":
                             return r[FlextModelsContainers.BatchResultDict].fail(
-                                f"Batch processing failed: {error_msg}",
+                                f"Batch processing failed: {error_msg}"
                             )
                         if error_mode == "collect":
-                            # Store as (index, error_message) tuple
                             errors.append((processed - 1, str(error_msg)))
-                        # skip mode - don't add to errors
                     continue
-
                 try:
                     if do_flatten and isinstance(result_raw, list):
                         for item in result_raw:
                             if FlextUtilitiesGuards.is_general_value_type(item):
                                 results.append(
-                                    FlextUtilitiesCollection._coerce_guard_value(item),
+                                    FlextUtilitiesCollection._coerce_guard_value(item)
                                 )
                             else:
                                 results.append(str(item))
                         continue
-                    # Narrow result_raw to ContainerValue via TypeGuard
                     if FlextUtilitiesGuards.is_general_value_type(result_raw):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            result_raw,
+                            result_raw
                         )
                     else:
                         direct_result = str(result_raw)
                 except (TypeError, ValueError):
                     direct_result = str(result_raw)
                 if do_flatten and FlextUtilitiesCollection._is_general_value_list(
-                    direct_result,
+                    direct_result
                 ):
-                    # Extend results with all items from the list
-                    # Convert each item to ContainerValue
                     results.extend(direct_result)
                 else:
                     results.append(direct_result)
             except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
                 if error_mode == "fail":
                     return r[FlextModelsContainers.BatchResultDict].fail(
-                        f"Batch processing failed: {e}",
+                        f"Batch processing failed: {e}"
                     )
                 if error_mode == "collect":
-                    # Store as (index, error_message) tuple
                     errors.append((processed - 1, str(e)))
-                # skip mode - silently ignore
-
-            # Track progress
             if progress is not None and processed % progress_interval == 0:
                 progress(processed, total)
-
         result_dict = FlextModelsContainers.BatchResultDict(
             results=FlextUtilitiesCollection._to_batch_scalars(results),
             total=total,
@@ -298,10 +269,7 @@ class FlextUtilitiesCollection:
         return [list(items[i : i + size]) for i in range(0, len(items), size)]
 
     @staticmethod
-    def coerce_dict_to_bool() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, bool],
-    ]:
+    def coerce_dict_to_bool() -> Callable[[t.ConfigurationMapping], Mapping[str, bool]]:
         """Create validator that coerces dict values to bool."""
 
         def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, bool]:
@@ -336,8 +304,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_float() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, float],
+        [t.ConfigurationMapping], Mapping[str, float]
     ]:
         """Create validator that coerces dict values to float."""
 
@@ -350,10 +317,7 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_int() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, int],
-    ]:
+    def coerce_dict_to_int() -> Callable[[t.ConfigurationMapping], Mapping[str, int]]:
         """Create validator that coerces dict values to int."""
 
         def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, int]:
@@ -365,10 +329,7 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_str() -> Callable[
-        [t.ConfigurationMapping],
-        Mapping[str, str],
-    ]:
+    def coerce_dict_to_str() -> Callable[[t.ConfigurationMapping], Mapping[str, str]]:
         """Create validator that coerces dict values to str."""
 
         def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, str]:
@@ -378,10 +339,6 @@ class FlextUtilitiesCollection:
             }
 
         return validator
-
-    # ========================================================================
-    # Generic Coercion Validators (used by tests)
-    # ========================================================================
 
     @staticmethod
     def coerce_dict_validator[E: StrEnum](
@@ -399,15 +356,10 @@ class FlextUtilitiesCollection:
             if not isinstance(data, dict):
                 msg = f"Expected dict, got {data.__class__.__name__}"
                 raise TypeError(msg)
-
             result: dict[str, E] = {}
-            # Iterate directly using items() - pyright reports partial unknown for ContainerValue
-            # This is acceptable as we validate each value with isinstance checks
             for k_raw in data:
                 v_raw = data[k_raw]
-                # Convert key to string
                 k = str(k_raw)
-                # Check value type with isinstance to narrow
                 if isinstance(v_raw, enum_cls):
                     result[k] = v_raw
                 elif isinstance(v_raw, str):
@@ -418,10 +370,7 @@ class FlextUtilitiesCollection:
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
                 else:
-                    msg = (
-                        "Expected str for enum conversion, got "
-                        f"{v_raw.__class__.__name__}"
-                    )
+                    msg = f"Expected str for enum conversion, got {v_raw.__class__.__name__}"
                     raise TypeError(msg)
             return result
 
@@ -498,14 +447,10 @@ class FlextUtilitiesCollection:
         """
 
         def validator(data: t.ContainerValue) -> list[E]:
-            # Check for sequence type (but not str which is also a sequence)
             if isinstance(data, str) or not isinstance(data, Sequence):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
-
             result: list[E] = []
-            # Iterate directly - pyright reports partial unknown for ContainerValue
-            # This is acceptable as we validate each value with isinstance checks
             for v_raw in data:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
@@ -517,20 +462,14 @@ class FlextUtilitiesCollection:
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
                 else:
-                    msg = (
-                        "Expected str for enum conversion, got "
-                        f"{v_raw.__class__.__name__}"
-                    )
+                    msg = f"Expected str for enum conversion, got {v_raw.__class__.__name__}"
                     raise TypeError(msg)
             return result
 
         return validator
 
     @staticmethod
-    def count(
-        items: Sequence[T],
-        predicate: Callable[[T], bool] | None = None,
-    ) -> int:
+    def count(items: Sequence[T], predicate: Callable[[T], bool] | None = None) -> int:
         """Count items, optionally matching predicate.
 
         Args:
@@ -598,35 +537,22 @@ class FlextUtilitiesCollection:
             result.append((key_str, value_raw))
         return result
 
-    # =========================================================================
-    # Public overloaded filter function - inlined implementations
-    # =========================================================================
-
     @overload
     @staticmethod
     def filter(
-        items: list[T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: None = None,
+        items: list[T], predicate: Callable[[T], bool], *, mapper: None = None
     ) -> list[T]: ...
 
     @overload
     @staticmethod
     def filter(
-        items: list[T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: Callable[[T], U],
+        items: list[T], predicate: Callable[[T], bool], *, mapper: Callable[[T], U]
     ) -> list[U]: ...
 
     @overload
     @staticmethod
     def filter(
-        items: tuple[T, ...],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: None = None,
+        items: tuple[T, ...], predicate: Callable[[T], bool], *, mapper: None = None
     ) -> tuple[T, ...]: ...
 
     @overload
@@ -641,19 +567,13 @@ class FlextUtilitiesCollection:
     @overload
     @staticmethod
     def filter(
-        items: dict[str, T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: None = None,
+        items: dict[str, T], predicate: Callable[[T], bool], *, mapper: None = None
     ) -> dict[str, T]: ...
 
     @overload
     @staticmethod
     def filter(
-        items: dict[str, T],
-        predicate: Callable[[T], bool],
-        *,
-        mapper: Callable[[T], U],
+        items: dict[str, T], predicate: Callable[[T], bool], *, mapper: Callable[[T], U]
     ) -> dict[str, U]: ...
 
     @staticmethod
@@ -688,8 +608,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def find(
-        items: list[T] | tuple[T, ...] | dict[str, T],
-        predicate: _Predicate[T],
+        items: list[T] | tuple[T, ...] | dict[str, T], predicate: _Predicate[T]
     ) -> r[T]:
         """Find first item matching predicate with generic type support.
 
@@ -697,19 +616,15 @@ class FlextUtilitiesCollection:
         """
         if isinstance(items, (list, tuple)):
             for item in items:
-                result: bool = predicate(item)  # Explicit type for result
+                result: bool = predicate(item)
                 if result:
                     return r[T].ok(item)
             return r[T].fail("No matching item found")
         for v in items.values():
-            matched: bool = predicate(v)  # Explicit type for matched
+            matched: bool = predicate(v)
             if matched:
                 return r[T].ok(v)
         return r[T].fail("No matching item found")
-
-    # ========================================================================
-    # Additional Collection Convenience Methods
-    # ========================================================================
 
     @staticmethod
     def first(
@@ -762,10 +677,7 @@ class FlextUtilitiesCollection:
         return result
 
     @staticmethod
-    def group(
-        items: Sequence[T],
-        key_func: Callable[[T], U],
-    ) -> dict[U, list[T]]:
+    def group(items: Sequence[T], key_func: Callable[[T], U]) -> dict[U, list[T]]:
         """Group items by key function.
 
         This is an alias for group_by for convenience.
@@ -773,10 +685,7 @@ class FlextUtilitiesCollection:
         return FlextUtilitiesCollection.group_by(items, key_func)
 
     @staticmethod
-    def group_by(
-        items: Sequence[T],
-        key_func: Callable[[T], U],
-    ) -> dict[U, list[T]]:
+    def group_by(items: Sequence[T], key_func: Callable[[T], U]) -> dict[U, list[T]]:
         """Group items by key function.
 
         Args:
@@ -829,44 +738,25 @@ class FlextUtilitiesCollection:
             return r[T].ok(default)
         return r[T].fail("No last item found")
 
-    # =========================================================================
-    # Public overloaded map function - inlined implementations
-    # =========================================================================
+    @overload
+    @staticmethod
+    def map(items: list[T], mapper: Callable[[T], U]) -> list[U]: ...
 
     @overload
     @staticmethod
-    def map(
-        items: list[T],
-        mapper: Callable[[T], U],
-    ) -> list[U]: ...
+    def map(items: tuple[T, ...], mapper: Callable[[T], U]) -> tuple[U, ...]: ...
 
     @overload
     @staticmethod
-    def map(
-        items: tuple[T, ...],
-        mapper: Callable[[T], U],
-    ) -> tuple[U, ...]: ...
+    def map(items: dict[str, T], mapper: Callable[[T], U]) -> dict[str, U]: ...
 
     @overload
     @staticmethod
-    def map(
-        items: dict[str, T],
-        mapper: Callable[[T], U],
-    ) -> dict[str, U]: ...
+    def map(items: set[T], mapper: Callable[[T], U]) -> set[U]: ...
 
     @overload
     @staticmethod
-    def map(
-        items: set[T],
-        mapper: Callable[[T], U],
-    ) -> set[U]: ...
-
-    @overload
-    @staticmethod
-    def map(
-        items: frozenset[T],
-        mapper: Callable[[T], U],
-    ) -> frozenset[U]: ...
+    def map(items: frozenset[T], mapper: Callable[[T], U]) -> frozenset[U]: ...
 
     @staticmethod
     def map(
@@ -911,21 +801,18 @@ class FlextUtilitiesCollection:
                 result: dict[str, t.ContainerValue] = dict(base)
                 result.update(other)
                 return r[dict[str, t.ContainerValue]].ok(result)
-
             if strategy == "filter_none":
                 result = dict(base)
                 for key, value in other.items():
                     if value is not None:
                         result[key] = value
                 return r[dict[str, t.ContainerValue]].ok(result)
-
             if strategy in {"filter_empty", "filter_both"}:
                 result = dict(base)
                 for key, value in other.items():
                     if not FlextUtilitiesCollection._is_empty_value(value):
                         result[key] = value
                 return r[dict[str, t.ContainerValue]].ok(result)
-
             if strategy == "append":
                 result = dict(base)
                 for key, value in other.items():
@@ -935,28 +822,23 @@ class FlextUtilitiesCollection:
                         and isinstance(current_val, list)
                         and isinstance(value, list)
                     ):
-                        # Append lists - both are now properly typed as lists
                         result[key] = current_val + value
                     else:
                         result[key] = value
                 return r[dict[str, t.ContainerValue]].ok(result)
-
             if strategy == "deep":
                 result = base.copy()
                 for key, value in other.items():
                     merge_result = FlextUtilitiesCollection._merge_deep_single_key(
-                        result,
-                        key,
-                        value,
+                        result, key, value
                     )
                     if merge_result.is_failure:
                         return r[dict[str, t.ContainerValue]].fail(
-                            merge_result.error or "Unknown error",
+                            merge_result.error or "Unknown error"
                         )
                 return r[dict[str, t.ContainerValue]].ok(result)
-
             return r[dict[str, t.ContainerValue]].fail(
-                f"Unknown merge strategy: {strategy}",
+                f"Unknown merge strategy: {strategy}"
             )
         except (TypeError, ValueError, KeyError, AttributeError) as e:
             return r[dict[str, t.ContainerValue]].fail(f"Merge failed: {e}")
@@ -982,8 +864,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def parse_mapping[E: StrEnum](
-        enum_cls: type[E],
-        mapping: dict[str, str | E],
+        enum_cls: type[E], mapping: dict[str, str | E]
     ) -> r[dict[str, E]]:
         """Parse dict values from strings to StrEnum.
 
@@ -1002,22 +883,15 @@ class FlextUtilitiesCollection:
         try:
             result: dict[str, E] = {}
             errors: list[str] = []
-
             for key, value_raw in mapping.items():
-                # StrEnum is a subclass of str, so value can be str or StrEnum
-                # Try conversion - enum_cls(str_value) creates enum, enum_cls(enum_value) returns same enum
                 try:
-                    # value_raw is str | StrEnum due to function signature
-                    # pyright warns isinstance is unnecessary since StrEnum extends str
-                    # We just try the conversion which works for both
                     result[key] = enum_cls(value_raw)
                 except (ValueError, TypeError) as e:
                     errors.append(f"'{key}': {e}")
-
             if errors:
                 enum_name = getattr(enum_cls, "__name__", "Enum")
                 return r[dict[str, E]].fail(
-                    f"Invalid {enum_name} values: {', '.join(errors)}",
+                    f"Invalid {enum_name} values: {', '.join(errors)}"
                 )
             return r[dict[str, E]].ok(result)
         except (TypeError, ValueError, AttributeError, KeyError) as e:
@@ -1025,14 +899,12 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def parse_sequence(
-        enum_cls: type[StrEnum],
-        values: Sequence[str | StrEnum],
+        enum_cls: type[StrEnum], values: Sequence[str | StrEnum]
     ) -> r[tuple[StrEnum, ...]]:
         """Parse sequence of strings to tuple of StrEnum."""
         try:
             parsed: list[StrEnum] = []
             errors: list[str] = []
-
             for idx, val in enumerate(values):
                 if isinstance(val, enum_cls):
                     parsed.append(val)
@@ -1041,11 +913,10 @@ class FlextUtilitiesCollection:
                         parsed.append(enum_cls(val))
                     except ValueError:
                         errors.append(f"[{idx}]: '{val}'")
-
             if errors:
                 enum_name = getattr(enum_cls, "__name__", "Enum")
                 return r[tuple[StrEnum, ...]].fail(
-                    f"Invalid {enum_name} values: {', '.join(errors)}",
+                    f"Invalid {enum_name} values: {', '.join(errors)}"
                 )
             return r[tuple[StrEnum, ...]].ok(tuple(parsed))
         except (TypeError, ValueError, AttributeError) as e:
@@ -1053,8 +924,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def partition(
-        items: Sequence[T],
-        predicate: _Predicate[T],
+        items: Sequence[T], predicate: _Predicate[T]
     ) -> tuple[list[T], list[T]]:
         """Split items by predicate: (matches, non-matches).
 
@@ -1077,7 +947,7 @@ class FlextUtilitiesCollection:
                 matches.append(item)
             else:
                 non_matches.append(item)
-        return matches, non_matches
+        return (matches, non_matches)
 
     @staticmethod
     def process(
@@ -1105,18 +975,14 @@ class FlextUtilitiesCollection:
             FlextResult with list of processed results or error
 
         """
-        _ = filter_keys  # Documented for dict processing, applied in subclasses
-        _ = exclude_keys  # Documented for dict processing, applied in subclasses
-
+        _ = filter_keys
+        _ = exclude_keys
         try:
             results: list[U] = []
             for item in items:
-                # Type narrowing: item is T
                 item_typed: T = item
-                # Check predicate - item is T from Sequence[T]
-                if predicate is not None and not predicate(item_typed):
+                if predicate is not None and (not predicate(item_typed)):
                     continue
-
                 try:
                     result = processor(item)
                     results.append(result)
@@ -1130,8 +996,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def unique(
-        items: Sequence[T],
-        key_func: Callable[[T], Hashable] | None = None,
+        items: Sequence[T], key_func: Callable[[T], Hashable] | None = None
     ) -> list[T]:
         """Get unique items preserving order.
 
@@ -1156,6 +1021,4 @@ class FlextUtilitiesCollection:
         return result
 
 
-__all__ = [
-    "FlextUtilitiesCollection",
-]
+__all__ = ["FlextUtilitiesCollection"]

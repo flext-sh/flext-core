@@ -33,32 +33,23 @@ if TYPE_CHECKING:
 
     from flext_core import r
 
-# =============================================================================
-# PROTOCOL DETECTION AND VALIDATION HELPERS
-# =============================================================================
-
 
 class _ProtocolIntrospection:
     """Internal helpers for protocol detection and compliance checks."""
 
     @classmethod
     def check_implements_protocol(
-        cls,
-        instance: t.ContainerValue,
-        protocol: type,
+        cls, instance: t.ContainerValue, protocol: type
     ) -> bool:
         """Check if an instance implements a protocol."""
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-
         protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[t.ContainerValue] | t.ContainerValue = getattr(
-            protocol,
-            "__protocol_attrs__",
-            set[t.ContainerValue](),
+            protocol, "__protocol_attrs__", set[t.ContainerValue]()
         )
         protocol_methods: set[str] = set()
         if isinstance(raw_attrs, set):
@@ -70,42 +61,34 @@ class _ProtocolIntrospection:
         required_members = {
             m
             for m in required_members
-            if (
-                not m.startswith("_")
-                or m.startswith("__")
-                or m == "_protocol_name"
-                or m in {"metadata_extra", "sealed"}
-            )
+            if not m.startswith("_")
+            or m.startswith("__")
+            or m == "_protocol_name"
+            or (m in {"metadata_extra", "sealed"})
         }
-
         if not required_members:
             return False
         return all(hasattr(instance, member) for member in required_members)
 
     @classmethod
     def partition_protocol_bases(
-        cls,
-        bases: tuple[type, ...],
+        cls, bases: tuple[type, ...]
     ) -> tuple[list[type], list[type]]:
         """Separate Protocol bases from regular class bases."""
         protocols: list[type] = []
         model_bases: list[type] = []
-
         for base in bases:
             if cls.is_protocol(base):
                 protocols.append(base)
             else:
                 model_bases.append(base)
-
-        return protocols, model_bases
+        return (protocols, model_bases)
 
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
         protocols: tuple[t.ContainerValue, ...] | t.ContainerValue = getattr(
-            target_cls,
-            "__protocols__",
-            (),
+            target_cls, "__protocols__", ()
         )
         if isinstance(protocols, tuple):
             typed_protocols: list[type] = []
@@ -126,69 +109,51 @@ class _ProtocolIntrospection:
 
     @staticmethod
     def validate_protocol_compliance(
-        target_cls: type,
-        protocol: type,
-        class_name: str,
+        target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
         protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[t.ContainerValue] | t.ContainerValue = getattr(
-            protocol,
-            "__protocol_attrs__",
-            set[t.ContainerValue](),
+            protocol, "__protocol_attrs__", set[t.ContainerValue]()
         )
         protocol_methods: set[str] = set()
         if isinstance(raw_attrs, set):
             for attr in raw_attrs:
                 if isinstance(attr, str):
                     protocol_methods.add(attr)
-
         required_members: set[str] = set(protocol_annotations.keys())
         if protocol_methods:
             required_members.update(protocol_methods)
-
         required_members = {
             m
             for m in required_members
-            if (
-                not m.startswith("_")
-                or m.startswith("__")
-                or m == "_protocol_name"
-                or m in {"metadata_extra", "sealed"}
-            )
+            if not m.startswith("_")
+            or m.startswith("__")
+            or m == "_protocol_name"
+            or (m in {"metadata_extra", "sealed"})
         }
-
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
             base_annotations: dict[str, object] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
-
         missing = [
             member
             for member in required_members
             if not (hasattr(target_cls, member) or member in all_annotations)
         ]
-
         if missing:
             protocol_name = (
                 protocol.__name__ if hasattr(protocol, "__name__") else str(protocol)
             )
             missing_str = ", ".join(sorted(missing))
-            msg = (
-                f"Class '{class_name}' does not implement required members "
-                f"of protocol '{protocol_name}': {missing_str}"
-            )
+            msg = f"Class '{class_name}' does not implement required members of protocol '{protocol_name}': {missing_str}"
             raise TypeError(msg)
 
 
-# Combined metaclass inheriting from both Pydantic's ModelMetaclass and
-# typing's Protocol metaclass. Resolve metaclass at runtime from public types
-# to avoid importing private names (_ProtocolMeta, pydantic._internal).
-# BaseSettings uses the same ModelMetaclass as BaseModel.
 if TYPE_CHECKING:
 
     class _CombinedModelMeta(_TypeCheckModelMeta):
@@ -197,11 +162,7 @@ if TYPE_CHECKING:
 else:
 
     def _build_combined_model_meta() -> type:
-        return type(
-            "_CombinedModelMeta",
-            (type(BaseModel), type(Protocol)),
-            {},
-        )
+        return type("_CombinedModelMeta", (type(BaseModel), type(Protocol)), {})
 
     _CombinedModelMeta: type = _build_combined_model_meta()
 
@@ -218,10 +179,6 @@ class FlextProtocols:
     - Application: CQRS and application layer protocols
     - Utility: Supporting utility protocols
     """
-
-    # =========================================================================
-    # BASE PROTOCOLS (Fundamental Interfaces)
-    # =========================================================================
 
     @runtime_checkable
     class BaseProtocol(Protocol):
@@ -250,10 +207,6 @@ class FlextProtocols:
             """Query type identifier."""
             ...
 
-    # =========================================================================
-    # CONTEXT: Context Management Protocols
-    # =========================================================================
-
     @runtime_checkable
     class Context(Protocol):
         """Context protocol for type safety without circular imports.
@@ -269,21 +222,13 @@ class FlextProtocols:
             """Clone context for isolated execution."""
             ...
 
-        def get(
-            self,
-            key: str,
-            scope: str = ...,
-        ) -> r[t.ContainerValue]:
+        def get(self, key: str, scope: str = ...) -> r[t.ContainerValue]:
             """Get a context value. Returns Result-like object."""
             ...
 
         @overload
         def set(
-            self,
-            key_or_data: str,
-            value: t.ContainerValue,
-            *,
-            scope: str = ...,
+            self, key_or_data: str, value: t.ContainerValue, *, scope: str = ...
         ) -> r[bool]: ...
 
         @overload
@@ -320,10 +265,6 @@ class FlextProtocols:
         wire_modules: Sequence[ModuleType] | None
         wire_packages: Sequence[str] | None
         wire_classes: Sequence[type] | None
-
-    # =========================================================================
-    # CORE PROTOCOLS (Result Handling and Models)
-    # =========================================================================
 
     @runtime_checkable
     class Result[T](BaseProtocol, Protocol):
@@ -405,17 +346,14 @@ class FlextProtocols:
 
         @classmethod
         def accumulate_errors(
-            cls,
-            *results: FlextProtocols.Result[t.ContainerValue],
+            cls, *results: FlextProtocols.Result[t.ContainerValue]
         ) -> FlextProtocols.Result[list[t.ContainerValue]]:
             """Collect all successes, fail if any failure."""
             ...
 
         @classmethod
         def create_from_callable(
-            cls,
-            func: Callable[[], T],
-            error_code: str | None = None,
+            cls, func: Callable[[], T], error_code: str | None = None
         ) -> FlextProtocols.Result[T]:
             """Create result from callable, catching exceptions."""
             ...
@@ -431,10 +369,7 @@ class FlextProtocols:
             """Map over sequence with configurable failure handling."""
             ...
 
-        def filter(
-            self,
-            predicate: Callable[[T], bool],
-        ) -> Self:
+        def filter(self, predicate: Callable[[T], bool]) -> Self:
             """Filter success value using predicate.
 
             Returns self if predicate passes or result is failure,
@@ -443,23 +378,18 @@ class FlextProtocols:
             ...
 
         def flat_map[U](
-            self,
-            func: Callable[[T], FlextProtocols.Result[U]],
+            self, func: Callable[[T], FlextProtocols.Result[U]]
         ) -> FlextProtocols.Result[U]:
             """Chain operations returning Result."""
             ...
 
         def flow_through[U](
-            self,
-            *funcs: Callable[[T | U], FlextProtocols.Result[U]],
+            self, *funcs: Callable[[T | U], FlextProtocols.Result[U]]
         ) -> FlextProtocols.Result[U]:
             """Chain multiple operations in a pipeline."""
             ...
 
-        def lash(
-            self,
-            func: Callable[[str], FlextProtocols.Result[T]],
-        ) -> Self:
+        def lash(self, func: Callable[[str], FlextProtocols.Result[T]]) -> Self:
             """Apply recovery function on failure."""
             ...
 
@@ -563,18 +493,11 @@ class FlextProtocols:
             """Validate model."""
             ...
 
-    # =========================================================================
-    # CONFIGURATION PROTOCOLS (Config and Context Management)
-    # =========================================================================
-
     @runtime_checkable
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(
-            self,
-            config: t.ConfigurationMapping | None = None,
-        ) -> Self:
+        def configure(self, config: t.ConfigurationMapping | None = None) -> Self:
             """Configure component with settings."""
             ...
 
@@ -588,24 +511,18 @@ class FlextProtocols:
         override methods.
         """
 
-        # Required fields (access as attributes, not necessarily properties)
         app_name: str
-        """Application name bound to the configuration."""
-
+        "Application name bound to the configuration."
         version: str
-        """Semantic version of the running application."""
-
+        "Semantic version of the running application."
         enable_caching: bool
-        """Enable caching for query operations."""
-
+        "Enable caching for query operations."
         timeout_seconds: float
-        """Default timeout in seconds for operations."""
-
+        "Default timeout in seconds for operations."
         dispatcher_auto_context: bool
-        """Enable automatic context management in dispatcher."""
-
+        "Enable automatic context management in dispatcher."
         dispatcher_enable_logging: bool
-        """Enable logging in dispatcher operations."""
+        "Enable logging in dispatcher operations."
 
         def model_copy(
             self,
@@ -624,10 +541,6 @@ class FlextProtocols:
 
             """
             ...
-
-    # =========================================================================
-    # INFRASTRUCTURE PROTOCOLS (DI and Container Management)
-    # =========================================================================
 
     @runtime_checkable
     class DI(Configurable, Protocol):
@@ -653,18 +566,12 @@ class FlextProtocols:
 
         @overload
         def get[T: t.RegisterableService](
-            self,
-            name: str,
-            *,
-            type_cls: type[T],
+            self, name: str, *, type_cls: type[T]
         ) -> r[T]: ...
 
         @overload
         def get(
-            self,
-            name: str,
-            *,
-            type_cls: None = None,
+            self, name: str, *, type_cls: None = None
         ) -> r[t.RegisterableService]: ...
 
         def get_config(self) -> FlextModelsContainers.ConfigMap:
@@ -712,10 +619,6 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-    # =========================================================================
-    # DOMAIN PROTOCOLS (Business Logic Interfaces)
-    # =========================================================================
-
     @runtime_checkable
     class Service[T](BaseProtocol, Protocol):
         """Base domain service interface.
@@ -762,30 +665,19 @@ class FlextProtocols:
     class Repository[T](BaseProtocol, Protocol):
         """Data access interface."""
 
-        def delete(
-            self,
-            entity_id: str,
-        ) -> FlextProtocols.Result[bool]:
+        def delete(self, entity_id: str) -> FlextProtocols.Result[bool]:
             """Delete entity."""
             ...
 
-        def find_all(
-            self,
-        ) -> FlextProtocols.Result[Sequence[T]]:
+        def find_all(self) -> FlextProtocols.Result[Sequence[T]]:
             """Find all entities."""
             ...
 
-        def get_by_id(
-            self,
-            entity_id: str,
-        ) -> FlextProtocols.Result[T]:
+        def get_by_id(self, entity_id: str) -> FlextProtocols.Result[T]:
             """Get entity by ID."""
             ...
 
-        def save(
-            self,
-            entity: T,
-        ) -> FlextProtocols.Result[T]:
+        def save(self, entity: T) -> FlextProtocols.Result[T]:
             """Save entity."""
             ...
 
@@ -800,13 +692,9 @@ class FlextProtocols:
             Supports any callable that accepts a value and returns bool.
             """
 
-            def __call__(self, value: t.ContainerValue) -> bool:  # INTERFACE
+            def __call__(self, value: t.ContainerValue) -> bool:
                 """Evaluate predicate on value."""
                 ...
-
-    # =========================================================================
-    # APPLICATION: Application Layer Protocols
-    # =========================================================================
 
     @runtime_checkable
     class Handler[MessageT, ResultT](BaseProtocol, Protocol):
@@ -828,10 +716,7 @@ class FlextProtocols:
             """
             ...
 
-        def handle(
-            self,
-            message: MessageT,
-        ) -> r[ResultT]:
+        def handle(self, message: MessageT) -> r[ResultT]:
             """Handle message - core business logic method.
 
             Reflects real implementations like FlextHandlers.handle() which
@@ -847,24 +732,19 @@ class FlextProtocols:
         """
 
         def dispatch(
-            self,
-            message: FlextProtocols.Routable,
+            self, message: FlextProtocols.Routable
         ) -> FlextProtocols.Result[t.ContainerValue]:
             """Dispatch a CQRS message to its registered handler."""
             ...
 
         def publish(
-            self,
-            event: FlextProtocols.Routable | list[FlextProtocols.Routable],
+            self, event: FlextProtocols.Routable | list[FlextProtocols.Routable]
         ) -> FlextProtocols.Result[bool]:
             """Publish events to registered subscribers."""
             ...
 
         def register_handler(
-            self,
-            handler: t.HandlerLike,
-            *,
-            is_event: bool = False,
+            self, handler: t.HandlerLike, *, is_event: bool = False
         ) -> FlextProtocols.Result[bool]:
             """Register a handler with route auto-discovery.
 
@@ -911,8 +791,7 @@ class FlextProtocols:
             ...
 
         def register_handler(
-            self,
-            handler: FlextProtocols.Handler[t.ContainerValue, t.ContainerValue],
+            self, handler: FlextProtocols.Handler[t.ContainerValue, t.ContainerValue]
         ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
@@ -963,9 +842,9 @@ class FlextProtocols:
 
         def process(
             self,
-            data: (
-                t.ContainerValue | BaseModel | FlextProtocols.Result[t.ContainerValue]
-            ),
+            data: t.ContainerValue
+            | BaseModel
+            | FlextProtocols.Result[t.ContainerValue],
         ) -> t.ContainerValue | BaseModel | FlextProtocols.Result[t.ContainerValue]:
             """Process data and return result.
 
@@ -994,9 +873,7 @@ class FlextProtocols:
             ...
 
         def record_metric(
-            self,
-            name: str,
-            value: t.ContainerValue,
+            self, name: str, value: t.ContainerValue
         ) -> FlextProtocols.Result[bool]:
             """Record a metric value.
 
@@ -1036,10 +913,7 @@ class FlextProtocols:
             """
             ...
 
-        def push_context(
-            self,
-            ctx: t.ContainerValue,
-        ) -> FlextProtocols.Result[bool]:
+        def push_context(self, ctx: t.ContainerValue) -> FlextProtocols.Result[bool]:
             """Push execution context onto the stack.
 
             Args:
@@ -1050,10 +924,6 @@ class FlextProtocols:
 
             """
             ...
-
-    # =========================================================================
-    # INFRASTRUCTURE: Infrastructure Protocols
-    # =========================================================================
 
     class Log:
         """Logging namespace with StructlogLogger and Metadata protocols.
@@ -1162,15 +1032,9 @@ class FlextProtocols:
             """Get connection string."""
             ...
 
-        def test_connection(
-            self,
-        ) -> FlextProtocols.Result[bool]:
+        def test_connection(self) -> FlextProtocols.Result[bool]:
             """Test connection."""
             ...
-
-    # =========================================================================
-    # UTILITY: Utility Protocols
-    # =========================================================================
 
     @runtime_checkable
     class VariadicCallable[T_co](Protocol):
@@ -1181,11 +1045,7 @@ class FlextProtocols:
         factories, and callbacks.
         """
 
-        def __call__(
-            self,
-            *args: t.Scalar,
-            **kwargs: t.Scalar,
-        ) -> T_co:
+        def __call__(self, *args: t.Scalar, **kwargs: t.Scalar) -> T_co:
             """Call the function with any arguments, returning T_co."""
             ...
 
@@ -1207,8 +1067,7 @@ class FlextProtocols:
             ...
 
         def __and__(
-            self,
-            other: FlextProtocols.ValidatorSpec,
+            self, other: FlextProtocols.ValidatorSpec
         ) -> FlextProtocols.ValidatorSpec:
             """Compose with AND - both validators must pass."""
             ...
@@ -1218,8 +1077,7 @@ class FlextProtocols:
             ...
 
         def __or__(
-            self,
-            other: FlextProtocols.ValidatorSpec,
+            self, other: FlextProtocols.ValidatorSpec
         ) -> FlextProtocols.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
             ...
@@ -1251,10 +1109,7 @@ class FlextProtocols:
 
         """
 
-        def __call__(
-            self,
-            func: Callable[..., R],
-        ) -> Callable[..., R]:
+        def __call__(self, func: Callable[..., R]) -> Callable[..., R]:
             """Apply decorator to function, returning wrapped callable.
 
             Args:
@@ -1266,15 +1121,8 @@ class FlextProtocols:
             """
             ...
 
-    # =========================================================================
-    # SPECIALIZED: Specialized Domain Protocols
-    # =========================================================================
-
     @runtime_checkable
-    class Entry(
-        BaseProtocol,
-        Protocol,
-    ):  # Cannot inherit BaseProtocol due to Python nested class limitations
+    class Entry(BaseProtocol, Protocol):
         """Entry object protocol (read-only)."""
 
         @property
@@ -1287,26 +1135,15 @@ class FlextProtocols:
             """Distinguished name."""
             ...
 
-        def add_attribute(
-            self,
-            name: str,
-            values: Sequence[str],
-        ) -> Self:
+        def add_attribute(self, name: str, values: Sequence[str]) -> Self:
             """Add attribute values, returning self for chaining."""
             ...
 
-        def remove_attribute(
-            self,
-            name: str,
-        ) -> Self:
+        def remove_attribute(self, name: str) -> Self:
             """Remove attribute, returning self for chaining."""
             ...
 
-        def set_attribute(
-            self,
-            name: str,
-            values: Sequence[str],
-        ) -> Self:
+        def set_attribute(self, name: str, values: Sequence[str]) -> Self:
             """Set attribute values, returning self for chaining."""
             ...
 
@@ -1318,23 +1155,10 @@ class FlextProtocols:
             """Convert to LDIF format."""
             ...
 
-    # =========================================================================
-    # UTILITIES PROTOCOLS
-    # =========================================================================
     @runtime_checkable
-    class CallableWithHints(
-        BaseProtocol,
-        Protocol,
-    ):  # Cannot inherit BaseProtocol due to Python nested class limitations
+    class CallableWithHints(BaseProtocol, Protocol):
         """Protocol for callables that support type hints introspection."""
 
-    # =========================================================================
-    # TYPE ALIASES FOR UTILITIES
-    # =========================================================================
-
-    # Type for data sources that get() can access
-    # Supports: ConfigurationDict (ContainerValue), JsonValue dicts, and object dicts
-    # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
         FlextModelsContainers.ConfigMap
         | Mapping[str, t.JsonValue]
@@ -1343,21 +1167,6 @@ class FlextProtocols:
         | "FlextProtocols.HasModelDump"
         | "FlextProtocols.ValidatorSpec"
     )
-
-    # =========================================================================
-
-    # =========================================================================
-    # CONTAINER SERVICE TYPE (Union of all registerable service protocols)
-    # =========================================================================
-
-    # RegisterableService: Type alias for all services that can be registered
-    # in FlextContainer. Includes protocols, models, and callables.
-    # This replaces object/dict usage in DI container methods.
-    # Type for services registerable in FlextContainer.
-    # Union of all protocol types that can be registered as DI services:
-    # - ContainerValue: Primitives, BaseModel, sequences, mappings
-    # - BindableLogger: Logger protocol
-    # - Callable: Factories that return ContainerValue
     type RegisterableService = (
         t.ContainerValue
         | BindableLogger
@@ -1368,24 +1177,8 @@ class FlextProtocols:
         | Service[t.ContainerValue]
         | CommandBus
     )
-
-    # ServiceFactory: Factory callable that returns RegisterableService
     type ServiceFactory = t.FactoryCallable
-    """Factory callable returning any registerable service type.
-
-    Broader than t.FactoryCallable (which returns ContainerValue).
-    Supports factories that create protocols like Log,             ..., Config, etc.
-
-    Usage:
-        def create_logger() -> FlextLogger:
-            return FlextLogger.create_module_logger("app")
-
-        container.register_factory("logger", create_logger)  # OK
-    """
-
-    # =========================================================================
-    # PROTOCOL + PYDANTIC INTEGRATION (Metaclass, Base Classes, Decorator)
-    # =========================================================================
+    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns ContainerValue).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
 
     class ProtocolModelMeta(_CombinedModelMeta):
         """Metaclass combining Pydantic with Protocol structural typing.
@@ -1427,37 +1220,22 @@ class FlextProtocols:
                 The newly created class with protocols validated.
 
             """
-            # Separate protocols from model bases
             protocols, model_bases = _ProtocolIntrospection.partition_protocol_bases(
-                bases,
+                bases
             )
-
-            # Ensure we have at least one real base
             if not model_bases:
                 model_bases = [BaseModel]
-
-            # Create class with only model bases (no metaclass conflict)
             built_cls: type = super().__new__(
-                cls,
-                name,
-                tuple(model_bases),
-                dict(namespace),
+                cls, name, tuple(model_bases), dict(namespace)
             )
-
-            # Store protocols using setattr
             setattr(built_cls, "__protocols__", tuple(protocols))
-
-            # Validate protocol compliance at class definition time
             for protocol in protocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
-                    built_cls,
-                    protocol,
-                    name,
+                    built_cls, protocol, name
                 )
-
             return built_cls
 
-    class ProtocolModel(BaseModel, metaclass=ProtocolModelMeta):
+    class ProtocolModel(metaclass=ProtocolModelMeta):
         """Base class for Pydantic models that implement protocols.
 
         Enables natural multi-inheritance with protocols without metaclass
@@ -1610,39 +1388,28 @@ class FlextProtocols:
         """
 
         def decorator(cls: type[T]) -> type[T]:
-            # Validate each protocol at decoration time
-            # Use getattr for type-safe access to __name__
             class_name = cls.__name__ if hasattr(cls, "__name__") else str(cls)
             for protocol in protocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
-                    cls,
-                    protocol,
-                    class_name,
+                    cls, protocol, class_name
                 )
-
-            # Store protocols using setattr (avoids type: ignore)
             setattr(cls, "__protocols__", tuple(protocols))
 
-            # Add helper method for instance protocol checking
             def _instance_implements_protocol(
-                self: t.ContainerValue,
-                protocol: type,
+                self: t.ContainerValue, protocol: type
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
             setattr(cls, "implements_protocol", _instance_implements_protocol)
 
-            # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
             setattr(cls, "get_protocols", classmethod(_class_get_protocols))
-
             return cls
 
         return decorator
 
-    # Expose utility functions as static methods for external use
     @staticmethod
     def is_protocol(target_cls: type) -> bool:
         """Check if a class is a typing.Protocol."""

@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Comprehensive coverage tests for FlextExceptions.
 
 Module: flext_core.exceptions
@@ -42,11 +41,7 @@ class ExceptionScenarios:
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
-            "validation_basic",
-            FlextExceptions.ValidationError,
-            "Invalid input",
-            {},
-            {},
+            "validation_basic", FlextExceptions.ValidationError, "Invalid input", {}, {}
         ),
         ExceptionCreationScenario(
             "validation_with_field",
@@ -162,7 +157,6 @@ class ExceptionScenarios:
             {"attribute_name": "missing_field"},
         ),
     ]
-
     FACTORY_CREATION: ClassVar[
         list[tuple[str, dict[str, t.ContainerValue], type[FlextExceptions.BaseError]]]
     ] = [
@@ -186,8 +180,6 @@ class ExceptionScenarios:
             {"operation": "INSERT", "reason": "Constraint violation"},
             FlextExceptions.OperationError,
         ),
-        # NOTE: TimeoutError with numeric timeout_seconds can't be created via e.create()
-        # due to source bug: internal normalization stringifies values before strict validation.
     ]
 
 
@@ -195,26 +187,17 @@ class TestFlextExceptionsHierarchy:
     """Test complete exception hierarchy using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.EXCEPTION_CREATION,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.EXCEPTION_CREATION, ids=lambda s: s.name
     )
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
-            # Convert dict[str, t.ContainerValue] to dict[str, MetadataAttributeValue]
-            # Separate type values from metadata values for proper type handling
             type_kwargs: dict[str, type] = {}
             metadata_kwargs: dict[str, t.MetadataValue] = {}
             for key, value in scenario.kwargs.items():
-                # For TypeError, preserve type objects for expected_type and actual_type
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
-                    and key
-                    in {
-                        "expected_type",
-                        "actual_type",
-                    }
+                    and key in {"expected_type", "actual_type"}
                     and isinstance(value, type)
                 ):
                     type_kwargs[key] = value
@@ -222,16 +205,11 @@ class TestFlextExceptionsHierarchy:
                     metadata_kwargs[key] = cast("t.MetadataAttributeValue", value)
                 else:
                     metadata_kwargs[key] = cast("t.MetadataAttributeValue", str(value))
-            # For TypeError, pass type_kwargs separately, then metadata_kwargs
             if type_kwargs:
-                # Convert type objects to strings for metadata compatibility
                 for key, type_value in type_kwargs.items():
                     metadata_kwargs[key] = type_value.__name__
-            # Type narrowing: all values in metadata_kwargs are MetadataAttributeValue
-            # Pass keyword arguments unpacked from metadata_kwargs
             exception_ctor = cast(
-                "Callable[..., FlextExceptions.BaseError]",
-                scenario.exception_type,
+                "Callable[..., FlextExceptions.BaseError]", scenario.exception_type
             )
             error = exception_ctor(scenario.message, **metadata_kwargs)
         else:
@@ -274,9 +252,7 @@ class TestExceptionIntegration:
         try:
             error_msg = "Validation failed"
             raise FlextExceptions.ValidationError(
-                error_msg,
-                field="email",
-                value="invalid",
+                error_msg, field="email", value="invalid"
             )
         except FlextExceptions.ValidationError as e:
             result = FlextResult[bool].fail(f"Error in user creation: {e}")
@@ -298,9 +274,7 @@ class TestExceptionEdgeCases:
         ids=["empty", "unicode", "long", "special_chars"],
     )
     def test_exception_message_variations(
-        self,
-        message: str,
-        expected_in_str: bool,
+        self, message: str, expected_in_str: bool
     ) -> None:
         """Test exception with various message formats."""
         error = FlextExceptions.ValidationError(message)
@@ -350,9 +324,7 @@ class TestExceptionProperties:
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
         error = FlextExceptions.NotFoundError(
-            "Resource not found",
-            resource_id="123",
-            resource_type="User",
+            "Resource not found", resource_id="123", resource_type="User"
         )
         assert "Resource not found" in str(error)
 
@@ -362,19 +334,14 @@ class TestExceptionContext:
 
     def test_exception_with_context_data(self) -> None:
         """Test exception with contextual information via metadata."""
-        # ValidationError accepts metadata via **extra_kwargs as MetadataAttributeValue
-        # Convert Metadata to dict for extra_kwargs
         metadata_dict: dict[str, t.MetadataValue] = {
             "user_id": "123",
             "operation": "create_user",
             "timestamp": 1234567890,
         }
-        # ValidationError accepts metadata via **extra_kwargs: MetadataAttributeValue
-        # Cast metadata_dict to correct type
         metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
         error = FlextExceptions.ValidationError(
-            "Validation failed in context",
-            metadata=metadata_typed,
+            "Validation failed in context", metadata=metadata_typed
         )
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
@@ -394,7 +361,6 @@ class TestExceptionContext:
         except ValueError as e:
             original = e
         assert original is not None
-        # Python native exception chaining using 'from'
         error = FlextExceptions.OperationError("Operation failed")
         error.__cause__ = original
         assert error.__cause__ is original
@@ -415,9 +381,7 @@ class TestExceptionSerialization:
     def test_exception_to_dict(self) -> None:
         """Test converting exception to dictionary."""
         error = FlextExceptions.ValidationError(
-            "Invalid email",
-            field="email",
-            value="not-valid",
+            "Invalid email", field="email", value="not-valid"
         )
         error_dict = error.to_dict()
         assert error_dict["error_type"] == "ValidationError"
@@ -426,12 +390,8 @@ class TestExceptionSerialization:
 
     def test_exception_dict_with_metadata(self) -> None:
         """Test exception dict includes metadata (flattened)."""
-        error = FlextExceptions.OperationError(
-            "Operation failed",
-            operation="INSERT",
-        )
+        error = FlextExceptions.OperationError("Operation failed", operation="INSERT")
         error_dict = error.to_dict()
-        # Metadata is flattened into the dict, not nested
         assert error_dict["operation"] == "INSERT"
 
 
@@ -456,21 +416,12 @@ class TestExceptionFactory:
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        # Convert dict[str, t.ContainerValue] to dict[str, MetadataAttributeValue]
         converted_kwargs: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
         }
-        # Type narrowing: all values in converted_kwargs are MetadataAttributeValue
-        # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility
-
-        # Cast converted_kwargs to correct type for dynamic kwargs unpacking in tests
-        # Mypy limitation: dict unpacking to **kwargs not fully supported
-        # The dict[str, MetadataAttributeValue] is compatible with **kwargs: MetadataAttributeValue
-        # Use type ignore for dict unpacking (runtime behavior is correct)
         kwargs_typed: dict[str, t.MetadataValue] = converted_kwargs
         create_error = cast(
-            "Callable[..., FlextExceptions.BaseError]",
-            FlextExceptions.create,
+            "Callable[..., FlextExceptions.BaseError]", FlextExceptions.create
         )
         error = create_error(message, **kwargs_typed)
         assert isinstance(error, expected_type)
@@ -488,7 +439,6 @@ class TestExceptionMetrics:
         metrics = FlextExceptions.get_metrics()
         assert metrics["total_exceptions"] == 3
         exception_counts = metrics.get("exception_counts")
-        # Type narrowing: exception_counts is dict-like
         if isinstance(exception_counts, dict):
             assert exception_counts.get("FlextExceptions.ValidationError") == 2
             assert exception_counts.get("FlextExceptions.ConfigurationError") == 1
@@ -509,10 +459,8 @@ class TestExceptionLogging:
     def test_exception_string_with_correlation_id(self) -> None:
         """Test exception has correlation ID when auto_correlation=True."""
         error = FlextExceptions.BaseError("Test", auto_correlation=True)
-        # Correlation ID is stored but not in string repr (only error_code and message)
         assert error.correlation_id is not None
         assert error.correlation_id.startswith("exc_")
-        # String contains the message
         assert "Test" in str(error)
 
     def test_exception_error_code_in_string(self) -> None:
@@ -542,7 +490,6 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_comparison(self) -> None:
         """Test FailureLevel enum comparison."""
         failure_level = c.Exceptions.FailureLevel
-        # Test enum members are distinct - use str() to avoid Literal type overlap issues
         strict_val: str = str(failure_level.STRICT.value)
         warn_val: str = str(failure_level.WARN.value)
         permissive_val: str = str(failure_level.PERMISSIVE.value)

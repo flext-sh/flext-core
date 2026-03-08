@@ -102,7 +102,6 @@ class EnumScenarios:
         IsMemberScenario(name="invalid_type", value=123, expected=False),
         IsMemberScenario(name="none", value=None, expected=False),
     ]
-
     IS_SUBSET: ClassVar[list[IsSubsetScenario]] = [
         IsSubsetScenario(
             name="valid_enum_in_subset",
@@ -135,7 +134,6 @@ class EnumScenarios:
             expected=False,
         ),
     ]
-
     PARSE: ClassVar[list[ParseScenario]] = [
         ParseScenario(
             name="valid_string",
@@ -159,7 +157,6 @@ class EnumScenarios:
             expected_error="Invalid Status",
         ),
     ]
-
     PARSE_OR_DEFAULT: ClassVar[list[ParseOrDefaultScenario]] = [
         ParseOrDefaultScenario(
             name="valid_string",
@@ -174,10 +171,7 @@ class EnumScenarios:
             expected=Status.INACTIVE,
         ),
         ParseOrDefaultScenario(
-            name="none",
-            value=None,
-            default=Status.PENDING,
-            expected=Status.PENDING,
+            name="none", value=None, default=Status.PENDING, expected=Status.PENDING
         ),
         ParseOrDefaultScenario(
             name="invalid_string",
@@ -186,7 +180,6 @@ class EnumScenarios:
             expected=Status.PENDING,
         ),
     ]
-
     COERCE_VALIDATOR: ClassVar[list[CoerceValidatorScenario]] = [
         CoerceValidatorScenario(
             name="valid_string",
@@ -245,11 +238,7 @@ class TestuEnumIsSubset:
             if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
-        result = u.Enum.is_subset(
-            Status,
-            scenario.valid_members,
-            value_typed,
-        )
+        result = u.Enum.is_subset(Status, scenario.valid_members, value_typed)
         assert result == scenario.expected
 
 
@@ -260,31 +249,19 @@ class TestuEnumParse:
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
         result = u.Enum.parse(Status, scenario.value)
-
         if scenario.expected_success:
-            # Type annotation: Status is StrEnum, compatible with t.ContainerValue
-            # Use explicit type annotation to help mypy infer TValue
             expected_status_cast: t.ContainerValue = cast(
-                "t.ContainerValue",
-                scenario.expected_status,
+                "t.ContainerValue", scenario.expected_status
             )
-            # Type annotation: mypy cannot infer TValue from StrEnum, specify explicitly
-            # Cast result to r[t.ContainerValue] and expected_value to t.ContainerValue
-            result_typed: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
-                result,
-            )
+            result_typed: r[t.ContainerValue] = cast("r[t.ContainerValue]", result)
             expected_typed: t.ContainerValue = expected_status_cast
-            u.Tests.Result.assert_success_with_value(
-                result_typed,
-                expected_typed,
-            )
+            u.Tests.Result.assert_success_with_value(result_typed, expected_typed)
         else:
             u.Tests.Result.assert_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None
-                and scenario.expected_error in result.error
+                and (scenario.expected_error in result.error)
             )
 
 
@@ -292,17 +269,11 @@ class TestuEnumParseOrDefault:
     """Test FlextUtilitiesEnum.parse_or_default."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        EnumScenarios.PARSE_OR_DEFAULT,
-        ids=lambda s: s.name,
+        "scenario", EnumScenarios.PARSE_OR_DEFAULT, ids=lambda s: s.name
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        result = u.Enum.parse_or_default(
-            Status,
-            scenario.value,
-            scenario.default,
-        )
+        result = u.Enum.parse_or_default(Status, scenario.value, scenario.default)
         assert result == scenario.expected
 
 
@@ -310,9 +281,7 @@ class TestuEnumCoerceValidator:
     """Test FlextUtilitiesEnum.coerce_validator."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        EnumScenarios.COERCE_VALIDATOR,
-        ids=lambda s: s.name,
+        "scenario", EnumScenarios.COERCE_VALIDATOR, ids=lambda s: s.name
     )
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
@@ -322,7 +291,6 @@ class TestuEnumCoerceValidator:
             if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
-
         if scenario.expected_success:
             result = validator(value)
             assert result == scenario.expected_status
@@ -360,7 +328,6 @@ class TestuEnumCoerceByNameValidator:
     def test_coerce_by_name_validator_invalid(self) -> None:
         """Test coerce_by_name_validator with invalid value."""
         validator = u.Enum.coerce_by_name_validator(Status)
-
         with pytest.raises(ValueError) as exc_info:
             validator("invalid")
         assert "Invalid Status" in str(exc_info.value)
@@ -397,5 +364,4 @@ class TestuEnumMetadata:
         """Test that metadata methods are cached."""
         values1 = u.Enum.values(Status)
         values2 = u.Enum.values(Status)
-        # Should return same object due to caching
         assert values1 is values2

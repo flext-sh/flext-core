@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from flext_core import FlextRuntime, p, r, t
+from flext_core import FlextRuntime, p, r, t, u
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -25,10 +25,7 @@ from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.enum import FlextUtilitiesEnum
 from flext_core._utilities.file_ops import FlextUtilitiesFileOps
 from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards import (
-    FlextUtilitiesGuards,
-    validate_pydantic_model,
-)
+from flext_core._utilities.guards import FlextUtilitiesGuards, validate_pydantic_model
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core._utilities.pagination import FlextUtilitiesPagination
@@ -54,8 +51,6 @@ class FlextUtilities:
         value = u.get(data, "key")
         mapped = u.map(items, fn)
     """
-
-    # === FACADE CLASSES - Real inheritance ===
 
     class Args(FlextUtilitiesArgs):
         """Args utility class - real inheritance."""
@@ -114,28 +109,17 @@ class FlextUtilities:
     class Text(FlextUtilitiesText):
         """Text utility class - real inheritance."""
 
-    # =========================================================================
-    # STATIC METHOD ALIASES - All from _utilities/*.py
-    # =========================================================================
-
-    # Args
     get_enum_params = staticmethod(FlextUtilitiesArgs.get_enum_params)
     parse_kwargs = staticmethod(FlextUtilitiesArgs.parse_kwargs)
     validated = staticmethod(FlextUtilitiesArgs.validated)
     validated_with_result = staticmethod(FlextUtilitiesArgs.validated_with_result)
-
-    # Cache
     clear_object_cache = staticmethod(FlextUtilitiesCache.clear_object_cache)
     generate_cache_key = staticmethod(FlextUtilitiesCache.generate_cache_key)
     has_cache_attributes = staticmethod(FlextUtilitiesCache.has_cache_attributes)
     normalize_component = staticmethod(FlextUtilitiesCache.normalize_component)
     sort_dict_keys = staticmethod(FlextUtilitiesCache.sort_dict_keys)
     sort_key = staticmethod(FlextUtilitiesCache.sort_key)
-
-    # Cast (use u.cast_generic or u.Mapper.cast_generic at call sites)
     cast_generic = staticmethod(FlextUtilitiesMapper.cast_generic)
-
-    # Collection
     batch = staticmethod(FlextUtilitiesCollection.batch)
     chunk = staticmethod(FlextUtilitiesCollection.chunk)
     coerce_dict_to_bool = staticmethod(FlextUtilitiesCollection.coerce_dict_to_bool)
@@ -163,26 +147,22 @@ class FlextUtilities:
     mul = staticmethod(FlextUtilitiesCollection.mul)
     extract_mapping_items = staticmethod(FlextUtilitiesCollection.extract_mapping_items)
     extract_callable_mapping = staticmethod(
-        FlextUtilitiesCollection.extract_callable_mapping,
+        FlextUtilitiesCollection.extract_callable_mapping
     )
     parse_mapping = staticmethod(FlextUtilitiesCollection.parse_mapping)
     parse_sequence = staticmethod(FlextUtilitiesCollection.parse_sequence)
     partition = staticmethod(FlextUtilitiesCollection.partition)
     process = staticmethod(FlextUtilitiesCollection.process)
     unique = staticmethod(FlextUtilitiesCollection.unique)
-
-    # Checker
     compute_accepted_message_types = staticmethod(
-        FlextUtilitiesChecker.compute_accepted_message_types,
+        FlextUtilitiesChecker.compute_accepted_message_types
     )
-
-    # Configuration
     build_options_from_kwargs = staticmethod(
-        FlextUtilitiesConfiguration.build_options_from_kwargs,
+        FlextUtilitiesConfiguration.build_options_from_kwargs
     )
     bulk_register = staticmethod(FlextUtilitiesConfiguration.bulk_register)
     create_settings_config = staticmethod(
-        FlextUtilitiesConfiguration.create_settings_config,
+        FlextUtilitiesConfiguration.create_settings_config
     )
     get_parameter = staticmethod(FlextUtilitiesConfiguration.get_parameter)
     get_singleton = staticmethod(FlextUtilitiesConfiguration.get_singleton)
@@ -192,53 +172,40 @@ class FlextUtilities:
     set_parameter = staticmethod(FlextUtilitiesConfiguration.set_parameter)
     set_singleton = staticmethod(FlextUtilitiesConfiguration.set_singleton)
     validate_config_class = staticmethod(
-        FlextUtilitiesConfiguration.validate_config_class,
+        FlextUtilitiesConfiguration.validate_config_class
     )
-
-    # Context
     clone_container = staticmethod(FlextUtilitiesContext.clone_container)
     clone_runtime = staticmethod(FlextUtilitiesContext.clone_runtime)
     create_datetime_proxy = staticmethod(FlextUtilitiesContext.create_datetime_proxy)
     create_dict_proxy = staticmethod(FlextUtilitiesContext.create_dict_proxy)
     create_str_proxy = staticmethod(FlextUtilitiesContext.create_str_proxy)
-
-    # Conversion - use direct static method alias
-    # Tests should use u.Conversion.conversion() directly for proper overload resolution
     conversion = staticmethod(FlextUtilitiesConversion.conversion)
     join = staticmethod(FlextUtilitiesConversion.join)
     normalize = staticmethod(FlextUtilitiesConversion.normalize)
     to_str = staticmethod(FlextUtilitiesConversion.to_str)
     to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
     to_flexible_value = staticmethod(FlextUtilitiesConversion.to_flexible_value)
-
-    # FileOps
     write_file = staticmethod(FlextUtilitiesFileOps.write_file)
     write_stdout = staticmethod(FlextUtilitiesFileOps.write_stdout)
-
-    # Deprecation
     deprecated = staticmethod(FlextUtilitiesDeprecation.deprecated)
     deprecated_class = staticmethod(FlextUtilitiesDeprecation.deprecated_class)
     deprecated_parameter = staticmethod(FlextUtilitiesDeprecation.deprecated_parameter)
     warn_once = staticmethod(FlextUtilitiesDeprecation.warn_once)
-
-    # Domain
     compare_entities_by_id = staticmethod(FlextUtilitiesDomain.compare_entities_by_id)
     compare_value_objects_by_value = staticmethod(
-        FlextUtilitiesDomain.compare_value_objects_by_value,
+        FlextUtilitiesDomain.compare_value_objects_by_value
     )
     hash_entity_by_id = staticmethod(FlextUtilitiesDomain.hash_entity_by_id)
     hash_value_object_by_value = staticmethod(
-        FlextUtilitiesDomain.hash_value_object_by_value,
+        FlextUtilitiesDomain.hash_value_object_by_value
     )
     validate_entity_has_id = staticmethod(FlextUtilitiesDomain.validate_entity_has_id)
     validate_value_object_immutable = staticmethod(
-        FlextUtilitiesDomain.validate_value_object_immutable,
+        FlextUtilitiesDomain.validate_value_object_immutable
     )
-
-    # Enum
     coerce_validator = staticmethod(FlextUtilitiesEnum.coerce_validator)
     create_discriminated_union = staticmethod(
-        FlextUtilitiesEnum.create_discriminated_union,
+        FlextUtilitiesEnum.create_discriminated_union
     )
     create_enum = staticmethod(FlextUtilitiesEnum.create_enum)
     get_enum_values = staticmethod(FlextUtilitiesEnum.get_enum_values)
@@ -248,22 +215,18 @@ class FlextUtilities:
     names = staticmethod(FlextUtilitiesEnum.names)
     parse_enum = staticmethod(FlextUtilitiesEnum.parse)
     values = staticmethod(FlextUtilitiesEnum.values)
-
-    # Generators
     create_dynamic_type_subclass = staticmethod(
-        FlextUtilitiesGenerators.create_dynamic_type_subclass,
+        FlextUtilitiesGenerators.create_dynamic_type_subclass
     )
     ensure_dict = staticmethod(FlextUtilitiesGenerators.ensure_dict)
     ensure_trace_context = staticmethod(FlextUtilitiesGenerators.ensure_trace_context)
     generate = staticmethod(FlextUtilitiesGenerators.generate)
     generate_datetime_utc = staticmethod(FlextUtilitiesGenerators.generate_datetime_utc)
     generate_iso_timestamp = staticmethod(
-        FlextUtilitiesGenerators.generate_iso_timestamp,
+        FlextUtilitiesGenerators.generate_iso_timestamp
     )
     generate_operation_id = staticmethod(FlextUtilitiesGenerators.generate_operation_id)
     generate_short_id = staticmethod(FlextUtilitiesGenerators.Random.generate_short_id)
-
-    # Guards
     chk = staticmethod(FlextUtilitiesGuards.chk)
     empty = staticmethod(FlextUtilitiesGuards.empty)
     extract_mapping_or_none = staticmethod(FlextUtilitiesGuards.extract_mapping_or_none)
@@ -272,7 +235,7 @@ class FlextUtilities:
     in_ = staticmethod(FlextUtilitiesGuards.in_)
     is_configuration_dict = staticmethod(FlextUtilitiesGuards.is_configuration_dict)
     is_configuration_mapping = staticmethod(
-        FlextUtilitiesGuards.is_configuration_mapping,
+        FlextUtilitiesGuards.is_configuration_mapping
     )
     is_context = staticmethod(FlextUtilitiesGuards.is_context)
     is_dict_non_empty = staticmethod(FlextUtilitiesGuards.is_dict_non_empty)
@@ -288,12 +251,8 @@ class FlextUtilities:
     is_mapping = staticmethod(FlextUtilitiesGuards.is_mapping)
     none_ = staticmethod(FlextUtilitiesGuards.none_)
     is_result_like = staticmethod(FlextUtilitiesGuards.is_result_like)
-    normalize_to_metadata_value = staticmethod(
-        FlextRuntime.normalize_to_metadata_value,
-    )
+    normalize_to_metadata_value = staticmethod(FlextRuntime.normalize_to_metadata_value)
     require_initialized = staticmethod(FlextUtilitiesGuards.require_initialized)
-
-    # Mapper
     agg = staticmethod(FlextUtilitiesMapper.agg)
     build = staticmethod(FlextUtilitiesMapper.build)
     build_flags_dict = staticmethod(FlextUtilitiesMapper.build_flags_dict)
@@ -307,7 +266,7 @@ class FlextUtilities:
     ensure_str = staticmethod(FlextUtilitiesMapper.ensure_str)
     ensure_str_or_none = staticmethod(FlextUtilitiesMapper.ensure_str_or_none)
     narrow_to_general_value_type = staticmethod(
-        FlextUtilitiesMapper.narrow_to_general_value_type,
+        FlextUtilitiesMapper.narrow_to_general_value_type
     )
     extract = staticmethod(FlextUtilitiesMapper.extract)
     fields = staticmethod(FlextUtilitiesMapper.fields)
@@ -316,10 +275,7 @@ class FlextUtilities:
 
     @staticmethod
     def get(
-        data: p.AccessibleData,
-        key: str,
-        *,
-        default: t.ContainerValue | None = None,
+        data: p.AccessibleData, key: str, *, default: t.ContainerValue | None = None
     ) -> t.ContainerValue:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)
@@ -329,42 +285,35 @@ class FlextUtilities:
     key_by = staticmethod(FlextUtilitiesMapper.key_by)
     map_dict_keys = staticmethod(FlextUtilitiesMapper.map_dict_keys)
     normalize_context_values = staticmethod(
-        FlextUtilitiesMapper.normalize_context_values,
+        FlextUtilitiesMapper.normalize_context_values
     )
     omit = staticmethod(FlextUtilitiesMapper.omit)
     pick = staticmethod(FlextUtilitiesMapper.pick)
     pluck = staticmethod(FlextUtilitiesMapper.pluck)
     process_context_data = staticmethod(FlextUtilitiesMapper.process_context_data)
     prop = staticmethod(FlextUtilitiesMapper.prop)
-    # NOTE: take has complex overloads - use u.Mapper.take() for type inference
     take = staticmethod(FlextUtilitiesMapper.take)
     transform = staticmethod(FlextUtilitiesMapper.transform)
     transform_values = staticmethod(FlextUtilitiesMapper.transform_values)
-
-    # Model
     dump = staticmethod(FlextUtilitiesModel.dump)
     from_kwargs = staticmethod(FlextUtilitiesModel.from_kwargs)
     load = staticmethod(FlextUtilitiesModel.load)
     merge_defaults = staticmethod(FlextUtilitiesModel.merge_defaults)
     normalize_to_metadata = staticmethod(FlextUtilitiesModel.normalize_to_metadata)
     update = staticmethod(FlextUtilitiesModel.update)
-
-    # Pagination
     build_pagination_response = staticmethod(
-        FlextUtilitiesPagination.build_pagination_response,
+        FlextUtilitiesPagination.build_pagination_response
     )
     extract_page_params = staticmethod(FlextUtilitiesPagination.extract_page_params)
     extract_pagination_config = staticmethod(
-        FlextUtilitiesPagination.extract_pagination_config,
+        FlextUtilitiesPagination.extract_pagination_config
     )
     prepare_pagination_data = staticmethod(
-        FlextUtilitiesPagination.prepare_pagination_data,
+        FlextUtilitiesPagination.prepare_pagination_data
     )
     validate_pagination_params = staticmethod(
-        FlextUtilitiesPagination.validate_pagination_params,
+        FlextUtilitiesPagination.validate_pagination_params
     )
-
-    # Reliability
     calculate_delay = staticmethod(FlextUtilitiesReliability.calculate_delay)
     chain = staticmethod(FlextUtilitiesReliability.chain)
     compose = staticmethod(FlextUtilitiesReliability.compose)
@@ -378,23 +327,16 @@ class FlextUtilities:
     then = staticmethod(FlextUtilitiesReliability.then)
     with_retry = staticmethod(FlextUtilitiesReliability.with_retry)
     with_timeout = staticmethod(FlextUtilitiesReliability.with_timeout)
-
-    # Runtime
     is_dict_like = staticmethod(FlextRuntime.is_dict_like)
     is_list_like = staticmethod(FlextRuntime.is_list_like)
     normalize_to_general_value = staticmethod(FlextRuntime.normalize_to_general_value)
-
     runtime_generate_datetime_utc = staticmethod(FlextRuntime.generate_datetime_utc)
     generate_id = staticmethod(FlextRuntime.generate_id)
     generate_prefixed_id = staticmethod(FlextRuntime.generate_prefixed_id)
-
-    # Text
     clean_text = staticmethod(FlextUtilitiesText.clean_text)
     format_app_id = staticmethod(FlextUtilitiesText.format_app_id)
     safe_string = staticmethod(FlextUtilitiesText.safe_string)
     truncate_text = staticmethod(FlextUtilitiesText.truncate_text)
-
-    # Parser - Direct access aliases (u.parse, u.convert, u.conv_*, u.norm_*)
     parse = staticmethod(FlextUtilitiesParser.parse)
     convert = staticmethod(FlextUtilitiesParser.convert)
     conv_str = staticmethod(FlextUtilitiesParser.conv_str)
@@ -406,13 +348,9 @@ class FlextUtilities:
     norm_list = staticmethod(FlextUtilitiesParser.norm_list)
     norm_join = staticmethod(FlextUtilitiesParser.norm_join)
     norm_in = staticmethod(FlextUtilitiesParser.norm_in)
-
-    # Validation - Core
     validate_length = staticmethod(FlextUtilitiesGuards.validate_length)
     validate_pattern = staticmethod(FlextUtilitiesGuards.validate_pattern)
     validate_positive = staticmethod(FlextUtilitiesGuards.validate_positive)
-
-    # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
     err = staticmethod(FlextUtilitiesResultHelpers.err)
 
@@ -443,9 +381,4 @@ class FlextUtilities:
 
 
 u = FlextUtilities
-
-__all__ = [
-    "FlextUtilities",
-    "u",
-    "validate_pydantic_model",
-]
+__all__ = ["FlextUtilities", "u", "validate_pydantic_model"]

@@ -40,25 +40,13 @@ class CoverageScenarios:
 
     CHAINING_SCENARIOS: ClassVar[list[ResultChainingScenario]] = [
         ResultChainingScenario(
-            "map_chaining",
-            "hello",
-            ["upper", "append_excl"],
-            True,
-            "HELLO!",
+            "map_chaining", "hello", ["upper", "append_excl"], True, "HELLO!"
         ),
         ResultChainingScenario(
-            "flat_map_chaining",
-            "hi",
-            ["double", "double"],
-            True,
-            "hihihihi",
+            "flat_map_chaining", "hi", ["double", "double"], True, "hihihihi"
         ),
         ResultChainingScenario(
-            "error_propagation",
-            "input",
-            ["fail", "upper"],
-            False,
-            None,
+            "error_propagation", "input", ["fail", "upper"], False, None
         ),
     ]
 
@@ -126,7 +114,6 @@ class TestPhase2FinalCoveragePush:
         config_dict = original.model_dump()
         assert isinstance(config_dict, dict)
         assert config_dict["app_name"] == "json_test"
-        # Exclude computed fields that have no setters
         config_dict_filtered = {
             k: v
             for k, v in config_dict.items()

@@ -51,7 +51,6 @@ class Ex09FlextDecorators(Examples):
     def _demo_combined(self) -> None:
         """Exercise combined decorator in non-railway and railway modes."""
         self.section("combined")
-
         combined_standard_operation = self.rand_str(12)
         combined_railway_operation = self.rand_str(12)
 
@@ -85,7 +84,6 @@ class Ex09FlextDecorators(Examples):
         std_result = combined_standard()
         rail_ok = combined_railway(True)
         rail_fail = combined_railway(False)
-
         self.check(
             "combined.standard_matches",
             std_result == f"{self._token_service_value}|{combined_standard_operation}",
@@ -105,13 +103,10 @@ class Ex09FlextDecorators(Examples):
     def _demo_deprecated(self) -> None:
         """Exercise deprecated decorator warning behavior."""
         self.section("deprecated")
-
         decorator_exists = hasattr(FlextDecorators, "deprecated")
         self.check("deprecated.exists", decorator_exists)
-
         if not decorator_exists:
             return
-
         deprecated_note = self.rand_str(12)
         source_value = self.rand_int(1, 1000)
 
@@ -123,7 +118,6 @@ class Ex09FlextDecorators(Examples):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always", DeprecationWarning)
             result = old_api(source_value)
-
         self.check("deprecated.result_matches", result == source_value + 1)
         self.check("deprecated.warning_count", len(caught) == 1)
         self.check(
@@ -138,7 +132,6 @@ class Ex09FlextDecorators(Examples):
     def _demo_factory(self) -> None:
         """Exercise factory decorator metadata with all parameter variations."""
         self.section("factory")
-
         factory_default_name = f"svc.{self.rand_str(6)}"
         factory_custom_name = f"svc.{self.rand_str(6)}"
         default_value = self.rand_str(10)
@@ -157,7 +150,6 @@ class Ex09FlextDecorators(Examples):
         attr_name = c.Discovery.FACTORY_ATTR
         default_cfg = getattr(factory_default, attr_name)
         custom_cfg = getattr(factory_custom, attr_name)
-
         self.check(
             "factory.default.name_matches",
             getattr(default_cfg, "name", "") == factory_default_name,
@@ -199,7 +191,6 @@ class Ex09FlextDecorators(Examples):
             "inject.kwarg_override_matches",
             token_value(service=override_service) == override_service,
         )
-
         missing_default_value = self.rand_str(8)
         missing_provided_value = self.rand_str(8)
 
@@ -216,7 +207,6 @@ class Ex09FlextDecorators(Examples):
     def _demo_log_operation(self) -> None:
         """Exercise log_operation with named/default operation and perf toggle."""
         self.section("log_operation")
-
         named_operation = self.rand_str(12)
 
         @d.log_operation(named_operation)
@@ -233,8 +223,7 @@ class Ex09FlextDecorators(Examples):
 
         self.check("log_operation.named_matches", log_named() == named_operation)
         self.check(
-            "log_operation.default_track_perf",
-            log_default_perf() == "log_default_perf",
+            "log_operation.default_track_perf", log_default_perf() == "log_default_perf"
         )
 
     def _demo_railway(self) -> None:
@@ -256,7 +245,6 @@ class Ex09FlextDecorators(Examples):
         right = self.rand_int(1, 500)
         ok_result = add(left, right)
         fail_result = fail_railway()
-
         alias_value = self.rand_int(1, 500)
         self.check("railway.alias_r.ok", r[int].ok(alias_value).value == alias_value)
         self.check("railway.ok.is_success", ok_result.is_success)
@@ -307,7 +295,6 @@ class Ex09FlextDecorators(Examples):
         self.check("retry.linear.attempts", linear_state["attempts"] == 2)
         self.check("retry.exponential.result", retry_exponential() == "exp-2")
         self.check("retry.exponential.attempts", exp_state["attempts"] == 2)
-
         try:
             retry_fails()
             self.check("retry.failure.raised", False)
@@ -338,7 +325,6 @@ class Ex09FlextDecorators(Examples):
 
         self.check("timeout.default.ok_nonempty", bool(timeout_default()))
         self.check("timeout.explicit.ok_nonempty", bool(timeout_explicit_ok()))
-
         try:
             timeout_fail()
             self.check("timeout.failure.raised", False)
@@ -350,9 +336,7 @@ class Ex09FlextDecorators(Examples):
     def _demo_track_operation(self) -> None:
         """Exercise track_operation with correlation on and off."""
         self.section("track_operation")
-
         FlextContext.Utilities.clear_context()
-
         with_corr_operation = self.rand_str(12)
 
         @d.track_operation(with_corr_operation, track_correlation=True)
@@ -364,7 +348,6 @@ class Ex09FlextDecorators(Examples):
             )
 
         with_corr = tracked_with_correlation()
-
         FlextContext.Utilities.clear_context()
 
         @d.track_operation(track_correlation=False)
@@ -376,7 +359,6 @@ class Ex09FlextDecorators(Examples):
             )
 
         without_corr = tracked_without_correlation()
-
         self.check(
             "track_operation.with_corr.operation", with_corr[0] == with_corr_operation
         )
@@ -390,13 +372,12 @@ class Ex09FlextDecorators(Examples):
     def _demo_track_performance(self) -> None:
         """Exercise track_performance with named and default operation names."""
         self.section("track_performance")
-
         perf_operation_name = self.rand_str(10)
 
         @d.log_operation(perf_operation_name)
         def perf_named(value: int) -> tuple[int, str | None]:
             """Return transformed value plus operation name from context."""
-            return value * 2, FlextContext.Request.get_operation_name()
+            return (value * 2, FlextContext.Request.get_operation_name())
 
         @d.log_operation()
         def perf_default() -> str | None:
@@ -407,20 +388,16 @@ class Ex09FlextDecorators(Examples):
         named_value, named_operation = perf_named(base_value)
         self.check("track_performance.named.value", named_value == base_value * 2)
         self.check(
-            "track_performance.named.operation",
-            named_operation == perf_operation_name,
+            "track_performance.named.operation", named_operation == perf_operation_name
         )
         self.check(
-            "track_performance.default.operation",
-            perf_default() == "perf_default",
+            "track_performance.default.operation", perf_default() == "perf_default"
         )
 
     def _demo_with_context(self) -> None:
         """Exercise with_context binding and None-value filtering."""
         self.section("with_context")
-
         FlextContext.Utilities.clear_context()
-
         tenant = self.rand_str(8)
         retries = self.rand_int(1, 10)
         enabled = self.rand_bool()
@@ -445,7 +422,6 @@ class Ex09FlextDecorators(Examples):
             if u.Guards.is_type(after_tenant_raw, (str, int, bool))
             else None
         )
-
         self.check("with_context.inside.tenant", inside.get("tenant") == tenant)
         self.check("with_context.inside.retries", inside.get("retries") == retries)
         self.check("with_context.inside.enabled", inside.get("enabled") == enabled)
@@ -461,7 +437,6 @@ class Ex09FlextDecorators(Examples):
     def _demo_with_correlation(self) -> None:
         """Exercise with_correlation correlation-id creation behavior."""
         self.section("with_correlation")
-
         FlextContext.Utilities.clear_context()
 
         @d.with_correlation()

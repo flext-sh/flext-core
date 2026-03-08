@@ -9,16 +9,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import BaseModel
 
 from flext_infra import FlextInfraJsonService
 
-
-class SampleModel(BaseModel):
-    """Sample model for testing."""
-
-    name: str
-    value: int
+from ._models import SampleModel
 
 
 class TestFlextInfraJsonService:
@@ -29,9 +23,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "test.json"
         json_file.write_text('{"key": "value", "number": 42}', encoding="utf-8")
         service = FlextInfraJsonService()
-
         result = service.read(json_file)
-
         assert result.is_success
         assert result.value["key"] == "value"
         assert result.value["number"] == 42
@@ -40,9 +32,7 @@ class TestFlextInfraJsonService:
         """Test reading a nonexistent file returns empty mapping."""
         json_file = tmp_path / "missing.json"
         service = FlextInfraJsonService()
-
         result = service.read(json_file)
-
         assert result.is_success
         assert result.value == {}
 
@@ -51,9 +41,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "invalid.json"
         json_file.write_text("{invalid json}", encoding="utf-8")
         service = FlextInfraJsonService()
-
         result = service.read(json_file)
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert isinstance(result.error, str)
@@ -64,9 +52,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "array.json"
         json_file.write_text("[1, 2, 3]", encoding="utf-8")
         service = FlextInfraJsonService()
-
         result = service.read(json_file)
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "must be object" in result.error
@@ -76,9 +62,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "output.json"
         service = FlextInfraJsonService()
         payload: dict[str, str | int] = {"key": "value", "number": 42}
-
         result = service.write(json_file, payload)
-
         assert result.is_success
         assert json_file.exists()
         content = json_file.read_text(encoding="utf-8")
@@ -90,9 +74,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "model.json"
         service = FlextInfraJsonService()
         model = SampleModel(name="test", value=123)
-
         result = service.write(json_file, model)
-
         assert result.is_success
         assert json_file.exists()
 
@@ -101,9 +83,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "nested" / "deep" / "file.json"
         service = FlextInfraJsonService()
         payload = {"key": "value"}
-
         result = service.write(json_file, payload)
-
         assert result.is_success
         assert json_file.exists()
 
@@ -112,12 +92,9 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "sorted.json"
         service = FlextInfraJsonService()
         payload = {"z": 1, "a": 2, "m": 3}
-
         result = service.write(json_file, payload, sort_keys=True)
-
         assert result.is_success
         content = json_file.read_text(encoding="utf-8")
-        # Check that 'a' appears before 'z' in the output
         assert content.index('"a"') < content.index('"z"')
 
     def test_write_with_ensure_ascii(self, tmp_path: Path) -> None:
@@ -125,31 +102,27 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "ascii.json"
         service = FlextInfraJsonService()
         payload = {"text": "café"}
-
         result = service.write(json_file, payload, ensure_ascii=True)
-
         assert result.is_success
         content = json_file.read_text(encoding="utf-8")
-        assert "\\u" in content  # Unicode escape
+        assert "\\u" in content
 
     def test_write_permission_error(self, tmp_path: Path) -> None:
         """Test write failure on permission error."""
         json_file = tmp_path / "readonly.json"
         json_file.write_text("{}", encoding="utf-8")
-        json_file.chmod(0o444)  # Read-only
+        json_file.chmod(292)
         service = FlextInfraJsonService()
-
         try:
             result = service.write(json_file, {"key": "value"})
             assert result.is_failure
         finally:
-            json_file.chmod(0o644)  # Restore permissions for cleanup
+            json_file.chmod(420)
 
     def test_write_returns_true_on_success(self, tmp_path: Path) -> None:
         """Test write returns True on success."""
         json_file = tmp_path / "test.json"
         service = FlextInfraJsonService()
-
         result = service.write(json_file, {"key": "value"})
         assert result.is_success
         assert result.value is True
@@ -157,7 +130,6 @@ class TestFlextInfraJsonService:
     def test_removed_direct_api_methods_raise_attribute_error(self) -> None:
         """Direct-return compatibility methods are no longer available."""
         service = FlextInfraJsonService()
-
         with pytest.raises(AttributeError):
             _ = getattr(service, "load")
         with pytest.raises(AttributeError):

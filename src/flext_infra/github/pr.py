@@ -50,11 +50,7 @@ class FlextInfraPrManager:
         self._versioning = versioning or FlextInfraVersioningService()
 
     def checks(
-        self,
-        repo_root: Path,
-        selector: str,
-        *,
-        strict: bool = False,
+        self, repo_root: Path, selector: str, *, strict: bool = False
     ) -> r[Mapping[str, t.Scalar]]:
         """Run PR checks.
 
@@ -126,16 +122,14 @@ class FlextInfraPrManager:
         )
         if existing_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
-                existing_result.error or "failed to check existing PRs",
+                existing_result.error or "failed to check existing PRs"
             )
-
-        existing = cast("Mapping[str, t.Scalar]", existing_result.unwrap())  # type: ignore[redundant-cast]
+        existing = cast("Mapping[str, t.Scalar]", existing_result.unwrap())
         if existing:
             return r[Mapping[str, t.Scalar]].ok({
                 c.Infra.ReportKeys.STATUS: "already-open",
                 "pr_url": cast("str", existing.get(c.Infra.ReportKeys.URL)),
             })
-
         command = [
             c.Infra.Cli.GH,
             c.Infra.Cli.GhCmd.PR,
@@ -151,15 +145,12 @@ class FlextInfraPrManager:
         ]
         if draft:
             command.append("--draft")
-
         result: r[str] = self._runner.capture(command, cwd=repo_root)
         if result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(
-                result.error or "PR creation failed",
-            )
+            return r[Mapping[str, t.Scalar]].fail(result.error or "PR creation failed")
         return r[Mapping[str, t.Scalar]].ok({
             c.Infra.ReportKeys.STATUS: "created",
-            "pr_url": cast("str", result.unwrap()),  # type: ignore[redundant-cast]
+            "pr_url": cast("str", result.unwrap()),
         })
 
     def merge(
@@ -190,17 +181,15 @@ class FlextInfraPrManager:
         """
         if selector == head:
             pr_result = self.open_pr_for_head(repo_root, head)
-            if pr_result.is_success and not pr_result.unwrap():
+            if pr_result.is_success and (not pr_result.unwrap()):
                 return r[Mapping[str, t.ContainerValue]].ok({
                     c.Infra.ReportKeys.STATUS: "no-open-pr"
                 })
-
         merge_flag = {
             c.Infra.Cli.GhCmd.MERGE: "--merge",
             c.Infra.Verbs.REBASE: "--rebase",
             c.Infra.Cli.GhCmd.SQUASH: "--squash",
         }.get(method, "--squash")
-
         command = [
             c.Infra.Cli.GH,
             c.Infra.Cli.GhCmd.PR,
@@ -212,7 +201,6 @@ class FlextInfraPrManager:
             command.append("--auto")
         if delete_branch:
             command.append("--delete-branch")
-
         result = self._runner.run(command, cwd=repo_root)
         if result.is_failure:
             stderr = result.error or ""
@@ -229,12 +217,10 @@ class FlextInfraPrManager:
                 )
                 if update_result.is_success:
                     result = self._runner.run(command, cwd=repo_root)
-
         if result.is_failure:
             return r[Mapping[str, t.ContainerValue]].fail(
                 result.error or "merge failed"
             )
-
         info: MutableMapping[str, t.ContainerValue] = {
             c.Infra.ReportKeys.STATUS: "merged"
         }
@@ -244,11 +230,7 @@ class FlextInfraPrManager:
                 info[c.Infra.ReportKeys.RELEASE] = release_result.value
         return r[t.ConfigurationMapping].ok(info)
 
-    def open_pr_for_head(
-        self,
-        repo_root: Path,
-        head: str,
-    ) -> r[Mapping[str, t.Scalar]]:
+    def open_pr_for_head(self, repo_root: Path, head: str) -> r[Mapping[str, t.Scalar]]:
         """Find an open PR for the given head branch.
 
         Args:
@@ -276,9 +258,7 @@ class FlextInfraPrManager:
             cwd=repo_root,
         )
         if result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(
-                result.error or "failed to list PRs",
-            )
+            return r[Mapping[str, t.Scalar]].fail(result.error or "failed to list PRs")
         payload_result = u.Infra.Io.parse(str(result.unwrap()))
         if payload_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
@@ -292,18 +272,14 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].ok({})
         try:
             typed_first = TypeAdapter(dict[str, t.Scalar]).validate_python(
-                first,
-                strict=False,
+                first, strict=False
             )
         except ValidationError:
             return r[Mapping[str, t.Scalar]].ok({})
         return r[Mapping[str, t.Scalar]].ok(typed_first)
 
     def status(
-        self,
-        repo_root: Path,
-        base: str,
-        head: str,
+        self, repo_root: Path, base: str, head: str
     ) -> r[Mapping[str, t.Scalar]]:
         """Get PR status for the given head branch.
 
@@ -319,9 +295,8 @@ class FlextInfraPrManager:
         pr_result: r[Mapping[str, t.Scalar]] = self.open_pr_for_head(repo_root, head)
         if pr_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
-                pr_result.error or "status check failed",
+                pr_result.error or "status check failed"
             )
-
         info: MutableMapping[str, t.Scalar] = {
             "repo": str(repo_root),
             "base": base,
@@ -356,9 +331,7 @@ class FlextInfraPrManager:
         )
 
     def _trigger_release_if_needed(
-        self,
-        repo_root: Path,
-        head: str,
+        self, repo_root: Path, head: str
     ) -> r[Mapping[str, str]]:
         """Trigger release workflow if repo supports it.
 
@@ -375,13 +348,11 @@ class FlextInfraPrManager:
             return r[Mapping[str, str]].ok({
                 c.Infra.ReportKeys.STATUS: "no-release-workflow"
             })
-
         tag_result: r[str] = self._versioning.release_tag_from_branch(head)
         if tag_result.is_failure:
             return r[Mapping[str, str]].ok({
                 c.Infra.ReportKeys.STATUS: "no-release-tag"
             })
-
         tag = tag_result.unwrap()
         view_result = self._runner.run(
             [c.Infra.Cli.GH, c.Infra.ReportKeys.RELEASE, c.Infra.Cli.GhCmd.VIEW, tag],
@@ -392,7 +363,6 @@ class FlextInfraPrManager:
                 c.Infra.ReportKeys.STATUS: "release-exists",
                 c.Infra.ReportKeys.TAG: tag,
             })
-
         dispatch_result = self._runner.run(
             [
                 c.Infra.Cli.GH,
@@ -453,54 +423,39 @@ def main() -> int:
     args = _parse_args()
     repo_root = args.repo_root.resolve()
     manager = FlextInfraPrManager()
-
     git = FlextInfraGitService()
     head_result = git.current_branch(repo_root)
     head = cast("str", args.head or head_result.unwrap_or(c.Infra.Git.HEAD))
     base = args.base
     selector = _selector(args.number, head)
-
     if args.action == c.Infra.ReportKeys.STATUS:
         result = manager.status(repo_root, base, head)
         if result.is_success:
             return 0
         output.error(result.error or "status failed")
         return 1
-
     if args.action == c.Infra.Cli.GhCmd.CREATE:
         title = args.title or f"chore: sync {head}"
         body = args.body or "Automated PR managed by flext_infra.github.pr"
         result = manager.create(
-            repo_root,
-            base,
-            head,
-            title,
-            body,
-            draft=args.draft == 1,
+            repo_root, base, head, title, body, draft=args.draft == 1
         )
         if result.is_success:
             return 0
         output.error(result.error or "create failed")
         return 1
-
     if args.action == c.Infra.Cli.GhCmd.VIEW:
         result_view = manager.view(repo_root, selector)
         if result_view.is_success:
             return 0
         output.error(result_view.error or "view failed")
         return 1
-
     if args.action == c.Infra.Verbs.CHECKS:
-        result = manager.checks(
-            repo_root,
-            selector,
-            strict=args.checks_strict == 1,
-        )
+        result = manager.checks(repo_root, selector, strict=args.checks_strict == 1)
         if result.is_success:
             return 0
         output.error(result.error or "checks failed")
         return 1
-
     if args.action == c.Infra.Cli.GhCmd.MERGE:
         merge_result = manager.merge(
             repo_root,
@@ -515,14 +470,12 @@ def main() -> int:
             return 0
         output.error(merge_result.error or "merge failed")
         return 1
-
     if args.action == c.Infra.Verbs.CLOSE:
         result_close = manager.close(repo_root, selector)
         if result_close.is_success:
             return 0
         output.error(result_close.error or "close failed")
         return 1
-
     msg = f"unknown action: {args.action}"
     raise RuntimeError(msg)
 

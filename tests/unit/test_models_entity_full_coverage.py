@@ -22,21 +22,14 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
-
     cfg = ComparableConfigMap(root={"a": 1})
     assert (cfg == 1) is False
-
-    # Source raises TypeError for non-dict/Mapping/None data
     with pytest.raises(
-        TypeError,
-        match="Domain event data must be a dictionary or None",
+        TypeError, match="Domain event data must be a dictionary or None"
     ):
         FlextModelsEntity.DomainEvent(
-            event_type="evt",
-            aggregate_id="agg",
-            data=object(),
+            event_type="evt", aggregate_id="agg", data=object()
         )
-
     entry = FlextModelsEntity.Entry(unique_id="e1")
     bad = entry.add_domain_events_bulk(
         cast("Sequence[tuple[str, m.ConfigMap | None]]", "invalid")

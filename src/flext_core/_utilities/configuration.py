@@ -106,8 +106,6 @@ class FlextUtilitiesConfiguration:
             int: Numeric logging level (e.g., logging.INFO = 20)
 
         """
-        # Use default log level from constants to avoid circular import
-        # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
         default_log_level = c.Logging.DEFAULT_LEVEL.upper()
         return getattr(logging, default_log_level, logging.INFO)
 
@@ -148,46 +146,22 @@ class FlextUtilitiesConfiguration:
             )
 
         """
-        # Check for custom env file path
         custom_env_file = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)
             if custom_path.exists():
                 return str(custom_path.resolve())
-            # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
             return custom_env_file
-
-        # Default: use .env from current directory
         default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
         if default_path.exists():
             return str(default_path.resolve())
-
-        # Return default string if no .env file exists (Pydantic handles gracefully)
         return c.Platform.ENV_FILE_DEFAULT
-
-    # =========================================================================
-    # Sentinel Pattern for Parameter Access
-    # =========================================================================
-    # Business Rule: Distinguish "not found" from "value is None"
-    #
-    # Problem: When get_parameter returns None, callers can't distinguish:
-    # - Parameter exists with None value (valid configuration)
-    # - Parameter doesn't exist at all (missing configuration)
-    #
-    # Solution: Sentinel tuple pattern (found: bool, value)
-    # - (True, value) → Parameter found, value may be None or any type
-    # - (False, None) → Parameter not found in this access strategy
-    #
-    # This pattern is internal (private helper methods) and converted to
-    # either return value or NotFoundError at the public API boundary.
-    # =========================================================================
 
     _NOT_FOUND: tuple[bool, None] = (False, None)
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | object,
-        parameter: str,
+        obj: p.HasModelDump | object, parameter: str
     ) -> tuple[bool, t.ContainerValue]:
         """Try to get attribute value from object via hasattr/getattr.
 
@@ -217,8 +191,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.ContainerValue],
-        parameter: str,
+        obj: Mapping[str, t.ContainerValue], parameter: str
     ) -> tuple[bool, t.ContainerValue]:
         """Try to get parameter from dict-like object.
 
@@ -246,15 +219,13 @@ class FlextUtilitiesConfiguration:
             (True, value) if key exists, (False, None) if not dict-like or missing
 
         """
-        # Type narrowing: is_dict_like ensures obj is Mapping-like
         if isinstance(obj, Mapping) and parameter in obj:
             return (True, obj[parameter])
         return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: object,
-        parameter: str,
+        obj: object, parameter: str
     ) -> tuple[bool, t.ContainerValue]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
@@ -274,8 +245,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_model_dump(
-        obj: p.HasModelDump,
-        parameter: str,
+        obj: p.HasModelDump, parameter: str
     ) -> tuple[bool, t.ContainerValue]:
         """Try to get parameter from HasModelDump protocol object.
 
@@ -318,7 +288,7 @@ class FlextUtilitiesConfiguration:
         default_factory: Callable[[], T_Model],
         **kwargs: t.Scalar,
     ) -> FlextRuntime.RuntimeResult[T_Model]:
-        """Build Pydantic options model from explicit options or kwargs.
+        '''Build Pydantic options model from explicit options or kwargs.
 
         Business Rule: Options+Config+kwargs Pattern (FLEXT Convention)
         ===============================================================
@@ -362,7 +332,7 @@ class FlextUtilitiesConfiguration:
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)
                 def get_ldif_config_default() -> WriteFormatOptions:
-                    \"\"\"Get default options from ldif config namespace.\"\"\"
+                    """Get default options from ldif config namespace."""
                     config_class = self.config.get_namespace_config("ldif")
                     if config_class is None:
                         msg = "ldif namespace not registered in config"
@@ -395,20 +365,14 @@ class FlextUtilitiesConfiguration:
         Returns:
             r[T_Model]: ok(validated_model) or fail(error_msg)
 
-        """
+        '''
         try:
-            # Step 1: Get base options (explicit or from config defaults)
             if explicit_options is not None:
                 base_options = explicit_options
             else:
                 base_options = default_factory()
-
-            # Step 2: If no kwargs, return base options directly
             if not kwargs:
                 return r[T_Model].ok(base_options)
-
-            # Step 3: Get valid field names from model class
-            # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
             if FlextRuntime.is_dict_like(model_fields_attr):
                 valid_field_names = {
@@ -416,21 +380,14 @@ class FlextUtilitiesConfiguration:
                 }
             else:
                 valid_field_names = set()
-
-            # Step 4: Filter kwargs to only valid field names
             valid_kwargs = FlextModelsContainers.ConfigMap(root={})
             invalid_kwargs: list[str] = []
-
             for key, value in kwargs.items():
                 if key in valid_field_names:
                     valid_kwargs[key] = value
                 else:
                     invalid_kwargs.append(key)
-
-            # Get class name for logging
             class_name = getattr(model_class, "__name__", "UnknownModel")
-
-            # Step 5: Log warning for invalid kwargs (don't fail)
             if invalid_kwargs:
                 FlextUtilitiesConfiguration._get_logger().warning(
                     "Ignored invalid kwargs for %s: %s. Valid fields: %s",
@@ -438,43 +395,25 @@ class FlextUtilitiesConfiguration:
                     str(invalid_kwargs),
                     str(sorted(valid_field_names)),
                 )
-
-            # Step 6: If no valid overrides, return base options
             if not valid_kwargs:
                 return r[T_Model].ok(base_options)
-
-            # Step 7: Create new model with base values + kwargs overrides
-            # Use model_dump to get base values, then update with kwargs
-            # NOTE: Cannot use u.merge() here due to circular import
-            # (utilities.py imports from _utilities/configuration.py)
             base_dict = base_options.model_dump()
             base_dict.update(valid_kwargs)
-
-            # Step 8: Validate and create new model instance
             merged_options = model_class(**base_dict)
-
             return r[T_Model].ok(merged_options)
-
         except (TypeError, ValueError) as e:
-            # Pydantic validation error
             class_name = getattr(model_class, "__name__", "UnknownModel")
-            return r[T_Model].fail(
-                f"Failed to build {class_name}: {e}",
-            )
+            return r[T_Model].fail(f"Failed to build {class_name}: {e}")
         except (AttributeError, RuntimeError, KeyError) as e:
-            # Unexpected error
             class_name = getattr(model_class, "__name__", "UnknownModel")
             FlextUtilitiesConfiguration._get_logger().exception(
-                "Unexpected error building options model",
+                "Unexpected error building options model"
             )
-            return r[T_Model].fail(
-                f"Unexpected error building {class_name}: {e}",
-            )
+            return r[T_Model].fail(f"Unexpected error building {class_name}: {e}")
 
     @staticmethod
     def bulk_register(
-        container: p.DI,
-        registrations: Mapping[str, t.Scalar | m.ConfigMap | m.Dict],
+        container: p.DI, registrations: Mapping[str, t.Scalar | m.ConfigMap | m.Dict]
     ) -> r[int]:
         """Register multiple services at once.
 
@@ -492,17 +431,15 @@ class FlextUtilitiesConfiguration:
                 register_result = container.register(name, value)
                 if not isinstance(register_result, p.ResultLike):
                     return r[int].fail(
-                        f"Bulk registration failed at {name}: register returned non-result",
+                        f"Bulk registration failed at {name}: register returned non-result"
                     )
                 if register_result.is_failure:
                     return r[int].fail(
-                        f"Bulk registration failed at {name}: {register_result.error}",
+                        f"Bulk registration failed at {name}: {register_result.error}"
                     )
                 count += 1
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                return r[int].fail(
-                    f"Bulk registration failed at {name}: {e}",
-                )
+                return r[int].fail(f"Bulk registration failed at {name}: {e}")
         return r[int].ok(count)
 
     @staticmethod
@@ -557,8 +494,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: p.HasModelDump | t.ConfigurationMapping,
-        parameter: str,
+        obj: p.HasModelDump | t.ConfigurationMapping, parameter: str
     ) -> t.ContainerValue:
         """Get parameter value from a configuration object.
 
@@ -604,44 +540,32 @@ class FlextUtilitiesConfiguration:
             e.NotFoundError: If parameter is not defined
 
         """
-        # Strategy 1: HasModelDump protocol
         if isinstance(obj, p.HasModelDump):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
-                obj,
-                parameter,
+                obj, parameter
             )
             if found:
                 return value
-
-        # Strategy 2: Dict-like (Mapping / m.ConfigMap)
         if isinstance(obj, Mapping):
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                obj,
-                parameter,
+                obj, parameter
             )
             if found:
                 return value
-
         found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            obj,
-            parameter,
+            obj, parameter
         )
         if found:
             return duck_value
-
         found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
         if found:
             return attr_val
-
         class_name = obj.__class__.__name__
         msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 
     @staticmethod
-    def get_singleton(
-        singleton_class: type,
-        parameter: str,
-    ) -> t.ContainerValue:
+    def get_singleton(singleton_class: type, parameter: str) -> t.ContainerValue:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)
@@ -679,37 +603,25 @@ class FlextUtilitiesConfiguration:
             e.NotFoundError: If parameter is not defined
 
         """
-        # Use getattr to help pyright infer types correctly
         if hasattr(singleton_class, "get_global"):
-            get_global_attr = getattr(
-                singleton_class,
-                "get_global",
-                None,
-            )
-            if get_global_attr is not None and callable(
-                get_global_attr,
-            ):
-                # callable() check ensures this is callable - call directly
+            get_global_attr = getattr(singleton_class, "get_global", None)
+            if get_global_attr is not None and callable(get_global_attr):
                 instance = get_global_attr()
                 found, value = (
                     FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-                        instance,
-                        parameter,
+                        instance, parameter
                     )
                 )
                 if found:
                     return value
                 found, value = FlextUtilitiesConfiguration._try_get_attr(
-                    instance,
-                    parameter,
+                    instance, parameter
                 )
                 if found:
                     return value
                 msg = f"Parameter '{parameter}' is not defined"
                 raise e.NotFoundError(msg)
-
         msg = f"Class {singleton_class.__name__} does not have get_global method"
-
         raise e.ValidationError(msg)
 
     @staticmethod
@@ -739,19 +651,15 @@ class FlextUtilitiesConfiguration:
                 return r[bool].fail("Factory registration failed")
             if register_result.is_failure:
                 return r[bool].fail(
-                    register_result.error or "Factory registration failed",
+                    register_result.error or "Factory registration failed"
                 )
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(
-                f"Factory registration failed for {name}: {e}",
-            )
+            return r[bool].fail(f"Factory registration failed for {name}: {e}")
 
     @staticmethod
     def register_singleton(
-        container: p.DI,
-        name: str,
-        instance: t.Scalar | m.ConfigMap | m.Dict,
+        container: p.DI, name: str, instance: t.Scalar | m.ConfigMap | m.Dict
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -769,18 +677,14 @@ class FlextUtilitiesConfiguration:
             if not isinstance(register_result, p.ResultLike):
                 return r[bool].fail("Registration failed")
             if register_result.is_failure:
-                return r[bool].fail(
-                    register_result.error or "Registration failed",
-                )
+                return r[bool].fail(register_result.error or "Registration failed")
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Registration failed for {name}: {e}")
 
     @staticmethod
     def set_parameter(
-        obj: p.HasModelDump | object,
-        parameter: str,
-        value: t.Scalar | m.ConfigMap,
+        obj: p.HasModelDump | object, parameter: str, value: t.Scalar | m.ConfigMap
     ) -> bool:
         """Set parameter value on a configuration object with validation.
 
@@ -821,8 +725,6 @@ class FlextUtilitiesConfiguration:
 
         """
         try:
-            # Check if parameter exists in model fields for Pydantic objects
-            # Access model_fields from class directly (Pydantic 2.11+ compatibility)
             obj_class = obj.__class__
             if hasattr(obj_class, "model_fields"):
                 model_fields_dict = getattr(obj_class, "model_fields", {})
@@ -830,20 +732,14 @@ class FlextUtilitiesConfiguration:
                     return False
                 if parameter not in model_fields_dict:
                     return False
-
-            # Use setattr which triggers Pydantic validation if applicable
             setattr(obj, parameter, value)
             return True
-
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # Validation error or attribute error returns False
             return False
 
     @staticmethod
     def set_singleton(
-        singleton_class: type,
-        parameter: str,
-        value: t.Scalar | m.ConfigMap,
+        singleton_class: type, parameter: str, value: t.Scalar | m.ConfigMap
     ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -879,37 +775,22 @@ class FlextUtilitiesConfiguration:
         """
         if not hasattr(singleton_class, "get_global"):
             return r[bool].fail(
-                f"Class {singleton_class.__name__} does not have get_global method",
+                f"Class {singleton_class.__name__} does not have get_global method"
             )
-
-        # Use getattr to help pyright infer types correctly
-        get_global_attr = getattr(
-            singleton_class,
-            "get_global",
-            None,
-        )
+        get_global_attr = getattr(singleton_class, "get_global", None)
         if get_global_attr is None or not callable(get_global_attr):
             return r[bool].fail(
-                f"get_global is not callable on {singleton_class.__name__}",
+                f"get_global is not callable on {singleton_class.__name__}"
             )
-
-        # callable() check above ensures this is callable - call directly
         instance = get_global_attr()
         model_dump_attr = getattr(instance, "model_dump", None)
         if model_dump_attr is None or not callable(model_dump_attr):
-            return r[bool].fail(
-                "Instance does not implement model_dump() method",
-            )
-
-        success = FlextUtilitiesConfiguration.set_parameter(
-            instance,
-            parameter,
-            value,
-        )
+            return r[bool].fail("Instance does not implement model_dump() method")
+        success = FlextUtilitiesConfiguration.set_parameter(instance, parameter, value)
         if success:
             return r[bool].ok(value=True)
         return r[bool].fail(
-            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}",
+            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}"
         )
 
     @staticmethod
@@ -944,22 +825,13 @@ class FlextUtilitiesConfiguration:
 
         """
         try:
-            # config_class annotation already guarantees class input
-
-            # Check model_config existence
             class_name = getattr(config_class, "__name__", "UnknownClass")
             if not hasattr(config_class, "model_config"):
                 return r[bool].fail(f"{class_name} must define model_config")
-
-            # Try to instantiate to ensure it's valid
             _ = config_class()
-
             return r[bool].ok(True)
-
         except (TypeError, ValueError, AttributeError) as e:
             return r[bool].fail(f"Configuration class validation failed: {e!s}")
 
 
-__all__ = [
-    "FlextUtilitiesConfiguration",
-]
+__all__ = ["FlextUtilitiesConfiguration"]

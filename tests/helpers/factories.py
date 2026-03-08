@@ -10,51 +10,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import StrEnum
 from itertools import count
 from typing import ClassVar, override
 
-from flext_core import FlextModels, FlextResult, FlextService, m, t
-from tests.constants import TestsFlextConstants
+from flext_core import FlextResult, FlextService, m, t
 
-# =========================================================================
-# Test Models
-# =========================================================================
+from ..constants import TestsFlextConstants
+from ..models import TestsFlextModels
 
-
-class User(FlextModels.Entity):
-    """Test user entity."""
-
-    user_id: str
-    name: str
-    email: str
-    is_active: bool = True
-
-
-class ServiceTestType(StrEnum):
-    """Service test types."""
-
-    GET_USER = "get_user"
-    VALIDATE = "validate"
-    FAIL = "fail"
-
-
-@dataclass(frozen=True, slots=True)
-class ServiceTestCase:
-    """Test case data container (not a test class)."""
-
-    service_type: ServiceTestType
-    input_value: str
-    expected_success: bool = True
-    expected_error: str | None = None
-    extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
-    description: str = field(default="", compare=False)
-
-
-# =========================================================================
-# Service Implementations
-# =========================================================================
+User = TestsFlextModels.Core.User
+ServiceTestType = TestsFlextModels.Core.ServiceTestType
+ServiceTestCase = TestsFlextModels.Core.ServiceTestCase
 
 
 class GetUserService(FlextService[User]):
@@ -70,7 +36,7 @@ class GetUserService(FlextService[User]):
                 user_id=self.user_id,
                 name=f"{TestsFlextConstants.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                 email=f"user{self.user_id}{TestsFlextConstants.Services.DEFAULT_EMAIL_DOMAIN}",
-            ),
+            )
         )
 
 
@@ -84,10 +50,10 @@ class ValidatingService(FlextService[str]):
     def execute(self) -> FlextResult[str]:
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
-            return FlextResult.fail(
-                f"Value must be at least {self.min_length} characters",
+            return FlextResult[str].fail(
+                f"Value must be at least {self.min_length} characters"
             )
-        return FlextResult.ok(self.value_input.upper())
+        return FlextResult[str].ok(self.value_input.upper())
 
 
 class FailingService(FlextService[str]):
@@ -98,10 +64,9 @@ class FailingService(FlextService[str]):
     @override
     def execute(self) -> FlextResult[str]:
         """Always fails."""
-        return FlextResult.fail(self.error_message)
+        return FlextResult[str].fail(self.error_message)
 
 
-# Auto-execute variants
 class GetUserServiceAuto(GetUserService):
     """Auto-executing GetUserService."""
 
@@ -118,11 +83,6 @@ class FailingServiceAuto(FailingService):
     """Auto-executing FailingService."""
 
     auto_execute: ClassVar[bool] = True
-
-
-# =========================================================================
-# Native Python Factories (No External Dependencies)
-# =========================================================================
 
 
 class UserFactory:
@@ -204,13 +164,7 @@ class GetUserServiceFactory:
 class ValidatingServiceFactory:
     """Factory for ValidatingService."""
 
-    _words: ClassVar[list[str]] = [
-        "alpha",
-        "bravo",
-        "charlie",
-        "delta",
-        "echo",
-    ]
+    _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -230,8 +184,7 @@ class ValidatingServiceFactory:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
         return ValidatingService.model_construct(
-            value_input=actual_value,
-            min_length=min_length,
+            value_input=actual_value, min_length=min_length
         )
 
     @classmethod
@@ -250,9 +203,7 @@ class FailingServiceFactory:
 
     @classmethod
     def build(
-        cls,
-        *,
-        error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
+        cls, *, error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
     ) -> FailingService:
         """Build a FailingService instance."""
         return FailingService.model_construct(error_message=error_message)
@@ -289,13 +240,7 @@ class GetUserServiceAutoFactory:
 class ValidatingServiceAutoFactory:
     """Factory for ValidatingServiceAuto."""
 
-    _words: ClassVar[list[str]] = [
-        "alpha",
-        "bravo",
-        "charlie",
-        "delta",
-        "echo",
-    ]
+    _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -315,8 +260,7 @@ class ValidatingServiceAutoFactory:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
         return ValidatingServiceAuto.model_construct(
-            value_input=actual_value,
-            min_length=min_length,
+            value_input=actual_value, min_length=min_length
         )
 
     @classmethod
@@ -335,9 +279,7 @@ class FailingServiceAutoFactory:
 
     @classmethod
     def build(
-        cls,
-        *,
-        error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
+        cls, *, error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
         return FailingServiceAuto.model_construct(error_message=error_message)
@@ -414,11 +356,6 @@ class ServiceTestCaseFactory:
         cls._word_index = 0
 
 
-# =========================================================================
-# Service Factory Registry with Pattern Matching
-# =========================================================================
-
-
 class ServiceFactoryRegistry:
     """Registry for service factories using pattern matching."""
 
@@ -437,32 +374,23 @@ class ServiceFactoryRegistry:
 
     @classmethod
     def create_service(
-        cls,
-        case: ServiceTestCase,
+        cls, case: ServiceTestCase
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type using pattern matching."""
         service: FlextService[User] | FlextService[str]
-
         match case.service_type:
             case ServiceTestType.GET_USER:
                 service = GetUserServiceFactory.build(user_id=case.input_value)
             case ServiceTestType.VALIDATE:
                 service = ValidatingServiceFactory.build(
-                    value_input=case.input_value,
-                    min_length=case.extra_param,
+                    value_input=case.input_value, min_length=case.extra_param
                 )
             case ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
             case _:
                 msg = f"Unsupported service type: {case.service_type}"
                 raise ValueError(msg)
-
         return service
-
-
-# =========================================================================
-# Test Data Generators
-# =========================================================================
 
 
 class TestDataGenerators:
@@ -474,7 +402,7 @@ class TestDataGenerators:
         return [
             ServiceTestCase(
                 service_type=ServiceTestType.GET_USER,
-                input_value=str(i * 100 + 1),  # "1", "101", "201" etc.
+                input_value=str(i * 100 + 1),
                 description=f"Valid user ID {i}",
             )
             for i in range(1, num_cases + 1)
@@ -496,7 +424,7 @@ class TestDataGenerators:
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
-            ),
+            )
         ]
 
     @staticmethod
@@ -521,64 +449,39 @@ class TestDataGenerators:
         ]
 
 
-# =========================================================================
-# Unified Test Cases Factory
-# =========================================================================
-
-
 class ServiceTestCases:
     """Unified factory for all test cases using advanced patterns."""
 
-    # Success cases for GetUserService - dynamically generated
     USER_SUCCESS: ClassVar[list[ServiceTestCase]] = (
         TestDataGenerators.generate_user_success_cases()
     )
-
-    # Validation success cases - dynamically generated
     VALIDATE_SUCCESS: ClassVar[list[ServiceTestCase]] = (
         TestDataGenerators.generate_validation_success_cases()
     )
-
-    # Validation failure cases - dynamically generated
     VALIDATE_FAILURE: ClassVar[list[ServiceTestCase]] = (
         TestDataGenerators.generate_validation_failure_cases()
     )
 
     @staticmethod
-    def create_service(
-        case: ServiceTestCase,
-    ) -> FlextService[User] | FlextService[str]:
+    def create_service(case: ServiceTestCase) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type."""
         return ServiceFactoryRegistry.create_service(case)
-
-
-# =========================================================================
-# Generic Model Factories (Pydantic v2 Models for All FLEXT Projects)
-# =========================================================================
 
 
 class GenericModelFactory:
     """Factories for generic reusable models (Value, Snapshot, Progress)."""
 
     @staticmethod
-    def operation_context(
-        source: str | None = None,
-    ) -> m.OperationContext:
+    def operation_context(source: str | None = None) -> m.OperationContext:
         """Create OperationContext value object."""
         return m.OperationContext(source=source)
 
     @staticmethod
     def service_snapshot(
-        name: str,
-        version: str | None = None,
-        status: str = "active",
+        name: str, version: str | None = None, status: str = "active"
     ) -> m.Service:
         """Create ServiceSnapshot."""
-        return m.Service(
-            name=name,
-            version=version,
-            status=status,
-        )
+        return m.Service(name=name, version=version, status=status)
 
     @staticmethod
     def configuration_snapshot(
@@ -595,38 +498,24 @@ class GenericModelFactory:
 
     @staticmethod
     def health_status(
-        *,
-        healthy: bool = True,
-        checks: dict[str, bool] | None = None,
+        *, healthy: bool = True, checks: dict[str, bool] | None = None
     ) -> m.Health:
         """Create HealthStatus."""
-        return m.Health(
-            healthy=healthy,
-            checks=m.Dict.model_validate(checks or {}),
-        )
+        return m.Health(healthy=healthy, checks=m.Dict.model_validate(checks or {}))
 
     @staticmethod
     def operation_progress(
-        success: int = 0,
-        failure: int = 0,
-        skipped: int = 0,
+        success: int = 0, failure: int = 0, skipped: int = 0
     ) -> m.Operation:
         """Create OperationProgress."""
         return m.Operation(
-            success_count=success,
-            failure_count=failure,
-            skipped_count=skipped,
+            success_count=success, failure_count=failure, skipped_count=skipped
         )
 
     @staticmethod
     def conversion_progress() -> m.Conversion:
         """Create ConversionProgress."""
         return m.Conversion()
-
-
-# =========================================================================
-# Factory Reset Utility
-# =========================================================================
 
 
 def reset_all_factories() -> None:

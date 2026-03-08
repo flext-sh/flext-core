@@ -52,28 +52,20 @@ class TestFlextInfraCodegenLazyInit:
 
     def test_generate_output_to_sandboxed_path(self, tmp_path: Path) -> None:
         """Test that generated output goes to sandboxed tmp_path, not src/."""
-        # Create a minimal __init__.py in sandbox
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test package."""\n'
-            "from test_pkg.module import TestClass\n"
-            '__all__ = ["TestClass"]\n'
+            '"""Test package."""\nfrom test_pkg.module import TestClass\n__all__ = ["TestClass"]\n'
         )
-
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
-
-        # Verify output is in tmp_path, not in actual src/flext_infra/
         assert result >= 0
-        # Verify the file still exists in sandbox
         assert init_file.exists()
 
     def test_generator_is_flext_service(self, tmp_path: Path) -> None:
         """Test that FlextInfraCodegenLazyInit is a FlextService[str]."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        # Verify it's an instance of FlextService
         assert isinstance(generator, FlextService)
 
     def test_run_returns_integer_exit_code(self, tmp_path: Path) -> None:
@@ -150,14 +142,12 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text('"""Test."""\n__all__ = ["Test"]')
-
-        # Make file unreadable
-        init_file.chmod(0o000)
+        init_file.chmod(0)
         try:
-            result = generator._process_file(init_file, check_only=False)  # Line 76
+            result = generator._process_file(init_file, check_only=False)
             assert result == -1
         finally:
-            init_file.chmod(0o644)
+            init_file.chmod(420)
 
     def test_process_file_with_parse_error(self, tmp_path: Path) -> None:
         """Test _process_file handles parse errors gracefully."""
@@ -165,8 +155,7 @@ class TestLazyInitEdgeCases:
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
-        init_file.write_text("invalid python syntax ][")  # Line 97
-
+        init_file.write_text("invalid python syntax ][")
         result = generator._process_file(init_file, check_only=False)
         assert result == -1
 
@@ -176,8 +165,7 @@ class TestLazyInitEdgeCases:
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
-        init_file.write_text('"""Test."""\nfrom module import something')  # Line 99
-
+        init_file.write_text('"""Test."""\nfrom module import something')
         result = generator._process_file(init_file, check_only=False)
         assert result is None
 
@@ -187,8 +175,7 @@ class TestLazyInitEdgeCases:
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
-        init_file.write_text('"""Test."""\n__all__ = []')  # Lines 101-102
-
+        init_file.write_text('"""Test."""\n__all__ = []')
         result = generator._process_file(init_file, check_only=False)
         assert result is None
 
@@ -200,11 +187,9 @@ class TestLazyInitEdgeCases:
         init_file = src_dir / "__init__.py"
         original_content = '"""Test."""\nfrom module import Test\n__all__ = ["Test"]'
         init_file.write_text(original_content)
-
-        result = generator._process_file(init_file, check_only=True)  # Line 129-131
+        result = generator._process_file(init_file, check_only=True)
         assert result is not None
         assert result >= 0
-        # Verify file wasn't modified
         assert init_file.read_text() == original_content
 
     def test_process_file_with_inline_constants(self, tmp_path: Path) -> None:
@@ -214,12 +199,8 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test."""\n'
-            '__version__ = "1.0.0"\n'
-            "from module import Test\n"
-            '__all__ = ["__version__", "Test"]'
-        )  # Lines 135-137
-
+            '"""Test."""\n__version__ = "1.0.0"\nfrom module import Test\n__all__ = ["__version__", "Test"]'
+        )
         result = generator._process_file(init_file, check_only=False)
         assert result is not None
         assert result >= 0
@@ -231,11 +212,8 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test."""\n'
-            '_LAZY_IMPORTS = {"Test": ("module", "Test")}\n'
-            '__all__ = ["Test"]'
-        )  # Line 142
-
+            '"""Test."""\n_LAZY_IMPORTS = {"Test": ("module", "Test")}\n__all__ = ["Test"]'
+        )
         result = generator._process_file(init_file, check_only=False)
         assert result is not None
         assert result >= 0
@@ -243,43 +221,42 @@ class TestLazyInitEdgeCases:
     def test_infer_package_without_src_directory(self) -> None:
         """Test _infer_package when path doesn't contain /src/."""
         path = Path("/workspace/lib/test/__init__.py")
-        pkg = _infer_package(path)  # Line 159
+        pkg = _infer_package(path)
         assert pkg == ""
 
     def test_resolve_module_with_zero_level(self) -> None:
         """Test _resolve_module with level 0 (absolute import)."""
-        result = _resolve_module("module.submodule", 0, "current.pkg")  # Line 165
+        result = _resolve_module("module.submodule", 0, "current.pkg")
         assert result == "module.submodule"
 
     def test_resolve_module_with_empty_current_pkg(self) -> None:
         """Test _resolve_module with empty current package."""
-        result = _resolve_module("module", 1, "")  # Lines 168-169
+        result = _resolve_module("module", 1, "")
         assert result == "module"
 
     def test_resolve_module_with_level_exceeding_depth(self) -> None:
         """Test _resolve_module when level exceeds package depth."""
-        result = _resolve_module("module", 5, "a.b")  # Lines 168-169
-        # Should return raw module when level is too deep
+        result = _resolve_module("module", 5, "a.b")
         assert result == "module" or result.startswith("a")
 
     def test_extract_docstring_source_without_docstring(self) -> None:
         """Test _extract_docstring_source when no docstring exists."""
         code = "x = 1\ny = 2"
-        tree = ast.parse(code)  # Line 186-189
+        tree = ast.parse(code)
         docstring = _extract_docstring_source(tree, code)
         assert docstring == ""
 
     def test_extract_docstring_source_with_non_string_expr(self) -> None:
         """Test _extract_docstring_source with non-string first expression."""
         code = "123\nx = 1"
-        tree = ast.parse(code)  # Line 186-189
+        tree = ast.parse(code)
         docstring = _extract_docstring_source(tree, code)
         assert docstring == ""
 
     def test_extract_exports_with_tuple_all(self) -> None:
         """Test _extract_exports with __all__ as tuple."""
         code = '__all__ = ("Foo", "Bar")'
-        tree = ast.parse(code)  # Line 207
+        tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
         assert has_all is True
         assert exports == ["Foo", "Bar"]
@@ -287,7 +264,7 @@ class TestLazyInitEdgeCases:
     def test_extract_exports_without_all(self) -> None:
         """Test _extract_exports when __all__ is missing."""
         code = "x = 1"
-        tree = ast.parse(code)  # Line 215
+        tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
         assert has_all is False
         assert exports == []
@@ -295,7 +272,7 @@ class TestLazyInitEdgeCases:
     def test_extract_inline_constants_with_non_string_values(self) -> None:
         """Test _extract_inline_constants ignores non-string values."""
         code = '__version__ = "1.0.0"\n__count__ = 42\n__enabled__ = True'
-        tree = ast.parse(code)  # Line 219
+        tree = ast.parse(code)
         constants = _extract_inline_constants(tree)
         assert "__version__" in constants
         assert "__count__" not in constants
@@ -304,23 +281,22 @@ class TestLazyInitEdgeCases:
     def test_parse_existing_lazy_imports_with_annotated_assignment(self) -> None:
         """Test _parse_existing_lazy_imports with type-annotated assignment."""
         code = '_LAZY_IMPORTS: dict[str, tuple[str, str]] = {"Foo": ("module", "Foo")}'
-        tree = ast.parse(code)  # Lines 233
+        tree = ast.parse(code)
         lazy_map = _parse_existing_lazy_imports(tree)
         assert "Foo" in lazy_map
         assert lazy_map["Foo"] == ("module", "Foo")
 
     def test_parse_existing_lazy_imports_with_invalid_dict(self) -> None:
         """Test _parse_existing_lazy_imports with malformed dict."""
-        code = '_LAZY_IMPORTS = {"Foo": ("module",)}'  # Tuple with only 1 element
-        tree = ast.parse(code)  # Line 280
+        code = '_LAZY_IMPORTS = {"Foo": ("module",)}'
+        tree = ast.parse(code)
         lazy_map = _parse_existing_lazy_imports(tree)
-        # Should skip malformed entries
         assert "Foo" not in lazy_map
 
     def test_derive_lazy_map_with_import_from(self) -> None:
         """Test _derive_lazy_map extracts from ImportFrom statements."""
         code = "from module import Test, Helper"
-        tree = ast.parse(code)  # Line 305
+        tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "current.pkg")
         assert "Test" in lazy_map
         assert "Helper" in lazy_map
@@ -328,7 +304,7 @@ class TestLazyInitEdgeCases:
     def test_derive_lazy_map_with_import_statement(self) -> None:
         """Test _derive_lazy_map extracts from Import statements."""
         code = "import module\nimport other as alias"
-        tree = ast.parse(code)  # Line 321
+        tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "current.pkg")
         assert "module" in lazy_map
         assert "alias" in lazy_map
@@ -336,7 +312,7 @@ class TestLazyInitEdgeCases:
     def test_derive_lazy_map_skips_skip_modules(self) -> None:
         """Test _derive_lazy_map skips modules in _SKIP_MODULES."""
         code = "from typing import List\nfrom module import Test"
-        tree = ast.parse(code)  # Line 324
+        tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "current.pkg")
         assert "List" not in lazy_map
         assert "Test" in lazy_map
@@ -344,61 +320,56 @@ class TestLazyInitEdgeCases:
     def test_derive_lazy_map_with_assignment_aliases(self) -> None:
         """Test _derive_lazy_map captures assignment aliases."""
         code = "from module import FlextConstants\nc = FlextConstants"
-        tree = ast.parse(code)  # Lines 330-335
+        tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "current.pkg")
         assert "c" in lazy_map
 
     def test_derive_lazy_map_fixes_single_letter_aliases(self) -> None:
         """Test _derive_lazy_map fixes single-letter aliases."""
         code = "from module import FlextConstants, FlextModels\nc = FlextConstants"
-        tree = ast.parse(code)  # Lines 340-345
+        tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "current.pkg")
-        # Should map 'c' to FlextConstants
         if "c" in lazy_map:
             assert lazy_map["c"][1] == "FlextConstants"
 
     def test_resolve_unmapped_with_alias_suffix_matching(self, tmp_path: Path) -> None:
         """Test _resolve_unmapped resolves single-letter aliases."""
-        exports_set = {"c", "m", "t"}  # Lines 351-356
+        exports_set = {"c", "m", "t"}
         filtered = {"FlextConstants": ("module", "FlextConstants")}
         pkg_dir = tmp_path
-
         _resolve_unmapped(exports_set, filtered, "test.pkg", pkg_dir)
-        # Should resolve 'c' to FlextConstants
         assert "c" in filtered or "FlextConstants" in filtered
 
     def test_resolve_unmapped_with_version_file(self, tmp_path: Path) -> None:
         """Test _resolve_unmapped resolves __version__ from __version__.py."""
-        exports_set = {"__version__"}  # Lines 372-389
+        exports_set = {"__version__"}
         filtered: dict[str, tuple[str, str]] = {}
         pkg_dir = tmp_path
         version_file = pkg_dir / "__version__.py"
         version_file.write_text('__version__ = "1.0.0"')
-
         _resolve_unmapped(exports_set, filtered, "test.pkg", pkg_dir)
         assert "__version__" in filtered
 
     def test_resolve_unmapped_with_version_info_file(self, tmp_path: Path) -> None:
         """Test _resolve_unmapped resolves __version_info__ from __version__.py."""
-        exports_set = {"__version_info__"}  # Lines 372-389
+        exports_set = {"__version_info__"}
         filtered: dict[str, tuple[str, str]] = {}
         pkg_dir = tmp_path
         version_file = pkg_dir / "__version__.py"
         version_file.write_text("__version_info__ = (1, 0, 0)")
-
         _resolve_unmapped(exports_set, filtered, "test.pkg", pkg_dir)
         assert "__version_info__" in filtered
 
     def test_generate_type_checking_with_empty_groups(self) -> None:
         """Test _generate_type_checking with no imports."""
-        groups: dict[str, list[tuple[str, str]]] = {}  # Line 405-406
+        groups: dict[str, list[tuple[str, str]]] = {}
         lines = _generate_type_checking(groups)
         assert "if TYPE_CHECKING:" in lines
         assert any("pass" in line for line in lines)
 
     def test_generate_type_checking_with_single_module(self) -> None:
         """Test _generate_type_checking with single module."""
-        groups = {"module": [("Test", "Test")]}  # Line 419
+        groups = {"module": [("Test", "Test")]}
         lines = _generate_type_checking(groups)
         assert "from module import" in " ".join(lines)
 
@@ -410,42 +381,38 @@ class TestLazyInitEdgeCases:
                 ("VeryLongClassName2", "VeryLongClassName2"),
                 ("VeryLongClassName3", "VeryLongClassName3"),
             ]
-        }  # Lines 424-426
+        }
         lines = _generate_type_checking(groups)
-        # Should have imports from module
         assert any("module" in line for line in lines)
 
     def test_generate_type_checking_with_alias_imports(self) -> None:
         """Test _generate_type_checking with aliased imports."""
-        groups = {"module": [("c", "FlextConstants"), ("m", "FlextModels")]}  # Line 435
+        groups = {"module": [("c", "FlextConstants"), ("m", "FlextModels")]}
         lines = _generate_type_checking(groups)
         output = " ".join(lines)
         assert "as" in output
 
     def test_generate_file_with_flext_core_package(self, tmp_path: Path) -> None:
         """Test _generate_file uses correct lazy import for flext_core."""
-        exports = ["Test"]  # Line 462
+        exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
-
         content = _generate_file("", exports, filtered, inline_constants, "flext_core")
         assert "flext_core._utilities.lazy" in content
 
     def test_generate_file_with_other_package(self) -> None:
         """Test _generate_file uses correct lazy import for other packages."""
-        exports = ["Test"]  # Line 482
+        exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
-
         content = _generate_file("", exports, filtered, inline_constants, "other_pkg")
         assert "from flext_core.lazy import" in content
 
     def test_generate_file_with_inline_constants(self) -> None:
         """Test _generate_file includes inline constants."""
-        exports = ["__version__", "Test"]  # Line 484
+        exports = ["__version__", "Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants = {"__version__": "1.0.0"}
-
         content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
         assert '__version__ = "1.0.0"' in content
 
@@ -455,7 +422,6 @@ class TestLazyInitEdgeCases:
         exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
-
         content = _generate_file(
             docstring, exports, filtered, inline_constants, "test_pkg"
         )
@@ -464,7 +430,6 @@ class TestLazyInitEdgeCases:
     def test_run_ruff_fix_with_nonexistent_file(self, tmp_path: Path) -> None:
         """Test _run_ruff_fix handles nonexistent files gracefully."""
         nonexistent = tmp_path / "nonexistent.py"
-        # Should not raise exception
         _run_ruff_fix(nonexistent)
 
     def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:
@@ -481,9 +446,7 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text('"""Test."""\ninvalid syntax ][\n__all__ = ["Test"]')
-
         result = generator.run(check_only=False)
-        # Should return 0 because the file is skipped due to parse error
         assert result >= 0
 
     def test_run_with_unmapped_exports_increments_unmapped_count(
@@ -494,13 +457,10 @@ class TestLazyInitEdgeCases:
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
-        # Create a file with unmapped exports
         init_file.write_text(
             '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]'
         )
-
         result = generator.run(check_only=False)
-        # Should return > 0 because there's an unmapped export
         assert result > 0
 
     def test_process_file_with_unmapped_exports_message(self, tmp_path: Path) -> None:
@@ -512,9 +472,7 @@ class TestLazyInitEdgeCases:
         init_file.write_text(
             '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]'
         )
-
         result = generator._process_file(init_file, check_only=False)
-        # Should return 1 (one unmapped export)
         assert result == 1
 
     def test_parse_existing_lazy_imports_with_non_dict_value(
@@ -531,7 +489,6 @@ class TestLazyInitEdgeCases:
         code = "from test_pkg import something"
         tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "test_pkg")
-        # Should not include imports from current package
         assert "something" not in lazy_map
 
     def test_derive_lazy_map_skips_stdlib_imports(self, tmp_path: Path) -> None:
@@ -539,7 +496,6 @@ class TestLazyInitEdgeCases:
         code = "import sys"
         tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "test_pkg")
-        # Should not include sys
         assert "sys" not in lazy_map
 
     def test_derive_lazy_map_fixes_single_letter_aliases_mapping(
@@ -549,7 +505,6 @@ class TestLazyInitEdgeCases:
         code = "from flext_core import FlextConstants\nc = FlextConstants"
         tree = ast.parse(code)
         lazy_map = _derive_lazy_map(tree, "test_pkg")
-        # Should have 'c' mapped to FlextConstants
         assert "c" in lazy_map
         assert lazy_map["c"][1] == "FlextConstants"
 
@@ -563,7 +518,6 @@ class TestLazyInitEdgeCases:
         ]
         lines = _generate_type_checking(groups)
         content = "\n".join(lines)
-        # Should have multi-line import with parentheses
         assert "(" in content or len(lines) > 1
 
     def test_generate_type_checking_with_multiple_modules_spacing(
@@ -574,5 +528,4 @@ class TestLazyInitEdgeCases:
         groups["module_a"] = [("Test1", "Test1")]
         groups["module_b"] = [("Test2", "Test2")]
         lines = _generate_type_checking(groups)
-        # Should have blank line between different modules
         assert "" in lines

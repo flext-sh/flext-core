@@ -68,21 +68,17 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
         try:
             parent = project_root.resolve().parent
             git_marker = parent / c.Infra.Git.DIR
-
             if not git_marker.exists():
                 output.info("Running in standalone mode (no parent workspace detected)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
-
             result = self._git.config_get(parent, "remote.origin.url")
             if result.is_failure:
                 output.info("Running in standalone mode (unable to detect workspace)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
-
             origin = result.value.strip()
             if not origin:
                 output.info("Running in standalone mode (no remote origin found)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
-
             repo_name = self._repo_name_from_url(origin)
             mode = (
                 WorkspaceMode.WORKSPACE
@@ -92,7 +88,6 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
             if mode == WorkspaceMode.STANDALONE:
                 output.info(f"Running in standalone mode (parent repo: {repo_name})")
             return r[WorkspaceMode].ok(mode)
-
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
             output.info(f"Running in standalone mode (detection error: {exc})")
             return r[WorkspaceMode].fail(f"Detection failed: {exc}")
@@ -103,7 +98,4 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
         return r[WorkspaceMode].fail("Use detect() method directly")
 
 
-__all__ = [
-    "FlextInfraWorkspaceDetector",
-    "WorkspaceMode",
-]
+__all__ = ["FlextInfraWorkspaceDetector", "WorkspaceMode"]

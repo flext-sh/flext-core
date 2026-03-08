@@ -35,16 +35,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
     - All generic utilities come from FlextTestsUtilities
     """
 
-    # NOTE: FlextTestsUtilities extends FlextUtilities and provides:
-    # - Result: assert_success, assert_failure, assert_success_with_value, etc.
-    # - TestContext: temporary_attribute context manager
-    # - Factory: create_result, create_test_data
-    # - ModelTestHelpers, RegistryHelpers, ConfigHelpers
-    # - All FlextUtilities classes via inheritance
-    #
-    # These are available through inheritance.
-
-    # Expose FlextUtilities classes through real inheritance
     class Args(u.Args):
         """Args utility class for tests - real inheritance."""
 
@@ -113,7 +103,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             """
             result = operation()
-
             if expected_error is not None:
                 assertion_helpers.assert_flext_result_failure(
                     result,
@@ -125,8 +114,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 )
             else:
                 assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"Expected success for: {description}, got: {result.error}",
+                    result, f"Expected success for: {description}, got: {result.error}"
                 )
                 if expected_value is not None:
                     assert result.value == expected_value, (
@@ -140,9 +128,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """String-like object that raises on split()."""
 
             def split(
-                self,
-                *_args: t.ContainerValue,
-                **_kwargs: t.ContainerValue,
+                self, *_args: t.ContainerValue, **_kwargs: t.ContainerValue
             ) -> list[str]:
                 """Raise error on split attempt."""
                 msg = "Bad split"
@@ -212,7 +198,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """Object with model_dump that raises."""
 
             model_dump: Callable[[], dict[str, t.ContainerValue]] = staticmethod(
-                lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump"))
             )
 
         class BadConfig:
@@ -241,15 +227,12 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             """
             assertion_helpers.assert_flext_result_failure(
-                result,
-                description,
-                error_contains=expected_error,
+                result, description, error_contains=expected_error
             )
 
         @staticmethod
         def assert_success(
-            result: FlextResult[t.ContainerValue],
-            description: str = "",
+            result: FlextResult[t.ContainerValue], description: str = ""
         ) -> None:
             """Assert that result is a success.
 
@@ -260,7 +243,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """
             _ = (
                 assertion_helpers.assert_flext_result_success(result),
-                (f"Expected success for: {description}, got: {result.error}"),
+                f"Expected success for: {description}, got: {result.error}",
             )
 
         @staticmethod
@@ -279,13 +262,11 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """
             _ = (
                 assertion_helpers.assert_flext_result_success(result),
-                (f"Expected success for: {description}, got: {result.error}"),
+                f"Expected success for: {description}, got: {result.error}",
             )
             assert result.value == expected_value, (
                 f"Expected {expected_value}, got {result.value} for: {description}"
             )
 
 
-__all__ = [
-    "TestsFlextUtilities",
-]
+__all__ = ["TestsFlextUtilities"]

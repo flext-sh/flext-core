@@ -40,21 +40,15 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         return False
 
     @staticmethod
-    def _parse_violation(
-        violation_str: str,
-    ) -> m.Infra.Codegen.CensusViolation | None:
+    def _parse_violation(violation_str: str) -> m.Infra.Codegen.CensusViolation | None:
         """Parse a violation string into a CensusViolation model."""
         match = c.Infra.Codegen.VIOLATION_PATTERN.match(violation_str)
         if match is None:
             return None
-
         rule = match.group("rule")
         fixable = FlextInfraCodegenCensus._is_fixable(
-            rule=rule,
-            module=match.group("module"),
-            message=match.group("message"),
+            rule=rule, module=match.group("module"), message=match.group("message")
         )
-
         return m.Infra.Codegen.CensusViolation(
             module=match.group("module"),
             rule=rule,
@@ -69,10 +63,7 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         return r[list[m.Infra.Codegen.CensusReport]].ok(self.run())
 
     def run(
-        self,
-        workspace_root: Path | None = None,
-        *,
-        output_format: str = "json",
+        self, workspace_root: Path | None = None, *, output_format: str = "json"
     ) -> list[m.Infra.Codegen.CensusReport]:
         """Run census on all projects in workspace.
 
@@ -84,12 +75,10 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         workspace = (
             workspace_root if workspace_root is not None else self._workspace_root
         )
-
         discovery = FlextInfraDiscoveryService()
         projects_result = discovery.discover_projects(workspace)
         if not projects_result.is_success:
             return []
-
         reports: list[m.Infra.Codegen.CensusReport] = []
         discovered: Sequence[p.Infra.ProjectInfo] = projects_result.unwrap()
         for project in discovered:
@@ -100,13 +89,11 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         return reports
 
     def _census_project(
-        self,
-        project: p.Infra.ProjectInfo,
+        self, project: p.Infra.ProjectInfo
     ) -> m.Infra.Codegen.CensusReport:
         """Run census on a single project."""
         validator = FlextInfraNamespaceValidator()
         result = validator.validate(project.path, scan_tests=False)
-
         violations: list[m.Infra.Codegen.CensusViolation] = []
         if result.is_success:
             report: m.Infra.Core.ValidationReport = result.unwrap()
@@ -114,7 +101,6 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
                 violation = self._parse_violation(violation_str)
                 if violation is not None:
                     violations.append(violation)
-
         return m.Infra.Codegen.CensusReport(
             project=project.name,
             violations=violations,

@@ -46,9 +46,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
+        self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         """Apply import modernizer or lazy-import hoisting based on fix action."""
         fix_action = (
@@ -56,25 +54,21 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         )
         if "lazy-import" in self.rule_id or fix_action == "hoist_to_module_top":
             return self._fix_lazy_imports(tree)
-
         runtime_aliases = set(c.Infra.Refactor.RUNTIME_ALIAS_NAMES)
         blocked_aliases = self._collect_blocked_aliases(tree, runtime_aliases)
         blocked_aliases.update(
             self._collect_function_shadowed_aliases(tree, runtime_aliases)
         )
-
         forbidden = self.config.get("forbidden_imports")
         if forbidden is None:
             forbidden = [self.config]
         if not forbidden:
-            return tree, []
-
+            return (tree, [])
         imports_to_remove: list[str] = []
         symbols_to_replace: dict[str, str] = {}
         for rule_config in _parse_forbidden_rules(forbidden):
             imports_to_remove.append(rule_config.module)
             symbols_to_replace.update(rule_config.symbol_mapping)
-
         transformer = FlextInfraRefactorImportModernizer(
             imports_to_remove=imports_to_remove,
             symbols_to_replace=symbols_to_replace,
@@ -82,7 +76,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
             blocked_aliases=blocked_aliases,
         )
         wrapper = MetadataWrapper(tree)
-        return wrapper.visit(transformer), transformer.changes
+        return (wrapper.visit(transformer), transformer.changes)
 
     def _bound_name_from_import_alias(self, alias: cst.ImportAlias) -> str:
         if alias.asname is not None and isinstance(alias.asname.name, cst.Name):
@@ -92,16 +86,12 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         return alias.name.attr.value
 
     def _collect_blocked_aliases(
-        self,
-        tree: cst.Module,
-        runtime_aliases: set[str],
+        self, tree: cst.Module, runtime_aliases: set[str]
     ) -> set[str]:
         blocked_aliases: set[str] = set()
-
         for stmt in tree.body:
             if isinstance(stmt, cst.ImportFrom):
                 continue
-
             if not isinstance(stmt, cst.SimpleStatementLine):
                 if (
                     isinstance(stmt, cst.FunctionDef)
@@ -114,7 +104,6 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                 ):
                     blocked_aliases.add(stmt.name.value)
                 continue
-
             for small_stmt in stmt.body:
                 if isinstance(small_stmt, cst.ImportFrom):
                     module_name = self._module_name_from_expr(small_stmt.module)
@@ -127,14 +116,12 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                         if bound_name in runtime_aliases:
                             blocked_aliases.add(bound_name)
                     continue
-
                 if isinstance(small_stmt, cst.Import):
                     for alias in small_stmt.names:
                         bound_name = self._bound_name_from_import_alias(alias)
                         if bound_name in runtime_aliases:
                             blocked_aliases.add(bound_name)
                     continue
-
                 if isinstance(small_stmt, cst.Assign):
                     for assign_target in small_stmt.targets:
                         target = assign_target.target
@@ -144,18 +131,14 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                         ):
                             blocked_aliases.add(target.value)
                     continue
-
                 if isinstance(small_stmt, cst.AnnAssign):
                     target = small_stmt.target
                     if isinstance(target, cst.Name) and target.value in runtime_aliases:
                         blocked_aliases.add(target.value)
-
         return blocked_aliases
 
     def _collect_function_shadowed_aliases(
-        self,
-        tree: cst.Module,
-        runtime_aliases: set[str],
+        self, tree: cst.Module, runtime_aliases: set[str]
     ) -> set[str]:
         shadowed_aliases: set[str] = set()
 
@@ -198,17 +181,14 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
                 self._function_depth += 1
                 param_names = [
                     param.name.value
-                    for param in (
-                        list(node.params.params)
-                        + list(node.params.posonly_params)
-                        + list(node.params.kwonly_params)
-                    )
+                    for param in list(node.params.params)
+                    + list(node.params.posonly_params)
+                    + list(node.params.kwonly_params)
                 ]
                 if isinstance(node.params.star_arg, cst.Param):
                     param_names.append(node.params.star_arg.name.value)
                 if isinstance(node.params.star_kwarg, cst.Param):
                     param_names.append(node.params.star_kwarg.name.value)
-
                 for param_name in param_names:
                     if param_name in runtime_aliases:
                         shadowed_aliases.add(param_name)
@@ -219,7 +199,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
     def _fix_lazy_imports(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
         transformer = FlextInfraRefactorLazyImportFixer()
         new_tree = tree.visit(transformer)
-        return new_tree, transformer.changes
+        return (new_tree, transformer.changes)
 
     def _module_name_from_expr(self, module: cst.BaseExpression | None) -> str:
         if module is None:

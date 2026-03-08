@@ -90,7 +90,6 @@ class FlextInfraPytestDiagExtractor:
         diag.skip_cases = [
             line for line in lines if re.search(r"(^SKIPPED |::.* SKIPPED( |$))", line)
         ]
-
         capture = False
         block: list[str] = []
         for line in lines:
@@ -114,10 +113,8 @@ class FlextInfraPytestDiagExtractor:
             root = DefusedET.parse(junit_path).getroot()
         except DefusedET.ParseError:
             return False
-
         if root is None:
             return False
-
         slow_rows: list[tuple[float, str]] = []
         for case in root.iter("testcase"):
             classname = case.attrib.get("classname", "")
@@ -128,11 +125,9 @@ class FlextInfraPytestDiagExtractor:
             except ValueError:
                 secs = 0.0
             slow_rows.append((secs, label))
-
             failure = case.find("failure")
             error = case.find(c.Infra.Toml.ERROR)
             skipped = case.find("skipped")
-
             if failure is not None:
                 diag.failed_cases.append(label)
                 msg = (failure.attrib.get(c.Infra.ReportKeys.MESSAGE) or "").strip()
@@ -143,7 +138,6 @@ class FlextInfraPytestDiagExtractor:
                 if trace:
                     chunk.append(trace)
                 diag.error_traces.append("\n".join(chunk))
-
             if error is not None:
                 msg = (error.attrib.get(c.Infra.ReportKeys.MESSAGE) or "").strip()
                 trace = (error.text or "").strip()
@@ -153,15 +147,11 @@ class FlextInfraPytestDiagExtractor:
                 if trace:
                     chunk.append(trace)
                 diag.error_traces.append("\n".join(chunk))
-
             if skipped is not None:
                 reason = (
                     skipped.attrib.get(c.Infra.ReportKeys.MESSAGE) or skipped.text or ""
                 ).strip()
-                diag.skip_cases.append(
-                    f"{label} | {reason}" if reason else label,
-                )
-
+                diag.skip_cases.append(f"{label} | {reason}" if reason else label)
         if slow_rows:
             diag.slow_entries = [
                 f"{secs:.6f}s | {label}"
@@ -170,9 +160,7 @@ class FlextInfraPytestDiagExtractor:
         return True
 
     def extract(
-        self,
-        junit_path: Path,
-        log_path: Path,
+        self, junit_path: Path, log_path: Path
     ) -> r[m.Infra.Core.PytestDiagnostics]:
         """Extract diagnostics from JUnit XML and pytest log.
 
@@ -192,15 +180,12 @@ class FlextInfraPytestDiagExtractor:
             )
             lines = log_text.splitlines()
             diag = _DiagResult()
-
             xml_parsed = self._parse_xml(junit_path, diag)
             if not xml_parsed:
                 self._parse_log_into_diag(lines, diag)
-
             self._extract_warnings(lines, diag)
             if not diag.slow_entries:
                 self._extract_slow_from_log(lines, diag)
-
             result = m.Infra.Core.PytestDiagnostics(
                 failed_count=len(diag.failed_cases),
                 error_count=len(diag.error_traces),
@@ -215,7 +200,7 @@ class FlextInfraPytestDiagExtractor:
             return r[m.Infra.Core.PytestDiagnostics].ok(result)
         except (OSError, TypeError, ValueError) as exc:
             return r[m.Infra.Core.PytestDiagnostics].fail(
-                f"pytest diagnostics extraction failed: {exc}",
+                f"pytest diagnostics extraction failed: {exc}"
             )
 
 

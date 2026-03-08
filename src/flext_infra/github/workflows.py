@@ -12,26 +12,16 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_core import r, t
 from flext_infra import (
     FlextInfraJsonService,
     FlextInfraProjectSelector,
     FlextInfraTemplateEngine,
+    m,
 )
 from flext_infra.constants import c
 
-
-class SyncOperation(BaseModel):
-    """Describe one workflow sync operation."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    project: str = Field(..., description="Project name.")
-    path: str = Field(..., description="File path relative to project root.")
-    action: str = Field(..., description="Sync action (create, update, noop, prune).")
-    reason: str = Field(..., description="Reason for the action.")
+SyncOperation = m.Infra.Github.SyncOperation
 
 
 class FlextInfraWorkflowSyncer:
@@ -66,18 +56,15 @@ class FlextInfraWorkflowSyncer:
             body = template_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"failed to read template: {exc}")
-
         header = self._templates.GENERATED_SHELL_HEADER.format(
-            source="flext_infra.github.workflows",
+            source="flext_infra.github.workflows"
         )
         if body.startswith(header):
             return r[str].ok(body)
         return r[str].ok(header + body)
 
     def resolve_source_workflow(
-        self,
-        workspace_root: Path,
-        source_workflow: Path | None = None,
+        self, workspace_root: Path, source_workflow: Path | None = None
     ) -> r[Path]:
         """Resolve the source workflow file path.
 
@@ -93,12 +80,11 @@ class FlextInfraWorkflowSyncer:
             candidate = (
                 source_workflow
                 if source_workflow.is_absolute()
-                else (workspace_root / source_workflow)
+                else workspace_root / source_workflow
             ).resolve()
             if candidate.exists():
                 return r[Path].ok(candidate)
             return r[Path].fail(f"missing source workflow: {candidate}")
-
         default_source = (workspace_root / ".github" / "workflows" / "ci.yml").resolve()
         if default_source.exists():
             return r[Path].ok(default_source)
@@ -129,15 +115,13 @@ class FlextInfraWorkflowSyncer:
         operations: list[SyncOperation] = []
         workflows_dir = project_root / ".github" / "workflows"
         destination = workflows_dir / "ci.yml"
-
         try:
             if destination.exists():
                 current = destination.read_text(encoding=c.Infra.Encoding.DEFAULT)
                 if current != rendered_template:
                     if apply:
                         _ = destination.write_text(
-                            rendered_template,
-                            encoding=c.Infra.Encoding.DEFAULT,
+                            rendered_template, encoding=c.Infra.Encoding.DEFAULT
                         )
                     operations.append(
                         SyncOperation(
@@ -145,7 +129,7 @@ class FlextInfraWorkflowSyncer:
                             path=str(destination.relative_to(project_root)),
                             action="update",
                             reason="force overwrite ci.yml",
-                        ),
+                        )
                     )
                 else:
                     operations.append(
@@ -154,14 +138,13 @@ class FlextInfraWorkflowSyncer:
                             path=str(destination.relative_to(project_root)),
                             action="noop",
                             reason="already synced",
-                        ),
+                        )
                     )
             else:
                 if apply:
                     workflows_dir.mkdir(parents=True, exist_ok=True)
                     _ = destination.write_text(
-                        rendered_template,
-                        encoding=c.Infra.Encoding.DEFAULT,
+                        rendered_template, encoding=c.Infra.Encoding.DEFAULT
                     )
                 operations.append(
                     SyncOperation(
@@ -169,12 +152,11 @@ class FlextInfraWorkflowSyncer:
                         path=str(destination.relative_to(project_root)),
                         action="create",
                         reason="missing ci.yml",
-                    ),
+                    )
                 )
-
             if prune and workflows_dir.exists():
                 candidates = sorted(workflows_dir.glob("*.yml")) + sorted(
-                    workflows_dir.glob("*.yaml"),
+                    workflows_dir.glob("*.yaml")
                 )
                 for path in candidates:
                     if path.name in c.Infra.Github.MANAGED_FILES:
@@ -187,11 +169,10 @@ class FlextInfraWorkflowSyncer:
                             path=str(path.relative_to(project_root)),
                             action="prune",
                             reason="remove non-canonical workflow",
-                        ),
+                        )
                     )
         except OSError as exc:
             return r[list[SyncOperation]].fail(f"sync error: {exc}")
-
         return r[list[SyncOperation]].ok(operations)
 
     def sync_workspace(
@@ -219,21 +200,18 @@ class FlextInfraWorkflowSyncer:
         source_result = self.resolve_source_workflow(workspace_root, source_workflow)
         if source_result.is_failure:
             return r[list[SyncOperation]].fail(
-                source_result.error or "source resolution failed",
+                source_result.error or "source resolution failed"
             )
-
         template_result = self.render_template(source_result.value)
         if template_result.is_failure:
             return r[list[SyncOperation]].fail(
-                template_result.error or "template render failed",
+                template_result.error or "template render failed"
             )
-
         projects_result = self._selector.resolve_projects(workspace_root, [])
         if projects_result.is_failure:
             return r[list[SyncOperation]].fail(
-                projects_result.error or "project discovery failed",
+                projects_result.error or "project discovery failed"
             )
-
         all_operations: list[SyncOperation] = []
         for project in projects_result.value:
             ops_result = self.sync_project(
@@ -245,24 +223,17 @@ class FlextInfraWorkflowSyncer:
             )
             if ops_result.is_success:
                 all_operations.extend(ops_result.value)
-
         if report_path is not None:
             self._write_report(report_path, apply=apply, operations=all_operations)
-
         return r[list[SyncOperation]].ok(all_operations)
 
     def _write_report(
-        self,
-        report_path: Path,
-        *,
-        apply: bool,
-        operations: list[SyncOperation],
+        self, report_path: Path, *, apply: bool, operations: list[SyncOperation]
     ) -> None:
         """Write a JSON report of sync operations."""
         by_action: MutableMapping[str, int] = {}
         for op in operations:
             by_action[op.action] = by_action.get(op.action, 0) + 1
-
         payload: MutableMapping[str, t.ContainerValue] = {
             "mode": "apply" if apply else "dry-run",
             c.Infra.ReportKeys.SUMMARY: by_action,

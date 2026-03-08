@@ -57,14 +57,7 @@ class UserService(s[m.ConfigMap]):
     @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute service and return data."""
-        return r[m.ConfigMap].ok(
-            m.ConfigMap(
-                root={
-                    "user_id": 1,
-                    "name": "test_user",
-                },
-            ),
-        )
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"user_id": 1, "name": "test_user"}))
 
 
 class ComplexService(s[str]):
@@ -133,16 +126,10 @@ class ServiceScenarios:
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
         ServiceScenario(
-            "complex_valid",
-            ServiceScenarioType.COMPLEX_VALID,
-            True,
-            {"name": "test"},
+            "complex_valid", ServiceScenarioType.COMPLEX_VALID, True, {"name": "test"}
         ),
         ServiceScenario(
-            "complex_invalid",
-            ServiceScenarioType.COMPLEX_INVALID,
-            False,
-            {"name": ""},
+            "complex_invalid", ServiceScenarioType.COMPLEX_INVALID, False, {"name": ""}
         ),
         ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
         ServiceScenario(
@@ -154,45 +141,32 @@ class ServiceScenarios:
     ]
 
     @staticmethod
-    def create_service(
-        scenario: ServiceScenario,
-    ) -> s[m.ConfigMap] | s[str] | s[bool]:
+    def create_service(scenario: ServiceScenario) -> s[m.ConfigMap] | s[str] | s[bool]:
         """Create service instance for scenario."""
         kwargs_raw: Mapping[str, t.Scalar] = scenario.service_kwargs or {}
-
         if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
             return UserService()
-
         if scenario.scenario_type in {
             ServiceScenarioType.COMPLEX_VALID,
             ServiceScenarioType.COMPLEX_INVALID,
         }:
-            # Extract and convert types for ComplexService with safe defaults
             name_val = kwargs_raw.get("name", "test")
             name = str(name_val) if name_val is not None else "test"
-
             amount_val = kwargs_raw.get("amount", 0)
             amount = int(amount_val) if isinstance(amount_val, (int, float)) else 0
-
             enabled_val = kwargs_raw.get("enabled", True)
             enabled = bool(enabled_val) if enabled_val is not None else True
-
             return ComplexService.model_construct(
-                name=name,
-                amount=amount,
-                enabled=enabled,
+                name=name, amount=amount, enabled=enabled
             )
-
         if scenario.scenario_type == ServiceScenarioType.FAILING:
             return FailingService()
-
         if scenario.scenario_type == ServiceScenarioType.EXCEPTION:
             should_raise_val = kwargs_raw.get("should_raise", False)
             should_raise = (
                 bool(should_raise_val) if should_raise_val is not None else False
             )
             return ExceptionService.model_construct(should_raise=should_raise)
-
         error_msg = f"Unknown scenario type: {scenario.scenario_type}"
         raise ValueError(error_msg)
 
@@ -210,9 +184,6 @@ class TestsCore:
     def test_service_immutability(self) -> None:
         """Test service mutability (frozen removed for compatibility with FlextMixins)."""
         service = UserService()
-        # frozen=True was removed from FlextService to allow direct attribute assignment
-        # compatible with FlextMixins pattern (e.g., _runtime assignment)
-        # Service is now mutable to support runtime initialization
         assert (
             service.model_config.get("frozen") is None
             or service.model_config.get("frozen") is False
@@ -228,10 +199,7 @@ class TestsCore:
 
         service = ConcreteService()
         result = service.execute()
-        u.Tests.Result.assert_success_with_value(
-            result,
-            "test_value",
-        )
+        u.Tests.Result.assert_success_with_value(result, "test_value")
 
     def test_basic_execution(self) -> None:
         """Test basic service execution returns expected type."""
@@ -243,9 +211,7 @@ class TestsCore:
         assert "user_id" in data
 
     @pytest.mark.parametrize(
-        "scenario",
-        ServiceScenarios.SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ServiceScenarios.SCENARIOS, ids=lambda s: s.name
     )
     def test_is_valid_scenarios(self, scenario: ServiceScenario) -> None:
         """Test is_valid with various service scenarios."""
@@ -268,10 +234,7 @@ class TestsCore:
         """Test custom business rules validation failure."""
         service = ComplexService.model_construct(name="")
         result = service.validate_business_rules()
-        u.Tests.Result.assert_failure_with_error(
-            result,
-            "Missing value",
-        )
+        u.Tests.Result.assert_failure_with_error(result, "Missing value")
 
     def test_get_service_info(self) -> None:
         """Test get_service_info returns proper metadata."""
@@ -282,7 +245,6 @@ class TestsCore:
 
     def test_service_validation_using_generic_helpers(self) -> None:
         """Test service validation using generic helpers - real behavior."""
-        # Use generic helper to validate model attributes
         service = ComplexService.model_construct(name="test", amount=10, enabled=True)
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
@@ -295,17 +257,13 @@ class TestsCore:
 
     def test_service_validation_failure_limits(self) -> None:
         """Test service validation failure - limit cases."""
-        # Test with missing required attributes
         service = ComplexService.model_construct(name="", amount=-1, enabled=False)
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
-                service,
-                required_attrs=["name"],
+                service, required_attrs=["name"]
             )
         )
-        # Should pass attribute check, but business rules should fail
-        u.Tests.Result.assert_success(validation_result)  # Attributes exist
-        # But business rules validation should fail
+        u.Tests.Result.assert_success(validation_result)
         business_result = service.validate_business_rules()
         u.Tests.Result.assert_failure(business_result)
 

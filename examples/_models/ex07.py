@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-
 from flext_core import m
 
 
@@ -26,9 +24,3 @@ class Ex07GetUserQuery(m.Query):
     """Get user query model."""
 
     user_id: str
-
-
-class Ex07DemoPlugin(BaseModel):
-    """Demo plugin model."""
-
-    name: str

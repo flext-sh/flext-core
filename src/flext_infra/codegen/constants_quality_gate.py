@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import json
 import shutil
-import subprocess  # noqa: S404  # JUSTIFIED: runs local quality tools with shell=False
+import subprocess
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -40,17 +40,14 @@ class FlextInfraCodegenConstantsQualityGate:
     def run(self) -> dict[str, object]:
         """Execute quality gate and return structured report payload."""
         before_payload, before_source, before_load_error = self._load_before_payload()
-
         census_reports = FlextInfraCodegenCensus(
             workspace_root=self._workspace_root
         ).run()
         duplicate_groups = self._count_duplicate_constant_groups()
-
         modified_files = self._modified_python_files()
         pyrefly_check = self._run_pyrefly_check(modified_files)
         ruff_check = self._run_ruff_check(modified_files)
         import_scan = self._scan_import_nodes(modified_files)
-
         before_metrics = self._before_metrics(before_payload)
         after_metrics = self._after_metrics(
             census_reports=census_reports,
@@ -68,7 +65,6 @@ class FlextInfraCodegenConstantsQualityGate:
             before_load_error=before_load_error,
         )
         verdict = self._compute_verdict(checks, improvement)
-
         report: dict[str, object] = {
             "workspace": str(self._workspace_root),
             "generated_at": datetime.now(UTC).isoformat(),
@@ -114,22 +110,9 @@ class FlextInfraCodegenConstantsQualityGate:
         lines.extend([
             "",
             "Before/After:",
-            (
-                "- violations: "
-                f"{before.get('total_violations', 'n/a')} -> "
-                f"{after.get('total_violations', 'n/a')}"
-            ),
-            (
-                "- duplicates: "
-                f"{before.get('duplicate_groups', 'n/a')} -> "
-                f"{after.get('duplicate_groups', 'n/a')}"
-            ),
-            (
-                "- projects: "
-                f"{after.get('projects_total', 0)} total, "
-                f"{after.get('projects_passed', 0)} passed, "
-                f"{after.get('projects_failed', 0)} failed"
-            ),
+            f"- violations: {before.get('total_violations', 'n/a')} -> {after.get('total_violations', 'n/a')}",
+            f"- duplicates: {before.get('duplicate_groups', 'n/a')} -> {after.get('duplicate_groups', 'n/a')}",
+            f"- projects: {after.get('projects_total', 0)} total, {after.get('projects_passed', 0)} passed, {after.get('projects_failed', 0)} failed",
             "",
             "Improvement:",
             f"- violations_delta: {improvement.get('violations_delta', 0)}",
@@ -147,20 +130,20 @@ class FlextInfraCodegenConstantsQualityGate:
     def _load_before_payload(self) -> tuple[dict[str, object] | None, str, str]:
         baseline_path = self._before_report or self._baseline_file
         if baseline_path is None:
-            return None, "", ""
+            return (None, "", "")
         resolved = (
             baseline_path
             if baseline_path.is_absolute()
-            else (self._workspace_root / baseline_path)
+            else self._workspace_root / baseline_path
         ).resolve()
         if not resolved.is_file():
-            return None, str(resolved), f"baseline file not found: {resolved}"
+            return (None, str(resolved), f"baseline file not found: {resolved}")
         try:
             payload = json.loads(resolved.read_text(encoding=c.Infra.Encoding.DEFAULT))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-            return None, str(resolved), "baseline parse failed"
+            return (None, str(resolved), "baseline parse failed")
         if not isinstance(payload, dict):
-            return None, str(resolved), "baseline payload is not a JSON object"
+            return (None, str(resolved), "baseline payload is not a JSON object")
         raw = cast("dict[Any, Any]", payload)
         return ({str(key): value for key, value in raw.items()}, str(resolved), "")
 
@@ -267,14 +250,12 @@ class FlextInfraCodegenConstantsQualityGate:
         checks.append({
             "name": "namespace_compliance",
             "passed": (
-                (violations_total == 0) or (before_available and violations_delta < 0)
+                violations_total == 0 or (before_available and violations_delta < 0)
             )
             and (not before_available or violations_delta <= 0),
-            "detail": (
-                f"total={violations_total}, delta={violations_delta}"
-                if before_available
-                else f"total={violations_total} (no baseline provided)"
-            ),
+            "detail": f"total={violations_total}, delta={violations_delta}"
+            if before_available
+            else f"total={violations_total} (no baseline provided)",
             "critical": False,
         })
         mro_failures = self._as_int(after_metrics.get("mro_failures"))
@@ -295,14 +276,10 @@ class FlextInfraCodegenConstantsQualityGate:
             },
             {
                 "name": "import_resolution",
-                "passed": (
-                    cross_ref == 0 and import_parse == 0 and import_parse_errors == 0
-                ),
-                "detail": (
-                    "cross_project_reference_violations="
-                    f"{cross_ref}, invalid_import_from={import_parse}, "
-                    f"parse_errors={import_parse_errors}"
-                ),
+                "passed": cross_ref == 0
+                and import_parse == 0
+                and (import_parse_errors == 0),
+                "detail": f"cross_project_reference_violations={cross_ref}, invalid_import_from={import_parse}, parse_errors={import_parse_errors}",
                 "critical": True,
             },
             {
@@ -314,15 +291,12 @@ class FlextInfraCodegenConstantsQualityGate:
             {
                 "name": "duplication_reduction",
                 "passed": (
-                    (duplicate_groups == 0)
-                    or (before_available and duplicates_delta < 0)
+                    duplicate_groups == 0 or (before_available and duplicates_delta < 0)
                 )
                 and (not before_available or duplicates_delta <= 0),
-                "detail": (
-                    f"duplicate_groups={duplicate_groups}, delta={duplicates_delta}"
-                    if before_available
-                    else f"duplicate_groups={duplicate_groups} (no baseline provided)"
-                ),
+                "detail": f"duplicate_groups={duplicate_groups}, delta={duplicates_delta}"
+                if before_available
+                else f"duplicate_groups={duplicate_groups} (no baseline provided)",
                 "critical": False,
             },
             {
@@ -395,12 +369,10 @@ class FlextInfraCodegenConstantsQualityGate:
                         name_to_projects.setdefault(target.id, set()).add(
                             report.project
                         )
-
         return sum(1 for projects in name_to_projects.values() if len(projects) > 1)
 
     def _project_findings(
-        self,
-        census_reports: Sequence[m.Infra.Codegen.CensusReport],
+        self, census_reports: Sequence[m.Infra.Codegen.CensusReport]
     ) -> list[dict[str, object]]:
         findings: list[dict[str, object]] = [
             {
@@ -439,9 +411,7 @@ class FlextInfraCodegenConstantsQualityGate:
             encoding=c.Infra.Encoding.DEFAULT,
         )
         u.write_file(
-            report_text,
-            self.render_text(report),
-            encoding=c.Infra.Encoding.DEFAULT,
+            report_text, self.render_text(report), encoding=c.Infra.Encoding.DEFAULT
         )
         census_payload: list[dict[str, object]] = [
             item.model_dump() for item in census_reports
@@ -555,7 +525,7 @@ class FlextInfraCodegenConstantsQualityGate:
         if not git_bin:
             return []
         try:
-            result = subprocess.run(  # noqa: S603  # JUSTIFIED: local trusted git binary with explicit args
+            result = subprocess.run(
                 [git_bin, "-C", str(self._workspace_root), *args],
                 check=False,
                 text=True,
@@ -613,7 +583,7 @@ class FlextInfraCodegenConstantsQualityGate:
 
     def _run_external_check(self, cmd: list[str]) -> dict[str, object]:
         try:
-            result = subprocess.run(  # noqa: S603  # JUSTIFIED: executes vetted command list with shell=False
+            result = subprocess.run(
                 cmd,
                 cwd=self._workspace_root,
                 check=False,
@@ -653,7 +623,7 @@ class FlextInfraCodegenConstantsQualityGate:
                 for node in ast.walk(tree)
                 if isinstance(node, ast.ImportFrom)
                 and node.module is None
-                and node.level == 0
+                and (node.level == 0)
             )
         return {
             "invalid_import_from_count": len(invalid_import_from),

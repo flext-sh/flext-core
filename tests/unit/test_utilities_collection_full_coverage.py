@@ -50,28 +50,22 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
-
     not_found = u.Collection.find({"a": 1}, lambda value: value == 2)
     assert not_found.is_failure
-
     nested = u.Collection._merge_deep_single_key(
         cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
         "x",
         cast("t.ContainerValue", {"b": 2}),
     )
     assert nested.is_success
-
     deep = u.Collection.merge(
         cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
         cast("dict[str, t.ContainerValue]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success
-
     broken = u.Collection.merge(
-        cast("dict[str, t.ContainerValue]", None),
-        {"x": 1},
-        strategy="deep",
+        cast("dict[str, t.ContainerValue]", None), {"x": 1}, strategy="deep"
     )
     assert broken.is_failure
 
@@ -81,19 +75,18 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
         [1],
         cast(
             "Callable[[int], r[Never]]",
-            (lambda _item: cast("r[Never]", r[list[int]].ok([1, 2]))),
+            lambda _item: cast("r[Never]", r[list[int]].ok([1, 2])),
         ),
         flatten=True,
     )
     assert flattened.is_success
     flat_value = flattened.value
     assert flat_value.results == [1, 2]
-
     collected = u.Collection.batch(
         [1],
         cast(
             "Callable[[int], r[Never]]",
-            (lambda _item: cast("r[Never]", r[int].fail("err"))),
+            lambda _item: cast("r[Never]", r[int].fail("err")),
         ),
         on_error="collect",
     )
@@ -101,16 +94,12 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     collected_value = collected.value
     assert len(collected_value.errors) == 1
     assert "err" in collected_value.errors[0][1]
-
     failed = u.Collection.batch([1], lambda _item: r[int].fail("hard"), on_error="fail")
     assert failed.is_failure
-
     failed_exc = u.Collection.batch(
-        [1],
-        lambda _item: (_ for _ in ()).throw(ValueError("x")),
+        [1], lambda _item: (_ for _ in ()).throw(ValueError("x"))
     )
     assert failed_exc.is_failure
-
     progress_calls: list[tuple[int, int]] = []
     ok = u.Collection.batch(
         [1, 2],
@@ -123,20 +112,15 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 def test_process_outer_exception_and_coercion_branches() -> None:
     processed: r[list[object]] = u.Collection.process(
-        cast("list[object]", _BadSequence()),
-        lambda x: x,
+        cast("list[object]", _BadSequence()), lambda x: x
     )
     assert processed.is_failure
-
     assert u.Collection._coerce_value_to_float(1.5) == pytest.approx(1.5)
     assert u.Collection._coerce_value_to_bool(True) is True
-
     enum_dict = u.Collection.coerce_dict_to_enum(_Color)({"a": _Color.RED})
     assert enum_dict["a"] is _Color.RED
-
     enum_list = u.Collection.coerce_list_to_enum(_Color)([_Color.BLUE])
     assert enum_list == [_Color.BLUE]
-
     assert u.Collection.first([], default=9).value == 9
     assert u.Collection.last([], default=8).value == 8
 
@@ -144,28 +128,25 @@ def test_process_outer_exception_and_coercion_branches() -> None:
 def test_parse_mapping_outer_exception() -> None:
     with pytest.raises(RuntimeError, match="boom"):
         u.Collection.parse_mapping(
-            _Color,
-            cast("dict[str, str | _Color]", _BadMapping()),
+            _Color, cast("dict[str, str | _Color]", _BadMapping())
         )
 
 
 def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error() -> (
     None
 ):
+
     class _FailureResult:
         is_success = False
         value: None = None
         error = "boom"
 
     collected = u.Collection.batch(
-        [1],
-        lambda _item: _FailureResult(),
-        on_error="collect",
+        [1], lambda _item: _FailureResult(), on_error="collect"
     )
     assert collected.is_success
     collected_value = collected.value
     assert collected_value.errors[0][1] == "boom"
-
     failed = u.Collection.batch([1], lambda _item: _FailureResult(), on_error="fail")
     assert failed.is_failure
 

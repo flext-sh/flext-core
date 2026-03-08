@@ -65,17 +65,14 @@ class FlextInfraPathResolver(s[Path]):
             current = Path(file).resolve()
             if current.is_file():
                 current = current.parent
-
             for parent in [current, *list(current.parents)]:
                 if all(
                     (parent / marker).exists()
                     for marker in c.Infra.Paths.WORKSPACE_MARKERS
                 ):
                     return r[Path].ok(parent)
-
             return r[Path].fail(
-                f"workspace root not found (looking for {c.Infra.Paths.WORKSPACE_MARKERS}) "
-                f"starting from {file}",
+                f"workspace root not found (looking for {c.Infra.Paths.WORKSPACE_MARKERS}) starting from {file}"
             )
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")

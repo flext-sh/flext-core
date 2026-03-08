@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import BaseModel
-
 from flext_core import FlextDispatcher, m, p, r, t
 
 from .shared import Examples
@@ -14,9 +12,7 @@ from .shared import Examples
 class Ex04FlextDispatcher(Examples):
     """Golden-file tests for ``FlextDispatcher`` public API."""
 
-    # -- Message models (Pydantic, Routable) -----------------------------------
-
-    class CreateUser(BaseModel):
+    class CreateUser:
         """Command model for user creation."""
 
         username: str
@@ -24,7 +20,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = ""
         event_type: str = ""
 
-    class GetUser(BaseModel):
+    class GetUser:
         """Query model for user retrieval."""
 
         username: str
@@ -32,7 +28,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = "get_user"
         event_type: str = ""
 
-    class DeleteUser(BaseModel):
+    class DeleteUser:
         """Command model for user deletion."""
 
         username: str
@@ -40,7 +36,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = ""
         event_type: str = ""
 
-    class FailingDelete(BaseModel):
+    class FailingDelete:
         """Command model that intentionally fails."""
 
         username: str
@@ -48,7 +44,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = ""
         event_type: str = ""
 
-    class AutoCommand(BaseModel):
+    class AutoCommand:
         """Command routed through can_handle auto-discovery."""
 
         payload: str
@@ -56,7 +52,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = ""
         event_type: str = ""
 
-    class Ping(BaseModel):
+    class Ping:
         """Command handled by a callable returning plain value."""
 
         value: str
@@ -64,7 +60,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = ""
         event_type: str = ""
 
-    class UnknownQuery(BaseModel):
+    class UnknownQuery:
         """Query model with no registered handler."""
 
         payload: str
@@ -72,7 +68,7 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = "unknown_query"
         event_type: str = ""
 
-    class UserCreated(BaseModel):
+    class UserCreated:
         """Event model published to subscribers."""
 
         username: str
@@ -80,15 +76,13 @@ class Ex04FlextDispatcher(Examples):
         query_type: str = ""
         event_type: str = "user_created"
 
-    class NoSubscriberEvent(BaseModel):
+    class NoSubscriberEvent:
         """Event model without registered subscribers."""
 
         marker: str
         command_type: str = ""
         query_type: str = ""
         event_type: str = "no_subscribers"
-
-    # -- Handler classes -------------------------------------------------------
 
     class CreateUserHandler:
         """HandleProtocol handler for CreateUser commands."""
@@ -221,39 +215,29 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_register_and_dispatch(self) -> None:
         """Cover constructor, register_handler and dispatch happy paths."""
         self.section("register_and_dispatch")
-
         dispatcher = FlextDispatcher()
         self.check("constructor.type", type(dispatcher).__name__)
-
         reg_handle = dispatcher.register_handler(self.CreateUserHandler())
         self.check("register(HandleProtocol).is_success", reg_handle.is_success)
-
         reg_dispatch_msg = dispatcher.register_handler(
             self.GetUserDispatcher(), is_event=False
         )
         self.check(
-            "register(DispatchMessageProtocol).is_success",
-            reg_dispatch_msg.is_success,
+            "register(DispatchMessageProtocol).is_success", reg_dispatch_msg.is_success
         )
-
         reg_execute = dispatcher.register_handler(self.DeleteExecutor())
         self.check("register(ExecuteProtocol).is_success", reg_execute.is_success)
-
         reg_callable = dispatcher.register_handler(self.PingCallable())
         self.check("register(callable).is_success", reg_callable.is_success)
-
         create_r = dispatcher.dispatch(self.CreateUser(username="alice"))
         self.check("dispatch(command).is_success", create_r.is_success)
         self.check("dispatch(command).value", create_r.value)
-
         get_r = dispatcher.dispatch(self.GetUser(username="alice"))
         self.check("dispatch(query).is_success", get_r.is_success)
         self.check("dispatch(query).value", get_r.value)
-
         delete_r = dispatcher.dispatch(self.DeleteUser(username="alice"))
         self.check("dispatch(execute).is_success", delete_r.is_success)
         self.check("dispatch(execute).value", delete_r.value)
-
         ping_r = dispatcher.dispatch(self.Ping(value="x"))
         self.check("dispatch(callable).is_success", ping_r.is_success)
         self.check("dispatch(callable).value", ping_r.value)
@@ -261,12 +245,9 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_auto_discovery(self) -> None:
         """Cover can_handle route discovery for dispatch fallback."""
         self.section("auto_discovery")
-
         dispatcher = FlextDispatcher()
-
         reg_auto = dispatcher.register_handler(self.AutoHandler())
         self.check("register(can_handle).is_success", reg_auto.is_success)
-
         auto_r = dispatcher.dispatch(self.AutoCommand(payload="fallback"))
         self.check("dispatch(auto_discovery).is_success", auto_r.is_success)
         self.check("dispatch(auto_discovery).value", auto_r.value)
@@ -274,7 +255,6 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_error_cases(self) -> None:
         """Cover registration and dispatch failure paths."""
         self.section("error_cases")
-
         dispatcher = FlextDispatcher()
 
         def _invalid_handler(message: p.Routable) -> str:
@@ -283,42 +263,32 @@ class _Ex04Exercise(Ex04FlextDispatcher):
 
         reg_invalid = dispatcher.register_handler(_invalid_handler)
         self.check("register(no_route_attrs).is_failure", reg_invalid.is_failure)
-
         no_handler_r = dispatcher.dispatch(self.UnknownQuery(payload="none"))
         self.check("dispatch(no_handler).is_failure", no_handler_r.is_failure)
-
         reg_fail_handler = dispatcher.register_handler(self.FailingDeleteCallable())
         self.check("register(failing_callable).is_success", reg_fail_handler.is_success)
-
         failing_r = dispatcher.dispatch(self.FailingDelete(username="alice"))
         self.check("dispatch(handler_returns_fail).is_failure", failing_r.is_failure)
 
     def _exercise_event_publishing(self) -> None:
         """Cover event registration and publish paths."""
         self.section("event_publishing")
-
         dispatcher = FlextDispatcher()
         subscriber = self.UserCreatedSubscriber()
         audit_subscriber = self.AuditSubscriber()
-
         reg_user = dispatcher.register_handler(subscriber, is_event=True)
         self.check("register(event_subscriber).is_success", reg_user.is_success)
-
         reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
         self.check("register(audit_subscriber).is_success", reg_audit.is_success)
-
         pub_one = dispatcher.publish(self.UserCreated(username="alice"))
         self.check("publish(single).is_success", pub_one.is_success)
-
         pub_many = dispatcher.publish([
             self.UserCreated(username="bruno"),
             self.UserCreated(username="carla"),
         ])
         self.check("publish(list).is_success", pub_many.is_success)
-
         self.check("subscriber.events", subscriber.events)
         self.check("audit_subscriber.events", audit_subscriber.events)
-
         pub_none = dispatcher.publish(self.NoSubscriberEvent(marker="ok"))
         self.check("publish(no_subscribers).is_success", pub_none.is_success)
         self.check("publish(no_subscribers).value", pub_none.value)

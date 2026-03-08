@@ -54,7 +54,6 @@ class TestFactoryDecoratorsDiscoveryScanModule:
         config = m.FactoryDecoratorConfig(name="my_factory")
         setattr(my_factory, c.Discovery.FACTORY_ATTR, config)
         mod.__dict__["my_factory"] = my_factory
-
         result = FactoryDecoratorsDiscovery.scan_module(mod)
         assert len(result) == 1
         assert result[0][0] == "my_factory"
@@ -76,7 +75,6 @@ class TestFactoryDecoratorsDiscoveryScanModule:
         setattr(alpha_factory, c.Discovery.FACTORY_ATTR, config_a)
         mod.__dict__["zebra_factory"] = zebra_factory
         mod.__dict__["alpha_factory"] = alpha_factory
-
         result = FactoryDecoratorsDiscovery.scan_module(mod)
         assert len(result) == 2
         assert result[0][0] == "alpha_factory"

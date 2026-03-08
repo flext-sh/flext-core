@@ -25,10 +25,7 @@ def test_base_error_normalize_metadata_merges_existing_metadata_model() -> None:
 
 def test_authentication_error_normalizes_extra_kwargs_into_context() -> None:
     err = e.AuthenticationError(
-        "auth",
-        auth_method="token",
-        user_id="u1",
-        ip="127.0.0.1",
+        "auth", auth_method="token", user_id="u1", ip="127.0.0.1"
     )
     assert err.to_dict()["ip"] == "127.0.0.1"
 
@@ -43,18 +40,14 @@ def test_not_found_error_correlation_id_selection_and_extra_kwargs() -> None:
     )
     assert err_explicit.correlation_id == "explicit-cid"
     assert err_explicit.to_dict()["extra_value"] == "3"
-
     err_preserved = e.NotFoundError(
-        "missing",
-        resource_id="x",
-        correlation_id="preserved-cid",
+        "missing", resource_id="x", correlation_id="preserved-cid"
     )
     assert err_preserved.correlation_id == "preserved-cid"
 
 
 def test_merge_metadata_context_paths() -> None:
     context = m.ConfigMap(root={})
-
     err = e.BaseError("meta", metadata={"x": 1})
     meta = err.metadata
     config_attrs = m.ConfigMap.model_validate({"k": 1, "z": "q"})
@@ -62,7 +55,6 @@ def test_merge_metadata_context_paths() -> None:
     e._merge_metadata_into_context(context, meta)
     assert context["k"] == "1"
     assert context["z"] == "q"
-
     context2 = m.ConfigMap(root={})
     mapping_obj = MappingProxyType({"p": 7})
     e._merge_metadata_into_context(context2, mapping_obj)
@@ -73,7 +65,6 @@ def test_exceptions_uncovered_metadata_paths() -> None:
     metadata = e.BaseError("x", metadata={"a": 1}).metadata
     same = e.BaseError._normalize_metadata(metadata, {})
     assert same is metadata
-
     raw = exceptions_module._Metadata(attributes={"x": 1})
     object.__setattr__(raw, "attributes", {"x": 1, "y": "z"})
     merged = m.ConfigMap(root={})

@@ -20,7 +20,6 @@ class TestFlextInfraMainCLI:
         with patch("sys.argv", ["flext-infra"]):
             with patch("flext_infra.__main__.output") as mock_output:
                 result = FlextInfraMainCLI.main()
-
                 assert result == 1
                 mock_output.info.assert_called()
 
@@ -29,7 +28,6 @@ class TestFlextInfraMainCLI:
         with patch("sys.argv", ["flext-infra", "-h"]):
             with patch("flext_infra.__main__.output") as mock_output:
                 result = FlextInfraMainCLI.main()
-
                 assert result == 0
                 mock_output.info.assert_called()
 
@@ -38,7 +36,6 @@ class TestFlextInfraMainCLI:
         with patch("sys.argv", ["flext-infra", "--help"]):
             with patch("flext_infra.__main__.output") as mock_output:
                 result = FlextInfraMainCLI.main()
-
                 assert result == 0
                 mock_output.info.assert_called()
 
@@ -47,7 +44,6 @@ class TestFlextInfraMainCLI:
         with patch("sys.argv", ["flext-infra", "unknown"]):
             with patch("flext_infra.__main__.output") as mock_output:
                 result = FlextInfraMainCLI.main()
-
                 assert result == 1
                 mock_output.error.assert_called()
 
@@ -58,9 +54,7 @@ class TestFlextInfraMainCLI:
                 mock_module = Mock()
                 mock_module.main.return_value = 0
                 mock_import.return_value = mock_module
-
                 result = FlextInfraMainCLI.main()
-
                 assert result == 0
                 mock_import.assert_called_once_with("flext_infra.basemk.__main__")
                 mock_module.main.assert_called_once()
@@ -74,9 +68,7 @@ class TestFlextInfraMainCLI:
                     mock_module = Mock()
                     mock_module.main.return_value = 0
                     mock_import.return_value = mock_module
-
                     FlextInfraMainCLI.main()
-
                     assert sys.argv[0] == "flext-infra check"
                     assert sys.argv[1] == "lint"
         finally:
@@ -89,9 +81,7 @@ class TestFlextInfraMainCLI:
                 mock_module = Mock()
                 mock_module.main.return_value = None
                 mock_import.return_value = mock_module
-
                 result = FlextInfraMainCLI.main()
-
                 assert result == 0
 
     def test_main_handles_group_module_returning_string(self) -> None:
@@ -101,9 +91,7 @@ class TestFlextInfraMainCLI:
                 mock_module = Mock()
                 mock_module.main.return_value = "0"
                 mock_import.return_value = mock_module
-
                 result = FlextInfraMainCLI.main()
-
                 assert result == 0
                 assert isinstance(result, int)
 
@@ -122,7 +110,6 @@ class TestFlextInfraMainCLI:
             "release",
             "workspace",
         }
-
         assert set(FlextInfraMainCLI.GROUPS.keys()) == expected_groups
 
     def test_main_group_modules_are_valid(self) -> None:
@@ -140,7 +127,6 @@ class TestFlextInfraMainCLI:
         """Test _print_help() outputs all groups."""
         with patch("flext_infra.__main__.output") as mock_output:
             FlextInfraMainCLI._print_help()
-
             assert mock_output.info.call_count >= 10
 
     def test_main_ensures_structlog_configured(self) -> None:
@@ -151,7 +137,6 @@ class TestFlextInfraMainCLI:
             ) as mock_ensure:
                 with patch("flext_infra.__main__.output"):
                     FlextInfraMainCLI.main()
-
                     mock_ensure.assert_called_once()
 
     def test_main_calls_sys_exit(self) -> None:
@@ -161,6 +146,5 @@ class TestFlextInfraMainCLI:
                 mock_module = Mock()
                 mock_module.main.return_value = 0
                 mock_import.return_value = mock_module
-
                 result = FlextInfraMainCLI.main()
                 assert result == 0

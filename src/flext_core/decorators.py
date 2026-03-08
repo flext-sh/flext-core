@@ -307,9 +307,7 @@ class FlextDecorators:
     """
 
     @staticmethod
-    def deprecated(
-        message: str,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def deprecated(message: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to mark functions/variables as deprecated.
 
         Emits DeprecationWarning when decorated function is called.
@@ -338,22 +336,13 @@ class FlextDecorators:
 
         """
 
-        def decorator(
-            func: Callable[P, R],
-        ) -> Callable[P, R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             """Apply deprecation warning to callable."""
 
             @wraps(func)
-            def wrapper(
-                *args: P.args,
-                **kwargs: P.kwargs,
-            ) -> R:
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 """Wrapper that emits warning before execution."""
-                warnings.warn(
-                    message,
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
                 return func(*args, **kwargs)
 
             return wrapper
@@ -361,9 +350,7 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def inject(
-        **dependencies: str,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def inject(**dependencies: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
         Automatically resolves and injects dependencies from the global
@@ -397,21 +384,15 @@ class FlextDecorators:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Get container from self if available, otherwise use global singleton
                 container = FlextContainer.create()
-
-                # Inject dependencies that aren't already provided
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
-                        # Get from container using the service key
                         result = container.get(service_key)
                         if result.is_success:
-                            # Use .value directly - FlextResult never returns None on success
                             kwargs[name] = result.value
-                        # If resolution fails, let the function handle missing parameter
-
                 return func(*args, **kwargs)
 
             return wrapper
@@ -420,9 +401,7 @@ class FlextDecorators:
 
     @staticmethod
     def log_operation(
-        operation_name: str | None = None,
-        *,
-        track_perf: bool = False,
+        operation_name: str | None = None, *, track_perf: bool = False
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
@@ -462,29 +441,21 @@ class FlextDecorators:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Fast fail: explicit default value instead of 'or' fallback
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-
-                # Get logger from self if available, otherwise create one
                 logger = FlextDecorators._resolve_logger(args, func)
-                # with_result() is specific to FlextLogger, not in protocol
-                # Type narrowing: _resolve_logger always returns FlextLogger
                 result_logger = logger.with_result()
-
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
                     function_name=func.__name__,
                     ensure_correlation=True,
                 )
-
-                # Track timing if requested
                 start_time = time.perf_counter() if track_perf else 0.0
-
                 try:
                     start_extra: dict[str, t.Scalar] = {
                         "function": func.__name__,
@@ -492,7 +463,6 @@ class FlextDecorators:
                     }
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
-
                     if correlation_id is not None:
                         _ = result_logger.debug(
                             "%s_started",
@@ -512,28 +482,21 @@ class FlextDecorators:
                                 "func_module": func.__module__,
                             },
                         )
-
                     result = func(*args, **kwargs)
-
                     completion_extra: dict[str, t.Scalar] = {
                         "function": func.__name__,
                         "success": True,
                     }
                     if correlation_id is not None:
                         completion_extra["correlation_id"] = correlation_id
-
-                    # Add timing metrics if tracking performance
                     if track_perf:
                         duration = time.perf_counter() - start_time
                         completion_extra["duration_ms"] = (
                             duration * c.MILLISECONDS_MULTIPLIER
                         )
                         completion_extra["duration_seconds"] = duration
-
                     _ = result_logger.debug(
-                        "%s_completed",
-                        op_name,
-                        extra=dict(completion_extra),
+                        "%s_completed", op_name, extra=dict(completion_extra)
                     )
                     return result
                 except (
@@ -552,17 +515,14 @@ class FlextDecorators:
                     }
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
-
                     tracked_duration = (
                         time.perf_counter() - start_time if track_perf else 0.0
                     )
-                    # Add timing metrics if tracking performance
                     if track_perf:
                         failure_extra["duration_ms"] = (
                             tracked_duration * c.MILLISECONDS_MULTIPLIER
                         )
                         failure_extra["duration_seconds"] = tracked_duration
-
                     exc_info_value = True
                     if correlation_id is not None and track_perf:
                         _ = result_logger.exception(
@@ -616,8 +576,6 @@ class FlextDecorators:
                         )
                     raise
                 finally:
-                    # CRITICAL: Clear operation context (defensive cleanup)
-                    # Use suppress to ensure cleanup never fails
                     with suppress(Exception):
                         FlextDecorators._clear_operation_scope(
                             logger=logger,
@@ -673,14 +631,12 @@ class FlextDecorators:
         """
 
         def decorator(func: Callable[P, T]) -> Callable[P, r[T]]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[T]:
                 try:
                     result = func(*args, **kwargs)
-
-                    # Wrap successful result
                     return r[T].ok(result)
-
                 except (
                     AttributeError,
                     TypeError,
@@ -688,14 +644,10 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    # Convert exception to FlextResult failure
                     effective_error_code: str = (
                         error_code if error_code is not None else "OPERATION_ERROR"
                     )
-                    return r[T].fail(
-                        str(e),
-                        error_code=effective_error_code,
-                    )
+                    return r[T].fail(str(e), error_code=effective_error_code)
 
             return wrapper
 
@@ -747,7 +699,6 @@ class FlextDecorators:
             across the entire ecosystem. Logs retry attempts automatically.
 
         """
-        # Fast fail: explicit default values instead of 'or' fallback
         attempts: int = (
             max_attempts
             if max_attempts is not None
@@ -765,17 +716,16 @@ class FlextDecorators:
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
                 retry_func = func
-                # Create retry config from parameters
                 retry_config = m.RetryConfiguration(
                     max_retries=attempts,
                     initial_delay_seconds=delay,
-                    exponential_backoff=(
-                        strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL
-                    ),
+                    exponential_backoff=strategy
+                    == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
                 try:
                     retry_args: tuple[object, ...] = tuple(args)
@@ -789,11 +739,7 @@ class FlextDecorators:
                     )
                     if isinstance(retry_result, Exception):
                         FlextDecorators._handle_retry_exhaustion(
-                            retry_result,
-                            retry_func,
-                            attempts,
-                            error_code,
-                            logger,
+                            retry_result, retry_func, attempts, error_code, logger
                         )
                         retry_error_code = (
                             error_code
@@ -817,11 +763,7 @@ class FlextDecorators:
                     KeyError,
                 ) as exc:
                     FlextDecorators._handle_retry_exhaustion(
-                        exc,
-                        retry_func,
-                        attempts,
-                        error_code,
-                        logger,
+                        exc, retry_func, attempts, error_code, logger
                     )
                     raise
 
@@ -848,13 +790,9 @@ class FlextDecorators:
             current_id = FlextContext.Variables.CorrelationId.get()
             if isinstance(current_id, str):
                 correlation_id = current_id
-
         FlextContext.Request.set_operation_name(operation)
-
-        # Use bind_context with SCOPE_OPERATION (replaces bind_operation_context)
         binding_result = FlextLogger.bind_context(
-            c.Context.SCOPE_OPERATION,
-            operation=operation,
+            c.Context.SCOPE_OPERATION, operation=operation
         )
         if binding_result.is_failure:
             logger.warning(
@@ -869,26 +807,17 @@ class FlextDecorators:
 
     @staticmethod
     def _clear_operation_scope(
-        *,
-        logger: FlextLogger,
-        function_name: str,
-        operation: str,
+        *, logger: FlextLogger, function_name: str, operation: str
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
         clear_result = FlextLogger.clear_scope("operation")
-        # clear_scope() returns r[bool] (never None), so is not None check is redundant
         if clear_result.is_failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
                 logger=logger,
                 fallback_message="operation_context_clear_failed",
                 kwargs=m.ConfigMap(
-                    root={
-                        "extra": {
-                            "function": function_name,
-                            "operation": operation,
-                        },
-                    },
+                    root={"extra": {"function": function_name, "operation": operation}}
                 ),
             )
 
@@ -916,22 +845,17 @@ class FlextDecorators:
             Function result on success
 
         """
-        # Use default config if none provided
         if retry_config is None:
             retry_config = m.RetryConfiguration()
-
         attempts = retry_config.max_retries
         delay = retry_config.initial_delay_seconds
-        # Map exponential_backoff bool to strategy string
         strategy = (
             c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL
             if retry_config.exponential_backoff
             else c.Reliability.BACKOFF_STRATEGY_LINEAR
         )
-
         last_exception: Exception | None = None
         current_delay = delay
-
         for attempt in range(1, attempts + 1):
             try:
                 if attempt > 1:
@@ -943,18 +867,9 @@ class FlextDecorators:
                         delay_seconds=current_delay,
                     )
                     time.sleep(current_delay)
-
                 return func(*args, **kwargs)
-
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 last_exception = e
-
                 logger.warning(
                     "operation_failed_retrying",
                     function=func.__name__,
@@ -963,19 +878,12 @@ class FlextDecorators:
                     error=str(e),
                     error_type=e.__class__.__name__,
                 )
-
-                # Calculate next delay based on strategy
                 if strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL:
                     current_delay *= 2
                 elif strategy == c.Reliability.BACKOFF_STRATEGY_LINEAR:
                     current_delay += delay
-                # For unknown strategies, keep constant delay
-
-                # If this was the last attempt, we'll raise after loop
                 if attempt == attempts:
                     break
-
-        # Should never be None (loop always catches exceptions), but handle defensively
         if last_exception is None:
             msg = "Retry loop completed without success or exception"
             return RuntimeError(msg)
@@ -1020,7 +928,6 @@ class FlextDecorators:
         logger: FlextLogger,
     ) -> None:
         """Handle retry exhaustion and raise appropriate exception."""
-        # All retries exhausted
         logger.error(
             "operation_failed_all_retries_exhausted",
             function=func.__name__,
@@ -1048,10 +955,7 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(
-        args: tuple[object, ...],
-        func: Callable[P, R],
-    ) -> FlextLogger:
+    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:
@@ -1063,7 +967,6 @@ class FlextDecorators:
             return first_arg
         if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
             return first_arg.logger
-        # FlextLogger constructor returns FlextLogger
         return FlextLogger(func.__module__)
 
     @overload
@@ -1145,43 +1048,31 @@ class FlextDecorators:
             maintain code clarity.
 
         """
-        # Return different decorators based on use_railway flag
-        # This separation ensures proper type inference by pyrefly
         if use_railway:
-            # Railway path decorator
+
             def railway_decorator(func: Callable[P, R]) -> Callable[P, r[R]]:
-                # Railway decorator changes return type from R to r[R]
                 result = FlextDecorators.railway(error_code=error_code)(func)
-                # Apply dependency injection to railway-wrapped function
                 if inject_deps:
                     result = FlextDecorators.inject(**inject_deps)(result)
-                # Apply unified log_operation with optional performance tracking
                 return FlextDecorators.log_operation(
-                    operation_name=operation_name,
-                    track_perf=track_perf,
+                    operation_name=operation_name, track_perf=track_perf
                 )(result)
 
             return railway_decorator
 
-        # Non-railway path decorator
         def standard_decorator(func: Callable[P, R]) -> Callable[P, R]:
             result = func
             if inject_deps:
                 result = FlextDecorators.inject(**inject_deps)(result)
-            # Apply unified log_operation with optional performance tracking
             return FlextDecorators.log_operation(
-                operation_name=operation_name,
-                track_perf=track_perf,
+                operation_name=operation_name, track_perf=track_perf
             )(result)
 
         return standard_decorator
 
     @staticmethod
     def factory(
-        name: str,
-        *,
-        singleton: bool = False,
-        lazy: bool = True,
+        name: str, *, singleton: bool = False, lazy: bool = True
     ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark functions as factories for DI container.
 
@@ -1206,9 +1097,7 @@ class FlextDecorators:
         def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
             config = m.HandlerFactoryDecoratorConfig(
-                name=name,
-                singleton=singleton,
-                lazy=lazy,
+                name=name, singleton=singleton, lazy=lazy
             )
             setattr(func, c.Discovery.FACTORY_ATTR, config)
             return func
@@ -1217,8 +1106,7 @@ class FlextDecorators:
 
     @staticmethod
     def timeout(
-        timeout_seconds: float | None = None,
-        error_code: str | None = None,
+        timeout_seconds: float | None = None, error_code: str | None = None
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
@@ -1251,7 +1139,6 @@ class FlextDecorators:
             thread-based timeouts, use threading.Timer or asyncio.
 
         """
-        # Use c.Reliability for default
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
@@ -1259,14 +1146,12 @@ class FlextDecorators:
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 start_time = time.perf_counter()
-
                 try:
                     result = func(*args, **kwargs)
-
-                    # Check if operation exceeded timeout
                     duration = time.perf_counter() - start_time
                     if duration > max_duration:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s)"
@@ -1282,11 +1167,8 @@ class FlextDecorators:
                             operation=func.__name__,
                             duration_seconds=duration,
                         )
-
                     return result
-
                 except e.TimeoutError:
-                    # Re-raise timeout errors
                     raise
                 except (
                     AttributeError,
@@ -1295,7 +1177,6 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    # Check duration even on exception
                     duration = time.perf_counter() - start_time
                     if duration > max_duration:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {exc.__class__.__name__}"
@@ -1307,7 +1188,6 @@ class FlextDecorators:
                             duration_seconds=duration,
                             original_error=str(exc),
                         ) from exc
-                    # Re-raise original exception if not timeout
                     raise
 
             return wrapper
@@ -1316,9 +1196,7 @@ class FlextDecorators:
 
     @staticmethod
     def track_operation(
-        operation_name: str | None = None,
-        *,
-        track_correlation: bool = True,
+        operation_name: str | None = None, *, track_correlation: bool = True
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to track operation execution with FlextRuntime.Integration.
 
@@ -1358,15 +1236,13 @@ class FlextDecorators:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Fast fail: explicit default value instead of 'or' fallback
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-
                 logger = FlextDecorators._resolve_logger(args, func)
-
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -1379,15 +1255,9 @@ class FlextDecorators:
                         function=func.__name__,
                         operation=op_name,
                     )
-
                 try:
-                    # Call the actual function
-                    # Performance tracking via FlextRuntime.Integration
-                    # happens automatically
                     return func(*args, **kwargs)
-
                 finally:
-                    # Clear operation context
                     with suppress(Exception):
                         FlextDecorators._clear_operation_scope(
                             logger=logger,
@@ -1437,12 +1307,11 @@ class FlextDecorators:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
-
                 try:
-                    # Bind context variables to global logging context
                     if context_vars:
                         filtered_vars: dict[str, t.MetadataValue] = {
                             k: v for k, v in context_vars.items() if v is not None
@@ -1456,14 +1325,11 @@ class FlextDecorators:
                                 error_code=bind_result.error_code or "",
                                 bound_keys=", ".join(context_vars.keys()),
                             )
-
                     return func(*args, **kwargs)
-
                 finally:
-                    # Unbind context variables
                     if context_vars:
                         unbind_result = FlextLogger.unbind_global_context(
-                            *tuple(context_vars.keys()),
+                            *tuple(context_vars.keys())
                         )
                         if unbind_result.is_failure:
                             logger.warning(
@@ -1509,20 +1375,16 @@ class FlextDecorators:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Ensure correlation ID exists
                 _ = FlextContext.Utilities.ensure_correlation_id()
-
                 return func(*args, **kwargs)
 
             return wrapper
 
         return decorator
 
-    # FactoryDecoratorsDiscovery lives in _decorators/; use it or d from facade.
-
 
 d = FlextDecorators
-
 __all__ = ["FlextDecorators", "d"]

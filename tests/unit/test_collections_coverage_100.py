@@ -23,7 +23,6 @@ from pydantic import Field
 
 from flext_core import FlextRuntime, m, t
 
-# Use actual classes, not type aliases, for inheritance
 Statistics = m.CollectionsStatistics
 Config = m.CollectionsConfig
 Results = m.CollectionsResults
@@ -78,9 +77,7 @@ class TestFlextModelsCollectionsCategories:
         assert categories.get("nonexistent") == []
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionsScenarios.CATEGORY_OPERATIONS,
-        ids=_scenario_id,
+        "scenario", CollectionsScenarios.CATEGORY_OPERATIONS, ids=_scenario_id
     )
     def test_categories_operations(self, scenario: CategoryOperationScenario) -> None:
         """Test category operations with various scenarios."""
@@ -95,7 +92,6 @@ class TestFlextModelsCollectionsCategories:
         elif scenario.operation == "remove":
             categories.add_entries(scenario.category, ["temp"])
             categories.remove_category(scenario.category)
-            # Categories doesn't have has_category method, check via categories dict
             assert scenario.category not in categories.categories
 
     def test_categories_add_entries_existing_category(self) -> None:
@@ -108,7 +104,6 @@ class TestFlextModelsCollectionsCategories:
     def test_categories_has_category(self) -> None:
         """Test has_category via categories dict."""
         categories: m.Categories = m.Categories()
-        # Categories doesn't have has_category method, check via categories dict
         assert "users" not in categories.categories
         categories.add_entries("users", ["user1"])
         assert categories.has_category("users")
@@ -139,7 +134,6 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
-        # Categories doesn't have a summary property, but we can compute it from categories dict
         summary: dict[str, int] = {
             name: len(entries) for name, entries in categories.categories.items()
         }
@@ -150,7 +144,6 @@ class TestFlextModelsCollectionsCategories:
         """Test dict-like operations."""
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1"])
-        # Categories uses .categories dict for dict-like operations
         assert ("users", ["user1"]) in categories.categories.items()
         assert "users" in categories.categories
         assert ["user1"] in categories.categories.values()
@@ -268,7 +261,6 @@ class TestFlextModelsCollectionsSettings:
     def test_config_to_dict(self) -> None:
         """Test to_mapping method (to_dict was renamed to to_mapping)."""
         config = _TestConfig.model_validate({"timeout": 60})
-        # Config uses to_mapping() method, not to_dict()
         config_dict = config.to_mapping()
         assert config_dict["timeout"] == 60
 
@@ -328,7 +320,6 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10)
         result2 = TestResult(processed=20)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
@@ -342,7 +333,6 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
@@ -356,7 +346,6 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
@@ -372,7 +361,6 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, errors=["a"], status="ok")
         result2 = TestResult(processed=20, errors=["b"], status="done")
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
@@ -389,7 +377,6 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, status="ok")
         result2 = TestResult(processed=None, status=None)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 10

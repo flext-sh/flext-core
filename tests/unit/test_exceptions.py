@@ -91,14 +91,10 @@ class ExceptionScenarios:
 
     BASE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
         ExceptionScenario(
-            "base_error_init",
-            ExceptionScenarioType.BASE_ERROR,
-            e.BaseError,
+            "base_error_init", ExceptionScenarioType.BASE_ERROR, e.BaseError
         ),
         ExceptionScenario(
-            "base_error_with_code",
-            ExceptionScenarioType.WITH_CODE,
-            e.BaseError,
+            "base_error_with_code", ExceptionScenarioType.WITH_CODE, e.BaseError
         ),
         ExceptionScenario(
             "base_error_with_correlation",
@@ -106,9 +102,7 @@ class ExceptionScenarios:
             e.BaseError,
         ),
         ExceptionScenario(
-            "base_error_with_metadata",
-            ExceptionScenarioType.WITH_METADATA,
-            e.BaseError,
+            "base_error_with_metadata", ExceptionScenarioType.WITH_METADATA, e.BaseError
         ),
         ExceptionScenario(
             "base_error_with_kwargs",
@@ -116,9 +110,7 @@ class ExceptionScenarios:
             e.BaseError,
         ),
         ExceptionScenario(
-            "base_error_to_dict",
-            ExceptionScenarioType.TO_DICT,
-            e.BaseError,
+            "base_error_to_dict", ExceptionScenarioType.TO_DICT, e.BaseError
         ),
         ExceptionScenario(
             "base_error_str_repr",
@@ -126,12 +118,9 @@ class ExceptionScenarios:
             e.BaseError,
         ),
     ]
-
     SPECIFIC_TYPE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
         ExceptionScenario(
-            "validation_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.ValidationError,
+            "validation_error", ExceptionScenarioType.SPECIFIC_TYPE, e.ValidationError
         ),
         ExceptionScenario(
             "configuration_error",
@@ -139,14 +128,10 @@ class ExceptionScenarios:
             e.ConfigurationError,
         ),
         ExceptionScenario(
-            "connection_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.ConnectionError,
+            "connection_error", ExceptionScenarioType.SPECIFIC_TYPE, e.ConnectionError
         ),
         ExceptionScenario(
-            "timeout_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.TimeoutError,
+            "timeout_error", ExceptionScenarioType.SPECIFIC_TYPE, e.TimeoutError
         ),
         ExceptionScenario(
             "authentication_error",
@@ -159,19 +144,13 @@ class ExceptionScenarios:
             e.AuthorizationError,
         ),
         ExceptionScenario(
-            "not_found_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.NotFoundError,
+            "not_found_error", ExceptionScenarioType.SPECIFIC_TYPE, e.NotFoundError
         ),
         ExceptionScenario(
-            "conflict_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.ConflictError,
+            "conflict_error", ExceptionScenarioType.SPECIFIC_TYPE, e.ConflictError
         ),
         ExceptionScenario(
-            "rate_limit_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.RateLimitError,
+            "rate_limit_error", ExceptionScenarioType.SPECIFIC_TYPE, e.RateLimitError
         ),
         ExceptionScenario(
             "circuit_breaker_error",
@@ -179,17 +158,12 @@ class ExceptionScenarios:
             e.CircuitBreakerError,
         ),
         ExceptionScenario(
-            "type_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.TypeError,
+            "type_error", ExceptionScenarioType.SPECIFIC_TYPE, e.TypeError
         ),
         ExceptionScenario(
-            "operation_error",
-            ExceptionScenarioType.SPECIFIC_TYPE,
-            e.OperationError,
+            "operation_error", ExceptionScenarioType.SPECIFIC_TYPE, e.OperationError
         ),
     ]
-
     FACTORY_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
         ExceptionScenario(
             "create_error_validation",
@@ -276,8 +250,7 @@ class ExceptionScenarios:
             "OperationError",
         ),
         ExceptionScenario(
-            "create_error_invalid",
-            ExceptionScenarioType.FACTORY_INVALID,
+            "create_error_invalid", ExceptionScenarioType.FACTORY_INVALID
         ),
         ExceptionScenario(
             "exception_raising",
@@ -292,7 +265,6 @@ class ExceptionScenarios:
             True,
         ),
     ]
-
     TYPE_SCENARIOS: ClassVar[list[ExceptionTypeScenario]] = [
         ExceptionTypeScenario(
             "instantiate_validation",
@@ -310,9 +282,7 @@ class ExceptionScenarios:
             e.ConnectionError,
         ),
         ExceptionTypeScenario(
-            "instantiate_timeout",
-            ExceptionTypeScenarioType.TIMEOUT,
-            e.TimeoutError,
+            "instantiate_timeout", ExceptionTypeScenarioType.TIMEOUT, e.TimeoutError
         ),
         ExceptionTypeScenario(
             "instantiate_authentication",
@@ -330,9 +300,7 @@ class ExceptionScenarios:
             e.NotFoundError,
         ),
         ExceptionTypeScenario(
-            "instantiate_conflict",
-            ExceptionTypeScenarioType.CONFLICT,
-            e.ConflictError,
+            "instantiate_conflict", ExceptionTypeScenarioType.CONFLICT, e.ConflictError
         ),
         ExceptionTypeScenario(
             "instantiate_rate_limit",
@@ -345,9 +313,7 @@ class ExceptionScenarios:
             e.CircuitBreakerError,
         ),
         ExceptionTypeScenario(
-            "instantiate_type_error",
-            ExceptionTypeScenarioType.TYPE_ERROR,
-            e.TypeError,
+            "instantiate_type_error", ExceptionTypeScenarioType.TYPE_ERROR, e.TypeError
         ),
         ExceptionTypeScenario(
             "instantiate_operation",
@@ -361,9 +327,7 @@ class Teste:
     """Comprehensive test suite for e using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.BASE_SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.BASE_SCENARIOS, ids=lambda s: s.name
     )
     def test_base_exception_scenarios(self, scenario: ExceptionScenario) -> None:
         """Test base exception creation and behavior."""
@@ -375,24 +339,17 @@ class Teste:
             assert isinstance(error.metadata.attributes, dict)
         elif scenario.scenario_type == ExceptionScenarioType.WITH_CODE:
             error = e.BaseError("Test error", error_code="TEST_001")
-            assert error.error_code == "TEST_001"  # Test-specific error code
+            assert error.error_code == "TEST_001"
             assert str(error) == "[TEST_001] Test error"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_CORRELATION:
             error = e.BaseError("Test error", correlation_id="corr-123")
             assert error.correlation_id == "corr-123"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_METADATA:
             metadata = {"field": "email", "value": "invalid"}
-            error = e.BaseError(
-                "Test error",
-                metadata=metadata,
-            )
+            error = e.BaseError("Test error", metadata=metadata)
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
-            error = e.BaseError(
-                "Test error",
-                field="email",
-                value="invalid",
-            )
+            error = e.BaseError("Test error", field="email", value="invalid")
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.TO_DICT:
             error = e.BaseError(
@@ -412,25 +369,20 @@ class Teste:
             assert str(error2) == "[TEST_001] Test error"
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS, ids=lambda s: s.name
     )
     def test_specific_exception_types(self, scenario: ExceptionScenario) -> None:
         """Test specific exception type instantiation."""
         assert scenario.exception_type is not None
         if scenario.exception_type == e.ValidationError:
             error: e.BaseError = e.ValidationError(
-                "Invalid email",
-                field="email",
-                error_code="VAL_EMAIL",
+                "Invalid email", field="email", error_code="VAL_EMAIL"
             )
             assert error.message == "Invalid email"
-            assert error.error_code == "VAL_EMAIL"  # Test-specific error code
+            assert error.error_code == "VAL_EMAIL"
         elif scenario.exception_type == e.ConfigurationError:
             config_error: e.ConfigurationError = e.ConfigurationError(
-                "Missing config",
-                config_key="database.host",
+                "Missing config", config_key="database.host"
             )
             assert (
                 config_error.message == "Missing config"
@@ -438,9 +390,7 @@ class Teste:
             )
         elif scenario.exception_type == e.ConnectionError:
             conn_error: e.ConnectionError = e.ConnectionError(
-                "Connection failed",
-                host=FlextConstants.Network.LOCALHOST,
-                port=5432,
+                "Connection failed", host=FlextConstants.Network.LOCALHOST, port=5432
             )
             assert (
                 conn_error.message == "Connection failed"
@@ -448,20 +398,16 @@ class Teste:
             )
         elif scenario.exception_type == e.TimeoutError:
             timeout_error: e.TimeoutError = e.TimeoutError(
-                "Operation timeout",
-                timeout_seconds=30.0,
-                operation="database_query",
+                "Operation timeout", timeout_seconds=30.0, operation="database_query"
             )
             assert (
                 timeout_error.message == "Operation timeout"
                 and timeout_error.timeout_seconds is not None
-                and timeout_error.timeout_seconds == pytest.approx(30.0)
+                and (timeout_error.timeout_seconds == pytest.approx(30.0))
             )
         elif scenario.exception_type == e.AuthenticationError:
             auth_error: e.AuthenticationError = e.AuthenticationError(
-                "Invalid credentials",
-                user_id="testuser",
-                auth_method="password",
+                "Invalid credentials", user_id="testuser", auth_method="password"
             )
             assert (
                 auth_error.message == "Invalid credentials"
@@ -480,9 +426,7 @@ class Teste:
             )
         elif scenario.exception_type == e.NotFoundError:
             not_found_error: e.NotFoundError = e.NotFoundError(
-                "Resource not found",
-                resource_type="User",
-                resource_id="123",
+                "Resource not found", resource_type="User", resource_id="123"
             )
             assert (
                 not_found_error.message == "Resource not found"
@@ -500,9 +444,7 @@ class Teste:
             )
         elif scenario.exception_type == e.RateLimitError:
             rate_limit_error: e.RateLimitError = e.RateLimitError(
-                "Rate limit exceeded",
-                limit=100,
-                window_seconds=60,
+                "Rate limit exceeded", limit=100, window_seconds=60
             )
             assert (
                 rate_limit_error.message == "Rate limit exceeded"
@@ -510,9 +452,7 @@ class Teste:
             )
         elif scenario.exception_type == e.CircuitBreakerError:
             circuit_error: e.CircuitBreakerError = e.CircuitBreakerError(
-                "Circuit breaker open",
-                service_name="payment_service",
-                failure_count=5,
+                "Circuit breaker open", service_name="payment_service", failure_count=5
             )
             assert (
                 circuit_error.message == "Circuit breaker open"
@@ -520,18 +460,14 @@ class Teste:
             )
         elif scenario.exception_type == e.TypeError:
             type_error: e.TypeError = e.TypeError(
-                "Invalid type",
-                expected_type=str,
-                actual_type=int,
+                "Invalid type", expected_type=str, actual_type=int
             )
             assert (
                 type_error.message == "Invalid type" and type_error.expected_type is str
             )
         elif scenario.exception_type == e.OperationError:
             op_error: e.OperationError = e.OperationError(
-                "Operation failed",
-                operation="backup",
-                reason="disk_full",
+                "Operation failed", operation="backup", reason="disk_full"
             )
             assert (
                 op_error.message == "Operation failed"
@@ -539,9 +475,7 @@ class Teste:
             )
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.FACTORY_SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.FACTORY_SCENARIOS, ids=lambda s: s.name
     )
     def test_factory_methods(self, scenario: ExceptionScenario) -> None:
         """Test exception factory methods."""
@@ -562,19 +496,14 @@ class Teste:
         elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_CHAINING:
             operation_error_msg = "Operation failed"
             with pytest.raises(e.OperationError) as exc_op_info:
-                raise e.OperationError(
-                    operation_error_msg,
-                ) from e.ConfigurationError("Config error")
+                raise e.OperationError(operation_error_msg) from e.ConfigurationError(
+                    "Config error"
+                )
             assert exc_op_info.value.__cause__ is not None
-            assert isinstance(
-                exc_op_info.value.__cause__,
-                e.ConfigurationError,
-            )
+            assert isinstance(exc_op_info.value.__cause__, e.ConfigurationError)
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.TYPE_SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.TYPE_SCENARIOS, ids=lambda s: s.name
     )
     def test_exception_type_scenarios(self, scenario: ExceptionTypeScenario) -> None:
         """Test comprehensive exception type instantiation."""
@@ -586,8 +515,7 @@ class Teste:
         )
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
         exc = scenario.exception_class(
-            f"{scenario.scenario_type} error",
-            metadata={"test": "data"},
+            f"{scenario.scenario_type} error", metadata={"test": "data"}
         )
         assert "test" in exc.metadata.attributes
         assert exc.metadata.attributes["test"] == "data"
@@ -615,11 +543,7 @@ class Teste:
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
         metadata = {"existing": "value"}
-        error = e.BaseError(
-            "Test error",
-            metadata=metadata,
-            new_field="new_value",
-        )
+        error = e.BaseError("Test error", metadata=metadata, new_field="new_value")
         assert error.metadata.attributes["existing"] == "value"
         assert error.metadata.attributes["new_field"] == "new_value"
 
@@ -650,9 +574,6 @@ class Teste:
             "field": "email",
             "value": "invalid",
         })
-        # ValidationError accepts metadata via extra_kwargs, but BaseError.__init__ accepts it
-        # Pass metadata via extra_kwargs - ValidationError.__init__ pops it and passes to BaseError
-        # extra_kwargs accepts t.MetadataAttributeValue, and m.Metadata is compatible
         exc = e.ValidationError(
             "Validation failed",
             error_code="INVALID_INPUT",
@@ -670,7 +591,6 @@ class Teste:
         line 118 (no code path), we need to set error_code to empty string
         after creation or use a different approach.
         """
-        # Create error and manually set error_code to empty to test line 118
         error = e.BaseError("Test message")
         error.error_code = ""
         assert str(error) == "Test message"
@@ -682,22 +602,14 @@ class Teste:
 
     def test_normalize_metadata_fallback(self) -> None:
         """Test _normalize_metadata fallback path - tests line 219."""
-        # Test with non-Mapping, non-Metadata value
-        result = e.BaseError._normalize_metadata(
-            12345,  # int is t.ContainerValue but not Mapping/Metadata
-            {},
-        )
+        result = e.BaseError._normalize_metadata(12345, {})
         assert hasattr(result, "attributes")
-        # Assuming fallback behavior normalizes single value to "value" key
-        # or similar default behavior in normalize_metadata
-        # Check attributes exist
         assert result.attributes
 
     def test_normalize_metadata_with_merged_kwargs(self) -> None:
         """Test _normalize_metadata with merged_kwargs - tests lines 211-212."""
         metadata = {"key1": "value1"}
         merged_kwargs = {"key2": "value2"}
-        # Cast merged_kwargs to MetadataAttributeValue for type compatibility
         merged_kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", merged_kwargs)
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
         assert hasattr(result, "attributes")
@@ -707,16 +619,12 @@ class Teste:
     def test_validation_error_with_context(self) -> None:
         """Test ValidationError with context - tests lines 243-244."""
         context_raw = {"key1": "value1", "key2": 123}
-        # Convert to Mapping[str, t.MetadataAttributeValue] using normalize_to_metadata_value
-        # All values in context_raw are already t.ContainerValue (str, int)
         context: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(cast("t.ContainerValue", v))
             for k, v in context_raw.items()
         }
         error = e.ValidationError(
-            "Validation failed",
-            field="test_field",
-            context=context,
+            "Validation failed", field="test_field", context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -733,10 +641,7 @@ class Teste:
         ids=["config_context", "connection_context", "auth_context", "authz_context"],
     )
     def test_exception_with_context(
-        self,
-        error_class: type[e.BaseError],
-        msg: str,
-        context_key: str,
+        self, error_class: type[e.BaseError], msg: str, context_key: str
     ) -> None:
         """Test exception classes with context metadata."""
         context = {context_key: "value1"}
@@ -748,36 +653,27 @@ class Teste:
         """Test NotFoundError with context - tests lines 518-547."""
         context_raw = {
             "key1": "value1",
-            "correlation_id": "test-id",  # Reserved key, should be excluded
-            "metadata": "test",  # Reserved key, should be excluded
-            "auto_log": True,  # Reserved key, should be excluded
-            "auto_correlation": True,  # Reserved key, should be excluded
+            "correlation_id": "test-id",
+            "metadata": "test",
+            "auto_log": True,
+            "auto_correlation": True,
         }
-        # Convert to Mapping[str, t.MetadataAttributeValue]
-        # All values are already t.ContainerValue compatible
         context: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(cast("t.ContainerValue", v))
             for k, v in context_raw.items()
         }
         error = e.NotFoundError(
-            "Not found",
-            resource_type="User",
-            resource_id="123",
-            context=context,
+            "Not found", resource_type="User", resource_id="123", context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
-        # Reserved keys should not be in metadata
         assert "correlation_id" not in error.metadata.attributes
 
     def test_conflict_error_with_context(self) -> None:
         """Test ConflictError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.ConflictError(
-            "Conflict",
-            resource_type="User",
-            resource_id="123",
-            context=context,
+            "Conflict", resource_type="User", resource_id="123", context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -786,10 +682,7 @@ class Teste:
         """Test ConflictError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.ConflictError(
-            "Conflict",
-            resource_type="User",
-            resource_id="123",
-            context=context,
+            "Conflict", resource_type="User", resource_id="123", context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -797,10 +690,7 @@ class Teste:
     def test_conflict_error_build_context_with_extra_kwargs(self) -> None:
         """Test ConflictError with extra_kwargs - tests line 625."""
         error = e.ConflictError(
-            "Conflict",
-            custom="value",
-            resource_type="User",
-            resource_id="123",
+            "Conflict", custom="value", resource_type="User", resource_id="123"
         )
         assert error.metadata is not None
         assert "custom" in error.metadata.attributes
@@ -809,10 +699,7 @@ class Teste:
         """Test RateLimitError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.RateLimitError(
-            "Rate limit",
-            limit=100,
-            window_seconds=60,
-            context=context,
+            "Rate limit", limit=100, window_seconds=60, context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -821,9 +708,7 @@ class Teste:
         """Test CircuitBreakerError with context - tests line 659."""
         context = {"key1": "value1"}
         error = e.CircuitBreakerError(
-            "Circuit open",
-            service="test_service",
-            context=context,
+            "Circuit open", service="test_service", context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -832,10 +717,7 @@ class Teste:
         """Test TypeError with context - tests line 701."""
         context = {"key1": "value1"}
         error = e.TypeError(
-            "Type error",
-            expected_type=str,
-            actual_type=int,
-            context=context,
+            "Type error", expected_type=str, actual_type=int, context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -844,9 +726,7 @@ class Teste:
         """Test OperationError with context - tests lines 757-761."""
         context = {"key1": "value1"}
         error = e.OperationError(
-            "Operation failed",
-            operation="test_op",
-            context=context,
+            "Operation failed", operation="test_op", context=context
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -868,57 +748,31 @@ class Teste:
 
     def test_type_error_normalize_type(self) -> None:
         """Test TypeError._normalize_type."""
-        # Test extracting type from extra_kwargs when type_value is None
         type_map: dict[str, type] = {"str": str, "int": int}
         extra_kwargs_raw = {"expected_type": "str"}
-        # Convert to t.MetadataAttributeDict
-        # _normalize_type accepts t.MetadataAttributeDict but at runtime can handle type objects
-        # Mypy limitation: type objects not in MetadataAttributeValue union, but method handles them
         extra_kwargs: dict[str, t.MetadataValue] = {
-            k: cast("t.MetadataAttributeValue", v)  # str is ScalarValue
-            for k, v in extra_kwargs_raw.items()
+            k: cast("t.MetadataAttributeValue", v) for k, v in extra_kwargs_raw.items()
         }
         result = e.TypeError._normalize_type(
-            None,
-            type_map,
-            extra_kwargs,
-            "expected_type",
+            None, type_map, extra_kwargs, "expected_type"
         )
         assert result is str
-        # Key should be popped from extra_kwargs
         assert "expected_type" not in extra_kwargs
-
-        # Test extracting type object from extra_kwargs
         extra_kwargs_type_raw = {"expected_type": int}
-        # Type objects need special handling - _normalize_type accepts t.MetadataAttributeDict
-        # but at runtime can handle type objects (defensive programming)
-        # Mypy limitation: type objects not in MetadataAttributeValue union
         extra_kwargs_type: dict[str, t.MetadataValue] = cast(
-            "dict[str, t.MetadataAttributeValue]",
-            extra_kwargs_type_raw,
+            "dict[str, t.MetadataAttributeValue]", extra_kwargs_type_raw
         )
         result = e.TypeError._normalize_type(
-            None,
-            type_map,
-            extra_kwargs_type,
-            "expected_type",
+            None, type_map, extra_kwargs_type, "expected_type"
         )
         assert result is int
         assert "expected_type" not in extra_kwargs_type
-
-        # Test with type_value as string (should lookup in type_map)
         result = e.TypeError._normalize_type("str", type_map, {}, "expected_type")
         assert result is str
-
-        # Test with type_value as type object (should return as-is)
         result = e.TypeError._normalize_type(str, type_map, {}, "expected_type")
         assert result is str
-
-        # Test with type_value as None and key not in extra_kwargs
         result = e.TypeError._normalize_type(None, type_map, {}, "expected_type")
         assert result is None
-
-        # Test with string type not in map
         result = e.TypeError._normalize_type("float", type_map, {}, "expected_type")
         assert result is None
 
@@ -926,10 +780,7 @@ class Teste:
         """Test TypeError._build_type_context."""
         context = {"key1": "value1"}
         type_context = e.TypeError._build_type_context(
-            str,
-            int,
-            context,
-            {"custom": "value"},
+            str, int, context, {"custom": "value"}
         )
         assert "key1" in type_context
         assert "expected_type" in type_context
@@ -947,7 +798,6 @@ class Teste:
     def test_type_error_build_type_context_with_type_objects(self) -> None:
         """Test TypeError._build_type_context with type objects."""
         type_context = e.TypeError._build_type_context(str, int, None, {})
-        # Type objects should be converted to __qualname__
         assert type_context["expected_type"] == "str"
         assert type_context["actual_type"] == "int"
 
@@ -978,10 +828,7 @@ class Teste:
     def test_type_error_build_type_context_with_extra_kwargs(self) -> None:
         """Test TypeError._build_type_context with extra_kwargs."""
         type_context = e.TypeError._build_type_context(
-            None,
-            None,
-            None,
-            {"custom": "value"},
+            None, None, None, {"custom": "value"}
         )
         assert "expected_type" not in type_context
         assert "actual_type" not in type_context
@@ -994,92 +841,65 @@ class Teste:
 
     def test_create_with_invalid_type(self) -> None:
         """Test create with invalid error type - tests line 1346."""
-        # create returns BaseError when type cannot be determined
         error = e.create("message", invalid_key="value")
         assert isinstance(error, e.BaseError)
         assert error.message == "message"
 
     def test_create_error_factory_methods(self) -> None:
         """Test create_error factory methods - tests lines 1014-1033."""
-        # Test all factory methods exist and work
-        # Note: create_error uses class names, not lowercase types
         error = e.create("ValidationError", "Test message")
         assert isinstance(error, e.ValidationError)
         assert error.message == "Test message"
-
         error = e.create("ConfigurationError", "Config error")
         assert isinstance(error, e.ConfigurationError)
-
         error = e.create("ConnectionError", "Conn error")
         assert isinstance(error, e.ConnectionError)
-
         error = e.create("TimeoutError", "Timeout error")
         assert isinstance(error, e.TimeoutError)
-
         error = e.create("AuthenticationError", "Auth error")
         assert isinstance(error, e.AuthenticationError)
-
         error = e.create("AuthorizationError", "Authz error")
         assert isinstance(error, e.AuthorizationError)
-
         error = e.create("NotFoundError", "Not found error")
         assert isinstance(error, e.NotFoundError)
-
         error = e.create("ConflictError", "Conflict error")
         assert isinstance(error, e.ConflictError)
-
         error = e.create("RateLimitError", "Rate limit error")
         assert isinstance(error, e.RateLimitError)
-
         error = e.create("CircuitBreakerError", "Circuit error")
         assert isinstance(error, e.CircuitBreakerError)
-
         error = e.create("TypeError", "Type error")
         assert isinstance(error, e.TypeError)
-
         error = e.create("OperationError", "Operation error")
         assert isinstance(error, e.OperationError)
-
         error = e.create("AttributeError", "Attribute error")
         assert isinstance(error, e.AttributeAccessError)
 
     def test_create_factory_methods(self) -> None:
         """Test create factory methods - tests lines 1368-1379."""
-        # Test create method with various error types (determined from kwargs)
         error = e.create("Test message", field="test_field")
         assert isinstance(error, e.ValidationError)
-
         error = e.create("Config error", config_key="test_key")
         assert isinstance(error, e.ConfigurationError)
-
         error = e.create("Conn error", host=FlextConstants.Network.LOCALHOST)
         assert isinstance(error, e.ConnectionError)
-
-        # Source bug: create() normalizes 30.0 → "30.0" which fails TimeoutErrorParams strict validation
         with pytest.raises(Exception):
             e.create("Timeout error", timeout_seconds=30.0)
-
         error = e.create("Auth error", user_id="user1", auth_method="password")
         assert isinstance(error, e.AuthenticationError)
-
         error = e.create("Authz error", user_id="user1", permission="read")
         assert isinstance(error, e.AuthorizationError)
-
         error = e.create("Not found error", resource_type="User", resource_id="123")
         assert isinstance(error, e.NotFoundError)
-
         error = e.create("Operation error", operation="test_op")
         assert isinstance(error, e.OperationError)
-
         error = e.create("Attribute error", attribute_name="test_attr")
         assert isinstance(error, e.AttributeAccessError)
 
     def test_create_with_metadata_dict(self) -> None:
         """Test create with metadata as dict - tests lines 1372-1375."""
         error = e.create(
-            "Test message",
-            field="test_field",
-            metadata={"key1": "value1"},
+            "Test message", field="test_field", metadata={"key1": "value1"}
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1088,8 +908,6 @@ class Teste:
     def test_create_with_metadata_metadata_object(self) -> None:
         """Test create with metadata as Metadata object - tests lines 1369-1371."""
         metadata_obj = m.Metadata(attributes={"key1": "value1"})
-        # create accepts **kwargs: t.MetadataAttributeValue
-        # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
         error = e.create(
             "Test message",
             field="test_field",
@@ -1117,15 +935,11 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
-        # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.ContainerValue (string), then normalize
         dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("t.ContainerValue", v)
             )
             for k, v in dict_like.items()
         }
@@ -1141,21 +955,15 @@ class Teste:
     def test_create_with_correlation_id(self) -> None:
         """Test create with correlation_id - tests lines 1365-1366."""
         error = e.create(
-            "Test message",
-            field="test_field",
-            correlation_id="test-correlation-id",
+            "Test message", field="test_field", correlation_id="test-correlation-id"
         )
         assert isinstance(error, e.ValidationError)
-        # correlation_id is added to error_context and passed to _create_error_by_type
         assert error.correlation_id == "test-correlation-id"
 
     def test_create_error_by_type_with_error_code(self) -> None:
         """Test _create_error_by_type with error_code - tests lines 1322-1323."""
         error = e._create_error_by_type(
-            "validation",
-            "Test message",
-            error_code="CUSTOM_ERROR",
-            context=None,
+            "validation", "Test message", error_code="CUSTOM_ERROR", context=None
         )
         assert isinstance(error, e.ValidationError)
         assert error.error_code == "CUSTOM_ERROR"
@@ -1164,10 +972,7 @@ class Teste:
         """Test _create_error_by_type with context - tests lines 1320-1321."""
         context = {"key1": "value1"}
         error = e._create_error_by_type(
-            "validation",
-            "Test message",
-            error_code=None,
-            context=context,
+            "validation", "Test message", error_code=None, context=context
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1176,10 +981,7 @@ class Teste:
     def test_create_error_by_type_base_error(self) -> None:
         """Test _create_error_by_type returns BaseError for None type - tests lines 1346-1350."""
         error = e._create_error_by_type(
-            None,
-            "Test message",
-            error_code=None,
-            context=None,
+            None, "Test message", error_code=None, context=None
         )
         assert isinstance(error, e.BaseError)
         assert error.message == "Test message"
@@ -1187,10 +989,7 @@ class Teste:
     def test_create_error_by_type_invalid_type(self) -> None:
         """Test _create_error_by_type with invalid type - tests line 1346."""
         error = e._create_error_by_type(
-            "invalid",
-            "Test message",
-            error_code=None,
-            context=None,
+            "invalid", "Test message", error_code=None, context=None
         )
         assert isinstance(error, e.BaseError)
         assert error.message == "Test message"
@@ -1198,9 +997,7 @@ class Teste:
     def test_attribute_access_error_with_extra_kwargs(self) -> None:
         """Test AttributeAccessError with extra_kwargs - tests line 918."""
         error = e.AttributeAccessError(
-            "Attribute error",
-            attribute_name="test_attr",
-            custom_key="custom_value",
+            "Attribute error", attribute_name="test_attr", custom_key="custom_value"
         )
         assert error.metadata is not None
         assert "custom_key" in error.metadata.attributes
@@ -1208,7 +1005,6 @@ class Teste:
     def test_prepare_kwargs(self) -> None:
         """Test prepare_exception_kwargs - tests lines 945-970."""
         specific_params_raw = {"field": "test_field"}
-        # Convert to t.MetadataAttributeDict
         specific_params: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
@@ -1219,25 +1015,21 @@ class Teste:
             "auto_log": True,
             "auto_correlation": True,
             "config": "test_config",
-            "field": "override_field",  # Should be overridden by specific_params
+            "field": "override_field",
             "custom": "value",
         }
-        # Convert to t.MetadataAttributeDict
         kwargs: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
-        # Note: The order of arguments in prepare_exception_kwargs in exceptions.py is (kwargs, specific_params)
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         corr_id, metadata, auto_log, auto_corr, _config, extra = result
-
         assert corr_id == "test-id"
         assert metadata is not None
         assert auto_log is True
         assert auto_corr is True
         assert "field" in extra
-        assert extra["field"] == "test_field"  # Overridden by specific_params
+        assert extra["field"] == "test_field"
         assert "custom" in extra
-        # Reserved keys should not be in extra_kwargs
         assert "correlation_id" not in extra
         assert "metadata" not in extra
         assert "auto_log" not in extra
@@ -1247,7 +1039,6 @@ class Teste:
     def test_prepare_kwargs_with_empty_specific_params(self) -> None:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""
         kwargs_raw = {"field": "test_field"}
-        # Convert to t.MetadataAttributeDict
         kwargs: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
@@ -1259,12 +1050,11 @@ class Teste:
     def test_prepare_kwargs_setdefault_behavior(self) -> None:
         """Test prepare_exception_kwargs setdefault behavior - tests line 948."""
         specific_params_raw = {"field": "test_field"}
-        # Convert to t.MetadataAttributeDict
         specific_params: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
-        kwargs: dict[str, t.MetadataValue] = {}  # field not in kwargs
+        kwargs: dict[str, t.MetadataValue] = {}
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
         assert "field" in extra
@@ -1272,38 +1062,30 @@ class Teste:
 
     def test_prepare_kwargs_with_specific_params_none(self) -> None:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
-        specific_params_raw: dict[str, None] = {
-            "field": None
-        }  # None value should not override
-        # Convert to t.MetadataAttributeDict (None is valid MetadataAttributeValue)
+        specific_params_raw: dict[str, None] = {"field": None}
         specific_params: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
         kwargs_raw = {"field": "test_field"}
-        # Convert to t.MetadataAttributeDict
         kwargs: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
-        assert (
-            extra["field"] == "test_field"
-        )  # Not overridden because specific_params value is None
+        assert extra["field"] == "test_field"
 
     def test_prepare_exception_kwargs_with_non_string_correlation_id(self) -> None:
         """Test prepare_exception_kwargs with non-string correlation_id - tests lines 961-966."""
-        kwargs = {"correlation_id": 123}  # Not a string
-        # Cast kwargs to dict[str, t.MetadataAttributeValue] for type compatibility
+        kwargs = {"correlation_id": 123}
         kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         corr_id, _metadata, _auto_log, _auto_corr, _config, _extra = result
-        assert corr_id is None  # Should be None for non-string
+        assert corr_id is None
 
     def test_prepare_exception_kwargs_return_tuple(self) -> None:
         """Test prepare_exception_kwargs returns correct tuple - tests lines 967-970."""
         kwargs = {"field": "test"}
-        # Cast kwargs to dict[str, t.MetadataAttributeValue] for type compatibility
         kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         assert len(result) == 6
@@ -1316,8 +1098,6 @@ class Teste:
 
     def test_create_error_with_context(self) -> None:
         """Test create_error with context parameter - tests lines 1086-1087."""
-        # Note: create_error doesn't accept context directly, but we can test
-        # the error creation with various parameters
         error = e.create("ValidationError", "Test message")
         assert isinstance(error, e.ValidationError)
 
@@ -1348,15 +1128,11 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
-        # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.ContainerValue (string), then normalize
         dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("t.ContainerValue", v)
             )
             for k, v in dict_like.items()
         }
@@ -1390,15 +1166,11 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
-        # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.ContainerValue (string), then normalize
         dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("t.ContainerValue", v)
             )
             for k, v in dict_like.items()
         }
@@ -1437,15 +1209,11 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
-        # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.ContainerValue (string), then normalize
         dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("t.ContainerValue", v)
             )
             for k, v in dict_like.items()
         }
@@ -1461,11 +1229,8 @@ class Teste:
     def test_create_error_instance(self) -> None:
         """Test create_error instance method (__call__) - tests lines 1453-1456."""
         error_factory = e()
-        # __call__ accepts error_code parameter
         error = error_factory(
-            "Test message",
-            error_code="TEST_ERROR",
-            field="test_field",
+            "Test message", error_code="TEST_ERROR", field="test_field"
         )
         assert isinstance(error, e.ValidationError)
         assert error.error_code == "TEST_ERROR"
@@ -1475,17 +1240,12 @@ class Teste:
     def test_create_error_instance_normalizes_kwargs(self) -> None:
         """Test create_error instance method normalizes kwargs - tests lines 1453-1456."""
         error_factory = e()
-        # Test with various types that need normalization
-        # Note: calling create() which accepts kwargs, NOT create_error() which is static and positional only
         error = error_factory.create(
             "Test message",
             error_code="TEST_ERROR",
             field="test_field",
-            value=123,  # int is already t.MetadataAttributeValue (ScalarValue)
-            custom_obj=cast(
-                "t.MetadataAttributeValue",
-                str(object()),
-            ),  # object needs to be converted to string
+            value=123,
+            custom_obj=cast("t.MetadataAttributeValue", str(object())),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1496,8 +1256,6 @@ class Teste:
     def test_create_error_instance_normalizes_all_kwargs(self) -> None:
         """Test create_error instance method normalizes all kwargs - tests lines 1454-1455."""
         error_factory = e()
-        # Test normalization loop
-        # Note: calling create() which accepts kwargs
         error = error_factory.create(
             "Test message",
             field="test_field",
@@ -1517,15 +1275,8 @@ class Teste:
     def test_create_error_instance_normalize_loop(self) -> None:
         """Test create_error instance method normalization loop - tests lines 1454-1455."""
         error_factory = e()
-        # Test that all kwargs are normalized in the loop
-        # Note: calling create() which accepts kwargs: t.MetadataAttributeValue
-        # Convert all values to MetadataAttributeValue
-        # create() normalizes values internally, but we need to pass compatible types
         error = error_factory.create(
-            "Test message",
-            obj=str(object()),  # object -> str (str is ScalarValue)
-            lst=[1, 2, 3],  # list[int] is Sequence[ScalarValue]
-            dct={"key": "value"},  # dict[str, str] is Mapping[str, ScalarValue]
+            "Test message", obj=str(object()), lst=[1, 2, 3], dct={"key": "value"}
         )
         assert isinstance(error, e.BaseError)
         assert error.metadata is not None
@@ -1535,44 +1286,30 @@ class Teste:
 
     def test_determine_error_type(self) -> None:
         """Test _determine_error_type - tests lines 1105-1308."""
-        # Test various patterns
         error_type = e._determine_error_type({"field": "test"})
         assert error_type == "validation"
-
         error_type = e._determine_error_type({"config_key": "test"})
         assert error_type == "configuration"
-
         error_type = e._determine_error_type({"host": FlextConstants.Network.LOCALHOST})
         assert error_type == "connection"
-
         error_type = e._determine_error_type({"timeout_seconds": 30.0})
         assert error_type == "timeout"
-
         error_type = e._determine_error_type({
             "user_id": "user1",
             "auth_method": "password",
         })
         assert error_type == "authentication"
-
-        error_type = e._determine_error_type({
-            "user_id": "user1",
-            "permission": "read",
-        })
+        error_type = e._determine_error_type({"user_id": "user1", "permission": "read"})
         assert error_type == "authorization"
-
         error_type = e._determine_error_type({"resource_id": "123"})
         assert error_type == "not_found"
-
         error_type = e._determine_error_type({"attribute_name": "test"})
         assert error_type == "attribute_access"
-
         error_type = e._determine_error_type({"unknown": "value"})
         assert error_type is None
 
     def test_determine_error_type_with_conflict(self) -> None:
         """Test _determine_error_type with conflict pattern - tests line 585."""
-        # ConflictError doesn't have a specific pattern, so it won't be detected
-        # But we can test other patterns
         error_type = e._determine_error_type({
             "resource_type": "User",
             "resource_id": "123",
@@ -1590,14 +1327,11 @@ class Teste:
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
         assert corr_id == "test-id"
         assert isinstance(metadata, m.Metadata)
-
-        # Test with dict metadata
         kwargs_dict_raw = {
             "correlation_id": "test-id",
             "metadata": {"key": "value"},
             "field": "test_field",
         }
-        # Convert to Mapping[str, t.MetadataAttributeValue] for extract_common_kwargs
         kwargs_dict: dict[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             if not isinstance(v, dict)
@@ -1611,7 +1345,6 @@ class Teste:
         assert corr_id_dict == "test-id"
         assert isinstance(metadata_dict, dict)
 
-        # Test with dict-like metadata
         class DictLike(Mapping[str, object]):
             @override
             def __getitem__(self, key: str) -> object:
@@ -1633,12 +1366,9 @@ class Teste:
             "metadata": dict_like_obj,
             "field": "test_field",
         }
-        # Convert to Mapping[str, t.MetadataAttributeValue] for extract_common_kwargs
-        # DictLike is Mapping[str, object], need to convert values
         kwargs_dict_like: dict[str, t.MetadataValue] = {}
         for k, v in kwargs_dict_like_raw.items():
             if k == "metadata" and isinstance(v, DictLike):
-                # Convert DictLike to dict[str, t.MetadataAttributeValue]
                 dict_like_dict: dict[str, t.MetadataValue] = {
                     k2: str(v2)
                     if not isinstance(v2, (str, int, float, bool, type(None)))
@@ -1650,11 +1380,11 @@ class Teste:
                 kwargs_dict_like[k] = cast("t.MetadataAttributeValue", v)
         corr_id_dl, metadata_dl = e.extract_common_kwargs(kwargs_dict_like)
         assert corr_id_dl == "test-id"
-        # Dict-like metadata is converted to dict
         assert isinstance(metadata_dl, dict)
         assert "key" in metadata_dl
 
     def test_extract_common_kwargs_metadata_protocol_like(self) -> None:
+
         class _MetadataLike:
             def __init__(self) -> None:
                 self.attributes = {"source": "protocol"}
@@ -1664,7 +1394,6 @@ class Teste:
             "metadata": cast("t.MetadataAttributeValue", _MetadataLike()),
         }
         kwargs_cast = cast("Mapping[str, t.MetadataValue]", kwargs)
-
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
         assert corr_id == "test-id"
         assert metadata is not None

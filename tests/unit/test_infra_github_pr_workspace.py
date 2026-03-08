@@ -222,12 +222,10 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
-
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
-
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
             git=_make_git_mock(),
@@ -260,7 +258,6 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(1)
-
         proj1 = Mock()
         proj1.path = tmp_path / "p1"
         proj1.path.mkdir()
@@ -268,7 +265,6 @@ class TestOrchestrate:
         proj2.path = tmp_path / "p2"
         proj2.path.mkdir()
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj1, proj2])
-
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
             git=_make_git_mock(),
@@ -288,9 +284,7 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
-
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([])
-
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
             git=_make_git_mock(),
@@ -310,14 +304,11 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].ok(0)
-
         mock_git = _make_git_mock()
-
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
-
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
             git=mock_git,
@@ -337,12 +328,10 @@ class TestOrchestrate:
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         mock_runner.run_to_file.return_value = r[int].fail("command error")
-
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
-
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
             git=_make_git_mock(),
@@ -417,5 +406,4 @@ class TestStaticMethods:
         )
         cmd = build_subproject_command(tmp_path, {})
         assert "make" in cmd
-        # head, number, title, body are optional — should not appear
         assert not [c for c in cmd if c.startswith("PR_HEAD=")]

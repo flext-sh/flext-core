@@ -91,34 +91,24 @@ class FlextUtilitiesGuards:
         return value is None
 
     @staticmethod
-    def _is_sequence(
-        value: t.ContainerValue,
-    ) -> TypeGuard[Sequence[t.ContainerValue]]:
+    def _is_sequence(value: t.ContainerValue) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Check if value is Sequence of ContainerValue."""
         return isinstance(value, (list, tuple, range))
-
-    # =========================================================================
-    # Generic Type Guards for Collections and Sequences
-    # =========================================================================
 
     @staticmethod
     def _is_sequence_not_str(
         value: t.ContainerValue,
     ) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Check if value is Sequence and not str."""
-        # Runtime check needed: type checker sees str | Sequence[T] as Sequence[Unknown]
-        # but runtime can be either str or Sequence[str]
-        # Type check is necessary for runtime type distinction
-        return isinstance(value, (list, tuple, range)) and not isinstance(value, str)
+        return isinstance(value, (list, tuple, range)) and (not isinstance(value, str))
 
     @staticmethod
     def _is_sequence_not_str_bytes(
         value: t.ContainerValue,
     ) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Check if value is Sequence and not str or bytes."""
-        return isinstance(value, (list, tuple, range)) and not isinstance(
-            value,
-            (str, bytes),
+        return isinstance(value, (list, tuple, range)) and (
+            not isinstance(value, (str, bytes))
         )
 
     @staticmethod
@@ -173,9 +163,7 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def is_configuration_dict(
-        value: t.ContainerValue,
-    ) -> TypeGuard[m.Dict]:
+    def is_configuration_dict(value: t.ContainerValue) -> TypeGuard[m.Dict]:
         """Check if value is a valid m.Dict mapping.
 
         This TypeGuard enables explicit narrowing for m.Dict values.
@@ -202,9 +190,7 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def is_configuration_mapping(
-        value: t.ContainerValue,
-    ) -> TypeGuard[m.ConfigMap]:
+    def is_configuration_mapping(value: t.ContainerValue) -> TypeGuard[m.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
         m.ConfigMap = Mapping[str, t.ContainerValue]
@@ -225,10 +211,8 @@ class FlextUtilitiesGuards:
             ...     items = config.items()
 
         """
-        # Check if it's a Mapping (structural)
         if not isinstance(value, Mapping):
             return False
-        # Check all keys are strings and values are ContainerValue
         for item_value in value.values():
             if not FlextUtilitiesGuards.is_general_value_type(item_value):
                 return False
@@ -257,24 +241,15 @@ class FlextUtilitiesGuards:
             return True
         if isinstance(value, (list, tuple)):
             for item in value:
-                if item is not None and not FlextUtilitiesGuards.is_scalar(
-                    item,
-                ):
+                if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
             return True
         if isinstance(value, Mapping):
             for item in value.values():
-                if item is not None and not FlextUtilitiesGuards.is_scalar(
-                    item,
-                ):
+                if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
             return True
         return False
-
-    # =========================================================================
-    # TypeGuard Functions for FLEXT Core Types
-    # =========================================================================
-    # These functions enable type narrowing without  - zero tolerance typing
 
     @staticmethod
     def is_general_value_type(value: object) -> TypeGuard[t.ContainerValue]:
@@ -293,32 +268,24 @@ class FlextUtilitiesGuards:
             TypeGuard[t.ContainerValue]: True if value matches t.ContainerValue structure
 
         """
-        # Check scalar types first (most common case)
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
-        # Check for bool before int (bool is subclass of int in Python)
         if value is True or value is False:
             return True
-        # Check sequence types (list/tuple can never be str/bytes)
         if isinstance(value, (list, tuple)):
-            # Iterate with explicit type annotation to satisfy pyright
             item: t.ContainerValue
             for item in value:
                 if not FlextUtilitiesGuards.is_general_value_type(item):
                     return False
             return True
-        # Check mapping types (structural)
         if isinstance(value, Mapping):
-            # Iterate with explicit type annotations to satisfy pyright
             v: t.Primitives | None
             for v in value.values():
                 if not FlextUtilitiesGuards.is_general_value_type(v):
                     return False
             return True
-        # Check callable types
         if callable(value):
             return True
-        # Check BaseModel or Path instances (structural for BaseModel)
         return hasattr(value, "model_dump") or isinstance(value, Path)
 
     @staticmethod
@@ -350,21 +317,16 @@ class FlextUtilitiesGuards:
             ...     result = container.register("my_handler", handler)
 
         """
-        # Check if callable (most common case - HandlerCallable)
         if callable(value):
             return True
-        # Check if Mapping (handler mapping) - structural
         if isinstance(value, Mapping):
             return True
-        # Check if BaseModel instance or class
         if (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")
             and callable(value.model_dump)
         ):
             return True
-        # Check for handler protocol methods (duck typing)
-        # All values are objects in Python, so type check (value, object) is always True
         return hasattr(value, "handle") or hasattr(value, "can_handle")
 
     @staticmethod
@@ -377,7 +339,7 @@ class FlextUtilitiesGuards:
         """Check if value is a non-empty list using duck typing."""
         return (
             isinstance(value, Sequence)
-            and not isinstance(value, str | bytes)
+            and (not isinstance(value, str | bytes))
             and bool(value)
         )
 
@@ -387,10 +349,6 @@ class FlextUtilitiesGuards:
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         """Check if value is ConfigurationMapping (Mapping[str, t.ContainerValue])."""
         return isinstance(value, Mapping)
-
-    # ── Runtime type-layer guards ─────────────────────────────────────────
-    # Single source of truth for isinstance checks against t.Primitives / t.Scalar.
-    # Call sites MUST use these guards — never raw isinstance with type aliases.
 
     @staticmethod
     def is_primitive(value: object) -> TypeGuard[t.Primitives]:
@@ -448,12 +406,6 @@ class FlextUtilitiesGuards:
             raise AttributeError(msg)
         return value
 
-    # =========================================================================
-    # Generic is_type() Function - Unified Type Checking
-    # =========================================================================
-
-    # Protocol specs: name -> check function (returns bool)
-    # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
     _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
         "config": lambda v: (
             hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
@@ -480,7 +432,6 @@ class FlextUtilitiesGuards:
             and callable(getattr(v, "before_dispatch", None))
         ),
     })
-
     _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
         p.Config: "config",
         p.Context: "context",
@@ -492,9 +443,7 @@ class FlextUtilitiesGuards:
         p.Service: "service",
         p.Middleware: "middleware",
     })
-
     _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType({
-        # Collection checks
         "str": "_is_str",
         "dict": "_is_dict",
         "list": "is_list",
@@ -507,12 +456,10 @@ class FlextUtilitiesGuards:
         "sized": "_is_sized",
         "callable": "_is_callable_key_func",
         "bytes": "_is_bytes",
-        # Primitive type checks
         "int": "_is_int",
         "float": "_is_float",
         "bool": "_is_bool",
         "none": "_is_none",
-        # Non-empty checks
         "string_non_empty": "is_string_non_empty",
         "dict_non_empty": "is_dict_non_empty",
         "list_non_empty": "is_list_non_empty",
@@ -566,10 +513,7 @@ class FlextUtilitiesGuards:
         if isinstance(condition, type):
             if FlextUtilitiesGuards.is_general_value_type(value):
                 return FlextUtilitiesGuards._guard_check_type(
-                    value,
-                    condition,
-                    context_name,
-                    error_msg,
+                    value, condition, context_name, error_msg
                 )
             return (
                 error_msg
@@ -578,10 +522,7 @@ class FlextUtilitiesGuards:
         if FlextUtilitiesGuards._is_type_tuple(condition):
             if FlextUtilitiesGuards.is_general_value_type(value):
                 return FlextUtilitiesGuards._guard_check_type(
-                    value,
-                    condition,
-                    context_name,
-                    error_msg,
+                    value, condition, context_name, error_msg
                 )
             return (
                 error_msg
@@ -594,10 +535,7 @@ class FlextUtilitiesGuards:
                 )
             typed_value: t.ContainerValue = value
             return FlextUtilitiesGuards._guard_check_validator(
-                typed_value,
-                condition,
-                context_name,
-                error_msg,
+                typed_value, condition, context_name, error_msg
             )
         if isinstance(condition, str):
             if not FlextUtilitiesGuards.is_general_value_type(value):
@@ -606,17 +544,11 @@ class FlextUtilitiesGuards:
                 )
             typed_value_s: t.ContainerValue = value
             return FlextUtilitiesGuards._guard_check_string_shortcut(
-                typed_value_s,
-                condition,
-                context_name,
-                error_msg,
+                typed_value_s, condition, context_name, error_msg
             )
         if callable(condition):
             return FlextUtilitiesGuards._guard_check_predicate(
-                value,
-                condition,
-                context_name,
-                error_msg,
+                value, condition, context_name, error_msg
             )
         return error_msg or f"{context_name} invalid guard condition type"
 
@@ -658,16 +590,16 @@ class FlextUtilitiesGuards:
         if shortcut_lower == "positive":
             if (
                 isinstance(value, int | float)
-                and not isinstance(value, bool)
-                and value > 0
+                and (not isinstance(value, bool))
+                and (value > 0)
             ):
                 return ""
             return error_msg or f"{context_name} must be positive number"
         if shortcut_lower == "non_negative":
             if (
                 isinstance(value, int | float)
-                and not isinstance(value, bool)
-                and value >= 0
+                and (not isinstance(value, bool))
+                and (value >= 0)
             ):
                 return ""
             return error_msg or f"{context_name} must be non-negative number"
@@ -679,7 +611,7 @@ class FlextUtilitiesGuards:
             if (
                 hasattr(value, "__iter__")
                 and value.__class__ not in {str, bytes}
-                and not hasattr(value, "items")
+                and (not hasattr(value, "items"))
             ):
                 return ""
             return error_msg or f"{context_name} must be list-like"
@@ -688,11 +620,11 @@ class FlextUtilitiesGuards:
                 return ""
             return error_msg or f"{context_name} must be string"
         if shortcut_lower == "int":
-            if isinstance(value, int) and not isinstance(value, bool):
+            if isinstance(value, int) and (not isinstance(value, bool)):
                 return ""
             return error_msg or f"{context_name} must be int"
         if shortcut_lower == "float":
-            if isinstance(value, int | float) and not isinstance(value, bool):
+            if isinstance(value, int | float) and (not isinstance(value, bool)):
                 return ""
             return error_msg or f"{context_name} must be float"
         if shortcut_lower == "bool":
@@ -740,10 +672,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _guard_handle_failure[T](
-        error_message: str,
-        *,
-        return_value: bool,
-        default: T | None,
+        error_message: str, *, return_value: bool, default: T | None
     ) -> r[T] | T:
         if return_value:
             if default is not None:
@@ -807,33 +736,22 @@ class FlextUtilitiesGuards:
             u.chk(v, is_=str, none=False)      # is string and not None
 
         """
-        # None checks
         if none is True and value is not None:
             return False
         if none is False and value is None:
             return False
-
-        # Type checks
-        # is_ and not_ are type[ContainerValue] which can be generic
-        # Check if the type is a plain type (not generic) before using type check
-        if is_ is not None and not isinstance(value, is_):
+        if is_ is not None and (not isinstance(value, is_)):
             return False
         if not_ is not None and isinstance(value, not_):
             return False
-
-        # Equality checks
         if eq is not None and value != eq:
             return False
         if ne is not None and value == ne:
             return False
-
-        # Membership checks
         if in_ is not None and value not in in_:
             return False
         if not_in is not None and value in not_in:
             return False
-
-        # Length/numeric checks - use len() for sequences, direct for numbers
         check_val: int | float = 0
         if isinstance(value, (int, float)):
             check_val = value
@@ -848,7 +766,6 @@ class FlextUtilitiesGuards:
                         check_val = length
             except (TypeError, AttributeError):
                 check_val = 0
-
         if gt is not None and check_val <= gt:
             return False
         if gte is not None and check_val < gte:
@@ -857,32 +774,27 @@ class FlextUtilitiesGuards:
             return False
         if lte is not None and check_val > lte:
             return False
-
-        # Empty checks (after len is computed)
         if empty is True and check_val != 0:
             return False
         if empty is False and check_val == 0:
             return False
-
-        # String-specific checks
         if isinstance(value, str):
-            if match is not None and not re.search(match, value):
+            if match is not None and (not re.search(match, value)):
                 return False
-            if starts is not None and not value.startswith(starts):
+            if starts is not None and (not value.startswith(starts)):
                 return False
-            if ends is not None and not value.endswith(ends):
+            if ends is not None and (not value.endswith(ends)):
                 return False
             if (
                 contains is not None
                 and isinstance(contains, str)
-                and contains not in value
+                and (contains not in value)
             ):
                 return False
         elif contains is not None:
             if isinstance(value, (dict, list, tuple, set, frozenset)):
                 if contains not in value:
                     return False
-            # Other types - use hasattr/getattr with explicit type narrowing
             elif hasattr(value, "__contains__"):
                 contains_method = getattr(value, "__contains__", None)
                 if callable(contains_method):
@@ -891,7 +803,6 @@ class FlextUtilitiesGuards:
                             return False
                     except (TypeError, ValueError):
                         return False
-
         return True
 
     @staticmethod
@@ -927,35 +838,29 @@ class FlextUtilitiesGuards:
                 if value is not None
                 else str_default
             )
-
         if target_type == "str_list":
             str_list_default: list[str] | None = None
             if isinstance(default, list):
                 str_list_default = [str(x) for x in default]
-            if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+            if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
                 return list(value)
             if value is None:
                 return list(str_list_default) if str_list_default else []
             return [value]
-
         if target_type == "dict":
             dict_default: Mapping[str, t.ContainerValue] | None = (
                 default if isinstance(default, Mapping) else None
             )
             return FlextUtilitiesGuards._ensure_to_dict(value, dict_default)
-
         if target_type == "auto" and isinstance(value, Mapping):
             return {str(k): v for k, v in value.items()}
-
         list_default: list[t.ContainerValue] | None = (
             default if isinstance(default, list) else None
         )
         return FlextUtilitiesGuards._ensure_to_list(value, list_default)
 
     @staticmethod
-    def extract_mapping_or_none(
-        value: t.ContainerValue,
-    ) -> r[m.ConfigMap]:
+    def extract_mapping_or_none(value: t.ContainerValue) -> r[m.ConfigMap]:
         """Extract a mapping from a value or return None.
 
         Used for type narrowing when a generic parameter could be a Mapping
@@ -972,9 +877,7 @@ class FlextUtilitiesGuards:
         if (
             isinstance(value, dict)
             or (hasattr(value, "keys") and hasattr(value, "__getitem__"))
-        ) and FlextUtilitiesGuards.is_configuration_mapping(
-            value,
-        ):
+        ) and FlextUtilitiesGuards.is_configuration_mapping(value):
             return r[m.ConfigMap].ok(value)
         return r[m.ConfigMap].fail("Value is not a configuration mapping")
 
@@ -999,8 +902,7 @@ class FlextUtilitiesGuards:
                     item for item in validator if isinstance(item, type)
                 )
                 if len(tuple_types) == len(validator) and isinstance(
-                    value,
-                    tuple_types,
+                    value, tuple_types
                 ):
                     return guarded_value if return_value else True
             elif callable(validator):
@@ -1027,9 +929,11 @@ class FlextUtilitiesGuards:
     @staticmethod
     def guard_result[T](
         value: T,
-        *conditions: (
-            type[T] | tuple[type[T], ...] | Callable[[T], bool] | p.ValidatorSpec | str
-        ),
+        *conditions: type[T]
+        | tuple[type[T], ...]
+        | Callable[[T], bool]
+        | p.ValidatorSpec
+        | str,
         error_message: str | None = None,
         context: str | None = None,
         default: T | None = None,
@@ -1041,25 +945,16 @@ class FlextUtilitiesGuards:
                 return value if return_value else r.ok(value)
             failure_message = error_message or f"{context_name} guard failed"
             return FlextUtilitiesGuards._guard_handle_failure(
-                failure_message,
-                return_value=return_value,
-                default=default,
+                failure_message, return_value=return_value, default=default
             )
-
         for condition in conditions:
             condition_error = FlextUtilitiesGuards._guard_check_condition(
-                value,
-                condition,
-                context_name,
-                error_message,
+                value, condition, context_name, error_message
             )
             if condition_error:
                 return FlextUtilitiesGuards._guard_handle_failure(
-                    condition_error,
-                    return_value=return_value,
-                    default=default,
+                    condition_error, return_value=return_value, default=default
                 )
-
         return value if return_value else r.ok(value)
 
     @staticmethod
@@ -1085,15 +980,12 @@ class FlextUtilitiesGuards:
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")
-            and callable(
-                value.model_dump,
-            )
+            and callable(value.model_dump)
         )
 
     @staticmethod
     def is_type(
-        value: t.ContainerValue,
-        type_spec: str | type | tuple[type, ...],
+        value: t.ContainerValue, type_spec: str | type | tuple[type, ...]
     ) -> bool:
         """Generic type checking function that unifies all guard checks.
 
@@ -1136,15 +1028,10 @@ class FlextUtilitiesGuards:
             >>> u.is_type(obj, p.Context)
 
         """
-        # String-based type names (delegate to specific guard functions or centralized models)
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
-
-            # Protocol checks via _PROTOCOL_SPECS mapping
             if type_name in FlextUtilitiesGuards._PROTOCOL_SPECS:
                 return FlextUtilitiesGuards._check_protocol(value, type_name)
-
-            # Non-protocol string-based checks
             if type_name in FlextUtilitiesGuards._STRING_METHOD_MAP:
                 method_name = FlextUtilitiesGuards._STRING_METHOD_MAP[type_name]
                 method = getattr(FlextUtilitiesGuards, method_name)
@@ -1157,14 +1044,9 @@ class FlextUtilitiesGuards:
                         return bool(method(value))
                     return False
                 return bool(method(value))
-
             return False
-
-        # Tuple of types check
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)
-
-        # Fallback: type check for any other type specification
         try:
             return isinstance(value, type_spec)
         except TypeError:
@@ -1188,21 +1070,14 @@ class FlextUtilitiesGuards:
         return all(v is None for v in values)
 
     @staticmethod
-    def validate_hostname(
-        hostname: str,
-        field_name: str = "hostname",
-    ) -> r[str]:
+    def validate_hostname(hostname: str, field_name: str = "hostname") -> r[str]:
         """Return success when ``hostname`` is a valid hostname or FQDN."""
         hostname_pattern = (
-            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
+            "^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
         )
         if re.search(hostname_pattern, hostname) is None:
             return r[str].fail(f"{field_name} has invalid hostname format")
         return r[str].ok(hostname)
-
-    # =========================================================================
-    # Validation Methods
-    # =========================================================================
 
     @staticmethod
     def validate_length[T: Sized](
@@ -1219,30 +1094,23 @@ class FlextUtilitiesGuards:
             return r[T].fail(f"{field_name} length is invalid")
         if min_length is not None and length < min_length:
             return r[T].fail(
-                f"{field_name} must have at least {min_length} characters/items",
+                f"{field_name} must have at least {min_length} characters/items"
             )
         if max_length is not None and length > max_length:
             return r[T].fail(
-                f"{field_name} must have at most {max_length} characters/items",
+                f"{field_name} must have at most {max_length} characters/items"
             )
         return r[T].ok(value)
 
     @staticmethod
-    def validate_pattern(
-        value: str,
-        pattern: str,
-        field_name: str = "value",
-    ) -> r[str]:
+    def validate_pattern(value: str, pattern: str, field_name: str = "value") -> r[str]:
         """Return success when ``value`` matches ``pattern``."""
         if re.search(pattern, value) is None:
             return r[str].fail(f"{field_name} has invalid format")
         return r[str].ok(value)
 
     @staticmethod
-    def validate_port_number(
-        port: int,
-        field_name: str = "port",
-    ) -> r[int]:
+    def validate_port_number(port: int, field_name: str = "port") -> r[int]:
         """Return success when ``port`` is a valid port number (1-65535)."""
         if not isinstance(port, int) or isinstance(port, bool):
             return r[int].fail(f"{field_name} must be an integer")
@@ -1252,33 +1120,23 @@ class FlextUtilitiesGuards:
         return r[int].ok(port)
 
     @staticmethod
-    def validate_positive(
-        value: float,
-        field_name: str = "value",
-    ) -> r[int | float]:
+    def validate_positive(value: float, field_name: str = "value") -> r[int | float]:
         """Return success when numeric ``value`` is greater than zero."""
         if isinstance(value, bool) or value <= 0:
             return r[int | float].fail(f"{field_name} must be positive")
         return r[int | float].ok(value)
 
     @staticmethod
-    def validate_uri(
-        uri: str,
-        field_name: str = "uri",
-    ) -> r[str]:
+    def validate_uri(uri: str, field_name: str = "uri") -> r[str]:
         """Return success when ``uri`` is a valid URI/URL format."""
-        uri_pattern = r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$"
+        uri_pattern = "^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]+$"
         if re.search(uri_pattern, uri) is None:
             return r[str].fail(f"{field_name} has invalid URI format")
         return r[str].ok(uri)
 
 
-# Pydantic v2 validation template with FlextResult error handling
-
-
 def validate_pydantic_model[T: BaseModel](
-    model_class: type[T],
-    data: Mapping[str, t.ContainerValue],
+    model_class: type[T], data: Mapping[str, t.ContainerValue]
 ) -> r[T]:
     """Validate data using Pydantic v2 model and return FlextResult.
 
@@ -1309,7 +1167,4 @@ def validate_pydantic_model[T: BaseModel](
         return FlextResult[T].fail(f"Validation failed: {e}")
 
 
-__all__ = [
-    "FlextUtilitiesGuards",
-    "validate_pydantic_model",
-]
+__all__ = ["FlextUtilitiesGuards", "validate_pydantic_model"]

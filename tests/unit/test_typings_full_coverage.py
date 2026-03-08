@@ -73,7 +73,6 @@ class TestDictMixinOperations:
         key, value = d.popitem()
         assert key == "a"
         assert value == "1"
-
         d2 = m.Dict(root={})
         assert d2.setdefault("x", "y") == "y"
         assert d2["x"] == "y"

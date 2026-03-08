@@ -34,12 +34,10 @@ class TestFlextInfraPrManager:
             "isDraft": False,
         }
         mock_runner.capture.return_value = r[str].ok(json.dumps([pr_data]))
-
         manager = FlextInfraPrManager(
             runner=mock_runner, git=mock_git, versioning=mock_versioning
         )
         result = manager.open_pr_for_head(tmp_path, "feature/new-endpoint")
-
         assert result.is_success
         assert result.value["number"] == 42
 
@@ -49,12 +47,10 @@ class TestFlextInfraPrManager:
         mock_git = Mock()
         mock_versioning = Mock()
         mock_runner.capture.return_value = r[str].ok("[]")
-
         manager = FlextInfraPrManager(
             runner=mock_runner, git=mock_git, versioning=mock_versioning
         )
         result = manager.open_pr_for_head(tmp_path, "feature/nonexistent")
-
         assert result.is_success
         assert result.value == {}
 
@@ -64,12 +60,10 @@ class TestFlextInfraPrManager:
         mock_git = Mock()
         mock_versioning = Mock()
         mock_runner.capture.return_value = r[str].ok("invalid json")
-
         manager = FlextInfraPrManager(
             runner=mock_runner, git=mock_git, versioning=mock_versioning
         )
         result = manager.open_pr_for_head(tmp_path, "feature/test")
-
         assert result.is_failure
         assert result.error
 
@@ -79,12 +73,10 @@ class TestFlextInfraPrManager:
         mock_git = Mock()
         mock_versioning = Mock()
         mock_runner.capture.return_value = r[str].fail("gh command failed")
-
         manager = FlextInfraPrManager(
             runner=mock_runner, git=mock_git, versioning=mock_versioning
         )
         result = manager.open_pr_for_head(tmp_path, "feature/test")
-
         assert result.is_failure
         assert result.error
 
@@ -191,7 +183,6 @@ class TestCreate:
             tmp_path, "main", "feature", "title", "body", draft=True
         )
         assert result.is_success
-        # Verify --draft was in the command
         call_args = mock_runner.capture.call_args_list[1]
         assert "--draft" in call_args[0][0]
 
@@ -279,8 +270,8 @@ class TestMerge:
         mock_runner = Mock()
         mock_runner.run.side_effect = [
             r[bool].fail("not mergeable"),
-            r[bool].ok(True),  # update-branch success
-            r[bool].ok(True),  # retry merge
+            r[bool].ok(True),
+            r[bool].ok(True),
         ]
         manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
         result = manager.merge(tmp_path, "42", "feature", release_on_merge=False)
@@ -300,10 +291,7 @@ class TestMerge:
         mock_runner = Mock()
         mock_versioning = Mock()
         mock_versioning.release_tag_from_branch.return_value = r[str].ok("v1.0.0")
-        mock_runner.run.side_effect = [
-            r[bool].ok(True),  # merge
-            r[bool].ok(True),  # release view (exists)
-        ]
+        mock_runner.run.side_effect = [r[bool].ok(True), r[bool].ok(True)]
         manager = FlextInfraPrManager(
             runner=mock_runner, git=Mock(), versioning=mock_versioning
         )
@@ -406,10 +394,7 @@ class TestTriggerRelease:
         mock_runner = Mock()
         mock_versioning = Mock()
         mock_versioning.release_tag_from_branch.return_value = r[str].ok("v1.0.0")
-        mock_runner.run.side_effect = [
-            r[bool].fail("not found"),  # view fails
-            r[bool].ok(True),  # dispatch succeeds
-        ]
+        mock_runner.run.side_effect = [r[bool].fail("not found"), r[bool].ok(True)]
         manager = FlextInfraPrManager(
             runner=mock_runner, git=Mock(), versioning=mock_versioning
         )
@@ -425,8 +410,8 @@ class TestTriggerRelease:
         mock_versioning = Mock()
         mock_versioning.release_tag_from_branch.return_value = r[str].ok("v1.0.0")
         mock_runner.run.side_effect = [
-            r[bool].fail("not found"),  # view fails
-            r[bool].fail("dispatch failed"),  # dispatch fails
+            r[bool].fail("not found"),
+            r[bool].fail("dispatch failed"),
         ]
         manager = FlextInfraPrManager(
             runner=mock_runner, git=Mock(), versioning=mock_versioning
@@ -852,21 +837,21 @@ class TestGithubInit:
 
     def test_lazy_import_pr_manager(self) -> None:
         """Test lazy import of FlextInfraPrManager."""
-        import flext_infra.github as github_module  # noqa: PLC0415
+        import flext_infra.github as github_module
 
         manager = github_module.FlextInfraPrManager()
         assert isinstance(manager, FlextInfraPrManager)
 
     def test_getattr_invalid_attribute(self) -> None:
         """Test __getattr__ raises AttributeError for invalid attribute."""
-        import flext_infra.github as github_module  # noqa: PLC0415
+        import flext_infra.github as github_module
 
-        with pytest.raises(AttributeError, match=r"module.*has no attribute"):
+        with pytest.raises(AttributeError, match="module.*has no attribute"):
             _ = github_module.NonexistentAttribute
 
     def test_dir_returns_all_exports(self) -> None:
         """Test __dir__ returns all exported attributes."""
-        import flext_infra.github as github_module  # noqa: PLC0415
+        import flext_infra.github as github_module
 
         exports = dir(github_module)
         assert "FlextInfraPrManager" in exports

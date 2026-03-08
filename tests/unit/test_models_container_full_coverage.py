@@ -15,11 +15,8 @@ def test_container_resource_registration_metadata_normalized() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
-
     reg = m.ResourceRegistration(
-        name="r1",
-        factory=lambda: 1,
-        metadata=m.Metadata(attributes={"value": "x"}),
+        name="r1", factory=lambda: 1, metadata=m.Metadata(attributes={"value": "x"})
     )
     assert reg.metadata is not None
     assert isinstance(reg.metadata, m.Metadata)

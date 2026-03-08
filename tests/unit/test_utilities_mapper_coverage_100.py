@@ -17,10 +17,11 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import pytest
-from pydantic import BaseModel
 
 from flext_core import m, t, u
 from tests.test_utils import assertion_helpers
+
+from ._models import ComplexModel
 
 
 @dataclass
@@ -29,14 +30,6 @@ class SimpleObj:
 
     name: str
     value: int
-
-
-class ComplexModel(BaseModel):
-    """Complex test model."""
-
-    id: int
-    data: dict[str, t.ContainerValue]
-    items: list[str]
 
 
 class TestuMapperExtract:
@@ -103,7 +96,6 @@ class TestuMapperExtract:
         data = {"items": [1]}
         result = u.Mapper.extract(data, "items[5]", required=True)
         assertion_helpers.assert_flext_result_failure(result)
-        # Check for 'out of range' or 'Invalid index' or 'not found' depending on impl
         msg = str(result.error)
         assert any(x in msg for x in ["out of range", "Invalid index", "not found"])
 
@@ -113,7 +105,6 @@ class TestuMapperExtract:
         result = u.Mapper.extract(data, "a.b", default="defs")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "defs"
-
         result_req = u.Mapper.extract(data, "a.b", required=True)
         assert result_req.is_failure
         assert "is None" in str(result_req.error)
@@ -145,18 +136,14 @@ class TestuMapperAccessors:
         """Test take value extraction."""
         data = {"a": 1, "b": "str"}
         assert u.Mapper.take(cast("Any", data), "a", as_type=int) == 1
-        assert (
-            u.Mapper.take(cast("Any", data), "b", as_type=int, default=0) == 0
-        )  # Type mismatch
+        assert u.Mapper.take(cast("Any", data), "b", as_type=int, default=0) == 0
 
     def test_take_slice(self) -> None:
         """Test take slicing."""
         items = [1, 2, 3, 4, 5]
         assert u.Mapper.take(cast("Any", items), 2) == [1, 2]
         assert u.Mapper.take(cast("Any", items), 2, from_start=False) == [4, 5]
-
         d = {"a": 1, "b": 2, "c": 3}
-        # Dict order preserved in recent python
         taken = u.Mapper.take(d, 2)
         assert len(taken) == 2
         assert "a" in taken and "b" in taken
@@ -233,10 +220,7 @@ class TestuMapperConversions:
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value."""
         obj = SimpleObj("test", 1)
-        # Pass dict directly - convert_to_json_value handles any dict
-        # Purpose is to CONVERT arbitrary objects to JSON-safe format
         res = u.Mapper.convert_to_json_value(cast("Any", {"obj": obj}))
-        # Should convert obj to string representation
         assert isinstance(res, dict)
         assert "obj" in res
         assert "SimpleObj" in str(res["obj"])
@@ -244,9 +228,7 @@ class TestuMapperConversions:
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
         d = {"a": SimpleObj("test", 1)}
-        # Use convert_to_json_value which handles any dict
         res = u.Mapper.convert_to_json_value(cast("Any", d))
-        # Result should be a dict
         if isinstance(res, dict):
             assert isinstance(res["a"], str)
         else:
@@ -256,9 +238,7 @@ class TestuMapperConversions:
     def test_convert_list_to_json(self) -> None:
         """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
         test_list = [{"a": SimpleObj("test", 1)}]
-        # Use convert_to_json_value which handles any sequence
         res = u.Mapper.convert_to_json_value(cast("Any", test_list))
-        # Result should be a list
         if isinstance(res, list) and isinstance(res[0], dict):
             assert isinstance(res[0]["a"], str)
         else:
@@ -271,37 +251,26 @@ class TestuMapperBuild:
 
     def test_build_pipeline(self) -> None:
         """Test build pipeline."""
-        ops = {
-            "ensure": "list",
-            "map": lambda x: x * 2,
-            "filter": lambda x: x > 2,  # Filter is applied BEFORE map
-        }
-        # Input: [1, 2, 3, 4]
-        # Ensure: [1, 2, 3, 4]
-        # Filter (x>2): [3, 4]
-        # Map (x*2): [6, 8]
+        ops = {"ensure": "list", "map": lambda x: x * 2, "filter": lambda x: x > 2}
         res = u.Mapper.build(
-            [1, 2, 3, 4],
-            ops=cast("dict[str, t.ContainerValue] | None", ops),
+            [1, 2, 3, 4], ops=cast("dict[str, t.ContainerValue] | None", ops)
         )
         assert res == [6, 8]
 
     def test_build_all_ops(self) -> None:
         """Test all build operations."""
         input_data = [1, 2, 1, 3, 4]
-
         ops = {
             "ensure": "list",
-            "filter": lambda x: x > 1,  # [2, 3, 4] (removed 1s)
-            "map": lambda x: x * 10,  # [20, 30, 40]
-            "process": lambda x: x + 5,  # [25, 35, 45]
-            "sort": True,  # [25, 35, 45]
-            "unique": True,  # [25, 35, 45]
-            "slice": (0, 2),  # [25, 35]
+            "filter": lambda x: x > 1,
+            "map": lambda x: x * 10,
+            "process": lambda x: x + 5,
+            "sort": True,
+            "unique": True,
+            "slice": (0, 2),
         }
         res = u.Mapper.build(
-            input_data,
-            ops=cast("dict[str, t.ContainerValue] | None", ops),
+            input_data, ops=cast("dict[str, t.ContainerValue] | None", ops)
         )
         assert res == [25, 35]
 
@@ -319,14 +288,12 @@ class TestuMapperBuild:
             ["cat", "dog", "ant"],
             ops=cast("dict[str, t.ContainerValue] | None", {"group": len}),
         )
-        # Keys are converted to strings because result is ConfigurationDict
         assert res == {"3": ["cat", "dog", "ant"]}
 
     def test_build_chunk(self) -> None:
         """Test build chunk."""
         res = u.Mapper.build(
-            [1, 2, 3, 4],
-            ops=cast("dict[str, t.ContainerValue] | None", {"chunk": 2}),
+            [1, 2, 3, 4], ops=cast("dict[str, t.ContainerValue] | None", {"chunk": 2})
         )
         assert res == [[1, 2], [3, 4]]
 
@@ -363,7 +330,7 @@ class TestuMapperAdvanced:
     def test_model_dump_extraction(self) -> None:
         """Test extraction via model_dump."""
 
-        class Dumpable(BaseModel):
+        class Dumpable:
             a: int = 1
 
         obj = Dumpable()
@@ -372,14 +339,10 @@ class TestuMapperAdvanced:
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
-        # Convert fails -> returns default (which is convert_type() -> int() -> 0)
         res = u.Mapper.build(
-            "invalid",
-            ops=cast("dict[str, t.ContainerValue] | None", {"convert": int}),
+            "invalid", ops=cast("dict[str, t.ContainerValue] | None", {"convert": int})
         )
         assert res == 0
-
-        # With custom default
         res = u.Mapper.build(
             "invalid",
             ops=cast(
@@ -391,36 +354,24 @@ class TestuMapperAdvanced:
 
     def test_transform_options(self) -> None:
         """Test build transform options."""
-        # Normalize, strip_none, etc.
         data: dict[str, str | None] = {"a": "UPPER", "b": None, "c": ""}
         ops = {
-            "transform": {
-                "normalize": True,
-                "strip_none": True,
-                "strip_empty": True,
-            },
+            "transform": {"normalize": True, "strip_none": True, "strip_empty": True}
         }
-        res = u.Mapper.build(
-            data,
-            ops=cast("dict[str, t.ContainerValue] | None", ops),
-        )
-        # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
+        res = u.Mapper.build(data, ops=cast("dict[str, t.ContainerValue] | None", ops))
         assert res == {"a": "UPPER"}
 
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
         data = [{"a": 2}, {"a": 1}]
         res = u.Mapper.build(
-            data,
-            ops=cast("dict[str, t.ContainerValue] | None", {"sort": "a"}),
+            data, ops=cast("dict[str, t.ContainerValue] | None", {"sort": "a"})
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
-
         res = u.Mapper.build(
             data,
             ops=cast(
-                "dict[str, t.ContainerValue] | None",
-                {"sort": operator.itemgetter("a")},
+                "dict[str, t.ContainerValue] | None", {"sort": operator.itemgetter("a")}
             ),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
@@ -433,6 +384,6 @@ class TestuMapperAdvanced:
 
     def test_agg_branches(self) -> None:
         """Test agg branches."""
-        data = [{"v": 1}, {"v": "str"}]  # "str" ignored
+        data = [{"v": 1}, {"v": "str"}]
         assert u.Mapper.agg(data, "v") == 1
         assert u.Mapper.agg([], "v") == 0

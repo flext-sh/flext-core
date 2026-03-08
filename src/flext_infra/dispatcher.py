@@ -37,12 +37,10 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.check"
         action: str = Field(
-            default="validate",
-            description="Check action (validate, fix, report)",
+            default="validate", description="Check action (validate, fix, report)"
         )
         args: list[str] = Field(
-            default_factory=list,
-            description="Additional arguments for check operation",
+            default_factory=list, description="Additional arguments for check operation"
         )
 
     class BaseMkCommand(BaseInfraCommand):
@@ -50,8 +48,7 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.basemk"
         action: str = Field(
-            default="generate",
-            description="BaseMk action (generate, validate, sync)",
+            default="generate", description="BaseMk action (generate, validate, sync)"
         )
         args: list[str] = Field(
             default_factory=list,
@@ -76,8 +73,7 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.release"
         action: str = Field(
-            default="plan",
-            description="Release action (plan, execute, validate)",
+            default="plan", description="Release action (plan, execute, validate)"
         )
         args: list[str] = Field(
             default_factory=list,
@@ -93,8 +89,7 @@ class FlextInfraDispatcher(s[bool]):
             description="Docs action (audit, generate, validate, build)",
         )
         args: list[str] = Field(
-            default_factory=list,
-            description="Additional arguments for docs operation",
+            default_factory=list, description="Additional arguments for docs operation"
         )
 
     class GithubCommand(BaseInfraCommand):
@@ -102,8 +97,7 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.github"
         action: str = Field(
-            default="lint",
-            description="GitHub action (lint, sync, pr-manage)",
+            default="lint", description="GitHub action (lint, sync, pr-manage)"
         )
         args: list[str] = Field(
             default_factory=list,
@@ -119,8 +113,7 @@ class FlextInfraDispatcher(s[bool]):
             description="Core action (validate, diagnose, inventory)",
         )
         args: list[str] = Field(
-            default_factory=list,
-            description="Additional arguments for core operation",
+            default_factory=list, description="Additional arguments for core operation"
         )
 
     class DepsCommand(BaseInfraCommand):
@@ -128,12 +121,10 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.deps"
         action: str = Field(
-            default="detect",
-            description="Deps action (detect, sync, modernize)",
+            default="detect", description="Deps action (detect, sync, modernize)"
         )
         args: list[str] = Field(
-            default_factory=list,
-            description="Additional arguments for deps operation",
+            default_factory=list, description="Additional arguments for deps operation"
         )
 
     @classmethod
@@ -146,7 +137,6 @@ class FlextInfraDispatcher(s[bool]):
         """
         dispatcher = FlextDispatcher()
 
-        # Generic handler callable with message_type for dispatcher routing
         class CommandHandler:
             """Callable handler with message_type attribute for dispatcher routing."""
 
@@ -176,8 +166,6 @@ class FlextInfraDispatcher(s[bool]):
         github_handler = CommandHandler("flext_infra.github", cls.GithubCommand)
         core_handler = CommandHandler("flext_infra.core", cls.CoreCommand)
         deps_handler = CommandHandler("flext_infra.deps", cls.DepsCommand)
-
-        # Register all handlers with the dispatcher
         dispatcher.register_handler(check_handler)
         dispatcher.register_handler(basemk_handler)
         dispatcher.register_handler(workspace_handler)
@@ -186,10 +174,7 @@ class FlextInfraDispatcher(s[bool]):
         dispatcher.register_handler(github_handler)
         dispatcher.register_handler(core_handler)
         dispatcher.register_handler(deps_handler)
-
         return dispatcher
 
 
-__all__ = [
-    "FlextInfraDispatcher",
-]
+__all__ = ["FlextInfraDispatcher"]

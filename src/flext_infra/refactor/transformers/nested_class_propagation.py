@@ -33,22 +33,17 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
     @override
     def leave_ImportFrom(
-        self,
-        original_node: cst.ImportFrom,
-        updated_node: cst.ImportFrom,
+        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
     ) -> cst.ImportFrom:
         _ = original_node
         if isinstance(updated_node.names, cst.ImportStar):
             return updated_node
-
         updated_aliases: list[cst.ImportAlias] = []
         changed = False
-
         for alias in updated_node.names:
             if not isinstance(alias.name, cst.Name):
                 updated_aliases.append(alias)
                 continue
-
             rename_to = self._class_renames.get(alias.name.value)
             if rename_to is None:
                 updated_aliases.append(alias)
@@ -56,13 +51,11 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
             if not self._should_propagate(alias.name.value, "propagate_imports"):
                 updated_aliases.append(alias)
                 continue
-
             rename_parts = self._split_dotted(rename_to)
             import_name = rename_parts[0]
             next_alias = alias.with_changes(name=cst.Name(import_name))
             updated_aliases.append(next_alias)
             changed = True
-
             if alias.asname is not None and isinstance(alias.asname.name, cst.Name):
                 local_name = alias.asname.name.value
                 if len(rename_parts) > 1:
@@ -70,24 +63,18 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
                     self._name_renames[local_name] = local_rename
                 else:
                     self._name_renames[local_name] = local_name
-
         if not changed:
             return updated_node
         return updated_node.with_changes(names=tuple(updated_aliases))
 
     @override
     def leave_Name(
-        self,
-        original_node: cst.Name,
-        updated_node: cst.Name,
+        self, original_node: cst.Name, updated_node: cst.Name
     ) -> cst.BaseExpression:
         rename_to = self._name_renames.get(original_node.value)
         if rename_to is None:
             return updated_node
-        if not self._should_propagate(
-            original_node.value,
-            "propagate_name_references",
-        ):
+        if not self._should_propagate(original_node.value, "propagate_name_references"):
             return updated_node
         if self._should_skip_name(original_node):
             return updated_node
@@ -97,31 +84,25 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
     @override
     def leave_Attribute(
-        self,
-        original_node: cst.Attribute,
-        updated_node: cst.Attribute,
+        self, original_node: cst.Attribute, updated_node: cst.Attribute
     ) -> cst.BaseExpression:
         rename_to = self._class_renames.get(original_node.attr.value)
         if rename_to is None:
             return updated_node
         if not self._should_propagate(
-            original_node.attr.value,
-            "propagate_attribute_references",
+            original_node.attr.value, "propagate_attribute_references"
         ):
             return updated_node
         if self._blocked_by_prefix(original_node.attr.value):
             return updated_node
-
         rename_parts = self._split_dotted(rename_to)
         if not rename_parts:
             return updated_node
-
         if self._rightmost_name(updated_node.value) == rename_parts[0]:
             suffix_parts = rename_parts[1:]
             if not suffix_parts:
                 return updated_node.with_changes(attr=cst.Name(rename_parts[0]))
             return self._attribute_from_base(updated_node.value, suffix_parts)
-
         return self._attribute_from_base(updated_node.value, rename_parts)
 
     def _should_skip_name(self, node: cst.Name) -> bool:
@@ -129,7 +110,6 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
             parent = self.get_metadata(ParentNodeProvider, node)
         except KeyError:
             return False
-
         if isinstance(parent, cst.Attribute) and parent.attr is node:
             return True
         if isinstance(parent, cst.ImportAlias) and (
@@ -153,19 +133,14 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         return expr
 
     def _attribute_from_base(
-        self,
-        base: cst.BaseExpression,
-        dotted_parts: list[str],
+        self, base: cst.BaseExpression, dotted_parts: list[str]
     ) -> cst.BaseExpression:
         expr: cst.BaseExpression = base
         for part in dotted_parts:
             expr = cst.Attribute(value=expr, attr=cst.Name(part))
         return expr
 
-    def _rightmost_name(
-        self,
-        expr: cst.BaseExpression,
-    ) -> str | None:
+    def _rightmost_name(self, expr: cst.BaseExpression) -> str | None:
         if isinstance(expr, cst.Name):
             return expr.value
         if isinstance(expr, cst.Attribute):

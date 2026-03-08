@@ -24,7 +24,6 @@ class TestFlextInfraInventoryService:
         """Test that generate returns success for empty workspace."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         result = service.generate(workspace_root)
         assert result.is_success
         assert isinstance(result.value, m.Infra.Core.InventoryReport)
@@ -35,7 +34,6 @@ class TestFlextInfraInventoryService:
         workspace_root = tmp_path
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
-
         result = service.generate(workspace_root, output_dir=output_dir)
         assert result.is_success
 
@@ -43,7 +41,6 @@ class TestFlextInfraInventoryService:
         """Test that generate returns FlextResult type."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         result = service.generate(workspace_root)
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
@@ -52,12 +49,10 @@ class TestFlextInfraInventoryService:
         """Test that generate scans Python scripts."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         script_dir = workspace_root / "scripts"
         script_dir.mkdir()
         script_file = script_dir / "test.py"
         script_file.write_text("#!/usr/bin/env python3\nprint('hello')")
-
         result = service.generate(workspace_root)
         assert result.is_success
 
@@ -65,12 +60,10 @@ class TestFlextInfraInventoryService:
         """Test that generate scans Bash scripts."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         script_dir = workspace_root / "scripts"
         script_dir.mkdir()
         script_file = script_dir / "test.sh"
         script_file.write_text("#!/bin/bash\necho 'hello'")
-
         result = service.generate(workspace_root)
         assert result.is_success
 
@@ -78,13 +71,11 @@ class TestFlextInfraInventoryService:
         """Test that generate counts all scripts."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         script_dir = workspace_root / "scripts"
         script_dir.mkdir()
         (script_dir / "script1.py").write_text("")
         (script_dir / "script2.sh").write_text("")
         (script_dir / "script3.py").write_text("")
-
         result = service.generate(workspace_root)
         assert result.is_success
         assert result.value.total_scripts == 3
@@ -93,13 +84,11 @@ class TestFlextInfraInventoryService:
         """Test that generate finds scripts in nested directories."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         script_dir = workspace_root / "scripts"
         subdir = script_dir / "subdir"
         subdir.mkdir(parents=True)
         (script_dir / "script1.py").write_text("")
         (subdir / "script2.sh").write_text("")
-
         result = service.generate(workspace_root)
         assert result.is_success
         assert result.value.total_scripts == 2
@@ -108,13 +97,11 @@ class TestFlextInfraInventoryService:
         """Test that generate ignores non-script files."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         script_dir = workspace_root / "scripts"
         script_dir.mkdir()
         (script_dir / "script.py").write_text("")
         (script_dir / "readme.txt").write_text("")
         (script_dir / "config.json").write_text("")
-
         result = service.generate(workspace_root)
         assert result.is_success
         assert result.value.total_scripts == 1
@@ -125,7 +112,6 @@ class TestFlextInfraInventoryService:
         """Test that generate handles missing scripts directory."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         result = service.generate(workspace_root)
         assert result.is_success
         assert result.value.total_scripts == 0
@@ -136,7 +122,6 @@ class TestFlextInfraInventoryService:
         workspace_root = tmp_path
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
-
         result = service.generate(workspace_root, output_dir=output_dir)
         assert result.is_success
         assert isinstance(result.value.reports_written, list)
@@ -150,7 +135,6 @@ class TestFlextInfraInventoryService:
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
         json_service = getattr(service, "_json")
-
         with patch.object(
             type(json_service),
             "write",
@@ -163,7 +147,6 @@ class TestFlextInfraInventoryService:
         """Test that generate handles exceptions."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path / "nonexistent"
-
         result = service.generate(workspace_root)
         assert result.is_success
 
@@ -173,11 +156,9 @@ class TestFlextInfraInventoryService:
         workspace_root = tmp_path
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
-
         script_dir = workspace_root / "scripts"
         script_dir.mkdir()
         (script_dir / "test.py").write_text("")
-
         result = service.generate(workspace_root, output_dir=output_dir)
         assert result.is_success
 
@@ -187,7 +168,6 @@ class TestFlextInfraInventoryService:
         workspace_root = tmp_path
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
-
         result = service.generate(workspace_root, output_dir=output_dir)
         assert result.is_success
 
@@ -197,7 +177,6 @@ class TestFlextInfraInventoryService:
         workspace_root = tmp_path
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
-
         result = service.generate(workspace_root, output_dir=output_dir)
         assert result.is_success
 
@@ -206,7 +185,6 @@ class TestFlextInfraInventoryService:
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
         json_service = getattr(service, "_json")
-
         with patch.object(
             type(json_service), "write", return_value=Mock(is_failure=False)
         ):
@@ -220,7 +198,6 @@ class TestFlextInfraInventoryService:
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
         json_service = getattr(service, "_json")
-
         with patch.object(
             type(json_service), "write", return_value=Mock(is_failure=False)
         ):
@@ -234,7 +211,6 @@ class TestFlextInfraInventoryService:
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
         json_service = getattr(service, "_json")
-
         with patch.object(
             type(json_service), "write", return_value=Mock(is_failure=False)
         ):
@@ -245,13 +221,11 @@ class TestFlextInfraInventoryService:
         """Test that generate sorts scripts alphabetically."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
-
         script_dir = workspace_root / "scripts"
         script_dir.mkdir()
         (script_dir / "z_script.py").write_text("")
         (script_dir / "a_script.py").write_text("")
         (script_dir / "m_script.py").write_text("")
-
         result = service.generate(workspace_root)
         assert result.is_success
 
@@ -262,12 +236,8 @@ class TestFlextInfraInventoryService:
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
         json_service = getattr(service, "_json")
-
-        # Mock the json.write to raise an exception
         with patch.object(
-            type(json_service),
-            "write",
-            side_effect=ValueError("test error"),
+            type(json_service), "write", side_effect=ValueError("test error")
         ):
             result = service.generate(workspace_root, output_dir=tmp_path / "reports")
             assert result.is_failure

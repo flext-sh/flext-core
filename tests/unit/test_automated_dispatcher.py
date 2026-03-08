@@ -59,21 +59,14 @@ class TestAutomatedFlextDispatcher:
         ids=lambda case: case["description"],
     )
     def test_automated_dispatcher_comprehensive_scenarios(
-        self,
-        test_scenario: AutomatedTestScenario,
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for dispatcher functionality."""
         try:
-            # Create test instance using fixture factory
             instance = fixture_factory.create_test_dispatcher_instance()
-
-            # Execute operation with test data
             result = self._execute_dispatcher_operation(
-                instance,
-                test_scenario["input"],
+                instance, test_scenario["input"]
             )
-
-            # Assert using automated assertion helpers
             if test_scenario["expected_success"]:
                 assertion_helpers.assert_flext_result_success(
                     result,
@@ -84,41 +77,31 @@ class TestAutomatedFlextDispatcher:
                     result,
                     f"FlextDispatcher operation should fail: {test_scenario['description']}",
                 )
-
         except Exception as e:
             if not test_scenario["expected_success"]:
-                # Expected failure occurred
                 pass
             else:
-                # Unexpected error
                 pytest.fail(f"Unexpected error in dispatcher test: {e}")
 
     def test_automated_dispatcher_type_safety(self) -> None:
         """Test type safety compliance for dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
-
-        # Test with correct types
         result = self._execute_dispatcher_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDispatcher type safety test",
+            result, "FlextDispatcher type safety test"
         )
 
     def test_automated_dispatcher_error_handling(self) -> None:
         """Test comprehensive error handling for dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
-
-        # Test various error conditions
         error_inputs = [
             None,
             dict[str, str](),
             {"invalid": "data"},
             {"malformed": True},
         ]
-
         for error_input in error_inputs:
             result = self._execute_dispatcher_operation(instance, error_input or {})
-            # Errors should be handled gracefully (either success or proper failure)
             assert result.is_success or result.is_failure, (
                 f"Unexpected result state: {result}"
             )
@@ -129,42 +112,31 @@ class TestAutomatedFlextDispatcher:
 
         def operation() -> object:
             return self._execute_dispatcher_operation(
-                instance,
-                {"performance_test": True},
+                instance, {"performance_test": True}
             )
 
-        # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDispatcher performance test exceeded timeout",
+            result, "FlextDispatcher performance test exceeded timeout"
         )
 
     def test_automated_dispatcher_resource_management(self) -> None:
         """Test resource management and cleanup for dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
-
-        # Test normal operation
         result = self._execute_dispatcher_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDispatcher resource test",
+            result, "FlextDispatcher resource test"
         )
-
-        # Test cleanup (if applicable)
         instance_obj: Any = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextDispatcher cleanup failed",
+                    cleanup_result, "FlextDispatcher cleanup failed"
                 )
 
     def _execute_dispatcher_operation(
-        self,
-        instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        self, instance: object, input_data: Mapping[str, t.ContainerValue]
     ) -> r[bool]:
         """Execute a test operation on dispatcher instance.
 
@@ -172,8 +144,6 @@ class TestAutomatedFlextDispatcher:
         For now, it provides a generic implementation that can be adapted.
         """
         try:
-            # For dispatcher, just test that it's properly instantiated
-            # Real dispatcher tests are in test_dispatcher_layer3_docker.py
             _ = input_data
             if hasattr(instance, "__class__"):
                 return r[bool].ok(True)

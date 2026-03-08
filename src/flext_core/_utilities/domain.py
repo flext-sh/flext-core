@@ -48,16 +48,13 @@ class FlextUtilitiesDomain:
         """
         if entity_b.__class__ is not entity_a.__class__:
             return False
-
         id_a = getattr(entity_a, id_attr, None)
         id_b = getattr(entity_b, id_attr, None)
-
         return id_a is not None and id_a == id_b
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.ContainerValue,
-        obj_b: t.ContainerValue,
+        obj_a: t.ContainerValue, obj_b: t.ContainerValue
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -79,18 +76,14 @@ class FlextUtilitiesDomain:
         """
         if obj_b.__class__ is not obj_a.__class__:
             return False
-
-        # Try __dict__ comparison
         try:
             return obj_a.__dict__ == obj_b.__dict__
         except (AttributeError, TypeError):
-            # Fallback to repr comparison
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
     def hash_entity_by_id(
-        entity: p.HasModelDump,
-        id_attr: str = c.Mixins.FIELD_ID,
+        entity: p.HasModelDump, id_attr: str = c.Mixins.FIELD_ID
     ) -> int:
         """Generate hash for entity based on unique ID and type.
 
@@ -110,9 +103,7 @@ class FlextUtilitiesDomain:
         """
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
-            return hash(id(entity))  # Fallback to object ID if no unique_id
-
-        # Combine type and ID for hash
+            return hash(id(entity))
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
@@ -132,13 +123,10 @@ class FlextUtilitiesDomain:
             >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
 
         """
-        # Try __dict__
         try:
             obj_dict = obj.__dict__
-            # Filter out non-hashable values and convert to tuple
             hashable_items: list[tuple[str, t.ContainerValue]] = []
             for key, value in sorted(obj_dict.items()):
-                # Check for types that are both Hashable and ContainerValue
                 if value.__class__ in {str, int, float, bool, None.__class__}:
                     hashable_items.append((key, value))
                 elif hasattr(value, "__hash__") and value.__class__ in {
@@ -149,21 +137,16 @@ class FlextUtilitiesDomain:
                     tuple,
                     frozenset,
                 }:
-                    # Other hashables get converted to repr string
                     hashable_items.append((key, repr(value)))
                 else:
-                    # Use repr for non-hashable values
                     hashable_items.append((key, repr(value)))
-
             return hash(tuple(hashable_items))
         except (AttributeError, TypeError):
-            # Fallback to repr hash
             return hash(repr(obj))
 
     @staticmethod
     def validate_entity_has_id(
-        entity: t.ContainerValue,
-        id_attr: str = c.Mixins.FIELD_ID,
+        entity: t.ContainerValue, id_attr: str = c.Mixins.FIELD_ID
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 
@@ -189,7 +172,6 @@ class FlextUtilitiesDomain:
             True if appears immutable (frozen=True or no __setattr__)
 
         """
-        # Check Pydantic frozen config
         if hasattr(obj, "model_config"):
             try:
                 config = getattr(obj, "model_config", {})
@@ -197,17 +179,10 @@ class FlextUtilitiesDomain:
                     return True
             except (AttributeError, TypeError):
                 pass
-
-        # Check if __setattr__ is overridden to prevent mutation
         if hasattr(obj, "__setattr__"):
-            # If __setattr__ is from object class, it's mutable
-            # Custom __setattr__ might enforce immutability
             setattr_method = getattr(obj.__class__, "__setattr__", None)
             return setattr_method is not object.__setattr__
-
         return False
 
 
-__all__ = [
-    "FlextUtilitiesDomain",
-]
+__all__ = ["FlextUtilitiesDomain"]

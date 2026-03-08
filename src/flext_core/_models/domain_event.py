@@ -34,9 +34,7 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
     __hash__ = FlextModelsContainers.ConfigMap.__hash__
 
 
-def _normalize_event_data(
-    value: t.ContainerValue,
-) -> _ComparableConfigMap:
+def _normalize_event_data(value: t.ContainerValue) -> _ComparableConfigMap:
     """BeforeValidator: normalize event data to _ComparableConfigMap."""
     if isinstance(value, _ComparableConfigMap):
         return value
@@ -47,7 +45,7 @@ def _normalize_event_data(
             root={
                 str(k): FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in value.items()
-            },
+            }
         )
         return _ComparableConfigMap(root=intermediate.root)
     if isinstance(value, Mapping):
@@ -55,7 +53,7 @@ def _normalize_event_data(
             root={
                 str(k): FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in value.items()
-            },
+            }
         )
         return _ComparableConfigMap(root=intermediate.root)
     if value is None:
@@ -74,9 +72,7 @@ class FlextModelsDomainEvent:
     ComparableConfigMap = _ComparableConfigMap
 
     @staticmethod
-    def _normalize_event_data(
-        value: t.ContainerValue,
-    ) -> _ComparableConfigMap:
+    def _normalize_event_data(value: t.ContainerValue) -> _ComparableConfigMap:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
         return _normalize_event_data(value)
 
@@ -91,7 +87,7 @@ class FlextModelsDomainEvent:
             root={
                 str(key): FlextRuntime.normalize_to_metadata_value(value)
                 for key, value in data.items()
-            },
+            }
         )
 
     class Entry(
@@ -106,15 +102,12 @@ class FlextModelsDomainEvent:
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
         )
-
         event_type: str = Field(min_length=c.Reliability.RETRY_COUNT_MIN)
         aggregate_id: str = Field(min_length=c.Reliability.RETRY_COUNT_MIN)
         data: Annotated[
-            _ComparableConfigMap,
-            BeforeValidator(_normalize_event_data),
+            _ComparableConfigMap, BeforeValidator(_normalize_event_data)
         ] = Field(
-            default_factory=_ComparableConfigMap,
-            description="Event data container",
+            default_factory=_ComparableConfigMap, description="Event data container"
         )
 
 

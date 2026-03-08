@@ -13,4 +13,4 @@ class FlextTestConstants:
     VALUE: Final[int] = 42
 
 
-c = FlextTestConstants  # alias — allowed
+c = FlextTestConstants

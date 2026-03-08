@@ -34,10 +34,8 @@ class ExplodingGetattr:
     @override
     def __getattribute__(self, name: str) -> object:
         """Raise on attribute access except for class/dict/value."""
-        # Allow __class__ and __dict__ for isinstance checks
         if name in {"__class__", "__dict__", "_value"}:
             return super().__getattribute__(name)
-        # Raise on any other attribute access (like _inner_value)
         msg = "boom"
         raise RuntimeError(msg)
 
@@ -52,11 +50,8 @@ def test_map_error_identity_and_transform() -> None:
     """map_error should short-circuit on success and transform failures."""
     success = r[int].ok(1)
     assert success.map_error(lambda msg: msg + "_x") is success
-
     failure: r[int] = r[int].fail(
-        "bad",
-        error_code="E1",
-        error_data=m.ConfigMap(root={"k": "v"}),
+        "bad", error_code="E1", error_data=m.ConfigMap(root={"k": "v"})
     )
     transformed = failure.map_error(lambda msg: f"{msg}_mapped")
     assert transformed.is_failure
@@ -92,18 +87,14 @@ def test_create_from_callable_and_repr() -> None:
     none_result = r[int].create_from_callable(none_callable)
     u.Tests.Result.assert_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
-
     error_callable: Callable[[], int] = cast(
-        "Callable[[], int]",
-        lambda: (_ for _ in ()).throw(ValueError("test error")),
+        "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error"))
     )
     error_result = r[int].create_from_callable(error_callable)
     u.Tests.Result.assert_failure(error_result)
     assert "test error" in (error_result.error or "")
-
     success_result = r[int].create_from_callable(lambda: 7)
     assert repr(success_result) == "r.ok(7)"
-
     failure_repr: r[int] = r[int].fail("oops")
     assert repr(failure_repr) == "r.fail('oops')"
 
@@ -113,7 +104,6 @@ def test_to_io_result_failure_path() -> None:
     failure: r[str] = r[str].fail("io_fail")
     io_result = failure.to_io_result()
     assert isinstance(io_result, IOFailure)
-    # IOFailure.__str__ includes the IO wrapper formatting
     assert "io_fail" in str(io_result)
 
 

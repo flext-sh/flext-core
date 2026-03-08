@@ -44,14 +44,12 @@ class UserDTO(m.Value):
     email: str
 
 
-# Handlers using h directly
 class CommandHandler(h[CreateUserCommand, str]):
     """Example command handler."""
 
     @override
     def handle(self, message: CreateUserCommand) -> r[str]:
         """Handle user creation command using u validation."""
-        # Railway pattern with u validation (DRY)
         name_validation = u.validate_length(
             message.name,
             min_length=c.Validation.MIN_NAME_LENGTH,
@@ -62,18 +60,14 @@ class CommandHandler(h[CreateUserCommand, str]):
                 name_validation.error or c.Errors.VALIDATION_ERROR,
                 error_code=c.Errors.VALIDATION_ERROR,
             )
-
         email_validation = u.validate_pattern(
-            message.email,
-            c.Platform.PATTERN_EMAIL,
-            "email",
+            message.email, c.Platform.PATTERN_EMAIL, "email"
         )
         if email_validation.is_failure:
             return r[str].fail(
                 email_validation.error or c.Errors.VALIDATION_ERROR,
                 error_code=c.Errors.VALIDATION_ERROR,
             )
-
         return r[str].ok(f"User {message.name} created")
 
 
@@ -85,19 +79,14 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
         """Handle user retrieval query using c error codes."""
         if message.user_id == "not-found":
             return r[UserDTO].fail(
-                c.Errors.NOT_FOUND_ERROR,
-                error_code=c.Errors.NOT_FOUND_ERROR,
+                c.Errors.NOT_FOUND_ERROR, error_code=c.Errors.NOT_FOUND_ERROR
             )
-
         user = UserDTO(
-            id=message.user_id,
-            name="Example User",
-            email="user@example.com",
+            id=message.user_id, name="Example User", email="user@example.com"
         )
         return r[UserDTO].ok(user)
 
 
-# Service using s directly
 class HandlersService(s[m.ConfigMap]):
     """Service demonstrating CQRS handlers with flext-core."""
 
@@ -105,22 +94,15 @@ class HandlersService(s[m.ConfigMap]):
     def _demonstrate_command_handlers() -> None:
         """Show command handler patterns."""
         print("\n=== Command Handlers ===")
-
         handler = CommandHandler()
-
         command = CreateUserCommand(
-            user_id="user-123",
-            name="Alice",
-            email="alice@example.com",
+            user_id="user-123", name="Alice", email="alice@example.com"
         )
         result = handler.handle(command)
         if result.is_success:
             print(f"✅ Command executed: {result.value}")
-
         invalid_command = CreateUserCommand(
-            user_id="user-456",
-            name="",
-            email="bob@example.com",
+            user_id="user-456", name="", email="bob@example.com"
         )
         invalid_result = handler.handle(invalid_command)
         if invalid_result.is_failure:
@@ -130,15 +112,8 @@ class HandlersService(s[m.ConfigMap]):
     def _demonstrate_error_handling() -> None:
         """Show error handling in handlers."""
         print("\n=== Error Handling ===")
-
         command_handler = CommandHandler()
-
-        error_command = CreateUserCommand(
-            user_id="error-user",
-            name="",
-            email="",
-        )
-
+        error_command = CreateUserCommand(user_id="error-user", name="", email="")
         error_result = command_handler.handle(error_command)
         if error_result.is_failure:
             print(f"✅ Error handled: {error_result.error}")
@@ -148,49 +123,39 @@ class HandlersService(s[m.ConfigMap]):
     def _demonstrate_pipeline_execution() -> None:
         """Show handler pipeline execution."""
         print("\n=== Pipeline Execution ===")
-
         phases = [
             c.Cqrs.ProcessingPhase.PREPARE,
             c.Cqrs.ProcessingPhase.EXECUTE,
             c.Cqrs.ProcessingPhase.VALIDATE,
             c.Cqrs.ProcessingPhase.COMPLETE,
         ]
-
         for phase in phases:
             print(f"✅ {phase.value.capitalize()} phase")
-
         print("✅ Pipeline executed successfully")
 
     @staticmethod
     def _demonstrate_query_handlers() -> None:
         """Show query handler patterns."""
         print("\n=== Query Handlers ===")
-
         handler = QueryHandler()
-
         query = GetUserQuery(user_id="user-123")
         result = handler.handle(query)
         if result.is_success:
             user = result.value
             print(f"✅ Query result: {user.name} ({user.email})")
-
         not_found_query = GetUserQuery(user_id="not-found")
         not_found_result = handler.handle(not_found_query)
         if not_found_result.is_failure:
             print(f"❌ Query failed: {not_found_result.error}")
 
     @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute comprehensive handler demonstrations."""
         print("Starting CQRS handlers demonstration")
-
         self._demonstrate_command_handlers()
         self._demonstrate_query_handlers()
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
-
         return r[m.ConfigMap].ok(
             m.ConfigMap(
                 root={
@@ -206,8 +171,8 @@ class HandlersService(s[m.ConfigMap]):
                         "result_patterns",
                     ],
                     "handler_types": 2,
-                },
-            ),
+                }
+            )
         )
 
 
@@ -226,12 +191,9 @@ def main() -> None:
     print("FLEXT HANDLERS - CQRS HANDLER IMPLEMENTATION")
     print("Command and Query handlers with type safety")
     print("=" * 60)
-
     demonstrate_cqrs_architecture()
-
     service = HandlersService()
     result = service.execute()
-
     if result.is_success:
         data = result.value
         handler_count_raw = data.get("handler_types", 0)
@@ -242,7 +204,6 @@ def main() -> None:
         print(f"✅ Used {pattern_count} CQRS patterns")
     else:
         print(f"\n❌ Failed: {result.error}")
-
     print("\n" + "=" * 60)
     print("🎯 CQRS Patterns: Command-Query Separation, Type Safety")
     print("🎯 Handler Types: Command Handlers, Query Handlers")

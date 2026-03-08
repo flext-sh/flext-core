@@ -69,14 +69,12 @@ class FlextGenericModels:
                 description="Additional metadata",
             )
             message: t.ContainerValue | None = Field(
-                default=None,
-                description="Message payload",
+                default=None, description="Message payload"
             )
             message_type: str = Field(default="", description="Message type")
             dispatch_type: str = Field(default="", description="Dispatch type")
             timeout_override: int | None = Field(
-                default=None,
-                description="Timeout override seconds",
+                default=None, description="Timeout override seconds"
             )
 
     class Snapshot:
@@ -125,14 +123,12 @@ class FlextGenericModels:
             )
             source: str | None = Field(default=None, description="Config source")
             environment: str | None = Field(
-                default=None,
-                description="Target environment",
+                default=None, description="Target environment"
             )
             version: str = Field(default="1.0.0", description="Schema version")
             checksum: str | None = Field(default=None, description="Checksum")
             validation_errors: list[str] = Field(
-                default_factory=list,
-                description="Validation errors",
+                default_factory=list, description="Validation errors"
             )
             metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
@@ -153,13 +149,11 @@ class FlextGenericModels:
                 default_factory=FlextModelsContainers.Dict, description="Check details"
             )
             checked_at: datetime = Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="Check timestamp",
+                default_factory=lambda: datetime.now(UTC), description="Check timestamp"
             )
             service_name: str | None = Field(default=None, description="Service name")
             service_version: str | None = Field(
-                default=None,
-                description="Service version",
+                default=None, description="Service version"
             )
             duration_ms: float | None = Field(
                 default=None, description="Check duration ms"
@@ -178,7 +172,7 @@ class FlextGenericModels:
             """Percentage with zero-safe fallback, capped at 100."""
             if not total or total == 0:
                 return 0.0
-            return min((processed / total) * 100.0, 100.0)
+            return min(processed / total * 100.0, 100.0)
 
         @staticmethod
         def safe_rate(numerator: int, denominator: int) -> float:
@@ -200,16 +194,14 @@ class FlextGenericModels:
             retry_count: int = Field(default=0, description="Retries")
             start_time: datetime | None = Field(default=None, description="Start time")
             last_update: datetime | None = Field(
-                default=None,
-                description="Last update",
+                default=None, description="Last update"
             )
             estimated_total: int | None = Field(
                 default=None, description="Estimated total"
             )
             current_item: str | None = Field(default=None, description="Current item")
             operation_name: str | None = Field(
-                default=None,
-                description="Operation name",
+                default=None, description="Operation name"
             )
             metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
@@ -242,9 +234,7 @@ class FlextGenericModels:
                 self._update_timestamp()
 
             def start_operation(
-                self,
-                name: str | None = None,
-                estimated_total: int | None = None,
+                self, name: str | None = None, estimated_total: int | None = None
             ) -> None:
                 """Start the operation tracking."""
                 self.operation_name = name
@@ -263,16 +253,13 @@ class FlextGenericModels:
             """
 
             converted: list[t.ContainerValue] = Field(
-                default_factory=list,
-                description="Converted items",
+                default_factory=list, description="Converted items"
             )
             errors: list[str] = Field(
-                default_factory=list,
-                description="Error messages",
+                default_factory=list, description="Error messages"
             )
             warnings: list[str] = Field(
-                default_factory=list,
-                description="Warning messages",
+                default_factory=list, description="Warning messages"
             )
             skipped: list[t.ContainerValue] = Field(
                 default_factory=list, description="Skipped items"
@@ -282,8 +269,7 @@ class FlextGenericModels:
             source_format: str | None = Field(default=None, description="Source format")
             target_format: str | None = Field(default=None, description="Target format")
             total_input_count: int | None = Field(
-                default=None,
-                description="Total input count",
+                default=None, description="Total input count"
             )
             metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
@@ -295,9 +281,7 @@ class FlextGenericModels:
                 self.converted.append(item)
 
             def add_error(
-                self,
-                error: str,
-                item: t.ContainerValue | None = None,
+                self, error: str, item: t.ContainerValue | None = None
             ) -> None:
                 """Add an error with optional failed item."""
                 self.errors.append(error)
@@ -305,9 +289,7 @@ class FlextGenericModels:
                     self._append_metadata_item("failed_items", item)
 
             def add_skipped(
-                self,
-                item: t.ContainerValue,
-                reason: str | None = None,
+                self, item: t.ContainerValue, reason: str | None = None
             ) -> None:
                 """Add a skipped item with optional reason."""
                 self.skipped.append(item)
@@ -315,9 +297,7 @@ class FlextGenericModels:
                     self._upsert_skip_reason(item, reason)
 
             def add_warning(
-                self,
-                warning: str,
-                item: t.ContainerValue | None = None,
+                self, warning: str, item: t.ContainerValue | None = None
             ) -> None:
                 """Add a warning with optional item."""
                 self.warnings.append(warning)

@@ -46,15 +46,12 @@ class ExecuteProtocol(Protocol):
         ...
 
 
-# Union of all handler types the dispatcher accepts
-# Callables returning ResultLike (FlextResult) or ContainerValue, plus protocol objects
 _DispatchableHandler: TypeAlias = (
     Callable[..., p.ResultLike[t.ContainerValue] | t.ContainerValue | None]
     | DispatchMessageProtocol
     | HandleProtocol
     | ExecuteProtocol
 )
-
 _DispatchValueT = TypeVar("_DispatchValueT")
 
 
@@ -69,15 +66,11 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-
         self._handlers: MutableMapping[str, _DispatchableHandler] = {}
         self._auto_handlers: list[_DispatchableHandler] = []
         self._event_subscribers: MutableMapping[str, list[_DispatchableHandler]] = {}
 
-    def dispatch(
-        self,
-        message: p.Routable,
-    ) -> r[t.ContainerValue]:
+    def dispatch(self, message: p.Routable) -> r[t.ContainerValue]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -91,12 +84,9 @@ class FlextDispatcher:
             route_name = self._resolve_route(message)
         except (TypeError, ValueError) as e:
             return r[t.ContainerValue].fail(
-                f"Dispatch failed: {e!s}",
-                error_code=c.Errors.COMMAND_PROCESSING_FAILED,
+                f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
             )
         handler = self._handlers.get(route_name)
-
-        # Auto-discovery fallback
         if not handler:
             msg_type = message.__class__
             for auto_h in self._auto_handlers:
@@ -104,19 +94,15 @@ class FlextDispatcher:
                 if callable(has_can_handle) and has_can_handle(msg_type):
                     handler = auto_h
                     break
-
         if not handler:
             return r[t.ContainerValue].fail(
                 f"No handler found for {route_name}",
                 error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
-
         return self._execute_handler(handler, message, route_name)
 
     def dispatch_typed(
-        self,
-        message: p.Routable,
-        expected_type: type[_DispatchValueT],
+        self, message: p.Routable, expected_type: type[_DispatchValueT]
     ) -> r[_DispatchValueT]:
         """Dispatch a message and return a strongly typed payload.
 
@@ -127,10 +113,7 @@ class FlextDispatcher:
             lambda value: self._coerce_dispatch_value(value, expected_type)
         )
 
-    def publish(
-        self,
-        event: p.Routable | list[p.Routable],
-    ) -> r[bool]:
+    def publish(self, event: p.Routable | list[p.Routable]) -> r[bool]:
         """Publish events to all registered subscribers.
 
         Args:
@@ -144,34 +127,25 @@ class FlextDispatcher:
             for e in event:
                 _ = self.publish(e)
             return r[bool].ok(value=True)
-
         route_name = self._resolve_route(event)
         handlers = self._event_subscribers.get(route_name, [])
-
-        # Auto-discovery fallback for events
         evt_type = event.__class__
         for auto_h in self._auto_handlers:
             has_can_handle = getattr(auto_h, "can_handle", None)
             if (
                 callable(has_can_handle)
                 and has_can_handle(evt_type)
-                and auto_h not in handlers
+                and (auto_h not in handlers)
             ):
                 handlers.append(auto_h)
-
         if not handlers:
             return r[bool].ok(value=True)
-
         for handler in handlers:
             _ = self._execute_handler(handler, event, route_name)
-
         return r[bool].ok(value=True)
 
     def register_handler(
-        self,
-        handler: _DispatchableHandler,
-        *,
-        is_event: bool = False,
+        self, handler: _DispatchableHandler, *, is_event: bool = False
     ) -> r[bool]:
         """Register a handler for a specific message type.
 
@@ -186,12 +160,9 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
-
-        # Extract route from handler metadata
         has_message_type = getattr(handler, "message_type", None)
         has_event_type = getattr(handler, "event_type", None)
         has_can_handle = getattr(handler, "can_handle", None)
-
         if has_message_type:
             route_name = self._resolve_route(has_message_type)
         elif has_event_type:
@@ -202,9 +173,8 @@ class FlextDispatcher:
             return r[bool].ok(value=True)
         else:
             return r[bool].fail(
-                "Handler must expose message_type, event_type, or can_handle",
+                "Handler must expose message_type, event_type, or can_handle"
             )
-
         if is_event:
             if route_name not in self._event_subscribers:
                 self._event_subscribers[route_name] = []
@@ -213,14 +183,10 @@ class FlextDispatcher:
         else:
             self._handlers[route_name] = handler
             self._logger.info("Registered handler", route=route_name)
-
         return r[bool].ok(value=True)
 
     def _execute_handler(
-        self,
-        handler: _DispatchableHandler,
-        message: p.Routable,
-        route_name: str,
+        self, handler: _DispatchableHandler, message: p.Routable, route_name: str
     ) -> r[t.ContainerValue]:
         """Execute a handler against a message.
 
@@ -236,11 +202,7 @@ class FlextDispatcher:
             elif isinstance(handler, ExecuteProtocol):
                 result_raw = handler.execute(message)
             elif callable(handler):
-                result_raw = handler(
-                    message,
-                )
-
-            # Handle ResultLike returns natively
+                result_raw = handler(message)
             if isinstance(result_raw, p.ResultLike):
                 result_like = result_raw
                 if result_like.is_failure:
@@ -258,12 +220,9 @@ class FlextDispatcher:
                         "Handler returned None in success result"
                     )
                 return r[t.ContainerValue].ok(value)
-
-            # Bare value return
             if result_raw is None:
                 return r[t.ContainerValue].fail("Handler returned None")
             return r[t.ContainerValue].ok(result_raw)
-
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)
             return r[t.ContainerValue].fail(
@@ -273,8 +232,7 @@ class FlextDispatcher:
 
     @staticmethod
     def _coerce_dispatch_value(
-        value: t.ContainerValue,
-        expected_type: type[_DispatchValueT],
+        value: t.ContainerValue, expected_type: type[_DispatchValueT]
     ) -> r[_DispatchValueT]:
         """Coerce dispatcher payload to expected type with typed result."""
         if isinstance(value, expected_type):
@@ -292,16 +250,10 @@ class FlextDispatcher:
         """Resolve route name strictly from Routable attributes or string."""
         if isinstance(msg, str):
             return msg
-
-        # 1. Try instance/class attributes - only accept strings
-        # Properties return the property object when accessed on the class,
-        # so we filter for str.
         for attr in ["command_type", "query_type", "event_type"]:
             val = getattr(msg, attr, None)
             if isinstance(val, str) and val:
                 return val
-
-        # 2. Try Pydantic class model_fields defaults
         if isinstance(msg, type) and hasattr(msg, "model_fields"):
             model_fields = getattr(msg, "model_fields", None)
             if model_fields:
@@ -312,12 +264,8 @@ class FlextDispatcher:
                         if (
                             isinstance(default_val, str)
                             and default_val
-                            and default_val != "PydanticUndefined"
+                            and (default_val != "PydanticUndefined")
                         ):
                             return default_val
-
-        msg_type_error = (
-            f"Message {msg} does not provide a valid route via "
-            "command_type, query_type, or event_type"
-        )
+        msg_type_error = f"Message {msg} does not provide a valid route via command_type, query_type, or event_type"
         raise TypeError(msg_type_error)

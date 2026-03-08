@@ -64,19 +64,14 @@ def test_results_internal_conflict_paths_and_combine() -> None:
     merged_dict = _Results._merge_dicts(
         cast(
             "list[t.ContainerValue]",
-            [
-                {"ok": "v", "xs": [1, "a", object()]},
-                {"ys": [2, None, 3.5]},
-            ],
-        ),
+            [{"ok": "v", "xs": [1, "a", object()]}, {"ys": [2, None, 3.5]}],
+        )
     )
     assert merged_dict["ok"] == "v"
     assert merged_dict["xs"] == [1, "a"]
     assert merged_dict["ys"] == [2, None, 3.5]
-
     assert _Results._resolve_aggregate_conflict(None, None) is None
     assert _Results._resolve_aggregate_conflict(True, False) is False
-
     combined = _Results.combine(_Results(value=1), _Results(value=2))
     assert combined.value == 2
 
@@ -86,7 +81,6 @@ def test_options_merge_conflict_paths_and_empty_merge_options() -> None:
     assert _Options._resolve_merge_conflict(2, 3) == 5
     assert _Options._resolve_merge_conflict([1], [2, "x"]) == [1, 2, "x"]
     assert _Options._resolve_merge_conflict("a", "b") == "b"
-
     empty = _Options.merge_options()
     assert isinstance(empty, _Options)
 
@@ -94,6 +88,5 @@ def test_options_merge_conflict_paths_and_empty_merge_options() -> None:
 def test_config_hash_from_mapping_and_non_hashable() -> None:
     loaded = _Config.from_mapping(m.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
-
     with pytest.raises(TypeError, match="_Config objects are not hashable"):
         hash(loaded)

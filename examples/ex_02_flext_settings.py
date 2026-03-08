@@ -34,10 +34,6 @@ class Ex02FlextSettings(Examples):
         FlextSettings.reset_for_testing()
         self._TestConfig.reset_for_testing()
 
-    # ------------------------------------------------------------------
-    # Env helpers (private, side-effect-free on cleanup)
-    # ------------------------------------------------------------------
-
     @staticmethod
     def _set_env(key: str, value: str | None) -> str | None:
         """Set an env var, returning its previous value."""
@@ -56,30 +52,21 @@ class Ex02FlextSettings(Examples):
         else:
             os.environ[key] = previous
 
-    # ------------------------------------------------------------------
-    # Sections
-    # ------------------------------------------------------------------
-
     def _exercise_singleton_and_global(self) -> None:
         """Exercise singleton pattern and global instance management."""
         self.section("singleton_and_global")
         FlextSettings.reset_for_testing()
-
         first = FlextSettings()
         second = FlextSettings()
         self.check("constructor.singleton_identity", first is second)
-
         global_instance = FlextSettings.get_global()
         self.check("get_global.identity", global_instance is first)
-
         getattr(FlextSettings, "_reset_instance")()
         third = FlextSettings()
         self.check("_reset_instance.recreates_singleton", third is not first)
-
         FlextSettings.reset_for_testing()
         fourth = FlextSettings.get_global()
         self.check("reset_global_instance.recreates_global", fourth is not third)
-
         getattr(self._TestConfig, "_reset_instance")()
         test_a = self._TestConfig()
         test_b = self._TestConfig()
@@ -89,7 +76,6 @@ class Ex02FlextSettings(Examples):
         """Exercise all configuration fields and validation."""
         self.section("configuration_fields_and_validation")
         FlextSettings.reset_for_testing()
-
         config = FlextSettings(
             app_name="demo-app",
             version="9.8.7",
@@ -118,7 +104,6 @@ class Ex02FlextSettings(Examples):
             api_key="demo-key",
             exception_failure_level=c.Exceptions.FAILURE_LEVEL_DEFAULT,
         )
-
         self.check("field.app_name", config.app_name)
         self.check("field.version", config.version)
         self.check("field.debug", config.debug)
@@ -147,7 +132,6 @@ class Ex02FlextSettings(Examples):
         self.check("field.max_batch_size", config.max_batch_size)
         self.check("field.api_key", config.api_key)
         self.check("field.exception_failure_level", config.exception_failure_level)
-
         validated = FlextSettings.model_validate(config.model_dump())
         self.check(
             "validate_configuration.indirect_via_model_validate", validated.app_name
@@ -157,20 +141,16 @@ class Ex02FlextSettings(Examples):
         """Exercise effective_log_level property and apply_override."""
         self.section("effective_log_level_and_override")
         FlextSettings.reset_for_testing()
-
         config = FlextSettings(
             debug=False, trace=False, log_level=c.Settings.LogLevel.ERROR
         )
         self.check("effective_log_level.base", config.effective_log_level)
-
         valid_override = config.apply_override("debug", True)
         self.check("apply_override.valid_return", valid_override)
         self.check("apply_override.valid_applied", config.debug)
         self.check("effective_log_level.debug", config.effective_log_level)
-
         config.apply_override("trace", True)
         self.check("effective_log_level.trace", config.effective_log_level)
-
         invalid_override = config.apply_override("does_not_exist", "x")
         self.check("apply_override.invalid_return", invalid_override)
 
@@ -178,18 +158,15 @@ class Ex02FlextSettings(Examples):
         """Exercise get_global and DI config provider."""
         self.section("get_global_and_provider")
         FlextSettings.reset_for_testing()
-
         base = FlextSettings.get_global()
         cloned = FlextSettings.get_global()
         self.check("get_global.clone_same_values", cloned.app_name == base.app_name)
         self.check("get_global.clone_new_object", cloned is base)
-
         overridden = FlextSettings.get_global(
             overrides={"app_name": "materialized", "timeout_seconds": 55.0}
         )
         self.check("get_global.override.app_name", overridden.app_name)
         self.check("get_global.override.timeout_seconds", overridden.timeout_seconds)
-
         provider = overridden.get_di_config_provider()
         self.check("get_di_config_provider.type", type(provider).__name__)
 
@@ -197,14 +174,12 @@ class Ex02FlextSettings(Examples):
         """Exercise resolve_env_file and AutoConfig."""
         self.section("resolve_env_file_and_auto_config")
         FlextSettings.reset_for_testing()
-
         env_path = Path(sys.prefix) / "flext_settings_example.env"
         env_path.write_text("FLEXT_APP_NAME=from_env_file\n", encoding="utf-8")
         previous = self._set_env(c.Platform.ENV_FILE_ENV_VAR, str(env_path))
         try:
             resolved = FlextSettings.resolve_env_file()
             self.check("resolve_env_file.custom_path", resolved)
-
             auto = FlextSettings.AutoConfig(
                 config_class=self._TestConfig,
                 env_prefix=c.Platform.ENV_PREFIX,
@@ -235,7 +210,6 @@ class Ex02FlextSettings(Examples):
 
         FlextSettings.register_namespace("decorated_ns", _DecoratedNamespace)
         FlextSettings.register_namespace("registered_ns", _RegisteredNamespace)
-
         base = FlextSettings()
         decorated_typed = base.get_namespace("decorated_ns", tc)
         registered_typed = base.get_namespace("registered_ns", tc)
@@ -248,7 +222,6 @@ class Ex02FlextSettings(Examples):
         """Exercise context override system."""
         self.section("context_system")
         self._TestConfig.reset_for_testing()
-
         self._TestConfig.register_context_overrides(
             "worker-a",
             service_name="worker-service",
@@ -257,7 +230,6 @@ class Ex02FlextSettings(Examples):
         )
         from_registered = self._TestConfig.for_context("worker-a")
         from_runtime = self._TestConfig.for_context("worker-a", feature_enabled=False)
-
         self.check(
             "register_context_overrides.service_name", from_registered.service_name
         )
@@ -266,8 +238,7 @@ class Ex02FlextSettings(Examples):
         )
         self.check("for_context.registered.max_workers", from_registered.max_workers)
         self.check(
-            "for_context.runtime_override.feature_enabled",
-            from_runtime.feature_enabled,
+            "for_context.runtime_override.feature_enabled", from_runtime.feature_enabled
         )
 
 

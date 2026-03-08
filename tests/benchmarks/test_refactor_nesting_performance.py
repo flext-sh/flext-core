@@ -18,123 +18,54 @@ class TestPerformanceBenchmarks:
         """Benchmark: Process 1000 files in < 30 seconds."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
-
-            # Create 1000 Python files with loose classes
             for i in range(1000):
                 file_dir = tmp_path / f"pkg{i // 100}" / f"subpkg{i // 10}"
                 file_dir.mkdir(parents=True, exist_ok=True)
                 test_file = file_dir / f"module_{i}.py"
-                test_file.write_text(f'''
-class LooseClass{i}:
-    """Loose class {i}."""
-    pass
-
-def helper_{i}():
-    return {i}
-''')
-
+                test_file.write_text(
+                    f'\nclass LooseClass{i}:\n    """Loose class {i}."""\n    pass\n\ndef helper_{i}():\n    return {i}\n'
+                )
             scanner = FlextInfraRefactorLooseClassScanner()
-
-            # Measure time
             start = time.perf_counter()
             _ = scanner.scan(tmp_path)
             elapsed = time.perf_counter() - start
-
-            # Verify performance target
             assert elapsed < 30.0, f"Scan took {elapsed:.2f}s, expected < 30s"
 
     def test_peak_memory_under_500mb(self) -> None:
         """Benchmark: Peak memory < 500MB for workspace scan."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
-
-            # Create substantial codebase
             for i in range(500):
                 file_dir = tmp_path / f"project{i // 50}" / "src"
                 file_dir.mkdir(parents=True, exist_ok=True)
                 test_file = file_dir / f"file_{i}.py"
-                # Create files with substantial content
-                test_file.write_text(f'''
-"""Module {i} with substantial content."""
-from __future__ import annotations
-
-from typing import Optional, List, Dict, Any
-
-class ClassA{i}:
-    """Class A variant {i}."""
-    
-    def __init__(self, value: int) -> None:
-        self.value = value
-    
-    def process(self, items: List[str]) -> Dict[str, Any]:
-        return {{"items": items, "value": self.value}}
-
-class ClassB{i}:
-    """Class B variant {i}."""
-    
-    @staticmethod
-    def helper(x: Optional[int]) -> int:
-        return x or 0
-
-def standalone_func_{i}(a: int, b: int) -> int:
-    return a + b
-''')
-
+                test_file.write_text(
+                    f'\n"""Module {i} with substantial content."""\nfrom __future__ import annotations\n\nfrom typing import Optional, List, Dict, Any\n\nclass ClassA{i}:\n    """Class A variant {i}."""\n    \n    def __init__(self, value: int) -> None:\n        self.value = value\n    \n    def process(self, items: List[str]) -> Dict[str, Any]:\n        return {{"items": items, "value": self.value}}\n\nclass ClassB{i}:\n    """Class B variant {i}."""\n    \n    @staticmethod\n    def helper(x: Optional[int]) -> int:\n        return x or 0\n\ndef standalone_func_{i}(a: int, b: int) -> int:\n    return a + b\n'
+                )
             scanner = FlextInfraRefactorLooseClassScanner()
-
-            # Measure memory
             tracemalloc.start()
             _ = scanner.scan(tmp_path)
             _, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
-
             peak_mb = peak / 1024 / 1024
-
-            # Verify memory target
             assert peak_mb < 500, f"Peak memory was {peak_mb:.1f}MB, expected < 500MB"
 
     def test_rule_application_performance(self) -> None:
         """Benchmark rule application on single file."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
-
-            # Create test file
             test_file = tmp_path / "test.py"
-            test_file.write_text("""
-class TimeoutEnforcer:
-    def enforce(self, timeout: int) -> bool:
-        return True
-
-class RateLimiter:
-    def limit(self, rate: int) -> bool:
-        return True
-""")
-
-            # Create config
+            test_file.write_text(
+                "\nclass TimeoutEnforcer:\n    def enforce(self, timeout: int) -> bool:\n        return True\n\nclass RateLimiter:\n    def limit(self, rate: int) -> bool:\n        return True\n"
+            )
             config_file = tmp_path / "mappings.yml"
-            config_file.write_text("""
-class_nesting:
-  - loose_name: TimeoutEnforcer
-    current_file: test.py
-    target_namespace: FlextDispatcher
-    target_name: TimeoutEnforcer
-    confidence: high
-  - loose_name: RateLimiter
-    current_file: test.py
-    target_namespace: FlextDispatcher
-    target_name: RateLimiter
-    confidence: high
-""")
-
+            config_file.write_text(
+                "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n"
+            )
             rule = ClassNestingRefactorRule(config_file)
-
-            # Measure time
             start = time.perf_counter()
-            for _ in range(100):  # Apply 100 times
+            for _ in range(100):
                 _ = rule.apply(test_file, dry_run=True)
             elapsed = time.perf_counter() - start
-
             avg_time = elapsed / 100
-
-            # Should be fast per file
             assert avg_time < 0.1, f"Rule application too slow: {avg_time * 1000:.2f}ms"

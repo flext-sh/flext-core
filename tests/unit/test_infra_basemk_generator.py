@@ -49,7 +49,6 @@ def test_generator_execute_returns_generated_content() -> None:
     """Test execute() method returns generated content."""
     gen = FlextInfraBaseMkGenerator(template_engine=_SuccessRenderer())
     result = gen.execute()
-
     assert result.is_success
     assert "help:" in result.value
 
@@ -58,7 +57,6 @@ def test_generator_generate_with_none_config_uses_default() -> None:
     """Test generate() with None config uses default configuration."""
     gen = FlextInfraBaseMkGenerator(template_engine=_SuccessRenderer())
     result = gen.generate(config=None)
-
     assert result.is_success
 
 
@@ -76,7 +74,6 @@ def test_generator_generate_with_basemk_config_object() -> None:
     )
     gen = FlextInfraBaseMkGenerator(template_engine=_SuccessRenderer())
     result = gen.generate(config=config)
-
     assert result.is_success
 
 
@@ -94,7 +91,6 @@ def test_generator_generate_with_dict_config() -> None:
     )
     gen = FlextInfraBaseMkGenerator(template_engine=_SuccessRenderer())
     result = gen.generate(config=config)
-
     assert result.is_success
 
 
@@ -103,7 +99,6 @@ def test_generator_generate_with_invalid_dict_config() -> None:
     invalid_config = {"invalid_key": "value"}
     gen = FlextInfraBaseMkGenerator(template_engine=_SuccessRenderer())
     result = gen.generate(config=invalid_config)
-
     assert result.is_failure
     assert isinstance(result.error, str)
     assert isinstance(result.error, str)
@@ -114,7 +109,6 @@ def test_generator_generate_propagates_render_failure() -> None:
     """Test generate() propagates template render failures."""
     gen = FlextInfraBaseMkGenerator(template_engine=_FailureRenderer())
     result = gen.generate()
-
     assert result.is_failure
     assert isinstance(result.error, str)
     assert "render error" in result.error
@@ -125,9 +119,7 @@ def test_generator_write_to_file(tmp_path: Path) -> None:
     output_path = tmp_path / "test.mk"
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
-
     result = gen.write(content, output=output_path)
-
     assert result.is_success
     assert output_path.exists()
     assert output_path.read_text(encoding="utf-8") == content
@@ -138,9 +130,7 @@ def test_generator_write_creates_parent_directories(tmp_path: Path) -> None:
     output_path = tmp_path / "nested" / "dir" / "test.mk"
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
-
     result = gen.write(content, output=output_path)
-
     assert result.is_success
     assert output_path.exists()
 
@@ -150,9 +140,7 @@ def test_generator_write_to_stream() -> None:
     stream = io.StringIO()
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
-
     result = gen.write(content, stream=stream)
-
     assert result.is_success
     assert stream.getvalue() == content
 
@@ -161,9 +149,7 @@ def test_generator_write_fails_without_output_or_stream() -> None:
     """Test write() fails when neither output nor stream provided."""
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
-
     result = gen.write(content, output=None, stream=None)
-
     assert result.is_failure
     assert isinstance(result.error, str)
     assert "stdout stream is required" in result.error
@@ -174,24 +160,20 @@ def test_generator_write_handles_file_permission_error(tmp_path: Path) -> None:
     output_path = tmp_path / "readonly" / "test.mk"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.touch()
-    output_path.chmod(0o444)  # Read-only
-
+    output_path.chmod(292)
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
-
     try:
         result = gen.write(content, output=output_path)
-        # May succeed or fail depending on OS permissions
         assert result.is_failure or result.is_success
     finally:
-        output_path.chmod(0o644)  # Restore for cleanup
+        output_path.chmod(420)
 
 
 def test_generator_normalize_config_with_none() -> None:
     """Test _normalize_config handles None."""
     gen = FlextInfraBaseMkGenerator()
     result = gen._normalize_config(None)
-
     assert result.is_success
     assert isinstance(result.value, im.Infra.Basemk.BaseMkConfig)
 
@@ -210,7 +192,6 @@ def test_generator_normalize_config_with_basemk_config() -> None:
     )
     gen = FlextInfraBaseMkGenerator()
     result = gen._normalize_config(config)
-
     assert result.is_success
     assert result.value == config
 
@@ -229,7 +210,6 @@ def test_generator_normalize_config_with_dict() -> None:
     )
     gen = FlextInfraBaseMkGenerator()
     result = gen._normalize_config(config)
-
     assert result.is_success
     assert isinstance(result.value, im.Infra.Basemk.BaseMkConfig)
 
@@ -239,7 +219,6 @@ def test_generator_normalize_config_with_invalid_dict() -> None:
     invalid_dict = {"bad_key": "value"}
     gen = FlextInfraBaseMkGenerator()
     result = gen._normalize_config(invalid_dict)
-
     assert result.is_failure
     assert isinstance(result.error, str)
     assert "validation failed" in result.error
@@ -250,7 +229,6 @@ def test_generator_write_to_stream_handles_oserror(
 ) -> None:
     """Test write() handles OSError when writing to stream."""
     stream = io.StringIO()
-
     stream = io.StringIO()
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()

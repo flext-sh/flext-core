@@ -423,6 +423,7 @@ class FlextInfraRefactorModels:
         constants_class: str = Field(
             default="", description="First constants class name"
         )
+        facade_alias: str = Field(default="c", description="Facade alias letter")
         candidates: tuple[FlextInfraRefactorModels.MROSymbolCandidate, ...] = Field(
             default_factory=tuple,
             description="Module-level symbol candidates",

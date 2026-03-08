@@ -8,7 +8,7 @@ Usage (via facade):
     from flext_core import u
     u.write_file(path, content, encoding=c.Infra.Encoding.DEFAULT)
     u.write_file(path, raw_bytes)
-    u.write_stdout("message\\n")
+    u.write_stdout("message\\\\n")
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -34,10 +34,7 @@ class FlextUtilitiesFileOps:
 
     @staticmethod
     def write_file(
-        path: Path,
-        content: str | bytes,
-        *,
-        encoding: str = "utf-8",
+        path: Path, content: str | bytes, *, encoding: str = "utf-8"
     ) -> None:
         """Write content to *path*, discarding the byte-count return value.
 

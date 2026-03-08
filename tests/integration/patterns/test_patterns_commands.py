@@ -12,23 +12,13 @@ from typing import override
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
 from tests.typings import TestsFlextTypes
 
-# TypedDict definitions from consolidated test typings
 CommandPayloadDict = TestsFlextTypes.Fixtures.CommandPayloadDict
 UpdateFieldDict = TestsFlextTypes.Fixtures.UpdateFieldDict
 UpdatePayloadDict = TestsFlextTypes.Fixtures.UpdatePayloadDict
 UserPayloadDict = TestsFlextTypes.Fixtures.UserPayloadDict
-
-# =============================================================================
-# Import required classes for CQRS patterns
-# Constants
 EXPECTED_BULK_SIZE = 2
-
 FlextCommandId = str
 FlextCommandType = str
-
-
-# TEST COMMAND IMPLEMENTATIONS
-# =============================================================================
 
 
 class CreateUserCommand(FlextModels.Command):
@@ -39,10 +29,7 @@ class CreateUserCommand(FlextModels.Command):
 
     def get_payload(self) -> UserPayloadDict:
         """Get command payload."""
-        result: UserPayloadDict = {
-            "username": self.username,
-            "email": self.email,
-        }
+        result: UserPayloadDict = {"username": self.username, "email": self.email}
         return result
 
     def validate_command(self) -> FlextResult[bool]:
@@ -67,9 +54,9 @@ class UpdateUserCommand(FlextModels.Command):
         typed_updates: dict[str, UpdateFieldDict] = {
             key: {
                 "field_name": key,
-                "new_value": (
-                    value if isinstance(value, (str, int, bool)) else str(value)
-                ),
+                "new_value": value
+                if isinstance(value, (str, int, bool))
+                else str(value),
             }
             for key, value in self.updates.items()
         }
@@ -102,16 +89,11 @@ class FailingCommand(FlextModels.Command):
 
 
 def _create_user_command(*, username: str, email: str) -> CreateUserCommand:
-    return CreateUserCommand.model_validate({
-        "username": username,
-        "email": email,
-    })
+    return CreateUserCommand.model_validate({"username": username, "email": email})
 
 
 def _update_user_command(
-    *,
-    target_user_id: str,
-    updates: dict[str, t.ContainerValue],
+    *, target_user_id: str, updates: dict[str, t.ContainerValue]
 ) -> UpdateUserCommand:
     return UpdateUserCommand.model_validate({
         "target_user_id": target_user_id,
@@ -120,7 +102,7 @@ def _update_user_command(
 
 
 class CreateUserCommandHandler(
-    FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]],
+    FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]]
 ):
     """Test handler for CreateUserCommand."""
 
@@ -148,14 +130,12 @@ class CreateUserCommandHandler(
     def validate(self, data: object) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, CreateUserCommand):
-            # Call the command's validate_command method
             return data.validate_command()
         return FlextResult[bool].fail("Cannot handle this command type")
 
     @override
     def handle(
-        self,
-        message: CreateUserCommand,
+        self, message: CreateUserCommand
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the create user command."""
         user_data: dict[str, t.ContainerValue] = {
@@ -164,19 +144,17 @@ class CreateUserCommandHandler(
             "email": message.email,
         }
         self.created_users.append(user_data)
-
         return FlextResult[dict[str, t.ContainerValue]].ok(user_data)
 
     def handle_command(
-        self,
-        command: CreateUserCommand,
+        self, command: CreateUserCommand
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the create user command (alias for handle)."""
         return self.handle(command)
 
 
 class UpdateUserCommandHandler(
-    FlextHandlers[UpdateUserCommand, dict[str, t.ContainerValue]],
+    FlextHandlers[UpdateUserCommand, dict[str, t.ContainerValue]]
 ):
     """Test handler for UpdateUserCommand."""
 
@@ -204,33 +182,27 @@ class UpdateUserCommandHandler(
     def validate(self, data: object) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, UpdateUserCommand):
-            # Call the command's validate_command method
             return data.validate_command()
         return FlextResult[bool].fail("Cannot handle this command type")
 
     @override
     def handle(
-        self,
-        message: UpdateUserCommand,
+        self, message: UpdateUserCommand
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the update user command."""
         if message.target_user_id not in self.updated_users:
             self.updated_users[message.target_user_id] = {}
-
         user_updates = self.updated_users[message.target_user_id]
         if isinstance(user_updates, dict):
             user_updates.update(message.updates)
-
         result_data: dict[str, t.ContainerValue] = {
             "target_user_id": message.target_user_id,
             "updated_fields": list(message.updates.keys()),
         }
-
         return FlextResult[dict[str, t.ContainerValue]].ok(result_data)
 
     def handle_command(
-        self,
-        command: UpdateUserCommand,
+        self, command: UpdateUserCommand
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the update user command (alias for handle)."""
         return self.handle(command)
@@ -252,14 +224,12 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
     def validate(self, data: object) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, FailingCommand):
-            # Call the command's validate_command method
             return data.validate_command()
         return FlextResult[bool].fail("Cannot handle this command type")
 
     @override
     def handle(self, message: FailingCommand) -> FlextResult[bool]:
         """Fail to handle command intentionally."""
-        # Use message to demonstrate it's being processed
         error_msg = (
             f"Handler processing failed for command: {message.__class__.__name__}"
         )
@@ -276,11 +246,8 @@ class TestFlextCommand:
     def test_command_creation_with_auto_id(self) -> None:
         """Test creating command with auto-generated ID."""
         command: CreateUserCommand = _create_user_command(
-            username="john_doe",
-            email="john@example.com",
+            username="john_doe", email="john@example.com"
         )
-
-        # Test command creation
         assert command.username == "john_doe"
         assert command.email == "john@example.com"
         assert command.username == "john_doe"
@@ -290,13 +257,7 @@ class TestFlextCommand:
 
     def test_command_creation_with_custom_id(self) -> None:
         """Test creating command with custom ID."""
-        # Cannot create command with custom id - not supported by Pydantic model
-        command = _create_user_command(
-            username="jane_doe",
-            email="jane@example.com",
-        )
-
-        # Just verify the command was created successfully
+        command = _create_user_command(username="jane_doe", email="jane@example.com")
         assert command.username == "jane_doe"
         assert command.email == "jane@example.com"
 
@@ -304,8 +265,6 @@ class TestFlextCommand:
         """Test getting command payload."""
         command = _create_user_command(username="test_user", email="test@example.com")
         payload = command.get_payload()
-
-        # UserPayloadDict has total=False, so use .get() for optional fields
         username = payload.get("username")
         if username != "test_user":
             msg = f"Expected {'test_user'}, got {username}"
@@ -316,8 +275,7 @@ class TestFlextCommand:
         """Test successful command validation."""
         command = _create_user_command(username="valid_user", email="valid@example.com")
         result = command.validate_command()
-
-        if not (result.is_success):
+        if not result.is_success:
             msg = f"Expected True, got {result.is_success}"
             raise AssertionError(msg)
 
@@ -325,55 +283,44 @@ class TestFlextCommand:
         """Test command validation failure for missing username."""
         command = _create_user_command(username="", email="test@example.com")
         result = command.validate_command()
-
-        if not (result.is_failure):
+        if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
         if "username is required" not in (result.error or "").lower():
             msg = f"Expected {'username is required'} in {(result.error or '').lower()}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_validate_command_failure_no_email(self) -> None:
         """Test command validation failure for missing email."""
         command = _create_user_command(username="test_user", email="")
         result = command.validate_command()
-
-        if not (result.is_failure):
+        if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
         if "email is required" not in (result.error or "").lower():
             msg = f"Expected {'email is required'} in {(result.error or '').lower()}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_validate_command_failure_invalid_email(self) -> None:
         """Test command validation failure for invalid email."""
         command = _create_user_command(username="test_user", email="invalid_email")
         result = command.validate_command()
-
-        if not (result.is_failure):
+        if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
         if "invalid email" not in (result.error or "").lower():
             msg = f"Expected {'invalid email'} in {(result.error or '').lower()}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_get_command_metadata(self) -> None:
         """Test command basic properties."""
         command = _create_user_command(username="test_user", email="test@example.com")
-
-        # Test basic command properties
         assert command.username == "test_user"
         assert command.email == "test@example.com"
         assert isinstance(command, CreateUserCommand)
@@ -385,7 +332,6 @@ class TestFlextCommandHandler:
     def test_handler_creation(self) -> None:
         """Test creating command handler."""
         handler = CreateUserCommandHandler()
-
         handler_id = (
             handler._config_model.handler_id
             if hasattr(handler, "_config_model")
@@ -393,69 +339,50 @@ class TestFlextCommandHandler:
         )
         if handler_id != "create_user_handler":
             msg = f"Expected {'create_user_handler'}, got {handler_id}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
         assert handler.get_command_type() == "create_user"
 
     def test_can_handle_correct_command_type(self) -> None:
         """Test can_handle with correct command type."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
-
-        if not (handler.can_handle(CreateUserCommand)):
+        if not handler.can_handle(CreateUserCommand):
             msg = f"Expected True, got {handler.can_handle(CreateUserCommand)}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
-        handler: FlextHandlers[
-            CreateUserCommand,
-            dict[str, t.ContainerValue],
-        ] = CreateUserCommandHandler()
-
+        handler: FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]] = (
+            CreateUserCommandHandler()
+        )
         if handler.can_handle(UpdateUserCommand):
             msg = f"Expected False, got {handler.can_handle(UpdateUserCommand)}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command object."""
-        handler: FlextHandlers[
-            CreateUserCommand,
-            dict[str, t.ContainerValue],
-        ] = CreateUserCommandHandler()
-
+        handler: FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]] = (
+            CreateUserCommandHandler()
+        )
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
-        handler: FlextHandlers[
-            CreateUserCommand,
-            dict[str, t.ContainerValue],
-        ] = CreateUserCommandHandler()
-        command: CreateUserCommand = _create_user_command(
-            username="john",
-            email="john@example.com",
+        handler: FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]] = (
+            CreateUserCommandHandler()
         )
-
+        command: CreateUserCommand = _create_user_command(
+            username="john", email="john@example.com"
+        )
         result = handler.handle(command)
-
         if not result.is_success:
             msg = f"Expected True, got {result.is_success}"
             raise AssertionError(msg)
         assert result.value is not None
         if (result.value or {})["username"] != "john":
             msg = f"Expected {'john'}, got {(result.value or {})['username']}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
         assert (result.value or {})["email"] == "john@example.com"
         if "id" not in result.value:
             msg = f"Expected {'id'} in {result.value}"
@@ -465,12 +392,9 @@ class TestFlextCommandHandler:
         """Test complete command processing flow."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
-            username="jane",
-            email="jane@example.com",
+            username="jane", email="jane@example.com"
         )
-
         result = handler.handle(command)
-
         if not result.is_success:
             msg = f"Expected True, got {result.is_success}"
             raise AssertionError(msg)
@@ -480,49 +404,34 @@ class TestFlextCommandHandler:
 
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
-        handler: FlextHandlers[
-            CreateUserCommand,
-            dict[str, t.ContainerValue],
-        ] = CreateUserCommandHandler()
-        command: CreateUserCommand = _create_user_command(
-            username="",
-            email="invalid",
+        handler: FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]] = (
+            CreateUserCommandHandler()
         )
-
+        command: CreateUserCommand = _create_user_command(username="", email="invalid")
         result = handler.execute(command)
-
-        if not (result.is_failure):
+        if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
         if "username is required" not in (result.error or "").lower():
             msg = f"Expected {'username is required'} in {(result.error or '').lower()}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_process_command_cannot_handle(self) -> None:
         """Test validation failure for wrong command type."""
         wrong_command: UpdateUserCommand = _update_user_command(
-            target_user_id="123",
-            updates={"name": "test"},
+            target_user_id="123", updates={"name": "test"}
         )
-
-        # Test that handler's validate method rejects wrong command type
-        # validate() accepts object, so this is type-safe
         result = CreateUserCommandHandler().validate(wrong_command)
-
-        if not (result.is_failure):
+        if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
         if "cannot handle" not in (result.error or "").lower():
             msg = f"Expected {'cannot handle'} in {(result.error or '').lower()}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
 
 class TestFlextCommandResults:
@@ -531,49 +440,35 @@ class TestFlextCommandResults:
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
         result_data: dict[str, t.ContainerValue] = {"id": "123", "username": "test"}
-
         command_result: FlextResult[dict[str, t.ContainerValue]] = FlextResult[
             dict[str, t.ContainerValue]
         ].ok(result_data)
-
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)
         if command_result.value != result_data:
             msg = f"Expected {result_data}, got {command_result.value}"
             raise AssertionError(msg)
-        assert (
-            command_result.error is None
-        )  # Success has no error (backward compatibility)
+        assert command_result.error is None
 
     def test_failure_result_creation(self) -> None:
         """Test creating failed command result."""
         error_message = "Command execution failed"
-
         command_result: FlextResult[bool] = FlextResult[bool].fail(error_message)
-
         if command_result.is_success:
             msg = f"Expected False, got {command_result.is_success}"
             raise AssertionError(msg)
-        # Em falha, `.value` lança exceção - verificar que é falha
         assert command_result.is_failure
         if command_result.error != error_message:
             msg = f"Expected {error_message}, got {command_result.error}"
-            raise AssertionError(
-                msg,
-            )
+            raise AssertionError(msg)
 
     def test_result_metadata(self) -> None:
         """Test result metadata properties."""
         result_data = {"id": "123"}
-
-        # FlextResult test - create successful result
         command_result = FlextResult[dict[str, str]].ok(result_data)
-
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)
-        # FlextResult doesn't have metadata, use error_data which acts as metadata
         if command_result.error_data == {}:
-            # Test passes - metadata would be empty for successful results
             pass

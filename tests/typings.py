@@ -14,12 +14,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TypedDict
 
 from flext_core import T, T_co, T_contra, t
-from flext_tests import (
-    FlextTestsTypes,
-)
+from flext_tests import FlextTestsTypes
 
 
 class TestsFlextTypes(FlextTestsTypes):
@@ -42,39 +39,36 @@ class TestsFlextTypes(FlextTestsTypes):
         """
 
         type ServiceConfigMapping = Mapping[
-            str,
-            t.ContainerValue | Sequence[str] | Mapping[str, str | int] | None,
+            str, t.ContainerValue | Sequence[str] | Mapping[str, str | int] | None
         ]
-        """Service configuration mapping specific to flext-core services."""
-
+        "Service configuration mapping specific to flext-core services."
         type HandlerConfigMapping = Mapping[
-            str,
-            t.ContainerValue | Sequence[str] | Mapping[str, str] | None,
+            str, t.ContainerValue | Sequence[str] | Mapping[str, str] | None
         ]
-        """Handler configuration mapping specific to flext-core handlers."""
+        "Handler configuration mapping specific to flext-core handlers."
 
     class Fixtures:
         """TypedDict definitions for test fixtures."""
 
-        class GenericFieldsDict(TypedDict, total=False):
+        class GenericFieldsDict:
             """Generic dictionary for flexible test data and configurations."""
 
-        class GenericTestCaseDict(TypedDict, total=False):
+        class GenericTestCaseDict:
             """Generic test case dictionary for parameterized tests."""
 
-        class BddPhaseDict(TypedDict, total=False):
+        class BddPhaseDict:
             """BDD phase (given/when/then) configuration."""
 
             description: str
 
-        class BddPhaseData(TypedDict, total=False):
+        class BddPhaseData:
             """BDD phase data (given/when/then)."""
 
             description: str
             assertions: list[str]
             setup_steps: list[str]
 
-        class MockScenarioData(TypedDict, total=False):
+        class MockScenarioData:
             """Mock scenario test data."""
 
             given: dict[str, str | int | bool]
@@ -83,14 +77,14 @@ class TestsFlextTypes(FlextTestsTypes):
             tags: list[str]
             priority: str
 
-        class NestedDataDict(TypedDict, total=False):
+        class NestedDataDict:
             """Nested test data."""
 
             key: str
             value: str | int | bool
             metadata: str
 
-        class FixtureDataDict(TypedDict, total=False):
+        class FixtureDataDict:
             """Test data for FlextTestBuilder."""
 
             id: str
@@ -103,25 +97,25 @@ class TestsFlextTypes(FlextTestsTypes):
             version: str
             nested_data: dict[str, TestsFlextTypes.Fixtures.NestedDataDict]
 
-        class FixtureCaseDict(TypedDict, total=False):
+        class FixtureCaseDict:
             """Individual test case configuration."""
 
             email: str
             input: str
 
-        class SuccessCaseDict(TypedDict, total=False):
+        class SuccessCaseDict:
             """Success test case."""
 
             email: str
             input: str
 
-        class FailureCaseDict(TypedDict, total=False):
+        class FailureCaseDict:
             """Failure test case."""
 
             email: str
             input: str
 
-        class SetupDataDict(TypedDict, total=False):
+        class SetupDataDict:
             """Setup data for test suite."""
 
             initialization_step: str
@@ -129,7 +123,7 @@ class TestsFlextTypes(FlextTestsTypes):
             configuration_value: str
             environment: str
 
-        class FixtureSuiteDict(TypedDict):
+        class FixtureSuiteDict:
             """Test suite configuration."""
 
             suite_name: str
@@ -137,34 +131,34 @@ class TestsFlextTypes(FlextTestsTypes):
             tags: list[str]
             setup_data: dict[str, TestsFlextTypes.Fixtures.SetupDataDict]
 
-        class UserDataFixtureDict(TypedDict, total=False):
+        class UserDataFixtureDict:
             """User fixture data."""
 
             username: str
             email: str
             status: str
 
-        class RequestDataFixtureDict(TypedDict, total=False):
+        class RequestDataFixtureDict:
             """Request fixture data."""
 
             method: str
             path: str
             headers: dict[str, str]
 
-        class FixtureFixturesDict(TypedDict, total=False):
+        class FixtureFixturesDict:
             """Test fixtures configuration."""
 
             user: dict[str, TestsFlextTypes.Fixtures.UserDataFixtureDict]
             request: dict[str, TestsFlextTypes.Fixtures.RequestDataFixtureDict]
 
-        class UserProfileDict(TypedDict):
+        class UserProfileDict:
             """User profile for property-based testing."""
 
             id: str
             name: str
             email: str
 
-        class ConfigTestCaseDict(TypedDict, total=False):
+        class ConfigTestCaseDict:
             """Configuration test case."""
 
             domain: str
@@ -172,7 +166,7 @@ class TestsFlextTypes(FlextTestsTypes):
             timeout: float
             debug: bool
 
-        class PerformanceMetricsDict(TypedDict):
+        class PerformanceMetricsDict:
             """Performance metrics from testing."""
 
             total_operations: int
@@ -180,7 +174,7 @@ class TestsFlextTypes(FlextTestsTypes):
             ops_per_second: float
             memory_peak_mb: float
 
-        class StressTestResultDict(TypedDict):
+        class StressTestResultDict:
             """Result from stress testing."""
 
             iterations: int
@@ -188,38 +182,38 @@ class TestsFlextTypes(FlextTestsTypes):
             failure_count: int
             average_time_ms: float
 
-        class AsyncPayloadDict(TypedDict, total=False):
+        class AsyncPayloadDict:
             """Async event payload."""
 
             data: str
             status: str
 
-        class AsyncTestDataDict(TypedDict, total=False):
+        class AsyncTestDataDict:
             """Async test data."""
 
             event_type: str
             timestamp: str
             payload: dict[str, TestsFlextTypes.Fixtures.AsyncPayloadDict]
 
-        class UserPayloadDict(TypedDict, total=False):
+        class UserPayloadDict:
             """User command payload."""
 
             username: str
             email: str
 
-        class UpdateFieldDict(TypedDict, total=False):
+        class UpdateFieldDict:
             """Individual update field."""
 
             field_name: str
             new_value: str | int | bool
 
-        class UpdatePayloadDict(TypedDict):
+        class UpdatePayloadDict:
             """Update command payload."""
 
             target_user_id: str
             updates: dict[str, TestsFlextTypes.Fixtures.UpdateFieldDict]
 
-        class UserDataDict(TypedDict, total=False):
+        class UserDataDict:
             """User data response."""
 
             id: str
@@ -227,14 +221,14 @@ class TestsFlextTypes(FlextTestsTypes):
             email: str
             status: str
 
-        class UpdateResultDict(TypedDict, total=False):
+        class UpdateResultDict:
             """Update operation result."""
 
             user_id: str
             updated_fields: list[str]
             update_count: int
 
-        class CommandPayloadDict(TypedDict, total=False):
+        class CommandPayloadDict:
             """Generic command payload."""
 
             id: str
@@ -242,9 +236,4 @@ class TestsFlextTypes(FlextTestsTypes):
             email: str
 
 
-__all__ = [
-    "T",
-    "T_co",
-    "T_contra",
-    "TestsFlextTypes",
-]
+__all__ = ["T", "T_co", "T_contra", "TestsFlextTypes"]

@@ -23,56 +23,44 @@ class TestFlextVersion:
     def test_get_version_string(self) -> None:
         """Test get_version_string returns valid version string."""
         version = FlextVersion.get_version_string()
-        # Use tm.that() for comprehensive validation
         tm.that(version, is_=str, none=False, empty=False)
-        # Validate version format (semantic versioning)
         tm.that(
             version,
-            match=r"^\d+\.\d+\.\d+",
+            match="^\\d+\\.\\d+\\.\\d+",
             msg="Version must match semantic versioning",
         )
 
     def test_get_version_info(self) -> None:
         """Test get_version_info returns valid version tuple."""
         version_info = FlextVersion.get_version_info()
-        # Validate tuple structure
         tm.that(version_info, is_=tuple, none=False, empty=False, len=(1, 10))
-        # First element must be int (major version)
         tm.that(
             version_info[0],
             is_=int,
             gt=-1,
             msg="Major version must be non-negative integer",
         )
-        # If tuple has 2+ elements, minor should be int
         if len(version_info) >= 2 and isinstance(version_info[1], int):
             tm.that(
-                version_info[1],
-                gt=-1,
-                msg="Minor version must be non-negative integer",
+                version_info[1], gt=-1, msg="Minor version must be non-negative integer"
             )
 
     @pytest.mark.parametrize(
         ("major", "minor", "patch", "expected"),
         [
-            (0, 0, 0, True),  # Always at least 0.0.0
-            (0, 0, 1, None),  # Depends on current version
-            (1, 0, 0, None),  # Depends on current version
-            (999, 999, 999, False),  # Future version should be False
-            (-1, 0, 0, True),  # Negative major should still pass (tuple comparison)
+            (0, 0, 0, True),
+            (0, 0, 1, None),
+            (1, 0, 0, None),
+            (999, 999, 999, False),
+            (-1, 0, 0, True),
         ],
     )
     def test_is_version_at_least(
-        self,
-        major: int,
-        minor: int,
-        patch: int,
-        expected: bool | None,
+        self, major: int, minor: int, patch: int, expected: bool | None
     ) -> None:
         """Test is_version_at_least with various version combinations."""
         result = FlextVersion.is_version_at_least(major, minor, patch)
         tm.that(result, is_=bool, none=False)
-
         if expected is not None:
             tm.that(
                 result,
@@ -80,7 +68,6 @@ class TestFlextVersion:
                 msg=f"Version comparison failed for {major}.{minor}.{patch}",
             )
         else:
-            # For dynamic cases, validate against current version
             current_version_info = FlextVersion.get_version_info()
             current_major = (
                 current_version_info[0]
@@ -103,9 +90,7 @@ class TestFlextVersion:
     def test_get_package_info(self) -> None:
         """Test get_package_info returns complete package metadata dictionary."""
         info = FlextVersion.get_package_info()
-        # Validate dictionary structure
         tm.that(info, is_=dict, none=False, empty=False)
-        # Validate required keys
         required_keys = [
             "name",
             "version",
@@ -116,11 +101,8 @@ class TestFlextVersion:
             "url",
         ]
         tm.that(
-            info,
-            has=required_keys,
-            msg="Package info must contain all required keys",
+            info, has=required_keys, msg="Package info must contain all required keys"
         )
-        # Validate key types (all should be strings)
         for key in required_keys:
             tm.that(
                 info[key],
@@ -128,21 +110,19 @@ class TestFlextVersion:
                 none=False,
                 msg=f"Key {key} must be non-empty string",
             )
-        # Validate specific values
         tm.that(info["name"], eq="flext-core", msg="Package name must be flext-core")
         tm.that(
             info["version"],
-            match=r"^\d+\.\d+\.\d+",
+            match="^\\d+\\.\\d+\\.\\d+",
             msg="Version must match semantic versioning",
         )
 
     def test_module_level_exports(self) -> None:
         """Test module-level version exports are valid."""
-        # Validate __version__ export
-        tm.that(__version__, is_=str, none=False, empty=False, match=r"^\d+\.\d+\.\d+")
-        # Validate __version_info__ export
+        tm.that(
+            __version__, is_=str, none=False, empty=False, match="^\\d+\\.\\d+\\.\\d+"
+        )
         tm.that(__version_info__, is_=tuple, none=False, empty=False, len=(1, 10))
-        # Validate consistency between exports and class methods
         tm.that(
             __version__,
             eq=FlextVersion.get_version_string(),
@@ -162,8 +142,6 @@ class TestFlextVersion:
         dict matches what FlextVersion._metadata resolves to when the package
         is not installed.
         """
-        # The fallback version is hardcoded in __version__.py
-        # Verify it matches the class-level constant
         fallback_metadata = {
             "Version": "0.12.0-dev",
             "Name": "flext-core",
@@ -173,7 +151,6 @@ class TestFlextVersion:
             "License": "",
             "Home-Page": "",
         }
-        # Verify the fallback version value is what we expect
         tm.that(
             fallback_metadata["Version"],
             eq="0.12.0-dev",
@@ -197,9 +174,7 @@ class TestFlextVersion:
     def test_methods_are_callable(self, method_name: str) -> None:
         """Test that all class methods are callable and return valid results."""
         method = getattr(FlextVersion, method_name)
-        # Verify method is callable
         tm.that(callable(method), eq=True, msg=f"{method_name} must be callable")
-        # Verify method can be called and returns non-None
         if method_name == "is_version_at_least":
             result = method(0, 0, 0)
             tm.that(result, is_=bool, none=False, msg=f"{method_name} must return bool")

@@ -52,324 +52,225 @@ class FlextInfraConstants(FlextConstants):
             "validate",
             "workspace",
         })
-
         MIN_ARGV: Final[int] = 2
-        """Minimum argv length for CLI dispatch."""
+        "Minimum argv length for CLI dispatch."
 
         class Files:
             """File-related constants."""
 
             PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
-            """Standard filename for Python project configuration."""
-
+            "Standard filename for Python project configuration."
             MAKEFILE_FILENAME: Final[str] = "Makefile"
-            """Standard filename for Makefile project markers."""
-
+            "Standard filename for Makefile project markers."
             BASE_MK: Final[str] = "base.mk"
-            """Canonical base.mk filename."""
-
+            "Canonical base.mk filename."
             GO_MOD: Final[str] = "go.mod"
-            """Go module manifest filename."""
-
+            "Go module manifest filename."
             GITMODULES: Final[str] = ".gitmodules"
-            """Git submodule manifest filename."""
-
+            "Git submodule manifest filename."
             GITIGNORE: Final[str] = ".gitignore"
-            """Git ignore configuration filename."""
-
+            "Git ignore configuration filename."
             INIT_PY: Final[str] = "__init__.py"
-            """Python package initializer filename."""
+            "Python package initializer filename."
 
         class Git:
             """Git-related constants."""
 
             DIR: Final[str] = ".git"
-            """Git repository marker directory."""
-
+            "Git repository marker directory."
             ORIGIN: Final[str] = "origin"
-            """Default remote name."""
-
+            "Default remote name."
             MAIN: Final[str] = "main"
-            """Default branch name."""
-
+            "Default branch name."
             HEAD: Final[str] = "HEAD"
-            """Git HEAD reference."""
+            "Git HEAD reference."
 
         class Packages:
             """Package naming constants used across infra modules."""
 
             CORE: Final[str] = "flext-core"
-
             CORE_UNDERSCORE: Final[str] = "flext_core"
-
             ROOT: Final[str] = "flext"
 
         class Extensions:
             """File extension constants."""
 
             PYTHON: Final[str] = ".py"
-            """Python source file extension."""
-
+            "Python source file extension."
             PYTHON_GLOB: Final[str] = "*.py"
-            """Glob pattern to match Python source files."""
+            "Glob pattern to match Python source files."
 
         class Directories:
             """Common directory name constants."""
 
             TESTS: Final[str] = "tests"
-            """Standard test directory name."""
-
+            "Standard test directory name."
             EXAMPLES: Final[str] = "examples"
-            """Standard examples directory name."""
-
+            "Standard examples directory name."
             SCRIPTS: Final[str] = "scripts"
-            """Standard scripts directory name."""
-
+            "Standard scripts directory name."
             TYPINGS: Final[str] = "typings"
-            """Stub typings directory or poetry group name."""
-
+            "Stub typings directory or poetry group name."
             DOCS: Final[str] = "docs"
-            """Documentation directory name."""
-
+            "Documentation directory name."
             BUILD: Final[str] = "build"
-            """Build output directory name."""
-
+            "Build output directory name."
             DIST: Final[str] = "dist"
-            """Distribution output directory name."""
-
+            "Distribution output directory name."
             SITE: Final[str] = "site"
-            """Documentation site output directory."""
+            "Documentation site output directory."
 
         class Timeouts:
             """Standard timeout values in seconds."""
 
             DEFAULT: Final[int] = 300
-            """Default timeout for CI/command operations."""
-
+            "Default timeout for CI/command operations."
             SHORT: Final[int] = 60
-            """Short timeout for quick operations."""
-
+            "Short timeout for quick operations."
             MEDIUM: Final[int] = 120
-            """Medium timeout for moderate operations."""
-
+            "Medium timeout for moderate operations."
             LONG: Final[int] = 600
-            """Long timeout for heavy operations (pyright, etc.)."""
-
+            "Long timeout for heavy operations (pyright, etc.)."
             CI: Final[int] = 900
-            """Extended timeout for CI operations (go vet, etc.)."""
+            "Extended timeout for CI operations (go vet, etc.)."
 
         class Toml:
             """TOML section/key names for pyproject.toml parsing."""
 
             TOOL: Final[str] = "tool"
-            """Top-level [tool] section key."""
-
+            "Top-level [tool] section key."
             POETRY: Final[str] = "poetry"
-            """Poetry tool subsection key."""
-
+            "Poetry tool subsection key."
             PROJECT: Final[str] = "project"
-            """Top-level [project] section key."""
-
+            "Top-level [project] section key."
             DEPENDENCIES: Final[str] = "dependencies"
-            """Dependencies key within project or poetry sections."""
-
+            "Dependencies key within project or poetry sections."
             DEV_DEPENDENCIES: Final[str] = "dev-dependencies"
-            """Poetry dev-dependencies key."""
-
+            "Poetry dev-dependencies key."
             DEPENDENCY_GROUPS: Final[str] = "dependency-groups"
-            """PEP 735 dependency-groups section key."""
-
+            "PEP 735 dependency-groups section key."
             BUILD_SYSTEM: Final[str] = "build-system"
-            """Build system section key."""
-
+            "Build system section key."
             OPTIONAL_DEPENDENCIES: Final[str] = "optional-dependencies"
-            """Optional dependencies key within [project]."""
-
+            "Optional dependencies key within [project]."
             EXTRAS: Final[str] = "extras"
-            """Poetry extras key."""
-
+            "Poetry extras key."
             GROUP: Final[str] = "group"
-            """Poetry group key for dependency groups."""
-
+            "Poetry group key for dependency groups."
             NAME: Final[str] = "name"
-            """Project/package name key."""
-
+            "Project/package name key."
             VERSION: Final[str] = "version"
-            """Version key within project or tool sections."""
-
-            # -- Tool subsection names ------------------------------------------
-
+            "Version key within project or tool sections."
             PYREFLY: Final[str] = "pyrefly"
-            """Pyrefly tool section key."""
-
+            "Pyrefly tool section key."
             MYPY: Final[str] = "mypy"
-            """Mypy tool section key."""
-
+            "Mypy tool section key."
             PYRIGHT: Final[str] = "pyright"
-            """Pyright tool section key."""
-
+            "Pyright tool section key."
             RUFF: Final[str] = "ruff"
-            """Ruff tool section key."""
-
+            "Ruff tool section key."
             DEPTRY: Final[str] = "deptry"
-            """Deptry tool section key."""
-
+            "Deptry tool section key."
             PYTEST: Final[str] = "pytest"
-            """Pytest tool section key (tool.pytest.ini_options)."""
-
+            "Pytest tool section key (tool.pytest.ini_options)."
             ISORT: Final[str] = "isort"
-            """Isort tool section key (ruff.lint.isort)."""
-
+            "Isort tool section key (ruff.lint.isort)."
             INI_OPTIONS: Final[str] = "ini_options"
-            """Pytest ini_options subsection key."""
-
+            "Pytest ini_options subsection key."
             LINT_SECTION: Final[str] = "lint"
-            """Ruff lint subsection key."""
-
-            # -- Config sub-keys -------------------------------------------------
-
+            "Ruff lint subsection key."
             SEARCH_PATH: Final[str] = "search-path"
-            """Pyrefly search-path config key."""
-
+            "Pyrefly search-path config key."
             PROJECT_EXCLUDES: Final[str] = "project-excludes"
-            """Pyrefly project-excludes config key."""
-
+            "Pyrefly project-excludes config key."
             SUB_CONFIG: Final[str] = "sub-config"
-            """Pyrefly sub-config key."""
-
+            "Pyrefly sub-config key."
             PYTHON_VERSION_HYPHEN: Final[str] = "python-version"
-            """Pyrefly/pyright python-version config key (hyphenated)."""
-
+            "Pyrefly/pyright python-version config key (hyphenated)."
             PYTHON_VERSION_UNDERSCORE: Final[str] = "python_version"
-            """Mypy python_version config key (underscored)."""
-
+            "Mypy python_version config key (underscored)."
             EXTEND: Final[str] = "extend"
-            """Ruff extend config key."""
-
+            "Ruff extend config key."
             KNOWN_FIRST_PARTY_HYPHEN: Final[str] = "known-first-party"
-            """Ruff isort known-first-party key (hyphenated)."""
-
+            "Ruff isort known-first-party key (hyphenated)."
             KNOWN_FIRST_PARTY_UNDERSCORE: Final[str] = "known_first_party"
-            """Ruff isort known_first_party key (underscored)."""
-
+            "Ruff isort known_first_party key (underscored)."
             IGNORE_ERRORS_IN_GENERATED: Final[str] = "ignore-errors-in-generated-code"
-            """Pyrefly ignore-errors-in-generated-code key."""
-
+            "Pyrefly ignore-errors-in-generated-code key."
             MINVERSION: Final[str] = "minversion"
-            """Pytest minversion config key."""
-
+            "Pytest minversion config key."
             PYTHON_CLASSES: Final[str] = "python_classes"
-            """Pytest python_classes config key."""
-
+            "Pytest python_classes config key."
             PYTHON_FILES: Final[str] = "python_files"
-            """Pytest python_files config key."""
-
+            "Pytest python_files config key."
             ADDOPTS: Final[str] = "addopts"
-            """Pytest addopts config key."""
-
+            "Pytest addopts config key."
             MARKERS: Final[str] = "markers"
-            """Pytest markers config key."""
-
+            "Pytest markers config key."
             PLUGINS: Final[str] = "plugins"
-            """Mypy plugins config key."""
-
+            "Mypy plugins config key."
             DISABLE_ERROR_CODE: Final[str] = "disable_error_code"
-            """Mypy disable_error_code config key."""
-
+            "Mypy disable_error_code config key."
             IGNORE: Final[str] = "ignore"
-            """Pyrefly/sub-config ignore key."""
-
-            # -- Dependency / limits keys ----------------------------------------
-
+            "Pyrefly/sub-config ignore key."
             TYPING_LIBRARIES: Final[str] = "typing_libraries"
-            """Project limits typing_libraries key."""
-
+            "Project limits typing_libraries key."
             MODULE_TO_PACKAGE: Final[str] = "module_to_package"
-            """Typing libraries module_to_package mapping key."""
-
+            "Typing libraries module_to_package mapping key."
             EXCLUDE: Final[str] = "exclude"
-            """Generic exclude key."""
-
+            "Generic exclude key."
             PYTHON: Final[str] = "python"
-            """Python config subsection key (in limits)."""
-
+            "Python config subsection key (in limits)."
             PATH: Final[str] = "path"
-            """Path key within dependency entries."""
-
-            # -- Deptry JSON keys -----------------------------------------------
-
+            "Path key within dependency entries."
             ERROR: Final[str] = "error"
-            """Deptry JSON error field key."""
-
+            "Deptry JSON error field key."
             CODE: Final[str] = "code"
-            """Deptry JSON code field key."""
-
+            "Deptry JSON code field key."
             MODULE: Final[str] = "module"
-            """Deptry JSON module field key."""
-
-            # -- Poetry group names ---------------------------------------------
-
+            "Deptry JSON module field key."
             DEV: Final[str] = "dev"
-            """Development dependency group name."""
-
+            "Development dependency group name."
             DOCS: Final[str] = "docs"
-            """Documentation dependency group name."""
-
+            "Documentation dependency group name."
             SECURITY: Final[str] = "security"
-            """Security dependency group name."""
-
+            "Security dependency group name."
             TEST: Final[str] = "test"
-            """Test dependency group name."""
+            "Test dependency group name."
 
         class Cli:
             """CLI tool binary names used in subprocess calls."""
 
             GIT: Final[str] = "git"
-            """Git version control binary."""
-
+            "Git version control binary."
             RUFF: Final[str] = "ruff"
-            """Ruff linter/formatter binary."""
-
+            "Ruff linter/formatter binary."
             POETRY: Final[str] = "poetry"
-            """Poetry package manager binary."""
-
+            "Poetry package manager binary."
             SG: Final[str] = "sg"
-            """ast-grep (sg) binary."""
-
+            "ast-grep (sg) binary."
             DEPTRY: Final[str] = "deptry"
-            """Deptry dependency checker binary."""
-
+            "Deptry dependency checker binary."
             BANDIT: Final[str] = "bandit"
-            """Bandit security linter binary."""
-
+            "Bandit security linter binary."
             MARKDOWNLINT: Final[str] = "markdownlint"
-            """Markdown linter binary."""
-
+            "Markdown linter binary."
             GOFMT: Final[str] = "gofmt"
-            """Go formatter binary."""
-
+            "Go formatter binary."
             OUTPUT_JSON: Final[str] = "json"
-            """Common CLI output format flag value."""
-
+            "Common CLI output format flag value."
             MYPY: Final[str] = "mypy"
-            """Mypy type checker binary."""
-
+            "Mypy type checker binary."
             PYRIGHT: Final[str] = "pyright"
-            """Pyright type checker binary."""
-
+            "Pyright type checker binary."
             PYREFLY: Final[str] = "pyrefly"
-            """Pyrefly type checker binary."""
-
+            "Pyrefly type checker binary."
             GOVET: Final[str] = "go"
-            """Go vet binary (invoked as 'go vet')."""
-
+            "Go vet binary (invoked as 'go vet')."
             MAKE: Final[str] = "make"
-            """Make build tool binary."""
-
+            "Make build tool binary."
             GH: Final[str] = "gh"
-            """GitHub CLI binary."""
-
-            # -- Git subcommands -------------------------------------------------
+            "GitHub CLI binary."
 
             class GitCmd:
                 """Git subcommand constants."""
@@ -393,15 +294,11 @@ class FlextInfraConstants(FlextConstants):
                 REMOTE: Final[str] = "remote"
                 VET: Final[str] = "vet"
 
-            # -- Ruff subcommands ------------------------------------------------
-
             class RuffCmd:
                 """Ruff subcommand constants."""
 
                 CHECK: Final[str] = "check"
                 FORMAT: Final[str] = "format"
-
-            # -- Poetry subcommands ----------------------------------------------
 
             class PoetryCmd:
                 """Poetry subcommand constants."""
@@ -411,14 +308,10 @@ class FlextInfraConstants(FlextConstants):
                 CHECK: Final[str] = "check"
                 SHOW: Final[str] = "show"
 
-            # -- SG subcommands --------------------------------------------------
-
             class SgCmd:
                 """ast-grep subcommand constants."""
 
                 SCAN: Final[str] = "scan"
-
-            # -- GH subcommands --------------------------------------------------
 
             class GhCmd:
                 """GitHub CLI subcommand constants."""
@@ -449,9 +342,7 @@ class FlextInfraConstants(FlextConstants):
             GOVET: Final[str] = "govet"
             GOFMT: Final[str] = "gofmt"
             MARKDOWNLINT: Final[str] = "markdownlint"
-
             TYPE_ALIAS: Final[str] = "type"
-
             DEFAULT_CSV: Final[str] = (
                 "lint,format,pyrefly,mypy,pyright,security,markdown,go"
             )
@@ -460,43 +351,37 @@ class FlextInfraConstants(FlextConstants):
             """Status strings for check results."""
 
             PASS: Final[str] = "PASS"
-            """Status string for checks that passed."""
-
+            "Status string for checks that passed."
             FAIL: Final[str] = "FAIL"
-            """Status string for checks that failed."""
-
+            "Status string for checks that failed."
             OK: Final[str] = "OK"
-            """Status string for successful operations."""
-
+            "Status string for successful operations."
             WARN: Final[str] = "WARN"
-            """Status string for operations with warnings."""
+            "Status string for operations with warnings."
 
         class Defaults:
             """Default fallback values."""
 
             UNKNOWN: Final[str] = "unknown"
-            """Fallback for missing identifiers."""
-
+            "Fallback for missing identifiers."
             UNNAMED: Final[str] = "unnamed"
-            """Default name for unnamed projects."""
+            "Default name for unnamed projects."
 
         class MatchModes:
             """Scanner match mode constants."""
 
             PRESENT: Final[str] = "present"
-            """Match mode where presence indicates violations."""
-
+            "Match mode where presence indicates violations."
             ABSENT: Final[str] = "absent"
-            """Match mode where absence indicates violations."""
+            "Match mode where absence indicates violations."
 
         class Modes:
             """Operation mode constants."""
 
             BASELINE: Final[str] = "baseline"
-            """Baseline quality mode."""
-
+            "Baseline quality mode."
             STRICT: Final[str] = "strict"
-            """Strict quality mode."""
+            "Strict quality mode."
 
         class Severity:
             """Severity level constants for check/report results."""
@@ -539,8 +424,6 @@ class FlextInfraConstants(FlextConstants):
             TAG: Final[str] = "tag"
             URL: Final[str] = "url"
             STRATEGY: Final[str] = "strategy"
-
-            # Refactor-specific report keys
             CLASS_NESTING: Final[str] = "class_nesting"
             TARGET_NAMESPACE: Final[str] = "target_namespace"
             SOURCE_SYMBOL: Final[str] = "source_symbol"
@@ -588,29 +471,26 @@ class FlextInfraConstants(FlextConstants):
                 ".pytest_cache",
                 ".ruff_cache",
             })
-            """Common directories to exclude from analysis across all scripts."""
-
+            "Common directories to exclude from analysis across all scripts."
             DOC_EXCLUDED_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {"site"}
-            """Directories to exclude when analyzing documentation."""
-
+            "Directories to exclude when analyzing documentation."
             PYPROJECT_SKIP_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {
                 ".claude.disabled",
                 ".flext-deps",
                 ".sisyphus",
             }
-            """Directories to skip when scanning pyproject.toml files."""
-
+            "Directories to skip when scanning pyproject.toml files."
             CHECK_EXCLUDED_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {
                 ".flext-deps",
                 "reports",
             }
-            """Directories to exclude during quality checks."""
+            "Directories to exclude during quality checks."
 
         class Encoding:
             """Encoding constants."""
 
             DEFAULT: Final[str] = "utf-8"
-            """Default text encoding for file operations."""
+            "Default text encoding for file operations."
 
         class Basemk(FlextInfraBasemkConstants):
             """Basemk constants via MRO."""
@@ -630,10 +510,9 @@ class FlextInfraConstants(FlextConstants):
                 "examples",
                 "scripts",
             )
-            """Default directories to check in a project (root only uses scripts)."""
-
+            "Default directories to check in a project (root only uses scripts)."
             CHECK_DIRS_SUBPROJECT: Final[tuple[str, ...]] = ("src", "tests", "examples")
-            """Subprojects: type-check src/tests/examples only (scripts are workspace copies, run from root)."""
+            "Subprojects: type-check src/tests/examples only (scripts are workspace copies, run from root)."
 
         class Deps(FlextInfraDepsConstants):
             """Deps constants via MRO."""
@@ -645,10 +524,9 @@ class FlextInfraConstants(FlextConstants):
             """GitHub repository constants."""
 
             GITHUB_REPO_URL: Final[str] = "https://github.com/flext-sh/flext"
-            """Official GitHub repository URL for the FLEXT project."""
-
+            "Official GitHub repository URL for the FLEXT project."
             GITHUB_REPO_NAME: Final[str] = "flext-sh/flext"
-            """GitHub repository name in owner/repo format."""
+            "GitHub repository name in owner/repo format."
 
         class Release(FlextInfraReleaseConstants):
             """Release constants via MRO."""
@@ -664,47 +542,41 @@ class FlextInfraConstants(FlextConstants):
                 "Makefile",
                 "pyproject.toml",
             })
-            """Filesystem markers used to detect workspace root directories."""
-
+            "Filesystem markers used to detect workspace root directories."
             VENV_BIN_REL: Final[str] = ".venv/bin"
-            """Relative path to the virtualenv bin directory from workspace root."""
-
+            "Relative path to the virtualenv bin directory from workspace root."
             DEFAULT_SRC_DIR: Final[str] = "src"
-            """Default source directory for Python projects."""
+            "Default source directory for Python projects."
 
         class Versioning:
             """Semantic versioning constants for version management."""
 
             PROJECT_SECTION: Final[str] = "[project]"
-            """TOML section header for project metadata."""
-
+            "TOML section header for project metadata."
             SEMVER_RE: Final[re.Pattern[str]] = re.compile(
-                r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$",
+                "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-dev)?$"
             )
-            """Regex pattern for parsing semantic version strings."""
-
+            "Regex pattern for parsing semantic version strings."
             DEV_BRANCH_RE: Final[re.Pattern[str]] = re.compile(
-                r"^(\d+\.\d+\.\d+)-dev$",
+                "^(\\d+\\.\\d+\\.\\d+)-dev$"
             )
-            """Regex pattern for matching development branch names."""
-
+            "Regex pattern for matching development branch names."
             VALID_BUMP_TYPES: Final[frozenset[str]] = frozenset({
                 "major",
                 "minor",
                 "patch",
             })
-            """Allowed version bump type identifiers."""
+            "Allowed version bump type identifiers."
 
         class Reporting:
             """Reporting service constants for .reports/ path management."""
 
             REPORTS_DIR_NAME: Final[str] = ".reports"
-            """Standard directory name for report output."""
+            "Standard directory name for report output."
 
         class Refactor(FlextInfraRefactorConstants):
             """Refactor module constants via MRO."""
 
 
 c = FlextInfraConstants
-
 __all__ = ["FlextInfraConstants", "c"]

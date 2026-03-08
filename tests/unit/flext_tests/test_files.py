@@ -27,7 +27,6 @@ class TestFileInfo:
     def test_file_info_exists_false(self) -> None:
         """Test tf.FileInfo with exists=False."""
         info = tf.FileInfo(exists=False)
-
         assert info.exists is False
         assert info.size == 0
         assert info.lines == 0
@@ -45,7 +44,6 @@ class TestFileInfo:
             is_empty=False,
             first_line="first line",
         )
-
         assert info.exists is True
         assert info.size == 100
         assert info.lines == 5
@@ -60,7 +58,6 @@ class TestFlextTestsFiles:
     def test_init_without_base_dir(self) -> None:
         """Test initialization without base directory."""
         manager = tf()
-
         assert manager.base_dir is None
         assert manager.created_files == []
         assert manager.created_dirs == []
@@ -68,7 +65,6 @@ class TestFlextTestsFiles:
     def test_init_with_base_dir(self, tmp_path: Path) -> None:
         """Test initialization with base directory."""
         manager = tf(base_dir=tmp_path)
-
         assert manager.base_dir == tmp_path
         assert manager.created_files == []
         assert manager.created_dirs == []
@@ -76,22 +72,17 @@ class TestFlextTestsFiles:
     def test_temporary_directory(self) -> None:
         """Test temporary_directory context manager."""
         manager = tf()
-
         with manager.temporary_directory() as temp_dir:
             assert isinstance(temp_dir, Path)
             assert temp_dir.exists()
             assert temp_dir.is_dir()
-
-        # Directory should be cleaned up after context exit
         assert not temp_dir.exists()
 
     def test_create_text_file_default(self, tmp_path: Path) -> None:
         """Test creating text file with default parameters."""
         manager = tf(base_dir=tmp_path)
         content = "test content"
-
         file_path = manager.create(content, "test.txt")
-
         assert file_path.exists()
         assert file_path.read_text() == content
         assert file_path.name == "test.txt"
@@ -103,9 +94,7 @@ class TestFlextTestsFiles:
         content = "custom content"
         filename = "custom.txt"
         custom_dir = tmp_path / "subdir"
-
         file_path = manager.create(content, filename, directory=custom_dir)
-
         assert file_path.exists()
         assert file_path.read_text() == content
         assert file_path.name == filename
@@ -117,9 +106,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         content = "test content"
         encoding = "utf-16"
-
         file_path = manager.create(content, "test.txt", enc=encoding)
-
         assert file_path.exists()
         assert file_path.read_text(encoding=encoding) == content
 
@@ -127,9 +114,7 @@ class TestFlextTestsFiles:
         """Test creating binary file with default parameters."""
         manager = tf(base_dir=tmp_path)
         content = b"binary content"
-
         file_path = manager.create(content, "binary_data.bin")
-
         assert file_path.exists()
         assert file_path.read_bytes() == content
         assert file_path.name == "binary_data.bin"
@@ -141,9 +126,7 @@ class TestFlextTestsFiles:
         content = b"custom binary"
         filename = "custom.bin"
         custom_dir = tmp_path / "subdir"
-
         file_path = manager.create(content, filename, directory=custom_dir)
-
         assert file_path.exists()
         assert file_path.read_bytes() == content
         assert file_path.name == filename
@@ -152,9 +135,7 @@ class TestFlextTestsFiles:
     def test_create_empty_file(self, tmp_path: Path) -> None:
         """Test creating empty file."""
         manager = tf(base_dir=tmp_path)
-
         file_path = manager.create("", "empty.txt")
-
         assert file_path.exists()
         assert file_path.read_text() == ""
         assert file_path.name == "empty.txt"
@@ -163,9 +144,7 @@ class TestFlextTestsFiles:
         """Test creating empty file with custom name."""
         manager = tf(base_dir=tmp_path)
         filename = "custom_empty.txt"
-
         file_path = manager.create("", filename)
-
         assert file_path.exists()
         assert file_path.read_text() == ""
         assert file_path.name == filename
@@ -173,14 +152,8 @@ class TestFlextTestsFiles:
     def test_create_file_set(self, tmp_path: Path) -> None:
         """Test creating multiple files from dictionary."""
         files: dict[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
-        ] = {
-            "file1": "content1",
-            "file2": "content2",
-            "file3.txt": "content3",
-        }
-
+            str, str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
+        ] = {"file1": "content1", "file2": "content2", "file3.txt": "content3"}
         with tf.files(files, directory=tmp_path, ext=".txt") as created:
             assert len(created) == 3
             assert created["file1"].read_text() == "content1"
@@ -193,11 +166,9 @@ class TestFlextTestsFiles:
     def test_create_file_set_custom_extension(self, tmp_path: Path) -> None:
         """Test creating file set with custom extension."""
         files: dict[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str, str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
         ] = {"file1": "content1"}
         extension = ".md"
-
         with tf.files(files, directory=tmp_path, ext=extension) as created:
             assert created["file1"].name == "file1.md"
 
@@ -205,9 +176,7 @@ class TestFlextTestsFiles:
         """Test getting file info for non-existent file."""
         manager = tf()
         non_existent = tmp_path / "non_existent.txt"
-
         result = manager.info(non_existent)
-
         assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert isinstance(file_info, tf.FileInfo)
@@ -218,9 +187,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         content = "line1\nline2\nline3"
         file_path = manager.create(content, "test.txt")
-
         result = manager.info(file_path)
-
         assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert isinstance(file_info, tf.FileInfo)
@@ -235,9 +202,7 @@ class TestFlextTestsFiles:
         """Test getting file info for empty file."""
         manager = tf(base_dir=tmp_path)
         file_path = manager.create("", "empty.txt")
-
         result = manager.info(file_path)
-
         assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert isinstance(file_info, tf.FileInfo)
@@ -251,9 +216,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         content = "first line\nsecond line\nthird line"
         file_path = manager.create(content, "multiline.txt")
-
         result = manager.info(file_path)
-
         assertion_helpers.assert_flext_result_success(result)
         file_info = result.value
         assert file_info.lines == 3
@@ -264,12 +227,9 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         file1 = manager.create("content1", "file1.txt")
         file2 = manager.create("content2", "file2.txt")
-
         assert file1.exists()
         assert file2.exists()
-
         manager.cleanup()
-
         assert not file1.exists()
         assert not file2.exists()
         assert len(manager.created_files) == 0
@@ -277,15 +237,11 @@ class TestFlextTestsFiles:
     def test_cleanup_directories(self) -> None:
         """Test cleaning up created directories."""
         manager = tf()
-        # Create a file which will create a temp directory
         file_path = manager.create("content", "test.txt")
         temp_dir = file_path.parent
-
         assert temp_dir.exists()
         assert temp_dir in manager.created_dirs
-
         manager.cleanup()
-
         assert not temp_dir.exists()
         assert len(manager.created_dirs) == 0
 
@@ -293,11 +249,8 @@ class TestFlextTestsFiles:
         """Test cleanup handles non-existent files gracefully."""
         manager = tf(base_dir=tmp_path)
         file_path = manager.create("content", "test.txt")
-        file_path.unlink()  # Delete file manually
-
-        # Cleanup should not raise error
+        file_path.unlink()
         manager.cleanup()
-
         assert len(manager.created_files) == 0
 
     def test_context_manager(self, tmp_path: Path) -> None:
@@ -305,33 +258,25 @@ class TestFlextTestsFiles:
         with tf(base_dir=tmp_path) as manager:
             file_path = manager.create("content", "test.txt")
             assert file_path.exists()
-
-        # File should be cleaned up after context exit
         assert not file_path.exists()
 
     def test_resolve_directory_with_directory(self, tmp_path: Path) -> None:
         """Test directory resolution with provided directory."""
         manager = tf(base_dir=tmp_path)
         custom_dir = tmp_path / "custom"
-
         resolved = manager._resolve_directory(custom_dir)
-
         assert resolved == custom_dir
 
     def test_resolve_directory_with_base_dir(self, tmp_path: Path) -> None:
         """Test directory resolution with base_dir."""
         manager = tf(base_dir=tmp_path)
-
         resolved = manager._resolve_directory(None)
-
         assert resolved == tmp_path
 
     def test_resolve_directory_creates_temp(self) -> None:
         """Test directory resolution creates temporary directory."""
         manager = tf()
-
         resolved = manager._resolve_directory(None)
-
         assert resolved.exists()
         assert resolved.is_dir()
         assert resolved in manager.created_dirs
@@ -339,31 +284,22 @@ class TestFlextTestsFiles:
     def test_temporary_files_classmethod(self) -> None:
         """Test files classmethod context manager."""
         files: dict[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
-        ] = {
-            "file1": "content1",
-            "file2": "content2",
-        }
-
+            str, str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
+        ] = {"file1": "content1", "file2": "content2"}
         with tf.files(files) as created:
             assert len(created) == 2
             assert created["file1"].exists()
             assert created["file2"].exists()
             assert created["file1"].read_text() == "content1"
             assert created["file2"].read_text() == "content2"
-
-        # Files should be cleaned up after context exit
         assert not created["file1"].exists()
         assert not created["file2"].exists()
 
     def test_temporary_files_custom_extension(self) -> None:
         """Test files with custom extension."""
         files: dict[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str, str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
         ] = {"file1": "content1"}
-
         with tf.files(files, ext=".md") as created:
             assert created["file1"].name == "file1.md"
 
@@ -371,10 +307,8 @@ class TestFlextTestsFiles:
         """Test creating files in nested directory."""
         nested_dir = tmp_path / "nested" / "subdir"
         files: dict[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str, str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
         ] = {"file1": "content1"}
-
         with tf.files(files, directory=nested_dir) as created:
             assert created["file1"].parent == nested_dir
             assert nested_dir.exists()
@@ -383,9 +317,7 @@ class TestFlextTestsFiles:
         """Test creating text file in nested directory."""
         manager = tf(base_dir=tmp_path)
         nested_dir = tmp_path / "nested" / "subdir"
-
         file_path = manager.create("content", "test.txt", directory=nested_dir)
-
         assert file_path.parent == nested_dir
         assert nested_dir.exists()
 
@@ -393,27 +325,18 @@ class TestFlextTestsFiles:
         """Test multiple cleanup calls are safe."""
         manager = tf(base_dir=tmp_path)
         _ = manager.create("content", "test.txt")
-
         manager.cleanup()
-        # Second cleanup should not raise error
         manager.cleanup()
-
         assert len(manager.created_files) == 0
 
 
 class TestFlextTestsFilesNewApi:
     """Test suite for new tf API methods (create, read, compare, info, files)."""
 
-    # =========================================================================
-    # create() Tests
-    # =========================================================================
-
     def test_create_text_auto_detect(self, tmp_path: Path) -> None:
         """Test create() auto-detects text from str content."""
         manager = tf(base_dir=tmp_path)
-
         path = manager.create("hello world", "test.txt")
-
         assert path.exists()
         assert path.read_text() == "hello world"
         assert path.suffix == ".txt"
@@ -421,9 +344,7 @@ class TestFlextTestsFilesNewApi:
     def test_create_binary_auto_detect(self, tmp_path: Path) -> None:
         """Test create() auto-detects binary from bytes content."""
         manager = tf(base_dir=tmp_path)
-
         path = manager.create(b"\x00\x01\x02", "data.bin")
-
         assert path.exists()
         assert path.read_bytes() == b"\x00\x01\x02"
 
@@ -431,9 +352,7 @@ class TestFlextTestsFilesNewApi:
         """Test create() auto-detects JSON from dict content."""
         manager = tf(base_dir=tmp_path)
         content: m.ConfigMap = m.ConfigMap(root={"key": "value", "number": 42})
-
         path = manager.create(content, "config.json")
-
         assert path.exists()
         data = json.loads(path.read_text())
         assert data == content.root
@@ -442,9 +361,7 @@ class TestFlextTestsFilesNewApi:
         """Test create() auto-detects YAML from .yaml extension."""
         manager = tf(base_dir=tmp_path)
         content: m.ConfigMap = m.ConfigMap(root={"name": "test", "enabled": True})
-
         path = manager.create(content, "config.yaml")
-
         assert path.exists()
         data = yaml.safe_load(path.read_text())
         assert data == content.root
@@ -453,9 +370,7 @@ class TestFlextTestsFilesNewApi:
         """Test create() auto-detects CSV from list[list] content."""
         manager = tf(base_dir=tmp_path)
         content = [["a", "b"], ["1", "2"]]
-
         path = manager.create(content, "data.csv")
-
         assert path.exists()
         lines = path.read_text().strip().split("\n")
         assert len(lines) == 2
@@ -464,29 +379,23 @@ class TestFlextTestsFilesNewApi:
         """Test create() CSV with explicit headers."""
         manager = tf(base_dir=tmp_path)
         content = [["1", "2"], ["3", "4"]]
-
         path = manager.create(content, "data.csv", headers=["col1", "col2"])
-
         assert path.exists()
         lines = path.read_text().strip().split("\n")
         assert lines[0] == "col1,col2"
-        assert len(lines) == 3  # header + 2 data rows
+        assert len(lines) == 3
 
     def test_create_explicit_format(self, tmp_path: Path) -> None:
         """Test create() with explicit format override."""
         manager = tf(base_dir=tmp_path)
-
         path = manager.create(b"raw bytes", "data.dat", fmt="bin")
-
         assert path.exists()
         assert path.read_bytes() == b"raw bytes"
 
     def test_create_custom_encoding(self, tmp_path: Path) -> None:
         """Test create() with custom encoding."""
         manager = tf(base_dir=tmp_path)
-
         path = manager.create("áéíóú", "unicode.txt", enc="utf-16")
-
         assert path.exists()
         assert path.read_text(encoding="utf-16") == "áéíóú"
 
@@ -494,35 +403,24 @@ class TestFlextTestsFilesNewApi:
         """Test create() JSON with custom indentation."""
         manager = tf(base_dir=tmp_path)
         content = m.ConfigMap(root={"key": "value"})
-
         path = manager.create(content, "config.json", indent=4)
-
         assert path.exists()
         text = path.read_text()
-        # 4-space indent should have more whitespace than 2-space
         assert "    " in text
 
     def test_create_in_custom_directory(self, tmp_path: Path) -> None:
         """Test create() in custom directory."""
         manager = tf(base_dir=tmp_path)
         custom_dir = tmp_path / "subdir"
-
         path = manager.create("content", "test.txt", directory=custom_dir)
-
         assert path.exists()
         assert path.parent == custom_dir
-
-    # =========================================================================
-    # read() Tests
-    # =========================================================================
 
     def test_read_text_file(self, tmp_path: Path) -> None:
         """Test read() returns text content for .txt files."""
         manager = tf(base_dir=tmp_path)
         path = manager.create("hello world", "test.txt")
-
         result = manager.read(path)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "hello world"
 
@@ -530,9 +428,7 @@ class TestFlextTestsFilesNewApi:
         """Test read() returns bytes content for .bin files."""
         manager = tf(base_dir=tmp_path)
         path = manager.create(b"\x00\x01\x02", "data.bin", fmt="bin")
-
         result = manager.read(path)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == b"\x00\x01\x02"
 
@@ -541,9 +437,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         content: m.ConfigMap = m.ConfigMap(root={"key": "value", "number": 42})
         path = manager.create(content, "config.json")
-
         result = manager.read(path)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == content
 
@@ -552,9 +446,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         content: m.ConfigMap = m.ConfigMap(root={"name": "test", "enabled": True})
         path = manager.create(content, "config.yaml")
-
         result = manager.read(path)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == content
 
@@ -563,12 +455,8 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         content = [["a", "b"], ["1", "2"]]
         path = manager.create(content, "data.csv")
-
-        # By default has_headers=True, so first row is treated as header and skipped
         result = manager.read(path, has_headers=False)
-
         assertion_helpers.assert_flext_result_success(result)
-        # CSV read returns list of lists
         data = result.value
         assert isinstance(data, list)
         assert len(data) == 2
@@ -577,27 +465,18 @@ class TestFlextTestsFilesNewApi:
         """Test read() CSV with headers skips first row by default."""
         manager = tf(base_dir=tmp_path)
         content = [["header1", "header2"], ["1", "2"], ["3", "4"]]
-        path = manager.create(
-            content,
-            "data.csv",
-            headers=None,
-        )  # Don't add headers twice
-
-        # Default has_headers=True skips first row
+        path = manager.create(content, "data.csv", headers=None)
         result = manager.read(path)
-
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert isinstance(data, list)
-        assert len(data) == 2  # Only data rows, header skipped
+        assert len(data) == 2
 
     def test_read_nonexistent_file(self, tmp_path: Path) -> None:
         """Test read() returns failure for non-existent file."""
         manager = tf(base_dir=tmp_path)
         path = tmp_path / "nonexistent.txt"
-
         result = manager.read(path)
-
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert (
@@ -607,26 +486,17 @@ class TestFlextTestsFilesNewApi:
     def test_read_explicit_format(self, tmp_path: Path) -> None:
         """Test read() with explicit format override."""
         manager = tf(base_dir=tmp_path)
-        # Create a text file with .dat extension
         path = manager.create("plain text", "data.dat", fmt="text")
-
         result = manager.read(path, fmt="text")
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "plain text"
-
-    # =========================================================================
-    # compare() Tests
-    # =========================================================================
 
     def test_compare_identical_content(self, tmp_path: Path) -> None:
         """Test compare() returns True for identical content."""
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("same content", "file1.txt")
         path2 = manager.create("same content", "file2.txt")
-
         result = manager.compare(path1, path2)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -635,9 +505,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("content A", "file1.txt")
         path2 = manager.create("content B", "file2.txt")
-
         result = manager.compare(path1, path2)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
@@ -645,10 +513,8 @@ class TestFlextTestsFilesNewApi:
         """Test compare() in size mode."""
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("12345", "file1.txt")
-        path2 = manager.create("abcde", "file2.txt")  # Same length
-
+        path2 = manager.create("abcde", "file2.txt")
         result = manager.compare(path1, path2, mode="size")
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -657,9 +523,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("short", "file1.txt")
         path2 = manager.create("much longer content", "file2.txt")
-
         result = manager.compare(path1, path2, mode="size")
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
@@ -668,9 +532,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("identical", "file1.txt")
         path2 = manager.create("identical", "file2.txt")
-
         result = manager.compare(path1, path2, mode="hash")
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -678,10 +540,8 @@ class TestFlextTestsFilesNewApi:
         """Test compare() in lines mode compares actual line content."""
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("line1\nline2\nline3", "file1.txt")
-        path2 = manager.create("line1\nline2\nline3", "file2.txt")  # Same content
-
+        path2 = manager.create("line1\nline2\nline3", "file2.txt")
         result = manager.compare(path1, path2, mode="lines")
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -689,13 +549,8 @@ class TestFlextTestsFilesNewApi:
         """Test compare() in lines mode returns False for different content."""
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("line1\nline2\nline3", "file1.txt")
-        path2 = manager.create(
-            "a\nb\nc",
-            "file2.txt",
-        )  # Same line count, different content
-
+        path2 = manager.create("a\nb\nc", "file2.txt")
         result = manager.compare(path1, path2, mode="lines")
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
@@ -704,11 +559,8 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("hello world", "file1.txt")
         path2 = manager.create("hello  world", "file2.txt")
-
         result = manager.compare(path1, path2, ignore_ws=True)
-
         assertion_helpers.assert_flext_result_success(result)
-        # With ignore_ws, extra spaces should be ignored
         assert result.value is True
 
     def test_compare_ignore_case(self, tmp_path: Path) -> None:
@@ -716,9 +568,7 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("Hello World", "file1.txt")
         path2 = manager.create("hello world", "file2.txt")
-
         result = manager.compare(path1, path2, ignore_case=True)
-
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -727,44 +577,32 @@ class TestFlextTestsFilesNewApi:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("ERROR: something failed", "file1.txt")
         path2 = manager.create("ERROR: other failure", "file2.txt")
-
         result = manager.compare(path1, path2, pattern="ERROR")
-
         assertion_helpers.assert_flext_result_success(result)
-        assert result.value is True  # Both contain "ERROR"
+        assert result.value is True
 
     def test_compare_pattern_no_match(self, tmp_path: Path) -> None:
         """Test compare() pattern matching when one file doesn't match."""
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("ERROR: something failed", "file1.txt")
         path2 = manager.create("Success: all good", "file2.txt")
-
         result = manager.compare(path1, path2, pattern="ERROR")
-
         assertion_helpers.assert_flext_result_success(result)
-        assert result.value is False  # Only one contains "ERROR"
+        assert result.value is False
 
     def test_compare_nonexistent_file(self, tmp_path: Path) -> None:
         """Test compare() returns failure for non-existent file."""
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("content", "file1.txt")
         path2 = tmp_path / "nonexistent.txt"
-
         result = manager.compare(path1, path2)
-
         assertion_helpers.assert_flext_result_failure(result)
-
-    # =========================================================================
-    # info() Tests
-    # =========================================================================
 
     def test_info_existing_file(self, tmp_path: Path) -> None:
         """Test info() returns tf.FileInfo for existing file."""
         manager = tf(base_dir=tmp_path)
         path = manager.create("line1\nline2\nline3", "test.txt")
-
         result = manager.info(path)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.exists is True
@@ -777,9 +615,7 @@ class TestFlextTestsFilesNewApi:
         """Test info() returns tf.FileInfo with exists=False."""
         manager = tf(base_dir=tmp_path)
         path = tmp_path / "nonexistent.txt"
-
         result = manager.info(path)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.exists is False
@@ -788,21 +624,17 @@ class TestFlextTestsFilesNewApi:
         """Test info() computes SHA256 hash when requested."""
         manager = tf(base_dir=tmp_path)
         path = manager.create("test content", "test.txt")
-
         result = manager.info(path, compute_hash=True)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.sha256 is not None
-        assert len(info.sha256) == 64  # SHA256 hex digest length
+        assert len(info.sha256) == 64
 
     def test_info_format_detection(self, tmp_path: Path) -> None:
         """Test info() detects file format."""
         manager = tf(base_dir=tmp_path)
         path = manager.create(m.ConfigMap(root={"key": "value"}), "config.json")
-
         result = manager.info(path)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.fmt == "json"
@@ -811,9 +643,7 @@ class TestFlextTestsFilesNewApi:
         """Test info() for empty file."""
         manager = tf(base_dir=tmp_path)
         path = manager.create("", "empty.txt")
-
         result = manager.info(path)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.exists is True
@@ -823,19 +653,11 @@ class TestFlextTestsFilesNewApi:
     def test_info_size_human_readable(self, tmp_path: Path) -> None:
         """Test info() provides human-readable size."""
         manager = tf(base_dir=tmp_path)
-        # Create a file with known content
         path = manager.create("x" * 1024, "test.txt")
-
         result = manager.info(path)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
-        # Should show KB or similar
         assert info.size_human != ""
-
-    # =========================================================================
-    # files() Context Manager Tests
-    # =========================================================================
 
     def test_files_context_manager_basic(self) -> None:
         """Test files() context manager creates temporary files."""
@@ -846,15 +668,12 @@ class TestFlextTestsFilesNewApi:
             assert paths["b"].exists()
             assert paths["a"].read_text() == "content A"
             assert paths["b"].read_text() == "content B"
-
-        # Files should be cleaned up
         assert not paths["a"].exists()
         assert not paths["b"].exists()
 
     def test_files_context_manager_json_auto_detect(self) -> None:
         """Test files() auto-detects JSON from dict content."""
         content = m.ConfigMap(root={"key": "value"})
-
         with tf.files({"config": content}) as paths:
             assert paths["config"].suffix == ".json"
             data = json.loads(paths["config"].read_text())
@@ -903,18 +722,14 @@ class TestFileInfoFromModels:
     def test_fileinfo_import_from_models(self) -> None:
         """Test tf.FileInfo can be imported from models."""
         info = m.Tests.Files.FileInfo(exists=True, size=100, lines=5)
-
         assert info.exists is True
         assert info.size == 100
         assert info.lines == 5
 
     def test_fileinfo_backward_compatibility(self) -> None:
         """Test tf.FileInfo alias works for backward compatibility."""
-        # Old way still works
         info = tf.FileInfo(exists=True)
         assert info.exists is True
-
-        # New way works too
         info2 = m.Tests.Files.FileInfo(exists=True)
         assert info2.exists is True
 
@@ -934,11 +749,10 @@ class TestFileInfoFromModels:
             is_valid=True,
             created=now,
             modified=now,
-            permissions=0o644,
+            permissions=420,
             is_readonly=False,
             sha256="abc123" * 10 + "abcd",
         )
-
         assert info.exists is True
         assert info.size == 1024
         assert info.size_human == "1.0 KB"
@@ -954,12 +768,9 @@ class TestInfoWithContentMeta:
         """Test info() with parse_content=True for JSON dict."""
         manager = tf(base_dir=tmp_path)
         path = manager.create(
-            m.ConfigMap(root={"key1": "value1", "key2": "value2"}),
-            "config.json",
+            m.ConfigMap(root={"key1": "value1", "key2": "value2"}), "config.json"
         )
-
         result = manager.info(path, parse_content=True)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -972,9 +783,7 @@ class TestInfoWithContentMeta:
         content = json.dumps([1, 2, 3, 4, 5])
         path = tmp_path / "list.json"
         path.write_text(content)
-
         result = manager.info(path, parse_content=True)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -984,13 +793,8 @@ class TestInfoWithContentMeta:
     def test_info_parse_content_yaml_dict(self, tmp_path: Path) -> None:
         """Test info() with parse_content=True for YAML dict."""
         manager = tf(base_dir=tmp_path)
-        path = manager.create(
-            m.ConfigMap(root={"a": 1, "b": 2, "c": 3}),
-            "config.yaml",
-        )
-
+        path = manager.create(m.ConfigMap(root={"a": 1, "b": 2, "c": 3}), "config.yaml")
         result = manager.info(path, parse_content=True)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -1002,30 +806,25 @@ class TestInfoWithContentMeta:
         csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA\n"
         path = tmp_path / "data.csv"
         path.write_text(csv_content)
-
         result = manager.info(path, parse_content=True, detect_fmt=True)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
-        assert info.content_meta.row_count == 3  # header + 2 data rows
+        assert info.content_meta.row_count == 3
         assert info.content_meta.column_count == 3
 
     def test_info_validate_model_success(self, tmp_path: Path) -> None:
         """Test info() with validate_model for valid model."""
 
-        class SimpleModel(BaseModel):
+        class SimpleModel:
             name: str
             age: int
 
         manager = tf(base_dir=tmp_path)
         path = manager.create(
-            m.ConfigMap(root={"name": "Alice", "age": 30}),
-            "user.json",
+            m.ConfigMap(root={"name": "Alice", "age": 30}), "user.json"
         )
-
         result = manager.info(path, validate_model=SimpleModel)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -1035,17 +834,14 @@ class TestInfoWithContentMeta:
     def test_info_validate_model_failure(self, tmp_path: Path) -> None:
         """Test info() with validate_model for invalid model."""
 
-        class StrictModel(BaseModel):
+        class StrictModel:
             required_field: str
 
         manager = tf(base_dir=tmp_path)
         path = manager.create(
-            m.ConfigMap(root={"other_field": "value"}),
-            "invalid.json",
+            m.ConfigMap(root={"other_field": "value"}), "invalid.json"
         )
-
         result = manager.info(path, validate_model=StrictModel)
-
         assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -1060,14 +856,11 @@ class TestAssertExists:
         """Test assert_exists() succeeds for existing file."""
         path = tmp_path / "test.txt"
         path.write_text("content")
-
-        # Should not raise
         tf.assert_exists(path)
 
     def test_assert_exists_file_failure(self, tmp_path: Path) -> None:
         """Test assert_exists() fails for non-existing file."""
         path = tmp_path / "nonexistent.txt"
-
         with pytest.raises(AssertionError):
             tf.assert_exists(path)
 
@@ -1075,39 +868,30 @@ class TestAssertExists:
         """Test assert_exists() succeeds for existing directory."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-
-        # Should not raise
         tf.assert_exists(subdir)
 
     def test_assert_exists_is_file_check(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_file=True."""
         file_path = tmp_path / "test.txt"
         file_path.write_text("content")
-
-        # Should not raise for file
         tf.assert_exists(file_path, is_file=True)
 
     def test_assert_exists_is_dir_check(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_dir=True."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-
-        # Should not raise for directory
         tf.assert_exists(subdir, is_dir=True)
 
     def test_assert_exists_not_empty(self, tmp_path: Path) -> None:
         """Test assert_exists() with not_empty=True."""
         path = tmp_path / "test.txt"
         path.write_text("content")
-
-        # Should not raise for non-empty file
         tf.assert_exists(path, not_empty=True)
 
     def test_assert_exists_empty_file_fails(self, tmp_path: Path) -> None:
         """Test assert_exists() fails for empty file with not_empty=True."""
         path = tmp_path / "empty.txt"
         path.write_text("")
-
         with pytest.raises(AssertionError):
             tf.assert_exists(path, not_empty=True)
 
@@ -1115,36 +899,26 @@ class TestAssertExists:
         """Test assert_exists() with readable=True validation."""
         path = tmp_path / "readable.txt"
         path.write_text("content")
-        # Make readable (default should be readable)
-        path.chmod(0o644)
-
-        # Should not raise for readable file
+        path.chmod(420)
         tf.assert_exists(path, readable=True)
 
     def test_assert_exists_writable_check_file(self, tmp_path: Path) -> None:
         """Test assert_exists() with writable=True for file."""
         path = tmp_path / "writable.txt"
         path.write_text("content")
-        # Make writable (default should be writable)
-        path.chmod(0o644)
-
-        # Should not raise for writable file
+        path.chmod(420)
         tf.assert_exists(path, writable=True)
 
     def test_assert_exists_writable_check_directory(self, tmp_path: Path) -> None:
         """Test assert_exists() with writable=True for directory."""
         subdir = tmp_path / "writable_dir"
         subdir.mkdir()
-        # Make writable (default should be writable)
-        subdir.chmod(0o755)
-
-        # Should not raise for writable directory
+        subdir.chmod(493)
         tf.assert_exists(subdir, writable=True)
 
     def test_assert_exists_custom_error_message(self, tmp_path: Path) -> None:
         """Test assert_exists() with custom error message."""
         path = tmp_path / "nonexistent.txt"
-
         with pytest.raises(AssertionError, match="Custom error"):
             tf.assert_exists(path, msg="Custom error: file not found")
 
@@ -1152,38 +926,27 @@ class TestAssertExists:
         """Test assert_exists() with multiple validations at once."""
         path = tmp_path / "test.txt"
         path.write_text("content")
-        path.chmod(0o644)
-
-        # Should not raise for file that satisfies all conditions
+        path.chmod(420)
         tf.assert_exists(
-            path,
-            is_file=True,
-            not_empty=True,
-            readable=True,
-            writable=True,
+            path, is_file=True, not_empty=True, readable=True, writable=True
         )
 
     def test_assert_exists_is_file_false(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_file=False (should not be a file)."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-
-        # Should not raise - subdir is not a file
         tf.assert_exists(subdir, is_file=False)
 
     def test_assert_exists_is_dir_false(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_dir=False (should not be a directory)."""
         path = tmp_path / "test.txt"
         path.write_text("content")
-
-        # Should not raise - path is not a directory
         tf.assert_exists(path, is_dir=False)
 
     def test_assert_exists_empty_directory_fails(self, tmp_path: Path) -> None:
         """Test assert_exists() fails for empty directory with not_empty=True."""
         subdir = tmp_path / "empty_dir"
         subdir.mkdir()
-
         with pytest.raises(AssertionError):
             tf.assert_exists(subdir, not_empty=True)
 
@@ -1192,8 +955,6 @@ class TestAssertExists:
         subdir = tmp_path / "non_empty_dir"
         subdir.mkdir()
         (subdir / "file.txt").write_text("content")
-
-        # Should not raise for non-empty directory
         tf.assert_exists(subdir, not_empty=True)
 
 
@@ -1203,16 +964,10 @@ class TestBatchOperations:
     def test_batch_create_multiple_files(self, tmp_path: Path) -> None:
         """Test batch create for multiple files."""
         manager = tf(base_dir=tmp_path)
-
         result = manager.batch(
-            {
-                "file1.txt": "content1",
-                "file2.txt": "content2",
-                "file3.txt": "content3",
-            },
+            {"file1.txt": "content1", "file2.txt": "content2", "file3.txt": "content3"},
             directory=tmp_path,
         )
-
         assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
         assert batch_result.total == 3
@@ -1223,19 +978,13 @@ class TestBatchOperations:
     def test_batch_create_json_files(self, tmp_path: Path) -> None:
         """Test batch create for JSON files."""
         manager = tf(base_dir=tmp_path)
-
         result = manager.batch(
-            {
-                "config1.json": {"key": "value1"},
-                "config2.json": {"key": "value2"},
-            },
+            {"config1.json": {"key": "value1"}, "config2.json": {"key": "value2"}},
             directory=tmp_path,
         )
-
         assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
         assert batch_result.success_count == 2
-        # Verify files were created correctly
         config1 = tmp_path / "config1.json"
         assert config1.exists()
         assert json.loads(config1.read_text())["key"] == "value1"
@@ -1243,46 +992,26 @@ class TestBatchOperations:
     def test_batch_on_error_collect(self, tmp_path: Path) -> None:
         """Test batch with on_error='collect' continues on failures."""
         manager = tf(base_dir=tmp_path)
-
-        # Create a read-only directory to cause failure
         readonly_dir = tmp_path / "readonly"
         readonly_dir.mkdir()
-
         result = manager.batch(
-            {
-                "valid.txt": "content",
-            },
-            directory=tmp_path,
-            on_error="collect",
+            {"valid.txt": "content"}, directory=tmp_path, on_error="collect"
         )
-
-        # Should succeed for the valid file
         assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
-        # success_count is a computed_field (pyrefly limitation: sees it as callable)
-        # Use the underlying 'succeeded' field directly for the assertion
         assert batch_result.succeeded >= 1
 
     def test_batch_result_model_structure(self, tmp_path: Path) -> None:
         """Test BatchResult model has correct structure."""
         manager = tf(base_dir=tmp_path)
-
-        result = manager.batch(
-            {"file.txt": "content"},
-            directory=tmp_path,
-        )
-
+        result = manager.batch({"file.txt": "content"}, directory=tmp_path)
         assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
-
-        # Verify all expected fields exist
         assert hasattr(batch_result, "succeeded")
         assert hasattr(batch_result, "failed")
         assert hasattr(batch_result, "total")
         assert hasattr(batch_result, "success_count")
         assert hasattr(batch_result, "failure_count")
-
-        # Verify types
         assert isinstance(batch_result.succeeded, int)
         assert isinstance(batch_result.failed, int)
         assert isinstance(batch_result.total, int)
@@ -1294,18 +1023,12 @@ class TestCreateInStatic:
     def test_create_in_text_content(self, tmp_path: Path) -> None:
         """Test create_in() for text content."""
         path = tf.create_in("hello world", "test.txt", tmp_path)
-
         assert path.exists()
         assert path.read_text() == "hello world"
 
     def test_create_in_dict_content(self, tmp_path: Path) -> None:
         """Test create_in() for dict content (JSON)."""
-        path = tf.create_in(
-            m.ConfigMap(root={"key": "value"}),
-            "config.json",
-            tmp_path,
-        )
-
+        path = tf.create_in(m.ConfigMap(root={"key": "value"}), "config.json", tmp_path)
         assert path.exists()
         content = json.loads(path.read_text())
         assert content == {"key": "value"}
@@ -1313,11 +1036,8 @@ class TestCreateInStatic:
     def test_create_in_yaml_content(self, tmp_path: Path) -> None:
         """Test create_in() for YAML file."""
         path = tf.create_in(
-            m.ConfigMap(root={"setting": True}),
-            "config.yaml",
-            tmp_path,
+            m.ConfigMap(root={"setting": True}), "config.yaml", tmp_path
         )
-
         assert path.exists()
         content = yaml.safe_load(path.read_text())
         assert content == {"setting": True}
@@ -1325,38 +1045,28 @@ class TestCreateInStatic:
     def test_create_in_pydantic_model(self, tmp_path: Path) -> None:
         """Test create_in() for Pydantic model content."""
 
-        class UserModel(BaseModel):
+        class UserModel:
             name: str
             age: int
 
         user = UserModel(name="Alice", age=30)
         path = tf.create_in(user, "user.json", tmp_path)
-
         assert path.exists()
         content = json.loads(path.read_text())
         assert content == {"name": "Alice", "age": 30}
 
     def test_create_in_format_detection(self, tmp_path: Path) -> None:
         """Test create_in() format auto-detection from extension."""
-        # JSON from .json extension
         path1 = tf.create_in(
-            m.ConfigMap(root={"key": "value"}),
-            "config.json",
-            tmp_path,
+            m.ConfigMap(root={"key": "value"}), "config.json", tmp_path
         )
         assert path1.exists()
         assert json.loads(path1.read_text()) == {"key": "value"}
-
-        # YAML from .yaml extension
         path2 = tf.create_in(
-            m.ConfigMap(root={"key": "value"}),
-            "config.yaml",
-            tmp_path,
+            m.ConfigMap(root={"key": "value"}), "config.yaml", tmp_path
         )
         assert path2.exists()
         assert yaml.safe_load(path2.read_text()) == {"key": "value"}
-
-        # CSV from .csv extension
         path3 = tf.create_in([["a", "b"], ["1", "2"]], "data.csv", tmp_path)
         assert path3.exists()
         lines = path3.read_text().strip().split("\n")
@@ -1366,7 +1076,6 @@ class TestCreateInStatic:
         """Test create_in() with FlextResult content extraction."""
         result = r[m.ConfigMap].ok(m.ConfigMap(root={"status": "success"}))
         path = tf.create_in(result, "result.json", tmp_path)
-
         assert path.exists()
         content = json.loads(path.read_text())
         assert content == {"status": "success"}
@@ -1374,43 +1083,30 @@ class TestCreateInStatic:
     def test_create_in_custom_format(self, tmp_path: Path) -> None:
         """Test create_in() with explicit format override."""
         path = tf.create_in(b"binary data", "data.dat", tmp_path, fmt="bin")
-
         assert path.exists()
         assert path.read_bytes() == b"binary data"
 
     def test_create_in_custom_encoding(self, tmp_path: Path) -> None:
         """Test create_in() with custom encoding."""
         path = tf.create_in("áéíóú", "unicode.txt", tmp_path, enc="utf-16")
-
         assert path.exists()
         assert path.read_text(encoding="utf-16") == "áéíóú"
 
     def test_create_in_json_indent(self, tmp_path: Path) -> None:
         """Test create_in() with custom JSON indentation."""
         content: m.ConfigMap = m.ConfigMap(
-            root={
-                "key": "value",
-                "nested": m.ConfigMap(root={"a": 1}),
-            },
+            root={"key": "value", "nested": m.ConfigMap(root={"a": 1})}
         )
         path = tf.create_in(content, "config.json", tmp_path, indent=4)
-
         assert path.exists()
         text = path.read_text()
-        # 4-space indent should have more whitespace
         assert "    " in text
 
     def test_create_in_csv_with_headers(self, tmp_path: Path) -> None:
         """Test create_in() CSV with explicit headers."""
         content = [["1", "2"], ["3", "4"]]
-        path = tf.create_in(
-            content,
-            "data.csv",
-            tmp_path,
-            headers=["col1", "col2"],
-        )
-
+        path = tf.create_in(content, "data.csv", tmp_path, headers=["col1", "col2"])
         assert path.exists()
         lines = path.read_text().strip().split("\n")
         assert lines[0] == "col1,col2"
-        assert len(lines) == 3  # header + 2 data rows
+        assert len(lines) == 3

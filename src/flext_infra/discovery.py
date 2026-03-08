@@ -38,17 +38,10 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
             content = gitmodules.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError:
             return set()
-        return set(
-            re.findall(
-                r"^\s*path\s*=\s*(.+?)\s*$",
-                content,
-                re.MULTILINE,
-            ),
-        )
+        return set(re.findall("^\\s*path\\s*=\\s*(.+?)\\s*$", content, re.MULTILINE))
 
     def discover_projects(
-        self,
-        workspace_root: Path,
+        self, workspace_root: Path
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         """Discover all subprojects in the workspace.
 
@@ -65,11 +58,7 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
         try:
             projects: list[m.Infra.Workspace.ProjectInfo] = []
             submodules = self._submodule_names(workspace_root)
-
-            for entry in sorted(
-                workspace_root.iterdir(),
-                key=lambda v: v.name,
-            ):
+            for entry in sorted(workspace_root.iterdir(), key=lambda v: v.name):
                 if (
                     not entry.is_dir()
                     or entry.name == "cmd"
@@ -80,15 +69,12 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
                     continue
                 if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
                     continue
-
                 has_pyproject = (entry / c.Infra.Files.PYPROJECT_FILENAME).exists()
                 has_gomod = (entry / c.Infra.Files.GO_MOD).exists()
-                if not has_pyproject and not has_gomod:
+                if not has_pyproject and (not has_gomod):
                     continue
-
                 stack = c.Infra.Toml.PYTHON if has_pyproject else c.Infra.Gates.GO
                 kind = "submodule" if entry.name in submodules else "external"
-
                 projects.append(
                     m.Infra.Workspace.ProjectInfo(
                         path=entry,
@@ -96,13 +82,12 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
                         stack=f"{stack}/{kind}",
                         has_tests=(entry / c.Infra.Directories.TESTS).is_dir(),
                         has_src=(entry / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir(),
-                    ),
+                    )
                 )
-
             return r[list[m.Infra.Workspace.ProjectInfo]].ok(projects)
         except OSError as exc:
             return r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                f"project discovery failed: {exc}",
+                f"project discovery failed: {exc}"
             )
 
     @override
@@ -113,7 +98,6 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
             r with list of discovered ProjectInfo models.
 
         """
-        # Default implementation - subclasses can override
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
 
     def find_all_pyproject_files(
@@ -146,7 +130,6 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
                     if target.exists() and target.is_file():
                         selected.append(target)
                 return r[list[Path]].ok(sorted(set(selected)))
-
             effective_skip = (
                 skip_dirs
                 if skip_dirs is not None
@@ -154,16 +137,12 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
             )
             result = [
                 p
-                for p in sorted(
-                    workspace_root.rglob(c.Infra.Files.PYPROJECT_FILENAME),
-                )
+                for p in sorted(workspace_root.rglob(c.Infra.Files.PYPROJECT_FILENAME))
                 if not any(skip in p.parts for skip in effective_skip)
             ]
             return r[list[Path]].ok(result)
         except OSError as exc:
-            return r[list[Path]].fail(
-                f"pyproject file scan failed: {exc}",
-            )
+            return r[list[Path]].fail(f"pyproject file scan failed: {exc}")
 
 
 __all__ = ["FlextInfraDiscoveryService"]

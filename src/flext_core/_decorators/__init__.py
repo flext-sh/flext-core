@@ -16,8 +16,6 @@ from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import m
     from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
@@ -25,11 +23,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "m": ("flext_core", "m"),
 }
-
-__all__ = [
-    "FactoryDecoratorsDiscovery",
-    "m",
-]
+__all__ = ["FactoryDecoratorsDiscovery", "m"]
 
 
 def __getattr__(name: str) -> object:

@@ -32,77 +32,58 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
 
     @override
     def leave_ImportFrom(
-        self,
-        original_node: cst.ImportFrom,
-        updated_node: cst.ImportFrom,
+        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
     ) -> cst.ImportFrom:
         module_name = self._module_name_from_expr(original_node.module)
         next_node = updated_node
-
         if module_name in self._module_renames:
             next_module = self._module_expr_from_dotted(
                 self._module_renames[module_name]
             )
             next_node = next_node.with_changes(module=next_module)
             self._record_change(
-                f"Renamed import module: {module_name}"
-                f" -> {self._module_renames[module_name]}"
+                f"Renamed import module: {module_name} -> {self._module_renames[module_name]}"
             )
             module_name = self._module_renames[module_name]
-
         if module_name not in self._target_modules or isinstance(
             next_node.names, cst.ImportStar
         ):
             return next_node
-
         next_aliases: list[cst.ImportAlias] = []
         changed = False
         for alias in list(next_node.names):
             if not isinstance(alias.name, cst.Name):
                 next_aliases.append(alias)
                 continue
-
             imported_name = alias.name.value
             renamed_symbol = self._import_symbol_renames.get(imported_name)
             if renamed_symbol is None:
                 next_aliases.append(alias)
                 continue
-
             changed = True
             next_alias = alias.with_changes(name=cst.Name(renamed_symbol))
             next_aliases.append(next_alias)
-
             local_name = imported_name
             if alias.asname is not None and isinstance(alias.asname.name, cst.Name):
                 local_name = alias.asname.name.value
-
             if alias.asname is None:
                 self._local_name_renames[imported_name] = renamed_symbol
-
             self._record_change(
-                f"Renamed imported symbol:"
-                f" {imported_name} -> {renamed_symbol}"
-                f" (local={local_name})"
+                f"Renamed imported symbol: {imported_name} -> {renamed_symbol} (local={local_name})"
             )
-
         if not changed:
             return next_node
         return next_node.with_changes(names=tuple(next_aliases))
 
     @override
     def leave_Name(
-        self,
-        original_node: cst.Name,
-        updated_node: cst.Name,
+        self, original_node: cst.Name, updated_node: cst.Name
     ) -> cst.BaseExpression:
         rename_to = self._local_name_renames.get(original_node.value)
         if rename_to is None:
             return updated_node
-
         qualified_names = self.get_metadata(
-            QualifiedNameProvider,
-            original_node,
-            default=set(),
+            QualifiedNameProvider, original_node, default=set()
         )
         if not qualified_names:
             return updated_node
@@ -111,10 +92,8 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
             for qualified_name in qualified_names
         ):
             return updated_node
-
         if updated_node.value == rename_to:
             return updated_node
-
         self._record_change(
             f"Propagated local symbol rename: {updated_node.value} -> {rename_to}"
         )

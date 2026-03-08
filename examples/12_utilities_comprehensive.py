@@ -23,18 +23,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from flext_core import (
-    FlextConstants,
-    FlextResult,
-    FlextService,
-    c,
-    m,
-    u,
-)
-
-# ═══════════════════════════════════════════════════════════════════
-# SAMPLE DATA
-# ═══════════════════════════════════════════════════════════════════
+from flext_core import FlextConstants, FlextResult, FlextService, c, m, u
 
 TEST_DATA: m.ConfigMap = m.ConfigMap(
     root={
@@ -46,13 +35,8 @@ TEST_DATA: m.ConfigMap = m.ConfigMap(
         "uri": "https://example.com/api",
         "port": 8080,
         "hostname": "api.example.com",
-    },
+    }
 )
-
-
-# ═══════════════════════════════════════════════════════════════════
-# SERVICE IMPLEMENTATION
-# ═══════════════════════════════════════════════════════════════════
 
 
 class UtilitiesService(FlextService[m.ConfigMap]):
@@ -62,17 +46,11 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_caching() -> None:
         """Show caching utilities."""
         print("\n=== Caching Utilities ===")
-
-        # Cache key generation using normalization
         test_data_normalized = u.normalize_component(TEST_DATA)
         print(f"✅ Data normalization: {type(test_data_normalized).__name__}")
-
-        # Sort dictionary keys for consistent cache keys (DRY)
         sorted_data = u.sort_dict_keys(TEST_DATA)
         if isinstance(sorted_data, Mapping):
             print(f"✅ Sorted keys: {list(sorted_data.keys())}")
-
-        # Clear object cache
         clear_result = u.clear_object_cache(TEST_DATA)
         print(f"✅ Cache clearing: {clear_result.is_success}")
 
@@ -80,33 +58,22 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_collection_operations() -> None:
         """Show collection operation utilities."""
         print("\n=== Collection Operations ===")
-
-        # Parse sequence of StrEnum values using railway pattern (DRY)
-        u.parse_sequence(
-            c.Cqrs.HandlerType,
-            ["validation", "id_generation"],
-        ).map(
+        u.parse_sequence(c.Cqrs.HandlerType, ["validation", "id_generation"]).map(
             lambda parsed_enums: print(
-                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}",
-            ),
+                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}"
+            )
         )
 
     @staticmethod
     def _demonstrate_conversions() -> None:
         """Show type conversion utilities."""
         print("\n=== Type Conversions ===")
-
-        # String parsing utilities
         number_str = str(TEST_DATA["number_str"])
         float_str = str(TEST_DATA["float_str"])
-
-        # Parse delimited strings using railway pattern (DRY)
         parser = u.Parser()
         parser.parse_delimited("a,b,c", ",").map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
-
-        # String to number conversion concepts
         print(f"✅ String to int concept: '{number_str}' → int")
         print(f"✅ String to float concept: '{float_str}' → float")
         print("✅ Safe conversion with error handling available")
@@ -115,28 +82,16 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_id_generation() -> None:
         """Show ID generation utilities using u."""
         print("\n=== ID Generation ===")
-
-        # Correlation ID using u
         correlation_id = u.generate("correlation")
         print(
-            f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
+            f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}..."
         )
-
-        # Short ID using u
         short_id = u.generate_short_id()
-        print(
-            f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
-        )
-
-        # Entity ID
+        print(f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...")
         entity_id = u.generate("entity")
         print(f"✅ Entity ID: {entity_id[:16]}...")
-
-        # Batch ID
         batch_id = u.generate("batch", parts=(100,))
         print(f"✅ Batch ID: {batch_id[:20]}...")
-
-        # Transaction ID
         transaction_id = u.generate("transaction")
         print(f"✅ Transaction ID: {transaction_id[:20]}...")
 
@@ -145,24 +100,15 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         """Show reliability utilities."""
         print("\n=== Reliability Patterns ===")
 
-        # Retry logic
         def operation() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
         retry_result: FlextResult[str] = u.retry(
-            operation,
-            max_attempts=3,
-            delay_seconds=0.1,
+            operation, max_attempts=3, delay_seconds=0.1
         )
         print(f"✅ Retry logic: {retry_result.is_success}")
-
-        # Timeout handling
-        timeout_result = u.with_timeout(
-            operation,
-            timeout_seconds=1.0,
-        )
+        timeout_result = u.with_timeout(operation, timeout_seconds=1.0)
         print(f"✅ Timeout handling: {timeout_result.is_success}")
-
         print("✅ Circuit breaker patterns available")
         print("✅ Retry logic available")
 
@@ -170,30 +116,19 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_string_parsing() -> None:
         """Show string parsing utilities."""
         print("\n=== String Parsing ===")
-
-        # Parse delimited strings using railway pattern (DRY)
         parser = u.Parser()
-        # Use m.CollectionsParseOptions instead of private import
         options = m.CollectionsParseOptions(strip=True, remove_empty=True)
         parser.parse_delimited("a, b, c", ",", options=options).map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
-
-        # Split with escape handling using railway pattern (DRY)
         parser.split_on_char_with_escape(
-            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com",
-            ",",
-            "\\",
-        ).map(
-            lambda split: print(f"✅ Escaped split: {split}"),
-        )
+            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
+        ).map(lambda split: print(f"✅ Escaped split: {split}"))
 
     @staticmethod
     def _demonstrate_type_checking() -> None:
         """Show type checking utilities."""
         print("\n=== Type Checking ===")
-
-        # Compute accepted message types for a handler class
         message_types = u.compute_accepted_message_types(UtilitiesService)
         print(f"✅ Message types computed: {len(message_types)} types")
 
@@ -201,17 +136,11 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_validation() -> None:
         """Show validation utilities using FlextConstants and u."""
         print("\n=== Validation Utilities ===")
-
-        # Email validation using u
         email = str(TEST_DATA["email"])
         email_result = u.validate_pattern(
-            email,
-            FlextConstants.Platform.PATTERN_EMAIL,
-            "email",
+            email, FlextConstants.Platform.PATTERN_EMAIL, "email"
         )
         print(f"✅ Email validation: {email} -> {email_result.is_success}")
-
-        # String validation using FlextConstants limits
         name = "test"
         name_result = u.validate_length(
             name,
@@ -219,17 +148,11 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
         )
         print(f"✅ String validation: {name} -> {name_result.is_success}")
-
-        # URI validation
         uri = str(TEST_DATA["uri"])
         uri_result = u.validate_pattern(
-            uri,
-            r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$",
-            "uri",
+            uri, "^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]+$", "uri"
         )
         print(f"✅ URI validation: {uri} -> {uri_result.is_success}")
-
-        # Port validation
         port_value = TEST_DATA["port"]
         if isinstance(port_value, int):
             port_result = (
@@ -238,23 +161,18 @@ class UtilitiesService(FlextService[m.ConfigMap]):
                 else FlextResult[int].fail("port must be between 1 and 65535")
             )
             print(f"✅ Port validation: {port_value} -> {port_result.is_success}")
-
-        # Hostname validation
         hostname = str(TEST_DATA["hostname"])
         hostname_result = u.validate_pattern(
             hostname,
-            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$",
+            "^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\\.[a-zA-Z0-9-]{1,63}(?<!-))*$",
             "hostname",
         )
         print(f"✅ Hostname validation: {hostname} -> {hostname_result.is_success}")
 
     @override
-    def execute(
-        self,
-    ) -> FlextResult[m.ConfigMap]:
+    def execute(self) -> FlextResult[m.ConfigMap]:
         """Execute comprehensive utilities demonstrations."""
         print("Starting utilities demonstration")
-
         try:
             self._demonstrate_validation()
             self._demonstrate_id_generation()
@@ -264,7 +182,6 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             self._demonstrate_string_parsing()
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
-
             return FlextResult[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
@@ -285,10 +202,9 @@ class UtilitiesService(FlextService[m.ConfigMap]):
                             "performance",
                             "reliability",
                         ],
-                    },
-                ),
+                    }
+                )
             )
-
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
             return FlextResult[m.ConfigMap].fail(error_msg)
@@ -308,19 +224,13 @@ def main() -> None:
     print("=" * 60)
     print("FLEXT UTILITIES - COMPREHENSIVE DEMONSTRATION")
     print(
-        "Validation, generation, conversion, caching, reliability, "
-        "parsing, collections, type checking",
+        "Validation, generation, conversion, caching, reliability, parsing, collections, type checking"
     )
     print("=" * 60)
-
-    # Demonstrate composition
     demonstrate_utility_composition()
-
-    # Use service pattern
     service = UtilitiesService()
     result = service.execute()
 
-    # Railway pattern for result handling (DRY)
     def handle_success(data: m.ConfigMap) -> None:
         """Handle successful result."""
         categories = data.get("utility_categories", 0)
@@ -328,7 +238,7 @@ def main() -> None:
         utilities_count = (
             len(utilities)
             if isinstance(utilities, Sequence)
-            and not isinstance(utilities, (str, bytes, bytearray))
+            and (not isinstance(utilities, (str, bytes, bytearray)))
             else 0
         )
         print(f"\n✅ Demonstrated {categories} utility categories")
@@ -340,7 +250,6 @@ def main() -> None:
         return FlextResult[None].ok(value=None)
 
     result.map(handle_success).lash(handle_error)
-
     print("\n" + "=" * 60)
     print("🎯 Utility Categories: Validation, ID Generation, Conversion")
     print("🎯 Advanced Features: Caching, Reliability, Composition")

@@ -25,9 +25,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             result = main([])
-
             assert result == 0
 
     def test_main_success_with_none_value(self) -> None:
@@ -38,9 +36,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int].ok(0)
-
             result = main([])
-
             assert result == 0
 
     def test_main_success_with_nonzero_value(self) -> None:
@@ -51,9 +47,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int].ok(42)
-
             result = main([])
-
             assert result == 42
 
     def test_main_failure_returns_one(self) -> None:
@@ -64,10 +58,8 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail("error message")
-
             with patch("flext_infra.maintenance.__main__.output.error"):
                 result = main([])
-
             assert result == 1
 
     def test_main_failure_with_none_error(self) -> None:
@@ -78,10 +70,8 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail(None)
-
             with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
                 result = main([])
-
             assert result == 1
             mock_error.assert_called_once()
             call_args = mock_error.call_args[0][0]
@@ -95,9 +85,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main(["--check"])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["check_only"] is True
 
@@ -109,9 +97,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main([])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["check_only"] is False
 
@@ -123,9 +109,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main(["--verbose"])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["verbose"] is True
 
@@ -137,9 +121,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main(["-v"])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["verbose"] is True
 
@@ -151,9 +133,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main([])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["verbose"] is False
 
@@ -165,9 +145,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main(["--check", "--verbose"])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["check_only"] is True
             assert call_kwargs["verbose"] is True
@@ -176,7 +154,6 @@ class TestMaintenanceMain:
         """Test main() with --help flag."""
         with pytest.raises(SystemExit) as exc_info:
             main(["--help"])
-
         assert exc_info.value.code == 0
 
     def test_main_with_none_argv(self) -> None:
@@ -188,9 +165,7 @@ class TestMaintenanceMain:
                 mock_enforcer = Mock()
                 mock_enforcer_class.return_value = mock_enforcer
                 mock_enforcer.execute.return_value = r[int | None].ok(0)
-
                 result = main(None)
-
                 assert result == 0
 
     def test_main_creates_enforcer_instance(self) -> None:
@@ -201,9 +176,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main([])
-
             mock_enforcer_class.assert_called_once()
 
     def test_main_calls_execute_method(self) -> None:
@@ -214,9 +187,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main([])
-
             mock_enforcer.execute.assert_called_once()
 
     def test_main_error_output_called_on_failure(self) -> None:
@@ -227,10 +198,8 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail("test error")
-
             with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
                 main([])
-
             mock_error.assert_called_once()
 
     def test_main_error_output_not_called_on_success(self) -> None:
@@ -241,10 +210,8 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
                 main([])
-
             mock_error.assert_not_called()
 
     def test_main_with_empty_argv_list(self) -> None:
@@ -255,9 +222,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             result = main([])
-
             assert result == 0
 
     def test_main_runtime_configured(self) -> None:
@@ -271,9 +236,7 @@ class TestMaintenanceMain:
                 mock_enforcer = Mock()
                 mock_enforcer_class.return_value = mock_enforcer
                 mock_enforcer.execute.return_value = r[int | None].ok(0)
-
                 main([])
-
                 mock_config.assert_called_once()
 
     def test_main_check_and_verbose_together(self) -> None:
@@ -284,9 +247,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-
             main(["--check", "-v"])
-
             call_kwargs = mock_enforcer.execute.call_args[1]
             assert call_kwargs["check_only"] is True
             assert call_kwargs["verbose"] is True
@@ -300,10 +261,8 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail(error_msg)
-
             with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
                 main([])
-
             mock_error.assert_called_once_with(error_msg)
 
     def test_main_calls_sys_exit(self) -> None:
@@ -315,7 +274,6 @@ class TestMaintenanceMain:
                 mock_enforcer = Mock()
                 mock_enforcer_class.return_value = mock_enforcer
                 mock_enforcer.execute.return_value = r[int | None].ok(0)
-
                 with patch("sys.exit") as _mock_exit:
                     try:
                         main([])

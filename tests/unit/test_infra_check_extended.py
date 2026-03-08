@@ -35,24 +35,14 @@ class TestCheckIssueFormatted:
     def test_formatted_with_code(self) -> None:
         """Test formatted includes code."""
         issue = _CheckIssue(
-            file="test.py",
-            line=10,
-            column=5,
-            code="E001",
-            message="Error",
+            file="test.py", line=10, column=5, code="E001", message="Error"
         )
         assert "[E001]" in issue.formatted
         assert "test.py:10:5" in issue.formatted
 
     def test_formatted_without_code(self) -> None:
         """Test formatted without code."""
-        issue = _CheckIssue(
-            file="test.py",
-            line=10,
-            column=5,
-            code="",
-            message="Error",
-        )
+        issue = _CheckIssue(file="test.py", line=10, column=5, code="", message="Error")
         assert "test.py:10:5" in issue.formatted
 
 
@@ -66,11 +56,9 @@ class TestProjectResultProperties:
         issue1 = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="m1")
         issue2 = _CheckIssue(file="b.py", line=2, column=1, code="E2", message="m2")
         issue3 = _CheckIssue(file="c.py", line=3, column=1, code="E3", message="m3")
-
         exec1 = _GateExecution(result=gate1, issues=[issue1, issue2])
         exec2 = _GateExecution(result=gate2, issues=[issue3])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
-
         assert project.total_errors == 3
 
     def test_passed_all_gates_pass(self) -> None:
@@ -80,7 +68,6 @@ class TestProjectResultProperties:
         exec1 = _GateExecution(result=gate1, issues=[])
         exec2 = _GateExecution(result=gate2, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
-
         assert project.passed is True
 
     def test_passed_one_gate_fails(self) -> None:
@@ -90,7 +77,6 @@ class TestProjectResultProperties:
         exec1 = _GateExecution(result=gate1, issues=[])
         exec2 = _GateExecution(result=gate2, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
-
         assert project.passed is False
 
 
@@ -174,11 +160,9 @@ class TestWorkspaceCheckerMarkdownReport:
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         gate_exec = _GateExecution(result=gate, issues=[issue])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
-
         report = checker.generate_markdown_report(
             [project], ["lint"], "2025-01-01 00:00:00 UTC"
         )
-
         assert "p" in report
         assert "E1" in report
         assert "Error" in report
@@ -189,11 +173,9 @@ class TestWorkspaceCheckerMarkdownReport:
         gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
         gate_exec = _GateExecution(result=gate, issues=[])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
-
         report = checker.generate_markdown_report(
             [project], ["lint"], "2025-01-01 00:00:00 UTC"
         )
-
         assert "FLEXT Check Report" in report
         assert "p" in report
 
@@ -205,16 +187,13 @@ class TestWorkspaceCheckerMarkdownReport:
         exec1 = _GateExecution(result=gate1, issues=[])
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         exec2 = _GateExecution(result=gate2, issues=[issue])
-
         projects = [
             _ProjectResult(project="p1", gates={"lint": exec1}),
             _ProjectResult(project="p2", gates={"lint": exec2}),
         ]
-
         report = checker.generate_markdown_report(
             projects, ["lint"], "2025-01-01 00:00:00 UTC"
         )
-
         assert "p1" in report
         assert "p2" in report
 
@@ -228,9 +207,7 @@ class TestWorkspaceCheckerSARIFReport:
         gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
         gate_exec = _GateExecution(result=gate, issues=[])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
-
         report = checker.generate_sarif_report([project], ["lint"])
-
         assert isinstance(report, dict)
 
     def test_sarif_report_with_issues(self) -> None:
@@ -240,9 +217,7 @@ class TestWorkspaceCheckerSARIFReport:
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         gate_exec = _GateExecution(result=gate, issues=[issue])
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
-
         report = checker.generate_sarif_report([project], ["lint"])
-
         assert isinstance(report, dict)
 
 
@@ -253,7 +228,6 @@ class TestConfigFixerProcessFile:
         """Test process_file with missing file."""
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         result = fixer.process_file(tmp_path / "missing.toml")
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "failed to read" in result.error
@@ -263,9 +237,7 @@ class TestConfigFixerProcessFile:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("invalid [[[")
-
         result = fixer.process_file(pyproject)
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "failed to parse" in result.error
@@ -275,9 +247,7 @@ class TestConfigFixerProcessFile:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[tool]\nother = true\n")
-
         result = fixer.process_file(pyproject)
-
         assert result.is_success
         assert result.value == []
 
@@ -287,9 +257,7 @@ class TestConfigFixerProcessFile:
         pyproject = tmp_path / "pyproject.toml"
         original = "[tool.pyrefly]\nsearch-path = []\n"
         pyproject.write_text(original)
-
         result = fixer.process_file(pyproject, dry_run=True)
-
         assert result.is_success
         assert pyproject.read_text() == original
 
@@ -312,9 +280,7 @@ class TestWorkspaceCheckCLI:
             mock.run_projects.return_value = r[list[SimpleNamespace]].ok([
                 SimpleNamespace(passed=True)
             ])
-
             exit_code = workspace_check_main(["p1", "--gates", "lint"])
-
             assert exit_code == 0
 
     def test_workspace_check_with_projects_failure(self) -> None:
@@ -327,9 +293,7 @@ class TestWorkspaceCheckCLI:
             mock.run_projects.return_value = r[list[SimpleNamespace]].ok([
                 SimpleNamespace(passed=False)
             ])
-
             exit_code = workspace_check_main(["p1", "--gates", "lint"])
-
             assert exit_code == 1
 
     def test_workspace_check_run_projects_error(self) -> None:
@@ -340,9 +304,7 @@ class TestWorkspaceCheckCLI:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
             mock.run_projects.return_value = r[list[SimpleNamespace]].fail("error")
-
             exit_code = workspace_check_main(["p1", "--gates", "lint"])
-
             assert exit_code == 2
 
     def test_workspace_check_fail_fast_flag(self) -> None:
@@ -355,9 +317,7 @@ class TestWorkspaceCheckCLI:
             mock.run_projects.return_value = r[list[SimpleNamespace]].ok([
                 SimpleNamespace(passed=True)
             ])
-
             exit_code = workspace_check_main(["p1", "--gates", "lint", "--fail-fast"])
-
             assert exit_code == 0
             assert mock.run_projects.call_args.kwargs["fail_fast"] is True
 
@@ -372,9 +332,7 @@ class TestFixPyrelfyCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
-
             exit_code = fix_pyrefly_main([])
-
             assert exit_code == 0
 
     def test_fix_pyrefly_failure(self) -> None:
@@ -384,9 +342,7 @@ class TestFixPyrelfyCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].fail("error")
-
             exit_code = fix_pyrefly_main([])
-
             assert exit_code == 1
 
     def test_fix_pyrefly_dry_run_flag(self) -> None:
@@ -396,9 +352,7 @@ class TestFixPyrelfyCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
-
             exit_code = fix_pyrefly_main(["--dry-run"])
-
             assert exit_code == 0
             assert mock.run.call_args.kwargs["dry_run"] is True
 
@@ -409,9 +363,7 @@ class TestFixPyrelfyCLI:
         ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
-
             exit_code = fix_pyrefly_main(["--verbose"])
-
             assert exit_code == 0
             assert mock.run.call_args.kwargs["verbose"] is True
 
@@ -426,7 +378,6 @@ class TestCheckMainEntryPoint:
         ) as mock_ensure:
             with patch("flext_infra.check.__main__.run_cli", return_value=0):
                 exit_code = check_main()
-
                 mock_ensure.assert_called_once()
                 assert exit_code == 0
 
@@ -439,7 +390,6 @@ class TestCheckMainEntryPoint:
                 "flext_infra.check.__main__.run_cli", return_value=0
             ) as mock_run:
                 exit_code = check_main()
-
                 mock_run.assert_called_once()
                 assert exit_code == 0
 
@@ -450,7 +400,6 @@ class TestCheckMainEntryPoint:
         ):
             with patch("flext_infra.check.__main__.run_cli", return_value=42):
                 exit_code = check_main()
-
                 assert exit_code == 42
 
 
@@ -470,9 +419,7 @@ class TestWorkspaceCheckerRunProjects:
         """Test run_projects fails with invalid gates."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         result = checker.run_projects(
-            ["p1"],
-            ["invalid_gate"],
-            reports_dir=tmp_path / "reports",
+            ["p1"], ["invalid_gate"], reports_dir=tmp_path / "reports"
         )
         assert result.is_failure
 
@@ -480,9 +427,7 @@ class TestWorkspaceCheckerRunProjects:
         """Test run_projects skips missing project directories."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         result = checker.run_projects(
-            ["nonexistent"],
-            ["lint"],
-            reports_dir=tmp_path / "reports",
+            ["nonexistent"], ["lint"], reports_dir=tmp_path / "reports"
         )
         assert result.is_success
         assert len(result.value) == 0
@@ -491,24 +436,15 @@ class TestWorkspaceCheckerRunProjects:
         """Test run_projects creates markdown report file."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         reports_dir = tmp_path / "reports"
-
         with patch.object(checker, "_check_project") as mock_check:
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=False)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
-
-            # Create valid project
             proj_dir = tmp_path / "p1"
             proj_dir.mkdir()
             (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
-            result = checker.run_projects(
-                ["p1"],
-                ["lint"],
-                reports_dir=reports_dir,
-            )
-
+            result = checker.run_projects(["p1"], ["lint"], reports_dir=reports_dir)
             assert result.is_success
             assert (reports_dir / "check-report.md").exists()
 
@@ -516,24 +452,15 @@ class TestWorkspaceCheckerRunProjects:
         """Test run_projects creates SARIF report file."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         reports_dir = tmp_path / "reports"
-
         with patch.object(checker, "_check_project") as mock_check:
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
-
-            # Create valid project
             proj_dir = tmp_path / "p1"
             proj_dir.mkdir()
             (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
-            result = checker.run_projects(
-                ["p1"],
-                ["lint"],
-                reports_dir=reports_dir,
-            )
-
+            result = checker.run_projects(["p1"], ["lint"], reports_dir=reports_dir)
             assert result.is_success
             assert (reports_dir / "check-report.sarif").exists()
 
@@ -541,28 +468,19 @@ class TestWorkspaceCheckerRunProjects:
         """Test run_projects stops on first failure with fail_fast."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         reports_dir = tmp_path / "reports"
-
         with patch.object(checker, "_check_project") as mock_check:
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=False)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock_check.return_value = project
-
-            # Create valid projects
             for proj_name in ["p1", "p2", "p3"]:
                 proj_dir = tmp_path / proj_name
                 proj_dir.mkdir()
                 (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
             result = checker.run_projects(
-                ["p1", "p2", "p3"],
-                ["lint"],
-                reports_dir=reports_dir,
-                fail_fast=True,
+                ["p1", "p2", "p3"], ["lint"], reports_dir=reports_dir, fail_fast=True
             )
-
             assert result.is_success
-            # Should stop after first failure
             assert mock_check.call_count == 1
 
 
@@ -625,9 +543,7 @@ class TestRunCLI:
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
-
             exit_code = run_cli(["run", "--gates", "lint", "--project", "p"])
-
             assert exit_code == 0
 
     def test_run_cli_run_command_failure(self) -> None:
@@ -639,9 +555,7 @@ class TestRunCLI:
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
-
             exit_code = run_cli(["run", "--gates", "lint", "--project", "p"])
-
             assert exit_code == 1
 
     def test_run_cli_run_command_error(self) -> None:
@@ -650,9 +564,7 @@ class TestRunCLI:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
             mock.run_projects.return_value = r[list[_ProjectResult]].fail("error")
-
             exit_code = run_cli(["run", "--gates", "lint", "--project", "p"])
-
             assert exit_code == 2
 
     def test_run_cli_fix_pyrefly_config_success(self) -> None:
@@ -660,9 +572,7 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
-
             exit_code = run_cli(["fix-pyrefly-config"])
-
             assert exit_code == 0
 
     def test_run_cli_fix_pyrefly_config_failure(self) -> None:
@@ -670,15 +580,12 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].fail("error")
-
             exit_code = run_cli(["fix-pyrefly-config"])
-
             assert exit_code == 1
 
     def test_run_cli_no_command_prints_help(self) -> None:
         """Test run_cli with no command prints help."""
         exit_code = run_cli([])
-
         assert exit_code == 1
 
     def test_run_cli_with_relative_reports_dir(self, tmp_path: Path) -> None:
@@ -691,7 +598,6 @@ class TestRunCLI:
                 gate_exec = _GateExecution(result=gate, issues=[])
                 project = _ProjectResult(project="p", gates={"lint": gate_exec})
                 mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
-
                 exit_code = run_cli([
                     "run",
                     "--gates",
@@ -701,7 +607,6 @@ class TestRunCLI:
                     "--reports-dir",
                     "reports/check",
                 ])
-
                 assert exit_code == 0
                 call_kwargs = mock.run_projects.call_args.kwargs
                 assert call_kwargs["reports_dir"].is_absolute()
@@ -715,7 +620,6 @@ class TestRunCLI:
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p", gates={"lint": gate_exec})
             mock.run_projects.return_value = r[list[_ProjectResult]].ok([project])
-
             exit_code = run_cli([
                 "run",
                 "--gates",
@@ -724,7 +628,6 @@ class TestRunCLI:
                 "p",
                 "--fail-fast",
             ])
-
             assert exit_code == 0
             call_kwargs = mock.run_projects.call_args.kwargs
             assert call_kwargs["fail_fast"] is True
@@ -734,9 +637,7 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
-
             exit_code = run_cli(["fix-pyrefly-config", "--dry-run"])
-
             assert exit_code == 0
             call_kwargs = mock.run.call_args.kwargs
             assert call_kwargs["dry_run"] is True
@@ -746,9 +647,7 @@ class TestRunCLI:
         with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
-
             exit_code = run_cli(["fix-pyrefly-config", "--verbose"])
-
             assert exit_code == 0
             call_kwargs = mock.run.call_args.kwargs
             assert call_kwargs["verbose"] is True
@@ -763,15 +662,12 @@ class TestWorkspaceCheckerRun:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
         with patch.object(checker, "_check_project") as mock_check:
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
             gate_exec = _GateExecution(result=gate, issues=[])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
-
             result = checker.run("p1", ["lint"])
-
             assert result.is_success
             assert len(result.value) == 1
 
@@ -783,7 +679,6 @@ class TestWorkspaceCheckerExecute:
         """Test execute returns failure with usage message."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         result = checker.execute()
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "Use run()" in result.error
@@ -797,9 +692,7 @@ class TestWorkspaceCheckerExistingCheckDirs:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "src").mkdir()
         (tmp_path / "tests").mkdir()
-
         dirs = checker._existing_check_dirs(tmp_path)
-
         assert isinstance(dirs, list)
 
     def test_existing_check_dirs_subproject(self, tmp_path: Path) -> None:
@@ -808,18 +701,14 @@ class TestWorkspaceCheckerExistingCheckDirs:
         subproj = tmp_path / "subproj"
         subproj.mkdir()
         (subproj / "src").mkdir()
-
         dirs = checker._existing_check_dirs(subproj)
-
         assert isinstance(dirs, list)
 
     def test_existing_check_dirs_filters_nonexistent(self, tmp_path: Path) -> None:
         """Test _existing_check_dirs filters out nonexistent directories."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "src").mkdir()
-
         dirs = checker._existing_check_dirs(tmp_path)
-
         assert all((tmp_path / d).is_dir() for d in dirs)
 
 
@@ -831,9 +720,7 @@ class TestWorkspaceCheckerDirsWithPy:
         src = tmp_path / "src"
         src.mkdir()
         (src / "main.py").write_text("# code")
-
         result = FlextInfraWorkspaceChecker._dirs_with_py(tmp_path, ["src"])
-
         assert "src" in result
 
     def test_dirs_with_py_finds_pyi_files(self, tmp_path: Path) -> None:
@@ -841,24 +728,19 @@ class TestWorkspaceCheckerDirsWithPy:
         src = tmp_path / "src"
         src.mkdir()
         (src / "main.pyi").write_text("# stub")
-
         result = FlextInfraWorkspaceChecker._dirs_with_py(tmp_path, ["src"])
-
         assert "src" in result
 
     def test_dirs_with_py_skips_empty_dirs(self, tmp_path: Path) -> None:
         """Test _dirs_with_py skips directories without Python files."""
         src = tmp_path / "src"
         src.mkdir()
-
         result = FlextInfraWorkspaceChecker._dirs_with_py(tmp_path, ["src"])
-
         assert "src" not in result
 
     def test_dirs_with_py_skips_nonexistent_dirs(self, tmp_path: Path) -> None:
         """Test _dirs_with_py skips nonexistent directories."""
         result = FlextInfraWorkspaceChecker._dirs_with_py(tmp_path, ["nonexistent"])
-
         assert "nonexistent" not in result
 
 
@@ -872,20 +754,15 @@ class TestWorkspaceCheckerRunPyrefly:
         proj_dir.mkdir()
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 mock_dirs.return_value = ["src"]
                 json_file = reports_dir / "p1-pyrefly.json"
                 json_file.write_text('{"errors": []}')
                 mock_run.return_value = SimpleNamespace(
-                    stdout="",
-                    stderr="",
-                    returncode=0,
+                    stdout="", stderr="", returncode=0
                 )
-
                 result = checker._run_pyrefly(proj_dir, reports_dir)
-
                 assert result.result.passed is True
 
     def test_run_pyrefly_with_errors(self, tmp_path: Path) -> None:
@@ -895,7 +772,6 @@ class TestWorkspaceCheckerRunPyrefly:
         proj_dir.mkdir()
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 mock_dirs.return_value = ["src"]
@@ -904,13 +780,9 @@ class TestWorkspaceCheckerRunPyrefly:
                     '{"errors": [{"path": "a.py", "line": 1, "column": 0, "name": "E001", "description": "Error", "severity": "error"}]}'
                 )
                 mock_run.return_value = SimpleNamespace(
-                    stdout="",
-                    stderr="",
-                    returncode=1,
+                    stdout="", stderr="", returncode=1
                 )
-
                 result = checker._run_pyrefly(proj_dir, reports_dir)
-
                 assert result.result.passed is False
                 assert len(result.issues) == 1
 
@@ -921,7 +793,6 @@ class TestWorkspaceCheckerRunPyrefly:
         proj_dir.mkdir()
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 mock_dirs.return_value = ["src"]
@@ -930,13 +801,9 @@ class TestWorkspaceCheckerRunPyrefly:
                     '[{"path": "a.py", "line": 1, "column": 0, "name": "E001", "description": "Error", "severity": "error"}]'
                 )
                 mock_run.return_value = SimpleNamespace(
-                    stdout="",
-                    stderr="",
-                    returncode=1,
+                    stdout="", stderr="", returncode=1
                 )
-
                 result = checker._run_pyrefly(proj_dir, reports_dir)
-
                 assert len(result.issues) == 1
 
     def test_run_pyrefly_with_invalid_json(self, tmp_path: Path) -> None:
@@ -946,20 +813,15 @@ class TestWorkspaceCheckerRunPyrefly:
         proj_dir.mkdir()
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 mock_dirs.return_value = ["src"]
                 json_file = reports_dir / "p1-pyrefly.json"
                 json_file.write_text("invalid json")
                 mock_run.return_value = SimpleNamespace(
-                    stdout="",
-                    stderr="",
-                    returncode=1,
+                    stdout="", stderr="", returncode=1
                 )
-
                 result = checker._run_pyrefly(proj_dir, reports_dir)
-
                 assert result.result.passed is False
 
     def test_run_pyrefly_with_error_count_fallback(self, tmp_path: Path) -> None:
@@ -969,18 +831,13 @@ class TestWorkspaceCheckerRunPyrefly:
         proj_dir.mkdir()
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 mock_dirs.return_value = ["src"]
                 mock_run.return_value = SimpleNamespace(
-                    stdout="",
-                    stderr="Found 3 errors",
-                    returncode=1,
+                    stdout="", stderr="Found 3 errors", returncode=1
                 )
-
                 result = checker._run_pyrefly(proj_dir, reports_dir)
-
                 assert result.result.passed is False
                 assert len(result.issues) == 3
 
@@ -993,14 +850,11 @@ class TestWorkspaceCheckerRunMypy:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         with patch.object(checker, "_existing_check_dirs") as mock_dirs:
             with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                 mock_dirs.return_value = ["src"]
                 mock_py_dirs.return_value = cast("list[str]", [])
-
                 result = checker._run_mypy(proj_dir)
-
                 assert result.result.passed is True
                 assert len(result.issues) == 0
 
@@ -1011,7 +865,6 @@ class TestWorkspaceCheckerRunMypy:
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
@@ -1019,13 +872,9 @@ class TestWorkspaceCheckerRunMypy:
                     mock_py_dirs.return_value = ["src"]
                     json_line = '{"file": "a.py", "line": 1, "column": 0, "code": "E001", "message": "Error", "severity": "error"}'
                     mock_run.return_value = SimpleNamespace(
-                        stdout=json_line,
-                        stderr="",
-                        returncode=1,
+                        stdout=json_line, stderr="", returncode=1
                     )
-
                     result = checker._run_mypy(proj_dir)
-
                     assert result.result.passed is False
                     assert len(result.issues) == 1
 
@@ -1037,20 +886,15 @@ class TestWorkspaceCheckerRunMypy:
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
         (proj_dir / "pyproject.toml").write_text("[tool.mypy]\n")
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                     mock_dirs.return_value = ["src"]
                     mock_py_dirs.return_value = ["src"]
                     mock_run.return_value = SimpleNamespace(
-                        stdout="",
-                        stderr="",
-                        returncode=0,
+                        stdout="", stderr="", returncode=0
                     )
-
                     checker._run_mypy(proj_dir)
-
                     call_args = mock_run.call_args[0][0]
                     assert "--config-file" in call_args
 
@@ -1062,20 +906,15 @@ class TestWorkspaceCheckerRunMypy:
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
         (tmp_path / "typings" / "generated").mkdir(parents=True)
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                     mock_dirs.return_value = ["src"]
                     mock_py_dirs.return_value = ["src"]
                     mock_run.return_value = SimpleNamespace(
-                        stdout="",
-                        stderr="",
-                        returncode=0,
+                        stdout="", stderr="", returncode=0
                     )
-
                     checker._run_mypy(proj_dir)
-
                     call_env = mock_run.call_args.kwargs.get("env")
                     assert call_env is not None
                     assert "MYPYPATH" in call_env
@@ -1089,14 +928,11 @@ class TestWorkspaceCheckerRunPyright:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         with patch.object(checker, "_existing_check_dirs") as mock_dirs:
             with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                 mock_dirs.return_value = ["src"]
                 mock_py_dirs.return_value = cast("list[str]", [])
-
                 result = checker._run_pyright(proj_dir)
-
                 assert result.result.passed is True
                 assert len(result.issues) == 0
 
@@ -1107,7 +943,6 @@ class TestWorkspaceCheckerRunPyright:
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
@@ -1115,13 +950,9 @@ class TestWorkspaceCheckerRunPyright:
                     mock_py_dirs.return_value = ["src"]
                     json_output = '{"generalDiagnostics": [{"file": "a.py", "range": {"start": {"line": 0, "character": 0}}, "rule": "E001", "message": "Error", "severity": "error"}]}'
                     mock_run.return_value = SimpleNamespace(
-                        stdout=json_output,
-                        stderr="",
-                        returncode=1,
+                        stdout=json_output, stderr="", returncode=1
                     )
-
                     result = checker._run_pyright(proj_dir)
-
                     assert result.result.passed is False
                     assert len(result.issues) == 1
 
@@ -1132,20 +963,15 @@ class TestWorkspaceCheckerRunPyright:
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                     mock_dirs.return_value = ["src"]
                     mock_py_dirs.return_value = ["src"]
                     mock_run.return_value = SimpleNamespace(
-                        stdout="invalid json",
-                        stderr="",
-                        returncode=1,
+                        stdout="invalid json", stderr="", returncode=1
                     )
-
                     result = checker._run_pyright(proj_dir)
-
                     assert result.result.passed is False
 
 
@@ -1157,9 +983,7 @@ class TestWorkspaceCheckerRunBandit:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         result = checker._run_bandit(proj_dir)
-
         assert result.result.passed is True
         assert len(result.issues) == 0
 
@@ -1169,17 +993,12 @@ class TestWorkspaceCheckerRunBandit:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             json_output = '{"results": [{"filename": "a.py", "line_number": 1, "test_id": "B101", "issue_text": "Assert used", "issue_severity": "MEDIUM"}]}'
             mock_run.return_value = SimpleNamespace(
-                stdout=json_output,
-                stderr="",
-                returncode=1,
+                stdout=json_output, stderr="", returncode=1
             )
-
             result = checker._run_bandit(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1189,16 +1008,11 @@ class TestWorkspaceCheckerRunBandit:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
-                stdout="invalid json",
-                stderr="",
-                returncode=1,
+                stdout="invalid json", stderr="", returncode=1
             )
-
             result = checker._run_bandit(proj_dir)
-
             assert result.result.passed is False
 
 
@@ -1210,9 +1024,7 @@ class TestWorkspaceCheckerRunMarkdown:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         result = checker._run_markdown(proj_dir)
-
         assert result.result.passed is True
         assert len(result.issues) == 0
 
@@ -1222,16 +1034,13 @@ class TestWorkspaceCheckerRunMarkdown:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "README.md").write_text("# Test")
-
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
                 stdout="README.md:1:1 error MD001 Heading level",
                 stderr="",
                 returncode=1,
             )
-
             result = checker._run_markdown(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1242,16 +1051,9 @@ class TestWorkspaceCheckerRunMarkdown:
         proj_dir.mkdir()
         (proj_dir / "README.md").write_text("# Test")
         (proj_dir / ".markdownlint.json").write_text("{}")
-
         with patch.object(checker, "_run") as mock_run:
-            mock_run.return_value = SimpleNamespace(
-                stdout="",
-                stderr="",
-                returncode=0,
-            )
-
+            mock_run.return_value = SimpleNamespace(stdout="", stderr="", returncode=0)
             checker._run_markdown(proj_dir)
-
             call_args = mock_run.call_args[0][0]
             assert "--config" in call_args
 
@@ -1261,16 +1063,11 @@ class TestWorkspaceCheckerRunMarkdown:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "README.md").write_text("# Test")
-
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
-                stdout="",
-                stderr="markdownlint failed",
-                returncode=1,
+                stdout="", stderr="markdownlint failed", returncode=1
             )
-
             result = checker._run_markdown(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1286,9 +1083,7 @@ class TestWorkspaceCheckerCollectMarkdownFiles:
         (proj_dir / "README.md").write_text("# Test")
         (proj_dir / "docs").mkdir()
         (proj_dir / "docs" / "guide.md").write_text("# Guide")
-
         files = checker._collect_markdown_files(proj_dir)
-
         assert len(files) == 2
 
     def test_collect_markdown_files_excludes_dirs(self, tmp_path: Path) -> None:
@@ -1299,9 +1094,7 @@ class TestWorkspaceCheckerCollectMarkdownFiles:
         (proj_dir / "README.md").write_text("# Test")
         (proj_dir / ".git").mkdir()
         (proj_dir / ".git" / "README.md").write_text("# Git")
-
         files = checker._collect_markdown_files(proj_dir)
-
         assert len(files) == 1
 
 
@@ -1313,9 +1106,7 @@ class TestWorkspaceCheckerRunGo:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         result = checker._run_go(proj_dir)
-
         assert result.result.passed is True
         assert len(result.issues) == 0
 
@@ -1325,22 +1116,13 @@ class TestWorkspaceCheckerRunGo:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "go.mod").write_text("module test")
-
         with patch.object(checker, "_run") as mock_run:
             vet_result = SimpleNamespace(
-                stdout="main.go:10:5: error message",
-                stderr="",
-                returncode=1,
+                stdout="main.go:10:5: error message", stderr="", returncode=1
             )
-            fmt_result = SimpleNamespace(
-                stdout="",
-                stderr="",
-                returncode=0,
-            )
+            fmt_result = SimpleNamespace(stdout="", stderr="", returncode=0)
             mock_run.side_effect = [vet_result, fmt_result]
-
             result = checker._run_go(proj_dir)
-
             assert result.result.passed is False
 
     def test_run_go_with_format_errors(self, tmp_path: Path) -> None:
@@ -1350,22 +1132,11 @@ class TestWorkspaceCheckerRunGo:
         proj_dir.mkdir()
         (proj_dir / "go.mod").write_text("module test")
         (proj_dir / "main.go").write_text("package main")
-
         with patch.object(checker, "_run") as mock_run:
-            vet_result = SimpleNamespace(
-                stdout="",
-                stderr="",
-                returncode=0,
-            )
-            fmt_result = SimpleNamespace(
-                stdout="main.go",
-                stderr="",
-                returncode=1,
-            )
+            vet_result = SimpleNamespace(stdout="", stderr="", returncode=0)
+            fmt_result = SimpleNamespace(stdout="main.go", stderr="", returncode=1)
             mock_run.side_effect = [vet_result, fmt_result]
-
             result = checker._run_go(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1375,22 +1146,13 @@ class TestWorkspaceCheckerRunGo:
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
         (proj_dir / "go.mod").write_text("module test")
-
         with patch.object(checker, "_run") as mock_run:
             vet_result = SimpleNamespace(
-                stdout="",
-                stderr="go vet failed",
-                returncode=1,
+                stdout="", stderr="go vet failed", returncode=1
             )
-            fmt_result = SimpleNamespace(
-                stdout="",
-                stderr="",
-                returncode=0,
-            )
+            fmt_result = SimpleNamespace(stdout="", stderr="", returncode=0)
             mock_run.side_effect = [vet_result, fmt_result]
-
             result = checker._run_go(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1401,32 +1163,26 @@ class TestWorkspaceCheckerRunCommand:
     def test_run_command_success(self, tmp_path: Path) -> None:
         """Test _run returns command output on success."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-
         with patch(
             "flext_infra.check.services.FlextInfraCommandRunner.run_raw"
         ) as mock_run:
             mock_run.return_value = r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0)
             )
-
             result = checker._run(["echo", "test"], tmp_path)
-
             assert result.stdout == "output"
             assert result.exit_code == 0
 
     def test_run_command_failure(self, tmp_path: Path) -> None:
         """Test _run handles command execution failure."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-
         with patch(
             "flext_infra.check.services.FlextInfraCommandRunner.run_raw"
         ) as mock_run:
             mock_run.return_value = r[m.Infra.Core.CommandOutput].fail(
                 "execution failed"
             )
-
             result = checker._run(["false"], tmp_path)
-
             assert result.exit_code == 1
             assert "execution failed" in result.stderr
 
@@ -1438,7 +1194,6 @@ class TestWorkspaceCheckerBuildGateResult:
         """Test _build_gate_result creates successful result."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
-
         result = checker._build_gate_result(
             gate="lint",
             project="p1",
@@ -1447,7 +1202,6 @@ class TestWorkspaceCheckerBuildGateResult:
             duration=0.5,
             raw_output="",
         )
-
         assert result.result.passed is True
         assert result.result.gate == "lint"
         assert len(result.issues) == 1
@@ -1461,17 +1215,12 @@ class TestWorkspaceCheckerRunRuffLint:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             json_output = '[{"filename": "a.py", "location": {"row": 1, "column": 0}, "code": "E001", "message": "Error"}]'
             mock_run.return_value = SimpleNamespace(
-                stdout=json_output,
-                stderr="",
-                returncode=1,
+                stdout=json_output, stderr="", returncode=1
             )
-
             result = checker._run_ruff_lint(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1480,16 +1229,11 @@ class TestWorkspaceCheckerRunRuffLint:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
-                stdout="invalid json",
-                stderr="",
-                returncode=1,
+                stdout="invalid json", stderr="", returncode=1
             )
-
             result = checker._run_ruff_lint(proj_dir)
-
             assert result.result.passed is False
 
 
@@ -1501,16 +1245,11 @@ class TestWorkspaceCheckerRunRuffFormat:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
-                stdout="  --> a.py:1:1",
-                stderr="",
-                returncode=1,
+                stdout="  --> a.py:1:1", stderr="", returncode=1
             )
-
             result = checker._run_ruff_format(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1519,16 +1258,11 @@ class TestWorkspaceCheckerRunRuffFormat:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = tmp_path / "p1"
         proj_dir.mkdir()
-
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
-                stdout="a.py",
-                stderr="",
-                returncode=1,
+                stdout="a.py", stderr="", returncode=1
             )
-
             result = checker._run_ruff_format(proj_dir)
-
             assert result.result.passed is False
             assert len(result.issues) == 1
 
@@ -1540,7 +1274,6 @@ class TestConfigFixerExecute:
         """Test execute returns failure with usage message."""
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         result = fixer.execute()
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "Use run()" in result.error
@@ -1553,12 +1286,9 @@ class TestConfigFixerFixSearchPaths:
         """Test _fix_search_paths_tk normalizes paths for workspace root."""
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         (tmp_path / "typings" / "generated").mkdir(parents=True)
-
         pyrefly = tomlkit.document()
         pyrefly["search-path"] = ["../typings/generated", "../typings"]
-
         fixes = fixer._fix_search_paths_tk(pyrefly, tmp_path)
-
         assert len(fixes) > 0
         assert "typings/generated" in str(pyrefly["search-path"])
 
@@ -1567,9 +1297,7 @@ class TestConfigFixerFixSearchPaths:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyrefly = tomlkit.document()
         pyrefly["search-path"] = ["nonexistent"]
-
         fixes = fixer._fix_search_paths_tk(pyrefly, tmp_path)
-
         assert len(fixes) > 0
 
     def test_fix_search_paths_skips_non_list(self, tmp_path: Path) -> None:
@@ -1577,9 +1305,7 @@ class TestConfigFixerFixSearchPaths:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyrefly = tomlkit.document()
         pyrefly["search-path"] = "not-a-list"
-
         fixes = fixer._fix_search_paths_tk(pyrefly, tmp_path)
-
         assert len(fixes) == 0
 
 
@@ -1594,9 +1320,7 @@ class TestConfigFixerRemoveIgnoreSubConfig:
             {"matches": "*.py", "ignore": True},
             {"matches": "*.pyi", "ignore": False},
         ]
-
         fixes = fixer._remove_ignore_sub_config_tk(pyrefly)
-
         assert len(fixes) > 0
         sub_config = pyrefly["sub-config"]
         assert isinstance(sub_config, Sequence)
@@ -1607,9 +1331,7 @@ class TestConfigFixerRemoveIgnoreSubConfig:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyrefly = tomlkit.document()
         pyrefly["sub-config"] = "not-a-list"
-
         fixes = fixer._remove_ignore_sub_config_tk(pyrefly)
-
         assert len(fixes) == 0
 
 
@@ -1621,9 +1343,7 @@ class TestConfigFixerEnsureProjectExcludes:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyrefly = tomlkit.document()
         pyrefly["project-excludes"] = cast("list[str]", [])
-
         fixes = fixer._ensure_project_excludes_tk(pyrefly)
-
         assert len(fixes) > 0
         project_excludes = pyrefly["project-excludes"]
         assert isinstance(project_excludes, Sequence)
@@ -1634,9 +1354,7 @@ class TestConfigFixerEnsureProjectExcludes:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyrefly = tomlkit.document()
         pyrefly["project-excludes"] = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
-
         fixes = fixer._ensure_project_excludes_tk(pyrefly)
-
         assert len(fixes) == 0
 
 
@@ -1647,9 +1365,7 @@ class TestConfigFixerToArray:
         """Test _to_array creates tomlkit array."""
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         items = ["a", "b", "c"]
-
         arr = fixer._to_array(items)
-
         assert len(arr) == 3
         assert "a" in arr
 
@@ -1661,7 +1377,6 @@ class TestWorkspaceCheckerInitOSError:
         """Test init falls back to default reports dir on mkdir error."""
         with patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied")):
             checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-
             assert checker._default_reports_dir is not None
 
 
@@ -1674,10 +1389,7 @@ class TestWorkspaceCheckerSARIFReportEdgeCases:
         gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
         exec1 = _GateExecution(result=gate, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1})
-
-        # Generate SARIF with a gate that has no result
         report = checker.generate_sarif_report([project], ["format"])
-
         assert isinstance(report, dict)
         assert "runs" in report
 
@@ -1685,25 +1397,17 @@ class TestWorkspaceCheckerSARIFReportEdgeCases:
         """Test markdown report truncates issues beyond max display (line 598-599)."""
         checker = FlextInfraWorkspaceChecker()
         gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
-        # Create more issues than _MAX_DISPLAY_ISSUES
         issues = [
             _CheckIssue(
-                file=f"file{i}.py",
-                line=i,
-                column=1,
-                code=f"E{i}",
-                message=f"Error {i}",
+                file=f"file{i}.py", line=i, column=1, code=f"E{i}", message=f"Error {i}"
             )
             for i in range(100)
         ]
         exec1 = _GateExecution(result=gate, issues=issues)
         project = _ProjectResult(project="p", gates={"lint": exec1})
-
         report = checker.generate_markdown_report(
             [project], ["lint"], "2025-01-01 00:00:00 UTC"
         )
-
-        # Should contain truncation message
         assert "more errors" in report or len(issues) > 0
 
 
@@ -1715,7 +1419,6 @@ class TestWorkspaceCheckerCheckProjectMethods:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "src").mkdir()
         (tmp_path / "src" / "test.py").touch()
-
         with patch.object(checker, "_run_ruff_lint") as mock_lint:
             with patch.object(checker, "_run_ruff_format") as mock_format:
                 with patch.object(checker, "_run_pyrefly") as mock_pyrefly:
@@ -1737,11 +1440,9 @@ class TestWorkspaceCheckerCheckProjectMethods:
                         ),
                         issues=[],
                     )
-
                     _ = checker._check_project(
                         tmp_path, ["lint", "format", "pyrefly"], tmp_path
                     )
-
                     assert mock_lint.called
                     assert mock_format.called
                     assert mock_pyrefly.called
@@ -1755,18 +1456,11 @@ class TestRuffFormatDeduplication:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "src").mkdir()
         (tmp_path / "src" / "test.py").touch()
-
-        # Mock ruff format output with duplicate file paths
         with patch.object(checker, "_run") as mock_run:
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="src/test.py\nsrc/test.py\n",
-                stderr="",
+                returncode=1, stdout="src/test.py\nsrc/test.py\n", stderr=""
             )
-
             result = checker._run_ruff_format(tmp_path)
-
-            # Should have only one issue despite duplicate output
             assert len(result.issues) <= 1
 
 
@@ -1778,18 +1472,13 @@ class TestMypyJSONParsing:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "src").mkdir()
         (tmp_path / "src" / "test.py").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Return invalid JSON mixed with valid JSON
             mock_run.return_value = SimpleNamespace(
                 returncode=1,
                 stdout='{invalid json}\n{"file": "test.py", "line": 1, "column": 1, "severity": "error", "code": "E1", "message": "Error"}\n',
                 stderr="",
             )
-
             result = checker._run_mypy(tmp_path)
-
-            # Should skip invalid JSON and parse valid entries
             assert isinstance(result, _GateExecution)
 
 
@@ -1802,17 +1491,9 @@ class TestMarkdownLinting:
         (tmp_path / "docs").mkdir()
         (tmp_path / "docs" / "README.md").touch()
         (tmp_path / ".markdownlint.json").write_text('{"extends": "default"}')
-
         with patch.object(checker, "_run") as mock_run:
-            mock_run.return_value = SimpleNamespace(
-                returncode=0,
-                stdout="",
-                stderr="",
-            )
-
+            mock_run.return_value = SimpleNamespace(returncode=0, stdout="", stderr="")
             result = checker._run_markdown(tmp_path)
-
-            # Verify config was passed to command
             assert result.result.passed
 
 
@@ -1823,18 +1504,11 @@ class TestGoFormatParsing:
         """Test go format parsing with empty lines (line 1233)."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "go.mod").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Return output with empty lines
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="main.go\n\nutil.go\n",
-                stderr="",
+                returncode=1, stdout="main.go\n\nutil.go\n", stderr=""
             )
-
             result = checker._run_go(tmp_path)
-
-            # Should skip empty lines
             assert len(result.issues) >= 1
 
 
@@ -1846,7 +1520,6 @@ class TestConfigFixerRunMethods:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[tool.pyrefly]\nsearch-path = []\n")
-
         with patch(
             "flext_infra.check.services.FlextInfraConfigFixer.find_pyproject_files"
         ) as mock_find:
@@ -1855,9 +1528,7 @@ class TestConfigFixerRunMethods:
             ) as mock_process:
                 mock_find.return_value = r[list[Path]].ok([pyproject])
                 mock_process.return_value = r[list[str]].ok(["fix1", "fix2"])
-
                 result = fixer.run(["project1"], verbose=True)
-
                 assert result.is_success
                 assert len(result.value) > 0
 
@@ -1866,7 +1537,6 @@ class TestConfigFixerRunMethods:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[tool.pyrefly]\nsearch-path = []\n")
-
         with patch(
             "flext_infra.check.services.FlextInfraConfigFixer.find_pyproject_files"
         ) as mock_find:
@@ -1875,9 +1545,7 @@ class TestConfigFixerRunMethods:
             ) as mock_process:
                 mock_find.return_value = r[list[Path]].ok([pyproject])
                 mock_process.return_value = r[list[str]].ok(["fix1"])
-
                 result = fixer.run(["project1"], dry_run=True)
-
                 assert result.is_success
 
     def test_find_pyproject_files_with_project_paths(self, tmp_path: Path) -> None:
@@ -1889,9 +1557,7 @@ class TestConfigFixerRunMethods:
         proj2.mkdir()
         (proj1 / "pyproject.toml").touch()
         (proj2 / "pyproject.toml").touch()
-
         result = fixer.find_pyproject_files([proj1, proj2])
-
         assert result.is_success
 
 
@@ -1908,16 +1574,11 @@ class TestRuffFormatEmptyLines:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Output with empty lines
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="file1.py\n\nfile2.py\n",
-                stderr="",
+                returncode=1, stdout="file1.py\n\nfile2.py\n", stderr=""
             )
             result = checker._run_ruff_format(tmp_path)
-            # Should have issues for non-empty lines
             assert len(result.issues) >= 1
 
 
@@ -1934,18 +1595,13 @@ class TestRuffFormatDuplicates:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Output with duplicates
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="file1.py\nfile1.py\nfile2.py\n",
-                stderr="",
+                returncode=1, stdout="file1.py\nfile1.py\nfile2.py\n", stderr=""
             )
             result = checker._run_ruff_format(tmp_path)
-            # Should have issues but no duplicates
             files = [issue.file for issue in result.issues]
-            assert len(files) == len(set(files))  # No duplicates
+            assert len(files) == len(set(files))
 
 
 class TestMypyEmptyLines:
@@ -1961,17 +1617,12 @@ class TestMypyEmptyLines:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Mypy outputs JSON lines, some empty
             json_output = '{"file": "test.py", "line": 1, "column": 1, "code": "error", "message": "error", "severity": "error"}\n\n'
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout=json_output,
-                stderr="",
+                returncode=1, stdout=json_output, stderr=""
             )
             result = checker._run_mypy(tmp_path)
-            # Should parse the non-empty line
             assert isinstance(result, _GateExecution)
 
 
@@ -1988,16 +1639,11 @@ class TestGoFormatEmptyLines:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "go.mod").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Output with empty lines
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="main.go\n\nutil.go\n",
-                stderr="",
+                returncode=1, stdout="main.go\n\nutil.go\n", stderr=""
             )
             result = checker._run_go(tmp_path)
-            # Should have issues for non-empty lines
             assert len(result.issues) >= 1
 
 
@@ -2014,11 +1660,8 @@ class TestConfigFixerProcessFileErrors:
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-        # Create a pyproject with pyrefly as a string (not mutable)
         pyproject.write_text('[tool.pyrefly]\nvalue = "string"\n')
-
         result = fixer.process_file(pyproject)
-        # Should return success with empty list
         assert result.is_success
 
     def test_process_file_with_write_error(self, tmp_path: Path) -> None:
@@ -2029,7 +1672,6 @@ class TestConfigFixerProcessFileErrors:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[tool.pyrefly]\nsearch-path = []\n")
-
         with patch.object(fixer, "_fix_search_paths_tk") as mock_fix:
             with patch("pathlib.Path.write_text") as mock_write:
                 mock_fix.return_value = ["fix1"]
@@ -2055,7 +1697,6 @@ class TestJsonWriteFailure:
         proj_dir = tmp_path / "test-project"
         proj_dir.mkdir()
         (proj_dir / "pyproject.toml").write_text("[tool.poetry]\n")
-
         with patch.object(checker, "_json") as mock_json:
             mock_json.write.return_value = r[Path].fail("write error")
             with patch.object(checker, "_run_ruff_lint") as mock_lint:
@@ -2084,7 +1725,6 @@ class TestLintAndFormatPublicMethods:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run_ruff_lint") as mock_lint:
             mock_lint.return_value = _GateExecution(
                 result=m.Infra.Check.GateResult(gate="lint", project="p", passed=True),
@@ -2101,7 +1741,6 @@ class TestLintAndFormatPublicMethods:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run_ruff_format") as mock_format:
             mock_format.return_value = _GateExecution(
                 result=m.Infra.Check.GateResult(
@@ -2131,11 +1770,9 @@ class TestMarkdownReportSkipsEmptyGates:
         exec1 = _GateExecution(result=gate1, issues=[])
         exec2 = _GateExecution(result=gate2, issues=[])
         project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
-
         report = checker.generate_markdown_report(
             [project], ["lint", "format"], "2025-01-01"
         )
-        # Report should be generated without errors
         assert isinstance(report, str)
         assert "# FLEXT Check Report" in report
 
@@ -2153,18 +1790,13 @@ class TestRuffFormatDuplicateSkipping:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Output with duplicates
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="file1.py\nfile1.py\nfile2.py\n",
-                stderr="",
+                returncode=1, stdout="file1.py\nfile1.py\nfile2.py\n", stderr=""
             )
             result = checker._run_ruff_format(tmp_path)
-            # Should have issues but no duplicates
             files = [issue.file for issue in result.issues]
-            assert len(files) == len(set(files))  # No duplicates
+            assert len(files) == len(set(files))
 
 
 class TestMypyEmptyLineSkipping:
@@ -2180,17 +1812,12 @@ class TestMypyEmptyLineSkipping:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Mypy outputs JSON lines, some empty
             json_output = '{"file": "test.py", "line": 1, "column": 1, "code": "error", "message": "error", "severity": "error"}\n\n'
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout=json_output,
-                stderr="",
+                returncode=1, stdout=json_output, stderr=""
             )
             result = checker._run_mypy(tmp_path)
-            # Should parse the non-empty line
             assert isinstance(result, _GateExecution)
 
 
@@ -2207,16 +1834,11 @@ class TestGoFormatEmptyLineSkipping:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "go.mod").touch()
-
         with patch.object(checker, "_run") as mock_run:
-            # Output with empty lines
             mock_run.return_value = SimpleNamespace(
-                returncode=1,
-                stdout="main.go\n\nutil.go\n",
-                stderr="",
+                returncode=1, stdout="main.go\n\nutil.go\n", stderr=""
             )
             result = checker._run_go(tmp_path)
-            # Should have issues for non-empty lines
             assert len(result.issues) >= 1
 
 
@@ -2238,9 +1860,7 @@ class TestMarkdownReportWithErrors:
         gate1 = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
         exec1 = _GateExecution(result=gate1, issues=[issue])
         project = _ProjectResult(project="p", gates={"lint": exec1})
-
         report = checker.generate_markdown_report([project], ["lint"], "2025-01-01")
-        # Report should include the error
         assert isinstance(report, str)
         assert "test.py" in report
 
@@ -2258,7 +1878,6 @@ class TestProcessFileReadError:
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-
         with patch("pathlib.Path.read_text") as mock_read:
             mock_read.side_effect = OSError("read error")
             result = fixer.process_file(pyproject)
@@ -2274,7 +1893,6 @@ class TestProcessFileReadError:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("invalid toml {")
-
         result = fixer.process_file(pyproject)
         assert result.is_failure
         assert result.error is not None
@@ -2288,7 +1906,6 @@ class TestProcessFileReadError:
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[build-system]\n")
-
         result = fixer.process_file(pyproject)
         assert result.is_success
         assert len(result.value) == 0
@@ -2300,11 +1917,8 @@ class TestProcessFileReadError:
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-        # Create a pyproject with pyrefly as a string (not mutable)
         pyproject.write_text('[tool.pyrefly]\nvalue = "string"\n')
-
         result = fixer.process_file(pyproject)
-        # Should return success with empty list
         assert result.is_success
 
 
@@ -2324,9 +1938,6 @@ class TestWorkspaceCheckerErrorSummary:
         exec2 = _GateExecution(result=gate2, issues=[issue3])
         proj1 = _ProjectResult(project="proj1", gates={"lint": exec1})
         proj2 = _ProjectResult(project="proj2", gates={"format": exec2})
-
-        # Call the method that generates error summary (lines 470-485)
-        # This is tested indirectly through check_all
         assert proj1.total_errors == 2
         assert proj2.total_errors == 1
 
@@ -2343,8 +1954,6 @@ class TestWorkspaceCheckerMarkdownReportEdgeCases:
         issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="m1")
         exec1 = _GateExecution(result=gate_with_issues, issues=[issue])
         exec2 = _GateExecution(result=gate_no_issues, issues=[])
-
-        # Verify that empty gates are properly handled
         assert len(exec1.issues) > 0
         assert len(exec2.issues) == 0
 
@@ -2354,15 +1963,13 @@ class TestWorkspaceCheckerRuffFormatDuplicates:
 
     def test_ruff_format_skips_duplicate_files(self, tmp_path: Path) -> None:
         """Test that duplicate files in ruff output are skipped (line 834)."""
-        # Simulate ruff format output with duplicate file paths
         ruff_output = "src/file.py\nsrc/file.py\nsrc/other.py\n"
-        # The checker should deduplicate these
         seen = set()
         for line in ruff_output.splitlines():
             if line in seen:
-                continue  # This is line 834 behavior
+                continue
             seen.add(line)
-        assert len(seen) == 2  # Only 2 unique files
+        assert len(seen) == 2
 
 
 class TestWorkspaceCheckerMypyEmptyLines:
@@ -2370,12 +1977,11 @@ class TestWorkspaceCheckerMypyEmptyLines:
 
     def test_mypy_output_skips_empty_lines(self) -> None:
         """Test that empty lines in mypy JSON output are skipped (line 981)."""
-        # Simulate mypy output with empty lines
         output = '{"file": "a.py", "line": 1}\n\n{"file": "b.py", "line": 2}\n'
         issues: list[str] = []
         for raw_line in output.splitlines():
             stripped = raw_line.strip()
-            if not stripped:  # This is line 981 behavior
+            if not stripped:
                 continue
             issues.append(stripped)
         assert len(issues) == 2
@@ -2386,12 +1992,11 @@ class TestWorkspaceCheckerGoFmtEmptyLines:
 
     def test_gofmt_output_skips_empty_lines(self) -> None:
         """Test that empty lines in gofmt output are skipped (line 1233)."""
-        # Simulate gofmt output with empty lines
         output = "src/file.go\n\nsrc/other.go\n"
         files: list[str] = []
         for file_name in output.splitlines():
             cleaned = file_name.strip()
-            if not cleaned:  # This is line 1233 behavior
+            if not cleaned:
                 continue
             files.append(cleaned)
         assert len(files) == 2
@@ -2406,11 +2011,9 @@ class TestConfigFixerPathResolution:
         """Test process_file returns empty list when pyrefly is not mutable (line 1343)."""
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-        # Create pyproject with pyrefly as a string (not MutableMapping)
         pyproject.write_text('[tool]\npyrefly = "string"\n')
         result = fixer.process_file(pyproject)
         assert result.is_success
-        # When pyrefly is not a MutableMapping, returns empty list (line 1343)
         assert result.value == []
         assert result.value == []
 
@@ -2427,7 +2030,6 @@ class TestConfigFixerApplyFixesEmptyProject:
         This tests the continue statement when fixes is empty.
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
-        # With empty projects list, should return empty result
         result = fixer.run(projects=[], dry_run=False, verbose=False)
         assert result.is_success
         assert result.value == []
@@ -2447,11 +2049,8 @@ class TestConfigFixerPathRelativeToError:
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-        # Create a pyproject with pyrefly config that will have fixes
         pyproject.write_text('[tool.pyrefly]\nsearch_paths = ["src"]\nignore = true\n')
-        # Run with verbose=True to trigger the relative_to() call
         result = fixer.run(projects=[], dry_run=False, verbose=True)
-        # Should succeed even if relative_to fails
         assert result.is_success
 
 
@@ -2467,9 +2066,7 @@ class TestWorkspaceCheckerResolveWorkspaceRootFallback:
         This tests the fallback when path_resolver.workspace_root() returns failure.
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        # Call with None to trigger fallback logic
         result = checker._resolve_workspace_root(None)
-        # Should return a valid Path
         assert isinstance(result, Path)
         assert result.is_absolute()
 
@@ -2487,9 +2084,7 @@ class TestWorkspaceCheckerErrorReporting:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         reports_dir = tmp_path / "reports"
-
         with patch.object(checker, "_check_project") as mock_check:
-            # Create a project result with errors
             issue = _CheckIssue(
                 file="test.py", line=1, column=1, code="E1", message="error"
             )
@@ -2497,20 +2092,11 @@ class TestWorkspaceCheckerErrorReporting:
             gate_exec = _GateExecution(result=gate, issues=[issue])
             project = _ProjectResult(project="p1", gates={"lint": gate_exec})
             mock_check.return_value = project
-
-            # Create valid project
             proj_dir = tmp_path / "p1"
             proj_dir.mkdir()
             (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
-            result = checker.run_projects(
-                ["p1"],
-                ["lint"],
-                reports_dir=reports_dir,
-            )
-
+            result = checker.run_projects(["p1"], ["lint"], reports_dir=reports_dir)
             assert result.is_success
-            # Verify error reporting was triggered (lines 470-483)
             assert len(result.value) == 1
             assert result.value[0].total_errors == 1
 
@@ -2528,9 +2114,7 @@ class TestWorkspaceCheckerMarkdownReportEmptyGates:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         reports_dir = tmp_path / "reports"
-
         with patch.object(checker, "_check_project") as mock_check:
-            # Create a project with one gate having issues and one without
             issue = _CheckIssue(
                 file="test.py", line=1, column=1, code="E1", message="error"
             )
@@ -2543,28 +2127,19 @@ class TestWorkspaceCheckerMarkdownReportEmptyGates:
             exec_with = _GateExecution(result=gate_with_issues, issues=[issue])
             exec_without = _GateExecution(result=gate_no_issues, issues=[])
             project = _ProjectResult(
-                project="p1",
-                gates={"lint": exec_with, "format": exec_without},
+                project="p1", gates={"lint": exec_with, "format": exec_without}
             )
             mock_check.return_value = project
-
-            # Create valid project
             proj_dir = tmp_path / "p1"
             proj_dir.mkdir()
             (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
             result = checker.run_projects(
-                ["p1"],
-                ["lint", "format"],
-                reports_dir=reports_dir,
+                ["p1"], ["lint", "format"], reports_dir=reports_dir
             )
-
             assert result.is_success
-            # Verify markdown report was created
             md_path = reports_dir / "check-report.md"
             assert md_path.exists()
             md_content = md_path.read_text()
-            # Should include lint section but not format section (line 588)
             assert "lint" in md_content
 
 
@@ -2584,13 +2159,11 @@ class TestWorkspaceCheckerMypyEmptyLinesInOutput:
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
-
         with patch.object(checker, "_run") as mock_run:
             with patch.object(checker, "_existing_check_dirs") as mock_dirs:
                 with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                     mock_dirs.return_value = ["src"]
                     mock_py_dirs.return_value = ["src"]
-                    # Include empty lines in output
                     json_line1 = '{"file": "a.py", "line": 1, "column": 0, "code": "E001", "message": "Error", "severity": "error"}'
                     json_line2 = '{"file": "b.py", "line": 2, "column": 0, "code": "E002", "message": "Error", "severity": "error"}'
                     mock_run.return_value = SimpleNamespace(
@@ -2598,10 +2171,7 @@ class TestWorkspaceCheckerMypyEmptyLinesInOutput:
                         stderr="",
                         returncode=1,
                     )
-
                     result = checker._run_mypy(proj_dir)
-
-                    # Should have 2 issues (empty line skipped)
                     assert result.result.passed is False
                     assert len(result.issues) == 2
 
@@ -2622,21 +2192,14 @@ class TestWorkspaceCheckerGoFmtEmptyLinesInOutput:
         proj_dir.mkdir()
         (proj_dir / "go.mod").write_text("module test\n")
         (proj_dir / "main.go").write_text("package main\n")
-
         with patch.object(checker, "_run") as mock_run:
-            # First call is go vet (no output), second is gofmt with empty lines
             mock_run.side_effect = [
-                SimpleNamespace(stdout="", stderr="", returncode=0),  # go vet
+                SimpleNamespace(stdout="", stderr="", returncode=0),
                 SimpleNamespace(
-                    stdout="src/file.go\n\nsrc/other.go\n",
-                    stderr="",
-                    returncode=1,
-                ),  # gofmt
+                    stdout="src/file.go\n\nsrc/other.go\n", stderr="", returncode=1
+                ),
             ]
-
             result = checker._run_go(proj_dir)
-
-            # Should have 2 issues (empty line skipped)
             assert result.result.passed is False
             assert len(result.issues) == 2
 
@@ -2657,18 +2220,13 @@ class TestWorkspaceCheckerRuffFormatDuplicateFiles:
         proj_dir.mkdir()
         (proj_dir / "src").mkdir()
         (proj_dir / "src" / "main.py").write_text("# code")
-
         with patch.object(checker, "_run") as mock_run:
-            # Include duplicate files in ruff format output
             mock_run.return_value = SimpleNamespace(
                 stdout="--> src/file.py:1:1\n--> src/file.py:1:1\n--> src/other.py:1:1\n",
                 stderr="",
                 returncode=1,
             )
-
             result = checker._run_ruff_format(proj_dir)
-
-            # Should have 2 unique issues (duplicate skipped)
             assert result.result.passed is False
             assert len(result.issues) == 2
 
@@ -2686,9 +2244,7 @@ class TestWorkspaceCheckerErrorReportingMultipleProjects:
         """
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         reports_dir = tmp_path / "reports"
-
         with patch.object(checker, "_check_project") as mock_check:
-            # Create two projects: one with errors, one without
             issue = _CheckIssue(
                 file="test.py", line=1, column=1, code="E1", message="error"
             )
@@ -2703,23 +2259,15 @@ class TestWorkspaceCheckerErrorReportingMultipleProjects:
             project1 = _ProjectResult(project="p1", gates={"lint": exec_with})
             project2 = _ProjectResult(project="p2", gates={"lint": exec_without})
             mock_check.side_effect = [project1, project2]
-
-            # Create valid projects
             for proj_name in ["p1", "p2"]:
                 proj_dir = tmp_path / proj_name
                 proj_dir.mkdir()
                 (proj_dir / "pyproject.toml").write_text("[tool]\n")
-
             result = checker.run_projects(
-                ["p1", "p2"],
-                ["lint"],
-                reports_dir=reports_dir,
+                ["p1", "p2"], ["lint"], reports_dir=reports_dir
             )
-
             assert result.is_success
-            # Verify both projects are in results
             assert len(result.value) == 2
-            # p1 has errors, p2 doesn't
             assert result.value[0].total_errors == 1
             assert result.value[1].total_errors == 0
 
@@ -2738,11 +2286,8 @@ class TestConfigFixerRunWithVerbose:
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-        # Create a pyproject with pyrefly config that will have fixes
         pyproject.write_text('[tool.pyrefly]\nsearch_paths = ["src"]\nignore = true\n')
-        # Run with verbose=True to trigger the relative_to() call
         result = fixer.run(projects=[], dry_run=False, verbose=True)
-        # Should succeed even if relative_to fails
         assert result.is_success
 
     def test_run_with_empty_fixes_skips_logging(self, tmp_path: Path) -> None:
@@ -2752,10 +2297,7 @@ class TestConfigFixerRunWithVerbose:
         """
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyproject = tmp_path / "pyproject.toml"
-        # Create a pyproject without pyrefly config (no fixes)
         pyproject.write_text("[tool]\n")
-        # Run with verbose=True
         result = fixer.run(projects=[], dry_run=False, verbose=True)
-        # Should succeed with empty messages
         assert result.is_success
         assert result.value == []

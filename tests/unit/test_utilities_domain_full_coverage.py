@@ -13,26 +13,9 @@ from collections import UserDict
 from datetime import UTC, datetime
 from typing import cast, override
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_core import t, u
 
-
-class _SampleEntity(BaseModel):
-    """Test entity for domain utility tests."""
-
-    model_config = ConfigDict(frozen=False)
-
-    unique_id: str = "test-123"
-    name: str = "test"
-
-
-class _FrozenEntity(BaseModel):
-    """Frozen entity for immutability tests."""
-
-    model_config = ConfigDict(frozen=True)
-
-    unique_id: str = "frozen-1"
+from ._models import _FrozenEntity, _SampleEntity
 
 
 class TestDomainLogger:
@@ -51,9 +34,8 @@ class TestDomainHashValue:
 
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
-        # datetime is Hashable but not str/int/float/bool/None
 
-        class EntityWithDate(BaseModel):
+        class EntityWithDate:
             unique_id: str = "test"
             created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
@@ -64,7 +46,7 @@ class TestDomainHashValue:
     def test_hash_with_non_hashable_value(self) -> None:
         """Non-hashable value in model_dump uses repr (line 159)."""
 
-        class EntityWithList(BaseModel):
+        class EntityWithList:
             unique_id: str = "test"
             tags: list[str] = ["a", "b"]
 
@@ -84,7 +66,6 @@ class TestValidateValueImmutable:
     def test_non_frozen_model_checks_setattr(self) -> None:
         """Non-frozen Pydantic model checks __setattr__ override."""
         entity = _SampleEntity()
-        # Pydantic models override __setattr__, so this should be True
         result = u.Domain.validate_value_object_immutable(entity)
         assert isinstance(result, bool)
 
@@ -95,10 +76,9 @@ class TestValidateValueImmutable:
             pass
 
         obj = PlainObj()
-        # PlainObj uses object.__setattr__ → mutable
         assert (
             u.Domain.validate_value_object_immutable(
-                cast("t.ContainerValue", cast("object", obj)),
+                cast("t.ContainerValue", cast("object", obj))
             )
             is False
         )
@@ -110,6 +90,7 @@ class TestValidateValueImmutable:
 
 
 def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
+
     class _BrokenConfigDict(UserDict[str, bool]):
         @override
         def get(self, key: str, default: object = None) -> bool:
@@ -130,13 +111,13 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     assert (
         u.Domain.validate_value_object_immutable(
-            cast("t.ContainerValue", cast("object", _BrokenConfig())),
+            cast("t.ContainerValue", cast("object", _BrokenConfig()))
         )
         is False
     )
     assert (
         u.Domain.validate_value_object_immutable(
-            cast("t.ContainerValue", cast("object", _NoSetattrVisible())),
+            cast("t.ContainerValue", cast("object", _NoSetattrVisible()))
         )
         is False
     )

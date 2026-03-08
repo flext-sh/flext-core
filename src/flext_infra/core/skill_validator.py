@@ -88,32 +88,25 @@ class FlextInfraSkillValidator:
                         passed=False,
                         violations=[f"rules.yml not found for skill '{skill_name}'"],
                         summary=f"no rules.yml for {skill_name}",
-                    ),
+                    )
                 )
-
             rules = _safe_load_yaml(rules_path)
             scan_targets = rules.get("scan_targets", {}) or {}
             if not isinstance(scan_targets, dict):
                 return r[m.Infra.Core.ValidationReport].fail(
-                    f"scan_targets must be a mapping: {rules_path}",
+                    f"scan_targets must be a mapping: {rules_path}"
                 )
-
             include_globs = _normalize_string_list(
-                scan_targets.get("include", ["**/*.py"]),
-                "scan_targets.include",
+                scan_targets.get("include", ["**/*.py"]), "scan_targets.include"
             ) or ["**/*"]
             exclude_globs = _normalize_string_list(
-                scan_targets.get(c.Infra.Toml.EXCLUDE, []),
-                "scan_targets.exclude",
+                scan_targets.get(c.Infra.Toml.EXCLUDE, []), "scan_targets.exclude"
             )
-
             rules_list = rules.get(c.Infra.ReportKeys.RULES, []) or []
             if not isinstance(rules_list, list):
                 return r[m.Infra.Core.ValidationReport].fail("rules must be a list")
-
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []
-
             for rule_obj in rules_list:
                 if not isinstance(rule_obj, dict):
                     continue
@@ -122,7 +115,6 @@ class FlextInfraSkillValidator:
                 group = (
                     str(rule_obj.get(c.Infra.Toml.GROUP, rule_id)).strip() or rule_id
                 )
-
                 if rule_type == "ast-grep":
                     count = self._run_ast_grep_count(
                         rule_obj,
@@ -134,21 +126,15 @@ class FlextInfraSkillValidator:
                     counts[group] = counts.get(group, 0) + count
                     if count > 0:
                         violations.append(f"[{rule_id}] {count} ast-grep matches")
-
                 elif rule_type == "custom":
                     count = self._run_custom_count(
-                        rule_obj,
-                        skills_dir / skill_name,
-                        root,
-                        mode,
+                        rule_obj, skills_dir / skill_name, root, mode
                     )
                     counts[group] = counts.get(group, 0) + count
                     if count > 0:
                         violations.append(f"[{rule_id}] {count} custom violations")
-
             total = sum(counts.values())
             passed = total == 0 if mode == c.Infra.Modes.STRICT else True
-
             if mode != c.Infra.Modes.STRICT:
                 baseline_obj = rules.get(c.Infra.Modes.BASELINE, {}) or {}
                 if isinstance(baseline_obj, dict):
@@ -182,20 +168,17 @@ class FlextInfraSkillValidator:
                                         counts.get(g, 0) <= bl_counts.get(g, 0)
                                         for g in set(counts) | set(bl_counts)
                                     )
-
             summary = (
-                f"{skill_name}: {total} violations, {'PASS' if passed else 'FAIL'}"
+                f"{skill_name}: {total} violations, {('PASS' if passed else 'FAIL')}"
             )
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed,
-                    violations=violations,
-                    summary=summary,
-                ),
+                    passed=passed, violations=violations, summary=summary
+                )
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
             return r[m.Infra.Core.ValidationReport].fail(
-                f"skill validation failed: {exc}",
+                f"skill validation failed: {exc}"
             )
 
     def _run_ast_grep_count(
@@ -215,7 +198,6 @@ class FlextInfraSkillValidator:
             rule_file = (skill_dir / rule_file_raw).resolve()
         if not rule_file.exists():
             return 0
-
         cmd = [
             c.Infra.Cli.SG,
             c.Infra.Cli.SgCmd.SCAN,
@@ -228,19 +210,14 @@ class FlextInfraSkillValidator:
         for pat in exclude_globs:
             cmd.extend(["--globs", f"!{pat}"])
         cmd.append(str(project_path))
-
         result_wrapper = self._runner.run_raw(
-            cmd,
-            cwd=project_path,
-            timeout=c.Infra.Timeouts.DEFAULT,
+            cmd, cwd=project_path, timeout=c.Infra.Timeouts.DEFAULT
         )
         if result_wrapper.is_failure:
             return 0
         result: p.Infra.CommandOutput = result_wrapper.value
-
         if result.exit_code not in {0, 1}:
             return 0
-
         count = 0
         for raw_line in (result.stdout or "").splitlines():
             line = raw_line.strip()
@@ -267,7 +244,6 @@ class FlextInfraSkillValidator:
             script = (skill_dir / script_raw).resolve()
         if not script.exists():
             return 0
-
         cmd: list[str] = (
             [sys.executable, str(script)]
             if script.suffix == c.Infra.Extensions.PYTHON
@@ -276,16 +252,12 @@ class FlextInfraSkillValidator:
         cmd.extend(["--root", str(project_path)])
         if bool(rule.get("pass_mode")):
             cmd.extend(["--mode", mode])
-
         result_wrapper = self._runner.run_raw(
-            cmd,
-            cwd=project_path,
-            timeout=c.Infra.Timeouts.DEFAULT,
+            cmd, cwd=project_path, timeout=c.Infra.Timeouts.DEFAULT
         )
         if result_wrapper.is_failure:
             return 0
         result: p.Infra.CommandOutput = result_wrapper.value
-
         count = 0
         for raw_line in (result.stdout or "").splitlines():
             line = raw_line.strip()

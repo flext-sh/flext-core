@@ -15,17 +15,13 @@ from typing import ClassVar
 
 from flext_core import m, t
 
-# =========================================================================
-# Scenario Dataclasses
-# =========================================================================
-
 
 @dataclass(frozen=True, slots=True)
 class ValidationScenario:
     """Single scenario for validation testing."""
 
     name: str
-    validator_type: str  # "network", "string", "numeric"
+    validator_type: str
     input_value: t.ContainerValue
     input_params: dict[str, object] | None = None
     should_succeed: bool = True
@@ -52,7 +48,7 @@ class ReliabilityScenario:
     """Single scenario for reliability testing (circuit breaker, retry)."""
 
     name: str
-    strategy: str  # "retry", "circuit_breaker", "timeout"
+    strategy: str
     config: m.ConfigMap
     simulate_failures: int
     expected_state: str
@@ -60,15 +56,9 @@ class ReliabilityScenario:
     description: str | None = None
 
 
-# =========================================================================
-# Centralized Validation Scenarios
-# =========================================================================
-
-
 class ValidationScenarios:
     """Centralized validation scenarios - single source of truth."""
 
-    # Network Validators
     URI_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="uri_valid_http",
@@ -168,7 +158,6 @@ class ValidationScenarios:
             description="Custom scheme with allowlist",
         ),
     ]
-
     PORT_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="port_valid_80",
@@ -243,7 +232,6 @@ class ValidationScenarios:
             description="Port above maximum",
         ),
     ]
-
     HOSTNAME_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="hostname_simple",
@@ -278,8 +266,6 @@ class ValidationScenarios:
             description="Hostname with hyphen",
         ),
     ]
-
-    # String Validators
     REQUIRED_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="required_valid",
@@ -338,7 +324,6 @@ class ValidationScenarios:
             description="Single character string",
         ),
     ]
-
     CHOICE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="choice_valid_single",
@@ -392,7 +377,6 @@ class ValidationScenarios:
             description="Case-insensitive choice",
         ),
     ]
-
     LENGTH_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="length_exact",
@@ -440,13 +424,12 @@ class ValidationScenarios:
             description="Zero-length string allowed",
         ),
     ]
-
     PATTERN_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="pattern_email_valid",
             validator_type="string",
             input_value="test@example.com",
-            input_params={"pattern": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
+            input_params={"pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$"},
             should_succeed=True,
             expected_value="test@example.com",
             description="Valid email pattern",
@@ -455,7 +438,7 @@ class ValidationScenarios:
             name="pattern_digits_only",
             validator_type="string",
             input_value="12345",
-            input_params={"pattern": r"^\d+$"},
+            input_params={"pattern": "^\\d+$"},
             should_succeed=True,
             expected_value="12345",
             description="Digits-only pattern",
@@ -464,7 +447,7 @@ class ValidationScenarios:
             name="pattern_alphanumeric",
             validator_type="string",
             input_value="abc123",
-            input_params={"pattern": r"^[a-zA-Z0-9]+$"},
+            input_params={"pattern": "^[a-zA-Z0-9]+$"},
             should_succeed=True,
             expected_value="abc123",
             description="Alphanumeric pattern",
@@ -473,14 +456,12 @@ class ValidationScenarios:
             name="pattern_mismatch",
             validator_type="string",
             input_value="invalid@",
-            input_params={"pattern": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
+            input_params={"pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$"},
             should_succeed=False,
             expected_error_contains="format is invalid",
             description="Pattern mismatch",
         ),
     ]
-
-    # Numeric Validators
     NON_NEGATIVE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="non_negative_zero",
@@ -523,7 +504,6 @@ class ValidationScenarios:
             description="None rejection",
         ),
     ]
-
     POSITIVE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="positive_one",
@@ -574,7 +554,6 @@ class ValidationScenarios:
             description="None rejection",
         ),
     ]
-
     RANGE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="range_within_bounds",
@@ -651,11 +630,6 @@ class ValidationScenarios:
     ]
 
 
-# =========================================================================
-# Centralized Parser Scenarios
-# =========================================================================
-
-
 class ParserScenarios:
     """Centralized parser scenarios - single source of truth."""
 
@@ -685,11 +659,6 @@ class ParserScenarios:
     ]
 
 
-# =========================================================================
-# Centralized Reliability Scenarios
-# =========================================================================
-
-
 class ReliabilityScenarios:
     """Centralized reliability scenarios - single source of truth."""
 
@@ -698,7 +667,7 @@ class ReliabilityScenarios:
             name="retry_immediate_success",
             strategy="retry",
             config=m.ConfigMap(
-                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
             ),
             simulate_failures=0,
             expected_state="success",
@@ -709,7 +678,7 @@ class ReliabilityScenarios:
             name="retry_after_one_failure",
             strategy="retry",
             config=m.ConfigMap(
-                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
             ),
             simulate_failures=1,
             expected_state="success",
@@ -720,7 +689,7 @@ class ReliabilityScenarios:
             name="retry_exhausted",
             strategy="retry",
             config=m.ConfigMap(
-                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10}
             ),
             simulate_failures=5,
             expected_state="exhausted",
@@ -728,7 +697,6 @@ class ReliabilityScenarios:
             description="All retries exhausted",
         ),
     ]
-
     CIRCUIT_BREAKER_SCENARIOS: ClassVar[list[ReliabilityScenario]] = [
         ReliabilityScenario(
             name="circuit_initial_closed",

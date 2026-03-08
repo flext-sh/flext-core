@@ -59,7 +59,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         ])
         if result.is_failure:
             return r[tuple[int, str]].fail(result.error or "make execution failed")
-
         output_model = result.value
         output = (output_model.stdout + "\n" + output_model.stderr).strip()
         return r[tuple[int, str]].ok((output_model.exit_code, output))
@@ -70,10 +69,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         return r[bool].ok(True)
 
     def phase_build(
-        self,
-        root: Path,
-        version: str,
-        project_names: list[str],
+        self, root: Path, version: str, project_names: list[str]
     ) -> r[bool]:
         """Execute the build phase.
 
@@ -100,11 +96,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             output_dir.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
             return r[bool].fail(f"report dir creation failed: {exc}")
-
         targets = self._build_targets(root, project_names)
         records: list[Mapping[str, str | int]] = []
         failures = 0
-
         for name, path in targets:
             make_result = self._run_make(path, c.Infra.Directories.BUILD)
             if make_result.is_failure:
@@ -123,23 +117,16 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 "log": str(log),
             })
             logger.info("release_phase_build_project", project=name, exit_code=code)
-
         report: Mapping[str, t.ContainerValue] = {
             c.Infra.Toml.VERSION: version,
             c.Infra.ReportKeys.TOTAL: len(records),
             "failures": failures,
             "records": records,
         }
-        u.Infra.Io.write_json(
-            output_dir / "build-report.json",
-            report,
-            sort_keys=True,
-        )
+        u.Infra.Io.write_json(output_dir / "build-report.json", report, sort_keys=True)
         logger.info(
-            "release_phase_build_report",
-            report=str(output_dir / "build-report.json"),
+            "release_phase_build_report", report=str(output_dir / "build-report.json")
         )
-
         if failures:
             return r[bool].fail(f"build failed: {failures} project(s)")
         return r[bool].ok(True)
@@ -182,32 +169,23 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             notes_dir.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
             return r[bool].fail(f"report dir creation failed: {exc}")
-
         notes_path = notes_dir / "RELEASE_NOTES.md"
         notes_result = self._generate_notes(
-            root,
-            version,
-            tag,
-            project_names,
-            notes_path,
+            root, version, tag, project_names, notes_path
         )
         if notes_result.is_failure:
             return notes_result
-
         if not dry_run:
             changelog_result = self._update_changelog(root, version, tag, notes_path)
             if changelog_result.is_failure:
                 return changelog_result
-
             tag_result = self._create_tag(root, tag)
             if tag_result.is_failure:
                 return tag_result
-
             if push:
                 push_result = self._push_release(root, tag)
                 if push_result.is_failure:
                     return push_result
-
         logger.info("release_phase_publish", tag=tag, dry_run=dry_run)
         return r[bool].ok(True)
 
@@ -260,11 +238,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         """
         versioning = FlextInfraVersioningService()
         target = f"{version}-dev" if dev_suffix else version
-
         parse_result = versioning.parse_semver(version)
         if parse_result.is_failure:
             return r[bool].fail(parse_result.error or "invalid version")
-
         files = self._version_files(root, project_names)
         changed = 0
         for path in files:
@@ -277,20 +253,11 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             changed += 1
             if not dry_run:
                 versioning.replace_project_version(path.parent, target)
-            logger.info(
-                "release_version_file_updated",
-                path=str(path),
-                target=target,
-            )
-
+            logger.info("release_version_file_updated", path=str(path), target=target)
         if dry_run:
             logger.info("release_phase_version_checked", checked_version=target)
         logger.info("release_phase_version_summary", files_changed=changed)
         return r[bool].ok(True)
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def run_release(
         self,
@@ -328,15 +295,11 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         """
         names = project_names or []
         spec = m.Infra.Release.ReleaseSpec(
-            version=version,
-            tag=tag,
-            bump_type=next_bump,
+            version=version, tag=tag, bump_type=next_bump
         )
-
         for phase in phases:
             if phase not in c.Infra.Release.VALID_PHASES:
                 return r[bool].fail(f"invalid phase: {phase}")
-
         logger.info(
             "release_run_started",
             release_version=spec.version,
@@ -344,12 +307,10 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             phases=phases,
             projects=names,
         )
-
-        if create_branches and not dry_run:
+        if create_branches and (not dry_run):
             branch_result = self._create_branches(root, version, names)
             if branch_result.is_failure:
                 return branch_result
-
         for phase in phases:
             result = self._dispatch_phase(
                 phase,
@@ -363,17 +324,13 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             )
             if result.is_failure:
                 return result
-
-        if next_dev and not dry_run:
+        if next_dev and (not dry_run):
             return self._bump_next_dev(root, version, names, next_bump)
-
         logger.info("release_run_completed", status=c.Infra.ReportKeys.OK)
         return r[bool].ok(True)
 
     def _build_targets(
-        self,
-        root: Path,
-        project_names: list[str],
+        self, root: Path, project_names: list[str]
     ) -> list[tuple[str, Path]]:
         """Resolve unique build targets from project names."""
         targets: list[tuple[str, Path]] = [(c.Infra.ReportKeys.ROOT, root)]
@@ -381,7 +338,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             targets.extend((p.name, p.path) for p in projects_result.value)
-
         seen: set[str] = set()
         unique: list[tuple[str, Path]] = []
         for name, path in targets:
@@ -392,11 +348,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         return unique
 
     def _bump_next_dev(
-        self,
-        root: Path,
-        version: str,
-        project_names: list[str],
-        bump: str,
+        self, root: Path, version: str, project_names: list[str], bump: str
     ) -> r[bool]:
         """Bump to the next development version."""
         versioning = FlextInfraVersioningService()
@@ -404,12 +356,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         if bump_result.is_failure:
             return r[bool].fail(bump_result.error or "bump failed")
         next_version = bump_result.value
-        result = self.phase_version(
-            root,
-            next_version,
-            project_names,
-            dev_suffix=True,
-        )
+        result = self.phase_version(root, next_version, project_names, dev_suffix=True)
         if result.is_success:
             logger.info("release_next_dev_version", version=f"{next_version}-dev")
         return result
@@ -420,10 +367,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         return FlextInfraGitService().log(root, rev)
 
     def _create_branches(
-        self,
-        root: Path,
-        version: str,
-        project_names: list[str],
+        self, root: Path, version: str, project_names: list[str]
     ) -> r[bool]:
         """Create local release branches for workspace and projects."""
         git = FlextInfraGitService()
@@ -431,7 +375,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         result = git.checkout(root, branch, create=True)
         if result.is_failure:
             return result
-
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
@@ -439,7 +382,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 proj_result = git.checkout(project.path, branch, create=True)
                 if proj_result.is_failure:
                     return proj_result
-
         return r[bool].ok(True)
 
     def _create_tag(self, root: Path, tag: str) -> r[bool]:
@@ -451,10 +393,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         if exists_result.value:
             return r[bool].ok(True)
         return git.create_tag(root, tag, f"release: {tag}")
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     def _dispatch_phase(
         self,
@@ -473,22 +411,13 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             return self.phase_validate(root, dry_run=dry_run)
         if phase == c.Infra.Toml.VERSION:
             return self.phase_version(
-                root,
-                version,
-                project_names,
-                dry_run=dry_run,
-                dev_suffix=dev_suffix,
+                root, version, project_names, dry_run=dry_run, dev_suffix=dev_suffix
             )
         if phase == c.Infra.Directories.BUILD:
             return self.phase_build(root, version, project_names)
         if phase == "publish":
             return self.phase_publish(
-                root,
-                version,
-                tag,
-                project_names,
-                dry_run=dry_run,
-                push=push,
+                root, version, tag, project_names, dry_run=dry_run, push=push
             )
         return r[bool].fail(f"unknown phase: {phase}")
 
@@ -505,13 +434,11 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         previous = previous_result.value if previous_result.is_success else ""
         changes_result = self._collect_changes(root, previous, tag)
         changes = changes_result.value if changes_result.is_success else ""
-
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         project_list: list[m.Infra.Workspace.ProjectInfo] = (
             projects_result.value if projects_result.is_success else []
         )
-
         lines: list[str] = [
             f"# Release {tag}",
             "",
@@ -542,7 +469,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             "- make validate VALIDATE_SCOPE=workspace",
             "- make build",
         ])
-
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             u.write_file(
@@ -564,17 +490,12 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         return FlextInfraGitService().push_release(root, tag)
 
     def _update_changelog(
-        self,
-        root: Path,
-        version: str,
-        tag: str,
-        notes_path: Path,
+        self, root: Path, version: str, tag: str, notes_path: Path
     ) -> r[bool]:
         """Update changelog and release notes files."""
         changelog_path = root / c.Infra.Directories.DOCS / "CHANGELOG.md"
         latest_path = root / c.Infra.Directories.DOCS / "releases" / "latest.md"
         tagged_path = root / c.Infra.Directories.DOCS / "releases" / f"{tag}.md"
-
         try:
             notes_text = notes_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             existing = (
@@ -582,16 +503,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 if changelog_path.exists()
                 else "# Changelog\n\n"
             )
-
             date = datetime.now(UTC).date().isoformat()
             heading = f"## {version} - "
-            section = (
-                f"{heading}{date}\n\n"
-                f"- Workspace release tag: `{tag}`\n"
-                "- Status: Alpha, non-production\n\n"
-                f"Full notes: `docs/releases/{tag}.md`\n\n"
-            )
-
+            section = f"{heading}{date}\n\n- Workspace release tag: `{tag}`\n- Status: Alpha, non-production\n\nFull notes: `docs/releases/{tag}.md`\n\n"
             if heading not in existing:
                 marker = "# Changelog\n\n"
                 if marker in existing:
@@ -600,24 +514,18 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                     updated = "# Changelog\n\n" + section + existing
             else:
                 updated = existing
-
             changelog_path.parent.mkdir(parents=True, exist_ok=True)
             u.write_file(changelog_path, updated, encoding=c.Infra.Encoding.DEFAULT)
             latest_path.parent.mkdir(parents=True, exist_ok=True)
             u.write_file(latest_path, notes_text, encoding=c.Infra.Encoding.DEFAULT)
             u.write_file(tagged_path, notes_text, encoding=c.Infra.Encoding.DEFAULT)
-
             logger.info("release_changelog_written", path=str(changelog_path))
             logger.info("release_tagged_notes_written", path=str(tagged_path))
             return r[bool].ok(True)
         except OSError as exc:
             return r[bool].fail(f"changelog update failed: {exc}")
 
-    def _version_files(
-        self,
-        root: Path,
-        project_names: list[str],
-    ) -> list[Path]:
+    def _version_files(self, root: Path, project_names: list[str]) -> list[Path]:
         """Discover pyproject.toml files that need version updates."""
         files: list[Path] = [root / c.Infra.Files.PYPROJECT_FILENAME]
         selector = FlextInfraProjectSelector()

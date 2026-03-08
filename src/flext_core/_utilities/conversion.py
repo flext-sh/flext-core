@@ -12,20 +12,13 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Literal, overload
 
-from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import r, t
 
 type StrictJsonValue = (
     t.Scalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue] | None
 )
-
-
-class _StrictJsonScalarModel(BaseModel):
-    """Strict scalar wrapper for narrow value validation."""
-
-    model_config = ConfigDict(extra="forbid", strict=True)
-    value: t.Scalar
 
 
 class FlextUtilitiesConversion:
@@ -42,11 +35,9 @@ class FlextUtilitiesConversion:
     """
 
     _strict_json_list_adapter: TypeAdapter[list[StrictJsonValue]] = TypeAdapter(
-        list[StrictJsonValue],
+        list[StrictJsonValue]
     )
-    _strict_json_scalar_adapter: TypeAdapter[t.Scalar] = TypeAdapter(
-        t.Scalar,
-    )
+    _strict_json_scalar_adapter: TypeAdapter[t.Scalar] = TypeAdapter(t.Scalar)
     _float_adapter = TypeAdapter(float)
     _str_adapter = TypeAdapter(str)
     _str_list_adapter = TypeAdapter(list[str])
@@ -108,24 +99,22 @@ class FlextUtilitiesConversion:
 
         """
         if mode == "to_str":
-            # Type narrowing: default should be str | None for to_str
             default_str: str | None = None
             if default is not None:
                 try:
                     default_str = FlextUtilitiesConversion._str_adapter.validate_python(
-                        default,
+                        default
                     )
                 except ValidationError:
                     default_str = None
             return FlextUtilitiesConversion.to_str(value, default=default_str)
         if mode == "to_str_list":
-            # Type narrowing: default should be list[str] | None for to_str_list
             default_list: list[str] | None = None
             if default is not None:
                 try:
                     default_list = (
                         FlextUtilitiesConversion._str_list_adapter.validate_python(
-                            default,
+                            default
                         )
                     )
                 except ValidationError:
@@ -138,29 +127,22 @@ class FlextUtilitiesConversion:
             try:
                 raw_values = (
                     FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
-                        value,
+                        value
                     )
                 )
             except ValidationError as err:
                 error_msg = "join mode requires Sequence"
                 raise TypeError(error_msg) from err
-            # Convert sequence items to strings for type safety
-            # Strings are valid sequences (of characters)
             str_values: list[str] = [str(v) for v in raw_values]
             return FlextUtilitiesConversion.join(
-                str_values,
-                separator=separator,
-                case=case,
+                str_values, separator=separator, case=case
             )
         error_msg = f"Unknown mode: {mode}"
         raise ValueError(error_msg)
 
     @staticmethod
     def join(
-        values: Sequence[str],
-        *,
-        separator: str = " ",
-        case: str | None = None,
+        values: Sequence[str], *, separator: str = " ", case: str | None = None
     ) -> str:
         """Join string values with separator and optional case conversion.
 
@@ -183,11 +165,7 @@ class FlextUtilitiesConversion:
         return separator.join(normalized)
 
     @staticmethod
-    def normalize(
-        value: StrictJsonValue,
-        *,
-        case: str | None = None,
-    ) -> str:
+    def normalize(value: StrictJsonValue, *, case: str | None = None) -> str:
         """Normalize string value with optional case conversion.
 
         Args:
@@ -219,9 +197,6 @@ class FlextUtilitiesConversion:
             FlextResult containing strict scalar value or failure
 
         """
-        # Strict scalar = str | int | float | bool | datetime | None
-        #                | Sequence[scalar] | Mapping[str, scalar]
-        # where scalar = str | int | float | bool | datetime | None
         if value is None:
             return r[t.Scalar].fail("None is not a scalar-compatible value")
         if isinstance(value, (BaseModel, Mapping, list, tuple, set, frozenset)):
@@ -231,7 +206,12 @@ class FlextUtilitiesConversion:
             if callable(isoformat_method):
                 return r[t.Scalar].ok(str(value))
         try:
-            return r[t.Scalar].ok(_StrictJsonScalarModel(value=value).value)
+            strict_value = (
+                FlextUtilitiesConversion._strict_json_scalar_adapter.validate_python(
+                    value
+                )
+            )
+            return r[t.Scalar].ok(strict_value)
         except ValidationError:
             return r[t.Scalar].ok(str(value))
 
@@ -253,7 +233,6 @@ class FlextUtilitiesConversion:
             return str(value)
         try:
             float_value = FlextUtilitiesConversion._float_adapter.validate_python(value)
-            # Format float to 2 decimal places if it's a decimal number
             if float_value.is_integer():
                 return str(int(float_value))
             return f"{float_value:.2f}"
@@ -263,9 +242,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: StrictJsonValue,
-        *,
-        default: list[str] | None = None,
+        value: StrictJsonValue, *, default: list[str] | None = None
     ) -> list[str]:
         """Convert value to list of strings.
 
@@ -285,7 +262,7 @@ class FlextUtilitiesConversion:
         try:
             list_value = (
                 FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
-                    value,
+                    value
                 )
             )
             return [str(item) for item in list_value if item is not None]
@@ -295,9 +272,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list_safe(
-        value: StrictJsonValue,
-        *,
-        filter_list_like: bool = True,
+        value: StrictJsonValue, *, filter_list_like: bool = True
     ) -> list[str]:
         """Convert value to list[str] with safe nested list handling.
 
@@ -320,7 +295,6 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return []
-
         items: list[StrictJsonValue] = []
         value_class = value.__class__
         if value_class is str:
@@ -329,40 +303,38 @@ class FlextUtilitiesConversion:
             try:
                 items = (
                     FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
-                        value,
+                        value
                     )
                 )
             except ValidationError:
                 items = []
         else:
             items = [value]
-
         filtered_items: list[StrictJsonValue]
         if filter_list_like:
             filtered_items = [
                 item
                 for item in items
                 if item is not None
-                and not (
-                    item.__class__ in {list, tuple, set, frozenset}
-                    or (
-                        item.__class__ in {list, tuple}
+                and (
+                    not (
+                        item.__class__ in {list, tuple, set, frozenset}
                         or (
-                            hasattr(item, "__getitem__")
-                            and item.__class__ not in {str, bytes}
+                            item.__class__ in {list, tuple}
+                            or (
+                                hasattr(item, "__getitem__")
+                                and item.__class__ not in {str, bytes}
+                            )
                         )
                     )
                 )
             ]
         else:
             filtered_items = [item for item in items if item is not None]
-
         return [str(item) for item in filtered_items]
 
     @staticmethod
-    def to_str_list_truthy(
-        value: StrictJsonValue,
-    ) -> list[str]:
+    def to_str_list_truthy(value: StrictJsonValue) -> list[str]:
         """Convert value to list[str] filtering out falsy values.
 
         Converts value to list of strings while filtering out falsy

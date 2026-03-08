@@ -188,7 +188,6 @@ class TestFlextInfraPatternsPatternTypes:
             FlextInfraPatterns.MARKDOWN_LINK_RE,
         ]
         for pattern in patterns:
-            # Check that pattern is Pattern[str]
             assert hasattr(pattern, "pattern")
             assert isinstance(pattern.pattern, str)
 

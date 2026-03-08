@@ -31,11 +31,7 @@ from typing import ClassVar
 import pytest
 from pydantic import Field, ValidationError, field_validator
 
-from flext_core import (
-    c,
-    m,
-    t,
-)
+from flext_core import c, m, t
 from flext_core._models.domain_event import _ComparableConfigMap
 from flext_tests import tm, u
 
@@ -118,20 +114,13 @@ class TestFlextModels:
         entity = TestEntity(name="Test User", email="test@example.com")
         tm.that(entity.name, eq="Test User", msg="Entity name must match input")
         tm.that(
-            entity.email,
-            eq="test@example.com",
-            msg="Entity email must match input",
+            entity.email, eq="test@example.com", msg="Entity email must match input"
         )
         tm.that("@" in entity.email, eq=True, msg="Entity email must contain @")
         tm.that(
-            entity.unique_id,
-            none=False,
-            empty=False,
-            msg="Entity must have unique_id",
+            entity.unique_id, none=False, empty=False, msg="Entity must have unique_id"
         )
         tm.that(entity.unique_id, is_=str, msg="Entity unique_id must be string")
-        # Create dict with only actual model fields (exclude computed fields)
-        # In Pydantic v2, iterate model_fields and only include existing keys
         dumped = entity.model_dump()
         entity_dict = {k: dumped[k] for k in type(entity).model_fields if k in dumped}
         tm.that(entity_dict, has="name", msg="Entity dict must contain name")
@@ -167,23 +156,13 @@ class TestFlextModels:
 
     def test_models_aggregate_root_creation(self) -> None:
         """Test aggregate root creation and basic functionality with real validation."""
-        # AggregateRoot is defined as subclass of Entity in the type system
-        tm.that(
-            True,  # Type relationship verified at type level
-            eq=True,
-            msg="AggregateRoot must be subclass of Entity",
-        )
+        tm.that(True, eq=True, msg="AggregateRoot must be subclass of Entity")
         tm.that(
             hasattr(m.AggregateRoot, "_invariants"),
             eq=True,
             msg="AggregateRoot must have _invariants attribute",
         )
-        # _invariants is defined as ClassVar[list] in AggregateRoot
-        tm.that(
-            True,  # Type relationship verified at type level
-            eq=True,
-            msg="AggregateRoot _invariants must be a list",
-        )
+        tm.that(True, eq=True, msg="AggregateRoot _invariants must be a list")
         tm.that(
             hasattr(m.AggregateRoot, "check_invariants"),
             eq=True,
@@ -219,10 +198,7 @@ class TestFlextModels:
 
     def test_models_metadata_creation(self) -> None:
         """Test metadata model creation."""
-        metadata = m.Metadata(
-            created_by="test_user",
-            tags=["tag1", "tag2"],
-        )
+        metadata = m.Metadata(created_by="test_user", tags=["tag1", "tag2"])
         tm.that(
             metadata.created_by,
             eq="test_user",
@@ -265,9 +241,7 @@ class TestFlextModels:
         tm.that(initial_version, gt=0, msg="Initial version must be positive")
         entity.increment_version()
         tm.that(
-            entity.version,
-            eq=initial_version + 1,
-            msg="Version must increment by 1",
+            entity.version, eq=initial_version + 1, msg="Version must increment by 1"
         )
         tm.that(
             entity.version,
@@ -284,9 +258,7 @@ class TestFlextModels:
         entity = TimestampedEntity(name="Test")
         initial_created = entity.created_at
         tm.that(
-            initial_created,
-            none=False,
-            msg="Entity must have created_at timestamp",
+            initial_created, none=False, msg="Entity must have created_at timestamp"
         )
         entity.update_timestamp()
         tm.that(
@@ -294,8 +266,6 @@ class TestFlextModels:
             none=False,
             msg="Entity must have updated_at after update",
         )
-        # Type narrowing: updated_at is not None after check
-        # initial_created is already verified to be not None above
         if entity.updated_at is not None:
             tm.that(
                 entity.updated_at > initial_created,
@@ -415,9 +385,8 @@ class TestFlextModels:
             eq=True,
             msg="Entities with different unique_id must not be equal",
         )
-        # Test that Entity != non-Entity types (always False)
         tm.that(
-            (entity1 == "not an entity"),
+            entity1 == "not an entity",
             eq=False,
             msg="Entity must not equal non-entity object",
         )
@@ -431,8 +400,6 @@ class TestFlextModels:
             eq=True,
             msg="Entities with different unique_id must have different hash",
         )
-        # Entity implements __hash__, so it's hashable for sets
-        # Use list and convert to set to avoid pyright hashability check
         entity_list: list[TestEntity] = [entity1, entity2, entity3]
         entity_set = set(entity_list)
         tm.that(len(entity_set), eq=2, msg="Set must contain 2 unique entities")
@@ -445,9 +412,7 @@ class TestFlextModels:
 
         entity = TestEntity(name="test")
         tm.that(
-            len(entity.domain_events),
-            eq=0,
-            msg="New entity must have no domain events",
+            len(entity.domain_events), eq=0, msg="New entity must have no domain events"
         )
         result = entity.add_domain_event(
             "test_event", m.ConfigMap(root={"data": "value"})
@@ -472,9 +437,7 @@ class TestFlextModels:
         )
         cleared_events = entity.clear_domain_events()
         tm.that(
-            len(cleared_events),
-            eq=1,
-            msg="clear_domain_events must return 1 event",
+            len(cleared_events), eq=1, msg="clear_domain_events must return 1 event"
         )
         tm.that(
             len(entity.domain_events),
@@ -492,7 +455,6 @@ class TestFlextModels:
         result = entity.add_domain_event("", m.ConfigMap(root={"data": "value"}))
         u.Tests.Result.assert_failure(result)
         tm.that(result.error, none=False, msg="Failure result must have error message")
-        # Type narrowing: error is not None after check
         if result.error is not None:
             tm.that(
                 "Domain event name must be a non-empty string" in result.error,
@@ -500,14 +462,11 @@ class TestFlextModels:
                 msg="Error message must indicate empty event name",
             )
         result = entity.add_domain_event(
-            "valid",
-            m.ConfigMap(root={"string": "value", "number": 42}),
+            "valid", m.ConfigMap(root={"string": "value", "number": 42})
         )
         u.Tests.Result.assert_success(result)
         tm.that(
-            len(entity.domain_events),
-            eq=1,
-            msg="Entity must have 1 valid domain event",
+            len(entity.domain_events), eq=1, msg="Entity must have 1 valid domain event"
         )
 
     def test_entity_initial_version(self) -> None:
@@ -517,7 +476,6 @@ class TestFlextModels:
             name: str
 
         entity = TestEntity(name="test")
-        # is_initial_version was removed during infra migration
         assert entity.version == 1
 
     def test_timestampable_mixin_serialization(self) -> None:
@@ -609,8 +567,6 @@ class TestFlextModels:
         value3 = TestValue(name="other", value=42)
         assert value1 == value2
         assert value1 != value3
-        # Value implements __hash__, so it's hashable for sets
-        # Use list and convert to set to avoid pyright hashability check
         value_list: list[TestValue] = [value1, value2, value3]
         value_set = set(value_list)
         assert len(value_set) == 2
@@ -646,8 +602,7 @@ class TestFlextModels:
     def test_query_creation(self) -> None:
         """Test Query creation."""
         query = m.Query(
-            query_type="find_users",
-            filters=m.Dict(root={"active": "true"}),
+            query_type="find_users", filters=m.Dict(root={"active": "true"})
         )
         assert hasattr(query, "query_id")
         assert query.query_id is not None
@@ -690,7 +645,6 @@ class TestFlextModels:
             name: str
 
         aggregate = TestAggregate(name="test")
-        # Convert to proper type: Sequence[tuple[str, EventDataMapping | None]]
         events = [
             ("event1", m.ConfigMap(root={"data": "value1"})),
             ("event2", m.ConfigMap(root={"data": "value2"})),
@@ -712,9 +666,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_events_bulk([])
         u.Tests.Result.assert_success(result)
-        invalid_empty_name = [
-            ("", m.ConfigMap(root={"data": "value"})),
-        ]
+        invalid_empty_name = [("", m.ConfigMap(root={"data": "value"}))]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
         u.Tests.Result.assert_failure(result)
         assert (
@@ -770,8 +722,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_event(
-            "failing_event",
-            m.ConfigMap(root={"data": "value"}),
+            "failing_event", m.ConfigMap(root={"data": "value"})
         )
         u.Tests.Result.assert_success(result)
 
@@ -793,10 +744,7 @@ class TestFlextModels:
 
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
-        command = m.Command(
-            command_type="CreateOrder",
-            issuer_id="issuer-123",
-        )
+        command = m.Command(command_type="CreateOrder", issuer_id="issuer-123")
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
         assert command.message_type == c.Cqrs.HandlerType.COMMAND
@@ -818,8 +766,7 @@ class TestFlextModels:
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
         request = m.ProcessingRequest(
-            data=m.ConfigMap(root={"input": "data"}),
-            enable_validation=True,
+            data=m.ConfigMap(root={"input": "data"}), enable_validation=True
         )
         assert getattr(request.data, "root", request.data) == {"input": "data"}
         assert request.enable_validation is True
@@ -832,9 +779,7 @@ class TestFlextModels:
             return value
 
         reg = m.HandlerRegistration(
-            name="TestHandler",
-            handler=dummy_handler,
-            event_types=["CreateUser"],
+            name="TestHandler", handler=dummy_handler, event_types=["CreateUser"]
         )
         assert reg.name == "TestHandler"
         assert callable(reg.handler)
@@ -844,9 +789,7 @@ class TestFlextModels:
         """Test BatchProcessingConfig model — source has recursion bug in validate_cross_fields."""
         with pytest.raises(RecursionError):
             m.BatchProcessingConfig(
-                batch_size=100,
-                continue_on_error=True,
-                data_items=[1, 2, 3],
+                batch_size=100, continue_on_error=True, data_items=[1, 2, 3]
             )
 
     def test_handler_execution_config_model(self) -> None:
@@ -875,7 +818,6 @@ class TestFlextModels:
             msg="initial_delay_seconds must be 1000",
         )
         tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
-        # Test default values for retry_on_exceptions and retry_on_status_codes
         tm.that(
             retry.retry_on_exceptions,
             is_=list,
@@ -894,8 +836,7 @@ class TestFlextModels:
     def test_retry_configuration_with_exceptions(self) -> None:
         """Test RetryConfiguration with retry_on_exceptions."""
         retry = m.RetryConfiguration(
-            max_attempts=3,
-            retry_on_exceptions=[ValueError, RuntimeError, TypeError],
+            max_attempts=3, retry_on_exceptions=[ValueError, RuntimeError, TypeError]
         )
         tm.that(
             retry.retry_on_exceptions,
@@ -928,8 +869,7 @@ class TestFlextModels:
     def test_retry_configuration_with_status_codes(self) -> None:
         """Test RetryConfiguration with retry_on_status_codes."""
         retry = m.RetryConfiguration(
-            max_attempts=3,
-            retry_on_status_codes=[500, 502, 503, 504],
+            max_attempts=3, retry_on_status_codes=[500, 502, 503, 504]
         )
         tm.that(
             retry.retry_on_status_codes,
@@ -1011,17 +951,13 @@ class TestFlextModels:
     def test_validation_configuration_model(self) -> None:
         """Test ValidationConfiguration model with correct fields."""
         val_config = m.ValidationConfiguration(
-            validate_on_assignment=True,
-            validate_on_read=False,
-            custom_validators=[],
+            validate_on_assignment=True, validate_on_read=False, custom_validators=[]
         )
         assert val_config.validate_on_assignment is True
 
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""
-        handler_config = m.HandlerExecutionConfig(
-            handler_name="CreateUserHandler",
-        )
+        handler_config = m.HandlerExecutionConfig(handler_name="CreateUserHandler")
         assert handler_config.handler_name == "CreateUserHandler"
 
     def test_pagination_model_creation(self) -> None:
@@ -1070,8 +1006,7 @@ class TestFlextModels:
     def test_handler_execution_context_model(self) -> None:
         """Test HandlerExecutionContext model creation."""
         context = m.HandlerExecutionContext.create_for_handler(
-            handler_name="ProcessOrderCommand",
-            handler_mode="command",
+            handler_name="ProcessOrderCommand", handler_mode="command"
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"

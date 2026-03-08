@@ -22,7 +22,6 @@ def test_basemk_main_with_no_command() -> None:
     with patch("sys.argv", ["basemk"]):
         with patch("flext_infra.output.output"):
             result = main(argv=[])
-
             assert result == 1
 
 
@@ -30,16 +29,13 @@ def test_basemk_main_with_generate_command() -> None:
     """Test main() with generate command succeeds."""
     with patch("sys.stdout", new_callable=StringIO):
         result = main(argv=["generate"])
-
         assert result == 0
 
 
 def test_basemk_main_with_output_file(tmp_path: Path) -> None:
     """Test main() writes to output file when specified."""
     output_file = tmp_path / "base.mk"
-
     result = main(argv=["generate", "--output", str(output_file)])
-
     assert result == 0
     assert output_file.exists()
     content = output_file.read_text(encoding="utf-8")
@@ -49,11 +45,9 @@ def test_basemk_main_with_output_file(tmp_path: Path) -> None:
 def test_basemk_main_with_project_name(tmp_path: Path) -> None:
     """Test main() accepts project name override."""
     output_file = tmp_path / "base.mk"
-
     result = main(
         argv=["generate", "--project-name", "my-project", "--output", str(output_file)]
     )
-
     assert result == 0
     assert output_file.exists()
 
@@ -70,21 +64,18 @@ def test_basemk_main_ensures_structlog_configured() -> None:
     with patch("flext_core.FlextRuntime.ensure_structlog_configured") as mock_ensure:
         with patch("sys.stdout", new_callable=StringIO):
             main(argv=["generate"])
-
             assert mock_ensure.call_count >= 1
 
 
 def test_basemk_build_config_with_none() -> None:
     """Test _build_config returns None when project_name is None."""
     result = _build_config(None)
-
     assert result is None
 
 
 def test_basemk_build_config_with_project_name() -> None:
     """Test _build_config returns config with project name."""
     result = _build_config("my-project")
-
     assert result is not None
     assert result.project_name == "my-project"
 
@@ -94,7 +85,6 @@ def test_basemk_main_with_none_argv() -> None:
     with patch("sys.argv", ["basemk", "generate"]):
         with patch("sys.stdout", new_callable=StringIO):
             result = main(argv=None)
-
             assert result == 0
 
 
@@ -102,7 +92,6 @@ def test_basemk_main_output_to_stdout() -> None:
     """Test main() outputs to stdout when no output file specified."""
     with patch("sys.stdout", new_callable=StringIO):
         result = main(argv=["generate"])
-
         assert result == 0
 
 

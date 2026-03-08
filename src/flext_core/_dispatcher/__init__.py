@@ -22,8 +22,6 @@ if TYPE_CHECKING:
         RetryPolicy,
     )
     from flext_core._dispatcher.timeout import TimeoutEnforcer
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CircuitBreakerManager": (
         "flext_core._dispatcher.reliability",
@@ -36,7 +34,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "m": ("flext_core", "m"),
     "t": ("flext_core", "FlextTypes"),
 }
-
 __all__ = [
     "CircuitBreakerManager",
     "FlextTypes",

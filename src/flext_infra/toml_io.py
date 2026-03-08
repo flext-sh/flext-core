@@ -45,10 +45,7 @@ class FlextInfraTomlService(s[bool]):
         return table
 
     @staticmethod
-    def value_differs(
-        current: object,
-        expected: object,
-    ) -> bool:
+    def value_differs(current: object, expected: object) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.
@@ -73,9 +70,7 @@ class FlextInfraTomlService(s[bool]):
         if not path.exists():
             return r[t.Infra.ContainerDict].ok({})
         try:
-            data_raw = tomllib.loads(
-                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
-            )
+            data_raw = tomllib.loads(path.read_text(encoding=c.Infra.Encoding.DEFAULT))
             data: t.Infra.ContainerDict = data_raw
             return r[t.Infra.ContainerDict].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
@@ -96,14 +91,10 @@ class FlextInfraTomlService(s[bool]):
         if not path.exists():
             return r[tomlkit.TOMLDocument].fail(f"file not found: {path}")
         try:
-            doc = tomlkit.parse(
-                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
-            )
+            doc = tomlkit.parse(path.read_text(encoding=c.Infra.Encoding.DEFAULT))
             return r[tomlkit.TOMLDocument].ok(doc)
         except (tomlkit.exceptions.ParseError, OSError) as exc:
-            return r[tomlkit.TOMLDocument].fail(
-                f"TOML document read error: {exc}",
-            )
+            return r[tomlkit.TOMLDocument].fail(f"TOML document read error: {exc}")
 
     def sync_mapping(
         self,
@@ -148,7 +139,6 @@ class FlextInfraTomlService(s[bool]):
             if self.value_differs(current, expected):
                 target[key] = expected
                 updated.append(path)
-
         if not prune_extras:
             return
         for key in list(target.keys()):
@@ -159,9 +149,7 @@ class FlextInfraTomlService(s[bool]):
             removed.append(path)
 
     def write(
-        self,
-        path: Path,
-        payload: tomlkit.TOMLDocument | t.Infra.ContainerDict,
+        self, path: Path, payload: tomlkit.TOMLDocument | t.Infra.ContainerDict
     ) -> r[bool]:
         """Write a TOML payload to a file.
 
@@ -180,7 +168,6 @@ class FlextInfraTomlService(s[bool]):
             if isinstance(payload, tomlkit.TOMLDocument):
                 content = payload.as_string()
             else:
-                # Convert dict to TOMLDocument
                 doc = tomlkit.document()
                 for key, value in payload.items():
                     nested_mapping = u.Infra.Toml.as_toml_mapping(value)
@@ -194,11 +181,7 @@ class FlextInfraTomlService(s[bool]):
         except (OSError, TypeError) as exc:
             return r[bool].fail(f"TOML write error: {exc}")
 
-    def write_document(
-        self,
-        path: Path,
-        doc: tomlkit.TOMLDocument,
-    ) -> r[bool]:
+    def write_document(self, path: Path, doc: tomlkit.TOMLDocument) -> r[bool]:
         """Write a tomlkit document to a TOML file.
 
         Args:
@@ -210,10 +193,7 @@ class FlextInfraTomlService(s[bool]):
 
         """
         try:
-            _ = path.write_text(
-                doc.as_string(),
-                encoding=c.Infra.Encoding.DEFAULT,
-            )
+            _ = path.write_text(doc.as_string(), encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"TOML write error: {exc}")
         return r[bool].ok(True)

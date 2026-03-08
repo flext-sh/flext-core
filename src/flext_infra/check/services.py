@@ -45,9 +45,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir = self._reporting.get_report_dir(
-            self._workspace_root,
-            c.Infra.Toml.PROJECT,
-            c.Infra.Verbs.CHECK,
+            self._workspace_root, c.Infra.Toml.PROJECT, c.Infra.Verbs.CHECK
         )
         try:
             report_dir.mkdir(parents=True, exist_ok=True)
@@ -74,8 +72,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
 
     @staticmethod
     def generate_sarif_report(
-        results: list[m.Infra.Check.ProjectResult],
-        gates: list[str],
+        results: list[m.Infra.Check.ProjectResult], gates: list[str]
     ) -> Mapping[str, t.ContainerValue]:
         """Render gate results as a SARIF 2.1.0 payload."""
         tool_info = {
@@ -94,14 +91,12 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             ),
             c.Infra.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
         }
-
         sarif_runs: list[m.Infra.Check.Sarif.Run] = []
         for gate in gates:
             tool_name, tool_url = tool_info.get(gate, (gate, ""))
             sarif_results: list[m.Infra.Check.Sarif.Result] = []
             rules_seen: set[str] = set()
             rules: list[m.Infra.Check.Sarif.Rule] = []
-
             for project in results:
                 gate_result = project.gates.get(gate)
                 if not gate_result:
@@ -112,38 +107,33 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                         rules_seen.add(rule_id)
                         rules.append(
                             m.Infra.Check.Sarif.Rule(
-                                id=rule_id,
-                                short_description=rule_id,
-                            ),
+                                id=rule_id, short_description=rule_id
+                            )
                         )
                     sarif_results.append(
                         m.Infra.Check.Sarif.Result(
                             rule_id=rule_id,
-                            level=(
-                                c.Infra.Toml.ERROR
-                                if issue.severity == "error"
-                                else c.Infra.Severity.WARNING
-                            ),
+                            level=c.Infra.Toml.ERROR
+                            if issue.severity == "error"
+                            else c.Infra.Severity.WARNING,
                             message=issue.message,
                             locations=[
                                 m.Infra.Check.Sarif.Location(
                                     uri=issue.file,
                                     start_line=max(issue.line, 1),
                                     start_column=max(issue.column, 1),
-                                ),
+                                )
                             ],
-                        ),
+                        )
                     )
-
             sarif_runs.append(
                 m.Infra.Check.Sarif.Run(
                     tool_name=tool_name,
                     information_uri=tool_url,
                     rules=rules,
                     results=sarif_results,
-                ),
+                )
             )
-
         return m.Infra.Check.Sarif.Report(runs=sarif_runs).model_dump(by_alias=True)
 
     @staticmethod
@@ -204,7 +194,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             "## Summary",
             "",
         ]
-
         header = "| Project |"
         sep = "|---------|"
         for gate in gates:
@@ -213,14 +202,13 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         header += " Total | Status |"
         sep += "-------|--------|"
         lines.extend([header, sep])
-
         total_all = 0
         failed_count = 0
         for project in results:
             row = f"| {project.project} |"
             for gate in gates:
                 gate_result = project.gates.get(gate)
-                row += f" {len(gate_result.issues) if gate_result else 0} |"
+                row += f" {(len(gate_result.issues) if gate_result else 0)} |"
             status = (
                 c.Infra.Status.PASS if project.passed else f"**{c.Infra.Status.FAIL}**"
             )
@@ -229,20 +217,14 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             row += f" {project.total_errors} | {status} |"
             total_all += project.total_errors
             lines.append(row)
-
-        lines.extend(
-            [
-                "",
-                f"**Total errors**: {total_all}  ",
-                f"**Failed projects**: {failed_count}/{len(results)}  ",
-                "",
-            ],
-        )
-
+        lines.extend([
+            "",
+            f"**Total errors**: {total_all}  ",
+            f"**Failed projects**: {failed_count}/{len(results)}  ",
+            "",
+        ])
         for project in sorted(
-            results,
-            key=lambda item: item.total_errors,
-            reverse=True,
+            results, key=lambda item: item.total_errors, reverse=True
         ):
             if project.total_errors == 0:
                 continue
@@ -262,10 +244,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 )
                 if len(gate_result.issues) > c.Infra.Check.MAX_DISPLAY_ISSUES:
                     lines.append(
-                        f"... and {len(gate_result.issues) - c.Infra.Check.MAX_DISPLAY_ISSUES} more errors",
+                        f"... and {len(gate_result.issues) - c.Infra.Check.MAX_DISPLAY_ISSUES} more errors"
                     )
                 lines.extend(["```", ""])
-
         return "\n".join(lines)
 
     def lint(self, project_dir: Path) -> r[m.Infra.Check.GateResult]:
@@ -273,9 +254,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return r[m.Infra.Check.GateResult].ok(self._run_ruff_lint(project_dir).result)
 
     def run(
-        self,
-        project: str,
-        gates: Sequence[str],
+        self, project: str, gates: Sequence[str]
     ) -> r[list[m.Infra.Check.ProjectResult]]:
         """Run selected gates for a single project."""
         return self.run_projects([project], list(gates)).map(lambda value: value)
@@ -292,19 +271,16 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         resolved_gates_result = self.resolve_gates(gates)
         if resolved_gates_result.is_failure:
             return r[list[m.Infra.Check.ProjectResult]].fail(
-                resolved_gates_result.error or "invalid gates",
+                resolved_gates_result.error or "invalid gates"
             )
         resolved_gates: list[str] = resolved_gates_result.value
-
         report_base = reports_dir or self._default_reports_dir
         report_base.mkdir(parents=True, exist_ok=True)
-
         results: list[m.Infra.Check.ProjectResult] = []
         total = len(projects)
         failed = 0
         skipped = 0
         loop_start = time.monotonic()
-
         for index, project_name in enumerate(projects, 1):
             project_dir = self._workspace_root / project_name
             pyproject_path = project_dir / c.Infra.Files.PYPROJECT_FILENAME
@@ -312,17 +288,13 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 output.progress(index, total, project_name, c.Infra.Severity.SKIP)
                 skipped += 1
                 continue
-
             output.progress(index, total, project_name, c.Infra.Verbs.CHECK)
             start = time.monotonic()
             project_result = self._check_project(
-                project_dir,
-                resolved_gates,
-                report_base,
+                project_dir, resolved_gates, report_base
             )
             elapsed = time.monotonic() - start
             results.append(project_result)
-
             if project_result.passed:
                 output.status(c.Infra.Verbs.CHECK, project_name, True, elapsed)
             else:
@@ -330,24 +302,20 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 failed += 1
                 if fail_fast:
                     break
-
         total_elapsed = time.monotonic() - loop_start
-
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
         md_path = report_base / "check-report.md"
         _ = md_path.write_text(
             self.generate_markdown_report(results, resolved_gates, timestamp),
             encoding=c.Infra.Encoding.DEFAULT,
         )
-
         sarif_path = report_base / "check-report.sarif"
         sarif_payload = self.generate_sarif_report(results, resolved_gates)
         json_write_result = self._json.write(sarif_path, sarif_payload)
         if json_write_result.is_failure:
             return r[list[m.Infra.Check.ProjectResult]].fail(
-                json_write_result.error or "failed to write sarif report",
+                json_write_result.error or "failed to write sarif report"
             )
-
         total_errors = sum(project.total_errors for project in results)
         success = len(results) - failed
         output.summary(
@@ -355,13 +323,10 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         output.info(f"Reports: {md_path}")
         output.info(f"         {sarif_path}")
-
         if total_errors > 0:
             output.info("Errors by project:")
             for project in sorted(
-                results,
-                key=lambda item: item.total_errors,
-                reverse=True,
+                results, key=lambda item: item.total_errors, reverse=True
             ):
                 if project.total_errors == 0:
                     continue
@@ -371,9 +336,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     if gate in project.gates and len(project.gates[gate].issues) > 0
                 )
                 output.error(
-                    f"{project.project:30s} {project.total_errors:6d}  ({breakdown})",
+                    f"{project.project:30s} {project.total_errors:6d}  ({breakdown})"
                 )
-
         return r[list[m.Infra.Check.ProjectResult]].ok(results)
 
     def _build_gate_result(
@@ -398,10 +362,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
 
     def _check_project(
-        self,
-        project_dir: Path,
-        gates: list[str],
-        reports_dir: Path,
+        self, project_dir: Path, gates: list[str], reports_dir: Path
     ) -> m.Infra.Check.ProjectResult:
         result = m.Infra.Check.ProjectResult(project=project_dir.name)
         runners: Mapping[str, Callable[[], m.Infra.Check.GateExecution]] = {
@@ -450,8 +411,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
 
     @classmethod
     def _to_mapping_list(
-        cls,
-        value: t.ContainerValue,
+        cls, value: t.ContainerValue
     ) -> list[dict[str, t.ContainerValue]]:
         if not isinstance(value, list):
             return []
@@ -493,10 +453,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
 
     @classmethod
     def _nested_int(
-        cls,
-        data: dict[str, t.ContainerValue],
-        *keys: str,
-        default: int = 0,
+        cls, data: dict[str, t.ContainerValue], *keys: str, default: int = 0
     ) -> int:
         """Walk keys into nested mappings, returning an int leaf or *default*."""
         target = cls._nested_mapping(data, *keys[:-1])
@@ -528,19 +485,13 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         timeout: int = c.Infra.Timeouts.DEFAULT,
         env: Mapping[str, str] | None = None,
     ) -> m.Infra.Core.CommandOutput:
-        result = self._runner.run_raw(
-            cmd,
-            cwd=cwd,
-            timeout=timeout,
-            env=env,
-        )
+        result = self._runner.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
         if result.is_failure:
             return m.Infra.Core.CommandOutput(
                 stdout="",
                 stderr=result.error or "command execution failed",
                 exit_code=1,
             )
-
         cmd_output: m.Infra.Core.CommandOutput = result.value
         return m.Infra.Core.CommandOutput(
             stdout=cmd_output.stdout,
@@ -592,8 +543,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     code=self._as_str(raw_item.get("test_id", "")),
                     message=self._as_str(raw_item.get("issue_text", "")),
                     severity=self._as_str(
-                        raw_item.get("issue_severity", "MEDIUM"),
-                        "MEDIUM",
+                        raw_item.get("issue_severity", "MEDIUM"), "MEDIUM"
                     ).lower(),
                 )
                 for raw_item in raw_results
@@ -622,7 +572,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             )
         issues: list[m.Infra.Check.Issue] = []
         raw_output = ""
-
         vet_result = self._run(
             [c.Infra.Cli.GOVET, "vet", "./..."],
             project_dir,
@@ -642,9 +591,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     column=int(match.group("col") or 1),
                     code=c.Infra.Gates.GOVET,
                     message=match.group("msg"),
-                ),
+                )
             )
-        if self._result_exit_code(vet_result) != 0 and not issues:
+        if self._result_exit_code(vet_result) != 0 and (not issues):
             issues.append(
                 m.Infra.Check.Issue(
                     file=".",
@@ -654,9 +603,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     message=(
                         vet_result.stdout or vet_result.stderr or "go vet failed"
                     ).strip(),
-                ),
+                )
             )
-
         go_files = list(project_dir.rglob("*.go"))
         if go_files:
             fmt_result = self._run(
@@ -685,9 +633,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                         column=1,
                         code=c.Infra.Gates.GOFMT,
                         message="File is not gofmt-formatted",
-                    ),
+                    )
                 )
-
         return self._build_gate_result(
             gate=c.Infra.Gates.GO,
             project=project_dir.name,
@@ -730,9 +677,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     column=int(match.group("col") or 1),
                     code=match.group("code"),
                     message=match.group("msg"),
-                ),
+                )
             )
-        if self._result_exit_code(result) != 0 and not issues:
+        if self._result_exit_code(result) != 0 and (not issues):
             issues.append(
                 m.Infra.Check.Issue(
                     file=".",
@@ -742,9 +689,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     message=(
                         result.stdout or result.stderr or "markdownlint failed"
                     ).strip(),
-                ),
+                )
             )
-
         return self._build_gate_result(
             gate=c.Infra.Gates.MARKDOWN,
             project=project_dir.name,
@@ -767,7 +713,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 duration=time.monotonic() - started,
                 raw_output="",
             )
-
         proj_py = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         cfg = (
             proj_py
@@ -784,7 +729,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             mypy_env["MYPYPATH"] = str(typings_generated) + (
                 f":{existing}" if existing else ""
             )
-
         result = self._run(
             [
                 sys.executable,
@@ -799,7 +743,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             project_dir,
             env=mypy_env,
         )
-
         issues: list[m.Infra.Check.Issue] = []
         for raw_line in (result.stdout or "").splitlines():
             stripped = raw_line.strip()
@@ -813,8 +756,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 continue
             try:
                 severity = self._as_str(
-                    line_data.get("severity", c.Infra.Toml.ERROR),
-                    c.Infra.Toml.ERROR,
+                    line_data.get("severity", c.Infra.Toml.ERROR), c.Infra.Toml.ERROR
                 )
                 if severity in {"error", "warning", "note"}:
                     issues.append(
@@ -825,11 +767,10 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                             code=self._as_str(line_data.get("code", "")),
                             message=self._as_str(line_data.get("message", "")),
                             severity=severity,
-                        ),
+                        )
                     )
             except ValidationError:
                 continue
-
         return self._build_gate_result(
             gate=c.Infra.Gates.MYPY,
             project=project_dir.name,
@@ -875,7 +816,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                     error_items = self._to_mapping_list(parsed.value)
                 else:
                     error_items = []
-
                 issues.extend(
                     m.Infra.Check.Issue(
                         file=self._as_str(d.get("path"), "?"),
@@ -883,19 +823,15 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                         column=self._as_int(d.get("column"), 0),
                         code=self._as_str(d.get("name"), ""),
                         message=self._as_str(d.get("description"), ""),
-                        severity=self._as_str(
-                            d.get("severity"),
-                            c.Infra.Toml.ERROR,
-                        ),
+                        severity=self._as_str(d.get("severity"), c.Infra.Toml.ERROR),
                     )
                     for err in error_items
                     for d in [dict(err)]
                 )
             except (TypeError, ValidationError):
                 pass
-
         if not issues and self._result_exit_code(result) != 0:
-            match = re.search(r"(\d+)\s+errors?", result.stderr + result.stdout)
+            match = re.search("(\\d+)\\s+errors?", result.stderr + result.stdout)
             if match:
                 count = int(match.group(1))
                 issues = [
@@ -905,9 +841,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                         column=0,
                         code=c.Infra.Gates.PYREFLY,
                         message=f"Pyrefly reported {count} error(s)",
-                    ),
+                    )
                 ] * count
-
         return self._build_gate_result(
             gate=c.Infra.Gates.PYREFLY,
             project=project_dir.name,
@@ -920,8 +855,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
     def _run_pyright(self, project_dir: Path) -> m.Infra.Check.GateExecution:
         started = time.monotonic()
         check_dirs = self._dirs_with_py(
-            project_dir,
-            self._existing_check_dirs(project_dir),
+            project_dir, self._existing_check_dirs(project_dir)
         )
         if not check_dirs:
             return self._build_gate_result(
@@ -959,7 +893,6 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             )
         except (TypeError, ValidationError):
             pass
-
         return self._build_gate_result(
             gate=c.Infra.Gates.PYRIGHT,
             project=project_dir.name,
@@ -1005,12 +938,12 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                             column=0,
                             code=c.Infra.Gates.FORMAT,
                             message="Would be reformatted",
-                        ),
+                        )
                     )
                 elif (
                     path.endswith(c.Infra.Extensions.PYTHON)
                     and " " not in path
-                    and path not in seen
+                    and (path not in seen)
                 ):
                     seen.add(path)
                     issues.append(
@@ -1020,7 +953,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                             column=0,
                             code=c.Infra.Gates.FORMAT,
                             message="Would be reformatted",
-                        ),
+                        )
                     )
         return self._build_gate_result(
             gate=c.Infra.Gates.FORMAT,
@@ -1108,13 +1041,11 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].fail("Use run() directly")
 
     def find_pyproject_files(
-        self,
-        project_paths: list[Path] | None = None,
+        self, project_paths: list[Path] | None = None
     ) -> r[list[Path]]:
         """Find pyproject.toml files in workspace or selected project paths."""
         return self._discovery.find_all_pyproject_files(
-            self._workspace_root,
-            project_paths=project_paths,
+            self._workspace_root, project_paths=project_paths
         )
 
     def process_file(self, path: Path, *, dry_run: bool = False) -> r[list[str]]:
@@ -1127,7 +1058,6 @@ class FlextInfraConfigFixer(s[list[str]]):
             return r[list[str]].fail(f"failed to read {path}: {exc}")
         except Exception as exc:
             return r[list[str]].fail(f"failed to parse {path}: {exc}")
-
         tool_data = doc_data.get(c.Infra.Toml.TOOL)
         if not isinstance(tool_data, dict):
             return r[list[str]].ok([])
@@ -1137,28 +1067,19 @@ class FlextInfraConfigFixer(s[list[str]]):
         pyrefly_data = typed_tool_data.get(c.Infra.Toml.PYREFLY)
         if not isinstance(pyrefly_data, Mapping):
             return r[list[str]].ok([])
-
         pyrefly: MutableMapping[str, t.ContainerValue] = dict(pyrefly_data)
-
         all_fixes: list[str] = []
-
-        # 1. Fix search paths
         fixes = self._fix_search_paths_tk(pyrefly, path.parent)
         all_fixes.extend(fixes)
-
-        # 2. Remove ignore=true sub-configs
         fixes = self._remove_ignore_sub_config_tk(pyrefly)
         all_fixes.extend(fixes)
-
-        # 3. Ensure project excludes
         if (
             any("removed ignore" in item for item in all_fixes)
             or path.parent == self._workspace_root
         ):
             fixes = self._ensure_project_excludes_tk(pyrefly)
             all_fixes.extend(fixes)
-
-        if all_fixes and not dry_run:
+        if all_fixes and (not dry_run):
             try:
                 typed_tool_data[c.Infra.Toml.PYREFLY] = dict(pyrefly)
                 doc_data[c.Infra.Toml.TOOL] = typed_tool_data
@@ -1169,24 +1090,18 @@ class FlextInfraConfigFixer(s[list[str]]):
                 _ = path.write_text(new_text, encoding=c.Infra.Encoding.DEFAULT)
             except OSError as exc:
                 return r[list[str]].fail(f"failed to write {path}: {exc}")
-
         return r[list[str]].ok(all_fixes)
 
     def run(
-        self,
-        projects: Sequence[str],
-        *,
-        dry_run: bool = False,
-        verbose: bool = False,
+        self, projects: Sequence[str], *, dry_run: bool = False, verbose: bool = False
     ) -> r[list[str]]:
         """Apply pyrefly config fixes for selected projects."""
         project_paths = [self._resolve_project_path(project) for project in projects]
         files_result = self.find_pyproject_files(project_paths or None)
         if files_result.is_failure:
             return r[list[str]].fail(
-                files_result.error or "failed to find pyproject files",
+                files_result.error or "failed to find pyproject files"
             )
-
         messages: list[str] = []
         total_fixes = 0
         pyproject_files: list[Path] = files_result.value
@@ -1194,7 +1109,7 @@ class FlextInfraConfigFixer(s[list[str]]):
             fixes_result = self.process_file(path, dry_run=dry_run)
             if fixes_result.is_failure:
                 return r[list[str]].fail(
-                    fixes_result.error or f"failed to process {path}",
+                    fixes_result.error or f"failed to process {path}"
                 )
             fixes: list[str] = fixes_result.value
             if not fixes:
@@ -1206,52 +1121,39 @@ class FlextInfraConfigFixer(s[list[str]]):
                 except ValueError:
                     rel = path
                 for fix in fixes:
-                    line = f"  {'(dry)' if dry_run else '✓'} {rel}: {fix}"
+                    line = f"  {('(dry)' if dry_run else '✓')} {rel}: {fix}"
                     _logger.info("pyrefly_config_fix", detail=line)
                     messages.append(line)
-
         if verbose and total_fixes == 0:
             _logger.info("pyrefly_configs_clean")
-
         return r[list[str]].ok(messages)
 
     def _ensure_project_excludes_tk(
-        self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        self, pyrefly: MutableMapping[str, t.ContainerValue]
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
-
         current: list[str] = []
         if isinstance(excludes, list):
             current = [str(x) for x in excludes]
-
-        # Check without quotes too just in case
         stripped_to_add: list[str] = []
         for glob in c.Infra.Check.REQUIRED_EXCLUDES:
             clean_glob = glob.strip('"').strip("'")
             if clean_glob not in current and glob not in current:
                 stripped_to_add.append(clean_glob)
-
         if stripped_to_add:
             updated = sorted(set(current) | set(stripped_to_add))
             pyrefly[c.Infra.Toml.PROJECT_EXCLUDES] = self._to_array(updated)
             fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
-
         return fixes
 
     def _fix_search_paths_tk(
-        self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
-        project_dir: Path,
+        self, pyrefly: MutableMapping[str, t.ContainerValue], project_dir: Path
     ) -> list[str]:
         fixes: list[str] = []
         search_path = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
-
         if not isinstance(search_path, list):
             return []
-
-        # Normalize paths for root
         if project_dir == self._workspace_root:
             new_paths: list[str] = []
             for p in search_path:
@@ -1260,18 +1162,15 @@ class FlextInfraConfigFixer(s[list[str]]):
                 if p == "../typings/generated":
                     new_paths.append("typings/generated")
                     fixes.append(
-                        "search-path ../typings/generated -> typings/generated",
+                        "search-path ../typings/generated -> typings/generated"
                     )
                 elif p == "../typings":
                     new_paths.append(c.Infra.Directories.TYPINGS)
                     fixes.append("search-path ../typings -> typings")
                 else:
                     new_paths.append(p)
-
             if fixes:
                 pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(new_paths)
-
-        # Remove nonexistent paths
         search_raw = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
         current_paths: list[t.ContainerValue] = (
             list(search_raw) if isinstance(search_raw, list) else []
@@ -1279,7 +1178,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         nonexistent = [
             p
             for p in current_paths
-            if isinstance(p, str) and not (project_dir / p).exists()
+            if isinstance(p, str) and (not (project_dir / p).exists())
         ]
         if nonexistent:
             remaining: list[str] = [
@@ -1289,18 +1188,15 @@ class FlextInfraConfigFixer(s[list[str]]):
             ]
             pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(remaining)
             fixes.append(f"removed nonexistent search-path: {', '.join(nonexistent)}")
-
         return fixes
 
     def _remove_ignore_sub_config_tk(
-        self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        self, pyrefly: MutableMapping[str, t.ContainerValue]
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
         if not isinstance(sub_configs, list):
             return []
-
         new_configs: list[t.ContainerValue] = []
         for conf in sub_configs:
             if isinstance(conf, Mapping) and conf.get(c.Infra.Toml.IGNORE) is True:
@@ -1308,10 +1204,8 @@ class FlextInfraConfigFixer(s[list[str]]):
                 fixes.append(f"removed ignore=true sub-config for '{matches}'")
                 continue
             new_configs.append(conf)
-
         if len(new_configs) != len(sub_configs):
             pyrefly[c.Infra.Toml.SUB_CONFIG] = new_configs
-
         return fixes
 
     def _resolve_project_path(self, raw: str) -> Path:
@@ -1331,7 +1225,6 @@ def build_parser() -> argparse.ArgumentParser:
     """Build CLI parser for check and pyrefly-fix commands."""
     parser = argparse.ArgumentParser(description="FLEXT check utilities")
     subparsers = parser.add_subparsers(dest="command")
-
     run_parser = subparsers.add_parser(c.Infra.Verbs.RUN, help="Run quality gates")
     _ = run_parser.add_argument("--gates", default=c.Infra.Gates.DEFAULT_CSV)
     _ = run_parser.add_argument("--project", action="append", required=True)
@@ -1339,15 +1232,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--reports-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check"
     )
     _ = run_parser.add_argument("--fail-fast", action="store_true")
-
     fix_parser = subparsers.add_parser(
-        "fix-pyrefly-config",
-        help="Repair [tool.pyrefly] blocks",
+        "fix-pyrefly-config", help="Repair [tool.pyrefly] blocks"
     )
     _ = fix_parser.add_argument("projects", nargs="*")
     _ = fix_parser.add_argument("--dry-run", action="store_true")
     _ = fix_parser.add_argument("--verbose", action="store_true")
-
     return parser
 
 
@@ -1355,7 +1245,6 @@ def run_cli(argv: list[str] | None = None) -> int:
     """Execute check service CLI commands and return process exit code."""
     parser = build_parser()
     args = parser.parse_args(argv)
-
     if args.command == c.Infra.Verbs.RUN:
         checker = FlextInfraWorkspaceChecker()
         gates = FlextInfraWorkspaceChecker.parse_gate_csv(args.gates)
@@ -1374,19 +1263,15 @@ def run_cli(argv: list[str] | None = None) -> int:
         run_results: list[m.Infra.Check.ProjectResult] = run_result.value
         failed_projects = [project for project in run_results if not project.passed]
         return 1 if failed_projects else 0
-
     if args.command == "fix-pyrefly-config":
         fixer = FlextInfraConfigFixer()
         fix_result = fixer.run(
-            projects=args.projects,
-            dry_run=args.dry_run,
-            verbose=args.verbose,
+            projects=args.projects, dry_run=args.dry_run, verbose=args.verbose
         )
         if fix_result.is_failure:
             output.error(fix_result.error or "pyrefly config fix failed")
             return 1
         return 0
-
     parser.print_help()
     return 1
 
@@ -1394,8 +1279,6 @@ def run_cli(argv: list[str] | None = None) -> int:
 _CheckIssue = m.Infra.Check.Issue
 _GateExecution = m.Infra.Check.GateExecution
 _ProjectResult = m.Infra.Check.ProjectResult
-
-
 __all__ = [
     "FlextInfraConfigFixer",
     "FlextInfraWorkspaceChecker",

@@ -12,6 +12,8 @@ from pydantic import BaseModel
 
 from flext_core import c, m, r, t, u
 
+from ._models import _Model
+
 
 def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
@@ -25,10 +27,6 @@ def _is_flexible_value_obj(value: object) -> bool:
     """Call is_flexible_value with arbitrary object for negative-case testing."""
     fn: Callable[[object], bool] = getattr(u.Guards, "is_flexible_value")
     return fn(value)
-
-
-class _Model(BaseModel):
-    name: str = "x"
 
 
 class _LoggerLike:
@@ -68,7 +66,7 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
     assert u.Guards.is_general_value_type([1, "x", None])
     assert u.Guards.is_general_value_type({"k": 1})
     assert not u.Guards.is_general_value_type([{"x"}])
-    assert u.Guards.is_general_value_type({1: "x"})  # Source accepts int keys
+    assert u.Guards.is_general_value_type({1: "x"})
     assert not u.Guards.is_general_value_type({"x": {1}})
 
 
@@ -77,10 +75,10 @@ def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type(_Model())
     assert u.Guards.is_handler_type(cast("t.ContainerValue", _sample_handler))
 
-    class _BaseModelSubclass(BaseModel):
+    class _BaseModelSubclass:
         value: str = "ok"
 
-    class _DuckHandler(BaseModel):
+    class _DuckHandler:
         value: str = "ok"
 
         def handle(self, _value: object) -> object:
@@ -95,25 +93,17 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.is_type("x", "string_non_empty")
     assert u.Guards.is_dict_non_empty({"k": "v"})
     assert u.Guards.is_list_non_empty([1])
-
     assert u.normalize_to_metadata_value("x") == "x"
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
-    assert dict_scalar_out == '{"k": 1}'  # Source: dicts → JSON string
-    # normalize_to_metadata_value({"k": object()}) raises TypeError (not JSON serializable)
+    assert dict_scalar_out == '{"k": 1}'
     with pytest.raises(TypeError):
-        u.normalize_to_metadata_value(
-            cast("t.ContainerValue", {"k": object()}),
-        )
-    list_out = u.normalize_to_metadata_value(
-        cast("t.ContainerValue", [1, object()]),
-    )
+        u.normalize_to_metadata_value(cast("t.ContainerValue", {"k": object()}))
+    list_out = u.normalize_to_metadata_value(cast("t.ContainerValue", [1, object()]))
     assert isinstance(list_out, list)
-    assert list_out[0] == "1"  # Source: int not scalar, stringified
+    assert list_out[0] == "1"
     assert isinstance(list_out[1], str)
     assert isinstance(
-        u.normalize_to_metadata_value(
-            cast("t.ContainerValue", cast("object", {1, 2})),
-        ),
+        u.normalize_to_metadata_value(cast("t.ContainerValue", cast("object", {1, 2}))),
         str,
     )
 
@@ -123,16 +113,12 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_key_mapping: dict[object, object] = {1: "ok"}
     bad_value_mapping: dict[str, object] = {"k": {1}}
     bad_value_dict: dict[str, object] = {"k": {1}}
-
-    # Source accepts int keys in mappings
     assert u.Guards.is_configuration_mapping(cast("t.ContainerValue", bad_key_mapping))
     assert not u.Guards.is_configuration_mapping(
-        cast("t.ContainerValue", bad_value_mapping),
+        cast("t.ContainerValue", bad_value_mapping)
     )
     assert not u.Guards.is_configuration_dict([])
-    assert u.Guards.is_configuration_dict(
-        cast("t.ContainerValue", {1: "v"}),
-    )  # Source accepts int keys
+    assert u.Guards.is_configuration_dict(cast("t.ContainerValue", {1: "v"}))
     assert not u.Guards.is_configuration_dict(cast("t.ContainerValue", bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
 
@@ -143,14 +129,13 @@ def test_is_flexible_value_covers_all_branches() -> None:
     assert u.Guards.is_flexible_value(datetime.now(UTC))
     assert u.Guards.is_flexible_value(["a", 1, None, datetime.now(UTC)])
     assert not u.Guards.is_flexible_value(["a", {"no": "nested"}])
-    assert _is_flexible_value_obj({1: "bad_key"})  # Source accepts int keys
+    assert _is_flexible_value_obj({1: "bad_key"})
     assert not u.Guards.is_flexible_value({"k": {"nested": "bad"}})
     assert u.Guards.is_flexible_value({"k": "v"})
     assert not _is_flexible_value_obj(set())
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-
     assert not _is_type_obj(object(), "config")
     assert not _is_type_obj(object(), "container")
     assert not _is_type_obj(object(), "command_bus")
@@ -159,9 +144,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert _is_type_obj(r[int].ok(1), "result")
     assert not _is_type_obj(object(), "service")
     assert not _is_type_obj(object(), "middleware")
-
     assert u.Guards.is_handler_callable(cast("t.ContainerValue", _sample_handler))
-
     assert u.Guards.is_mapping({"k": "v"})
 
     def _identity(value: t.ContainerValue) -> t.ContainerValue:
@@ -191,16 +174,12 @@ def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
     assert not u.is_type("x", "unknown_type_name")
     assert u.is_type(3, (int, float))
     assert u.is_type("x", str)
-    invalid_spec = cast(
-        "str | type | tuple[type, ...]",
-        cast("object", 123),
-    )
+    invalid_spec = cast("str | type | tuple[type, ...]", cast("object", 123))
     assert not u.is_type("x", invalid_spec)
 
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
-    # Verify is_type returns False when checking a plain object against protocol specs
     assert not _is_type_obj(object(), "config")
     assert not _is_type_obj(object(), "context")
     assert not _is_type_obj(object(), "handler")
@@ -215,7 +194,6 @@ def test_extract_mapping_or_none_branches() -> None:
     mapping_result = u.extract_mapping_or_none({"k": "v"})
     assert mapping_result.is_success
     assert mapping_result.value == {"k": "v"}
-    # Source accepts int keys in dicts as configuration_mapping
     mapping_non_str_keys = u.extract_mapping_or_none(cast("t.ContainerValue", {1: "v"}))
     assert mapping_non_str_keys.is_success
     assert mapping_non_str_keys.value == {1: "v"}
@@ -240,23 +218,18 @@ def test_guard_in_has_empty_none_helpers() -> None:
 
     assert u.guard("x", validator=_always_false, default="d") == "d"
     assert u.guard("x", validator=_raise_error, default="d") == "d"
-
     failure_result = u.guard("x", validator=_always_false, return_value=True)
     assert isinstance(failure_result, r)
     assert failure_result.is_failure
-
     assert u.in_("a", ["a", "b"])
     assert not u.in_([], ("a", "b"))
     assert not u.in_("a", 42)
-
     assert u.has({"k": 1}, "k")
     assert u.has({"key": "value"}, "key")
-
     assert u.empty(None)
     assert u.empty(())
     assert not u.empty([1])
     assert u.empty(0)
-
     assert u.none_(None, None)
     assert not u.none_(None, "x")
 
@@ -286,8 +259,7 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
     original_issubclass = builtins.issubclass
 
     def _fake_issubclass(
-        cls: type[object],
-        classinfo: type[object] | tuple[type[object], ...],
+        cls: type[object], classinfo: type[object] | tuple[type[object], ...]
     ) -> bool:
         if cls is _SomeType and classinfo is BaseModel:
             msg = "boom"
@@ -295,7 +267,6 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
         return original_issubclass(cls, classinfo)
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
-    # Source catches TypeError from issubclass and returns False
     assert not _is_type_obj(_SomeType, "handler")
     assert not u.chk(1, not_in=[1, 2])
     assert not u.chk(1, gt=1)
@@ -306,23 +277,20 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
     assert not u.chk("", empty=False)
     assert not u.chk("abc", starts="z")
     assert not u.chk("abc", ends="z")
-    assert not u.chk("abc", match=r"\d+")
+    assert not u.chk("abc", match="\\d+")
     assert not u.chk("abc", contains="z")
     assert not u.chk({"k": "v"}, contains="x")
     assert not u.chk(["k"], contains="x")
     assert not u.chk("abc", contains="x")
-    assert u.chk("abc", contains=1)  # Source returns True for int contains check on str
+    assert u.chk("abc", contains=1)
     assert u.chk("abc", gte=3, lte=3)
     assert u.chk("", empty=True)
 
 
 def test_guard_instance_attribute_access_warnings() -> None:
     guards = u.Guards()
-
-    # Source does not emit deprecation warnings for instance method access
     method = guards.is_type
     assert callable(method)
-
     private_method = cast("Callable[..., object]", getattr(guards, "_is_str"))
     assert callable(private_method)
 
@@ -334,8 +302,7 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
         pass
 
     def _explode(
-        cls: type[object],
-        classinfo: type[object] | tuple[type[object], ...],
+        cls: type[object], classinfo: type[object] | tuple[type[object], ...]
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
             msg = "boom"
@@ -344,10 +311,7 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
 
     setattr(builtins, "issubclass", _explode)
     try:
-        assert not _is_type_obj(
-            _Candidate,
-            "handler",
-        )  # Source catches TypeError, returns False
+        assert not _is_type_obj(_Candidate, "handler")
     finally:
         setattr(builtins, "issubclass", original_issubclass)
 
@@ -358,8 +322,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
-        obj: object,
-        classinfo: type[object] | tuple[type[object], ...],
+        obj: object, classinfo: type[object] | tuple[type[object], ...]
     ) -> bool:
         if obj is True and classinfo == (str, int, float, bool, type(None), datetime):
             return False
@@ -384,8 +347,7 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
         return original_callable(value)
 
     def _patched_issubclass(
-        cls: type[object],
-        classinfo: type[object] | tuple[type[object], ...],
+        cls: type[object], classinfo: type[object] | tuple[type[object], ...]
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
             msg = "boom"
@@ -402,7 +364,7 @@ def test_guards_issubclass_success_when_callable_is_patched(
 ) -> None:
     original_callable = builtins.callable
 
-    class _ModelSub(BaseModel):
+    class _ModelSub:
         value: str = "ok"
 
     def _patched_callable(value: object) -> bool:

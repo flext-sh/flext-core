@@ -50,9 +50,7 @@ class AppConfig(FlextSettings):
         le=FlextConstants.Performance.MAX_DB_POOL_SIZE,
         description="Database connection pool size",
     )
-    api_timeout: int = Field(
-        default=30,
-    )
+    api_timeout: int = Field(default=30)
     api_host: str = Field(
         default=c.Platform.DEFAULT_HOST,
         min_length=1,
@@ -60,31 +58,18 @@ class AppConfig(FlextSettings):
         description="API server hostname",
     )
     api_port: t.Validation.PortNumber = Field(
-        default=8080,
-        description="API server port number",
+        default=8080, description="API server port number"
     )
-    debug: bool = Field(
-        default=False,
-        description="Enable debug mode",
-    )
-    max_workers: int = Field(
-        default=4,
-        description="Maximum number of worker threads",
-    )
-    cache_enabled: bool = Field(
-        default=True,
-        description="Enable caching",
-    )
+    debug: bool = Field(default=False, description="Enable debug mode")
+    max_workers: int = Field(default=4, description="Maximum number of worker threads")
+    cache_enabled: bool = Field(default=True, description="Enable caching")
     cache_ttl: int = Field(
         default=3600,
         ge=0,
         le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
         description="Cache time-to-live in seconds",
     )
-    worker_timeout: int = Field(
-        default=60,
-        description="Worker operation timeout",
-    )
+    worker_timeout: int = Field(default=60, description="Worker operation timeout")
     retry_attempts: int = Field(
         default=3,
         ge=0,
@@ -101,9 +86,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
     """
 
     @staticmethod
-    def _create_success_metadata(
-        patterns: tuple[str, ...],
-    ) -> FlextResult[m.ConfigMap]:
+    def _create_success_metadata(patterns: tuple[str, ...]) -> FlextResult[m.ConfigMap]:
         """Create success metadata from demonstrated patterns."""
         return FlextResult[m.ConfigMap].ok(
             m.ConfigMap(
@@ -122,8 +105,8 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                         "strenum_validation",
                         "after_validator",
                     ],
-                },
-            ),
+                }
+            )
         )
 
     @staticmethod
@@ -144,7 +127,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                 debug=False,
                 max_workers=4,
                 log_level=FlextConstants.Settings.LogLevel.INFO,
-            ),
+            )
         )
         print_config(result.value)
         return FlextResult[bool].ok(value=True)
@@ -168,11 +151,9 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             """Create config from env vars and display."""
             print("\n=== Environment Configuration ===")
             env_config = AppConfig()
-
             print(f"✅ Environment database URL: {env_config.database_url}")
             print(f"✅ Environment API timeout: {env_config.api_timeout}")
             print(f"✅ Environment debug: {env_config.debug}")
-
             for key in env_vars:
                 os.environ.pop(key, None)
             return FlextResult[bool].ok(value=True)
@@ -230,7 +211,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                 config = AppConfig.model_validate(invalid_data)
                 if config.api_timeout < 0:
                     print(
-                        "⚠️  Note: Validation constraints may not apply to singleton instances",
+                        "⚠️  Note: Validation constraints may not apply to singleton instances"
                     )
                     print("✅ Config created (validation handled by type system)")
                 else:
@@ -264,15 +245,12 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
         )
 
     @staticmethod
-    def _handle_execution_error(
-        error: str,
-    ) -> FlextResult[m.ConfigMap]:
+    def _handle_execution_error(error: str) -> FlextResult[m.ConfigMap]:
         """Handle execution errors with proper logging."""
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
         return FlextResult[m.ConfigMap].fail(
-            error_msg,
-            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
         )
 
     @override
@@ -299,10 +277,9 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             ("validation_config", self._demonstrate_validation_config),
             ("singleton_pattern", self._demonstrate_singleton_pattern),
         ]
-
         results = [demo_func() for _, demo_func in demonstrations]
         return FlextResult.traverse(results, lambda r: r).map(
-            lambda _: tuple(name for name, _ in demonstrations),
+            lambda _: tuple((name for name, _ in demonstrations))
         )
 
 
@@ -362,9 +339,7 @@ def main() -> FlextResult[bool]:
         service = ConfigManagementService()
         return service.execute()
 
-    def display_results(
-        metadata: m.ConfigMap,
-    ) -> FlextResult[bool]:
+    def display_results(metadata: m.ConfigMap) -> FlextResult[bool]:
         """Display demonstration results."""
         patterns = metadata.get("patterns_demonstrated", [])
         features = metadata.get("config_features", [])
@@ -379,11 +354,9 @@ def main() -> FlextResult[bool]:
         patterns_count = _sequence_len(patterns)
         features_count = _sequence_len(features)
         advanced_count = _sequence_len(advanced_features)
-
         print(f"\n✅ Demonstrated {patterns_count} configuration patterns")
         print(f"✅ Used {features_count} configuration features")
         print(f"✅ Applied {advanced_count} advanced Python 3.13+ features")
-
         print("\n" + "=" * 60)
         print("🎯 Config Patterns: Basic, Environment, Validation, Singleton, Railway")
         print("🎯 Pydantic 2: Type safety, validation, env vars, AfterValidator")

@@ -43,7 +43,6 @@ class TestConfigServiceViaDI:
 
     def test_config_via_container_get_global(self) -> None:
         """Test accessing FlextSettings via get_global."""
-        # Config is accessible via singleton pattern
         config1 = FlextSettings.get_global()
         config2 = FlextSettings.get_global()
         assert config1 is config2
@@ -51,9 +50,7 @@ class TestConfigServiceViaDI:
 
     def test_config_via_service_runtime(self) -> None:
         """Test FlextSettings accessible via FlextService._create_runtime."""
-        runtime = s._create_runtime(
-            config_overrides={"app_name": "test_app"},
-        )
+        runtime = s._create_runtime(config_overrides={"app_name": "test_app"})
         assert runtime.config is not None
         assert isinstance(runtime.config, FlextSettings)
         assert runtime.config.app_name == "test_app"
@@ -68,11 +65,9 @@ class TestConfigServiceViaDI:
 
     def test_config_injection_via_wiring(self) -> None:
         """Test injecting FlextSettings via @inject decorator."""
-        # Use DependencyIntegration to create container with config
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config=m.ConfigMap(root={"app_name": "injected_config"}),
+            config=m.ConfigMap(root={"app_name": "injected_config"})
         )
-
         module = ModuleType("config_injection_module")
 
         @FlextRuntime.DependencyIntegration.inject
@@ -83,12 +78,8 @@ class TestConfigServiceViaDI:
         ) -> str:
             return app_name
 
-        # Type narrowing: ModuleType can have dynamic attributes
         setattr(module, "get_config", get_config)
-
-        # Wire module
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
-
         try:
             func = getattr(module, "get_config")
             result = func()
@@ -118,25 +109,18 @@ class TestLoggerServiceViaDI:
     def test_logger_registration_in_container(self) -> None:
         """Test registering FlextLogger in container for DI."""
         container = FlextContainer()
-
-        # Logger is auto-registered by default, so we can retrieve it directly
-        # or register a custom one with a different name
         logger_result = container.get("logger")
         assert logger_result.is_success
         assert isinstance(logger_result.value, FlextLogger)
 
-        # Test registering a custom logger with a different name
         def create_custom_logger() -> FlextLogger:
             return FlextLogger.create_module_logger("service_logger")
 
-        # Register custom logger factory with different name
         returned_container = container.register(
             "custom_logger", create_custom_logger, kind="factory"
         )
         assert returned_container is container
         assert container.has_service("custom_logger")
-
-        # Retrieve custom logger
         custom_logger_result = container.get("custom_logger")
         assert custom_logger_result.is_success
         assert isinstance(custom_logger_result.value, FlextLogger)
@@ -161,24 +145,16 @@ class TestContextServiceViaDI:
 
     def test_context_registration_in_container(self) -> None:
         """Test registering FlextContext in container for DI."""
-        # Context must be provided during container creation for auto-registration
         container = FlextContainer(_context=FlextContext())
-
-        # Context is auto-registered when provided, so we can retrieve it directly
         context_result = container.get("context")
         assert context_result.is_success
         assert isinstance(context_result.value, FlextContext)
-
-        # Test registering a custom context with a different name
         custom_context = FlextContext()
         returned_container = container.register(
-            "custom_context",
-            cast("t.ContainerValue", custom_context),
+            "custom_context", cast("t.ContainerValue", custom_context)
         )
         assert returned_container is container
         assert container.has_service("custom_context")
-
-        # Retrieve custom context
         custom_context_result = container.get("custom_context")
         assert custom_context_result.is_success
         assert isinstance(custom_context_result.value, FlextContext)
@@ -191,20 +167,14 @@ class TestServicesIntegrationViaDI:
     def test_all_services_via_service_runtime(self) -> None:
         """Test all services accessible via single service runtime."""
         custom_context = FlextContext.create()
-
         runtime = s._create_runtime(
-            config_overrides={"app_name": "integrated_app"},
-            context=custom_context,
+            config_overrides={"app_name": "integrated_app"}, context=custom_context
         )
-
-        # Verify all services accessible
         assert runtime.config is not None
         assert isinstance(runtime.config, FlextSettings)
         assert runtime.config.app_name == "integrated_app"
-
         assert runtime.context is not None
         assert isinstance(runtime.context, FlextContext)
-
         assert runtime.container is not None
         assert isinstance(runtime.container, FlextContainer)
 
@@ -217,19 +187,13 @@ class TestServicesIntegrationViaDI:
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
-                    services={
-                        "logger": FlextLogger.create_module_logger("service"),
-                    },
+                    services={"logger": FlextLogger.create_module_logger("service")},
                 )
 
             @override
             def execute(self) -> r[str]:
-                # Access config
                 app_name = self.config.app_name
                 tm.that(app_name, eq="service_app", msg="Config must be accessible")
-
-                # Access container services
-                # Type narrowing: container.get returns r[T], cast to help mypy
                 container_get_result: object = self.container.get("logger")
                 logger_result = cast("r[t.ContainerValue]", container_get_result)
                 u.Tests.Result.assert_success(logger_result)
@@ -240,7 +204,6 @@ class TestServicesIntegrationViaDI:
                     none=False,
                     msg="Logger must be accessible via DI",
                 )
-
                 return r[str].ok(f"app: {app_name}")
 
         service = ServiceWithDI()
@@ -250,23 +213,16 @@ class TestServicesIntegrationViaDI:
 
     def test_services_injection_combined(self) -> None:
         """Test injecting multiple services via @inject."""
-        # Use DependencyIntegration to create container with config and services
-        # This ensures config provider is properly configured
-        # Convert services to t.ContainerValue-compatible dict for type compatibility
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
         services_raw: dict[str, t.ContainerValue] = {
             "logger": cast("t.ContainerValue", logger_instance),
             "context": cast("t.ContainerValue", context_instance),
         }
-        # Cast to t.ContainerValue dict - services dict accepts any object
         services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config=m.ConfigMap(root={"app_name": "injected"}),
-            services=services,
+            config=m.ConfigMap(root={"app_name": "injected"}), services=services
         )
-
-        # Create module with injected function
         module = ModuleType("services_injection_module")
 
         @FlextRuntime.DependencyIntegration.inject
@@ -277,12 +233,8 @@ class TestServicesIntegrationViaDI:
         ) -> dict[str, str]:
             return {"app": app_name}
 
-        # Type narrowing: ModuleType can have dynamic attributes
         setattr(module, "process", process)
-
-        # Wire module
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
-
         try:
             process_func = getattr(module, "process")
             result = process_func()

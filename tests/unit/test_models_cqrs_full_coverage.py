@@ -19,6 +19,7 @@ def test_command_pagination_limit() -> None:
 def test_query_resolve_pagination_wrapper_and_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+
     class Wrapper:
         class Pagination(m.Pagination):
             pass
@@ -28,12 +29,10 @@ def test_query_resolve_pagination_wrapper_and_fallback(
 
     Wrapper.Query.__module__ = "flext_core.models"
     Wrapper.Query.__qualname__ = "Wrapper.Query"
-
     mock_module: ModuleType = ModuleType("flext_core.models")
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
-
     monkeypatch.setitem(
         sys.modules, "flext_core.models", ModuleType("flext_core.models")
     )
@@ -48,7 +47,6 @@ def test_query_validate_pagination_dict_and_default() -> None:
     assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 4
     assert parsed.pagination.size == 20
-
     defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
     assert isinstance(defaulted.pagination, m.Pagination)
     assert defaulted.pagination.page == c.Pagination.DEFAULT_PAGE_NUMBER
@@ -78,6 +76,7 @@ def test_handler_builder_fluent_methods() -> None:
 def test_cqrs_query_resolve_deeper_and_int_pagination(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+
     class Wrapper:
         class Inner:
             class Query(m.Query):
@@ -89,7 +88,6 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Inner.Query._resolve_pagination_class() is m.Pagination
-
     parsed = m.Query.model_validate({
         "pagination": {"page": 2, "size": 10},
         "filters": {},
@@ -102,6 +100,5 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
 def test_flext_message_type_alias_adapter() -> None:
     adapter: TypeAdapter[m.Message] = TypeAdapter(m.Message)
     parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
-    # Discriminated union produces base CQRS model, not FlextModels wrapper
     assert type(parsed).__name__ == "Command"
     assert parsed.message_type == "command"

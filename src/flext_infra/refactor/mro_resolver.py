@@ -17,8 +17,7 @@ class FlextInfraRefactorMROResolver:
         *,
         family_classes: Mapping[t.Infra.FacadeFamily, type],
         expected_base_chains: Mapping[
-            t.Infra.FacadeFamily,
-            Sequence[t.Infra.ExpectedBase],
+            t.Infra.FacadeFamily, Sequence[t.Infra.ExpectedBase]
         ],
     ) -> tuple[m.Infra.Refactor.FamilyMROResolution, ...]:
         """Resolve and validate MRO for all facade families."""
@@ -44,11 +43,10 @@ class FlextInfraRefactorMROResolver:
     ) -> tuple[m.Infra.Refactor.FamilyMROResolution, ...]:
         """Resolve MRO using family chains produced by project classifier."""
         expected_base_chains = cls._normalize_classifier_chains(
-            family_chains=classification.family_chains,
+            family_chains=classification.family_chains
         )
         return cls.resolve(
-            family_classes=family_classes,
-            expected_base_chains=expected_base_chains,
+            family_classes=family_classes, expected_base_chains=expected_base_chains
         )
 
     @classmethod
@@ -61,22 +59,17 @@ class FlextInfraRefactorMROResolver:
     ) -> m.Infra.Refactor.FamilyMROResolution:
         expected_names = cls._normalize_expected_chain(expected_chain=expected_chain)
         cls._validate_base_policy(
-            family=family,
-            facade_class=facade_class,
-            expected_names=expected_names,
+            family=family, facade_class=facade_class, expected_names=expected_names
         )
-
         resolved_mro = tuple(entry.__name__ for entry in inspect.getmro(facade_class))
         accessible_namespaces = cls._collect_accessible_namespaces(
-            family=family,
-            facade_class=facade_class,
+            family=family, facade_class=facade_class
         )
         cls._validate_expected_accessibility(
             family=family,
             expected_names=expected_names,
             accessible_namespaces=accessible_namespaces,
         )
-
         return m.Infra.Refactor.FamilyMROResolution(
             family=family,
             expected_bases=expected_names,
@@ -86,9 +79,7 @@ class FlextInfraRefactorMROResolver:
 
     @classmethod
     def _normalize_classifier_chains(
-        cls,
-        *,
-        family_chains: Mapping[str, Sequence[str]],
+        cls, *, family_chains: Mapping[str, Sequence[str]]
     ) -> dict[t.Infra.FacadeFamily, tuple[str, ...]]:
         normalized: dict[t.Infra.FacadeFamily, tuple[str, ...]] = {}
         for family in ("c", "t", "p", "m", "u"):
@@ -101,9 +92,7 @@ class FlextInfraRefactorMROResolver:
 
     @classmethod
     def _normalize_expected_chain(
-        cls,
-        *,
-        expected_chain: Sequence[t.Infra.ExpectedBase],
+        cls, *, expected_chain: Sequence[t.Infra.ExpectedBase]
     ) -> tuple[str, ...]:
         expected_names: list[str] = []
         for base in expected_chain:
@@ -123,39 +112,23 @@ class FlextInfraRefactorMROResolver:
     ) -> None:
         direct_base_names = tuple(base.__name__ for base in facade_class.__bases__)
         if len(direct_base_names) < len(expected_names):
-            msg = (
-                f"family={family} has fewer direct bases than expected: "
-                f"expected={expected_names!r} direct={direct_base_names!r}"
-            )
+            msg = f"family={family} has fewer direct bases than expected: expected={expected_names!r} direct={direct_base_names!r}"
             raise ValueError(msg)
-
         if direct_base_names[: len(expected_names)] != expected_names:
-            msg = (
-                f"family={family} direct base order violates policy: "
-                f"expected={expected_names!r} direct={direct_base_names!r}"
-            )
+            msg = f"family={family} direct base order violates policy: expected={expected_names!r} direct={direct_base_names!r}"
             raise ValueError(msg)
-
         mro_types = inspect.getmro(facade_class)
         mro_names = tuple(entry.__name__ for entry in mro_types)
         mro_index = {name: index for index, name in enumerate(mro_names)}
-
         missing = tuple(name for name in expected_names if name not in mro_index)
         if missing:
-            msg = (
-                f"family={family} missing expected bases in MRO: "
-                f"missing={missing!r} mro={mro_names!r}"
-            )
+            msg = f"family={family} missing expected bases in MRO: missing={missing!r} mro={mro_names!r}"
             raise ValueError(msg)
-
         previous_index = -1
         for base_name in expected_names:
             current_index = mro_index[base_name]
             if current_index <= previous_index:
-                msg = (
-                    f"family={family} MRO order is not C3-coherent for expected chain: "
-                    f"expected={expected_names!r} mro={mro_names!r}"
-                )
+                msg = f"family={family} MRO order is not C3-coherent for expected chain: expected={expected_names!r} mro={mro_names!r}"
                 raise ValueError(msg)
             previous_index = current_index
 
@@ -170,62 +143,45 @@ class FlextInfraRefactorMROResolver:
         missing_namespaces: list[str] = []
         for base_name in expected_names:
             namespace = cls._namespace_from_class_name(
-                class_name=base_name,
-                family=family,
+                class_name=base_name, family=family
             )
             if namespace is None:
                 continue
             if namespace in accessible_namespaces:
                 continue
             missing_namespaces.append(namespace)
-
         if missing_namespaces:
-            msg = (
-                f"family={family} expected namespaces are not accessible: "
-                f"missing={tuple(missing_namespaces)!r} "
-                f"accessible={accessible_namespaces!r}"
-            )
+            msg = f"family={family} expected namespaces are not accessible: missing={tuple(missing_namespaces)!r} accessible={accessible_namespaces!r}"
             raise ValueError(msg)
 
     @classmethod
     def _collect_accessible_namespaces(
-        cls,
-        *,
-        family: t.Infra.FacadeFamily,
-        facade_class: type,
+        cls, *, family: t.Infra.FacadeFamily, facade_class: type
     ) -> tuple[str, ...]:
         namespace_order: list[str] = []
         for current in inspect.getmro(facade_class):
             if current is object:
                 continue
-
             class_namespace = cls._namespace_from_class_name(
-                class_name=current.__name__,
-                family=family,
+                class_name=current.__name__, family=family
             )
             if class_namespace is not None:
                 cls._append_unique(namespace_order, class_namespace)
-
             for member_name, member in vars(current).items():
                 if member_name.startswith("_"):
                     continue
                 if not isinstance(member, type):
                     continue
                 cls._append_unique(namespace_order, member_name)
-
         return tuple(namespace_order)
 
     @classmethod
     def _namespace_from_class_name(
-        cls,
-        *,
-        class_name: str,
-        family: t.Infra.FacadeFamily,
+        cls, *, class_name: str, family: t.Infra.FacadeFamily
     ) -> str | None:
         suffix = c.Infra.Refactor.FAMILY_SUFFIXES[family]
         if not class_name.endswith(suffix):
             return None
-
         root = class_name[: -len(suffix)]
         root = root.removeprefix("Flext")
         if not root:
@@ -238,6 +194,4 @@ class FlextInfraRefactorMROResolver:
             namespaces.append(candidate)
 
 
-__all__ = [
-    "FlextInfraRefactorMROResolver",
-]
+__all__ = ["FlextInfraRefactorMROResolver"]

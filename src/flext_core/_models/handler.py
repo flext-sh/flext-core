@@ -38,22 +38,19 @@ class FlextModelsHandler:
         """Handler registration with advanced validation."""
 
         name: str = Field(
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Handler name",
+            min_length=c.Reliability.RETRY_COUNT_MIN, description="Handler name"
         )
         handler: t.HandlerCallable = Field(
-            description="Handler callable function or method",
+            description="Handler callable function or method"
         )
         event_types: list[str] = Field(
-            default_factory=list,
-            description="Event types this handler processes",
+            default_factory=list, description="Event types this handler processes"
         )
 
         @field_validator("handler", mode="before")
         @classmethod
         def validate_handler(
-            cls,
-            v: t.HandlerCallable | t.ContainerValue,
+            cls, v: t.HandlerCallable | t.ContainerValue
         ) -> t.HandlerCallable:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
@@ -78,24 +75,17 @@ class FlextModelsHandler:
         including status, mode, and identification.
         """
 
-        handler_name: str = Field(
-            description="Name of the handler",
-        )
+        handler_name: str = Field(description="Name of the handler")
         status: str = Field(
-            description="Registration status (registered, skipped, failed)",
+            description="Registration status (registered, skipped, failed)"
         )
-        mode: str = Field(
-            description="Registration mode (auto_discovery, explicit)",
-        )
+        mode: str = Field(description="Registration mode (auto_discovery, explicit)")
         handler_mode: c.Cqrs.HandlerTypeLiteral | c.Cqrs.HandlerType | None = Field(
-            default=None,
-            description="Handler mode (command/query/event)",
+            default=None, description="Handler mode (command/query/event)"
         )
         message_type: str | None = Field(
-            default=None,
-            description="Message type bound (for explicit mode)",
+            default=None, description="Message type bound (for explicit mode)"
         )
-
         _GETITEM_FIELDS: ClassVar[frozenset[str]] = frozenset({
             "handler_name",
             "status",
@@ -120,23 +110,19 @@ class FlextModelsHandler:
             t.HandlerCallable
             | p.Handler[t.ContainerValue, t.ContainerValue]
             | BaseModel
-        ) = Field(
-            description="Handler instance (callable, object, or FlextHandlers)",
-        )
+        ) = Field(description="Handler instance (callable, object, or FlextHandlers)")
         message_type: t.MessageTypeSpecifier | None = Field(
             default=None,
             description="Message type to handle (required for explicit mode)",
         )
         handler_mode: c.Cqrs.HandlerTypeLiteral | None = Field(
-            default=None,
-            description="Handler operation mode (command, query, event)",
+            default=None, description="Handler operation mode (command, query, event)"
         )
         handler_name: str | None = Field(
-            default=None,
-            description="Explicit handler name override",
+            default=None, description="Explicit handler name override"
         )
 
-    class RegistrationDetails(BaseModel):
+    class RegistrationDetails:
         """Registration details for handler registration tracking.
 
         Tracks metadata about handler registrations in the CQRS system,
@@ -167,9 +153,8 @@ class FlextModelsHandler:
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
-            },
+            }
         )
-
         registration_id: Annotated[
             str,
             Field(
@@ -209,7 +194,7 @@ class FlextModelsHandler:
             ),
         ] = c.Cqrs.CommonStatus.RUNNING
 
-    class ExecutionContext(BaseModel):
+    class ExecutionContext:
         """Handler execution context for tracking handler performance and state.
 
         Provides timing and metrics tracking for handler executions in the
@@ -241,7 +226,6 @@ class FlextModelsHandler:
                 "description": "Handler execution context for tracking performance and state",
             },
         )
-
         handler_name: Annotated[
             str,
             Field(
@@ -258,8 +242,6 @@ class FlextModelsHandler:
                 examples=["command", "query", "event"],
             ),
         ]
-        # Use PrivateAttr for internal state (Pydantic v2 pattern)
-        # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
         _metrics_state: FlextModelsContainers.Dict | None = PrivateAttr(default=None)
 
@@ -268,9 +250,6 @@ class FlextModelsHandler:
             """Get execution time in milliseconds."""
             if self._start_time is None:
                 return 0.0
-
-            # Type narrowing: _start_time is not None after check, so it's float
-            # PrivateAttr type narrowing works after None check
             start_time: float = self._start_time
             elapsed: float = time.time() - start_time
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
@@ -278,13 +257,11 @@ class FlextModelsHandler:
         @computed_field
         def has_metrics(self) -> bool:
             """Check if metrics have been recorded."""
-            # Type narrowing: PrivateAttr type narrowing works directly
             return self._metrics_state is not None and bool(self._metrics_state)
 
         @computed_field
         def is_running(self) -> bool:
             """Check if execution is currently running."""
-            # Type narrowing: PrivateAttr type narrowing works directly
             return self._start_time is not None
 
         @computed_field
@@ -304,20 +281,13 @@ class FlextModelsHandler:
 
             """
             if self._metrics_state is None:
-                # Use PrivateAttr for proper Pydantic v2 pattern
                 self._metrics_state = FlextModelsContainers.Dict(root={})
-            # Type narrowing: _metrics_state is not None after initialization above
-            # PrivateAttr type narrowing works after None check and initialization
             metrics_state_val: FlextModelsContainers.Dict = self._metrics_state
-            # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
-            # dict implements Mapping, so direct return works without cast
             return metrics_state_val
 
         @classmethod
         def create_for_handler(
-            cls,
-            handler_name: str,
-            handler_mode: c.Cqrs.HandlerTypeLiteral,
+            cls, handler_name: str, handler_mode: c.Cqrs.HandlerTypeLiteral
         ) -> Self:
             """Create execution context for a handler.
 
@@ -359,16 +329,11 @@ class FlextModelsHandler:
                 0.0
 
             """
-            # Use PrivateAttr for proper Pydantic v2 pattern
             self._start_time = None
             self._metrics_state = None
 
-        def set_metrics_state(
-            self,
-            state: FlextModelsContainers.Dict,
-        ) -> None:
+        def set_metrics_state(self, state: FlextModelsContainers.Dict) -> None:
             """Set metrics state."""
-            # Use PrivateAttr for proper Pydantic v2 pattern
             self._metrics_state = state
 
         def start_execution(self) -> None:
@@ -384,7 +349,6 @@ class FlextModelsHandler:
                 >>> context.start_execution()
 
             """
-            # Use PrivateAttr for proper Pydantic v2 pattern
             self._start_time = time.time()
 
     class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
@@ -414,12 +378,8 @@ class FlextModelsHandler:
         """
 
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-
         command: Annotated[
-            type,
-            Field(
-                description="Command type this handler processes",
-            ),
+            type, Field(description="Command type this handler processes")
         ]
         priority: Annotated[
             int,

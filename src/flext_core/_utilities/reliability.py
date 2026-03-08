@@ -36,12 +36,10 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _calculate_retry_delay(
-        attempt: int,
-        delay_seconds: float,
-        backoff_multiplier: float,
+        attempt: int, delay_seconds: float, backoff_multiplier: float
     ) -> float:
         """Calculate delay for retry attempt with exponential backoff."""
-        current_delay = delay_seconds * (backoff_multiplier**attempt)
+        current_delay = delay_seconds * backoff_multiplier**attempt
         return min(current_delay, c.Reliability.RETRY_BACKOFF_MAX)
 
     @staticmethod
@@ -54,7 +52,7 @@ class FlextUtilitiesReliability:
     def _is_match_predicate(
         value: type | t.ContainerValue | Callable[[t.ContainerValue], bool],
     ) -> TypeGuard[Callable[[t.ContainerValue], bool]]:
-        return callable(value) and not isinstance(value, type)
+        return callable(value) and (not isinstance(value, type))
 
     @staticmethod
     def _normalize_operation_mapping[TKey, TValue](
@@ -79,8 +77,7 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def calculate_delay(
-        attempt: int,
-        config: Mapping[str, t.ContainerValue] | None,
+        attempt: int, config: Mapping[str, t.ContainerValue] | None
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -92,26 +89,22 @@ class FlextUtilitiesReliability:
             float: Delay in seconds for next attempt
 
         """
-        # Extract configuration values safely with proper type conversion
-        # config is Mapping[str, t.ContainerValue] | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
-        # Type narrowing: ensure values are numeric before conversion
         initial_delay_raw = config.get("initial_delay_seconds", 0.1)
         max_delay_raw = config.get("max_delay_seconds", 60.0)
         exponential_backoff_raw = config.get("exponential_backoff", False)
         backoff_multiplier_raw = config.get("backoff_multiplier")
-
         initial_delay = (
             float(initial_delay_raw)
             if isinstance(initial_delay_raw, int | float)
-            and not isinstance(initial_delay_raw, bool)
+            and (not isinstance(initial_delay_raw, bool))
             else 0.1
         )
         max_delay = (
             float(max_delay_raw)
             if isinstance(max_delay_raw, int | float)
-            and not isinstance(max_delay_raw, bool)
+            and (not isinstance(max_delay_raw, bool))
             else 60.0
         )
         exponential_backoff = (
@@ -123,27 +116,21 @@ class FlextUtilitiesReliability:
         if (
             backoff_multiplier_raw is not None
             and isinstance(backoff_multiplier_raw, int | float)
-            and not isinstance(backoff_multiplier_raw, bool)
+            and (not isinstance(backoff_multiplier_raw, bool))
         ):
             backoff_multiplier = float(backoff_multiplier_raw)
-
-        # Calculate base delay
         if exponential_backoff:
-            delay = min(initial_delay * (2**attempt), max_delay)
+            delay = min(initial_delay * 2**attempt, max_delay)
         else:
             delay = min(initial_delay * (attempt + 1), max_delay)
-
-        # Apply backoff multiplier if specified
         if backoff_multiplier is not None:
             delay *= backoff_multiplier
             delay = min(delay, max_delay)
-
         return float(delay)
 
     @staticmethod
     def chain(
-        value: t.ContainerValue,
-        *funcs: Callable[[t.ContainerValue], t.ContainerValue],
+        value: t.ContainerValue, *funcs: Callable[[t.ContainerValue], t.ContainerValue]
     ) -> t.ContainerValue:
         """Chain operations (mnemonic: chain = pipeline).
 
@@ -175,8 +162,7 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def compose(
-        *funcs: Callable[[t.ContainerValue], t.ContainerValue],
-        mode: str = "pipe",
+        *funcs: Callable[[t.ContainerValue], t.ContainerValue], mode: str = "pipe"
     ) -> Callable[[t.ContainerValue], t.ContainerValue | r[t.ContainerValue]]:
         """Compose multiple functions into a single function.
 
@@ -207,11 +193,8 @@ class FlextUtilitiesReliability:
                 return result.value if result.is_success else result
 
             return piped
-
         if mode == "chain":
             return lambda value: FlextUtilitiesReliability.chain(value, *funcs)
-
-        # mode == "flow"
         return lambda value: FlextUtilitiesReliability.flow(value, *funcs)
 
     @staticmethod
@@ -248,20 +231,11 @@ class FlextUtilitiesReliability:
                     op_dict = _RELIABILITY_CONTAINER_DICT_ADAPTER.validate_python(op)
                 except ValidationError:
                     op_dict = {}
-                # Check if current is ContainerValue compatible
                 if FlextUtilitiesGuards.is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
-                else:
-                    # For non-ContainerValue, skip build and just pass through
-                    # This maintains backward compatibility for generic object pipelines
-                    pass
             elif callable(op):
                 current = op(current)
         return current
-
-    # ========================================================================
-    # Result Pipeline Methods (Railway-Oriented Programming)
-    # ========================================================================
 
     @staticmethod
     def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
@@ -295,8 +269,7 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def flow_through[T, U](
-        result: r[T | U],
-        *funcs: Callable[[T | U], r[T | U]],
+        result: r[T | U], *funcs: Callable[[T | U], r[T | U]]
     ) -> r[T | U]:
         """Chain multiple operations in a pipeline.
 
@@ -325,9 +298,7 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def fold_result[T, U](
-        result: r[T],
-        on_failure: Callable[[str], U],
-        on_success: Callable[[T], U],
+        result: r[T], on_failure: Callable[[str], U], on_success: Callable[[T], U]
     ) -> U:
         """Fold FlextResult into single value (catamorphism).
 
@@ -352,10 +323,6 @@ class FlextUtilitiesReliability:
         if result.is_failure:
             return on_failure(result.error or "Unknown error")
         return on_success(result.value)
-
-    # ========================================================================
-    # Pattern Matching Methods (Functional Programming)
-    # ========================================================================
 
     @staticmethod
     def match(
@@ -411,14 +378,11 @@ class FlextUtilitiesReliability:
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
                 return r[t.ContainerValue].ok(
-                    FlextUtilitiesReliability._resolve_match_output(result, value),
+                    FlextUtilitiesReliability._resolve_match_output(result, value)
                 )
             if pattern == input_value:
                 return r[t.ContainerValue].ok(
-                    FlextUtilitiesReliability._resolve_match_output(
-                        result,
-                        input_value,
-                    ),
+                    FlextUtilitiesReliability._resolve_match_output(result, input_value)
                 )
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
@@ -426,22 +390,16 @@ class FlextUtilitiesReliability:
                     if pred_result:
                         return r[t.ContainerValue].ok(
                             FlextUtilitiesReliability._resolve_match_output(
-                                result,
-                                input_value,
-                            ),
+                                result, input_value
+                            )
                         )
                 except (ValueError, TypeError, AttributeError):
                     pass
-        # Default handling
         if default is not None:
             return r[t.ContainerValue].ok(
-                FlextUtilitiesReliability._resolve_match_output(default, input_value),
+                FlextUtilitiesReliability._resolve_match_output(default, input_value)
             )
         return r[t.ContainerValue].fail("No match found and no default provided")
-
-    # ========================================================================
-    # Compose methods (pipe, chain, flow) - Functional composition patterns
-    # ========================================================================
 
     @staticmethod
     def pipe(
@@ -476,28 +434,21 @@ class FlextUtilitiesReliability:
         """
         if not operations:
             return r.ok(value)
-
-        # Type annotation: current starts as object (value parameter)
-        # Will be updated through pipeline operations
         current: t.ContainerValue = value
         for i, op in enumerate(operations):
             try:
                 op_result = op(current)
-
                 if FlextUtilitiesGuards.is_result_like(op_result):
                     if op_result.is_failure:
                         if on_error == "stop":
                             err_msg = op_result.error or "Unknown error"
                             return r[t.ContainerValue].fail(
-                                f"Pipeline step {i} failed: {err_msg}",
+                                f"Pipeline step {i} failed: {err_msg}"
                             )
-                        # on_error == "skip": continue with previous value
                         continue
-                    # Extract value from successful Result
                     current = op_result.value
                 else:
                     current = op_result
-
             except (
                 AttributeError,
                 TypeError,
@@ -508,8 +459,6 @@ class FlextUtilitiesReliability:
             ) as e:
                 if on_error == "stop":
                     return r[t.ContainerValue].fail(f"Pipeline step {i} failed: {e}")
-                # on_error == "skip": continue with previous value
-
         return r.ok(current)
 
     @staticmethod
@@ -537,10 +486,7 @@ class FlextUtilitiesReliability:
         Fast fail: explicit default values instead of 'or' fallback.
 
         """
-        # Use delay if provided, otherwise delay_seconds, otherwise default
         delay_value: float | None = delay if delay is not None else delay_seconds
-
-        # Fast fail: explicit default values instead of 'or' fallback
         max_attempts_value: int = (
             max_attempts
             if max_attempts is not None
@@ -556,31 +502,23 @@ class FlextUtilitiesReliability:
             if backoff_multiplier is not None
             else c.Reliability.RETRY_BACKOFF_BASE
         )
-
         if max_attempts_value < c.Reliability.RETRY_COUNT_MIN:
             return r[TResult].fail(
-                f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}",
+                f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}"
             )
-
         last_error: str | None = None
-
         for attempt in range(max_attempts_value):
             try:
                 result = operation()
                 if result.is_success:
                     return result
                 last_error = result.error or "Unknown error"
-
-                # Don't delay on the last attempt
                 if attempt < max_attempts_value - 1:
                     current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                        attempt,
-                        delay_seconds_value,
-                        backoff_multiplier_value,
+                        attempt, delay_seconds_value, backoff_multiplier_value
                     )
                     if current_delay > 0:
                         time.sleep(current_delay)
-
             except (
                 AttributeError,
                 TypeError,
@@ -589,23 +527,17 @@ class FlextUtilitiesReliability:
                 KeyError,
                 OSError,
             ) as e:
-                if retry_on is not None and not isinstance(e, retry_on):
+                if retry_on is not None and (not isinstance(e, retry_on)):
                     raise
-
                 last_error = str(e)
-
-                # Don't delay on the last attempt
                 if attempt < max_attempts_value - 1:
                     current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                        attempt,
-                        delay_seconds_value,
-                        backoff_multiplier_value,
+                        attempt, delay_seconds_value, backoff_multiplier_value
                     )
                     if current_delay > 0:
                         time.sleep(current_delay)
-
         return r[TResult].fail(
-            f"Operation failed after {max_attempts_value} attempts: {last_error}",
+            f"Operation failed after {max_attempts_value} attempts: {last_error}"
         )
 
     @staticmethod
@@ -680,21 +612,15 @@ class FlextUtilitiesReliability:
                 result = operation()
                 if result.is_success:
                     return result
-
-                # Check if we should retry
                 should_retry = (
                     should_retry_func(attempt, result.error)
                     if should_retry_func
                     else False
                 )
-
                 if not should_retry or attempt >= max_attempts - 1:
                     return result
-
-                # Call cleanup function if provided
                 if cleanup_func:
                     cleanup_func()
-
             except (
                 AttributeError,
                 TypeError,
@@ -703,66 +629,45 @@ class FlextUtilitiesReliability:
                 KeyError,
                 OSError,
             ) as e:
-                # If operation throws exception, consider it a failure
                 if attempt >= max_attempts - 1:
                     return r[TResult].fail(f"Operation failed: {e}")
-
                 if cleanup_func:
                     cleanup_func()
-
         return r[TResult].fail("Max retries exceeded")
 
     @staticmethod
     def with_timeout[TTimeout](
-        operation: Callable[[], r[TTimeout]],
-        timeout_seconds: float,
+        operation: Callable[[], r[TTimeout]], timeout_seconds: float
     ) -> r[TTimeout]:
         """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= c.INITIAL_TIME:
             return r[TTimeout].fail("Timeout must be positive")
-
-        # Use proper typing for containers
         result_container: list[r[TTimeout] | None] = [None]
         exception_container: list[Exception | None] = [None]
 
         def run_operation() -> None:
             try:
                 result_container[0] = operation()
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 exception_container[0] = e
 
-        # Copy current context to the new thread
         context = contextvars.copy_context()
         thread = threading.Thread(target=context.run, args=(run_operation,))
         thread.daemon = True
         thread.start()
         thread.join(timeout_seconds)
-
         if thread.is_alive():
-            # Thread is still running, timeout occurred
             return r[TTimeout].fail(
-                f"Operation timed out after {timeout_seconds} seconds",
+                f"Operation timed out after {timeout_seconds} seconds"
             )
-
         if exception_container[0]:
             return r[TTimeout].fail(
-                f"Operation failed with exception: {exception_container[0]}",
+                f"Operation failed with exception: {exception_container[0]}"
             )
-
         if result_container[0] is None:
-            return r[TTimeout].fail(
-                "Operation completed but returned no result",
-            )
-
+            return r[TTimeout].fail("Operation completed but returned no result")
         return result_container[0]
 
-    # Mnemonic alias
     mt = match
 
 

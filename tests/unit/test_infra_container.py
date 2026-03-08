@@ -222,7 +222,6 @@ class TestInfraServiceRetrieval:
         result2 = get_flext_infra_service("git_service")
         assert result1.is_success
         assert result2.is_success
-        # Factory services may return different instances
         service1 = result1.unwrap()
         service2 = result2.unwrap()
         assert isinstance(service1, FlextInfraGitService)

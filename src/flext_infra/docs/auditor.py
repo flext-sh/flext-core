@@ -49,26 +49,24 @@ class FlextInfraDocAuditor:
                 config_path = path
                 break
         if config_path is None:
-            return None, {}
-
+            return (None, {})
         payload_result = u.Infra.Io.read_json(config_path)
         if payload_result.is_failure:
-            return None, {}
+            return (None, {})
         payload = payload_result.value
         docs_validation_value = payload.get("docs_validation")
         if not isinstance(docs_validation_value, Mapping):
-            return None, {}
+            return (None, {})
         audit_gate_value = docs_validation_value.get("audit_gate")
         if not isinstance(audit_gate_value, Mapping):
-            return None, {}
+            return (None, {})
         default_budget = audit_gate_value.get("max_issues_default")
         by_scope_raw_value = audit_gate_value.get("max_issues_by_scope")
         by_scope_raw: Mapping[str, t.ContainerValue] = {}
         if isinstance(by_scope_raw_value, Mapping):
             try:
                 by_scope_raw = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                    by_scope_raw_value,
-                    strict=True,
+                    by_scope_raw_value, strict=True
                 )
             except ValidationError:
                 by_scope_raw = {}
@@ -77,8 +75,8 @@ class FlextInfraDocAuditor:
             if isinstance(value, (int, float)):
                 by_scope[name] = int(value)
         if isinstance(default_budget, (int, float)):
-            return int(default_budget), by_scope
-        return None, by_scope
+            return (int(default_budget), by_scope)
+        return (None, by_scope)
 
     @staticmethod
     def normalize_link(target: str) -> str:
@@ -93,14 +91,13 @@ class FlextInfraDocAuditor:
         """Return whether link text should be ignored as a non-path target."""
         if target.startswith("http"):
             return False
-        if "," in raw and ".md" not in raw and "/" not in raw:
+        if "," in raw and ".md" not in raw and ("/" not in raw):
             return True
-        return bool(" " in raw and ".md" not in raw and "/" not in raw)
+        return bool(" " in raw and ".md" not in raw and ("/" not in raw))
 
     @staticmethod
     def to_markdown(
-        scope: m.Infra.Docs.FlextInfraDocScope,
-        issues: list[m.Infra.Docs.AuditIssue],
+        scope: m.Infra.Docs.FlextInfraDocScope, issues: list[m.Infra.Docs.AuditIssue]
     ) -> list[str]:
         """Format audit issues as a markdown report."""
         return [
@@ -143,16 +140,12 @@ class FlextInfraDocAuditor:
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(
-            root=root,
-            project=project,
-            projects=projects,
-            output_dir=output_dir,
+            root=root, project=project, projects=projects, output_dir=output_dir
         )
         if scopes_result.is_failure:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
                 scopes_result.error or "scope error"
             )
-
         default_budget, by_scope_budget = self.load_audit_budgets(root)
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
@@ -164,7 +157,6 @@ class FlextInfraDocAuditor:
                 max_issues_by_scope=by_scope_budget,
             )
             reports.append(report)
-
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
     def audit_scope(
@@ -180,14 +172,11 @@ class FlextInfraDocAuditor:
         checks = {part.strip() for part in check.split(",") if part.strip()}
         if not checks or "all" in checks:
             checks = {"links", "forbidden-terms"}
-
         issues: list[m.Infra.Docs.AuditIssue] = []
         if "links" in checks:
             issues.extend(self.broken_link_issues(scope))
         if "forbidden-terms" in checks:
             issues.extend(self.forbidden_term_issues(scope))
-
-        # Write reports
         summary: Mapping[str, t.ContainerValue] = {
             c.Infra.ReportKeys.SCOPE: scope.name,
             "issues": len(issues),
@@ -209,22 +198,17 @@ class FlextInfraDocAuditor:
             "issues": issues_payload,
         }
         _ = u.Infra.Io.write_json(
-            scope.report_dir / "audit-summary.json",
-            summary_payload,
+            scope.report_dir / "audit-summary.json", summary_payload
         )
         _ = FlextInfraDocsShared.write_markdown(
-            scope.report_dir / "audit-report.md",
-            self.to_markdown(scope, issues),
+            scope.report_dir / "audit-report.md", self.to_markdown(scope, issues)
         )
-
-        # Determine pass/fail
         max_issues = max_issues_by_scope.get(scope.name, max_issues_default)
         if strict:
             limit = 0 if max_issues is None else max_issues
             passed = len(issues) <= limit
         else:
             passed = True
-
         status = c.Infra.Status.OK if passed else c.Infra.Status.FAIL
         reason = f"issues:{len(issues)}"
         logger.info(
@@ -234,7 +218,6 @@ class FlextInfraDocAuditor:
             result=status,
             reason=reason,
         )
-
         return m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope=scope.name,
@@ -257,8 +240,7 @@ class FlextInfraDocAuditor:
         )
 
     def broken_link_issues(
-        self,
-        scope: m.Infra.Docs.FlextInfraDocScope,
+        self, scope: m.Infra.Docs.FlextInfraDocScope
     ) -> list[m.Infra.Docs.AuditIssue]:
         """Collect broken internal-link issues for markdown files in scope."""
         issues: list[m.Infra.Docs.AuditIssue] = []
@@ -290,13 +272,12 @@ class FlextInfraDocAuditor:
                                 issue_type="broken_link",
                                 severity="high",
                                 message=f"line {number}: target not found -> {raw}",
-                            ),
+                            )
                         )
         return issues
 
     def forbidden_term_issues(
-        self,
-        scope: m.Infra.Docs.FlextInfraDocScope,
+        self, scope: m.Infra.Docs.FlextInfraDocScope
     ) -> list[m.Infra.Docs.AuditIssue]:
         """Collect forbidden-term issues for markdown files in scope."""
         issues: list[m.Infra.Docs.AuditIssue] = []
@@ -310,8 +291,7 @@ class FlextInfraDocAuditor:
             elif not scope.name.startswith("flext-"):
                 continue
             content = md_file.read_text(
-                encoding=c.Infra.Encoding.DEFAULT,
-                errors=c.Infra.Toml.IGNORE,
+                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
             ).lower()
             issues.extend(
                 m.Infra.Docs.AuditIssue(
@@ -338,7 +318,6 @@ def main() -> int:
     _ = parser.add_argument("--check", default="all")
     _ = parser.add_argument("--strict", type=int, default=1)
     args = parser.parse_args()
-
     auditor = FlextInfraDocAuditor()
     result = auditor.audit(
         root=Path(args.root).resolve(),
@@ -348,17 +327,13 @@ def main() -> int:
         check=args.check,
         strict=bool(args.strict),
     )
-
     if result.is_failure:
         output.error(result.error or "audit failed")
         return 1
-
     failures = sum(1 for report in result.value if not report.passed)
     return 1 if failures else 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
 __all__ = ["FlextInfraDocAuditor"]

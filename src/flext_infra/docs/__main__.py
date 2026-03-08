@@ -72,7 +72,6 @@ def _run_build(args: argparse.Namespace) -> int:
     if result.is_failure:
         output.error(result.error or "build failed")
         return 1
-
     failures = sum(1 for report in result.value if report.result == c.Infra.Status.FAIL)
     return 1 if failures else 0
 
@@ -107,7 +106,6 @@ def _run_validate(args: argparse.Namespace) -> int:
     if result.is_failure:
         output.error(result.error or "validate failed")
         return 1
-
     failures = sum(1 for report in result.value if report.result == c.Infra.Status.FAIL)
     return 1 if failures else 0
 
@@ -116,11 +114,10 @@ def main() -> int:
     """Run documentation services: audit, fix, build, generate, validate."""
     FlextRuntime.ensure_structlog_configured()
     parser = argparse.ArgumentParser(description="Documentation management services")
-    """Run documentation services: audit, fix, build, generate, validate."""
+    "Run documentation services: audit, fix, build, generate, validate."
     parser = argparse.ArgumentParser(description="Documentation management services")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Common arguments helper
     def _add_common_args(sub: argparse.ArgumentParser) -> None:
         _ = sub.add_argument("--root", default=".")
         _ = sub.add_argument("--project")
@@ -129,38 +126,27 @@ def main() -> int:
             "--output-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs"
         )
 
-    # audit
     audit_parser = subparsers.add_parser("audit", help="Audit documentation")
     _add_common_args(audit_parser)
     _ = audit_parser.add_argument("--check", default="all")
     _ = audit_parser.add_argument("--strict", type=int, default=1)
-
-    # fix
     fix_parser = subparsers.add_parser("fix", help="Fix documentation issues")
     _add_common_args(fix_parser)
     _ = fix_parser.add_argument("--apply", action="store_true")
-
-    # build
     build_parser = subparsers.add_parser(
         c.Infra.Directories.BUILD, help="Build MkDocs sites"
     )
     _add_common_args(build_parser)
-
-    # generate
     gen_parser = subparsers.add_parser("generate", help="Generate project docs")
     _add_common_args(gen_parser)
     _ = gen_parser.add_argument("--apply", action="store_true")
-
-    # validate
     val_parser = subparsers.add_parser(
         c.Infra.Verbs.VALIDATE, help="Validate documentation"
     )
     _add_common_args(val_parser)
     _ = val_parser.add_argument("--check", default="all")
     _ = val_parser.add_argument("--apply", action="store_true")
-
     args = parser.parse_args()
-
     handlers = {
         "audit": _run_audit,
         "fix": _run_fix,
@@ -168,11 +154,9 @@ def main() -> int:
         "generate": _run_generate,
         c.Infra.Verbs.VALIDATE: _run_validate,
     }
-
     handler = handlers.get(args.command)
     if handler:
         return handler(args)
-
     parser.print_help()
     return 1
 

@@ -24,15 +24,7 @@ from typing import ClassVar, cast, override
 
 import pytest
 
-from flext_core import (
-    FlextService,
-    c,
-    h,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import FlextService, c, h, m, p, r, t
 
 type _TestCallable = Callable[..., r[str]]
 type _TestDecorator = Callable[[_TestCallable], _TestCallable]
@@ -48,17 +40,9 @@ def _test_handler(
     return cast(
         "_TestDecorator",
         h.handler(
-            command=command,
-            priority=priority,
-            timeout=timeout,
-            middleware=middleware,
+            command=command, priority=priority, timeout=timeout, middleware=middleware
         ),
     )
-
-
-# ============================================================================
-# TEST FIXTURES - Sample Commands and Handlers
-# ============================================================================
 
 
 class UserCreateCommand:
@@ -87,11 +71,6 @@ class EventPublished:
 
     def __init__(self, event_id: str) -> None:
         self.event_id = event_id
-
-
-# ============================================================================
-# SERVICE WITH DECORATED HANDLERS - For Discovery Tests
-# ============================================================================
 
 
 class UserService:
@@ -136,11 +115,6 @@ class ServiceWithoutHandlers:
         return "no_handlers"
 
 
-# ============================================================================
-# MODULE-LEVEL HANDLER FUNCTIONS - For Module Scanning Tests
-# ============================================================================
-
-
 @_test_handler(command=UserCreateCommand, priority=100)
 def handle_user_create_globally(cmd: UserCreateCommand) -> r[str]:
     """Module-level handler for user creation."""
@@ -156,11 +130,6 @@ def handle_user_delete_globally(cmd: UserDeleteCommand) -> r[str]:
 def regular_module_function(value: str) -> str:
     """Regular module function without handler decoration."""
     return f"processed_{value}"
-
-
-# ============================================================================
-# TEST DECORATOR METADATA STORAGE
-# ============================================================================
 
 
 class TestHandlerDecoratorMetadata:
@@ -217,10 +186,7 @@ class TestHandlerDecoratorMetadata:
         """Decorator should store timeout value."""
 
         class TestService:
-            @_test_handler(
-                command=UserCreateCommand,
-                timeout=5.0,
-            )
+            @_test_handler(command=UserCreateCommand, timeout=5.0)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -245,10 +211,7 @@ class TestHandlerDecoratorMetadata:
         middleware_types: list[type[p.Middleware]] = []
 
         class TestService:
-            @_test_handler(
-                command=UserCreateCommand,
-                middleware=middleware_types,
-            )
+            @_test_handler(command=UserCreateCommand, middleware=middleware_types)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -278,11 +241,6 @@ class TestHandlerDecoratorMetadata:
         assert decorated is original_handler
 
 
-# ============================================================================
-# TEST CLASS DISCOVERY
-# ============================================================================
-
-
 class TestHandlerDiscoveryClass:
     """Test h.Discovery.scan_class() for class method discovery."""
 
@@ -302,17 +260,15 @@ class TestHandlerDiscoveryClass:
         """scan_class() should sort handlers by priority (highest first)."""
         handlers = h.Discovery.scan_class(UserService)
         priorities = [config.priority for _, config in handlers]
-        # Verify sorted descending
         assert priorities == sorted(priorities, reverse=True)
 
     def test_scan_class_priority_order(self) -> None:
         """scan_class() should return handlers in correct priority order."""
         handlers = h.Discovery.scan_class(UserService)
         names = [name for name, _ in handlers]
-        # Expected order: highest priority (100), then 50, then 10
-        assert names[0] == "handle_create_user"  # priority 100
-        assert names[1] == "handle_delete_user"  # priority 50
-        assert names[2] == "handle_query_user"  # priority 10
+        assert names[0] == "handle_create_user"
+        assert names[1] == "handle_delete_user"
+        assert names[2] == "handle_query_user"
 
     def test_scan_class_includes_handler_name(self) -> None:
         """scan_class() results should include method names."""
@@ -361,14 +317,8 @@ class TestHandlerDiscoveryClass:
 
     def test_has_handlers_efficient_check(self) -> None:
         """has_handlers() should check without scanning all methods."""
-        # This is a positive test that the method returns correct result
         result = h.Discovery.has_handlers(UserService)
         assert result is True
-
-
-# ============================================================================
-# TEST MODULE DISCOVERY
-# ============================================================================
 
 
 class TestHandlerDiscoveryModule:
@@ -376,7 +326,6 @@ class TestHandlerDiscoveryModule:
 
     def test_scan_module_finds_decorated_functions(self) -> None:
         """scan_module() should find decorated module-level functions."""
-        # Use this module as test module
         current_module = sys.modules[__name__]
         handlers = h.Discovery.scan_module(current_module)
         assert len(handlers) >= 2
@@ -397,7 +346,6 @@ class TestHandlerDiscoveryModule:
         def _private_handler(cmd: UserCreateCommand) -> r[str]:
             return r[str].ok("private")
 
-        # Private function should not be in scanned results
         current_module = sys.modules[__name__]
         handlers = h.Discovery.scan_module(current_module)
         names = [name for name, _, _ in handlers]
@@ -407,7 +355,6 @@ class TestHandlerDiscoveryModule:
         """scan_module() should skip non-callable attributes."""
         current_module = sys.modules[__name__]
         handlers = h.Discovery.scan_module(current_module)
-        # Only callables should be in results
         for _, func, _ in handlers:
             assert callable(func)
 
@@ -416,7 +363,6 @@ class TestHandlerDiscoveryModule:
         current_module = sys.modules[__name__]
         handlers = h.Discovery.scan_module(current_module)
         priorities = [config.priority for _, _, config in handlers]
-        # Verify sorted descending (if multiple handlers exist)
         if len(priorities) > 1:
             assert priorities == sorted(priorities, reverse=True)
 
@@ -437,11 +383,6 @@ class TestHandlerDiscoveryModule:
         assert result is True
 
 
-# ============================================================================
-# TEST INTEGRATION WITH HANDLER DISCOVERY
-# ============================================================================
-
-
 class TestHandlerDiscoveryIntegration:
     """Test integration of handler discovery with actual handler execution."""
 
@@ -449,7 +390,6 @@ class TestHandlerDiscoveryIntegration:
         """Discovered handlers should be callable."""
         handlers = h.Discovery.scan_class(UserService)
         service = UserService()
-
         for method_name, _ in handlers:
             method = getattr(service, method_name)
             assert callable(method)
@@ -458,18 +398,12 @@ class TestHandlerDiscoveryIntegration:
         """Discovered handlers should contain correct command types."""
         handlers = h.Discovery.scan_class(UserService)
         command_types = {config.command for _, config in handlers}
-
-        expected_types = {
-            UserCreateCommand,
-            UserDeleteCommand,
-            UserQueryCommand,
-        }
+        expected_types = {UserCreateCommand, UserDeleteCommand, UserQueryCommand}
         assert command_types == expected_types
 
     def test_discovery_preserves_handler_metadata(self) -> None:
         """Discovery should preserve all handler metadata."""
         handlers = h.Discovery.scan_class(UserService)
-
         for _, config in handlers:
             assert config.command is not None
             assert isinstance(config.priority, int)
@@ -480,7 +414,6 @@ class TestHandlerDiscoveryIntegration:
         """Discovery should work independently for multiple service classes."""
         user_handlers = h.Discovery.scan_class(UserService)
         order_handlers = h.Discovery.scan_class(OrderService)
-
         assert len(user_handlers) == 3
         assert len(order_handlers) == 1
 
@@ -488,10 +421,8 @@ class TestHandlerDiscoveryIntegration:
         """Discovery should return consistent order on multiple scans."""
         handlers1 = h.Discovery.scan_class(UserService)
         handlers2 = h.Discovery.scan_class(UserService)
-
         names1 = [name for name, _ in handlers1]
         names2 = [name for name, _ in handlers2]
-
         assert names1 == names2
 
     def test_discovery_with_priority_ties(self) -> None:
@@ -508,14 +439,8 @@ class TestHandlerDiscoveryIntegration:
 
         handlers = h.Discovery.scan_class(ServiceWithEqualPriority)
         assert len(handlers) == 2
-        # Both should have same priority
         assert handlers[0][1].priority == 10
         assert handlers[1][1].priority == 10
-
-
-# ============================================================================
-# TEST EDGE CASES AND ERROR CONDITIONS
-# ============================================================================
 
 
 class TestHandlerDiscoveryEdgeCases:
@@ -536,7 +461,6 @@ class TestHandlerDiscoveryEdgeCases:
 
         handlers = h.Discovery.scan_class(DerivedService)
         names = [name for name, _ in handlers]
-        # Should find both inherited and own handlers
         assert "handle_create" in names
         assert "handle_delete" in names
 
@@ -561,8 +485,6 @@ class TestHandlerDiscoveryEdgeCases:
         """scan_module() should handle various object types."""
         current_module = sys.modules[__name__]
         handlers = h.Discovery.scan_module(current_module)
-
-        # Should only include decorated handler functions
         for _name, func, config in handlers:
             assert hasattr(func, c.Discovery.HANDLER_ATTR)
             assert config.command is not None
@@ -578,25 +500,15 @@ class TestHandlerDiscoveryEdgeCases:
 
         method = TestService.handle
         config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
-        # The innermost (first applied) decorator should take effect
-        # Due to decorator order, UserDeleteCommand with priority 20 is applied last
         assert config.command is UserDeleteCommand
         assert config.priority == 20
-
-
-# ============================================================================
-# TEST DISCOVERY WITH FLEXT SERVICE INTEGRATION
-# ============================================================================
 
 
 class _TestServiceForDiscovery(FlextService[str]):
     """Test service class for handler discovery integration tests."""
 
     @_test_handler(command=UserCreateCommand, priority=10)
-    def handle_user_create(
-        self,
-        cmd: UserCreateCommand,
-    ) -> r[str]:
+    def handle_user_create(self, cmd: UserCreateCommand) -> r[str]:
         return r[str].ok(f"created_{cmd.name}")
 
     @override
@@ -625,11 +537,8 @@ class TestHandlerDiscoveryServiceIntegration:
 
     def test_service_can_use_discovered_handlers(self) -> None:
         """FlextService should be able to discover handlers from decorated classes."""
-        # Check that handler was discovered (without instantiating the service)
         handlers = h.Discovery.scan_class(_TestServiceForDiscovery)
         assert len(handlers) >= 1
-
-        # Verify handler metadata
         method_name, config = handlers[0]
         assert method_name == "handle_user_create"
         assert config.command is UserCreateCommand
@@ -637,10 +546,8 @@ class TestHandlerDiscoveryServiceIntegration:
 
     def test_service_auto_discover_handlers_attribute(self) -> None:
         """Service should auto-discover handlers with @h.handler decorator."""
-        # Check discovery works
         has_handlers = h.Discovery.has_handlers(_TestServiceWithMultipleHandlers)
         assert has_handlers is True
-
         handlers = h.Discovery.scan_class(_TestServiceWithMultipleHandlers)
         assert len(handlers) == 2
 

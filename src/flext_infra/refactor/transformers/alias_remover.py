@@ -26,13 +26,10 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
 
     @override
     def leave_Assign(
-        self,
-        original_node: cst.Assign,
-        updated_node: cst.Assign,
+        self, original_node: cst.Assign, updated_node: cst.Assign
     ) -> cst.BaseSmallStatement | cst.RemovalSentinel:
         if self._scope_depth > 0:
             return updated_node
-
         if (
             len(original_node.targets) == 1
             and isinstance(original_node.targets[0].target, cst.Name)
@@ -52,7 +49,6 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
                 if self._on_change is not None:
                     self._on_change(message)
                 return cst.RemovalSentinel.REMOVE
-
         return updated_node
 
     @override

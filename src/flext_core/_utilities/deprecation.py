@@ -21,7 +21,6 @@ from flext_core import P, R, t
 class FlextUtilitiesDeprecation:
     """Deprecation utilities for marking deprecated code."""
 
-    # Class-level set to track warnings that have already been issued
     _warned_once: ClassVar[set[str]] = set()
 
     @classmethod
@@ -69,6 +68,7 @@ class FlextUtilitiesDeprecation:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @functools.wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 message_parts = [f"{func.__name__} is deprecated"]
@@ -79,9 +79,7 @@ class FlextUtilitiesDeprecation:
                 if reason:
                     message_parts.append(f"Reason: {reason}")
                 warnings.warn(
-                    ". ".join(message_parts),
-                    DeprecationWarning,
-                    stacklevel=2,
+                    ". ".join(message_parts), DeprecationWarning, stacklevel=2
                 )
                 return func(*args, **kwargs)
 
@@ -91,8 +89,7 @@ class FlextUtilitiesDeprecation:
 
     @staticmethod
     def deprecated_class[TClass: type](
-        replacement: str | None = None,
-        version: str | None = None,
+        replacement: str | None = None, version: str | None = None
     ) -> Callable[[TClass], TClass]:
         """Mark class as deprecated.
 
@@ -113,11 +110,9 @@ class FlextUtilitiesDeprecation:
         """
 
         def decorator(cls: TClass) -> TClass:
-            # Access __init__ from the class type using getattr to avoid mypy error
-            # This avoids accessing __init__ on an instance which is unsound
             original_init = getattr(cls, "__init__", None)
             if original_init is None:
-                # If no __init__, create a no-op one
+
                 def noop_init(
                     self: t.ContainerValue,
                     *args: t.ContainerValue,
@@ -140,19 +135,12 @@ class FlextUtilitiesDeprecation:
                 if replacement:
                     message_parts.append(f"Use {replacement} instead")
                 warnings.warn(
-                    ". ".join(message_parts),
-                    DeprecationWarning,
-                    stacklevel=2,
+                    ". ".join(message_parts), DeprecationWarning, stacklevel=2
                 )
-                # Call original __init__ method - original_init is bound to the class
-                # Type narrowing: original_init is guaranteed to be callable after None check
                 init_func = original_init
                 if init_func is not None:
                     _ = init_func(self, *args, **kwargs)
 
-            # Set __init__ on the class for decorator pattern
-            # Accessing __init__ on class is necessary for decorator pattern
-            # Use setattr with variable to avoid mypy error about accessing __init__ on instance
             init_attr = "__init__"
             setattr(cls, init_attr, new_init)
             return cls
@@ -161,9 +149,7 @@ class FlextUtilitiesDeprecation:
 
     @staticmethod
     def deprecated_parameter(
-        param_name: str,
-        replacement: str | None = None,
-        version: str | None = None,
+        param_name: str, replacement: str | None = None, version: str | None = None
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Mark function parameter as deprecated.
 
@@ -186,6 +172,7 @@ class FlextUtilitiesDeprecation:
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+
             @functools.wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 if param_name in kwargs:
@@ -195,9 +182,7 @@ class FlextUtilitiesDeprecation:
                     if replacement:
                         message_parts.append(f"Use '{replacement}' instead")
                     warnings.warn(
-                        ". ".join(message_parts),
-                        DeprecationWarning,
-                        stacklevel=2,
+                        ". ".join(message_parts), DeprecationWarning, stacklevel=2
                     )
                 return func(*args, **kwargs)
 
@@ -206,6 +191,4 @@ class FlextUtilitiesDeprecation:
         return decorator
 
 
-__all__ = [
-    "FlextUtilitiesDeprecation",
-]
+__all__ = ["FlextUtilitiesDeprecation"]

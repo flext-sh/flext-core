@@ -21,21 +21,17 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
+        self, tree: cst.Module, _file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
         if _file_path is None:
-            return tree, []
+            return (tree, [])
         if _file_path.name != c.Infra.Refactor.CONSTANTS_FILE_GLOB:
-            return tree, []
-
+            return (tree, [])
         source = tree.code
         try:
             module_ast = ast.parse(source)
         except SyntaxError:
-            return tree, []
-
+            return (tree, [])
         candidates: list[m.Infra.Refactor.MROSymbolCandidate] = []
         for stmt in module_ast.body:
             if not isinstance(stmt, ast.AnnAssign):
@@ -48,14 +44,11 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
                 continue
             candidates.append(
                 m.Infra.Refactor.MROSymbolCandidate(
-                    symbol=stmt.target.id,
-                    line=stmt.lineno,
+                    symbol=stmt.target.id, line=stmt.lineno
                 )
             )
-
         if len(candidates) == 0:
-            return tree, []
-
+            return (tree, [])
         constants_class = _first_constants_class_name(module_ast)
         scan_result = m.Infra.Refactor.MROScanReport(
             file=str(_file_path),
@@ -69,10 +62,10 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
             )
         )
         if len(migration.moved_symbols) == 0 or updated_source == source:
-            return tree, []
+            return (tree, [])
         updated_module = cst.parse_module(updated_source)
         syms = ", ".join(migration.moved_symbols)
-        return updated_module, [f"migrated constants into facade class: {syms}"]
+        return (updated_module, [f"migrated constants into facade class: {syms}"])
 
 
 def _first_constants_class_name(tree: ast.Module) -> str:

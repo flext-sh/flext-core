@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import override
 
-from pydantic import BaseModel
-
 from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
 
 from .shared import Examples
@@ -14,8 +12,6 @@ from .shared import Examples
 
 class Ex05FlextMixins(Examples):
     """Golden-file tests for ``FlextMixins`` (``x``) public API."""
-
-    # -- Nested stubs for protocol introspection -------------------------------
 
     class DemoService(x):
         """Service exercising mixin result/conversion/tracking APIs."""
@@ -34,10 +30,7 @@ class Ex05FlextMixins(Examples):
             with self.track("demo_success") as metrics:
                 has_duration = "duration_ms" in metrics
                 operation_count = str(metrics.get("operation_count", -1))
-            return {
-                "has_duration": has_duration,
-                "operation_count": operation_count,
-            }
+            return {"has_duration": has_duration, "operation_count": operation_count}
 
     class HandlerLike(FlextSettings):
         """Minimal handler-like satisfying ``x.ProtocolValidation.is_handler``."""
@@ -56,10 +49,10 @@ class Ex05FlextMixins(Examples):
             """Handle data and return result."""
             return r[t.ContainerValue].ok(message)
 
-    class HandlerBad(BaseModel):
+    class HandlerBad:
         """Non-handler for negative ``is_handler`` check."""
 
-    class GoodProcessor(BaseModel):
+    class GoodProcessor:
         """Processor satisfying ``p.HasModelDump`` + process + validate."""
 
         def process(self) -> bool:
@@ -75,52 +68,37 @@ class Ex05FlextMixins(Examples):
         def _protocol_name(self) -> str:
             return "HasModelDump"
 
-    class BadProcessor(BaseModel):
+    class BadProcessor:
         """Processor missing ``process`` for negative validation."""
 
         def _protocol_name(self) -> str:
             return "HasModelDump"
-
-    # -- Exercise entry --------------------------------------------------------
 
     @override
     def exercise(self) -> None:
         """Run all scenarios and record deterministic golden output."""
         FlextRuntime.configure_structlog()
         service = self.DemoService()
-
         self._exercise_result_and_conversion(service)
         self._exercise_runtime_properties_and_tracking(service)
         self._exercise_cqrs_validation_and_protocols()
 
-    # -- §1 result & conversion ------------------------------------------------
-
     def _exercise_result_and_conversion(
-        self,
-        service: Ex05FlextMixins.DemoService,
+        self, service: Ex05FlextMixins.DemoService
     ) -> None:
         """Exercise ok/fail, to_dict, ensure_result, traverse, accumulate."""
         self.section("result_and_conversion")
-
-        # ok / fail
         ok_result = service.ok({"k": "v"})
         self.check("ok.unwrap_or", str(ok_result.map_or("{}")))
-
         fail_result = service.fail(
-            "failure",
-            error_code="E_EX",
-            error_data=service.to_dict({"step": 1}),
+            "failure", error_code="E_EX", error_data=service.to_dict({"step": 1})
         )
         self.check("fail.error", fail_result.error)
         self.check("fail.error_code", fail_result.error_code)
-
-        # to_dict (BaseModel, dict, None)
         to_dict_from_dict = service.to_dict({"x": 1, "y": "2"})
         to_dict_from_none = service.to_dict(None)
         self.check("to_dict.dict", str(to_dict_from_dict.root))
         self.check("to_dict.none", str(to_dict_from_none.root))
-
-        # ensure_result (raw value → ok, existing r → passthrough)
         ensured_raw = service.ensure_result(99)
         ensured_existing = service.ensure_result(r[int].ok(7))
         raw_str: str = str(ensured_raw.value) if ensured_raw.is_success else "-1"
@@ -130,7 +108,6 @@ class Ex05FlextMixins(Examples):
         self.check("ensure_result.raw", raw_str)
         self.check("ensure_result.existing", existing_str)
 
-        # traverse (fail_fast / collect-all)
         def _to_even(value: int) -> r[int]:
             if value % 2 == 0:
                 return r[int].ok(value)
@@ -142,63 +119,44 @@ class Ex05FlextMixins(Examples):
         self.check("traverse.ok", str(traverse_ok.unwrap_or([])))
         self.check("traverse.fail_fast", traverse_fail.error)
         self.check("traverse.collect", traverse_collect.error)
-
-        # accumulate_errors (all-ok / mixed)
         acc_ok = service.accumulate_errors(r[int].ok(1), r[int].ok(2))
         acc_fail = service.accumulate_errors(
-            r[int].ok(1),
-            r[int].fail("e1"),
-            r[int].fail("e2"),
+            r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
         )
         self.check("accumulate_errors.ok", str(acc_ok.unwrap_or([])))
         self.check("accumulate_errors.fail", acc_fail.error)
 
-    # -- §2 runtime properties & tracking --------------------------------------
-
     def _exercise_runtime_properties_and_tracking(
-        self,
-        service: Ex05FlextMixins.DemoService,
+        self, service: Ex05FlextMixins.DemoService
     ) -> None:
         """Exercise container, logger, context, config, and tracking."""
         self.section("runtime_properties_and_tracking")
-
         self.check("container.type", type(service.container).__name__)
         self.check("logger.type", type(service.logger).__name__)
         self.check("context.type", type(service.context).__name__)
         self.check("config.type", type(service.config).__name__)
         self.check("const.scope_operation", c.Context.SCOPE_OPERATION)
-
         success_metrics = service.run_track_success()
         failure_message = service.run_track_failure()
         self.check("track.success.metrics", success_metrics)
         self.check("track.failure.message", failure_message)
 
-    # -- §3 CQRS, Validation, ProtocolValidation -------------------------------
-
     def _exercise_cqrs_validation_and_protocols(self) -> None:
         """Exercise CQRS, Validation, and ProtocolValidation namespaces."""
         self.section("cqrs_validation_protocols")
-
-        # MetricsTracker
         tracker = x.CQRS.MetricsTracker()
-        self.check(
-            "metrics.record_metric",
-            tracker.record_metric("hits", 3).is_success,
-        )
+        self.check("metrics.record_metric", tracker.record_metric("hits", 3).is_success)
         metrics_result = tracker.get_metrics()
         self.check("metrics.get_metrics.success", metrics_result.is_success)
         metrics_str: str = metrics_result.map(lambda value: str(value)).unwrap_or("{}")
         self.check("metrics.get_metrics.value", metrics_str)
-
-        # ContextStack
         stack = x.CQRS.ContextStack()
         self.check(
             "context_stack.push_context",
             stack.push_context(
                 m.ExecutionContext.create_for_handler(
-                    handler_name="Q",
-                    handler_mode="query",
-                ),
+                    handler_name="Q", handler_mode="query"
+                )
             ).is_success,
         )
         self.check(
@@ -210,11 +168,9 @@ class Ex05FlextMixins(Examples):
         popped_str: str = popped.map(lambda value: str(value)).unwrap_or("{}")
         self.check("context_stack.pop_context.value", popped_str)
         self.check(
-            "context_stack.current_context.after_pop",
-            stack.current_context() is None,
+            "context_stack.current_context.after_pop", stack.current_context() is None
         )
 
-        # Validation.validate_with_result
         def _validator_ok(value: t.ContainerValue) -> r[bool]:
             text = str(value)
             return r[bool].ok(text.startswith("a"))
@@ -228,8 +184,6 @@ class Ex05FlextMixins(Examples):
         validation_fail = x.Validation.validate_with_result("abc", validators_fail)
         self.check("validation.ok", validation_ok.is_success)
         self.check("validation.fail", validation_fail.error)
-
-        # ProtocolValidation.is_handler (good / bad)
         self.check(
             "protocol.is_handler.good",
             bool(x.ProtocolValidation.is_handler(self.HandlerLike())),
@@ -238,13 +192,11 @@ class Ex05FlextMixins(Examples):
             "protocol.is_handler.bad",
             bool(x.ProtocolValidation.is_handler(self.HandlerBad())),
         )
-
-        # ProtocolValidation.validate_processor_protocol (good / bad)
         processor_ok = x.ProtocolValidation.validate_processor_protocol(
-            self.GoodProcessor(),
+            self.GoodProcessor()
         )
         processor_fail = x.ProtocolValidation.validate_processor_protocol(
-            self.BadProcessor(),
+            self.BadProcessor()
         )
         self.check("protocol.validate_processor.good", processor_ok.is_success)
         self.check("protocol.validate_processor.fail", processor_fail.error)

@@ -77,14 +77,10 @@ class FlextModelFoundation:
             return cls._list_adapter
 
         @classmethod
-        def metadata_map_adapter(
-            cls,
-        ) -> TypeAdapter[dict[str, t.MetadataValue]]:
+        def metadata_map_adapter(cls) -> TypeAdapter[dict[str, t.MetadataValue]]:
             """Lazy-load metadata map TypeAdapter on first access."""
             if cls._metadata_map_adapter is None:
-                cls._metadata_map_adapter = TypeAdapter(
-                    dict[str, t.MetadataValue],
-                )
+                cls._metadata_map_adapter = TypeAdapter(dict[str, t.MetadataValue])
             return cls._metadata_map_adapter
 
         @classmethod
@@ -94,7 +90,7 @@ class FlextModelFoundation:
             """Lazy-load strict string TypeAdapter on first access."""
             if cls._strict_string_adapter is None:
                 cls._strict_string_adapter = TypeAdapter(
-                    Annotated[str, Field(strict=True)],
+                    Annotated[str, Field(strict=True)]
                 )
             return cls._strict_string_adapter
 
@@ -124,9 +120,7 @@ class FlextModelFoundation:
             return v.strip()
 
         @staticmethod
-        def validate_config_dict(
-            v: t.ContainerValue,
-        ) -> Mapping[str, t.ContainerValue]:
+        def validate_config_dict(v: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
@@ -172,11 +166,7 @@ class FlextModelFoundation:
                     seen.add(clean_tag)
             return normalized
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # BASE MODEL CONFIGURATIONS
-    # ═══════════════════════════════════════════════════════════════════════════
-
-    class ArbitraryTypesModel(BaseModel):
+    class ArbitraryTypesModel:
         """Base model with arbitrary types support."""
 
         model_config = ConfigDict(
@@ -187,7 +177,7 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
-    class StrictBoundaryModel(BaseModel):
+    class StrictBoundaryModel:
         """Strict boundary model for API/external boundaries."""
 
         model_config = ConfigDict(
@@ -200,7 +190,7 @@ class FlextModelFoundation:
             frozen=True,
         )
 
-    class FlexibleInternalModel(BaseModel):
+    class FlexibleInternalModel:
         """Flexible internal model for domain logic."""
 
         model_config = ConfigDict(
@@ -211,23 +201,20 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
-    class ImmutableValueModel(BaseModel):
+    class ImmutableValueModel:
         """Immutable value model for value objects."""
 
         model_config = ConfigDict(
-            defer_build=True,
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
+            defer_build=True, frozen=True, validate_assignment=True, extra="forbid"
         )
 
-    class TaggedModel(BaseModel):
+    class TaggedModel:
         """Base pattern for tagged discriminated unions."""
 
         model_config = ConfigDict(defer_build=True, extra="forbid")
         tag: ClassVar[str]
 
-    class DynamicConfigModel(BaseModel):
+    class DynamicConfigModel:
         """Model for dynamic configuration - allows extra fields."""
 
         model_config = ConfigDict(
@@ -238,11 +225,7 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # METADATA MODEL
-    # ═══════════════════════════════════════════════════════════════════════════
-
-    class Metadata(BaseModel):
+    class Metadata:
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config = ConfigDict(
@@ -253,7 +236,6 @@ class FlextModelFoundation:
             populate_by_name=True,
             arbitrary_types_allowed=True,
         )
-
         created_at: datetime = Field(
             default_factory=lambda: datetime.now(UTC),
             description="Timestamp when the metadata record was first created in UTC.",
@@ -297,15 +279,13 @@ class FlextModelFoundation:
             examples=[{"source": "api", "priority": "high"}],
         )
         metadata_value: t.Scalar | None = Field(
-            default=None,
-            description="Scalar metadata value.",
+            default=None, description="Scalar metadata value."
         )
 
         @field_validator("attributes", mode="before")
         @classmethod
         def _validate_attributes(
-            cls,
-            value: t.MetadataValue | Mapping[str, t.MetadataValue] | None,
+            cls, value: t.MetadataValue | Mapping[str, t.MetadataValue] | None
         ) -> Mapping[str, t.MetadataValue]:
             if value is None:
                 return {}
@@ -327,15 +307,11 @@ class FlextModelFoundation:
                     raise ValueError(msg)
             return (
                 FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
-                    result,
+                    result
                 )
             )
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # DISCRIMINATED UNIONS
-    # ═══════════════════════════════════════════════════════════════════════════
-
-    class CommandMessage(BaseModel):
+    class CommandMessage:
         """Command message with discriminated union support."""
 
         message_type: Literal["command"] = "command"
@@ -346,7 +322,7 @@ class FlextModelFoundation:
             description="Command payload containing input data required for execution.",
         )
 
-    class QueryMessage(BaseModel):
+    class QueryMessage:
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
@@ -357,7 +333,7 @@ class FlextModelFoundation:
         )
         pagination: FlextModelsContainers.Dict | None = None
 
-    class EventMessage(BaseModel):
+    class EventMessage:
         """Event message with discriminated union support."""
 
         message_type: Literal["event"] = "event"
@@ -373,11 +349,10 @@ class FlextModelFoundation:
         )
 
     MessageUnion = Annotated[
-        CommandMessage | QueryMessage | EventMessage,
-        Discriminator("message_type"),
+        CommandMessage | QueryMessage | EventMessage, Discriminator("message_type")
     ]
 
-    class SuccessResult(BaseModel):
+    class SuccessResult:
         """Success result for discriminated union."""
 
         result_type: Literal["success"] = "success"
@@ -387,7 +362,7 @@ class FlextModelFoundation:
             description="Structured metadata attached to a successful operation result.",
         )
 
-    class FailureResult(BaseModel):
+    class FailureResult:
         """Failure result for discriminated union."""
 
         result_type: Literal["failure"] = "failure"
@@ -395,7 +370,7 @@ class FlextModelFoundation:
         error_code: str | None = None
         error_data: FlextModelFoundation.Metadata | None = None
 
-    class PartialResult(BaseModel):
+    class PartialResult:
         """Partial result for discriminated union."""
 
         result_type: Literal["partial"] = "partial"
@@ -407,18 +382,17 @@ class FlextModelFoundation:
         partial_success_rate: float
 
     OperationResult = Annotated[
-        SuccessResult | FailureResult | PartialResult,
-        Discriminator("result_type"),
+        SuccessResult | FailureResult | PartialResult, Discriminator("result_type")
     ]
 
-    class ValidOutcome(BaseModel):
+    class ValidOutcome:
         """Valid validation outcome."""
 
         outcome_type: Literal["valid"] = "valid"
         validated_data: t.ContainerValue
         validation_time_ms: float
 
-    class InvalidOutcome(BaseModel):
+    class InvalidOutcome:
         """Invalid validation outcome."""
 
         outcome_type: Literal["invalid"] = "invalid"
@@ -428,7 +402,7 @@ class FlextModelFoundation:
             description="Machine-readable error codes that classify validation failures.",
         )
 
-    class WarningOutcome(BaseModel):
+    class WarningOutcome:
         """Warning validation outcome."""
 
         outcome_type: Literal["warning"] = "warning"
@@ -437,15 +411,10 @@ class FlextModelFoundation:
         validation_time_ms: float
 
     ValidationOutcome = Annotated[
-        ValidOutcome | InvalidOutcome | WarningOutcome,
-        Discriminator("outcome_type"),
+        ValidOutcome | InvalidOutcome | WarningOutcome, Discriminator("outcome_type")
     ]
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # FROZEN MODELS
-    # ═══════════════════════════════════════════════════════════════════════════
-
-    class FrozenStrictModel(BaseModel):
+    class FrozenStrictModel:
         """Immutable base model with strict validation."""
 
         model_config = ConfigDict(
@@ -475,13 +444,9 @@ class FlextModelFoundation:
 
         def __hash__(self) -> int:
             data = self.model_dump()
-            return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
+            return hash(tuple(sorted(((k, str(v)) for k, v in data.items()))))
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # MIXINS
-    # ═══════════════════════════════════════════════════════════════════════════
-
-    class IdentifiableMixin(BaseModel):
+    class IdentifiableMixin:
         """Mixin for unique identifiers."""
 
         model_config = ConfigDict(
@@ -490,7 +455,6 @@ class FlextModelFoundation:
             validate_assignment=True,
             str_strip_whitespace=True,
         )
-
         unique_id: str = Field(
             default_factory=lambda: str(uuid.uuid4()),
             description="Unique identifier",
@@ -502,23 +466,19 @@ class FlextModelFoundation:
             """Regenerate the unique_id with a new UUID."""
             self.unique_id = str(uuid.uuid4())
 
-    class TimestampableMixin(BaseModel):
+    class TimestampableMixin:
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         model_config = ConfigDict(
-            defer_build=True,
-            arbitrary_types_allowed=True,
-            validate_assignment=True,
+            defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
         )
-
         created_at: UTCDatetime = Field(
             default_factory=lambda: datetime.now(UTC),
             description="Creation timestamp (UTC)",
             frozen=True,
         )
         updated_at: UTCDatetime | None = Field(
-            default=None,
-            description="Last update timestamp (UTC)",
+            default=None, description="Last update timestamp (UTC)"
         )
 
         @field_serializer("created_at", "updated_at", when_used="json")
@@ -538,15 +498,12 @@ class FlextModelFoundation:
                 raise ValueError(msg)
             return self
 
-    class VersionableMixin(BaseModel):
+    class VersionableMixin:
         """Mixin for versioning with optimistic locking."""
 
         model_config = ConfigDict(
-            defer_build=True,
-            arbitrary_types_allowed=True,
-            validate_assignment=True,
+            defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
         )
-
         version: int = Field(
             default=c.Performance.DEFAULT_VERSION,
             ge=c.Performance.MIN_VERSION,
@@ -566,11 +523,10 @@ class FlextModelFoundation:
                 raise ValueError(msg)
             return self
 
-    class RetryConfigurationMixin(BaseModel):
+    class RetryConfigurationMixin:
         """Mixin for shared retry configuration properties."""
 
         model_config = ConfigDict(populate_by_name=True)
-
         max_retries: int = Field(
             default=c.Reliability.DEFAULT_MAX_RETRIES,
             ge=c.ZERO,

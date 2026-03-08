@@ -33,20 +33,16 @@ def test_service_init_type_guards_and_properties(
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
-
     bad_ctx_runtime = m.ServiceRuntime.model_construct(
         config=FlextSettings(),
         context=cast("p.Context", "invalid-context"),
         container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
-        _Svc,
-        "_create_initial_runtime",
-        classmethod(lambda cls: bad_ctx_runtime),
+        _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_ctx_runtime)
     )
     with pytest.raises(TypeError, match="Expected FlextContext"):
         _Svc()
-
     good_ctx = FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
         config=cast("p.Config", _FakeConfig()),
@@ -54,9 +50,7 @@ def test_service_init_type_guards_and_properties(
         container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
-        _Svc,
-        "_create_initial_runtime",
-        classmethod(lambda cls: bad_cfg_runtime),
+        _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_cfg_runtime)
     )
     with pytest.raises(TypeError, match="Expected FlextSettings"):
         _Svc()
@@ -70,6 +64,7 @@ def test_service_create_runtime_container_overrides_branch() -> None:
 def test_service_create_initial_runtime_prefers_custom_config_type_and_context_property() -> (
     None
 ):
+
     class _CustomSettings(FlextSettings):
         pass
 
@@ -78,11 +73,10 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
         @override
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return FlextModelsService.RuntimeBootstrapOptions(
-                config_type=_CustomSettings,
+                config_type=_CustomSettings
             )
 
     runtime = _CustomSvc._create_initial_runtime()
     assert isinstance(runtime.config, _CustomSettings)
-
     service = _Svc()
     assert service.context is not None

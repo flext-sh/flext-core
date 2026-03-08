@@ -22,7 +22,7 @@ from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
@@ -257,7 +257,6 @@ class CollectionUtilitiesScenarios:
             error_contains="Invalid",
         ),
     ]
-
     COERCE_LIST_CASES: ClassVar[list[CoerceListScenario]] = [
         CoerceListScenario(
             name="valid_list_strings",
@@ -334,7 +333,6 @@ class CollectionUtilitiesScenarios:
             error_contains="Expected str",
         ),
     ]
-
     PARSE_MAPPING_CASES: ClassVar[list[ParseMappingScenario]] = [
         ParseMappingScenario(
             name="valid_strings",
@@ -393,7 +391,6 @@ class CollectionUtilitiesScenarios:
             error_contains="Invalid",
         ),
     ]
-
     COERCE_DICT_CASES: ClassVar[list[CoerceDictScenario]] = [
         CoerceDictScenario(
             name="valid_dict_strings",
@@ -449,7 +446,6 @@ class CollectionUtilitiesScenarios:
             error_contains="Expected str",
         ),
     ]
-
     MAP_CASES: ClassVar[list[MapScenario]] = [
         MapScenario(
             name="list_ints",
@@ -488,7 +484,6 @@ class CollectionUtilitiesScenarios:
             expected_result=["HELLO", "WORLD"],
         ),
     ]
-
     FIND_CASES: ClassVar[list[FindScenario]] = [
         FindScenario(
             name="list_find",
@@ -515,7 +510,6 @@ class CollectionUtilitiesScenarios:
             expected_result=20,
         ),
     ]
-
     FILTER_CASES: ClassVar[list[FilterScenario]] = [
         FilterScenario(
             name="list_filter",
@@ -556,13 +550,8 @@ class CollectionUtilitiesScenarios:
             expected_result=[2, 4, 6],
         ),
     ]
-
     COUNT_CASES: ClassVar[list[CountScenario]] = [
-        CountScenario(
-            name="count_list",
-            items=[1, 2, 3, 4],
-            expected_count=4,
-        ),
+        CountScenario(name="count_list", items=[1, 2, 3, 4], expected_count=4),
         CountScenario(
             name="count_predicate",
             items=[1, 2, 3, 4],
@@ -570,7 +559,6 @@ class CollectionUtilitiesScenarios:
             expected_count=2,
         ),
     ]
-
     PROCESS_CASES: ClassVar[list[ProcessScenario]] = [
         ProcessScenario(
             name="process_list",
@@ -598,23 +586,21 @@ class CollectionUtilitiesScenarios:
             expected_result=[],
         ),
     ]
-
     GROUP_CASES: ClassVar[list[GroupScenario]] = [
         GroupScenario(
             name="group_by_len",
             items=["cat", "dog", "house"],
             key=lambda x: len(x),
             expected_result={3: ["cat", "dog"], 5: ["house"]},
-        ),
+        )
     ]
-
     CHUNK_CASES: ClassVar[list[ChunkScenario]] = [
         ChunkScenario(
             name="chunk_list",
             items=[1, 2, 3, 4, 5],
             size=2,
             expected_result=[[1, 2], [3, 4], [5]],
-        ),
+        )
     ]
 
 
@@ -626,22 +612,14 @@ class TestuCollectionParseSequence:
         CollectionUtilitiesScenarios.PARSE_SEQUENCE_CASES,
         ids=lambda s: s.name,
     )
-    def test_parse_sequence(
-        self,
-        scenario: ParseSequenceScenario,
-    ) -> None:
+    def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
-        result = u.Collection.parse_sequence(
-            scenario.enum_cls,
-            scenario.values,
-        )
-
+        result = u.Collection.parse_sequence(scenario.enum_cls, scenario.values)
         if scenario.expected_success:
             assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
             if scenario.expected_count is not None:
                 assert len(result.value) == scenario.expected_count
-            # Verify all values are of correct enum type
             for val in result.value:
                 assert isinstance(val, scenario.enum_cls)
         else:
@@ -652,10 +630,7 @@ class TestuCollectionParseSequence:
 
     def test_parse_sequence_with_custom_enum(self) -> None:
         """Test parse_sequence with custom enum class."""
-        result = u.Collection.parse_sequence(
-            FixturePriority,
-            ["low", "medium", "high"],
-        )
+        result = u.Collection.parse_sequence(FixturePriority, ["low", "medium", "high"])
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert len(result.value) == 3
@@ -664,8 +639,7 @@ class TestuCollectionParseSequence:
     def test_parse_sequence_error_message_format(self) -> None:
         """Test parse_sequence error message format."""
         result = u.Collection.parse_sequence(
-            FixtureStatus,
-            ["active", "invalid1", "invalid2"],
+            FixtureStatus, ["active", "invalid1", "invalid2"]
         )
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
@@ -677,32 +651,21 @@ class TestuCollectionCoerceListValidator:
     """Real tests for u.Collection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.COERCE_LIST_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.COERCE_LIST_CASES, ids=lambda s: s.name
     )
-    def test_coerce_list_validator(
-        self,
-        scenario: CoerceListScenario,
-    ) -> None:
+    def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
         validator = u.Collection.coerce_list_validator(scenario.enum_cls)
-
         if scenario.expected_success:
             result = validator(scenario.value)
-            u.Tests.Assertions.assert_result_matches_expected(
-                result,
-                list,
-            )
+            u.Tests.Assertions.assert_result_matches_expected(result, list)
             if scenario.expected_count is not None:
                 assert len(result) == scenario.expected_count
-            # Verify all values are of correct enum type
             for val in result:
                 assert isinstance(val, scenario.enum_cls)
         else:
             with pytest.raises(
-                scenario.error_type or Exception,
-                match=scenario.error_contains or "",
+                scenario.error_type or Exception, match=scenario.error_contains or ""
             ):
                 _ = validator(scenario.value)
 
@@ -710,18 +673,15 @@ class TestuCollectionCoerceListValidator:
         """Test coerce_list_validator integration with Pydantic."""
         _ = u.Collection.coerce_list_validator(FixtureStatus)
 
-        class TestModel(BaseModel):
+        class TestModel:
             statuses: list[FixtureStatus] = Field(default_factory=list)
 
-        # Test with string list
         model1 = TestModel.model_validate({"statuses": ["active", "pending"]})
         assert len(model1.statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model1.statuses)
-
-        # Test with enum list
-        model2 = TestModel.model_validate(
-            {"statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING]},
-        )
+        model2 = TestModel.model_validate({
+            "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING]
+        })
         assert len(model2.statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model2.statuses)
 
@@ -734,22 +694,14 @@ class TestuCollectionParseMapping:
         CollectionUtilitiesScenarios.PARSE_MAPPING_CASES,
         ids=lambda s: s.name,
     )
-    def test_parse_mapping(
-        self,
-        scenario: ParseMappingScenario,
-    ) -> None:
+    def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""
-        result = u.Collection.parse_mapping(
-            scenario.enum_cls,
-            scenario.mapping,
-        )
-
+        result = u.Collection.parse_mapping(scenario.enum_cls, scenario.mapping)
         if scenario.expected_success:
             assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
             if scenario.expected_keys is not None:
                 assert set(result.value.keys()) == set(scenario.expected_keys)
-            # Verify all values are of correct enum type
             for val in result.value.values():
                 assert isinstance(val, scenario.enum_cls)
         else:
@@ -761,8 +713,7 @@ class TestuCollectionParseMapping:
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
         result = u.Collection.parse_mapping(
-            FixturePriority,
-            {"task1": "low", "task2": "medium", "task3": "high"},
+            FixturePriority, {"task1": "low", "task2": "medium", "task3": "high"}
         )
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
@@ -772,8 +723,7 @@ class TestuCollectionParseMapping:
     def test_parse_mapping_error_message_format(self) -> None:
         """Test parse_mapping error message format."""
         result = u.Collection.parse_mapping(
-            FixtureStatus,
-            {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
+            FixtureStatus, {"user1": "active", "user2": "invalid1", "user3": "invalid2"}
         )
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
@@ -785,32 +735,21 @@ class TestuCollectionCoerceDictValidator:
     """Real tests for u.Collection.coerce_dict_validator."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.COERCE_DICT_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.COERCE_DICT_CASES, ids=lambda s: s.name
     )
-    def test_coerce_dict_validator(
-        self,
-        scenario: CoerceDictScenario,
-    ) -> None:
+    def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
         """Test coerce_dict_validator with various scenarios."""
         validator = u.Collection.coerce_dict_validator(scenario.enum_cls)
-
         if scenario.expected_success:
             result = validator(scenario.value)
-            u.Tests.Assertions.assert_result_matches_expected(
-                result,
-                dict,
-            )
+            u.Tests.Assertions.assert_result_matches_expected(result, dict)
             if scenario.expected_keys is not None:
                 assert set(result.keys()) == set(scenario.expected_keys)
-            # Verify all values are of correct enum type
             for val in result.values():
                 assert isinstance(val, scenario.enum_cls)
         else:
             with pytest.raises(
-                scenario.error_type or Exception,
-                match=scenario.error_contains or "",
+                scenario.error_type or Exception, match=scenario.error_contains or ""
             ):
                 _ = validator(scenario.value)
 
@@ -818,25 +757,20 @@ class TestuCollectionCoerceDictValidator:
         """Test coerce_dict_validator integration with Pydantic."""
         _ = u.Collection.coerce_dict_validator(FixtureStatus)
 
-        class TestModel(BaseModel):
+        class TestModel:
             user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
 
-        # Test with string dict
-        model1 = TestModel.model_validate(
-            {"user_statuses": {"user1": "active", "user2": "pending"}},
-        )
+        model1 = TestModel.model_validate({
+            "user_statuses": {"user1": "active", "user2": "pending"}
+        })
         assert len(model1.user_statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model1.user_statuses.values())
-
-        # Test with enum dict
-        model2 = TestModel.model_validate(
-            {
-                "user_statuses": {
-                    "user1": FixtureStatus.ACTIVE,
-                    "user2": FixtureStatus.PENDING,
-                },
-            },
-        )
+        model2 = TestModel.model_validate({
+            "user_statuses": {
+                "user1": FixtureStatus.ACTIVE,
+                "user2": FixtureStatus.PENDING,
+            }
+        })
         assert len(model2.user_statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model2.user_statuses.values())
 
@@ -845,23 +779,13 @@ class TestuCollectionMap:
     """Real tests for u.Collection.map."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.MAP_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.MAP_CASES, ids=lambda s: s.name
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
-        # Skip scenarios that use FlextResult objects as items
-        # Collection.map() works on raw collections, not FlextResult
         if isinstance(scenario.items, (r, FlextRuntime.RuntimeResult)):
             pytest.skip("Collection.map() does not handle FlextResult items")
-
-        result = u.Collection.map(
-            scenario.items,
-            scenario.mapper,
-        )
-
-        # Collection.map() returns the mapped collection directly
+        result = u.Collection.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result
 
 
@@ -869,17 +793,11 @@ class TestuCollectionFind:
     """Real tests for u.Collection.find."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.FIND_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.FIND_CASES, ids=lambda s: s.name
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
-        # Collection.find works on lists, tuples, and dicts
-        result = u.Collection.find(
-            scenario.items,
-            cast("Any", scenario.predicate),
-        )
+        result = u.Collection.find(scenario.items, cast("Any", scenario.predicate))
         if scenario.expected_result is None:
             assert result.is_failure
         else:
@@ -891,17 +809,12 @@ class TestuCollectionFilter:
     """Real tests for u.Collection.filter."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.FILTER_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.FILTER_CASES, ids=lambda s: s.name
     )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
-        # Collection.filter works on lists, tuples, and dicts
         result = u.Collection.filter(
-            scenario.items,
-            scenario.predicate,
-            mapper=scenario.mapper,
+            scenario.items, scenario.predicate, mapper=scenario.mapper
         )
         assert result == scenario.expected_result
 
@@ -910,16 +823,11 @@ class TestuCollectionCount:
     """Real tests for u.Collection.count."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.COUNT_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.COUNT_CASES, ids=lambda s: s.name
     )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
-        result = u.Collection.count(
-            scenario.items,
-            scenario.predicate,
-        )
+        result = u.Collection.count(scenario.items, scenario.predicate)
         assert result == scenario.expected_count
 
 
@@ -927,9 +835,7 @@ class TestuCollectionProcess:
     """Real tests for u.Collection.process."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.PROCESS_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.PROCESS_CASES, ids=lambda s: s.name
     )
     def test_process(self, scenario: ProcessScenario) -> None:
         """Test process with various scenarios."""
@@ -941,7 +847,6 @@ class TestuCollectionProcess:
             filter_keys=scenario.filter_keys,
             exclude_keys=scenario.exclude_keys,
         )
-
         if scenario.expected_failure:
             assertion_helpers.assert_flext_result_failure(result)
             if scenario.error_contains:
@@ -955,16 +860,11 @@ class TestuCollectionGroup:
     """Real tests for u.Collection.group."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.GROUP_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.GROUP_CASES, ids=lambda s: s.name
     )
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group with various scenarios."""
-        result = u.Collection.group(
-            scenario.items,
-            scenario.key,
-        )
+        result = u.Collection.group(scenario.items, scenario.key)
         assert result == scenario.expected_result
 
 
@@ -972,16 +872,11 @@ class TestuCollectionChunk:
     """Real tests for u.Collection.chunk."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.CHUNK_CASES,
-        ids=lambda s: s.name,
+        "scenario", CollectionUtilitiesScenarios.CHUNK_CASES, ids=lambda s: s.name
     )
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""
-        result = u.Collection.chunk(
-            scenario.items,
-            scenario.size,
-        )
+        result = u.Collection.chunk(scenario.items, scenario.size)
         assert result == scenario.expected_result
 
 
@@ -991,11 +886,7 @@ class TestuCollectionBatch:
     def test_batch_basic(self) -> None:
         """Test batch basic functionality."""
         items = [1, 2, 3, 4, 5]
-        result = u.Collection.batch(
-            items,
-            lambda x: x * 2,
-            size=2,
-        )
+        result = u.Collection.batch(items, lambda x: x * 2, size=2)
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data.total == 5
@@ -1013,11 +904,7 @@ class TestuCollectionBatch:
                 raise ValueError(msg)
             return 10 // x
 
-        result = u.Collection.batch(
-            items,
-            op,
-            on_error="collect",
-        )
+        result = u.Collection.batch(items, op, on_error="collect")
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data.total == 4

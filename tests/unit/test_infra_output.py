@@ -7,13 +7,9 @@ import re
 from unittest.mock import patch
 
 import flext_infra
-from flext_infra.output import (
-    FlextInfraOutput,
-    _should_use_color,
-    _should_use_unicode,
-)
+from flext_infra.output import FlextInfraOutput, _should_use_color, _should_use_unicode
 
-ANSI_RE = re.compile(r"\033\[\d+m")
+ANSI_RE = re.compile("\\033\\[\\d+m")
 
 
 def _strip_ansi(text: str) -> str:
@@ -129,7 +125,7 @@ class TestInfraOutputStatus:
         buf = io.StringIO()
         out = FlextInfraOutput(use_color=True, use_unicode=False, stream=buf)
         out.status("check", "proj", result=True, elapsed=0.5)
-        assert "\033[" in buf.getvalue()
+        assert "\x1b[" in buf.getvalue()
 
 
 class TestInfraOutputSummary:
@@ -243,7 +239,7 @@ class TestInfraOutputNoColor:
         out.header("Title")
         out.progress(1, 1, "proj", "test")
         out.summary("check", 1, 1, 0, 0, 0.1)
-        assert "\033[" not in buf.getvalue()
+        assert "\x1b[" not in buf.getvalue()
 
 
 class TestModuleSingleton:
@@ -330,8 +326,7 @@ class TestInfraOutputEdgeCases:
         out = FlextInfraOutput(use_color=True, use_unicode=True, stream=buf)
         out.status("test", "proj", result=True, elapsed=0.1)
         text = buf.getvalue()
-        # Should have both ANSI codes and unicode symbols
-        assert "✓" in text or "\033[" in text
+        assert "✓" in text or "\x1b[" in text
 
     def test_stream_parameter_respected(self) -> None:
         buf1 = io.StringIO()

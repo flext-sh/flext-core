@@ -247,7 +247,6 @@ class TestReadDoc:
         doc = tomlkit.document()
         doc["key"] = "value"
         toml_file.write_text(tomlkit.dumps(doc))
-
         result = _read_doc(toml_file)
         assert result is not None
         assert result["key"] == "value"
@@ -261,7 +260,6 @@ class TestReadDoc:
         """Test reading invalid TOML file."""
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("invalid toml content [[[")
-
         result = _read_doc(toml_file)
         assert result is None
 
@@ -269,13 +267,12 @@ class TestReadDoc:
         """Test reading file with permission error."""
         toml_file = tmp_path / "test.toml"
         toml_file.write_text("[project]\nname = 'test'")
-        toml_file.chmod(0o000)
-
+        toml_file.chmod(0)
         try:
             result = _read_doc(toml_file)
             assert result is None
         finally:
-            toml_file.chmod(0o644)
+            toml_file.chmod(420)
 
 
 class TestProjectDevGroups:
@@ -293,7 +290,6 @@ class TestProjectDevGroups:
                 "typings": ["mypy"],
             }
         }
-
         result = _project_dev_groups(doc)
         assert result["dev"] == ["pytest"]
         assert result["docs"] == ["sphinx"]
@@ -317,12 +313,7 @@ class TestProjectDevGroups:
     def test_project_dev_groups_partial_groups(self) -> None:
         """Test with partial groups."""
         doc = tomlkit.document()
-        doc["project"] = {
-            "optional-dependencies": {
-                "dev": ["pytest"],
-            }
-        }
-
+        doc["project"] = {"optional-dependencies": {"dev": ["pytest"]}}
         result = _project_dev_groups(doc)
         assert result["dev"] == ["pytest"]
         assert result["docs"] == []
@@ -343,10 +334,8 @@ class TestCanonicalDevDependencies:
                 "typings": ["mypy"],
             }
         }
-
         result = _canonical_dev_dependencies(doc)
         assert len(result) == 5
-        # Check that all items are present (sorted)
         assert any("pytest" in r for r in result)
 
     def test_canonical_dev_dependencies_empty(self) -> None:
@@ -359,12 +348,8 @@ class TestCanonicalDevDependencies:
         """Test deduplication across groups."""
         doc = tomlkit.document()
         doc["project"] = {
-            "optional-dependencies": {
-                "dev": ["pytest>=7.0"],
-                "test": ["pytest>=6.0"],
-            }
+            "optional-dependencies": {"dev": ["pytest>=7.0"], "test": ["pytest>=6.0"]}
         }
-
         result = _canonical_dev_dependencies(doc)
         assert len(result) == 1
 
@@ -376,7 +361,6 @@ class TestWorkspaceRoot:
         """Test finding workspace root with .gitmodules."""
         (tmp_path / ".gitmodules").touch()
         (tmp_path / "pyproject.toml").touch()
-
         result = _workspace_root(tmp_path / "subdir")
         assert result == tmp_path
 
@@ -384,13 +368,11 @@ class TestWorkspaceRoot:
         """Test finding workspace root with .git."""
         (tmp_path / ".git").mkdir()
         (tmp_path / "pyproject.toml").touch()
-
         result = _workspace_root(tmp_path / "subdir")
         assert result == tmp_path
 
     def test_workspace_root_fallback(self, tmp_path: Path) -> None:
         """Test fallback when no markers found."""
-        # Create a deep enough path structure
         deep_path = tmp_path / "a" / "b" / "c" / "d" / "e"
         deep_path.mkdir(parents=True, exist_ok=True)
         result = _workspace_root(deep_path)
@@ -407,7 +389,6 @@ class TestConsolidateGroupsPhase:
         project = doc["project"]
         assert isinstance(project, MutableMapping)
         project["optional-dependencies"] = tomlkit.table()
-
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
         assert len(changes) > 0
@@ -422,7 +403,6 @@ class TestConsolidateGroupsPhase:
                 "test": ["coverage"],
             }
         }
-
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, ["pytest"])
         assert any("removed" in c for c in changes)
@@ -442,7 +422,6 @@ class TestConsolidateGroupsPhase:
                 }
             }
         }
-
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
         assert len(changes) > 0
@@ -455,7 +434,6 @@ class TestConsolidateGroupsPhase:
         assert isinstance(project, MutableMapping)
         project["optional-dependencies"] = tomlkit.table()
         doc["tool"] = tomlkit.table()
-
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
         assert any("deptry" in c for c in changes)
@@ -463,7 +441,6 @@ class TestConsolidateGroupsPhase:
     def test_consolidate_groups_handles_missing_tables(self) -> None:
         """Test handling missing tables."""
         doc = tomlkit.document()
-
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
         assert len(changes) > 0
@@ -476,7 +453,6 @@ class TestEnsurePytestConfigPhase:
         """Test setting pytest minversion."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
         assert any("minversion" in c for c in changes)
@@ -485,7 +461,6 @@ class TestEnsurePytestConfigPhase:
         """Test setting python_classes."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
         assert any("python_classes" in c for c in changes)
@@ -494,7 +469,6 @@ class TestEnsurePytestConfigPhase:
         """Test setting python_files."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
         assert any("python_files" in c for c in changes)
@@ -503,7 +477,6 @@ class TestEnsurePytestConfigPhase:
         """Test setting addopts."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
         assert any("addopts" in c for c in changes)
@@ -512,7 +485,6 @@ class TestEnsurePytestConfigPhase:
         """Test adding pytest markers."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
         assert any("markers" in c for c in changes)
@@ -522,13 +494,9 @@ class TestEnsurePytestConfigPhase:
         doc = tomlkit.document()
         doc["tool"] = {
             "pytest": {
-                "ini_options": {
-                    "minversion": "8.0",
-                    "python_classes": ["Test*"],
-                }
+                "ini_options": {"minversion": "8.0", "python_classes": ["Test*"]}
             }
         }
-
         phase = EnsurePytestConfigPhase()
         _ = phase.apply(doc)
         tool = doc["tool"]
@@ -547,7 +515,6 @@ class TestEnsurePyreflyConfigPhase:
         """Test setting Python version."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
         assert any("python-version" in c for c in changes)
@@ -556,7 +523,6 @@ class TestEnsurePyreflyConfigPhase:
         """Test enabling ignore-errors-in-generated-code."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
         assert any("ignore-errors-in-generated-code" in c for c in changes)
@@ -565,7 +531,6 @@ class TestEnsurePyreflyConfigPhase:
         """Test setting search-path."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
         assert any("search-path" in c for c in changes)
@@ -574,7 +539,6 @@ class TestEnsurePyreflyConfigPhase:
         """Test enabling strict error rules."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
         assert any("errors" in c for c in changes)
@@ -583,7 +547,6 @@ class TestEnsurePyreflyConfigPhase:
         """Test setting project-excludes."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
         assert any("project-excludes" in c for c in changes)
@@ -592,7 +555,6 @@ class TestEnsurePyreflyConfigPhase:
         """Test non-root project configuration."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=False)
         assert len(changes) > 0
@@ -604,7 +566,6 @@ class TestInjectCommentsPhase:
     def test_inject_comments_adds_banner(self) -> None:
         """Test adding managed banner."""
         rendered = "[project]\nname = 'test'"
-
         phase = InjectCommentsPhase()
         result, changes = phase.apply(rendered)
         assert "[MANAGED] FLEXT pyproject standardization" in result
@@ -613,7 +574,6 @@ class TestInjectCommentsPhase:
     def test_inject_comments_injects_markers(self) -> None:
         """Test injecting section markers."""
         rendered = "[project]\nname = 'test'\n[tool.pytest]"
-
         phase = InjectCommentsPhase()
         _, changes = phase.apply(rendered)
         assert any("marker" in c for c in changes)
@@ -621,7 +581,6 @@ class TestInjectCommentsPhase:
     def test_inject_comments_removes_broken_group_section(self) -> None:
         """Test removing broken [group.dev.dependencies] section."""
         rendered = "[group.dev.dependencies]\npytest = '^7.0'"
-
         phase = InjectCommentsPhase()
         result, changes = phase.apply(rendered)
         assert "[group.dev.dependencies]" not in result
@@ -630,16 +589,13 @@ class TestInjectCommentsPhase:
     def test_inject_comments_handles_optional_dependencies_dev(self) -> None:
         """Test handling optional-dependencies.dev marker."""
         rendered = "[project.optional-dependencies]\ndev = ['pytest']"
-
         phase = InjectCommentsPhase()
         result, changes = phase.apply(rendered)
-        # Check that dev marker was processed
         assert "dev" in result or len(changes) > 0
 
     def test_inject_comments_preserves_existing_markers(self) -> None:
         """Test preserving existing markers."""
         rendered = "# [MANAGED] build system\n[build-system]"
-
         phase = InjectCommentsPhase()
         result, _ = phase.apply(rendered)
         assert "# [MANAGED] build system" in result
@@ -664,7 +620,6 @@ class TestFlextInfraPyprojectModernizer:
         (tmp_path / "pyproject.toml").touch()
         (tmp_path / "subdir").mkdir()
         (tmp_path / "subdir" / "pyproject.toml").touch()
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         files = modernizer.find_pyproject_files()
         assert len(files) >= 2
@@ -674,7 +629,6 @@ class TestFlextInfraPyprojectModernizer:
         (tmp_path / "pyproject.toml").touch()
         (tmp_path / ".venv").mkdir()
         (tmp_path / ".venv" / "pyproject.toml").touch()
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         files = modernizer.find_pyproject_files()
         assert all(".venv" not in str(f) for f in files)
@@ -685,13 +639,9 @@ class TestFlextInfraPyprojectModernizer:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         pyproject.write_text(tomlkit.dumps(doc))
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
-            pyproject,
-            canonical_dev=[],
-            dry_run=True,
-            skip_comments=False,
+            pyproject, canonical_dev=[], dry_run=True, skip_comments=False
         )
         assert isinstance(changes, list)
 
@@ -699,13 +649,9 @@ class TestFlextInfraPyprojectModernizer:
         """Test processing invalid TOML file."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("invalid [[[")
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
-            pyproject,
-            canonical_dev=[],
-            dry_run=True,
-            skip_comments=False,
+            pyproject, canonical_dev=[], dry_run=True, skip_comments=False
         )
         assert "invalid TOML" in changes
 
@@ -716,13 +662,9 @@ class TestFlextInfraPyprojectModernizer:
         doc["project"] = {"name": "test"}
         original_content = tomlkit.dumps(doc)
         pyproject.write_text(original_content)
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         modernizer.process_file(
-            pyproject,
-            canonical_dev=["pytest"],
-            dry_run=True,
-            skip_comments=False,
+            pyproject, canonical_dev=["pytest"], dry_run=True, skip_comments=False
         )
         assert pyproject.read_text() == original_content
 
@@ -732,13 +674,9 @@ class TestFlextInfraPyprojectModernizer:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         pyproject.write_text(tomlkit.dumps(doc))
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
-            pyproject,
-            canonical_dev=[],
-            dry_run=True,
-            skip_comments=True,
+            pyproject, canonical_dev=[], dry_run=True, skip_comments=True
         )
         assert not any("banner" in c for c in changes)
 
@@ -748,20 +686,12 @@ class TestFlextInfraPyprojectModernizer:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         doc["tool"] = {
-            "poetry": {
-                "group": {
-                    "empty": {"dependencies": tomlkit.table()},
-                }
-            }
+            "poetry": {"group": {"empty": {"dependencies": tomlkit.table()}}}
         }
         pyproject.write_text(tomlkit.dumps(doc))
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
-            pyproject,
-            canonical_dev=[],
-            dry_run=True,
-            skip_comments=False,
+            pyproject, canonical_dev=[], dry_run=True, skip_comments=False
         )
         assert any("empty" in c for c in changes)
 
@@ -771,14 +701,9 @@ class TestFlextInfraPyprojectModernizer:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         pyproject.write_text(tomlkit.dumps(doc))
-
         args = argparse.Namespace(
-            dry_run=False,
-            audit=True,
-            skip_comments=False,
-            skip_check=True,
+            dry_run=False, audit=True, skip_comments=False, skip_check=True
         )
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch.object(modernizer, "find_pyproject_files", return_value=[pyproject]):
             with patch("flext_infra.deps.modernizer._read_doc") as mock_read:
@@ -792,14 +717,9 @@ class TestFlextInfraPyprojectModernizer:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         pyproject.write_text(tomlkit.dumps(doc))
-
         args = argparse.Namespace(
-            dry_run=False,
-            audit=False,
-            skip_comments=False,
-            skip_check=False,
+            dry_run=False, audit=False, skip_comments=False, skip_check=False
         )
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch.object(modernizer, "find_pyproject_files", return_value=[pyproject]):
             with patch("flext_infra.deps.modernizer._read_doc") as mock_read:
@@ -812,7 +732,6 @@ class TestFlextInfraPyprojectModernizer:
         """Test poetry check success."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[project]\nname = 'test'")
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch(
             "flext_infra.deps.modernizer.FlextInfraCommandRunner.run_raw"
@@ -821,7 +740,6 @@ class TestFlextInfraPyprojectModernizer:
             mock_result.is_failure = False
             mock_result.value = Mock(exit_code=0)
             mock_run.return_value = mock_result
-
             result = modernizer._run_poetry_check([pyproject])
             assert result == 0
 
@@ -829,7 +747,6 @@ class TestFlextInfraPyprojectModernizer:
         """Test poetry check failure."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[project]\nname = 'test'")
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch(
             "flext_infra.deps.modernizer.FlextInfraCommandRunner.run_raw"
@@ -837,7 +754,6 @@ class TestFlextInfraPyprojectModernizer:
             mock_result = Mock()
             mock_result.is_failure = True
             mock_run.return_value = mock_result
-
             result = modernizer._run_poetry_check([pyproject])
             assert result == 1
 
@@ -845,7 +761,6 @@ class TestFlextInfraPyprojectModernizer:
         """Test poetry check with non-zero exit code."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[project]\nname = 'test'")
-
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch(
             "flext_infra.deps.modernizer.FlextInfraCommandRunner.run_raw"
@@ -854,7 +769,6 @@ class TestFlextInfraPyprojectModernizer:
             mock_result.is_failure = False
             mock_result.value = Mock(exit_code=1)
             mock_run.return_value = mock_result
-
             result = modernizer._run_poetry_check([pyproject])
             assert result == 1
 
@@ -1006,10 +920,8 @@ def test_ensure_pyrefly_config_phase_apply_python_version(tmp_path: Path) -> Non
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
-
     assert any("python-version set to 3.13" in change for change in changes)
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
@@ -1025,10 +937,8 @@ def test_ensure_pyrefly_config_phase_apply_ignore_errors(tmp_path: Path) -> None
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
-
     assert any(
         "ignore-errors-in-generated-code enabled" in change for change in changes
     )
@@ -1046,10 +956,8 @@ def test_ensure_pyrefly_config_phase_apply_search_path(tmp_path: Path) -> None:
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
-
     assert "search-path set to" in " ".join(changes)
 
 
@@ -1060,11 +968,8 @@ def test_ensure_pyrefly_config_phase_apply_errors(tmp_path: Path) -> None:
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
-
-    # Should have changes for enabling strict errors
     assert any("errors" in change for change in changes)
 
 
@@ -1073,7 +978,6 @@ def test_inject_comments_phase_apply_banner(tmp_path: Path) -> None:
     rendered = '[project]\nname = "test"\n'
     phase = InjectCommentsPhase()
     result, changes = phase.apply(rendered)
-
     assert "[MANAGED] FLEXT pyproject standardization" in result
     assert "managed banner injected" in changes
 
@@ -1083,7 +987,6 @@ def test_inject_comments_phase_apply_markers(tmp_path: Path) -> None:
     rendered = '[project]\nname = "test"\n[tool.pytest]\n'
     phase = InjectCommentsPhase()
     result, _ = phase.apply(rendered)
-
     assert "[MANAGED]" in result
 
 
@@ -1092,7 +995,6 @@ def test_inject_comments_phase_apply_broken_group_section(tmp_path: Path) -> Non
     rendered = '[group.dev.dependencies]\nrequests = "*"\n[project]\n'
     phase = InjectCommentsPhase()
     result, changes = phase.apply(rendered)
-
     assert "[group.dev.dependencies]" not in result
     assert "broken [group.dev.dependencies] section removed" in changes
 
@@ -1109,10 +1011,8 @@ def test_consolidate_groups_phase_apply_removes_old_groups(tmp_path: Path) -> No
     opt_deps["dev"] = ["pytest"]
     opt_deps["docs"] = ["sphinx"]
     opt_deps["test"] = ["coverage"]
-
     phase = ConsolidateGroupsPhase()
     changes = phase.apply(doc, [])
-
     assert any("optional-dependencies.docs removed" in change for change in changes)
     assert any("optional-dependencies.test removed" in change for change in changes)
 
@@ -1127,10 +1027,8 @@ def test_ensure_pytest_config_phase_apply_minversion(tmp_path: Path) -> None:
     pytest_section = tool["pytest"]
     assert isinstance(pytest_section, MutableMapping)
     pytest_section["ini_options"] = tomlkit.table()
-
     phase = EnsurePytestConfigPhase()
     changes = phase.apply(doc)
-
     assert any("minversion set to 8.0" in change for change in changes)
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
@@ -1151,10 +1049,8 @@ def test_ensure_pytest_config_phase_apply_python_classes(tmp_path: Path) -> None
     pytest_section = tool["pytest"]
     assert isinstance(pytest_section, MutableMapping)
     pytest_section["ini_options"] = tomlkit.table()
-
     phase = EnsurePytestConfigPhase()
     changes = phase.apply(doc)
-
     assert any("python_classes updated" in change for change in changes)
 
 
@@ -1168,10 +1064,8 @@ def test_ensure_pytest_config_phase_apply_markers(tmp_path: Path) -> None:
     pytest_section = tool["pytest"]
     assert isinstance(pytest_section, MutableMapping)
     pytest_section["ini_options"] = tomlkit.table()
-
     phase = EnsurePytestConfigPhase()
     changes = phase.apply(doc)
-
     assert any("markers" in change for change in changes)
 
 
@@ -1181,12 +1075,10 @@ def test_flext_infra_pyproject_modernizer_process_file_invalid_toml(
     """Test modernizer handles invalid TOML gracefully."""
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text("invalid toml {", encoding="utf-8")
-
     modernizer = FlextInfraPyprojectModernizer(tmp_path)
     changes = modernizer.process_file(
         pyproject, canonical_dev=[], dry_run=True, skip_comments=False
     )
-
     assert "invalid TOML" in changes
 
 
@@ -1202,11 +1094,9 @@ def test_flext_infra_pyproject_modernizer_find_pyproject_files(tmp_path: Path) -
     )
     (tmp_path / ".venv").mkdir()
     (tmp_path / ".venv" / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
-
     modernizer = FlextInfraPyprojectModernizer(tmp_path)
     files = modernizer.find_pyproject_files()
-
-    assert len(files) == 2  # Should skip .venv
+    assert len(files) == 2
     assert all("project" in str(f) for f in files)
 
 
@@ -1243,10 +1133,7 @@ class TestModernizerUncoveredLines:
         self, tmp_path: Path
     ) -> None:
         """Test InjectCommentsPhase handles optional-dependencies.dev marker (lines 443-455)."""
-        rendered = (
-            "[project.optional-dependencies]\n"
-            "optional-dependencies.dev = ['pytest', 'coverage']\n"
-        )
+        rendered = "[project.optional-dependencies]\noptional-dependencies.dev = ['pytest', 'coverage']\n"
         phase = InjectCommentsPhase()
         result, changes = phase.apply(rendered)
         assert "optional-dependencies.dev" in result or len(changes) > 0
@@ -1328,9 +1215,7 @@ class TestEnsurePyrightConfigPhase:
         """Root pyright config should enforce tests reportPrivateUsage=none."""
         doc = tomlkit.document()
         phase = EnsurePyrightConfigPhase()
-
         changes = phase.apply(doc, is_root=True)
-
         tool = doc.get("tool")
         assert isinstance(tool, MutableMapping)
         pyright = tool.get("pyright")
@@ -1350,9 +1235,7 @@ class TestEnsurePyrightConfigPhase:
         """Subproject pyright config should enforce tests reportPrivateUsage=none."""
         doc = tomlkit.document()
         phase = EnsurePyrightConfigPhase()
-
         changes = phase.apply(doc, is_root=False)
-
         tool = doc.get("tool")
         assert isinstance(tool, MutableMapping)
         pyright = tool.get("pyright")

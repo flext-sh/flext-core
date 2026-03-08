@@ -26,18 +26,7 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import (
-    c,
-    m,
-    r,
-    s,
-    t,
-    u,
-)
-
-# ═══════════════════════════════════════════════════════════════════
-# TYPE DEFINITIONS (Python 3.13+ PEP 695 strict)
-# ═══════════════════════════════════════════════════════════════════
+from flext_core import c, m, r, s, t, u
 
 
 class StatusEnum(StrEnum):
@@ -56,10 +45,6 @@ class UserModel(m.ArbitraryTypesModel):
     age: int = Field(ge=0, le=150)
 
 
-# ═══════════════════════════════════════════════════════════════════
-# SAMPLE DATA
-# ═══════════════════════════════════════════════════════════════════
-
 TEST_DATA: Mapping[str, t.ContainerValue] = {
     "name": "John Doe",
     "status": "active",
@@ -69,11 +54,6 @@ TEST_DATA: Mapping[str, t.ContainerValue] = {
     "source_dict": {"old_key": "value", "foo": "bar"},
     "key_mapping": {"old_key": "new_key", "foo": "bar"},
 }
-
-
-# ═══════════════════════════════════════════════════════════════════
-# SERVICE IMPLEMENTATION
-# ═══════════════════════════════════════════════════════════════════
 
 
 class AdvancedUtilitiesService(s[m.ConfigMap]):
@@ -105,22 +85,13 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_configuration() -> None:
         """Show Configuration utilities."""
         print("\n=== Configuration ===")
-
-        # Get parameter from model
         user = UserModel(name="Test", status=StatusEnum.ACTIVE, age=30)
         try:
             name_param = u.get_parameter(user.model_dump(), "name")
             print(f"✅ Get parameter: name={name_param}")
         except Exception as e:
             print(f"⚠️  Get parameter: {e}")
-
-        # Get parameter from dict
-        config_dict: m.ConfigMap = m.ConfigMap(
-            root={
-                "timeout": 30,
-                "retries": 3,
-            },
-        )
+        config_dict: m.ConfigMap = m.ConfigMap(root={"timeout": 30, "retries": 3})
         try:
             timeout = u.get_parameter(config_dict.root, "timeout")
             print(f"✅ Get from dict: timeout={timeout}")
@@ -131,8 +102,6 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_data_mapping() -> None:
         """Show Mapper utilities."""
         print("\n=== Data Mapping ===")
-
-        # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
         map_result: r[Mapping[str, t.ContainerValue]] = r[t.ConfigurationMapping].fail(
@@ -148,19 +117,10 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         if map_result.is_success:
             mapped = map_result.value
             print(f"✅ Key mapping: {list(mapped.keys())}")
-
-        # Convert to int safe using parse()
         int_result = u.parse("123", int, default=0)
-        print(
-            f"✅ Safe int conversion: '123' → {int_result.map_or(0)}",
-        )
-
-        # Build flags dict
+        print(f"✅ Safe int conversion: '123' → {int_result.map_or(0)}")
         flags: list[str] = ["read", "write"]
-        flag_mapping: dict[str, str] = {
-            "read": "can_read",
-            "write": "can_write",
-        }
+        flag_mapping: dict[str, str] = {"read": "can_read", "write": "can_write"}
         flags_result = u.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
             flags_dict = flags_result.value
@@ -170,16 +130,10 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_domain_utilities() -> None:
         """Show Domain utilities."""
         print("\n=== Domain Utilities ===")
-
-        # Create test entities for comparison demonstration
         user1 = UserModel(name="Alice", status=StatusEnum.ACTIVE, age=25)
         user2 = UserModel(name="Bob", status=StatusEnum.ACTIVE, age=30)
-
-        # Compare value objects by value
         comparison = u.compare_value_objects_by_value(user1, user2)
         print(f"✅ Value object comparison: {comparison}")
-
-        # Entity comparison utilities available
         print("✅ Entity comparison utilities available")
         print("✅ Entity hashing utilities available")
 
@@ -187,17 +141,13 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_enum_utilities() -> None:
         """Show Enum utilities."""
         print("\n=== Enum Utilities ===")
-
-        # Parse enum from string
         parse_result = u.parse_enum(StatusEnum, "active")
         if parse_result.is_success:
             status = parse_result.value
             print(f"✅ Enum parsing: {status.value}")
-
         pending_result = u.parse_enum(StatusEnum, "pending")
         if pending_result.is_success:
             print("✅ Membership validation: 'pending' is a valid StatusEnum")
-
         active_result = u.parse_enum(StatusEnum, "active")
         if active_result.is_success:
             print("✅ Membership validation: 'active' is a valid StatusEnum")
@@ -206,8 +156,6 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_model_utilities() -> None:
         """Show Model utilities."""
         print("\n=== Model Utilities ===")
-
-        # Create model from dict
         user_data: dict[str, t.ContainerValue] = {
             "name": "Alice",
             "status": "active",
@@ -222,13 +170,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
                 else str(user.status)
             )
             print(f"✅ Model from dict: {user.name} ({status_value})")
-
-        # Create model from kwargs
         kwargs_result = u.from_kwargs(
-            UserModel,
-            name="Bob",
-            status=StatusEnum.PENDING,
-            age=30,
+            UserModel, name="Bob", status=StatusEnum.PENDING, age=30
         )
         if kwargs_result.is_success:
             user = kwargs_result.value
@@ -238,12 +181,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
                 else str(user.status)
             )
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
-
-        # Merge defaults
-        defaults: Mapping[str, t.JsonValue] = {
-            "status": StatusEnum.PENDING,
-            "age": 0,
-        }
+        defaults: Mapping[str, t.JsonValue] = {"status": StatusEnum.PENDING, "age": 0}
         overrides: Mapping[str, t.JsonValue] = {"name": "Charlie"}
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
@@ -259,8 +197,6 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_pagination() -> None:
         """Show Pagination utilities."""
         print("\n=== Pagination ===")
-
-        # Extract page params
         query_params: dict[str, str] = {"page": "2", "page_size": "10"}
         page_result = u.extract_page_params(
             query_params,
@@ -271,12 +207,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         if page_result.is_success:
             page, page_size = page_result.value
             print(f"✅ Page params: page={page}, size={page_size}")
-
-        # Validate pagination params
         validate_result = u.validate_pagination_params(
-            page=1,
-            page_size=20,
-            max_page_size=c.Pagination.MAX_PAGE_SIZE,
+            page=1, page_size=20, max_page_size=c.Pagination.MAX_PAGE_SIZE
         )
         if validate_result.is_success:
             params = validate_result.value
@@ -286,20 +218,14 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_text_processing() -> None:
         """Show Text utilities."""
         print("\n=== Text Processing ===")
-
-        # Clean text
         dirty_text = str(TEST_DATA["text"])
         cleaned = u.clean_text(dirty_text)
         print(f"✅ Text cleaning: '{dirty_text}' → '{cleaned}'")
-
-        # Truncate text
         long_text = str(TEST_DATA["long_text"])
         truncate_result = u.truncate_text(long_text, max_length=50)
         if truncate_result.is_success:
             truncated = truncate_result.value
             print(f"✅ Text truncation: {len(truncated)} chars")
-
-        # Safe string validation
         try:
             safe = u.safe_string("  valid  ")
             print(f"✅ Safe string: '{safe}'")
@@ -310,28 +236,19 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_type_guards() -> None:
         """Show Guards utilities."""
         print("\n=== Type Guards ===")
-
-        # String non-empty guard
         if u.is_type("hello", "string_non_empty"):
             print("✅ String non-empty guard: 'hello' is valid")
-
-        # Dict non-empty guard
         test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value"})
         if u.is_type(test_dict, "dict_non_empty"):
             print("✅ Dict non-empty guard: dict is valid")
-
-        # List non-empty guard
         test_list: list[int] = [1, 2, 3]
         if u.is_type(test_list, "list_non_empty"):
             print("✅ List non-empty guard: list is valid")
 
     @override
-    def execute(
-        self,
-    ) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute advanced utilities demonstrations."""
         print("Starting advanced utilities demonstration")
-
         try:
             self._demonstrate_args_validation()
             self._demonstrate_enum_utilities()
@@ -342,7 +259,6 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             self._demonstrate_domain_utilities()
             self._demonstrate_pagination()
             self._demonstrate_configuration()
-
             return r[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
@@ -369,10 +285,9 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
                             "api_pagination",
                             "parameter_access",
                         ],
-                    },
-                ),
+                    }
+                )
             )
-
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
             return r[m.ConfigMap].fail(error_msg)
@@ -384,17 +299,15 @@ def main() -> None:
     print("FLEXT UTILITIES - ADVANCED FEATURES")
     print("Args, Enum, Model, Text, Guards, Mapper, Domain, Pagination, Configuration")
     print("=" * 60)
-
     service = AdvancedUtilitiesService()
     result = service.execute()
-
     if result.is_success:
         data = result.value
         utilities = data.root["utilities_demonstrated"]
         categories = data.root["utility_categories"]
         if (
             isinstance(utilities, Sequence)
-            and not isinstance(utilities, (str, bytes, bytearray))
+            and (not isinstance(utilities, (str, bytes, bytearray)))
             and isinstance(categories, int)
         ):
             utilities_list = list(utilities)
@@ -402,7 +315,6 @@ def main() -> None:
             print(f"✅ Covered {len(utilities_list)} utility types")
     else:
         print(f"\n❌ Failed: {result.error}")
-
     print("\n" + "=" * 60)
     print("🎯 Advanced Utilities: Args, Enum, Model, Text")
     print("🎯 Type Safety: Guards, Mapper, Domain, Pagination")

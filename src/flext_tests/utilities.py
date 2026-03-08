@@ -106,8 +106,7 @@ class FlextTestsUtilities(FlextUtilities):
 
         @staticmethod
         def validate_pipeline(
-            value: str,
-            validators: list[Callable[[str], r[bool]]],
+            value: str, validators: list[Callable[[str], r[bool]]]
         ) -> r[bool]:
             """Execute validation pipeline with multiple validators.
 
@@ -127,7 +126,6 @@ class FlextTestsUtilities(FlextUtilities):
                     result = validator(value)
                     if result.is_failure:
                         return result
-                    # Validator returned ok(False) - this is still a failure
                     if result.value is False:
                         return r[bool].fail("Validator must return r[bool].ok(True)")
                 except TypeError as e:
@@ -179,8 +177,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: r[T] | p.Result[T],
-                expected_error: str | None = None,
+                result: r[T] | p.Result[T], expected_error: str | None = None
             ) -> None:
                 """Assert result is failure and has expected error.
 
@@ -201,8 +198,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure_with_error[T](
-                result: r[T] | p.Result[T],
-                expected_error: str,
+                result: r[T] | p.Result[T], expected_error: str
             ) -> None:
                 """Assert result failure with error (compat alias).
 
@@ -215,14 +211,12 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 FlextTestsUtilities.Tests.Result.assert_failure_with_error(
-                    result,
-                    expected_error,
+                    result, expected_error
                 )
 
             @staticmethod
             def assert_success[TResult](
-                result: r[TResult] | p.Result[TResult],
-                error_msg: str | None = None,
+                result: r[TResult] | p.Result[TResult], error_msg: str | None = None
             ) -> TResult:
                 """Assert result is success and return unwrapped value.
 
@@ -242,14 +236,12 @@ class FlextTestsUtilities(FlextUtilities):
                         error_msg or f"Expected success but got failure: {result.error}"
                     )
                     raise AssertionError(msg)
-                # Protocol guarantees value property exists
                 value: TResult = result.value
                 return value
 
             @staticmethod
             def assert_success_with_value[T](
-                result: r[T] | p.Result[T],
-                expected_value: T,
+                result: r[T] | p.Result[T], expected_value: T
             ) -> None:
                 """Assert result is success and has expected value.
 
@@ -300,9 +292,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: t.ContainerValue,
-                attribute: str,
-                value: t.Tests.ContainerValue,
+                target: t.ContainerValue, attribute: str, value: t.Tests.ContainerValue
             ) -> Generator[None]:
                 """Temporarily set attribute on target object.
 
@@ -333,8 +323,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def add_operation(
-                a: t.Tests.ContainerValue,
-                b: t.Tests.ContainerValue,
+                a: t.Tests.ContainerValue, b: t.Tests.ContainerValue
             ) -> t.Tests.ContainerValue:
                 """Execute add operation for numeric or string values.
 
@@ -373,9 +362,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_result[T](
-                value: T | None = None,
-                *,
-                error: str | None = None,
+                value: T | None = None, *, error: str | None = None
             ) -> r[T]:
                 """Create FlextResult for tests.
 
@@ -426,15 +413,13 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 if validation_result.is_failure:
                     return r[t.Tests.ContainerValue].fail(
-                        validation_result.error or "Validation failed",
+                        validation_result.error or "Validation failed"
                     )
                 result_data: t.Tests.ContainerValue = {"result": "success"}
                 return r[t.Tests.ContainerValue].ok(result_data)
 
             @staticmethod
-            def execute_default_service(
-                service_type: str,
-            ) -> r[t.Tests.ContainerValue]:
+            def execute_default_service(service_type: str) -> r[t.Tests.ContainerValue]:
                 """Execute default service operation.
 
                 Args:
@@ -447,10 +432,6 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 service_data: t.Tests.ContainerValue = {"service_type": service_type}
                 return r[t.Tests.ContainerValue].ok(service_data)
-
-            # =====================================================================
-            # Service execution - Reusable service execution helpers
-            # =====================================================================
 
             @staticmethod
             def execute_user_service(
@@ -513,10 +494,6 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 return FlextUtilities.generate("ulid", length=length)
 
-            # =====================================================================
-            # Operations - Reusable operation factories for testing
-            # =====================================================================
-
             @staticmethod
             def simple_operation() -> t.Tests.ContainerValue:
                 """Execute simple operation returning success message.
@@ -533,19 +510,16 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: r[T],
-                expected_error: str | None = None,
+                result: r[T], expected_error: str | None = None
             ) -> None:
                 """Assert result is failure with expected error (compat)."""
                 FlextTestsUtilities.Tests.Result.assert_failure_with_error(
-                    result,
-                    expected_error,
+                    result, expected_error
                 )
 
             @staticmethod
             def assert_result_failure_with_error[T](
-                result: r[T],
-                expected_error: str,
+                result: r[T], expected_error: str
             ) -> None:
                 """Assert result failure with error (compat alias).
 
@@ -558,19 +532,14 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 FlextTestsUtilities.Tests.Result.assert_failure_with_error(
-                    result,
-                    expected_error,
+                    result, expected_error
                 )
 
             @staticmethod
-            def assert_success_with_value[T](
-                result: r[T],
-                expected_value: T,
-            ) -> None:
+            def assert_success_with_value[T](result: r[T], expected_value: T) -> None:
                 """Assert result is success with expected value (compat)."""
                 FlextTestsUtilities.Tests.Result.assert_success_with_value(
-                    result,
-                    expected_value,
+                    result, expected_value
                 )
 
             @staticmethod
@@ -627,13 +596,10 @@ class FlextTestsUtilities(FlextUtilities):
                     AssertionError: If counts don't match
 
                 """
-                # Use alias if main param not provided
                 successes_expected = expected_successes or expected_success_count
                 failures_expected = expected_failures or expected_failure_count
-
                 successes = sum(1 for res in results if res.is_success)
                 failures = sum(1 for res in results if res.is_failure)
-
                 if successes_expected is not None:
                     assert successes == successes_expected, (
                         f"Expected {successes_expected} successes, got {successes}"
@@ -642,26 +608,19 @@ class FlextTestsUtilities(FlextUtilities):
                     assert failures == failures_expected, (
                         f"Expected {failures_expected} failures, got {failures}"
                     )
-
-                # Check first failure index
                 if first_failure_index is not None:
                     actual_first_failure = next(
-                        (i for i, res in enumerate(results) if res.is_failure),
-                        None,
+                        (i for i, res in enumerate(results) if res.is_failure), None
                     )
                     assert actual_first_failure == first_failure_index, (
-                        f"Expected first failure at index {first_failure_index}, "
-                        f"got {actual_first_failure}"
+                        f"Expected first failure at index {first_failure_index}, got {actual_first_failure}"
                     )
                 elif failures == 0:
-                    # Verify no failures when first_failure_index is None
                     actual_first_failure = next(
-                        (i for i, res in enumerate(results) if res.is_failure),
-                        None,
+                        (i for i, res in enumerate(results) if res.is_failure), None
                     )
                     assert actual_first_failure is None, (
-                        f"Expected no failures but found first failure at index "
-                        f"{actual_first_failure}"
+                        f"Expected no failures but found first failure at index {actual_first_failure}"
                     )
 
             @staticmethod
@@ -698,23 +657,17 @@ class FlextTestsUtilities(FlextUtilities):
                         str | None,
                     ]
                 ] = []
-
-                # Create success cases
                 for value in success_values:
                     result = r[t.Tests.ContainerValue].ok(value)
                     cases.append((result, True, value, None))
-
-                # Create failure cases
                 if failure_errors:
                     codes = error_codes or [None] * len(failure_errors)
                     for i, error in enumerate(failure_errors):
                         error_code = codes[i] if i < len(codes) else None
                         result = r[t.Tests.ContainerValue].fail(
-                            error,
-                            error_code=error_code,
+                            error, error_code=error_code
                         )
                         cases.append((result, False, None, error))
-
                 return cases
 
             @staticmethod
@@ -783,8 +736,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_config_fields(
-                config: FlextSettings,
-                expected_fields: m.ConfigMap,
+                config: FlextSettings, expected_fields: m.ConfigMap
             ) -> None:
                 """Assert config has expected field values.
 
@@ -804,9 +756,7 @@ class FlextTestsUtilities(FlextUtilities):
                     assert actual_value == expected_value, msg
 
             @staticmethod
-            def create_test_config(
-                **kwargs: t.Tests.ContainerValue,
-            ) -> FlextSettings:
+            def create_test_config(**kwargs: t.Tests.ContainerValue) -> FlextSettings:
                 """Create a test config instance.
 
                 Args:
@@ -819,9 +769,7 @@ class FlextTestsUtilities(FlextUtilities):
                 scalar_overrides: dict[str, core_t.Scalar] = {
                     str(key): _to_scalar(value) for key, value in kwargs.items()
                 }
-                return FlextSettings.get_global(
-                    overrides=scalar_overrides,
-                )
+                return FlextSettings.get_global(overrides=scalar_overrides)
 
             @staticmethod
             @contextmanager
@@ -840,24 +788,18 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 original_values: MutableMapping[str, str | None] = {}
-
-                # Save and clear specified vars
                 if vars_to_clear:
                     for var in vars_to_clear:
                         original_values[var] = os.environ.get(var)
                         if var in os.environ:
                             del os.environ[var]
-
-                # Save original values and set new ones
                 for key, value in env_vars.items():
                     if key not in original_values:
                         original_values[key] = os.environ.get(key)
                     os.environ[key] = str(value)
-
                 try:
                     yield
                 finally:
-                    # Restore original values
                     for key, original in original_values.items():
                         if original is None:
                             if key in os.environ:
@@ -870,9 +812,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_context_get_success(
-                context: FlextContext,
-                key: str,
-                expected_value: t.Tests.ContainerValue,
+                context: FlextContext, key: str, expected_value: t.Tests.ContainerValue
             ) -> None:
                 """Assert context get returns expected value.
 
@@ -935,7 +875,7 @@ class FlextTestsUtilities(FlextUtilities):
                 def get_count() -> int:
                     return count[0]
 
-                return factory, get_count
+                return (factory, get_count)
 
             @staticmethod
             def create_factory[TFactory](
@@ -986,10 +926,8 @@ class FlextTestsUtilities(FlextUtilities):
                     Handler configuration model
 
                 """
-                # Default values
                 h_type = handler_type or c.Cqrs.HandlerType.COMMAND
                 h_mode = handler_mode or h_type
-
                 return m.Handler(
                     handler_id=handler_id,
                     handler_name=handler_name,
@@ -1021,7 +959,6 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 result = operation()
-
                 if expected_error is not None:
                     assert result.is_failure, (
                         f"Expected failure for: {description}, got success"
@@ -1063,10 +1000,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 cases: list[MutableMapping[str, t.Tests.ContainerValue]] = []
                 for desc, data, expected in zip(
-                    descriptions,
-                    input_data_list,
-                    expected_results,
-                    strict=True,
+                    descriptions, input_data_list, expected_results, strict=True
                 ):
                     th = FlextTestsUtilities.Tests.TestCaseHelpers
                     case = th.create_operation_test_case(
@@ -1155,10 +1089,7 @@ class FlextTestsUtilities(FlextUtilities):
                 entities: list[TEntity] = []
                 dh = FlextTestsUtilities.Tests.DomainHelpers
                 for name, value, remove_id in zip(
-                    names,
-                    values,
-                    ids_removal,
-                    strict=True,
+                    names, values, ids_removal, strict=True
                 ):
                     try:
                         entity = dh.create_test_entity_instance(
@@ -1170,7 +1101,7 @@ class FlextTestsUtilities(FlextUtilities):
                         entities.append(entity)
                     except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                         return r[list[TEntity]].fail(
-                            f"Failed to create entity {name}: {e}",
+                            f"Failed to create entity {name}: {e}"
                         )
                 return r[list[TEntity]].ok(entities)
 
@@ -1201,9 +1132,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_value_object_instance[TValue](
-                data: str,
-                count: int,
-                value_class: _ValueFactory[TValue],
+                data: str, count: int, value_class: _ValueFactory[TValue]
             ) -> TValue:
                 """Create a test value object instance.
 
@@ -1238,9 +1167,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 return [
                     FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
-                        data=data,
-                        count=count,
-                        value_class=value_class,
+                        data=data, count=count, value_class=value_class
                     )
                     for data, count in zip(data_list, count_list, strict=True)
                 ]
@@ -1270,8 +1197,6 @@ class FlextTestsUtilities(FlextUtilities):
                 if not callable(op_method):
                     msg = f"Unknown operation: {operation}"
                     raise ValueError(msg)
-
-                # Merge input_data with kwargs
                 all_args = {**input_data, **kwargs}
                 return _to_payload(op_method(**all_args))
 
@@ -1301,10 +1226,9 @@ class FlextTestsUtilities(FlextUtilities):
                 """Object with model_dump that raises."""
 
                 model_dump: Callable[
-                    [],
-                    MutableMapping[str, t.Tests.ContainerValue],
+                    [], MutableMapping[str, t.Tests.ContainerValue]
                 ] = staticmethod(
-                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump"))
                 )
 
             class BadConfig:
@@ -1313,7 +1237,6 @@ class FlextTestsUtilities(FlextUtilities):
                 @override
                 def __getattribute__(self, name: str) -> t.Tests.ContainerValue:
                     """Raise error on attribute access - test helper for error testing."""
-                    # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
                         result: t.Tests.ContainerValue = super().__getattribute__(name)
                         return result
@@ -1326,7 +1249,6 @@ class FlextTestsUtilities(FlextUtilities):
                 @override
                 def __getattribute__(self, name: str) -> t.Tests.ContainerValue:
                     """Raise TypeError on attribute access - test helper for error testing."""
-                    # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
                         result: t.Tests.ContainerValue = super().__getattribute__(name)
                         return result
@@ -1378,8 +1300,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure(
-                result: r[T],
-                expected_error: str | None = None,
+                result: r[T], expected_error: str | None = None
             ) -> str:
                 """Assert result is failure and optionally check error message.
 
@@ -1423,8 +1344,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 assert isinstance(result, expected_type), (
-                    f"Expected {expected_type.__name__}, got {type(result).__name__}"
-                    f"{f' for {description}' if description else ''}"
+                    f"Expected {expected_type.__name__}, got {type(result).__name__}{(f' for {description}' if description else '')}"
                 )
 
             @staticmethod
@@ -1497,23 +1417,17 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 if fmt != c.Tests.Files.Format.AUTO:
                     return fmt
-
-                # Detect from content type
                 if isinstance(content, bytes):
                     return c.Tests.Files.Format.BIN
                 if FlextUtilities.is_type(content, "mapping"):
-                    # Check extension for yaml vs json
                     ext = Path(name).suffix.lower()
                     if ext in {".yaml", ".yml"}:
                         return c.Tests.Files.Format.YAML
                     return c.Tests.Files.Format.JSON
-                # Runtime check needed to distinguish nested sequences from flat sequences
                 if FlextUtilities.is_type(content, "list") and all(
                     FlextUtilities.is_type(row, "list") for row in content
                 ):
                     return c.Tests.Files.Format.CSV
-
-                # Detect from extension
                 return c.Tests.Files.get_format(Path(name).suffix)
 
             @staticmethod
@@ -1576,7 +1490,7 @@ class FlextTestsUtilities(FlextUtilities):
                     reader = csv.reader(f, delimiter=delim)
                     rows = list(reader)
                     if has_headers and rows:
-                        return rows[1:]  # Skip header row
+                        return rows[1:]
                     return rows
 
             @staticmethod
@@ -1730,9 +1644,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def is_approved(
-                rule_id: str,
-                file_path: Path,
-                approved: Mapping[str, list[str]],
+                rule_id: str, file_path: Path, approved: Mapping[str, list[str]]
             ) -> bool:
                 """Check if file is approved for this rule.
 
@@ -1771,7 +1683,7 @@ class FlextTestsUtilities(FlextUtilities):
                     if (
                         isinstance(stmt, ast.Expr)
                         and isinstance(stmt.value, ast.Constant)
-                        and stmt.value.value is ...
+                        and (stmt.value.value is ...)
                     ):
                         return True
                 return False
@@ -1796,51 +1708,44 @@ class FlextTestsUtilities(FlextUtilities):
                 match = pattern.search(line)
                 if not match:
                     return False
-
                 pos = match.start()
-
-                # Track quote state to determine if position is inside string
                 in_single = False
                 in_double = False
                 in_triple_single = False
                 in_triple_double = False
                 i = 0
                 while i < pos:
-                    # Check for triple quotes first
                     if (
                         line[i : i + 3] == '"""'
-                        and not in_single
-                        and not in_triple_single
+                        and (not in_single)
+                        and (not in_triple_single)
                     ):
                         in_triple_double = not in_triple_double
                         i += 3
                         continue
                     if (
                         line[i : i + 3] == "'''"
-                        and not in_double
-                        and not in_triple_double
+                        and (not in_double)
+                        and (not in_triple_double)
                     ):
                         in_triple_single = not in_triple_single
                         i += 3
                         continue
-                    # Check for single quotes
                     if (
                         line[i] == '"'
-                        and not in_single
-                        and not in_triple_single
-                        and not in_triple_double
+                        and (not in_single)
+                        and (not in_triple_single)
+                        and (not in_triple_double)
                     ):
                         in_double = not in_double
                     elif (
                         line[i] == "'"
-                        and not in_double
-                        and not in_triple_single
-                        and not in_triple_double
+                        and (not in_double)
+                        and (not in_triple_single)
+                        and (not in_triple_double)
                     ):
                         in_single = not in_single
                     i += 1
-
-                # If inside any string, it's not a real comment
                 return not (
                     in_single or in_double or in_triple_single or in_triple_double
                 )
@@ -1906,12 +1811,9 @@ class FlextTestsUtilities(FlextUtilities):
                         str(key): _to_config_map_value(value)
                         for key, value in obj.items()
                     }
-
                 for path, expected in spec.items():
                     result = FlextUtilities.Mapper.extract(
-                        source_obj,
-                        path,
-                        separator=path_sep,
+                        source_obj, path, separator=path_sep
                     )
                     if result.is_failure:
                         return m.Tests.Matcher.DeepMatchResult(
@@ -1921,7 +1823,6 @@ class FlextTestsUtilities(FlextUtilities):
                             matched=False,
                             reason=f"Path not found: {path}",
                         )
-
                     actual = result.value
                     if callable(expected):
                         actual_payload = _to_payload(actual)
@@ -1942,7 +1843,6 @@ class FlextTestsUtilities(FlextUtilities):
                             matched=False,
                             reason="Value mismatch",
                         )
-
                 return m.Tests.Matcher.DeepMatchResult(
                     path="",
                     expected=_to_payload(obj),
@@ -1965,8 +1865,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def validate(
-                value: t.Tests.ContainerValue,
-                spec: int | tuple[int, int],
+                value: t.Tests.ContainerValue, spec: int | tuple[int, int]
             ) -> bool:
                 """Validate length against spec.
 
@@ -1993,16 +1892,11 @@ class FlextTestsUtilities(FlextUtilities):
                     actual_len = len(value)
                 except TypeError:
                     return False
-
                 if isinstance(spec, int):
-                    # Delegate to flext-core chk() - zero duplication
                     return FlextUtilities.chk(actual_len, eq=spec)
                 min_len, max_len = spec
-                # Delegate to flext-core chk() - zero duplication
                 return FlextUtilities.chk(actual_len, gte=min_len, lte=max_len)
 
 
-# Runtime aliases: u for project namespace, u distinct to avoid shadowing core u
 u = FlextTestsUtilities
-
 __all__ = ["FlextTestsUtilities", "u"]

@@ -21,14 +21,11 @@ def test_settings_materialize_and_context_overrides() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
-
     sub = _SubSettings.materialize()
     assert isinstance(sub, _SubSettings)
-
     FlextSettings.register_context_overrides("ctx-a", app_name="A")
     cfg = FlextSettings.for_context("ctx-a")
     assert cfg.app_name == "A"
-
     unchanged = FlextSettings.for_context("ctx-b")
     assert isinstance(unchanged, FlextSettings)
 

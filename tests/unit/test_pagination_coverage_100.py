@@ -181,7 +181,6 @@ class PaginationScenarios:
             expected_error=None,
         ),
     ]
-
     VALIDATE_PAGINATION_PARAMS: ClassVar[list[ValidatePaginationParamsScenario]] = [
         ValidatePaginationParamsScenario(
             name="valid_with_page_size",
@@ -238,7 +237,6 @@ class PaginationScenarios:
             expected_error="Page must be >= 1",
         ),
     ]
-
     PREPARE_PAGINATION_DATA: ClassVar[list[PreparePaginationDataScenario]] = [
         PreparePaginationDataScenario(
             name="with_data_and_total",
@@ -321,7 +319,6 @@ class TestuPaginationExtractPageParams:
             default_page_size=scenario.default_page_size,
             max_page_size=scenario.max_page_size,
         )
-
         if scenario.expected_success:
             u.Tests.Result.assert_success(result)
             page, page_size = result.value
@@ -329,8 +326,7 @@ class TestuPaginationExtractPageParams:
             assert page_size == scenario.expected_page_size
         else:
             u.Tests.Result.assert_failure_with_error(
-                result,
-                expected_error=scenario.expected_error,
+                result, expected_error=scenario.expected_error
             )
 
 
@@ -339,8 +335,7 @@ class TestuPaginationValidatePaginationParams:
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.VALIDATE_PAGINATION_PARAMS)
     def test_validate_pagination_params(
-        self,
-        scenario: ValidatePaginationParamsScenario,
+        self, scenario: ValidatePaginationParamsScenario
     ) -> None:
         """Test validate_pagination_params with various scenarios."""
         result = u.Pagination.validate_pagination_params(
@@ -348,7 +343,6 @@ class TestuPaginationValidatePaginationParams:
             page_size=scenario.page_size,
             max_page_size=scenario.max_page_size,
         )
-
         if scenario.expected_success:
             u.Tests.Result.assert_success(result)
             params = result.value
@@ -356,8 +350,7 @@ class TestuPaginationValidatePaginationParams:
             assert params["page_size"] == scenario.expected_page_size
         else:
             u.Tests.Result.assert_failure_with_error(
-                result,
-                expected_error=scenario.expected_error,
+                result, expected_error=scenario.expected_error
             )
 
 
@@ -366,8 +359,7 @@ class TestuPaginationPreparePaginationData:
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.PREPARE_PAGINATION_DATA)
     def test_prepare_pagination_data(
-        self,
-        scenario: PreparePaginationDataScenario,
+        self, scenario: PreparePaginationDataScenario
     ) -> None:
         """Test prepare_pagination_data with various scenarios."""
         result = u.Pagination.prepare_pagination_data(
@@ -376,21 +368,17 @@ class TestuPaginationPreparePaginationData:
             page=scenario.page,
             page_size=scenario.page_size,
         )
-
         if scenario.expected_success:
             u.Tests.Result.assert_success(result)
             data = result.value
             assert "data" in data
             assert "pagination" in data
-
             pagination = data["pagination"]
             assert isinstance(pagination, dict)
             assert pagination["page"] == scenario.page
             assert pagination["page_size"] == scenario.page_size
             assert pagination["total"] == scenario.expected_total
             assert pagination["total_pages"] == scenario.expected_total_pages
-
-            # Check has_next and has_prev
             if scenario.expected_total_pages:
                 assert pagination["has_next"] == (
                     scenario.page < scenario.expected_total_pages
@@ -398,8 +386,7 @@ class TestuPaginationPreparePaginationData:
                 assert pagination["has_prev"] == (scenario.page > 1)
         else:
             u.Tests.Result.assert_failure_with_error(
-                result,
-                expected_error=scenario.expected_error,
+                result, expected_error=scenario.expected_error
             )
 
 
@@ -419,12 +406,9 @@ class TestuPaginationBuildPaginationResponse:
                 "has_prev": False,
             },
         }
-
         result = u.Pagination.build_pagination_response(
-            pagination_data,
-            message="Success",
+            pagination_data, message="Success"
         )
-
         u.Tests.Result.assert_success(result)
         response = result.value
         assert "data" in response
@@ -444,9 +428,7 @@ class TestuPaginationBuildPaginationResponse:
                 "has_prev": False,
             },
         }
-
         result = u.Pagination.build_pagination_response(pagination_data)
-
         u.Tests.Result.assert_success(result)
         response = result.value
         assert "data" in response
@@ -456,29 +438,23 @@ class TestuPaginationBuildPaginationResponse:
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
         pagination_data: dict[str, t.ContainerValue] = {"pagination": {}}
-
         result = u.Pagination.build_pagination_response(pagination_data)
-
         u.Tests.Result.assert_failure_with_error(
-            result,
-            expected_error="Invalid pagination data structure",
+            result, expected_error="Invalid pagination data structure"
         )
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
         pagination_data: dict[str, t.ContainerValue] = {"data": []}
-
         result = u.Pagination.build_pagination_response(pagination_data)
-
         u.Tests.Result.assert_failure_with_error(
-            result,
-            expected_error="Invalid pagination data structure",
+            result, expected_error="Invalid pagination data structure"
         )
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
         pagination_data: dict[str, t.ContainerValue] = {
-            "data": {"key": "value"},  # dict instead of list
+            "data": {"key": "value"},
             "pagination": {
                 "page": 1,
                 "page_size": 20,
@@ -488,10 +464,7 @@ class TestuPaginationBuildPaginationResponse:
                 "has_prev": False,
             },
         }
-
         result = u.Pagination.build_pagination_response(pagination_data)
-
-        # Should still succeed - dict is valid t.ContainerValue
         u.Tests.Result.assert_success(result)
         response = result.value
         assert "data" in response
@@ -503,7 +476,6 @@ class TestuPaginationExtractPaginationConfig:
     def test_extract_pagination_config_none(self) -> None:
         """Test extract_pagination_config with None."""
         result = u.Pagination.extract_pagination_config(None)
-
         assert result["default_page_size"] == 20
         assert result["max_page_size"] == 1000
 
@@ -515,8 +487,6 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
-        # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             u.Pagination.extract_pagination_config(config)
         else:
@@ -529,12 +499,10 @@ class TestuPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
-        # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
             assert result["default_page_size"] == 30
-            assert result["max_page_size"] == 1000  # Default
+            assert result["max_page_size"] == 1000
         else:
             pytest.skip("Config is not BaseModel or Mapping")
 
@@ -546,11 +514,8 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
-        # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
-            # Invalid values should be ignored, defaults used
             assert result["default_page_size"] == 20
             assert result["max_page_size"] == 1000
         else:
@@ -565,8 +530,6 @@ class TestuPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
-        # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
             assert result["default_page_size"] == 40

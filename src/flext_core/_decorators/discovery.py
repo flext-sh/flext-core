@@ -35,9 +35,7 @@ class FactoryDecoratorsDiscovery:
         )
 
     @staticmethod
-    def scan_module(
-        module: ModuleType,
-    ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
+    def scan_module(module: ModuleType) -> list[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for functions decorated with @factory().
 
         Introspects the module to find all functions with factory configuration
@@ -63,10 +61,7 @@ class FactoryDecoratorsDiscovery:
             func = getattr(module, name, None)
             if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
                 config: m.FactoryDecoratorConfig = getattr(
-                    func,
-                    c.Discovery.FACTORY_ATTR,
+                    func, c.Discovery.FACTORY_ATTR
                 )
                 factories.append((name, config))
-
-        # Sort by name for consistent ordering
         return sorted(factories, key=operator.itemgetter(0))

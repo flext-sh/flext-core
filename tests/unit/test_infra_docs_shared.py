@@ -28,9 +28,7 @@ class TestFlextInfraDocScope:
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         scope = FlextInfraDocScope(
-            name="test-project",
-            path=tmp_path,
-            report_dir=report_dir,
+            name="test-project", path=tmp_path, report_dir=report_dir
         )
         assert scope.name == "test-project"
         assert scope.path == tmp_path
@@ -40,16 +38,12 @@ class TestFlextInfraDocScope:
         """Test FlextInfraDocScope requires name."""
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
-        with pytest.raises(Exception):  # pydantic validation
-            FlextInfraDocScope(
-                name="",  # empty name
-                path=tmp_path,
-                report_dir=report_dir,
-            )
+        with pytest.raises(Exception):
+            FlextInfraDocScope(name="", path=tmp_path, report_dir=report_dir)
 
     def test_scope_path_required(self) -> None:
         """Test FlextInfraDocScope requires path."""
-        with pytest.raises(Exception):  # pydantic validation
+        with pytest.raises(Exception):
             FlextInfraDocScope.model_validate({
                 "name": "test",
                 "path": None,
@@ -58,7 +52,7 @@ class TestFlextInfraDocScope:
 
     def test_scope_report_dir_required(self, tmp_path: Path) -> None:
         """Test FlextInfraDocScope requires report_dir."""
-        with pytest.raises(Exception):  # pydantic validation
+        with pytest.raises(Exception):
             FlextInfraDocScope.model_validate({
                 "name": "test",
                 "path": str(tmp_path),
@@ -126,10 +120,7 @@ class TestFlextInfraDocsShared:
         """Test build_scopes with custom output directory."""
         custom_output = str(tmp_path / "custom_output")
         result = FlextInfraDocsShared.build_scopes(
-            root=tmp_path,
-            project=None,
-            projects=None,
-            output_dir=custom_output,
+            root=tmp_path, project=None, projects=None, output_dir=custom_output
         )
         assert result.is_success or result.is_failure
 
@@ -162,7 +153,6 @@ class TestFlextInfraDocsShared:
         )
         if result.is_success and result.value:
             for scope in result.value:
-                # Report dir should be created or creatable
                 assert isinstance(scope.report_dir, Path)
 
     def test_write_json_returns_flext_result(self, tmp_path: Path) -> None:
@@ -200,7 +190,6 @@ class TestFlextInfraDocsShared:
         hidden_file = hidden_dir / "test.md"
         hidden_file.write_text("# Hidden\n")
         files = FlextInfraDocsShared.iter_markdown_files(tmp_path)
-        # Hidden files should be excluded
         assert not any(".hidden" in str(f) for f in files)
 
     def test_selected_project_names_with_project(self, tmp_path: Path) -> None:
@@ -380,10 +369,7 @@ class TestFlextInfraDocsShared:
     def test_build_scopes_report_dir_path_resolution(self, tmp_path: Path) -> None:
         """Test build_scopes resolves report_dir paths correctly."""
         result = FlextInfraDocsShared.build_scopes(
-            root=tmp_path,
-            project=None,
-            projects=None,
-            output_dir=".reports/docs",
+            root=tmp_path, project=None, projects=None, output_dir=".reports/docs"
         )
         if result.is_success:
             for scope in result.value:
@@ -429,7 +415,6 @@ class TestFlextInfraDocsShared:
     ) -> None:
         """Test write_markdown returns failure on OSError."""
         md_file = tmp_path / "test.md"
-        # Mock Path.write_text to raise OSError
 
         def mock_write_text(
             self: object, data: str, *args: object, **kwargs: object
@@ -445,7 +430,6 @@ class TestFlextInfraDocsShared:
 
     def test_build_scopes_skips_missing_projects(self, tmp_path: Path) -> None:
         """Test build_scopes skips projects without pyproject.toml."""
-        # Create a directory without pyproject.toml
         missing_proj = tmp_path / "missing-proj"
         missing_proj.mkdir(parents=True, exist_ok=True)
         result = FlextInfraDocsShared.build_scopes(
@@ -454,7 +438,6 @@ class TestFlextInfraDocsShared:
             projects="missing-proj",
             output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
-        # Should succeed but skip the missing project
         assert result.is_success
 
     def test_build_scopes_with_nonexistent_project_skips_it(
@@ -467,7 +450,6 @@ class TestFlextInfraDocsShared:
             projects=None,
             output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
-        # Should succeed but only include root scope
         assert result.is_success
 
     def test_build_scopes_appends_valid_project_scope(self, tmp_path: Path) -> None:

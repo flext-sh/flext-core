@@ -17,20 +17,11 @@ from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.constants import c
 from flext_infra.models import FlextInfraModels
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
 
 @pytest.fixture
 def census(tmp_path: Path) -> FlextInfraCodegenCensus:
     """Census service pointed at an empty temporary workspace."""
     return FlextInfraCodegenCensus(workspace_root=tmp_path)
-
-
-# ---------------------------------------------------------------------------
-# _parse_violation — valid inputs
-# ---------------------------------------------------------------------------
 
 
 class TestParseViolationValid:
@@ -46,28 +37,28 @@ class TestParseViolationValid:
         ),
         [
             (
-                "[NS-000-001] src/file.py:42 \u2014 Multiple outer classes found (expected 1, got 2)",
+                "[NS-000-001] src/file.py:42 — Multiple outer classes found (expected 1, got 2)",
                 "NS-000",
                 "src/file.py",
                 42,
                 "Multiple outer classes found (expected 1, got 2)",
             ),
             (
-                "[NS-001-001] src/file.py:10 \u2014 Loose Final constant 'X' belongs in constants.py",
+                "[NS-001-001] src/file.py:10 — Loose Final constant 'X' belongs in constants.py",
                 "NS-001",
                 "src/file.py",
                 10,
                 "Loose Final constant 'X' belongs in constants.py",
             ),
             (
-                "[NS-002-001] src/file.py:5 \u2014 TypeVar 'T' belongs in typings.py",
+                "[NS-002-001] src/file.py:5 — TypeVar 'T' belongs in typings.py",
                 "NS-002",
                 "src/file.py",
                 5,
                 "TypeVar 'T' belongs in typings.py",
             ),
             (
-                "[NS-001-099] src/deep/nested/module.py:999 \u2014 Some long message with special chars: !@#",
+                "[NS-001-099] src/deep/nested/module.py:999 — Some long message with special chars: !@#",
                 "NS-001",
                 "src/deep/nested/module.py",
                 999,
@@ -85,18 +76,12 @@ class TestParseViolationValid:
         expected_msg: str,
     ) -> None:
         result = FlextInfraCodegenCensus._parse_violation(violation_str)
-
         assert result is not None
         assert isinstance(result, FlextInfraModels.Infra.Codegen.CensusViolation)
         assert result.rule == expected_rule
         assert result.module == expected_module
         assert result.line == expected_line
         assert result.message == expected_msg
-
-
-# ---------------------------------------------------------------------------
-# _parse_violation — invalid inputs
-# ---------------------------------------------------------------------------
 
 
 class TestParseViolationInvalid:
@@ -109,9 +94,9 @@ class TestParseViolationInvalid:
             "random text without brackets",
             "[WRONG-FORMAT] missing fields",
             "[NS-001] src/file.py:10 - wrong dash instead of em-dash",
-            "src/file.py:10 \u2014 Missing rule prefix",
-            "[NS-001-001] no-colon-line \u2014 message",
-            "[NS-001-001] src/file.py:notanumber \u2014 message",
+            "src/file.py:10 — Missing rule prefix",
+            "[NS-001-001] no-colon-line — message",
+            "[NS-001-001] src/file.py:notanumber — message",
         ],
         ids=[
             "empty",
@@ -128,31 +113,26 @@ class TestParseViolationInvalid:
         assert result is None
 
 
-# ---------------------------------------------------------------------------
-# Fixability classification
-# ---------------------------------------------------------------------------
-
-
 class TestFixabilityClassification:
     """NS-000 is not fixable; NS-001 and NS-002 are fixable."""
 
     def test_ns000_not_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
-            "[NS-000-001] src/file.py:1 \u2014 Structure violation"
+            "[NS-000-001] src/file.py:1 — Structure violation"
         )
         assert result is not None
         assert result.fixable is False
 
     def test_ns001_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
-            "[NS-001-001] src/file.py:1 \u2014 Constant violation"
+            "[NS-001-001] src/file.py:1 — Constant violation"
         )
         assert result is not None
         assert result.fixable is True
 
     def test_ns002_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
-            "[NS-002-001] src/file.py:1 \u2014 TypeVar violation"
+            "[NS-002-001] src/file.py:1 — TypeVar violation"
         )
         assert result is not None
         assert result.fixable is True
@@ -161,15 +141,10 @@ class TestFixabilityClassification:
         """Different sub-rule numbers under NS-000 are still not fixable."""
         for sub in ("001", "002", "099"):
             result = FlextInfraCodegenCensus._parse_violation(
-                f"[NS-000-{sub}] src/x.py:1 \u2014 msg"
+                f"[NS-000-{sub}] src/x.py:1 — msg"
             )
             assert result is not None
             assert result.fixable is False
-
-
-# ---------------------------------------------------------------------------
-# Excluded projects
-# ---------------------------------------------------------------------------
 
 
 class TestExcludedProjects:
@@ -182,11 +157,6 @@ class TestExcludedProjects:
         assert isinstance(c.Infra.Codegen.EXCLUDED_PROJECTS, frozenset)
 
 
-# ---------------------------------------------------------------------------
-# Regex pattern sanity
-# ---------------------------------------------------------------------------
-
-
 class TestViolationPattern:
     """Compiled regex captures named groups correctly."""
 
@@ -197,11 +167,6 @@ class TestViolationPattern:
         )
         assert match is not None
         assert set(match.groupdict().keys()) == expected_groups
-
-
-# ---------------------------------------------------------------------------
-# CensusViolation model round-trip
-# ---------------------------------------------------------------------------
 
 
 class TestCensusViolationModel:
@@ -222,20 +187,12 @@ class TestCensusViolationModel:
         assert violation.fixable is True
 
 
-# ---------------------------------------------------------------------------
-# CensusReport model
-# ---------------------------------------------------------------------------
-
-
 class TestCensusReportModel:
     """CensusReport aggregates violations correctly."""
 
     def test_empty_report(self) -> None:
         report = FlextInfraModels.Infra.Codegen.CensusReport(
-            project="test-project",
-            violations=[],
-            total=0,
-            fixable=0,
+            project="test-project", violations=[], total=0, fixable=0
         )
         assert report.project == "test-project"
         assert report.total == 0
@@ -245,25 +202,13 @@ class TestCensusReportModel:
     def test_report_with_mixed_violations(self) -> None:
         violations = [
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/a.py",
-                rule="NS-000",
-                line=1,
-                message="m1",
-                fixable=False,
+                module="src/a.py", rule="NS-000", line=1, message="m1", fixable=False
             ),
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/b.py",
-                rule="NS-001",
-                line=2,
-                message="m2",
-                fixable=True,
+                module="src/b.py", rule="NS-001", line=2, message="m2", fixable=True
             ),
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/c.py",
-                rule="NS-002",
-                line=3,
-                message="m3",
-                fixable=True,
+                module="src/c.py", rule="NS-002", line=3, message="m3", fixable=True
             ),
         ]
         report = FlextInfraModels.Infra.Codegen.CensusReport(

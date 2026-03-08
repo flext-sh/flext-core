@@ -28,10 +28,6 @@ class FlextModelsService:
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
 
-    # =========================================================================
-    # SUPPORTING MODELS - Base classes for dynamic configuration
-    # =========================================================================
-
     class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Runtime bootstrap options for service initialization."""
 
@@ -144,20 +140,14 @@ class FlextModelsService:
     class ServiceContext(FlextModelFoundation.DynamicConfigModel):
         """Service execution context - allows extra fields."""
 
-    # =========================================================================
-    # REQUEST/RESPONSE MODELS
-    # =========================================================================
-
     class DomainServiceExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
 
         service_name: str = Field(
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Service name",
+            min_length=c.Reliability.RETRY_COUNT_MIN, description="Service name"
         )
         method_name: str = Field(
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Method to execute",
+            min_length=c.Reliability.RETRY_COUNT_MIN, description="Method to execute"
         )
         parameters: FlextModelsService.ServiceParameters | None = None
         context: FlextModelsService.TraceContext | None = None
@@ -175,7 +165,6 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.parameters is None:
                 self.parameters = FlextModelsService.ServiceParameters()
-
             if self.context is None:
                 self.context = FlextModelsService.TraceContext()
             return self
@@ -196,7 +185,6 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.parameters is None:
                 self.parameters = FlextModelsService.ServiceParameters()
-
             return self
 
     class DomainServiceBatchRequest(FlextModelFoundation.ArbitraryTypesModel):
@@ -229,9 +217,7 @@ class FlextModelsService:
         metric_types: Annotated[
             list[c.Cqrs.ServiceMetricTypeLiteral],
             Field(
-                default_factory=lambda: list(
-                    c.Cqrs.DEFAULT_METRIC_CATEGORIES,
-                ),  # Constant reference, not class instance
+                default_factory=lambda: list(c.Cqrs.DEFAULT_METRIC_CATEGORIES),
                 description="Types of metrics to collect",
             ),
         ]
@@ -255,7 +241,6 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.filters is None:
                 self.filters = FlextModelsService.ServiceFilters()
-
             return self
 
     class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
@@ -293,7 +278,6 @@ class FlextModelsService:
                 self.data = FlextModelsService.ServiceData()
             if self.filters is None:
                 self.filters = FlextModelsService.ServiceFilters()
-
             return self
 
     class AclResponse(FlextModelFoundation.ArbitraryTypesModel):
@@ -304,12 +288,10 @@ class FlextModelsService:
         action: str = Field(description="Requested action")
         allowed: bool = Field(description="Whether access is allowed")
         permissions: list[str] = Field(
-            default_factory=list,
-            description="Granted permissions",
+            default_factory=list, description="Granted permissions"
         )
         denied_permissions: list[str] = Field(
-            default_factory=list,
-            description="Denied permissions",
+            default_factory=list, description="Denied permissions"
         )
         context: FlextModelsService.ServiceContext | None = None
 
@@ -318,7 +300,6 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.context is None:
                 self.context = FlextModelsService.ServiceContext()
-
             return self
 
     class OperationExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
@@ -330,11 +311,8 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: Callable[
-            [t.ContainerValue],
-            p.ResultLike[t.ContainerValue],
-        ] = Field(
-            description="Callable operation returning result",
-        )
+            [t.ContainerValue], p.ResultLike[t.ContainerValue]
+        ] = Field(description="Callable operation returning result")
         arguments: FlextModelsService.ServiceParameters | None = None
         keyword_arguments: FlextModelsService.ServiceParameters | None = None
         timeout_seconds: float = Field(
@@ -352,7 +330,6 @@ class FlextModelsService:
                 self.arguments = FlextModelsService.ServiceParameters()
             if self.keyword_arguments is None:
                 self.keyword_arguments = FlextModelsService.ServiceParameters()
-
             if self.retry_config is None:
                 self.retry_config = FlextModelsService.RetryConfiguration()
             return self

@@ -23,9 +23,7 @@ class FlextInfraUtilitiesToml:
     """
 
     @staticmethod
-    def as_toml_mapping(
-        value: t.ContainerValue,
-    ) -> t.Infra.ContainerDict | None:
+    def as_toml_mapping(value: t.ContainerValue) -> t.Infra.ContainerDict | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if not isinstance(value, dict):
             return None

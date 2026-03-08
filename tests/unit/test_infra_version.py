@@ -96,8 +96,6 @@ class TestFlextInfraVersion:
         major = version_info[0]
         minor = version_info[1] if len(version_info) > 1 else 0
         patch = version_info[2] if len(version_info) > 2 else 0
-
-        # Ensure major, minor, patch are integers
         if isinstance(major, int) and isinstance(minor, int) and isinstance(patch, int):
             result = FlextInfraVersion.is_version_at_least(major, minor, patch)
             assert result is True

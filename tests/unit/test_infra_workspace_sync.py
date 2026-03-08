@@ -39,9 +39,7 @@ def test_sync_service_detects_changes_via_sha256(
     """Test that sync service detects changes using SHA256 hash."""
     base_mk_path = tmp_path / "base.mk"
     base_mk_path.write_text("# Old content\n", encoding="utf-8")
-
     result = sync_service.sync(project_root=tmp_path)
-
     assert result.is_success
 
 
@@ -52,9 +50,7 @@ def test_sync_service_skips_write_when_content_unchanged(
     content = "# Same content\n"
     base_mk_path = tmp_path / "base.mk"
     base_mk_path.write_text(content, encoding="utf-8")
-
     result = sync_service.sync(project_root=tmp_path)
-
     assert result.is_success
 
 
@@ -63,7 +59,6 @@ def test_sync_service_creates_base_mk_if_missing(
 ) -> None:
     """Test that sync service creates base.mk if it doesn't exist."""
     result = sync_service.sync(project_root=tmp_path)
-
     assert result.is_success
     assert (tmp_path / "base.mk").exists()
 
@@ -81,9 +76,7 @@ def test_sync_service_validates_gitignore_entries(
     """Test that sync service validates required .gitignore entries."""
     gitignore_path = tmp_path / ".gitignore"
     gitignore_path.write_text("*.pyc\n", encoding="utf-8")
-
     result = sync_service.sync(project_root=tmp_path)
-
     assert result.is_success
 
 
@@ -131,7 +124,6 @@ def test_sync_service_basemk_generation_failure(tmp_path: Path) -> None:
     mock_result.is_failure = True
     mock_result.error = "Generation failed"
     sync_service._generator.generate.return_value = mock_result
-
     result = sync_service.sync(project_root=tmp_path)
     assert result.is_failure
     assert isinstance(result.error, str)
@@ -185,7 +177,7 @@ def test_sync_service_sha256_content() -> None:
     hash1 = FlextInfraSyncService._sha256_content(content)
     hash2 = FlextInfraSyncService._sha256_content(content)
     assert hash1 == hash2
-    assert len(hash1) == 64  # SHA256 hex is 64 chars
+    assert len(hash1) == 64
 
 
 def test_sync_service_sha256_file(tmp_path: Path) -> None:
@@ -204,10 +196,8 @@ def test_sync_service_canonical_root_copy(tmp_path: Path) -> None:
     canonical.mkdir()
     canonical_basemk = canonical / "base.mk"
     canonical_basemk.write_text("# Canonical content\n", encoding="utf-8")
-
     project = tmp_path / "project"
     project.mkdir()
-
     sync_service = FlextInfraSyncService(canonical_root=canonical)
     result = sync_service.sync(project_root=project)
     assert result.is_success
@@ -216,15 +206,7 @@ def test_sync_service_canonical_root_copy(tmp_path: Path) -> None:
 
 def test_sync_service_main_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test main() CLI entry point."""
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "sync",
-            "--project-root",
-            str(tmp_path),
-        ],
-    )
+    monkeypatch.setattr(sys, "argv", ["sync", "--project-root", str(tmp_path)])
     exit_code = main()
     assert exit_code == 0
 
@@ -234,7 +216,6 @@ def test_sync_service_ensure_gitignore_entries_missing_entries(tmp_path: Path) -
     sync_service = FlextInfraSyncService()
     gitignore_path = tmp_path / ".gitignore"
     gitignore_path.write_text("*.pyc\n", encoding="utf-8")
-
     result = sync_service._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"])
     assert result.is_success
     assert result.value is True
@@ -248,7 +229,6 @@ def test_sync_service_ensure_gitignore_entries_all_present(tmp_path: Path) -> No
     sync_service = FlextInfraSyncService()
     gitignore_path = tmp_path / ".gitignore"
     gitignore_path.write_text(".reports/\n.venv/\n__pycache__/\n", encoding="utf-8")
-
     result = sync_service._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"])
     assert result.is_success
     assert result.value is False
@@ -279,10 +259,8 @@ def test_sync_service_sync_basemk_from_canonical(tmp_path: Path) -> None:
     canonical.mkdir()
     canonical_basemk = canonical / "base.mk"
     canonical_basemk.write_text("# Canonical\n", encoding="utf-8")
-
     project = tmp_path / "project"
     project.mkdir()
-
     sync_service = FlextInfraSyncService()
     result = sync_service._sync_basemk(project, None, canonical_root=canonical)
     assert result.is_success
@@ -295,15 +273,12 @@ def test_sync_service_sync_basemk_no_change_needed(tmp_path: Path) -> None:
     sync_service = FlextInfraSyncService()
     content = "# Same content\n"
     (tmp_path / "base.mk").write_text(content, encoding="utf-8")
-
-    # Mock generator to return the same content
     sync_service._generator = Mock()
     mock_gen = Mock()
     mock_gen.is_failure = False
     mock_gen.is_success = True
     mock_gen.value = content
     sync_service._generator.generate.return_value = mock_gen
-
     result = sync_service._sync_basemk(tmp_path, None)
     assert result.is_success
     assert result.value is False
@@ -317,7 +292,6 @@ def test_sync_service_sync_basemk_generation_failure(tmp_path: Path) -> None:
     mock_result.is_failure = True
     mock_result.error = "Generation failed"
     sync_service._generator.generate.return_value = mock_result
-
     result = sync_service._sync_basemk(tmp_path, None)
     assert result.is_failure
     assert isinstance(result.error, str)
@@ -331,7 +305,6 @@ def test_sync_service_gitignore_sync_failure(
     sync_service = FlextInfraSyncService()
 
     def mock_ensure_gitignore(*args: object, **kwargs: object) -> object:
-
         return r[bool].fail(".gitignore sync failed")
 
     monkeypatch.setattr(
@@ -350,26 +323,19 @@ def test_sync_service_sync_basemk_with_canonical_root(tmp_path: Path) -> None:
     canonical_root.mkdir(parents=True, exist_ok=True)
     canonical_basemk = canonical_root / "base.mk"
     canonical_basemk.write_text("# Canonical base.mk\n")
-
     result = sync_service._sync_basemk(tmp_path, None, canonical_root=canonical_root)
     assert result.is_success or result.is_failure
 
 
 def test_main_returns_zero_on_success(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     """Test main() returns 0 when sync succeeds (line 274)."""
-    monkeypatch.setattr(
-        "sys.argv",
-        ["sync", "--project-root", str(tmp_path)],
-    )
+    monkeypatch.setattr("sys.argv", ["sync", "--project-root", str(tmp_path)])
     exit_code = main()
     assert exit_code == 0
 
 
 def test_main_returns_one_on_failure(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     """Test main() returns 1 when sync fails (lines 275-276)."""
-    monkeypatch.setattr(
-        "sys.argv",
-        ["sync", "--project-root", "/nonexistent/path"],
-    )
+    monkeypatch.setattr("sys.argv", ["sync", "--project-root", "/nonexistent/path"])
     exit_code = main()
     assert exit_code == 1

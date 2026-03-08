@@ -26,9 +26,7 @@ class TestFlextInfraTomlService:
             '[section]\nkey = "value"\nnumber = 42\n', encoding="utf-8"
         )
         service = FlextInfraTomlService()
-
         result = service.read(toml_file)
-
         assert result.is_success
         value = result.value
         assert isinstance(value, Mapping)
@@ -41,9 +39,7 @@ class TestFlextInfraTomlService:
         """Test reading a nonexistent file returns empty dict."""
         toml_file = tmp_path / "missing.toml"
         service = FlextInfraTomlService()
-
         result = service.read(toml_file)
-
         assert result.is_success
         assert result.value == {}
 
@@ -52,9 +48,7 @@ class TestFlextInfraTomlService:
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("[invalid\nkey = value", encoding="utf-8")
         service = FlextInfraTomlService()
-
         result = service.read(toml_file)
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert isinstance(result.error, str)
@@ -66,9 +60,7 @@ class TestFlextInfraTomlService:
         content = '[section]\nkey = "value"  # comment\n'
         toml_file.write_text(content, encoding="utf-8")
         service = FlextInfraTomlService()
-
         result = service.read_document(toml_file)
-
         assert result.is_success
         doc = result.value
         assert isinstance(doc, tomlkit.TOMLDocument)
@@ -80,9 +72,7 @@ class TestFlextInfraTomlService:
         """Test reading nonexistent file as document returns failure."""
         toml_file = tmp_path / "missing.toml"
         service = FlextInfraTomlService()
-
         result = service.read_document(toml_file)
-
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "file not found" in result.error
@@ -92,9 +82,7 @@ class TestFlextInfraTomlService:
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("[invalid\nkey = value", encoding="utf-8")
         service = FlextInfraTomlService()
-
         result = service.read_document(toml_file)
-
         assert result.is_failure
 
     def test_write_dict_payload(self, tmp_path: Path) -> None:
@@ -104,9 +92,7 @@ class TestFlextInfraTomlService:
         payload: dict[str, t.ContainerValue] = {
             "section": {"key": "value", "number": 42}
         }
-
         result = service.write(toml_file, payload)
-
         assert result.is_success
         assert toml_file.exists()
         content = toml_file.read_text(encoding="utf-8")
@@ -118,9 +104,7 @@ class TestFlextInfraTomlService:
         toml_file = tmp_path / "nested" / "deep" / "file.toml"
         service = FlextInfraTomlService()
         payload: dict[str, t.ContainerValue] = {"key": "value"}
-
         result = service.write(toml_file, payload)
-
         assert result.is_success
         assert toml_file.exists()
 
@@ -130,9 +114,7 @@ class TestFlextInfraTomlService:
         service = FlextInfraTomlService()
         doc = tomlkit.document()
         doc["section"] = {"key": "value"}
-
         result = service.write(toml_file, doc)
-
         assert result.is_success
         assert toml_file.exists()
 
@@ -143,9 +125,7 @@ class TestFlextInfraTomlService:
         doc = tomlkit.document()
         doc.add(tomlkit.comment("Configuration file"))
         doc["section"] = {"key": "value"}
-
         result = service.write(toml_file, doc)
-
         assert result.is_success
         content = toml_file.read_text(encoding="utf-8")
         assert "Configuration file" in content
@@ -154,37 +134,28 @@ class TestFlextInfraTomlService:
         """Test write failure on permission error."""
         toml_file = tmp_path / "readonly.toml"
         toml_file.write_text("[section]\n", encoding="utf-8")
-        toml_file.chmod(0o444)  # Read-only
+        toml_file.chmod(292)
         service = FlextInfraTomlService()
-
         try:
             result = service.write(toml_file, {"key": "value"})
             assert result.is_failure
         finally:
-            toml_file.chmod(0o644)  # Restore permissions for cleanup
+            toml_file.chmod(420)
 
     def test_update_section(self, tmp_path: Path) -> None:
         """Test updating a section in TOML file."""
         toml_file = tmp_path / "update.toml"
         toml_file.write_text('[section]\nkey = "old"\n', encoding="utf-8")
         service = FlextInfraTomlService()
-
-        # Read document
         read_result = service.read_document(toml_file)
         assert read_result.is_success
         doc = read_result.value
         assert isinstance(doc, tomlkit.TOMLDocument)
-
-        # Update
         section = doc["section"]
         assert isinstance(section, MutableMapping)
         section["key"] = "new"
-
-        # Write back
         write_result = service.write(toml_file, doc)
         assert write_result.is_success
-
-        # Verify
         verify_result = service.read(toml_file)
         assert verify_result.is_success
         verify_value = verify_result.value
@@ -198,7 +169,6 @@ class TestFlextInfraTomlService:
         current = [1, 2, 3]
         expected = [1, 2, 3]
         assert not FlextInfraTomlService.value_differs(current, expected)
-
         expected_diff = [1, 2, 4]
         assert FlextInfraTomlService.value_differs(current, expected_diff)
 
@@ -231,7 +201,6 @@ class TestFlextInfraTomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
-
         service.sync_mapping(
             target,
             canonical,
@@ -241,7 +210,6 @@ class TestFlextInfraTomlService:
             updated=updated,
             removed=removed,
         )
-
         assert target["new_key"] == "new_value"
         assert "new_key" in added
 
@@ -253,7 +221,6 @@ class TestFlextInfraTomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
-
         service.sync_mapping(
             target,
             canonical,
@@ -263,7 +230,6 @@ class TestFlextInfraTomlService:
             updated=updated,
             removed=removed,
         )
-
         assert target["key"] == "new_value"
         assert "key" in updated
 
@@ -275,7 +241,6 @@ class TestFlextInfraTomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
-
         service.sync_mapping(
             target,
             canonical,
@@ -285,7 +250,6 @@ class TestFlextInfraTomlService:
             updated=updated,
             removed=removed,
         )
-
         assert "remove" not in target
         assert "remove" in removed
 
@@ -297,7 +261,6 @@ class TestFlextInfraTomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
-
         service.sync_mapping(
             target,
             canonical,
@@ -307,7 +270,6 @@ class TestFlextInfraTomlService:
             updated=updated,
             removed=removed,
         )
-
         section = target["section"]
         assert isinstance(section, Mapping)
         assert section["key"] == "new"
@@ -321,7 +283,6 @@ class TestFlextInfraTomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
-
         service.sync_mapping(
             target,
             canonical,
@@ -331,7 +292,6 @@ class TestFlextInfraTomlService:
             updated=updated,
             removed=removed,
         )
-
         assert "extra" in target
         assert len(removed) == 0
 
@@ -344,7 +304,7 @@ class TestFlextInfraTomlService:
 
     def test_build_table_with_nested_mapping_dict(self) -> None:
         """Test build_table handles nested mappings."""
-        from flext_infra.toml_io import FlextInfraTomlService  # noqa: PLC0415
+        from flext_infra.toml_io import FlextInfraTomlService
 
         service = FlextInfraTomlService()
         nested: dict[str, t.ContainerValue] = {"key": {"nested": "value"}}
@@ -363,7 +323,6 @@ class TestFlextInfraTomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
-
         service.sync_mapping(
             target,
             canonical,
@@ -373,7 +332,5 @@ class TestFlextInfraTomlService:
             updated=updated,
             removed=removed,
         )
-
-        # The scalar should be replaced with a mapping
         assert isinstance(target["section"], dict)
         assert "section" in added

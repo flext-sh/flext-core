@@ -28,8 +28,7 @@ def _write_project(project_root: Path) -> None:
         encoding="utf-8",
     )
     _ = (project_root / ".gitignore").write_text(
-        "!scripts/\n!scripts/**\n*.pyc\n",
-        encoding="utf-8",
+        "!scripts/\n!scripts/**\n*.pyc\n", encoding="utf-8"
     )
 
 
@@ -46,10 +45,10 @@ def _build_migrator(
 
     discovery_mock = Mock()
     discovery_mock.discover_projects = _discover_projects
-    migrator._discovery = discovery_mock  # type narrowing: Mock duck-types the service
+    migrator._discovery = discovery_mock
     generator_mock = Mock()
     generator_mock.generate = lambda: r[str].ok(base_mk)
-    migrator._generator = generator_mock  # type narrowing: Mock duck-types the service
+    migrator._generator = generator_mock
     return migrator
 
 
@@ -57,7 +56,6 @@ def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
     _write_project(project_root)
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -66,15 +64,13 @@ def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None
         "has_src": True,
     })
     migrator = _build_migrator(project, "NEW_BASE\n")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
-
     assert result.is_success
     migration = result.value[0]
     assert any(change.startswith("[DRY-RUN]") for change in migration.changes)
     assert (project_root / "base.mk").read_text(encoding="utf-8") == "OLD_BASE\n"
     assert "scripts/check/workspace_check.py" in (project_root / "Makefile").read_text(
-        encoding="utf-8",
+        encoding="utf-8"
     )
 
 
@@ -82,7 +78,6 @@ def test_migrator_apply_updates_project_files(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
     _write_project(project_root)
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -91,20 +86,15 @@ def test_migrator_apply_updates_project_files(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "NEW_BASE\n")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
-
     assert result.is_success
     assert result.value[0].errors == []
     assert (project_root / "base.mk").read_text(encoding="utf-8") == "NEW_BASE\n"
-
     makefile_text = (project_root / "Makefile").read_text(encoding="utf-8")
     assert "scripts/check/workspace_check.py" not in makefile_text
     assert "python -m flext_infra check run" in makefile_text
-
     pyproject_text = (project_root / "pyproject.toml").read_text(encoding="utf-8")
     assert "flext-core @ ../flext-core" in pyproject_text
-
     gitignore_text = (project_root / ".gitignore").read_text(encoding="utf-8")
     assert "!scripts/" not in gitignore_text
     assert ".reports/" in gitignore_text
@@ -117,8 +107,6 @@ def test_migrator_handles_missing_pyproject_gracefully(tmp_path: Path) -> None:
     (project_root / ".git").mkdir(parents=True, exist_ok=True)
     _ = (project_root / "base.mk").write_text("OLD_BASE\n", encoding="utf-8")
     _ = (project_root / "Makefile").write_text("", encoding="utf-8")
-    # No pyproject.toml
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -127,9 +115,7 @@ def test_migrator_handles_missing_pyproject_gracefully(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "NEW_BASE\n")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
-
     assert result.is_success
     assert (project_root / "base.mk").read_text(encoding="utf-8") == "NEW_BASE\n"
 
@@ -142,7 +128,6 @@ def test_migrator_preserves_custom_makefile_content(tmp_path: Path) -> None:
     custom_content = "# Custom rule\ncustom-target:\n\t@echo 'custom'\n"
     makefile_path = project_root / "Makefile"
     makefile_path.write_text(custom_content, encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -151,9 +136,7 @@ def test_migrator_preserves_custom_makefile_content(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "NEW_BASE\n")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
-
     assert result.is_success
     makefile_text = makefile_path.read_text(encoding="utf-8")
     assert "custom-target" in makefile_text
@@ -184,7 +167,6 @@ def test_migrator_discovery_failure(tmp_path: Path) -> None:
     migrator._discovery.discover_projects.return_value = r[
         list[im.Infra.Workspace.ProjectInfo]
     ].fail("Discovery failed")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     assert result.is_failure
     assert isinstance(result.error, str)
@@ -193,13 +175,11 @@ def test_migrator_discovery_failure(tmp_path: Path) -> None:
 
 def test_migrator_workspace_root_project_detection(tmp_path: Path) -> None:
     """Test that migrator detects workspace root as a project."""
-    # Create workspace root markers
     (tmp_path / ".git").mkdir()
     (tmp_path / "Makefile").touch()
     (tmp_path / "pyproject.toml").touch()
     (tmp_path / "tests").mkdir()
     (tmp_path / "src").mkdir()
-
     migrator = FlextInfraProjectMigrator()
     migrator._discovery = Mock()
     migrator._discovery.discover_projects.return_value = r[
@@ -207,10 +187,8 @@ def test_migrator_workspace_root_project_detection(tmp_path: Path) -> None:
     ].ok([])
     migrator._generator = Mock()
     migrator._generator.generate.return_value = r[str].ok("base.mk")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
-    # Should include workspace root as a project
     assert len(result.value) >= 1
 
 
@@ -227,7 +205,6 @@ def test_migrator_no_changes_needed(tmp_path: Path) -> None:
     (project_root / ".gitignore").write_text(
         ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
     )
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -236,7 +213,6 @@ def test_migrator_no_changes_needed(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base.mk")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     assert result.is_success
     migration = result.value[0]
@@ -248,7 +224,6 @@ def test_migrator_basemk_generation_failure(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
     _write_project(project_root)
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -263,7 +238,6 @@ def test_migrator_basemk_generation_failure(tmp_path: Path) -> None:
     ].ok([project])
     migrator._generator = Mock()
     migrator._generator.generate.return_value = r[str].fail("Generation failed")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     assert result.is_success
     migration = result.value[0]
@@ -279,7 +253,6 @@ def test_migrator_makefile_read_failure(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -288,8 +261,6 @@ def test_migrator_makefile_read_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base.mk")
-
-    # Test normal migration without patching
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     assert result.is_success
 
@@ -303,7 +274,6 @@ def test_migrator_pyproject_parse_failure(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("invalid toml {", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -312,7 +282,6 @@ def test_migrator_pyproject_parse_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base.mk")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     assert result.is_success
     migration = result.value[0]
@@ -328,7 +297,6 @@ def test_migrator_flext_core_project_skipped(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "flext-core",
         "path": project_root,
@@ -337,7 +305,6 @@ def test_migrator_flext_core_project_skipped(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base.mk")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -353,7 +320,6 @@ def test_migrator_gitignore_write_failure(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -362,8 +328,6 @@ def test_migrator_gitignore_write_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base.mk")
-
-    # Mock gitignore write to fail
     with patch.object(Path, "write_text", side_effect=OSError("Write failed")):
         result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
         assert result.is_success
@@ -379,11 +343,9 @@ def test_migrator_has_flext_core_dependency_in_poetry(tmp_path: Path) -> None:
     (project_root / "base.mk").write_text("base.mk", encoding="utf-8")
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text(
-        '[tool.poetry.dependencies]\nflext-core = "^0.1.0"\n',
-        encoding="utf-8",
+        '[tool.poetry.dependencies]\nflext-core = "^0.1.0"\n', encoding="utf-8"
     )
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -392,7 +354,6 @@ def test_migrator_has_flext_core_dependency_in_poetry(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base.mk")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -408,7 +369,6 @@ def test_migrator_basemk_write_failure(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -417,7 +377,6 @@ def test_migrator_basemk_write_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "new content")
-
     with patch.object(Path, "write_text", side_effect=OSError("Write failed")):
         result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
         assert result.is_success
@@ -431,10 +390,8 @@ def test_migrator_makefile_not_found_dry_run(tmp_path: Path) -> None:
     project_root.mkdir(parents=True)
     (project_root / ".git").mkdir()
     (project_root / "base.mk").write_text("base", encoding="utf-8")
-    # No Makefile
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -443,7 +400,6 @@ def test_migrator_makefile_not_found_dry_run(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -465,7 +421,6 @@ def test_migrator_makefile_write_failure(tmp_path: Path) -> None:
     )
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -474,8 +429,6 @@ def test_migrator_makefile_write_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
-    # Patch write_text to fail on Makefile
     original_write = Path.write_text
 
     def mock_write(self: Path, data: str, **kwargs: str | None) -> int:
@@ -498,9 +451,7 @@ def test_migrator_pyproject_not_found_dry_run(tmp_path: Path) -> None:
     (project_root / ".git").mkdir()
     (project_root / "base.mk").write_text("base", encoding="utf-8")
     (project_root / "Makefile").write_text("content", encoding="utf-8")
-    # No pyproject.toml
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -509,7 +460,6 @@ def test_migrator_pyproject_not_found_dry_run(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -528,7 +478,6 @@ def test_migrator_flext_core_dry_run(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "flext-core",
         "path": project_root,
@@ -537,7 +486,6 @@ def test_migrator_flext_core_dry_run(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -556,7 +504,6 @@ def test_migrator_gitignore_read_failure(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("existing", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -565,8 +512,6 @@ def test_migrator_gitignore_read_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
-    # Patch read_text to fail on .gitignore
     original_read = Path.read_text
 
     def mock_read(self: Path, **kwargs: str | None) -> str:
@@ -593,7 +538,6 @@ def test_migrator_gitignore_already_normalized_dry_run(tmp_path: Path) -> None:
     (project_root / ".gitignore").write_text(
         ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
     )
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -602,7 +546,6 @@ def test_migrator_gitignore_already_normalized_dry_run(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -621,7 +564,6 @@ def test_migrator_pyproject_write_failure(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -630,8 +572,6 @@ def test_migrator_pyproject_write_failure(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
-    # Patch write_text to fail on pyproject.toml
     original_write = Path.write_text
 
     def mock_write(self: Path, data: str, **kwargs: str | None) -> int:
@@ -658,7 +598,6 @@ def test_migrator_has_flext_core_dependency_poetry_table_missing(
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[tool]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -667,7 +606,6 @@ def test_migrator_has_flext_core_dependency_poetry_table_missing(
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -687,7 +625,6 @@ def test_migrator_has_flext_core_dependency_poetry_deps_not_table(
         "[tool.poetry]\ndependencies = []\n", encoding="utf-8"
     )
     (project_root / ".gitignore").write_text("", encoding="utf-8")
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -696,7 +633,6 @@ def test_migrator_has_flext_core_dependency_poetry_deps_not_table(
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     assert result.is_success
     migration = result.value[0]
@@ -706,7 +642,6 @@ def test_migrator_has_flext_core_dependency_poetry_deps_not_table(
 def test_workspace_migrator_error_handling_on_invalid_workspace() -> None:
     """Test workspace migrator handles invalid workspace gracefully (line 185)."""
     migrator = FlextInfraProjectMigrator()
-    # Should handle invalid workspace without raising
     result = migrator.migrate(workspace_root=Path("/nonexistent"))
     assert result.is_failure or result.is_success
 
@@ -783,8 +718,6 @@ def test_migrate_makefile_not_found_non_dry_run(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
     (project_root / ".git").mkdir()
-    # No Makefile created
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
         "path": project_root,
@@ -793,7 +726,6 @@ def test_migrate_makefile_not_found_non_dry_run(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator._migrate_makefile(project_root, dry_run=False)
     assert result.is_success
     assert result.value == ""
@@ -804,12 +736,9 @@ def test_migrate_pyproject_flext_core_non_dry_run(tmp_path: Path) -> None:
     project_root = tmp_path / "flext-core"
     project_root.mkdir(parents=True)
     (project_root / ".git").mkdir()
-    # Create pyproject.toml
     (project_root / "pyproject.toml").write_text(
-        '[project]\nname = "flext-core"\nversion = "0.1.0"\n',
-        encoding="utf-8",
+        '[project]\nname = "flext-core"\nversion = "0.1.0"\n', encoding="utf-8"
     )
-
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "flext-core",
         "path": project_root,
@@ -818,7 +747,6 @@ def test_migrate_pyproject_flext_core_non_dry_run(tmp_path: Path) -> None:
         "has_src": True,
     })
     migrator = _build_migrator(project, "base")
-
     result = migrator._migrate_pyproject(
         project_root, project_name="flext-core", dry_run=False
     )

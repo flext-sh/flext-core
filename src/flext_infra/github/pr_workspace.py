@@ -47,10 +47,7 @@ class FlextInfraPrWorkspaceManager:
         self._reporting = reporting or FlextInfraReportingService()
 
     @staticmethod
-    def _build_root_command(
-        repo_root: Path,
-        pr_args: Mapping[str, str],
-    ) -> list[str]:
+    def _build_root_command(repo_root: Path, pr_args: Mapping[str, str]) -> list[str]:
         command = [
             c.Infra.Toml.PYTHON,
             "-m",
@@ -82,8 +79,7 @@ class FlextInfraPrWorkspaceManager:
 
     @staticmethod
     def _build_subproject_command(
-        repo_root: Path,
-        pr_args: Mapping[str, str],
+        repo_root: Path, pr_args: Mapping[str, str]
     ) -> list[str]:
         command = [
             c.Infra.Cli.MAKE,
@@ -127,22 +123,15 @@ class FlextInfraPrWorkspaceManager:
             return r[bool].fail(changes_result.error or "changes check failed")
         if not changes_result.value:
             return r[bool].ok(True)
-
         add_result = self._git.add(repo_root)
         if add_result.is_failure:
             return r[bool].fail(add_result.error or "git add failed")
-
         staged_result = self._git.diff_names(repo_root, cached=True)
-        if staged_result.is_success and not staged_result.value.strip():
+        if staged_result.is_success and (not staged_result.value.strip()):
             return r[bool].ok(True)
-
-        commit_result = self._git.commit(
-            repo_root,
-            "chore: checkpoint pending changes",
-        )
+        commit_result = self._git.commit(repo_root, "chore: checkpoint pending changes")
         if commit_result.is_failure:
             return r[bool].fail(commit_result.error or "git commit failed")
-
         return self._git.push(
             repo_root,
             remote=c.Infra.Git.ORIGIN if branch else "",
@@ -181,32 +170,25 @@ class FlextInfraPrWorkspaceManager:
 
         """
         projects_result: r[list[m.Infra.Workspace.ProjectInfo]] = (
-            self._selector.resolve_projects(
-                workspace_root,
-                projects or [],
-            )
+            self._selector.resolve_projects(workspace_root, projects or [])
         )
         if projects_result.is_failure:
             return r[m.Infra.Github.PrOrchestrationResult].fail(
-                projects_result.error or "project resolution failed",
+                projects_result.error or "project resolution failed"
             )
-
         repos = [p.path for p in projects_result.value]
         if include_root:
             repos.append(workspace_root)
-
         effective_args = pr_args or {
             c.Infra.ReportKeys.ACTION: c.Infra.ReportKeys.STATUS,
             "base": c.Infra.Git.MAIN,
         }
         failures = 0
         results: list[m.Infra.Github.PrExecutionResult] = []
-
         for repo_root in repos:
             self.checkout_branch(repo_root, branch)
             if checkpoint:
                 self.checkpoint(repo_root, branch)
-
             run_result: r[m.Infra.Github.PrExecutionResult] = self.run_pr(
                 repo_root, workspace_root, effective_args
             )
@@ -221,7 +203,6 @@ class FlextInfraPrWorkspaceManager:
                 failures += 1
                 if fail_fast:
                     break
-
         total = len(repos)
         orchestration_results: tuple[m.Infra.Github.PrExecutionResult, ...] = tuple(
             results
@@ -236,10 +217,7 @@ class FlextInfraPrWorkspaceManager:
         )
 
     def run_pr(
-        self,
-        repo_root: Path,
-        workspace_root: Path,
-        pr_args: Mapping[str, str],
+        self, repo_root: Path, workspace_root: Path, pr_args: Mapping[str, str]
     ) -> r[m.Infra.Github.PrExecutionResult]:
         """Execute a PR operation on a single repository.
 
@@ -258,22 +236,18 @@ class FlextInfraPrWorkspaceManager:
         )
         with contextlib.suppress(OSError):
             report_dir.mkdir(parents=True, exist_ok=True)
-
         log_path = report_dir / f"{display}.log"
-
         if repo_root == workspace_root:
             command = self._build_root_command(repo_root, pr_args)
         else:
             command = self._build_subproject_command(repo_root, pr_args)
-
         started = time.monotonic()
         to_file_result: r[int] = self._runner.run_to_file(command, log_path)
         if to_file_result.is_failure:
             return r[m.Infra.Github.PrExecutionResult].fail(
-                to_file_result.error or "command execution error",
+                to_file_result.error or "command execution error"
             )
         exit_code = to_file_result.value
-
         elapsed = int(time.monotonic() - started)
         status = c.Infra.Status.OK if exit_code == 0 else c.Infra.Status.FAIL
         log_str = str(log_path)

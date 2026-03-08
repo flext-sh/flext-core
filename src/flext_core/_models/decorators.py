@@ -29,17 +29,10 @@ class FlextModelsDecorators:
         Used by @timeout decorator to enforce operation time limits.
         """
 
-        model_config = ConfigDict(
-            frozen=True,
-            extra="forbid",
-            validate_assignment=True,
-        )
-
+        model_config = ConfigDict(frozen=True, extra="forbid", validate_assignment=True)
         timeout_seconds: float = Field(
-            gt=0,
-            description="Timeout duration in seconds (must be positive)",
+            gt=0, description="Timeout duration in seconds (must be positive)"
         )
         error_code: str | None = Field(
-            default=None,
-            description="Optional error code to use when timeout occurs",
+            default=None, description="Optional error code to use when timeout occurs"
         )

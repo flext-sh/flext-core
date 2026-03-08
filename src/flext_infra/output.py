@@ -13,9 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import Final, TextIO, override
-
-from pydantic import BaseModel, ConfigDict, Field, SkipValidation
+from typing import Final, TextIO
 
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 
@@ -38,15 +36,12 @@ def _should_use_unicode() -> bool:
 
 _USE_COLOR: Final[bool] = _should_use_color()
 _USE_UNICODE: Final[bool] = _should_use_unicode()
-
-RESET: Final[str] = "\033[0m" if _USE_COLOR else ""
-RED: Final[str] = "\033[31m" if _USE_COLOR else ""
-GREEN: Final[str] = "\033[32m" if _USE_COLOR else ""
-YELLOW: Final[str] = "\033[33m" if _USE_COLOR else ""
-BLUE: Final[str] = "\033[34m" if _USE_COLOR else ""
-BOLD: Final[str] = "\033[1m" if _USE_COLOR else ""
-
-
+RESET: Final[str] = "\x1b[0m" if _USE_COLOR else ""
+RED: Final[str] = "\x1b[31m" if _USE_COLOR else ""
+GREEN: Final[str] = "\x1b[32m" if _USE_COLOR else ""
+YELLOW: Final[str] = "\x1b[33m" if _USE_COLOR else ""
+BLUE: Final[str] = "\x1b[34m" if _USE_COLOR else ""
+BOLD: Final[str] = "\x1b[1m" if _USE_COLOR else ""
 SYM_OK: Final[str] = "✓" if _USE_UNICODE else "[OK]"
 SYM_FAIL: Final[str] = "✗" if _USE_UNICODE else "[FAIL]"
 SYM_WARN: Final[str] = "⚠" if _USE_UNICODE else "[WARN]"
@@ -55,7 +50,7 @@ SYM_ARROW: Final[str] = "→" if _USE_UNICODE else "->"
 SYM_BULLET: Final[str] = "•" if _USE_UNICODE else "*"
 
 
-class FlextInfraOutput(BaseModel):
+class FlextInfraOutput:
     """Structured terminal output for infrastructure commands.
 
     All methods write to ``sys.stderr`` so that stdout remains clean for
@@ -66,12 +61,6 @@ class FlextInfraOutput(BaseModel):
     in tests or downstream code.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    use_color: bool = Field(default_factory=lambda: _USE_COLOR)
-    use_unicode: bool = Field(default_factory=lambda: _USE_UNICODE)
-    stream: SkipValidation[TextIO] = Field(default_factory=lambda: sys.stderr)
-
     def __init__(
         self,
         *,
@@ -80,42 +69,19 @@ class FlextInfraOutput(BaseModel):
         stream: TextIO | None = None,
     ) -> None:
         """Initialize structured terminal output."""
-        data: dict[str, bool | TextIO] = {}
-        if use_color is not None:
-            data["use_color"] = use_color
-        if use_unicode is not None:
-            data["use_unicode"] = use_unicode
-        if stream is not None:
-            data["stream"] = stream
-        super().__init__(**data)
-
-        self._reset = "\033[0m" if self.use_color else ""
-        self._red = "\033[31m" if self.use_color else ""
-        self._green = "\033[32m" if self.use_color else ""
-        self._yellow = "\033[33m" if self.use_color else ""
-        self._blue = "\033[34m" if self.use_color else ""
-        self._bold = "\033[1m" if self.use_color else ""
-
+        self.use_color = _USE_COLOR if use_color is None else use_color
+        self.use_unicode = _USE_UNICODE if use_unicode is None else use_unicode
+        self.stream = sys.stderr if stream is None else stream
+        self._reset = "\x1b[0m" if self.use_color else ""
+        self._red = "\x1b[31m" if self.use_color else ""
+        self._green = "\x1b[32m" if self.use_color else ""
+        self._yellow = "\x1b[33m" if self.use_color else ""
+        self._blue = "\x1b[34m" if self.use_color else ""
+        self._bold = "\x1b[1m" if self.use_color else ""
         self._sym_ok = "✓" if self.use_unicode else "[OK]"
         self._sym_fail = "✗" if self.use_unicode else "[FAIL]"
         self._sym_warn = "⚠" if self.use_unicode else "[WARN]"
         self._sym_skip = "–" if self.use_unicode else "[SKIP]"
-
-    @override
-    def __setattr__(self, name: str, value: object) -> None:
-        """Allow non-field attribute assignment (e.g. unittest.mock.patch)."""
-        if name in type(self).model_fields or name.startswith("_"):
-            super().__setattr__(name, value)
-        else:
-            object.__setattr__(self, name, value)
-
-    @override
-    def __delattr__(self, name: str) -> None:
-        """Support unittest.mock.patch teardown for non-field attributes."""
-        if name in self.__dict__ and name not in type(self).model_fields:
-            object.__delattr__(self, name)
-        else:
-            super().__delattr__(name)
 
     def debug(self, message: str) -> None:
         """Write an debug message in blue.
@@ -179,13 +145,7 @@ class FlextInfraOutput(BaseModel):
         counter = f"[{index:0{width}d}/{total:0{width}d}]"
         self._write(f"{self._bold}{counter}{self._reset} {project} {verb} ...")
 
-    def status(
-        self,
-        verb: str,
-        project: str,
-        result: bool,
-        elapsed: float,
-    ) -> None:
+    def status(self, verb: str, project: str, result: bool, elapsed: float) -> None:
         """Write a formatted status line for a project operation.
 
         Example::
@@ -236,24 +196,19 @@ class FlextInfraOutput(BaseModel):
         header = f"{self._bold}{sep} {verb} summary {sep}{self._reset}"
         self._write("")
         self._write(header)
-
         parts: list[str] = [f"Total: {total}"]
-
         success_str = f"{self._green}Success: {success}{self._reset}"
         parts.append(success_str)
-
         if failed > 0:
             failed_str = f"{self._red}Failed: {failed}{self._reset}"
         else:
             failed_str = f"Failed: {failed}"
         parts.append(failed_str)
-
         if skipped > 0:
             skipped_str = f"{self._yellow}Skipped: {skipped}{self._reset}"
         else:
             skipped_str = f"Skipped: {skipped}"
         parts.append(skipped_str)
-
         elapsed_str = f"({elapsed:.2f}s)"
         line = "  ".join(parts) + f"  {elapsed_str}"
         self._write(line)
@@ -274,8 +229,7 @@ class FlextInfraOutput(BaseModel):
 
 
 output: Final[FlextInfraOutput] = FlextInfraOutput()
-"""Module-level singleton for direct use: ``from flext_infra import output``."""
-
+"Module-level singleton for direct use: ``from flext_infra import output``."
 __all__ = [
     "BLUE",
     "BOLD",

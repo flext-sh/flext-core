@@ -201,10 +201,7 @@ class TestRewritePep621:
             "dependencies": ["flext-core @ file://.flext-deps/flext-core"]
         }
         changes = _rewrite_pep621(
-            doc,
-            is_root=True,
-            mode="workspace",
-            internal_names={"flext-core"},
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
         )
         assert len(changes) > 0
         assert len(changes) > 0
@@ -218,10 +215,7 @@ class TestRewritePep621:
         doc = TOMLDocument()
         doc["project"] = {"dependencies": ["requests>=2.0.0"]}
         changes = _rewrite_pep621(
-            doc,
-            is_root=True,
-            mode="workspace",
-            internal_names={"flext-core"},
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
         )
         assert changes == []
 
@@ -234,10 +228,7 @@ class TestRewritePep621:
             ]
         }
         changes = _rewrite_pep621(
-            doc,
-            is_root=True,
-            mode="workspace",
-            internal_names={"flext-core"},
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
         )
         assert len(changes) > 0
         unwrapped = doc.unwrap()
@@ -250,10 +241,7 @@ class TestRewritePep621:
             "dependencies": [123, "flext-core @ file://.flext-deps/flext-core"]
         }
         changes = _rewrite_pep621(
-            doc,
-            is_root=True,
-            mode="workspace",
-            internal_names={"flext-core"},
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
         )
         assert len(changes) == 1
 
@@ -264,10 +252,7 @@ class TestRewritePep621:
             "dependencies": ["flext-core @ file://.flext-deps/flext-core"]
         }
         changes = _rewrite_pep621(
-            doc,
-            is_root=False,
-            mode="workspace",
-            internal_names={"flext-core"},
+            doc, is_root=False, mode="workspace", internal_names={"flext-core"}
         )
         assert len(changes) > 0
         unwrapped = doc.unwrap()
@@ -383,10 +368,7 @@ class TestRewriteDepPaths:
             '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n'
         )
         result = rewrite_dep_paths(
-            pyproject,
-            mode="workspace",
-            internal_names={"flext-core"},
-            is_root=True,
+            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
         )
         assert result.is_success
         assert len(result.value) > 0
@@ -406,7 +388,6 @@ class TestRewriteDepPaths:
             dry_run=True,
         )
         assert result.is_success
-        # Verify file was not modified
         assert pyproject.read_text() == original_content
 
     def test_rewrite_dep_paths_no_changes(self, tmp_path: Path) -> None:
@@ -414,10 +395,7 @@ class TestRewriteDepPaths:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\ndependencies = ["requests>=2.0.0"]\n')
         result = rewrite_dep_paths(
-            pyproject,
-            mode="workspace",
-            internal_names={"flext-core"},
-            is_root=True,
+            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
         )
         assert result.is_success
         assert result.value == []
@@ -426,10 +404,7 @@ class TestRewriteDepPaths:
         """Test rewrite_dep_paths when read fails."""
         pyproject = tmp_path / "pyproject.toml"
         result = rewrite_dep_paths(
-            pyproject,
-            mode="workspace",
-            internal_names={"flext-core"},
-            is_root=True,
+            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
         )
         assert result.is_failure
 
@@ -442,10 +417,7 @@ class TestRewriteDepPaths:
         with patch("flext_infra.FlextInfraTomlService.write_document") as mock_write:
             mock_write.return_value = r[bool].fail("write failed")
             result = rewrite_dep_paths(
-                pyproject,
-                mode="workspace",
-                internal_names={"flext-core"},
-                is_root=True,
+                pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
             )
             assert result.is_failure
 
@@ -458,13 +430,9 @@ class TestMain:
         (tmp_path / ".gitmodules").touch()
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
-            patch(
-                "sys.argv",
-                ["prog", "--mode", "auto"],
-            ),
+            patch("sys.argv", ["prog", "--mode", "auto"]),
         ):
             result = main()
             assert result == 0
@@ -473,13 +441,9 @@ class TestMain:
         """Test main with explicit workspace mode."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
-            patch(
-                "sys.argv",
-                ["prog", "--mode", "workspace"],
-            ),
+            patch("sys.argv", ["prog", "--mode", "workspace"]),
         ):
             result = main()
             assert result == 0
@@ -488,13 +452,9 @@ class TestMain:
         """Test main with explicit standalone mode."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
-            patch(
-                "sys.argv",
-                ["prog", "--mode", "standalone"],
-            ),
+            patch("sys.argv", ["prog", "--mode", "standalone"]),
         ):
             result = main()
             assert result == 0
@@ -503,13 +463,9 @@ class TestMain:
         """Test main with dry-run flag."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
-            patch(
-                "sys.argv",
-                ["prog", "--dry-run"],
-            ),
+            patch("sys.argv", ["prog", "--dry-run"]),
         ):
             result = main()
             assert result == 0
@@ -518,18 +474,13 @@ class TestMain:
         """Test main with specific projects."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text('[project]\nname = "flext-core"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
-            patch(
-                "sys.argv",
-                ["prog", "--project", "flext-core"],
-            ),
+            patch("sys.argv", ["prog", "--project", "flext-core"]),
         ):
             result = main()
             assert result == 0
@@ -538,7 +489,6 @@ class TestMain:
         """Test main when discovery fails."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -547,10 +497,7 @@ class TestMain:
                     "discovery failed"
                 ),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 1
@@ -559,7 +506,6 @@ class TestMain:
         """Test main when root rewrite fails."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -568,10 +514,7 @@ class TestMain:
                     "rewrite failed"
                 ),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 1
@@ -580,12 +523,10 @@ class TestMain:
         """Test main when project rewrite fails."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text('[project]\nname = "flext-core"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -603,18 +544,13 @@ class TestMain:
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
-                    r[
-                        list[m.Infra.Workspace.ProjectInfo]
-                    ].ok([]),  # root rewrite succeeds
+                    r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
                     r[list[m.Infra.Workspace.ProjectInfo]].fail(
                         "project rewrite failed"
-                    ),  # project rewrite fails
+                    ),
                 ],
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 1
@@ -623,17 +559,13 @@ class TestMain:
         """Test main with no changes needed."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -642,12 +574,10 @@ class TestMain:
         """Test main with changes made."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text('[project]\nname = "flext-core"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -665,16 +595,11 @@ class TestMain:
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
-                    r[list[m.Infra.Workspace.ProjectInfo]].ok([]),  # root rewrite
-                    r[list[m.Infra.Workspace.ProjectInfo]].ok([
-                        "change1"
-                    ]),  # project rewrite with changes
+                    r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
+                    r[list[m.Infra.Workspace.ProjectInfo]].ok(["change1"]),
                 ],
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -683,17 +608,13 @@ class TestMain:
         """Test main extracts root project name."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -702,12 +623,10 @@ class TestMain:
         """Test main extracts project names."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text('[project]\nname = "flext-core"\n')
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -726,10 +645,7 @@ class TestMain:
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -738,13 +654,9 @@ class TestMain:
         """Test main handles invalid project TOML."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text("invalid toml [[[")
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 1
@@ -757,10 +669,7 @@ class TestMain:
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -769,10 +678,8 @@ class TestMain:
         """Test main handles project without pyproject."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -787,10 +694,7 @@ class TestMain:
                     )
                 ]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -799,12 +703,10 @@ class TestMain:
         """Test main handles project with invalid TOML."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text("invalid toml [[[")
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -819,10 +721,7 @@ class TestMain:
                     )
                 ]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 1
@@ -831,12 +730,10 @@ class TestMain:
         """Test main handles project without name."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text("[project]\n")
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -851,10 +748,7 @@ class TestMain:
                     )
                 ]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -863,12 +757,10 @@ class TestMain:
         """Test main handles project with non-string name."""
         root_pyproject = tmp_path / "pyproject.toml"
         root_pyproject.write_text('[project]\nname = "flext-workspace"\n')
-
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         project_pyproject = project_dir / "pyproject.toml"
         project_pyproject.write_text("[project]\nname = 123\n")
-
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
@@ -883,10 +775,7 @@ class TestMain:
                     )
                 ]),
             ),
-            patch(
-                "sys.argv",
-                ["prog"],
-            ),
+            patch("sys.argv", ["prog"]),
         ):
             result = main()
             assert result == 0
@@ -935,7 +824,6 @@ def test_rewrite_dep_paths_with_internal_names(tmp_path: Path) -> None:
         dry_run=False,
     )
     assert result.is_success
-    # Should have changes since we're converting from .flext-deps to ../
     assert len(result.value) > 0
 
 
@@ -944,7 +832,6 @@ def test_rewrite_dep_paths_dry_run(tmp_path: Path) -> None:
     pyproject = tmp_path / "pyproject.toml"
     original = '[project]\ndependencies = ["flext-core @ file:../flext-core"]\n'
     pyproject.write_text(original)
-
     result = rewrite_dep_paths(
         pyproject,
         mode="workspace",
@@ -953,15 +840,12 @@ def test_rewrite_dep_paths_dry_run(tmp_path: Path) -> None:
         dry_run=True,
     )
     assert result.is_success
-    # File should not be modified in dry-run
     assert pyproject.read_text() == original
 
 
 def test_rewrite_dep_paths_read_failure(tmp_path: Path) -> None:
     """Test rewrite_dep_paths handles read failures."""
     pyproject = tmp_path / "pyproject.toml"
-    # Don't create the file
-
     result = rewrite_dep_paths(
         pyproject,
         mode="workspace",
@@ -1014,29 +898,19 @@ def test_rewrite_pep621_non_string_item(tmp_path: Path) -> None:
     doc["project"] = tomlkit.table()
     project = doc["project"]
     assert isinstance(project, MutableMapping)
-    project["dependencies"] = [123]  # Non-string
-
+    project["dependencies"] = [123]
     changes = _rewrite_pep621(
-        doc,
-        is_root=False,
-        mode="workspace",
-        internal_names={"flext-core"},
+        doc, is_root=False, mode="workspace", internal_names={"flext-core"}
     )
-
     assert len(changes) == 0
 
 
 def test_rewrite_pep621_no_project_table(tmp_path: Path) -> None:
     """Test _rewrite_pep621 with missing project table."""
     doc = tomlkit.document()
-
     changes = _rewrite_pep621(
-        doc,
-        is_root=False,
-        mode="workspace",
-        internal_names={"flext-core"},
+        doc, is_root=False, mode="workspace", internal_names={"flext-core"}
     )
-
     assert len(changes) == 0
 
 
@@ -1049,20 +923,16 @@ def test_rewrite_poetry_with_non_dict_value(tmp_path: Path) -> None:
     poetry = tomlkit.table()
     tool["poetry"] = poetry
     deps = tomlkit.table()
-    deps["flext-core"] = "string-value"  # Not a dict
+    deps["flext-core"] = "string-value"
     poetry["dependencies"] = deps
-
     changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
-
     assert len(changes) == 0
 
 
 def test_rewrite_poetry_no_tool_table(tmp_path: Path) -> None:
     """Test _rewrite_poetry with missing tool table."""
     doc = tomlkit.document()
-
     changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
-
     assert len(changes) == 0
 
 
@@ -1070,9 +940,7 @@ def test_rewrite_poetry_no_poetry_table(tmp_path: Path) -> None:
     """Test _rewrite_poetry with missing poetry table."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-
     changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
-
     assert len(changes) == 0
 
 
@@ -1104,42 +972,29 @@ def test_main_no_changes_needed(tmp_path: Path) -> None:
 
 def test_workspace_root_fallback(tmp_path: Path) -> None:
     """Test _workspace_root fallback when no .gitmodules found."""
-    # This tests line 30: return here.parents[4]
     deep = tmp_path / "a" / "b" / "c" / "d" / "e" / "f"
     deep.mkdir(parents=True)
     with patch("pathlib.Path.resolve") as mock_resolve:
         mock_resolve.return_value = deep / "test.py"
-        # _workspace_root already imported at top
-
         result = _workspace_root()
-        # Should return parents[4] when no .gitmodules found
         assert isinstance(result, Path)
 
 
 def test_rewrite_pep621_invalid_path_dep_regex(tmp_path: Path) -> None:
     """Test _rewrite_pep621 skips invalid path dependency regex."""
-    # This tests line 111: continue when regex doesn't match
     doc = tomlkit.document()
     doc["project"] = tomlkit.table()
     project = doc["project"]
     assert isinstance(project, MutableMapping)
-    # Create a dependency with @ but leading whitespace (breaks regex)
-    project["dependencies"] = [
-        "  flext-core @ file://.flext-deps/flext-core"  # Leading whitespace breaks regex
-    ]
+    project["dependencies"] = ["  flext-core @ file://.flext-deps/flext-core"]
     changes = _rewrite_pep621(
-        doc,
-        is_root=True,
-        mode="workspace",
-        internal_names={"flext-core"},
+        doc, is_root=True, mode="workspace", internal_names={"flext-core"}
     )
-    # Should skip the invalid entry (regex won't match due to leading whitespace)
     assert len(changes) == 0
 
 
 def test_main_with_changes_and_dry_run(tmp_path: Path) -> None:
     """Test main outputs changes when dry_run=True."""
-    # This tests lines 242-246: output info when changes exist
     with patch("sys.argv", ["sync-paths", "--dry-run"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
@@ -1154,14 +1009,12 @@ def test_main_with_changes_and_dry_run(tmp_path: Path) -> None:
                 with patch("flext_infra.deps.path_sync.output.info") as mock_info:
                     result = main()
                     assert result == 0
-                    # Verify output.info was called with dry-run prefix
                     calls = [str(call) for call in mock_info.call_args_list]
                     assert any("[DRY-RUN]" in str(call) for call in calls)
 
 
 def test_main_with_changes_no_dry_run(tmp_path: Path) -> None:
     """Test main outputs changes when dry_run=False."""
-    # This tests lines 242-246: output info when changes exist (no dry-run)
     with patch("sys.argv", ["sync-paths"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
@@ -1176,18 +1029,15 @@ def test_main_with_changes_no_dry_run(tmp_path: Path) -> None:
                 with patch("flext_infra.deps.path_sync.output.info") as mock_info:
                     result = main()
                     assert result == 0
-                    # Verify output.info was called without dry-run prefix
                     calls = [str(call) for call in mock_info.call_args_list]
-                    # Should have at least one call without [DRY-RUN]
                     assert len(calls) > 0
 
 
 def test_main_project_obj_not_dict_first_loop(tmp_path: Path) -> None:
     """Test main handles non-dict project object in first loop."""
-    # This tests line 272: continue when project_obj is not dict
     project_dir = tmp_path / "test-project"
     project_dir.mkdir()
-    (project_dir / "pyproject.toml").touch()  # Create the file so it exists
+    (project_dir / "pyproject.toml").touch()
     project_info = m.Infra.Workspace.ProjectInfo(
         path=project_dir,
         name="test",
@@ -1206,13 +1056,11 @@ def test_main_project_obj_not_dict_first_loop(tmp_path: Path) -> None:
             ):
                 with patch("flext_infra.deps.path_sync.output.info"):
                     result = main()
-                    # Should handle gracefully and return 0
                     assert result == 0
 
 
 def test_main_project_obj_not_dict_second_loop(tmp_path: Path) -> None:
     """Test main handles non-dict project object in second loop."""
-    # This tests line 286: continue when project_obj is not dict
     project_info = m.Infra.Workspace.ProjectInfo(
         path=tmp_path / "test-project",
         name="test",
@@ -1231,5 +1079,4 @@ def test_main_project_obj_not_dict_second_loop(tmp_path: Path) -> None:
             ):
                 with patch("flext_infra.deps.path_sync.output.info"):
                     result = main()
-                    # Should handle gracefully and return 0
                     assert result == 0

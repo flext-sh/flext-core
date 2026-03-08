@@ -28,10 +28,7 @@ class FlextInfraInventoryService:
         self._json = FlextInfraJsonService()
 
     def generate(
-        self,
-        workspace_root: Path,
-        *,
-        output_dir: Path | None = None,
+        self, workspace_root: Path, *, output_dir: Path | None = None
     ) -> r[m.Infra.Core.InventoryReport]:
         """Build and write scripts inventory reports.
 
@@ -47,7 +44,6 @@ class FlextInfraInventoryService:
         try:
             root = workspace_root.resolve()
             scripts_dir = root / c.Infra.Directories.SCRIPTS
-
             scripts: list[str] = []
             if scripts_dir.exists():
                 scripts = sorted(
@@ -56,7 +52,6 @@ class FlextInfraInventoryService:
                     if path.is_file()
                     and path.suffix in {c.Infra.Extensions.PYTHON, ".sh"}
                 )
-
             now = datetime.now(UTC).isoformat()
             inventory: t.Infra.ContainerDict = {
                 "generated_at": now,
@@ -69,48 +64,39 @@ class FlextInfraInventoryService:
                 "root_makefile": [c.Infra.Files.MAKEFILE_FILENAME],
                 "unwired_scripts": [],
             }
-            external: t.Infra.ContainerDict = {
-                "generated_at": now,
-                "candidates": [],
-            }
-
-            reports_dir = output_dir or (root / c.Infra.Reporting.REPORTS_DIR_NAME)
+            external: t.Infra.ContainerDict = {"generated_at": now, "candidates": []}
+            reports_dir = output_dir or root / c.Infra.Reporting.REPORTS_DIR_NAME
             written: list[str] = []
             inventory_path = reports_dir / "scripts-infra--json--scripts-inventory.json"
             wiring_path = reports_dir / "scripts-infra--json--scripts-wiring.json"
             external_path = (
                 reports_dir / "scripts-infra--json--external-scripts-candidates.json"
             )
-
             write_result = self._json.write(inventory_path, inventory, sort_keys=True)
             if write_result.is_failure:
                 return r[m.Infra.Core.InventoryReport].fail(
-                    write_result.error or "write failed",
+                    write_result.error or "write failed"
                 )
             written.append(str(inventory_path))
-
             write_result = self._json.write(wiring_path, wiring, sort_keys=True)
             if write_result.is_failure:
                 return r[m.Infra.Core.InventoryReport].fail(
-                    write_result.error or "write failed",
+                    write_result.error or "write failed"
                 )
             written.append(str(wiring_path))
-
             write_result = self._json.write(external_path, external, sort_keys=True)
             if write_result.is_failure:
                 return r[m.Infra.Core.InventoryReport].fail(
-                    write_result.error or "write failed",
+                    write_result.error or "write failed"
                 )
             written.append(str(external_path))
-
             result = m.Infra.Core.InventoryReport(
-                total_scripts=len(scripts),
-                reports_written=written,
+                total_scripts=len(scripts), reports_written=written
             )
             return r[m.Infra.Core.InventoryReport].ok(result)
         except (OSError, TypeError, ValueError) as exc:
             return r[m.Infra.Core.InventoryReport].fail(
-                f"inventory generation failed: {exc}",
+                f"inventory generation failed: {exc}"
             )
 
 

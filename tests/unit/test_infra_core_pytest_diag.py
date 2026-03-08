@@ -42,12 +42,10 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" '
-            'failures="0" errors="0" skipped="0"></testsuite></testsuites>'
+            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" failures="0" errors="0" skipped="0"></testsuite></testsuites>'
         )
         log_path = tmp_path / "log.txt"
         log_path.write_text("")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         assert isinstance(result.value, m.Infra.Core.PytestDiagnostics)
@@ -58,7 +56,6 @@ class TestFlextInfraPytestDiagExtractor:
         junit_xml = tmp_path / "junit.xml"
         log_path = tmp_path / "log.txt"
         log_path.write_text("FAILED test_case.py::test_foo")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
 
@@ -67,13 +64,10 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" '
-            'failures="1" errors="0" skipped="0"><testcase name="test_fail" classname="TestClass">'
-            '<failure message="assertion failed">Traceback here</failure></testcase></testsuite></testsuites>'
+            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" failures="1" errors="0" skipped="0"><testcase name="test_fail" classname="TestClass"><failure message="assertion failed">Traceback here</failure></testcase></testsuite></testsuites>'
         )
         log_path = tmp_path / "log.txt"
         log_path.write_text("")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         assert result.value.failed_count == 1
@@ -86,13 +80,10 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" '
-            'failures="0" errors="1" skipped="0"><testcase name="test_error" classname="TestClass">'
-            '<error message="runtime error">Error trace</error></testcase></testsuite></testsuites>'
+            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" failures="0" errors="1" skipped="0"><testcase name="test_error" classname="TestClass"><error message="runtime error">Error trace</error></testcase></testsuite></testsuites>'
         )
         log_path = tmp_path / "log.txt"
         log_path.write_text("")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         assert result.value.error_count == 1
@@ -102,13 +93,10 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" '
-            'failures="0" errors="0" skipped="1"><testcase name="test_skip" classname="TestClass">'
-            '<skipped message="skipped test"/></testcase></testsuite></testsuites>'
+            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="1" failures="0" errors="0" skipped="1"><testcase name="test_skip" classname="TestClass"><skipped message="skipped test"/></testcase></testsuite></testsuites>'
         )
         log_path = tmp_path / "log.txt"
         log_path.write_text("")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         assert result.value.skipped_count == 1
@@ -118,14 +106,10 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="2">'
-            '<testcase name="test_fast" time="0.1"/>'
-            '<testcase name="test_slow" time="5.5"/>'
-            "</testsuite></testsuites>"
+            '<?xml version="1.0"?><testsuites><testsuite name="test" tests="2"><testcase name="test_fast" time="0.1"/><testcase name="test_slow" time="5.5"/></testsuite></testsuites>'
         )
         log_path = tmp_path / "log.txt"
         log_path.write_text("")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         slow_entries = result.value.slow_entries
@@ -141,7 +125,6 @@ class TestFlextInfraPytestDiagExtractor:
         junit_xml.write_text("invalid xml content")
         log_path = tmp_path / "log.txt"
         log_path.write_text("FAILED test_case.py::test_foo")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
 
@@ -155,7 +138,6 @@ class TestFlextInfraPytestDiagExtractor:
             '<?xml version="1.0"?><testsuites><testsuite name="test" tests="0"/></testsuites>'
         )
         log_path = tmp_path / "missing.txt"
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
 
@@ -164,7 +146,6 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
         log_path = tmp_path / "log.txt"
-
         with patch.object(
             extractor, "_parse_xml", side_effect=ValueError("test error")
         ):
@@ -201,10 +182,7 @@ class TestFlextInfraPytestDiagExtractor:
         """Test _parse_xml extracts test timing data."""
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test">'
-            '<testcase name="test_a" classname="TestClass" time="1.5"/>'
-            '<testcase name="test_b" classname="TestClass" time="0.5"/>'
-            "</testsuite></testsuites>"
+            '<?xml version="1.0"?><testsuites><testsuite name="test"><testcase name="test_a" classname="TestClass" time="1.5"/><testcase name="test_b" classname="TestClass" time="0.5"/></testsuite></testsuites>'
         )
         diag = pytest_diag._DiagResult()
         result = FlextInfraPytestDiagExtractor._parse_xml(junit_xml, diag)
@@ -215,9 +193,7 @@ class TestFlextInfraPytestDiagExtractor:
         """Test _parse_xml handles invalid time attribute."""
         junit_xml = tmp_path / "junit.xml"
         junit_xml.write_text(
-            '<?xml version="1.0"?><testsuites><testsuite name="test">'
-            '<testcase name="test_a" classname="TestClass" time="invalid"/>'
-            "</testsuite></testsuites>"
+            '<?xml version="1.0"?><testsuites><testsuite name="test"><testcase name="test_a" classname="TestClass" time="invalid"/></testsuite></testsuites>'
         )
         diag = pytest_diag._DiagResult()
         result = FlextInfraPytestDiagExtractor._parse_xml(junit_xml, diag)
@@ -225,20 +201,14 @@ class TestFlextInfraPytestDiagExtractor:
 
     def test_parse_log_into_diag_extracts_failures(self) -> None:
         """Test _parse_log_into_diag extracts failures."""
-        lines = [
-            "FAILED test_case.py::test_foo",
-            "PASSED test_case.py::test_bar",
-        ]
+        lines = ["FAILED test_case.py::test_foo", "PASSED test_case.py::test_bar"]
         diag = pytest_diag._DiagResult()
         FlextInfraPytestDiagExtractor._parse_log_into_diag(lines, diag)
         assert len(diag.failed_cases) > 0
 
     def test_parse_log_into_diag_extracts_skips(self) -> None:
         """Test _parse_log_into_diag extracts skips."""
-        lines = [
-            "SKIPPED test_case.py::test_skip",
-            "PASSED test_case.py::test_pass",
-        ]
+        lines = ["SKIPPED test_case.py::test_skip", "PASSED test_case.py::test_pass"]
         diag = pytest_diag._DiagResult()
         FlextInfraPytestDiagExtractor._parse_log_into_diag(lines, diag)
         assert len(diag.skip_cases) > 0
@@ -297,7 +267,6 @@ class TestFlextInfraPytestDiagExtractor:
         )
         log_path = tmp_path / "log.txt"
         log_path.write_text("")
-
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         value = result.value

@@ -37,8 +37,6 @@ class FlextInfraRefactorSafetyManager:
         self._emergency_stop_reason = ""
         self._last_workspace_root: Path | None = None
 
-    # ── public API (business layer handles failures) ────────────
-
     def create_checkpoint(self, project_root: Path) -> r[str]:
         """Stash current state and return the stash reference."""
         self._last_workspace_root = project_root
@@ -78,29 +76,23 @@ class FlextInfraRefactorSafetyManager:
         return self._git.is_repo(workspace_root)
 
     def create_pre_transformation_stash(
-        self,
-        workspace_root: Path,
-        *,
-        label: str = "flext-refactor-pre-transform",
+        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform"
     ) -> r[str]:
         """Stash uncommitted changes and return the stash reference."""
         self._last_workspace_root = workspace_root
         if not self.is_git_repository(workspace_root):
             return r[str].ok("")
-
         has = self._git.has_changes(workspace_root)
         if has.is_failure:
             return r[str].fail(has.error or "git status failed")
         if not has.value:
             return r[str].ok("")
-
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         push = self._git.stash_push(
             workspace_root, f"{label}:{stamp}", include_untracked=True
         )
         if push.is_failure:
             return r[str].fail(push.error or "git stash push failed")
-
         ref = self._git.stash_list(workspace_root)
         if ref.is_failure:
             return r[str].fail(ref.error or "git stash list failed")
@@ -113,20 +105,16 @@ class FlextInfraRefactorSafetyManager:
     def rollback(self, workspace_root: str, /) -> None: ...
 
     def rollback(
-        self,
-        workspace_root: Path | str,
-        stash_ref: str = "",
+        self, workspace_root: Path | str, stash_ref: str = ""
     ) -> r[bool] | None:
         """Restore previously stashed state, resolving workspace from context."""
         if isinstance(workspace_root, Path):
             self._last_workspace_root = workspace_root
             return self._rollback_to_stash(workspace_root, stash_ref)
-
         stash_reference = workspace_root
         if self._last_workspace_root is None:
             self.request_emergency_stop("rollback requested without checkpoint context")
             return None
-
         rb = self._rollback_to_stash(self._last_workspace_root, stash_reference)
         if rb.is_failure:
             self.request_emergency_stop(rb.error or "rollback failed")
@@ -138,10 +126,8 @@ class FlextInfraRefactorSafetyManager:
         cont = self.ensure_can_continue()
         if cont.is_failure:
             return cont
-
         if not self.is_git_repository(workspace_root):
             return r[bool].ok(True)
-
         import_cmd = [
             c.Infra.Toml.PYTHON,
             "-m",
@@ -152,14 +138,10 @@ class FlextInfraRefactorSafetyManager:
         ic = self._runner.run_checked(import_cmd, cwd=workspace_root)
         if ic.is_failure:
             return r[bool].fail(ic.error or "import validation failed")
-
         tc = self._runner.run_checked(self._test_command, cwd=workspace_root)
         if tc.is_failure:
             return r[bool].fail(tc.error or "test validation failed")
-
         return r[bool].ok(True)
-
-    # ── checkpoint persistence ──────────────────────────────────
 
     def save_checkpoint(self, checkpoint: m.Infra.Refactor.Checkpoint) -> r[bool]:
         """Persist a checkpoint to disk as JSON."""
@@ -207,8 +189,6 @@ class FlextInfraRefactorSafetyManager:
         except OSError as exc:
             return r[bool].fail(str(exc))
 
-    # ── private ─────────────────────────────────────────────────
-
     def _resolve_workspace_root(self, files_changed: list[Path]) -> Path | None:
         if self._last_workspace_root is not None:
             return self._last_workspace_root
@@ -220,6 +200,4 @@ class FlextInfraRefactorSafetyManager:
         return self._git.stash_pop(workspace_root, stash_ref)
 
 
-__all__ = [
-    "FlextInfraRefactorSafetyManager",
-]
+__all__ = ["FlextInfraRefactorSafetyManager"]

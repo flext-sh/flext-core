@@ -35,11 +35,8 @@ class FlextUtilitiesText:
             str: Cleaned text with normalized whitespace
 
         """
-        # Remove control characters except tab and newline, normalize whitespace
         return re.sub(
-            r"\s+",
-            " ",
-            re.sub(c.Utilities.CONTROL_CHARS_PATTERN, "", text),
+            "\\s+", " ", re.sub(c.Utilities.CONTROL_CHARS_PATTERN, "", text)
         ).strip()
 
     @staticmethod
@@ -76,11 +73,9 @@ class FlextUtilitiesText:
             ValueError: If text is ``None``, empty, or whitespace-only
 
         """
-        # Fast fail: text cannot be None
         if text is None:
             msg = "Text cannot be None. Use explicit empty string '' or handle None in calling code."
             raise ValueError(msg)
-        # Fast fail: text cannot be empty or whitespace-only
         stripped = text.strip()
         if not stripped:
             msg = "Text cannot be empty or whitespace-only. Use explicit non-empty string."
@@ -96,11 +91,8 @@ class FlextUtilitiesText:
         """Truncate text to maximum length with suffix."""
         if len(text) <= max_length:
             return r[str].ok(text)
-
         truncated = text[: max_length - len(suffix)] + suffix
         return r[str].ok(truncated)
 
 
-__all__ = [
-    "FlextUtilitiesText",
-]
+__all__ = ["FlextUtilitiesText"]

@@ -17,14 +17,12 @@ def test_run_detect_success(tmp_path: Path) -> None:
     """Test _run_detect with successful detection."""
     args = Mock()
     args.project_root = tmp_path
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector"
     ) as mock_detector_class:
         mock_detector = Mock()
         mock_detector.detect.return_value = Mock(is_success=True, value="workspace")
         mock_detector_class.return_value = mock_detector
-
         result = workspace_main._run_detect(args)
         assert result == 0
 
@@ -33,7 +31,6 @@ def test_run_detect_failure(tmp_path: Path) -> None:
     """Test _run_detect with detection failure."""
     args = Mock()
     args.project_root = tmp_path
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector"
     ) as mock_detector_class:
@@ -42,7 +39,6 @@ def test_run_detect_failure(tmp_path: Path) -> None:
             is_success=False, error="Detection failed"
         )
         mock_detector_class.return_value = mock_detector
-
         result = workspace_main._run_detect(args)
         assert result == 1
 
@@ -52,14 +48,12 @@ def test_run_sync_success(tmp_path: Path) -> None:
     args = Mock()
     args.project_root = tmp_path
     args.canonical_root = None
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraSyncService"
     ) as mock_sync_class:
         mock_sync = Mock()
         mock_sync.sync.return_value = Mock(is_success=True)
         mock_sync_class.return_value = mock_sync
-
         result = workspace_main._run_sync(args)
         assert result == 0
 
@@ -69,14 +63,12 @@ def test_run_sync_failure(tmp_path: Path) -> None:
     args = Mock()
     args.project_root = tmp_path
     args.canonical_root = None
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraSyncService"
     ) as mock_sync_class:
         mock_sync = Mock()
         mock_sync.sync.return_value = Mock(is_success=False, error="Sync failed")
         mock_sync_class.return_value = mock_sync
-
         result = workspace_main._run_sync(args)
         assert result == 1
 
@@ -88,7 +80,6 @@ def test_run_orchestrate_success() -> None:
     args.verb = "check"
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
     ) as mock_orch_class:
@@ -97,7 +88,6 @@ def test_run_orchestrate_success() -> None:
             is_success=True, value=[Mock(exit_code=0), Mock(exit_code=0)]
         )
         mock_orch_class.return_value = mock_orch
-
         result = workspace_main._run_orchestrate(args)
         assert result == 0
 
@@ -109,7 +99,6 @@ def test_run_orchestrate_no_projects() -> None:
     args.verb = "check"
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
-
     result = workspace_main._run_orchestrate(args)
     assert result == 1
 
@@ -121,7 +110,6 @@ def test_run_orchestrate_with_failures() -> None:
     args.verb = "check"
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
     ) as mock_orch_class:
@@ -130,7 +118,6 @@ def test_run_orchestrate_with_failures() -> None:
             is_success=True, value=[Mock(exit_code=0), Mock(exit_code=1)]
         )
         mock_orch_class.return_value = mock_orch
-
         result = workspace_main._run_orchestrate(args)
         assert result == 1
 
@@ -142,7 +129,6 @@ def test_run_orchestrate_failure() -> None:
     args.verb = "check"
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
     ) as mock_orch_class:
@@ -151,7 +137,6 @@ def test_run_orchestrate_failure() -> None:
             is_success=False, error="Orchestration failed"
         )
         mock_orch_class.return_value = mock_orch
-
         result = workspace_main._run_orchestrate(args)
         assert result == 1
 
@@ -161,7 +146,6 @@ def test_run_migrate_success(tmp_path: Path) -> None:
     args = Mock()
     args.workspace_root = tmp_path
     args.dry_run = False
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraProjectMigrator"
     ) as mock_migrator_class:
@@ -170,7 +154,6 @@ def test_run_migrate_success(tmp_path: Path) -> None:
             is_success=True, is_failure=False, value=[Mock(errors=[], changes=[])]
         )
         mock_migrator_class.return_value = mock_migrator
-
         result = workspace_main._run_migrate(args)
         assert result == 0
 
@@ -180,7 +163,6 @@ def test_run_migrate_failure(tmp_path: Path) -> None:
     args = Mock()
     args.workspace_root = tmp_path
     args.dry_run = False
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraProjectMigrator"
     ) as mock_migrator_class:
@@ -189,7 +171,6 @@ def test_run_migrate_failure(tmp_path: Path) -> None:
             is_success=False, is_failure=True, error="Migration failed"
         )
         mock_migrator_class.return_value = mock_migrator
-
         result = workspace_main._run_migrate(args)
         assert result == 1
 
@@ -199,7 +180,6 @@ def test_run_migrate_with_project_errors(tmp_path: Path) -> None:
     args = Mock()
     args.workspace_root = tmp_path
     args.dry_run = False
-
     with patch(
         "flext_infra.workspace.__main__.FlextInfraProjectMigrator"
     ) as mock_migrator_class:
@@ -210,7 +190,6 @@ def test_run_migrate_with_project_errors(tmp_path: Path) -> None:
             value=[Mock(errors=["Error 1"], changes=[]), Mock(errors=[], changes=[])],
         )
         mock_migrator_class.return_value = mock_migrator
-
         result = workspace_main._run_migrate(args)
         assert result == 1
 
@@ -218,7 +197,6 @@ def test_run_migrate_with_project_errors(tmp_path: Path) -> None:
 def test_main_detect_command(tmp_path: Path) -> None:
     """Test main() with detect command."""
     argv = ["detect", "--project-root", str(tmp_path)]
-
     with patch("flext_infra.workspace.__main__._run_detect") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -229,7 +207,6 @@ def test_main_detect_command(tmp_path: Path) -> None:
 def test_main_sync_command(tmp_path: Path) -> None:
     """Test main() with sync command."""
     argv = ["sync", "--project-root", str(tmp_path)]
-
     with patch("flext_infra.workspace.__main__._run_sync") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -240,7 +217,6 @@ def test_main_sync_command(tmp_path: Path) -> None:
 def test_main_orchestrate_command() -> None:
     """Test main() with orchestrate command."""
     argv = ["orchestrate", "--verb", "check", "project-a", "project-b"]
-
     with patch("flext_infra.workspace.__main__._run_orchestrate") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -251,7 +227,6 @@ def test_main_orchestrate_command() -> None:
 def test_main_migrate_command(tmp_path: Path) -> None:
     """Test main() with migrate command."""
     argv = ["migrate", "--workspace-root", str(tmp_path)]
-
     with patch("flext_infra.workspace.__main__._run_migrate") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -262,7 +237,6 @@ def test_main_migrate_command(tmp_path: Path) -> None:
 def test_main_no_command() -> None:
     """Test main() with no command specified."""
     argv: list[str] = []
-
     result = workspace_main.main(argv)
     assert result == 1
 
@@ -270,7 +244,6 @@ def test_main_no_command() -> None:
 def test_main_orchestrate_with_fail_fast() -> None:
     """Test main() orchestrate with --fail-fast flag."""
     argv = ["orchestrate", "--verb", "check", "--fail-fast", "project-a"]
-
     with patch("flext_infra.workspace.__main__._run_orchestrate") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -291,7 +264,6 @@ def test_main_orchestrate_with_make_args() -> None:
         "PARALLEL=4",
         "project-a",
     ]
-
     with patch("flext_infra.workspace.__main__._run_orchestrate") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -304,7 +276,6 @@ def test_main_orchestrate_with_make_args() -> None:
 def test_main_migrate_dry_run(tmp_path: Path) -> None:
     """Test main() migrate with --dry-run flag."""
     argv = ["migrate", "--workspace-root", str(tmp_path), "--dry-run"]
-
     with patch("flext_infra.workspace.__main__._run_migrate") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -317,7 +288,6 @@ def test_main_sync_with_canonical_root(tmp_path: Path) -> None:
     """Test main() sync with --canonical-root flag."""
     canonical = tmp_path / "canonical"
     argv = ["sync", "--project-root", str(tmp_path), "--canonical-root", str(canonical)]
-
     with patch("flext_infra.workspace.__main__._run_sync") as mock_run:
         mock_run.return_value = 0
         result = workspace_main.main(argv)
@@ -329,10 +299,8 @@ def test_main_sync_with_canonical_root(tmp_path: Path) -> None:
 def test_main_entry_point(tmp_path: Path) -> None:
     """Test __main__ entry point."""
     argv = ["detect", "--project-root", str(tmp_path)]
-
     with patch("flext_infra.workspace.__main__.main") as mock_main:
         mock_main.return_value = 0
-        # Simulate the if __name__ == "__main__" block
         exit_code = workspace_main.main(argv)
         assert exit_code == 0
 
@@ -350,9 +318,7 @@ def test_main_calls_sys_exit(tmp_path: Path) -> None:
             mock_detector_class.return_value = mock_detector
             mock_detector.detect_mode.return_value = "monorepo"
             with patch("sys.exit") as _mock_exit:
-                from flext_infra.workspace.__main__ import (  # noqa: PLC0415
-                    main as _main_func,
-                )
+                from flext_infra.workspace.__main__ import main as _main_func
 
                 try:
                     _main_func(argv=["detect", "--project-root", str(tmp_path)])
