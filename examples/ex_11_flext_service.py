@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from typing import ClassVar, override
 
-from pydantic import PrivateAttr
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 
 from flext_core import (
     FlextContext,
@@ -19,10 +19,12 @@ from flext_core import (
     t,
 )
 
-from .models import em
 from .shared import Examples
 
-_Payload = em.Ex11.Payload
+
+class _Payload(BaseModel):
+    text: str
+    count: int
 
 
 class _EchoService(s[str]):
@@ -72,7 +74,7 @@ class _DeclarativeService(s[str]):
     auto_execute: ClassVar[bool] = True
     _execute_count: int = PrivateAttr(default=0)
 
-    _execution_result: r[str] | None = PrivateAttr(default=None)
+    _execution_result: r[str] = PrivateAttr()
 
     def __init__(self) -> None:
         super().__init__()
@@ -115,7 +117,14 @@ class _RuntimeFactoryService(s[str]):
         return r[str].ok("factory")
 
 
-_HandlerLike = em.Ex11.HandlerLike
+class _HandlerLike(BaseModel):
+    """Minimal handler-like BaseModel for protocol checks."""
+
+    model_config = ConfigDict(frozen=False)
+    data: dict[str, str] = {}
+
+    def handle(self) -> str:
+        return "ok"
 
 
 class _TinyType:
@@ -125,7 +134,8 @@ class _TinyType:
         self.initialized = True
 
 
-_EntityStub = em.Ex11.EntityStub
+class _EntityStub(BaseModel):
+    unique_id: str
 
 
 class _ServiceLike:
@@ -154,11 +164,38 @@ class _ServiceLike:
         return "ServiceLike"
 
 
-_ProcessorProtocolGood = em.Ex11.ProcessorProtocolGood
-_ProcessorProtocolBad = em.Ex11.ProcessorProtocolBad
+class _ProcessorProtocolGood(BaseModel):
+    model_config = ConfigDict(frozen=False)
+    status: str = "ok"
+
+    def process(self) -> str:
+        return "ok"
+
+    def _protocol_name(self) -> str:
+        return "ProcessorProtocolGood"
 
 
-_CommandBusStub = em.Ex11.CommandBusStub
+class _ProcessorProtocolBad(BaseModel):
+    model_config = ConfigDict(frozen=False)
+    status: str = "bad"
+
+    def _protocol_name(self) -> str:
+        return "ProcessorProtocolBad"
+
+
+class _CommandBusStub(BaseModel):
+    """Minimal BaseModel stub satisfying is_command_bus duck-typing."""
+
+    model_config = ConfigDict(frozen=False)
+
+    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def publish(self, _event: t.ContainerValue) -> None:
+        pass
+
+    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(True)
 
 
 class Ex11FlextService(Examples):

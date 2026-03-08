@@ -17,11 +17,31 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import dataclass
 from typing import ClassVar, cast, override
 
 import pytest
 
 from flext_core import t, u
+
+
+@dataclass(frozen=True, slots=True)
+class TypeGuardScenario:
+    """Type guard test scenario."""
+
+    name: str
+    value: t.ContainerValue
+    expected_result: bool
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizeScenario:
+    """Normalize to metadata value test scenario."""
+
+    name: str
+    value: t.ContainerValue
+    expected_type: type
+    expected_value: object | None = None
 
 
 class TypeGuardsScenarios:

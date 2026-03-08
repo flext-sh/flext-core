@@ -421,8 +421,9 @@ class TestFlextInfraReleaseOrchestrator:
                 "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._run_make",
                 return_value=r[tuple[int, str]].ok((0, "ok")),
             ):
-                result = orchestrator.phase_build(workspace_root, "1.0.0", [])
-                assert result.is_success
+                with patch("flext_infra.release.orchestrator.FlextInfraJsonService"):
+                    result = orchestrator.phase_build(workspace_root, "1.0.0", [])
+                    assert result.is_success
 
     def test_phase_build_report_dir_creation_fails(self, workspace_root: Path) -> None:
         """Test phase_build handles directory creation failure."""
@@ -457,8 +458,9 @@ class TestFlextInfraReleaseOrchestrator:
                 mock_runner.run_raw.return_value = r[
                     FlextInfraModels.Infra.Core.CommandOutput
                 ].ok(output_model)
-                result = orchestrator.phase_build(workspace_root, "1.0.0", [])
-                assert result.is_failure
+                with patch("flext_infra.release.orchestrator.FlextInfraJsonService"):
+                    result = orchestrator.phase_build(workspace_root, "1.0.0", [])
+                    assert result.is_failure
 
     def test_phase_publish_generates_notes(self, workspace_root: Path) -> None:
         """Test phase_publish generates release notes."""

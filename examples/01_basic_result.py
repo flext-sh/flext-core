@@ -32,11 +32,34 @@ from flext_core import (
     u,
 )
 
-from .models import em
+# Using t directly - no local type aliases (DRY + SRP)
+# All types come from t namespace - centralized type system
+# PEP 695 type aliases only when necessary for complex compositions
 
-User = em.Ex01.User
-DemonstrationResult = em.Ex01.DemonstrationResult
-RunDemonstrationCommand = em.Ex01.RunDemonstrationCommand
+# =====================================================================
+# DEMONSTRATION MODELS - Using m for type safety
+# =====================================================================
+
+
+class User(m.Entity):
+    """User entity for demonstration."""
+
+    name: str
+    email: str
+
+
+class DemonstrationResult(m.Value):
+    """Result value object for demonstration metadata."""
+
+    demonstrations_completed: int
+    patterns_covered: tuple[str, ...]
+    completed_at: str
+
+
+class RunDemonstrationCommand(m.Command):
+    """Command to run demonstration."""
+
+    operation: str = "demonstration"
 
 
 # Handler removed due to dispatcher serialization issues

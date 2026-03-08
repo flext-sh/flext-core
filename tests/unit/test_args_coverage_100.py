@@ -16,13 +16,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated, Final, cast
 
 import pytest
 
 from flext_core import r
-from flext_tests import p, u
+from flext_tests import p, t, u
 from tests.test_utils import assertion_helpers
 
 
@@ -68,6 +69,27 @@ class TestFlextUtilitiesArgs:
             INVALID_VALUES: Final[str] = "Invalid values"
             VALIDATION: Final[str] = "validation"
             INTERNAL_ERROR: Final[str] = "Internal error"
+
+    @dataclass(frozen=True, slots=True)
+    class ParseKwargsScenario:
+        """Parse kwargs test scenario."""
+
+        name: str
+        kwargs: dict[str, t.ContainerValue]
+        enum_fields: dict[str, type[StrEnum]]
+        expected_success: bool
+        expected_status: TestFlextUtilitiesArgs.StatusEnum | None = None
+        expected_error: str | None = None
+
+    @dataclass(frozen=True, slots=True)
+    class ValidatedScenario:
+        """Validated decorator test scenario."""
+
+        name: str
+        input_value: str | TestFlextUtilitiesArgs.StatusEnum
+        expected_success: bool
+        expected_result: str | None = None
+        expected_error: str | None = None
 
     class Scenarios:
         """Centralized test scenarios."""

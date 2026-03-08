@@ -10,13 +10,54 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import ClassVar
 
-from flext_core import m
+from flext_core import m, t
 
 # =========================================================================
 # Scenario Dataclasses
 # =========================================================================
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationScenario:
+    """Single scenario for validation testing."""
+
+    name: str
+    validator_type: str  # "network", "string", "numeric"
+    input_value: t.ContainerValue
+    input_params: dict[str, object] | None = None
+    should_succeed: bool = True
+    expected_value: t.ContainerValue | None = None
+    expected_error_contains: str | None = None
+    description: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ParserScenario:
+    """Single scenario for parser testing."""
+
+    name: str
+    parser_method: str
+    input_data: str
+    expected_output: t.ContainerValue | None = None
+    should_succeed: bool = True
+    error_contains: str | None = None
+    description: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReliabilityScenario:
+    """Single scenario for reliability testing (circuit breaker, retry)."""
+
+    name: str
+    strategy: str  # "retry", "circuit_breaker", "timeout"
+    config: m.ConfigMap
+    simulate_failures: int
+    expected_state: str
+    should_succeed: bool = True
+    description: str | None = None
 
 
 # =========================================================================

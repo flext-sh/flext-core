@@ -78,10 +78,10 @@ class TestsFlextUtilities(FlextTestsUtilities):
     class Mapper(u.Mapper):
         """Mapper utility class for tests - real inheritance."""
 
-    class Model(x=u.Model):
+    class Model(u.Model):
         """Model utility class for tests - real inheritance."""
 
-    class Pagination(page=u.Pagination):
+    class Pagination(u.Pagination):
         """Pagination utility class for tests - real inheritance."""
 
     class Parser(u.Parser):

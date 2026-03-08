@@ -16,3 +16,4 @@ class SharedHandle(BaseModel):
     """Shared handle model."""
 
     value: int
+    cleaned: bool = False

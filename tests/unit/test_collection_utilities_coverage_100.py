@@ -15,12 +15,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
 
-from flext_tests import u
+from flext_tests import t, u
 
 
 class Status(StrEnum):
@@ -37,6 +38,38 @@ class Priority(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+@dataclass(frozen=True, slots=True)
+class ParseSequenceScenario:
+    """Parse sequence test scenario."""
+
+    name: str
+    values: list[str | Status]
+    expected_success: bool
+    expected_count: int | None
+    expected_error: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class CoerceListValidatorScenario:
+    """Coerce list validator test scenario."""
+
+    name: str
+    value: t.ContainerValue
+    expected_success: bool
+    expected_error: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ParseMappingScenario:
+    """Parse mapping test scenario."""
+
+    name: str
+    mapping: dict[str, str | Status]
+    expected_success: bool
+    expected_count: int | None
+    expected_error: str | None
 
 
 class CollectionScenarios:

@@ -18,9 +18,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import override
+from typing import Annotated, override
 
-from pydantic import Field, model_validator
+from pydantic import EmailStr, Field, computed_field, model_validator
 
 from flext_core import (
     c,
@@ -299,8 +299,118 @@ if __name__ == "__main__":
 # ========== DOMAIN MODELS ==========
 
 
-def _new_order_items() -> list[OrderItem]:
-    return []
+class Email(m.Value):
+    """Email value object with advanced Pydantic 2 EmailStr validation."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    address: Annotated[
+        EmailStr,
+        Field(
+            min_length=5,
+            max_length=c.Validation.MAX_EMAIL_LENGTH,
+        ),
+    ]
+
+
+class Money(m.Value):
+    """Money value object with StrEnum currency and railway operations."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    amount: Annotated[Decimal, Field(gt=Decimal(0))]
+    currency: c.Domain.Currency | str = Field(
+        default=c.Domain.Currency.USD,
+    )
+
+    def add(self, other: Money) -> r[Money]:
+        """Railway pattern for currency-aware addition."""
+        if self.currency != other.currency:
+            return r[Money].fail("Currency mismatch")
+        return r.ok(
+            Money(amount=self.amount + other.amount, currency=self.currency),
+        )
+
+
+class User(m.Entity):
+    """User entity with comprehensive validation and domain rules."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    name: str = Field(
+        min_length=c.Validation.MIN_NAME_LENGTH,
+        max_length=c.Validation.MAX_NAME_LENGTH,
+    )
+    email: Email
+    age: Annotated[
+        int,
+        Field(
+            ge=c.Validation.MIN_AGE,
+            le=c.Validation.MAX_AGE,
+        ),
+    ]
+
+
+class OrderItem(m.Value):
+    """Order item with computed fields and railway validation."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    product_id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    price: Money
+    quantity: Annotated[int, Field(gt=0, le=1000)]
+
+    @property
+    @computed_field
+    def total(self) -> Money:
+        """Railway-aware total calculation."""
+        return Money(
+            amount=self.price.amount * self.quantity,
+            currency=self.price.currency,
+        )
+
+
+class Order(m.AggregateRoot):
+    """Order aggregate root with advanced business rules."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    customer_id: str = Field(min_length=1)
+    items: list[OrderItem] = Field(default_factory=list)
+    status: c.Domain.OrderStatus = Field(
+        default=c.Domain.OrderStatus.PENDING,
+    )
+
+    @property
+    @computed_field
+    def total(self) -> Money:
+        """Railway-aware order total calculation."""
+        if not self.items:
+            return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
+        currency = self.items[0].price.currency
+        total_amount = Decimal(
+            sum(item.price.amount * item.quantity for item in self.items),
+        )
+        return Money(amount=total_amount, currency=currency)
+
+    def add_item(self, item: OrderItem) -> r[Order]:
+        """Railway pattern for item addition with domain rules."""
+        if self.status != c.Domain.OrderStatus.PENDING:
+            return r[Order].fail("Cannot modify non-pending order")
+        if any(existing.product_id == item.product_id for existing in self.items):
+            return r[Order].fail("Product already in order")
+        self.items.append(item)
+        return r.ok(self)
+
+    def confirm(self) -> r[Order]:
+        """Railway pattern for order confirmation."""
+        if not self.items:
+            return r[Order].fail("Cannot confirm empty order")
+        if self.status != c.Domain.OrderStatus.PENDING:
+            return r[Order].fail("Order already processed")
+        self.status = c.Domain.OrderStatus.CONFIRMED
+        return r.ok(self)
 
 
 # No model_rebuild() needed - Pydantic v2 with 'from __future__ import annotations'

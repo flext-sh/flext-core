@@ -8,14 +8,23 @@ from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, override
 
+from pydantic import BaseModel, ConfigDict
+
 from flext_core import FlextHandlers, c, e, h, m, r, t
 
-from .models import em
 from .shared import Examples
 
-_Message = em.Ex10.Message
-_DerivedMessage = em.Ex10.DerivedMessage
-_Entity = em.Ex10.Entity
+
+class _Message(m.Command):
+    text: str
+
+
+class _DerivedMessage(_Message):
+    pass
+
+
+class _Entity(m.Value):
+    unique_id: str
 
 
 class _NoArgs:
@@ -23,12 +32,76 @@ class _NoArgs:
         self.marker = "created"
 
 
-_ProtocolHandler = em.Ex10.ProtocolHandler
-_ServiceStub = em.Ex10.ServiceStub
-_CommandBusStub = em.Ex10.CommandBusStub
-_ProcessorGood = em.Ex10.ProcessorGood
-_ProcessorBad = em.Ex10.ProcessorBad
-_ContextPayload = em.Ex10.ContextPayload
+class _ProtocolHandler(BaseModel):
+    model_config = ConfigDict(frozen=False)
+
+    @staticmethod
+    def _protocol_name() -> str:
+        return "ProtocolHandler"
+
+    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def check_data(self, data: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(data is not None)
+
+
+class _ServiceStub(BaseModel):
+    model_config = ConfigDict(frozen=False)
+
+    @property
+    def is_valid(self) -> bool:
+        return True
+
+    @staticmethod
+    def _protocol_name() -> str:
+        return "ServiceStub"
+
+    def execute(self) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
+
+    def get_service_info(self) -> m.ConfigMap:
+        return m.ConfigMap(root={"service": "stub"})
+
+    def validate_business_rules(self) -> r[bool]:
+        return r[bool].ok(True)
+
+
+class _CommandBusStub(BaseModel):
+    """Minimal BaseModel stub satisfying is_command_bus duck-typing."""
+
+    model_config = ConfigDict(frozen=False)
+
+    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def publish(self, event: t.ContainerValue) -> None:
+        pass
+
+    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(True)
+
+
+class _ProcessorGood(m.Value):
+    marker: str = "good"
+
+    @staticmethod
+    def _protocol_name() -> str:
+        return "ProcessorGood"
+
+    def process(self) -> str:
+        return "ok"
+
+
+class _ProcessorBad(m.Value):
+    marker: str = "bad"
+
+    @staticmethod
+    def _protocol_name() -> str:
+        return "ProcessorBad"
+
+    def process(self) -> str:
+        return "ok"
 
 
 class _NotImplementedPatternHandler(h[t.ContainerValue, t.ContainerValue]):
@@ -279,18 +352,18 @@ class Ex10FlextHandlers(Examples):
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
-        context_payload_query = m.ExecutionContext(
-            handler_name=context_name_1,
-            handler_mode="query",
-        )
+        context_payload_query: dict[str, t.ContainerValue] = {
+            "handler_name": context_name_1,
+            "handler_mode": "query",
+        }
         self.check(
             "push_context.mapping",
             handler.push_context(context_payload_query).is_success,
         )
-        context_payload_event = m.ExecutionContext(
-            handler_name=context_name_2,
-            handler_mode="event",
-        )
+        context_payload_event: dict[str, t.ContainerValue] = {
+            "handler_name": context_name_2,
+            "handler_mode": "event",
+        }
         self.check(
             "push_context.execution",
             handler.push_context(context_payload_event).is_success,
@@ -670,10 +743,10 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "runtime.extract_generic_args",
-            len(h.extract_generic_args(list[str])) >= 1,
+            len(h.extract_generic_args(dict[str, int])) >= 1,
         )
         self.check("runtime.is_sequence_type.true", h.is_sequence_type(list[int]))
-        self.check("runtime.is_sequence_type.false", h.is_sequence_type(str))
+        self.check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
         self.check(
             "runtime.normalize_general",
             h.normalize_to_general_value({dict_key: dict_value}),

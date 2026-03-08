@@ -27,6 +27,7 @@ from flext_core import (
     m,
     r,
     s,
+    u,
 )
 
 # Use centralized t for all complex types (no loose types, no aliases)
@@ -49,54 +50,149 @@ from flext_core import (
 # No separate config classes - using t and c directly (DRY)
 
 
+class DatabaseService(m.ArbitraryTypesModel):
+    """Database service using centralized types and railway pattern."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    config: m.ConfigMap
+    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
+
+    def connect(self) -> r[bool]:
+        """Connect to database with validation."""
+        if self.status == c.Cqrs.CommonStatus.ACTIVE:
+            return r[bool].ok(value=True)
+
+        url = str(self.config.get("url", ""))
+        if not url:
+            return r[bool].fail(c.Errors.CONFIGURATION_ERROR)
+
+        timeout_text = str(self.config.get("timeout", 0))
+        timeout = int(timeout_text) if timeout_text.isdigit() else 0
+
+        # Railway pattern with u validation (DRY)
+        timeout_validation = u.validate_positive(timeout)
+        if timeout_validation.is_failure:
+            return r[bool].fail(c.Errors.VALIDATION_ERROR)
+
+        self.status = c.Cqrs.CommonStatus.ACTIVE
+        return r[bool].ok(value=True)
+
+    def query(self, sql: str) -> r[m.ConfigMap]:
+        """Execute query with comprehensive validation using u."""
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[m.ConfigMap].fail(
+                c.Errors.CONNECTION_ERROR,
+            )
+
+        # Use u for advanced SQL pattern validation with centralized keywords
+        # Using c.Cqrs.Action StrEnum values (DRY - no local Literal aliases)
+        sql_keywords: tuple[str, ...] = (
+            c.Cqrs.Action.GET,
+            c.Cqrs.Action.CREATE,
+            c.Cqrs.Action.UPDATE,
+            c.Cqrs.Action.DELETE,
+        )
+        sql_pattern = rf"\b({'|'.join(sql_keywords)})\b"
+        if not u.validate_pattern(sql, sql_pattern).is_success:
+            return r[m.ConfigMap].fail(
+                c.Errors.VALIDATION_ERROR,
+            )
+
+        result: m.ConfigMap = m.ConfigMap(
+            root={
+                "id": u.generate_short_id(),
+                "name": "Alice",
+                "email": "alice@example.com",
+            },
+        )
+        return r[m.ConfigMap].ok(result)
+
+
+class CacheService(m.ArbitraryTypesModel):
+    """Cache service using centralized types."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    config: m.ConfigMap
+    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
+
+    def get(self, key: str) -> r[str | int]:
+        """Get value from cache using railway pattern."""
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[str | int].fail(c.Errors.CONNECTION_ERROR)
+
+        # Railway pattern with u validation (DRY)
+        return u.validate_length(
+            key,
+            max_length=c.Validation.MAX_NAME_LENGTH,
+        ).flat_map(
+            lambda _: (
+                r[str | int].fail(c.Errors.NOT_FOUND_ERROR)
+                if key == "missing"
+                else r[str | int].ok("cached_value")
+            ),
+        )
+
+    def set(self, key: str, value: str | int) -> r[bool]:
+        """Set value in cache using railway pattern."""
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[bool].fail(c.Errors.CONNECTION_ERROR)
+
+        # Railway pattern with u validation (DRY)
+        return (
+            u
+            .validate_length(
+                key,
+                max_length=c.Validation.MAX_NAME_LENGTH,
+            )
+            .flat_map(
+                lambda _: u.validate_length(
+                    str(value),
+                    max_length=c.Validation.MAX_NAME_LENGTH,
+                ),
+            )
+            .map(lambda _: True)
+        )
+
+
+class EmailService(m.ArbitraryTypesModel):
+    """Email service using centralized types."""
+
+    model_config = m.DOMAIN_MODEL_CONFIG
+
+    config: m.ConfigMap
+    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
+
+    def send(self, to: str, subject: str, body: str) -> r[bool]:
+        """Send email with railway pattern validation."""
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[bool].fail(c.Errors.CONNECTION_ERROR)
+
+        # Railway pattern with multiple validations using traverse (DRY)
+        validations = [
+            u.validate_pattern(
+                to,
+                c.Platform.PATTERN_EMAIL,
+                "email",
+            ),
+            u.validate_length(
+                subject,
+                min_length=1,
+                max_length=c.Validation.MAX_NAME_LENGTH,
+            ),
+            u.validate_length(
+                body,
+                min_length=1,
+                max_length=c.Defaults.MAX_MESSAGE_LENGTH,
+            ),
+        ]
+        return r.traverse(validations, lambda r: r).map(lambda _: True)
+
+
 # ═══════════════════════════════════════════════════════════════════
 # DEPENDENCY INJECTION SERVICE
 # ═══════════════════════════════════════════════════════════════════
-
-
-class DatabaseService(m.Value):
-    """Database service model used by DI example."""
-
-    config: m.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
-
-    def connect(self) -> r[bool]:
-        """Simulate database connection."""
-        return r[bool].ok(True)
-
-    def query(self, sql: str) -> r[m.ConfigMap]:
-        """Simulate query execution."""
-        if "INVALID" in sql:
-            return r[m.ConfigMap].fail("invalid query")
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"rows": 1}))
-
-
-class CacheService(m.Value):
-    """Cache service model used by DI example."""
-
-    config: m.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
-
-    def set(self, key: str, value: str) -> r[bool]:
-        """Simulate cache write."""
-        if not key:
-            return r[bool].fail("missing key")
-        if not value:
-            return r[bool].fail("missing value")
-        return r[bool].ok(True)
-
-
-class EmailService(m.Value):
-    """Email service model used by DI example."""
-
-    config: m.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
-
-    def send(self, to: str, subject: str, body: str) -> r[bool]:
-        """Simulate email send."""
-        if not to or not subject or not body:
-            return r[bool].fail("invalid email payload")
-        return r[bool].ok(True)
 
 
 class DependencyInjectionService(s[m.ConfigMap]):

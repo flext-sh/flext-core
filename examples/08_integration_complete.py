@@ -22,6 +22,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import override
 
+from pydantic import Field
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -33,6 +35,7 @@ from flext_core import (
     m,
     r,
     s,
+    t,
     u,
 )
 
@@ -41,23 +44,26 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-# ═══════════════════════════════════════════════════════════════════
-# SERVICE IMPLEMENTATION
-# ═══════════════════════════════════════════════════════════════════
-
-
 class User(m.Entity):
-    """User entity for integration demo."""
+    """User entity."""
 
     name: str
     email: str
 
 
 class Order(m.AggregateRoot):
-    """Order aggregate for integration demo."""
+    """Order aggregate root."""
 
     customer_id: str
-    status: c.Domain.Status = c.Domain.Status.ACTIVE
+    items: list[str] = Field(default_factory=list)
+    status: c.Cqrs.CommonStatus = Field(
+        default=c.Cqrs.CommonStatus.PENDING,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# SERVICE IMPLEMENTATION
+# ═══════════════════════════════════════════════════════════════════
 
 
 class IntegrationService(s[m.ConfigMap]):
@@ -249,7 +255,9 @@ def main() -> None:
     if result.is_success:
         data = result.value
 
-        root_data = data.root
+        root_data: dict[str, t.ContainerValue] = (
+            data.root if isinstance(data.root, dict) else {}
+        )
         components = root_data.get("components_integrated", [])
         total = root_data.get("total_components", 0)
         if (

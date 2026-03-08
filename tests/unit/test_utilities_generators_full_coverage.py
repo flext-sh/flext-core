@@ -38,6 +38,10 @@ class _BrokenMapping(Mapping[str, t.JsonValue]):
         raise TypeError(msg)
 
 
+class _GoodModel(BaseModel):
+    value: int = 7
+
+
 class _BrokenModel:
     def __init__(self) -> None:
         self.model_dump = lambda: (_ for _ in ()).throw(TypeError("dump-failed"))

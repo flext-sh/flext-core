@@ -22,9 +22,10 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
+from typing import override
 
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, field_validator
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
@@ -39,24 +40,60 @@ class TestValues:
 
     def test_value_object_creation(self) -> None:
         """Test creating a value object."""
+
+        class Money(m.Value):
+            """Money value object."""
+
+            amount: float
+            currency: str
+
         money = Money(amount=100.0, currency="USD")
         assert money.amount == pytest.approx(100.0)
         assert money.currency == "USD"
 
     def test_value_object_immutability(self) -> None:
         """Test value object is immutable."""
+
+        class Point(m.Value):
+            """Point value object."""
+
+            x: float
+            y: float
+
         point = Point(x=1.0, y=2.0)
         with pytest.raises(ValidationError):
             setattr(point, "x", 3.0)
 
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""
+
+        class Color(m.Value):
+            """Color value object."""
+
+            red: int
+            green: int
+            blue: int
+
         color1 = Color(red=255, green=0, blue=0)
         color2 = Color(red=255, green=0, blue=0)
         assert color1 == color2
 
     def test_value_object_validation(self) -> None:
         """Test value object validation."""
+
+        class Email(m.Value):
+            """Email value object with validation."""
+
+            address: str
+
+            @field_validator("address")
+            @classmethod
+            def validate_email(cls, v: str) -> str:
+                if "@" not in v:
+                    error_msg = "Invalid email format"
+                    raise ValueError(error_msg)
+                return v.lower()
+
         email = Email(address="USER@EXAMPLE.COM")
         assert email.address == "user@example.com"
         with pytest.raises(ValidationError):
@@ -64,6 +101,23 @@ class TestValues:
 
     def test_value_object_hashable(self) -> None:
         """Test value objects are hashable."""
+
+        class ISBN(m.Value):
+            """ISBN value object."""
+
+            code: str
+
+            def __hash__(self) -> int:
+                """Hash based on code value."""
+                return hash(self.code)
+
+            @override
+            def __eq__(self, other: object) -> bool:
+                """Equality based on code value."""
+                if not isinstance(other, ISBN):
+                    return False
+                return self.code == other.code
+
         isbn1 = ISBN(code="978-0-262-03384-8")
         isbn2 = ISBN(code="978-0-262-03384-8")
         isbn_set: set[ISBN] = {isbn1, isbn2}
@@ -75,6 +129,13 @@ class TestEntities:
 
     def test_entity_creation(self) -> None:
         """Test creating an entity."""
+
+        class Person(m.Entity):
+            """Person entity."""
+
+            name: str
+            age: int
+
         person = Person(name="Alice", age=30)
         assert person.name == "Alice"
         assert person.unique_id is not None
@@ -83,6 +144,13 @@ class TestEntities:
 
     def test_entity_identity_tracking(self) -> None:
         """Test entities are compared by identity."""
+
+        class Account(m.Entity):
+            """Account entity."""
+
+            name: str
+            balance: float
+
         account1 = Account(name="Checking", balance=100.0)
         account2 = Account(name="Checking", balance=100.0)
         assert account1.unique_id != account2.unique_id
@@ -90,6 +158,12 @@ class TestEntities:
 
     def test_entity_lifecycle_tracking(self) -> None:
         """Test entity creation and update timestamps."""
+
+        class Document(m.Entity):
+            """Document entity."""
+
+            title: str
+
         doc = Document(title="Test Doc")
         assert doc.created_at is not None
         assert doc.updated_at is not None
@@ -97,6 +171,21 @@ class TestEntities:
 
     def test_entity_validation(self) -> None:
         """Test entity field validation."""
+
+        class User(m.Entity):
+            """User entity with validation."""
+
+            email: str
+            username: str
+
+            @field_validator("username")
+            @classmethod
+            def validate_username(cls, v: str) -> str:
+                if len(v) < 3:
+                    error_msg = "Username must be at least 3 characters"
+                    raise ValueError(error_msg)
+                return v
+
         user = User(email="user@example.com", username="alice")
         assert user.username == "alice"
         with pytest.raises(ValidationError):
@@ -104,6 +193,13 @@ class TestEntities:
 
     def test_entity_model_dump_serialization(self) -> None:
         """Test entity serialization using Pydantic model_dump."""
+
+        class Product(m.Entity):
+            """Product entity."""
+
+            name: str
+            price: float
+
         product = Product(name="Widget", price=19.99)
         product_dict = product.model_dump()
         assert isinstance(product_dict, dict)
@@ -119,17 +215,38 @@ class TestAggregateRoots:
 
     def test_aggregate_root_creation(self) -> None:
         """Test creating an aggregate root."""
+
+        class Order(m.AggregateRoot):
+            """Order aggregate root."""
+
+            order_number: str
+            status: str
+
         order = Order(order_number="ORD-001", status="pending")
         assert order.order_number == "ORD-001"
         assert order.unique_id is not None
 
     def test_aggregate_root_invariants(self) -> None:
         """Test aggregate root enforces invariants."""
+
+        class Account(m.AggregateRoot):
+            """Account with business rules."""
+
+            balance: float
+            currency: str
+
         account = Account(balance=1000.0, currency="USD")
         assert account.balance >= 0.0
 
     def test_aggregate_root_lifecycle(self) -> None:
         """Test aggregate root lifecycle."""
+
+        class Project(m.AggregateRoot):
+            """Project aggregate root."""
+
+            name: str
+            status: str
+
         project = Project(name="New Project", status="planning")
         assert project.status == "planning"
         assert project.created_at is not None
@@ -140,12 +257,26 @@ class TestCommands:
 
     def test_command_creation(self) -> None:
         """Test creating a command."""
+
+        class CreateUserCommand(m.Command):
+            """Command to create a user."""
+
+            email: str
+            username: str
+
         cmd = CreateUserCommand(email="user@example.com", username="alice")
         assert cmd.email == "user@example.com"
         assert cmd.command_id is not None
 
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
+
+        class UpdateProfileCommand(m.Command):
+            """Command to update profile."""
+
+            name: str
+            bio: str
+
         cmd = UpdateProfileCommand(name="Alice", bio="Developer")
         original_name = cmd.name
         cmd.name = "Bob"
@@ -154,6 +285,21 @@ class TestCommands:
 
     def test_command_validation(self) -> None:
         """Test command validation."""
+
+        class DepositCommand(m.Command):
+            """Command with validation."""
+
+            account_id: str
+            amount: float
+
+            @field_validator("amount")
+            @classmethod
+            def validate_amount(cls, v: float) -> float:
+                if v <= 0:
+                    error_msg = "Amount must be positive"
+                    raise ValueError(error_msg)
+                return v
+
         cmd = DepositCommand(account_id="ACC-001", amount=100.0)
         assert cmd.amount == pytest.approx(100.0)
         with pytest.raises(ValidationError):
@@ -161,6 +307,24 @@ class TestCommands:
 
 
 # Define Query classes at module level using direct import
+class GetUserQuery(m.Query):
+    """Query to get a user."""
+
+
+class ListAccountsQuery(m.Query):
+    """Query to list accounts."""
+
+    page: int
+    limit: int
+
+
+class SearchProductsQuery(m.Query):
+    """Query to search products."""
+
+    keyword: str
+    category: str | None = None
+    min_price: float | None = None
+    max_price: float | None = None
 
 
 class TestQueries:
@@ -237,6 +401,10 @@ class TestDomainEvents:
 
     def test_domain_event_timestamp(self) -> None:
         """Test domain events have timestamps."""
+
+        class AccountUpdatedEvent(m.DomainEvent):
+            """Event: account was updated."""
+
         event = AccountUpdatedEvent(
             event_type="AccountUpdated",
             aggregate_id="ACC-001",
@@ -247,6 +415,10 @@ class TestDomainEvents:
 
     def test_domain_event_causality(self) -> None:
         """Test domain events track causality via id and timestamps."""
+
+        class PaymentProcessedEvent(m.DomainEvent):
+            """Event: payment was processed."""
+
         event = PaymentProcessedEvent(
             event_type="PaymentProcessed",
             aggregate_id="PAY-001",
@@ -285,6 +457,21 @@ class TestModelValidation:
 
     def test_model_validation_error_handling(self) -> None:
         """Test model validation error handling."""
+
+        class ValidatedEntity(m.Entity):
+            """Entity with validation."""
+
+            email: str
+            age: int
+
+            @field_validator("age")
+            @classmethod
+            def validate_age(cls, v: int) -> int:
+                if v < 0 or v > 150:
+                    error_msg = "Invalid age"
+                    raise ValueError(error_msg)
+                return v
+
         entity = ValidatedEntity(email="user@example.com", age=30)
         assert entity.age == 30
         with pytest.raises(ValidationError):
@@ -292,6 +479,30 @@ class TestModelValidation:
 
     def test_multiple_field_validation(self) -> None:
         """Test multiple field validators."""
+
+        class Profile(m.Entity):
+            """Profile with multiple validators."""
+
+            username: str
+            email: str
+            bio: str | None = None
+
+            @field_validator("username")
+            @classmethod
+            def validate_username(cls, v: str) -> str:
+                if len(v) < 3:
+                    error_msg = "Username too short"
+                    raise ValueError(error_msg)
+                return v
+
+            @field_validator("email")
+            @classmethod
+            def validate_email(cls, v: str) -> str:
+                if "@" not in v:
+                    error_msg = "Invalid email"
+                    raise ValueError(error_msg)
+                return v
+
         profile = Profile(username="alice", email="alice@example.com", bio="Developer")
         assert profile.username == "alice"
 
@@ -301,6 +512,13 @@ class TestModelSerialization:
 
     def test_entity_model_dump(self) -> None:
         """Test model_dump serialization."""
+
+        class Task(m.Entity):
+            """Task entity."""
+
+            title: str
+            completed: bool
+
         task = Task(title="Complete tests", completed=False)
         dumped = task.model_dump()
         assert dumped["title"] == "Complete tests"
@@ -309,6 +527,14 @@ class TestModelSerialization:
 
     def test_command_serialization(self) -> None:
         """Test command serialization."""
+
+        class SendEmailCommand(m.Command):
+            """Command to send email."""
+
+            recipient: str
+            subject: str
+            body: str
+
         cmd = SendEmailCommand(
             recipient="user@example.com",
             subject="Test",
@@ -320,6 +546,13 @@ class TestModelSerialization:
 
     def test_aggregate_root_serialization(self) -> None:
         """Test aggregate root serialization."""
+
+        class ShoppingCart(m.AggregateRoot):
+            """Shopping cart aggregate."""
+
+            items: list[dict[str, object]]
+            total: float
+
         cart = ShoppingCart(
             items=[
                 {"product_id": "P1", "quantity": 2},
@@ -337,6 +570,13 @@ class TestModelIntegration:
 
     def test_entity_model_validation(self) -> None:
         """Test entity model validation via model_validate."""
+
+        class Customer(m.Entity):
+            """Customer entity."""
+
+            name: str
+            email: str
+
         customer = Customer(name="John", email="john@example.com")
         # Create dict with only actual model fields (exclude computed fields)
         # In Pydantic v2, iterate model_fields and only include existing keys
@@ -351,6 +591,13 @@ class TestModelIntegration:
 
     def test_command_factory_pattern(self) -> None:
         """Test command creation as factories."""
+
+        class RegisterUserCommand(m.Command):
+            """User registration command."""
+
+            email: str
+            password: str
+
         cmd = RegisterUserCommand(email="user@example.com", password="secure123")
         assert cmd.email == "user@example.com"
 

@@ -7,6 +7,7 @@ from types import ModuleType
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
 
@@ -31,6 +32,14 @@ class _EventHandler(_Handler):
     def validate(self, data: t.JsonValue) -> FlextResult[bool]:
         _ = data
         return r[bool].ok(True)
+
+
+class _MsgWithCommandId(BaseModel):
+    command_id: str = "cmd-1"
+
+
+class _MsgWithMessageId(BaseModel):
+    message_id: str = "msg-1"
 
 
 def test_handler_type_literal_and_invalid() -> None:

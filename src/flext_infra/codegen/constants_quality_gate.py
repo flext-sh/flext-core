@@ -194,7 +194,7 @@ class FlextInfraCodegenConstantsQualityGate:
         by_rule = {"NS-000": 0, "NS-001": 0, "NS-002": 0}
         total_violations = 0
         for report in census_reports:
-            violations = cast("Sequence[Any]", report.violations)
+            violations = tuple(report.violations)
             total_violations += len(violations)
             for raw_violation in violations:
                 parsed = m.Infra.Codegen.CensusViolation.model_validate(raw_violation)
@@ -405,7 +405,7 @@ class FlextInfraCodegenConstantsQualityGate:
         findings: list[dict[str, object]] = [
             {
                 "project": entry.project,
-                "violations_total": len(cast("Sequence[Any]", entry.violations)),
+                "violations_total": len(tuple(entry.violations)),
                 "fixable_violations": int(entry.fixable),
                 "validator_passed": int(entry.total) == 0,
                 "mro_failures": 0,
@@ -539,8 +539,8 @@ class FlextInfraCodegenConstantsQualityGate:
                 raw = cast("dict[Any, Any]", payload)
                 modified = raw.get("modified_files")
                 if isinstance(modified, list):
-                    modified_list = cast("list[Any]", modified)
                     filtered: set[str] = set()
+                    modified_list = cast("list[Any]", modified)
                     for entry in modified_list:
                         if not isinstance(entry, str):
                             continue

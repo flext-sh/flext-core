@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast, override
 
@@ -48,6 +49,17 @@ class UtilityOperationType(StrEnum):
     CACHE_KEY = "cache_key"
     TEXT_CLEANING = "text_cleaning"
     TEXT_TRUNCATION = "text_truncation"
+
+
+@dataclass(frozen=True, slots=True)
+class UtilityTestCase:
+    """Test case for utility operations."""
+
+    operation: UtilityOperationType
+    input_data: t.ContainerValue | None = None
+    expected_type: type | None = None
+    should_succeed: bool = True
+    description: str = ""
 
 
 class UtilityScenarios:

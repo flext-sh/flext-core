@@ -12,12 +12,18 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast
 
+from pydantic import BaseModel
+
 from flext_core import c, m, r, t, u
 from flext_core._utilities.conversion import StrictJsonValue
 
 
 class _SeqLike(UserList[int]):
     pass
+
+
+class _Model(BaseModel):
+    value: int
 
 
 def test_conversion_string_and_join_paths() -> None:

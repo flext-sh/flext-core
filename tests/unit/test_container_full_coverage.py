@@ -449,9 +449,7 @@ def test_initialize_di_components_second_type_error_branch(
         c.initialize_di_components()
 
 
-def test_sync_config_registers_namespace_factories_and_fallbacks(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
     c = FlextContainer.create()
 
     class _Cfg:
@@ -463,7 +461,14 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
         @staticmethod
         def get_namespace_config(namespace: str) -> type[BaseModel]:
             if namespace == "alpha":
+
+                class _Model(BaseModel):
+                    v: str = "ok"
+
                 return _Model
+
+            class _Model2(BaseModel):
+                v: str = "ok2"
 
             return _Model2
 
@@ -482,20 +487,6 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
     c._user_overrides = m.ConfigMap(root={})
     registered: dict[str, Callable[..., object]] = {}
     c_any.has_service = _has_service_false
-
-    # Patch FlextSettings class-level methods/attributes since container code
-    # calls FlextSettings.get_namespace_config, not self._config.get_namespace_config
-    monkeypatch.setattr(
-        FlextSettings,
-        "get_namespace_config",
-        classmethod(lambda cls, ns: _Cfg.get_namespace_config(ns)),  # type: ignore[arg-type]
-    )
-    # Also patch get_global().get_namespace since the factory closure calls it
-    mock_settings = cast("Any", _Cfg())
-    monkeypatch.setattr(
-        "flext_core.container.FlextSettings.get_global",
-        staticmethod(lambda: mock_settings),
-    )
 
     def _register(
         name: str,
@@ -630,9 +621,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
     assert c.unregister("not-there").is_failure
 
 
-def test_container_remaining_branch_paths_in_sync_factory_and_getters(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     c = FlextContainer.create()
     c._global_config = m.ContainerConfig(
         enable_singleton=True,
@@ -654,18 +643,18 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
+            class _Model(BaseModel):
+                v: str = "x"
 
             return _Model
-
-        @staticmethod
-        def get_namespace(_namespace: str, _cls: type[BaseModel]) -> object:
-            return "not-a-model"  # triggers fallback to config_cls()
 
     class _CfgBadNamespace:
         _namespace_registry: ClassVar[dict[str, object]] = {"n3": object()}
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
+            class _Model(BaseModel):
+                v: str = "x"
 
             return _Model
 
@@ -678,6 +667,8 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
+            class _Model(BaseModel):
+                v: str = "x"
 
             return _Model
 
@@ -700,24 +691,6 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
         return c
 
     c_any.register = _capture_register
-
-    # Patch FlextSettings to delegate to current config object
-    def _dynamic_get_ns_config(ns: str) -> type[BaseModel] | None:
-        cfg = c_any._config
-        if hasattr(cfg, "get_namespace_config"):
-            return cfg.get_namespace_config(ns)
-        return None
-
-    monkeypatch.setattr(
-        FlextSettings,
-        "get_namespace_config",
-        classmethod(lambda cls, ns: _dynamic_get_ns_config(ns)),  # type: ignore[arg-type]
-    )
-    monkeypatch.setattr(
-        "flext_core.container.FlextSettings.get_global",
-        staticmethod(lambda: c_any._config),
-    )
-
     c.sync_config_to_di()
 
     c_any._config = _CfgBadNamespace()

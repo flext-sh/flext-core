@@ -25,7 +25,7 @@ from collections.abc import Sized
 import pytest
 from returns.io import IO, IOSuccess
 
-from flext_core import m, p, r, t
+from flext_core import m, p, r
 from flext_core.exceptions import e
 
 
@@ -73,10 +73,7 @@ class TestFailWithException:
     def test_fail_with_exception_and_error_data(self) -> None:
         """Verify fail() carries exception with error_data."""
         error_msg = "Validation failed"
-        error_data: dict[str, t.ContainerValue] = {
-            "field": "email",
-            "reason": "invalid format",
-        }
+        error_data = {"field": "email", "reason": "invalid format"}
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
             error_msg,
@@ -378,7 +375,11 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import ValidationError  # noqa: PLC0415
+        from pydantic import BaseModel, ValidationError  # noqa: PLC0415
+
+        class User(BaseModel):
+            name: str
+            age: int
 
         invalid_data = {"name": "Alice", "age": "not_an_int"}
         result = r[User].from_validation(invalid_data, User)

@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast, override
 
@@ -52,6 +53,21 @@ class RegistryOperationType(StrEnum):
     ERROR_HANDLING = "error_handling"
 
 
+@dataclass(frozen=True, slots=True)
+class RegistryTestCase:
+    """Registry test case definition with parametrization data."""
+
+    name: str
+    operation: RegistryOperationType
+    handler_count: int = 1
+    should_succeed: bool = True
+    error_pattern: str | None = None
+    with_bindings: bool = False
+    with_function_map: bool = False
+    with_summary: bool = False
+    duplicate_registration: bool = False
+
+
 class ConcreteTestHandler(h[t.ContainerValue, t.ContainerValue]):
     """Concrete implementation of h for testing."""
 
@@ -74,186 +90,186 @@ class RegistryScenarios:
 
     HANDLER_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="single_handler_success",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=1,
-            should_succeed=True,
+            "single_handler_success",
+            RegistryOperationType.REGISTER_HANDLER,
+            1,
+            True,
         ),
         RegistryTestCase(
-            name="idempotent_registration",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=False,
-            duplicate_registration=True,
+            "idempotent_registration",
+            RegistryOperationType.REGISTER_HANDLER,
+            1,
+            True,
+            None,
+            False,
+            False,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="none_handler_failure",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=0,
-            should_succeed=False,
-            error_pattern="Handler must expose message_type",
+            "none_handler_failure",
+            RegistryOperationType.REGISTER_HANDLER,
+            0,
+            False,
+            "Handler must expose message_type",
         ),
     ]
 
     BATCH_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="multiple_handlers_success",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=2,
-            should_succeed=True,
+            "multiple_handlers_success",
+            RegistryOperationType.REGISTER_HANDLERS,
+            2,
+            True,
         ),
         RegistryTestCase(
-            name="empty_handlers_list",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=0,
-            should_succeed=True,
+            "empty_handlers_list",
+            RegistryOperationType.REGISTER_HANDLERS,
+            0,
+            True,
         ),
         RegistryTestCase(
-            name="duplicate_handlers",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=2,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=False,
-            duplicate_registration=True,
+            "duplicate_handlers",
+            RegistryOperationType.REGISTER_HANDLERS,
+            2,
+            True,
+            None,
+            False,
+            False,
+            False,
+            True,
         ),
     ]
 
     BINDING_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="single_binding_success",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=True,
+            "single_binding_success",
+            RegistryOperationType.REGISTER_BINDINGS,
+            1,
+            True,
+            None,
+            True,
         ),
         RegistryTestCase(
-            name="empty_bindings_list",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=0,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=True,
+            "empty_bindings_list",
+            RegistryOperationType.REGISTER_BINDINGS,
+            0,
+            True,
+            None,
+            True,
         ),
         RegistryTestCase(
-            name="duplicate_bindings",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=True,
-            with_function_map=False,
-            with_summary=False,
-            duplicate_registration=True,
+            "duplicate_bindings",
+            RegistryOperationType.REGISTER_BINDINGS,
+            1,
+            True,
+            None,
+            True,
+            False,
+            False,
+            True,
         ),
     ]
 
     FUNCTION_MAP_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="function_map_with_handler",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=True,
+            "function_map_with_handler",
+            RegistryOperationType.REGISTER_FUNCTION_MAP,
+            1,
+            True,
+            None,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="empty_function_map",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=0,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=True,
+            "empty_function_map",
+            RegistryOperationType.REGISTER_FUNCTION_MAP,
+            0,
+            True,
+            None,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="duplicate_function_map",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=True,
-            with_summary=False,
-            duplicate_registration=True,
+            "duplicate_function_map",
+            RegistryOperationType.REGISTER_FUNCTION_MAP,
+            1,
+            True,
+            None,
+            False,
+            True,
+            False,
+            True,
         ),
     ]
 
     SUMMARY_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="empty_summary",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=0,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=True,
+            "empty_summary",
+            RegistryOperationType.SUMMARY_MANAGEMENT,
+            0,
+            True,
+            None,
+            False,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="summary_with_registrations",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=2,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=True,
+            "summary_with_registrations",
+            RegistryOperationType.SUMMARY_MANAGEMENT,
+            2,
+            True,
+            None,
+            False,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="summary_with_errors",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=1,
-            should_succeed=False,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=True,
+            "summary_with_errors",
+            RegistryOperationType.SUMMARY_MANAGEMENT,
+            1,
+            False,
+            None,
+            False,
+            False,
+            True,
         ),
     ]
 
     KEY_RESOLUTION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="resolve_handler_key_string_type",
-            operation=RegistryOperationType.RESOLVE_HANDLER_KEY,
-            handler_count=1,
-            should_succeed=True,
+            "resolve_handler_key_string_type",
+            RegistryOperationType.RESOLVE_HANDLER_KEY,
+            1,
+            True,
         ),
         RegistryTestCase(
-            name="resolve_handler_key_class_type",
-            operation=RegistryOperationType.RESOLVE_HANDLER_KEY,
-            handler_count=1,
-            should_succeed=True,
+            "resolve_handler_key_class_type",
+            RegistryOperationType.RESOLVE_HANDLER_KEY,
+            1,
+            True,
         ),
         RegistryTestCase(
-            name="resolve_binding_key",
-            operation=RegistryOperationType.RESOLVE_BINDING_KEY,
-            handler_count=1,
-            should_succeed=True,
+            "resolve_binding_key",
+            RegistryOperationType.RESOLVE_BINDING_KEY,
+            1,
+            True,
         ),
     ]
 
     ERROR_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="register_none_handler",
-            operation=RegistryOperationType.ERROR_HANDLING,
-            handler_count=0,
-            should_succeed=False,
-            error_pattern="Handler must expose message_type",
+            "register_none_handler",
+            RegistryOperationType.ERROR_HANDLING,
+            0,
+            False,
+            "Handler must expose message_type",
         ),
         RegistryTestCase(
-            name="dispatcher_integration",
-            operation=RegistryOperationType.ERROR_HANDLING,
-            handler_count=1,
-            should_succeed=True,
+            "dispatcher_integration",
+            RegistryOperationType.ERROR_HANDLING,
+            1,
+            True,
         ),
     ]
 

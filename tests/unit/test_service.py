@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, override
 
@@ -38,6 +39,16 @@ class ServiceScenarioType(StrEnum):
     COMPLEX_INVALID = "complex_invalid"
     FAILING = "failing"
     EXCEPTION = "exception"
+
+
+@dataclass(frozen=True, slots=True)
+class ServiceScenario:
+    """Service test scenario definition."""
+
+    name: str
+    scenario_type: ServiceScenarioType
+    is_valid_expected: bool
+    service_kwargs: Mapping[str, t.Scalar] | None = None
 
 
 class UserService(s[m.ConfigMap]):
@@ -120,33 +131,25 @@ class ServiceScenarios:
     """Centralized service test scenarios using FlextConstants."""
 
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
+        ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
         ServiceScenario(
-            name="basic_user_service",
-            scenario_type=ServiceScenarioType.BASIC_USER,
-            is_valid_expected=True,
+            "complex_valid",
+            ServiceScenarioType.COMPLEX_VALID,
+            True,
+            {"name": "test"},
         ),
         ServiceScenario(
-            name="complex_valid",
-            scenario_type=ServiceScenarioType.COMPLEX_VALID,
-            is_valid_expected=True,
-            service_kwargs={"name": "test"},
+            "complex_invalid",
+            ServiceScenarioType.COMPLEX_INVALID,
+            False,
+            {"name": ""},
         ),
+        ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
         ServiceScenario(
-            name="complex_invalid",
-            scenario_type=ServiceScenarioType.COMPLEX_INVALID,
-            is_valid_expected=False,
-            service_kwargs={"name": ""},
-        ),
-        ServiceScenario(
-            name="failing_service",
-            scenario_type=ServiceScenarioType.FAILING,
-            is_valid_expected=False,
-        ),
-        ServiceScenario(
-            name="exception_handling",
-            scenario_type=ServiceScenarioType.EXCEPTION,
-            is_valid_expected=False,
-            service_kwargs={"should_raise": True},
+            "exception_handling",
+            ServiceScenarioType.EXCEPTION,
+            False,
+            {"should_raise": True},
         ),
     ]
 

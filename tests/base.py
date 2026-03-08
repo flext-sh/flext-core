@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import override
 
 from flext_core import (
@@ -47,6 +48,36 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
     # - Logging setup
     # - Result wrapping
     # These are available through inheritance.
+
+    @dataclass(frozen=True, slots=True)
+    class HandlerTestCase:
+        """Factory for handler test case configurations."""
+
+        handler_id: str
+        handler_name: str | None = None
+        handler_type: FlextConstants.Cqrs.HandlerType = (
+            FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        expected_result: FlextTypes.Container | None = None
+        should_fail: bool = False
+        error_message: str | None = None
+        description: str = field(default="", compare=False)
+
+        def create_handler(
+            self,
+            process_fn: Callable[
+                [FlextTypes.Container],
+                FlextResult[FlextTypes.Container],
+            ]
+            | None = None,
+        ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
+            """Create handler instance for this test case."""
+            return TestsFlextServiceBase.Handlers.create_test_handler(
+                handler_id=self.handler_id,
+                handler_name=self.handler_name,
+                handler_type=self.handler_type,
+                process_fn=process_fn,
+            )
 
     class HandlerFactories:
         """Centralized factories for test handlers."""

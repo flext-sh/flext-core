@@ -18,14 +18,61 @@ from __future__ import annotations
 import math
 from collections import UserDict
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core import t, u
 from flext_tests import tm
 from tests.test_utils import assertion_helpers
+
+
+class CacheTestModel(BaseModel):
+    """Test model for cache key generation."""
+
+    name: str
+    value: int
+    tags: list[str] = Field(default_factory=list)
+    meta: dict[str, str] = Field(default_factory=dict)
+
+
+class NestedModel(BaseModel):
+    """Nested Pydantic model for cache testing."""
+
+    inner: CacheTestModel
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizeComponentScenario:
+    """Normalize component test scenario."""
+
+    name: str
+    component: t.ContainerValue | BaseModel
+    expected_type: type
+    expected_value: object | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SortKeyScenario:
+    """Sort key test scenario."""
+
+    name: str
+    key: t.SortableObjectType
+    expected_tuple: tuple[int, str]
+
+
+@dataclass(frozen=True, slots=True)
+class ClearCacheScenario:
+    """Clear cache test scenario."""
+
+    name: str
+    obj: object
+    has_cache_attr: bool
+    expected_success: bool
+    cache_attr_name: str | None = None
 
 
 class CacheScenarios:
@@ -408,6 +455,12 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_with_dict_cache(self) -> None:
         """Test clear_object_cache with dict-like cache."""
+
+        class TestObject(BaseModel):
+            """Test object with dict cache."""
+
+            _cache: dict[str, str] = {"key1": "value1", "key2": "value2"}
+
         obj = TestObject()
         assert len(obj._cache) == 2
 
@@ -418,6 +471,14 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_with_simple_cache(self) -> None:
         """Test clear_object_cache with simple cached value."""
+
+        class TestObject(BaseModel):
+            """Test object with simple cache."""
+
+            _cached_value: str | None = (
+                "cached_value"  # Use _cached_value (in CACHE_ATTRIBUTE_NAMES)
+            )
+
         obj = TestObject()
         assert obj._cached_value == "cached_value"
 
@@ -427,6 +488,12 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_with_non_dict_cache(self) -> None:
         """Test clear_object_cache with cache that doesn't have clear() method."""
+
+        class TestObject(BaseModel):
+            """Test object with non-dict cache."""
+
+            _cache: str | None = "simple_string_cache"  # String doesn't have clear()
+
         obj = TestObject()
         assert obj._cache == "simple_string_cache"
 
@@ -437,6 +504,14 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_multiple_attributes(self) -> None:
         """Test clear_object_cache clears multiple cache attributes."""
+
+        class TestObject(BaseModel):
+            """Test object with multiple cache attributes."""
+
+            _cache: dict[str, int] = {"a": 1}
+            _cached_value: str | None = "value"
+            _cached_at: dict[str, int] = {"b": 2}
+
         obj = TestObject()
         # Verify initial state
         assert len(obj._cache) == 1
@@ -452,6 +527,12 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_no_cache_attributes(self) -> None:
         """Test clear_object_cache with object without cache attributes."""
+
+        class TestObject(BaseModel):
+            """Test object without cache attributes."""
+
+            data: str = "value"
+
         obj = TestObject()
         result = u.Cache.clear_object_cache(obj)
 
@@ -460,6 +541,12 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_with_none_cache(self) -> None:
         """Test clear_object_cache with None cache value."""
+
+        class TestObject(BaseModel):
+            """Test object with None cache."""
+
+            _cache: dict[str, str] | None = None
+
         obj = TestObject()
         result = u.Cache.clear_object_cache(obj)
 
@@ -552,6 +639,12 @@ class TestuCacheClearObjectCache:
 
     def test_clear_object_cache_with_pydantic_model(self) -> None:
         """Test clear_object_cache with Pydantic model."""
+
+        class ModelWithCache(BaseModel):
+            model_config = {"extra": "allow"}
+            name: str
+            _cache: dict[str, str] = {}
+
         model = ModelWithCache(name="test")
         # Set cache attribute directly
         model._cache = {"computed": "value"}

@@ -5,11 +5,35 @@ from __future__ import annotations
 # mypy: follow_imports=skip, disable-error-code=valid-type
 # pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 from datetime import UTC, datetime
+from typing import override
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from flext_core import c, m, r, u
+
+
+class _FrozenValue(m.FrozenStrictModel):
+    name: str
+    count: int
+
+
+class _Identifiable(m.IdentifiableMixin):
+    pass
+
+
+class _Timestampable(m.TimestampableMixin):
+    pass
+
+
+class _BrokenDumpModel(BaseModel):
+    value: int = 1
+
+    @override
+    def __getattribute__(self, name: str) -> object:
+        if name == "model_dump":
+            return lambda *args, **kwargs: [1]
+        return super().__getattribute__(name)
 
 
 def test_metadata_attributes_accepts_none() -> None:
@@ -18,6 +42,8 @@ def test_metadata_attributes_accepts_none() -> None:
 
 
 def test_metadata_attributes_accepts_basemodel_mapping() -> None:
+    class _Attrs(BaseModel):
+        key: str
 
     model = m.Metadata.model_validate({"attributes": _Attrs(key="value")})
     assert model.attributes == {"key": "value"}

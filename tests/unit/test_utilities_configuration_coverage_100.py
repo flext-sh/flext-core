@@ -20,10 +20,12 @@ from __future__ import annotations
 # mypy: disable-error-code="valid-type,misc"
 # mypy: follow-imports=skip
 from collections.abc import Mapping
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, c, m, p, t, u
 
@@ -69,6 +71,65 @@ class _ResultAssertions:
 
 
 # Test models - module level for forward reference resolution
+class ConfigModelForTest(BaseModel):
+    """Test configuration model (mutable for set_parameter tests)."""
+
+    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+
+    name: str = "default_config"
+    timeout: int = Field(default=30, ge=0)
+    enabled: bool = True
+
+
+class OptionsModelForTest(m.Value):
+    """Test options model for build_options_from_kwargs."""
+
+    format: str = "json"
+    indent: int = 2
+    sort_keys: bool = False
+
+
+class StrictOptionsForTest(m.Value):
+    """Strict options with validation."""
+
+    value: int = Field(ge=0, le=100)
+
+
+class InvalidModelForTest(BaseModel):
+    """Model with invalid model_dump."""
+
+    value: str = "test"
+
+
+@dataclass
+class DataclassConfigForTest:
+    """Test dataclass configuration."""
+
+    name: str
+    value: int = 42
+
+
+class SingletonClassForTest(BaseModel):
+    """Test singleton class with Pydantic validation."""
+
+    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+
+    _instance: ClassVar[SingletonClassForTest | None] = None
+
+    name: str = "default"
+    timeout: int = 30
+
+    @classmethod
+    def get_global(cls) -> SingletonClassForTest:
+        """Get global singleton instance."""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset singleton instance for test isolation."""
+        cls._instance = None
 
 
 class SingletonWithoutGetGlobalForTest:
@@ -103,6 +164,24 @@ class ConfigWithoutModelConfigForTest:
 
     def __init__(self) -> None:
         """Initialize."""
+
+
+class BadConfigForTest(BaseModel):
+    """Config that fails to instantiate."""
+
+    model_config = {"validate_assignment": True}
+
+    def __init__(self, **kwargs: t.ContainerValue) -> None:
+        """Raise error on init."""
+        super().__init__(**kwargs)
+        msg = "Cannot instantiate"
+        raise ValueError(msg)
+
+
+class FailingOptionsForTest(m.Value):
+    """Options that fail on model_dump."""
+
+    value: str = "test"
 
 
 class TestConfigModels:

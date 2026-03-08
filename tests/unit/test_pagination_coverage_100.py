@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
@@ -31,6 +32,49 @@ def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:
         u.Pagination, "extract_pagination_config"
     )
     return fn(config)
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractPageParamsScenario:
+    """Extract page params test scenario."""
+
+    name: str
+    query_params: dict[str, str]
+    default_page: int
+    default_page_size: int
+    max_page_size: int
+    expected_success: bool
+    expected_page: int | None
+    expected_page_size: int | None
+    expected_error: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ValidatePaginationParamsScenario:
+    """Validate pagination params test scenario."""
+
+    name: str
+    page: int
+    page_size: int | None
+    max_page_size: int
+    expected_success: bool
+    expected_page_size: int | None
+    expected_error: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class PreparePaginationDataScenario:
+    """Prepare pagination data test scenario."""
+
+    name: str
+    data: list[t.ContainerValue] | None
+    total: int | None
+    page: int
+    page_size: int
+    expected_success: bool
+    expected_total: int | None
+    expected_total_pages: int | None
+    expected_error: str | None
 
 
 class PaginationScenarios:

@@ -15,6 +15,12 @@ from .shared import Examples
 class Ex02FlextSettings(Examples):
     """Golden-file tests for ``FlextSettings`` public API."""
 
+    class _TestConfig(FlextSettings):
+        """Subclass with extra fields used across namespace/context exercises."""
+
+        service_name: str = "test-service"
+        feature_enabled: bool = True
+
     @override
     def exercise(self) -> None:
         """Run all sections and record deterministic golden output."""

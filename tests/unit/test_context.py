@@ -24,12 +24,23 @@ from __future__ import annotations
 
 import threading
 import time
+from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
 
 from flext_core import FlextContainer, FlextContext, m, t
 from flext_tests import FlextTestsUtilities, t as tests_t, u
+
+
+@dataclass(frozen=True, slots=True)
+class ContextOperationScenario:
+    """Test scenario for context operations."""
+
+    name: str
+    key: str
+    value: object
+    expected_success: bool = True
 
 
 class ContextScenarios:

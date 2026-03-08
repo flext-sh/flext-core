@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 import warnings
 from collections.abc import Callable
+from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -48,6 +49,11 @@ class _FakeLogger:
 
     def exception(self, _message: str, **_kwargs: object) -> None:
         return None
+
+
+@dataclass
+class _ObjWithLogger:
+    logger: object
 
 
 def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:

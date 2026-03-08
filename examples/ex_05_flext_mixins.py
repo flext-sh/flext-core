@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextRuntime, c, m, r, t, x
+from pydantic import BaseModel
 
-from .models import em
+from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
+
 from .shared import Examples
 
 
@@ -38,10 +39,47 @@ class Ex05FlextMixins(Examples):
                 "operation_count": operation_count,
             }
 
-    HandlerLike = em.Ex05.HandlerLike
-    HandlerBad = em.Ex05.HandlerBad
-    GoodProcessor = em.Ex05.GoodProcessor
-    BadProcessor = em.Ex05.BadProcessor
+    class HandlerLike(FlextSettings):
+        """Minimal handler-like satisfying ``x.ProtocolValidation.is_handler``."""
+
+        @classmethod
+        @override
+        def validate(cls, value: t.ContainerValue) -> Ex05FlextMixins.HandlerLike:
+            """Validate using Pydantic model_validate."""
+            return cls.model_validate(value)
+
+        def can_handle(self, message_type: type) -> bool:
+            """Report capability for handler protocol."""
+            return bool(message_type)
+
+        def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+            """Handle data and return result."""
+            return r[t.ContainerValue].ok(message)
+
+    class HandlerBad(BaseModel):
+        """Non-handler for negative ``is_handler`` check."""
+
+    class GoodProcessor(BaseModel):
+        """Processor satisfying ``p.HasModelDump`` + process + validate."""
+
+        def process(self) -> bool:
+            """Process successfully."""
+            return True
+
+        @classmethod
+        @override
+        def validate(cls, value: t.ContainerValue) -> Ex05FlextMixins.GoodProcessor:
+            """Validate for Pydantic compatibility."""
+            return cls.model_validate(value)
+
+        def _protocol_name(self) -> str:
+            return "HasModelDump"
+
+    class BadProcessor(BaseModel):
+        """Processor missing ``process`` for negative validation."""
+
+        def _protocol_name(self) -> str:
+            return "HasModelDump"
 
     # -- Exercise entry --------------------------------------------------------
 

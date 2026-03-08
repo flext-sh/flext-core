@@ -10,9 +10,29 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
+from datetime import UTC, datetime
 from typing import cast, override
 
+from pydantic import BaseModel, ConfigDict
+
 from flext_core import t, u
+
+
+class _SampleEntity(BaseModel):
+    """Test entity for domain utility tests."""
+
+    model_config = ConfigDict(frozen=False)
+
+    unique_id: str = "test-123"
+    name: str = "test"
+
+
+class _FrozenEntity(BaseModel):
+    """Frozen entity for immutability tests."""
+
+    model_config = ConfigDict(frozen=True)
+
+    unique_id: str = "frozen-1"
 
 
 class TestDomainLogger:
@@ -33,12 +53,21 @@ class TestDomainHashValue:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
         # datetime is Hashable but not str/int/float/bool/None
 
+        class EntityWithDate(BaseModel):
+            unique_id: str = "test"
+            created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
+
         entity = EntityWithDate()
         result = u.Domain.hash_value_object_by_value(entity)
         assert isinstance(result, int)
 
     def test_hash_with_non_hashable_value(self) -> None:
         """Non-hashable value in model_dump uses repr (line 159)."""
+
+        class EntityWithList(BaseModel):
+            unique_id: str = "test"
+            tags: list[str] = ["a", "b"]
+
         entity = EntityWithList()
         result = u.Domain.hash_value_object_by_value(entity)
         assert isinstance(result, int)

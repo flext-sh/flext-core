@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
@@ -38,6 +39,57 @@ class Priority(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+@dataclass(frozen=True, slots=True)
+class IsMemberScenario:
+    """Is member test scenario."""
+
+    name: str
+    value: object
+    expected: bool
+
+
+@dataclass(frozen=True, slots=True)
+class IsSubsetScenario:
+    """Is subset test scenario."""
+
+    name: str
+    valid_members: frozenset[Status]
+    value: object
+    expected: bool
+
+
+@dataclass(frozen=True, slots=True)
+class ParseScenario:
+    """Parse test scenario."""
+
+    name: str
+    value: str | Status
+    expected_success: bool
+    expected_status: Status | None
+    expected_error: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ParseOrDefaultScenario:
+    """Parse or default test scenario."""
+
+    name: str
+    value: str | Status | None
+    default: Status
+    expected: Status
+
+
+@dataclass(frozen=True, slots=True)
+class CoerceValidatorScenario:
+    """Coerce validator test scenario."""
+
+    name: str
+    value: t.Primitives | Status | None
+    expected_success: bool
+    expected_status: Status | None
+    expected_error: str | None
 
 
 class EnumScenarios:

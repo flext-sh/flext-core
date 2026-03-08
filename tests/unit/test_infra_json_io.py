@@ -9,8 +9,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from pydantic import BaseModel
 
 from flext_infra import FlextInfraJsonService
+
+
+class SampleModel(BaseModel):
+    """Sample model for testing."""
+
+    name: str
+    value: int
 
 
 class TestFlextInfraJsonService:

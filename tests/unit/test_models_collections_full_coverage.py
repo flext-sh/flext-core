@@ -9,8 +9,32 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from pydantic import Field
 
 from flext_core import c, m, r, t, u
+
+
+class _Stats(m.CollectionsStatistics):
+    value: int | None = None
+
+
+class _Rules(m.Rules):
+    name: str = ""
+    count: int = 0
+
+
+class _Results(m.CollectionsResults):
+    value: int | bool | None = None
+    data: dict[str, t.ContainerValue] = Field(default_factory=dict)
+
+
+class _Options(m.CollectionsOptions):
+    score: int | float | bool | None = None
+    tags: list[t.ContainerValue] = Field(default_factory=list)
+
+
+class _Config(m.CollectionsConfig):
+    value: int = 0
 
 
 def test_categories_clear_and_symbols_are_available() -> None:
@@ -20,9 +44,7 @@ def test_categories_clear_and_symbols_are_available() -> None:
     assert categories.categories == {}
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
-    find_result = u.Collection.find([1], lambda value: value == 1)
-    assert find_result.is_success
-    assert isinstance(find_result.value, int)
+    assert isinstance(u.Collection.find([1], lambda value: value == 1), int)
 
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:

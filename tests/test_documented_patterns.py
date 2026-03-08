@@ -22,9 +22,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from dataclasses import dataclass, field
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
 
 # ============================================================================
 # Test Models and Factories
@@ -41,6 +43,119 @@ from flext_core import (
     m,
 )
 from tests.test_utils import assertion_helpers
+
+
+@dataclass
+class User:
+    """User domain model."""
+
+    unique_id: str
+    name: str
+    email: str
+    active: bool = True
+
+
+class EmailResponse(BaseModel):
+    """Email response model."""
+
+    status: str
+    message_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class ServiceTestCase:
+    """Factory for service test cases to reduce duplication."""
+
+    user_id: str
+    expected_success: bool = True
+    expected_error: str | None = None
+    description: str = field(default="", compare=False)
+
+    def create_user_service(self) -> GetUserService:
+        """Create GetUserService instance for this test case."""
+        return _make(GetUserService, user_id=self.user_id)
+
+
+@dataclass(frozen=True, slots=True)
+class RailwayTestCase:
+    """Factory for railway pattern test cases."""
+
+    user_ids: list[str]
+    operations: list[str] = field(default_factory=list)
+    expected_pipeline_length: int = 1
+    should_fail_at: int | None = None
+    description: str = field(default="", compare=False)
+
+    def execute_v1_pipeline(self) -> FlextResult[str | User | EmailResponse]:
+        """Execute V1 railway pipeline for this test case."""
+        if not self.user_ids:
+            return FlextResult.fail("No user IDs provided")
+
+        # Start with first user - explicit type annotation for union type
+        user_result: FlextResult[User] = _make(
+            GetUserService,
+            user_id=self.user_ids[0],
+        ).execute()
+        result: FlextResult[User | str | EmailResponse] = cast(
+            "FlextResult[User | str | EmailResponse]",
+            user_result,
+        )
+
+        # Apply operations if specified
+        for op in self.operations:
+            if op == "get_email":
+                result = result.map(
+                    lambda user: user.email if isinstance(user, User) else str(user),
+                )
+            elif op == "send_email":
+                # flat_map returns EmailResponse - type annotation handles union
+                email_result: FlextResult[EmailResponse] = result.flat_map(
+                    lambda email: _make(
+                        SendEmailService,
+                        to=str(email),
+                        subject="Test",
+                    ).execute(),
+                )
+                result = cast("FlextResult[User | str | EmailResponse]", email_result)
+            elif op == "get_status":
+                result = result.map(
+                    lambda response: (
+                        response.status
+                        if isinstance(response, EmailResponse)
+                        else str(response)
+                    ),
+                )
+
+        return result
+
+    def execute_v2_pipeline(self) -> User | str:
+        """Execute V2 property pipeline for this test case."""
+        if not self.user_ids:
+            msg = "No user IDs provided"
+            raise FlextExceptions.BaseError(msg)
+
+        # Start with first user
+        user_result = _service_result(_make(GetUserService, user_id=self.user_ids[0]))
+        user: User | str = (
+            user_result if isinstance(user_result, (User, str)) else str(user_result)
+        )
+
+        # Apply operations if specified
+        for op in self.operations:
+            if op == "get_email":
+                user = user.email if isinstance(user, User) else str(user)
+            elif op == "send_email":
+                email_to = str(user) if not isinstance(user, str) else user
+                response_obj: EmailResponse = _service_result(
+                    _make(
+                        SendEmailService,
+                        to=email_to,
+                        subject="Test",
+                    ),
+                )
+                user = response_obj.status
+
+        return user
 
 
 class TestFactories:

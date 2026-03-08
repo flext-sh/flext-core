@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
@@ -40,93 +41,105 @@ class ProtocolCategoryType(StrEnum):
     EXTENSIONS = "extensions"
 
 
+@dataclass(frozen=True, slots=True)
+class ProtocolDefinitionScenario:
+    """Protocol definition test scenario."""
+
+    name: str
+    protocol_name: str
+    category: ProtocolCategoryType
+
+
+@dataclass(frozen=True, slots=True)
+class ProtocolAvailabilityScenario:
+    """Protocol availability test scenario."""
+
+    name: str
+    category: ProtocolCategoryType
+    protocol_names: list[str]
+
+
 class ProtocolScenarios:
     """Centralized protocol test scenarios."""
 
     DEFINITION_SCENARIOS: ClassVar[list[ProtocolDefinitionScenario]] = [
         ProtocolDefinitionScenario(
-            name="result_protocol",
-            protocol_name="Result",
-            category=ProtocolCategoryType.FOUNDATION,
+            "result_protocol",
+            "Result",
+            ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            name="has_model_fields_protocol",
-            protocol_name="HasModelFields",
-            category=ProtocolCategoryType.FOUNDATION,
+            "has_model_fields_protocol",
+            "HasModelFields",
+            ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            name="has_model_dump_protocol",
-            protocol_name="HasModelDump",
-            category=ProtocolCategoryType.FOUNDATION,
+            "has_model_dump_protocol",
+            "HasModelDump",
+            ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            name="repository_protocol",
-            protocol_name="Repository",
-            category=ProtocolCategoryType.DOMAIN,
+            "repository_protocol",
+            "Repository",
+            ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
-            name="service_protocol",
-            protocol_name="Service",
-            category=ProtocolCategoryType.DOMAIN,
+            "service_protocol",
+            "Service",
+            ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
-            name="configurable_protocol",
-            protocol_name="Configurable",
-            category=ProtocolCategoryType.INFRASTRUCTURE,
+            "configurable_protocol",
+            "Configurable",
+            ProtocolCategoryType.INFRASTRUCTURE,
         ),
         ProtocolDefinitionScenario(
-            name="handler_protocol",
-            protocol_name="Handler",
-            category=ProtocolCategoryType.APPLICATION,
+            "handler_protocol",
+            "Handler",
+            ProtocolCategoryType.APPLICATION,
         ),
         ProtocolDefinitionScenario(
-            name="command_bus_protocol",
-            protocol_name="CommandBus",
-            category=ProtocolCategoryType.COMMANDS,
+            "command_bus_protocol",
+            "CommandBus",
+            ProtocolCategoryType.COMMANDS,
         ),
         ProtocolDefinitionScenario(
-            name="middleware_protocol",
-            protocol_name="Middleware",
-            category=ProtocolCategoryType.COMMANDS,
+            "middleware_protocol",
+            "Middleware",
+            ProtocolCategoryType.COMMANDS,
         ),
     ]
 
     AVAILABILITY_SCENARIOS: ClassVar[list[ProtocolAvailabilityScenario]] = [
         ProtocolAvailabilityScenario(
-            name="all_foundation_protocols_available",
-            category=ProtocolCategoryType.FOUNDATION,
-            protocol_names=[
-                "Result",
-                "ResultLike",
-                "HasModelFields",
-                "HasModelDump",
-                "Model",
-            ],
+            "all_foundation_protocols_available",
+            ProtocolCategoryType.FOUNDATION,
+            ["Result", "ResultLike", "HasModelFields", "HasModelDump", "Model"],
         ),
         ProtocolAvailabilityScenario(
-            name="all_domain_protocols_available",
-            category=ProtocolCategoryType.DOMAIN,
-            protocol_names=["Repository", "Service"],
+            "all_domain_protocols_available",
+            ProtocolCategoryType.DOMAIN,
+            ["Repository", "Service"],
         ),
         ProtocolAvailabilityScenario(
-            name="all_infrastructure_protocols_available",
-            category=ProtocolCategoryType.INFRASTRUCTURE,
-            protocol_names=["Configurable"],
+            "all_infrastructure_protocols_available",
+            ProtocolCategoryType.INFRASTRUCTURE,
+            ["Configurable"],
         ),
         ProtocolAvailabilityScenario(
-            name="all_application_protocols_available",
-            category=ProtocolCategoryType.APPLICATION,
-            protocol_names=["Handler"],
+            "all_application_protocols_available",
+            ProtocolCategoryType.APPLICATION,
+            ["Handler"],
         ),
         ProtocolAvailabilityScenario(
-            name="all_commands_protocols_available",
-            category=ProtocolCategoryType.COMMANDS,
-            protocol_names=["CommandBus", "Middleware"],
+            "all_commands_protocols_available",
+            ProtocolCategoryType.COMMANDS,
+            ["CommandBus", "Middleware"],
         ),
         ProtocolAvailabilityScenario(
-            name="all_extensions_protocols_available",
-            category=ProtocolCategoryType.EXTENSIONS,
-            protocol_names=["Middleware"],
+            "all_extensions_protocols_available",
+            ProtocolCategoryType.EXTENSIONS,
+            ["Middleware"],
         ),
     ]
 

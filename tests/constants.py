@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final, Literal
 
@@ -375,6 +376,73 @@ class TestsFlextConstants(FlextTestsConstants):
 
     class Fixtures:
         """Test fixture dataclasses for flext-core tests."""
+
+        @dataclass(frozen=True, slots=True)
+        class Identifiers:
+            """Test identifiers and IDs."""
+
+            user_id: str = "test_user_123"
+            session_id: str = "test_session_123"
+            service_name: str = "test_service"
+            operation_id: str = "test_operation"
+            request_id: str = "test-request-456"
+            correlation_id: str = "test-corr-123"
+
+        @dataclass(frozen=True, slots=True)
+        class Names:
+            """Test module and component names."""
+
+            module_name: str = "test_module"
+            handler_name: str = "test_handler"
+            chain_name: str = "test_chain"
+            command_type: str = "test_command"
+            query_type: str = "test_query"
+            logger_name: str = "test_logger"
+            app_name: str = "test-app"
+            validation_app: str = "validation-test"
+            source_service: str = "test_service"
+
+        @dataclass(frozen=True, slots=True)
+        class ErrorData:
+            """Test error codes and messages."""
+
+            error_code: str = "TEST_ERROR_001"
+            validation_error: str = "test_error"
+            operation_error: str = "Op failed"
+            config_error: str = "Config failed"
+            timeout_error: str = "Operation timeout"
+
+        @dataclass(frozen=True, slots=True)
+        class Data:
+            """Test field names and data values."""
+
+            field_name: str = "test_field"
+            config_key: str = "test_key"
+            username: str = "test_user"
+            email: str = "test@example.com"
+            password: str = "test_pass"
+            string_value: str = "test_value"
+            input_data: str = "test_input"
+            request_data: str = "test_request"
+            result_data: str = "test_result"
+            message: str = "test_message"
+
+        @dataclass(frozen=True, slots=True)
+        class PatternData:
+            """Test patterns and formats."""
+
+            slug_input: str = "Test_String"
+            slug_expected: str = "test_string"
+            uuid_format: str = "550e8400-e29b-41d4-a716-446655440000"
+
+        @dataclass(frozen=True, slots=True)
+        class NumericValues:
+            """Test port and numeric values."""
+
+            port: int = 8080
+            timeout: int = 30
+            retry_count: int = 3
+            batch_size: int = 100
 
 
 # Short alias per FLEXT convention

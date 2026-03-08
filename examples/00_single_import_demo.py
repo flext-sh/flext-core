@@ -23,9 +23,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence, Set as AbstractSet
+from dataclasses import dataclass
 from itertools import starmap
-
-from pydantic import ValidationError as PydanticValidationError
 
 from flext_core import (
     FlextContext,
@@ -34,11 +33,28 @@ from flext_core import (
     e,
     m,
     r,
-    t,
     u,
 )
 
-from .models import UserInput, UserProfile
+# Using t directly - no local type aliases (DRY + SRP)
+# All types come from t namespace - centralized type system
+
+
+# Advanced domain entity using c StrEnum (DRY + SRP)
+@dataclass(frozen=True)
+class UserProfile:
+    """Domain entity with centralized types and business logic - no None types."""
+
+    name: str
+    email: str
+    unique_id: str
+    status: c.Domain.Status
+
+    def activate(self) -> r[None]:
+        """Railway pattern for business operations - no None returns."""
+        if self.status == c.Domain.Status.ACTIVE:
+            return r[None].fail("Already active")
+        return r.ok(None)
 
 
 # Railway pattern with advanced validation using u (DRY + SRP)
@@ -46,13 +62,18 @@ def validate_transform_user(
     data: m.ConfigMap,
 ) -> r[UserProfile]:
     """Railway pattern using centralized utilities - no None types, strict validation."""
-    try:
-        typed_input = UserInput.model_validate(data)
-    except PydanticValidationError as exc:
-        return r[UserProfile].fail(str(exc))
+    # Extract with advanced collections.abc Mapping access and functional composition
+    name_value = data.get("name")
+    email_value = data.get("email")
 
-    name = typed_input.name
-    email = typed_input.email
+    # Validate and extract with fixed types
+    if not isinstance(name_value, str) or not name_value:
+        return r[UserProfile].fail("Name is required and must be a string")
+    if not isinstance(email_value, str) or not email_value:
+        return r[UserProfile].fail("Email is required and must be a string")
+
+    name: str = name_value
+    email: str = email_value
 
     # Advanced validation using u with traverse (DRY - no manual loops)
     return r.traverse(
@@ -105,7 +126,7 @@ class UserService:
     def _activate_user(user: UserProfile) -> r[UserProfile]:
         """Activate user using domain business logic - railway pattern."""
 
-        def return_user(_: t.ContainerValue) -> UserProfile:
+        def return_user(_: object) -> UserProfile:
             """Return the user after activation."""
             return user
 
@@ -176,7 +197,7 @@ class UserService:
     def _validate_and_transform(
         self,
         user_data: m.ConfigMap,
-        _: t.ContainerValue,
+        _: object,
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -251,16 +272,12 @@ def demonstrate_exceptions() -> None:
     def format_exception_message(error: str) -> str:
         return f"Converted exception to result: {error}"
 
-    def process_scenario(
-        msg: t.ContainerValue,
-        field: t.ContainerValue,
-        value: t.ContainerValue,
-    ) -> r[str]:
+    def process_scenario(msg: object, field: object, value: object) -> r[str]:
         msg_str = str(msg)
         field_str = str(field)
         value_str = str(value)
 
-        def format_error_after_validation(_: t.ContainerValue) -> str:
+        def format_error_after_validation(_: object) -> str:
             """Format error message after validation."""
             return format_error_message(field_str, value_str)
 
@@ -268,7 +285,7 @@ def demonstrate_exceptions() -> None:
             format_error_after_validation,
         )
 
-    def process_exception(error: t.ContainerValue) -> r[str]:
+    def process_exception(error: object) -> r[str]:
         error_str = str(error)
         return r.ok(format_exception_message(error_str))
 
@@ -290,7 +307,7 @@ def identity_result(r_obj: r[str]) -> r[str]:
     return r_obj
 
 
-def ignore_and_return_none(_: t.ContainerValue) -> r[None]:
+def ignore_and_return_none(_: object) -> r[None]:
     """Ignore input and return None."""
     return r.ok(None)
 
@@ -356,7 +373,9 @@ def main() -> None:
 
     with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
+        logger.info(
+            "Starting demonstration", correlation_id=str(correlation_id or "")
+        )
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
         user_data: m.ConfigMap = m.ConfigMap(

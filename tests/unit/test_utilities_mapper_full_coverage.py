@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import cast, override
 
 import pytest
 from pydantic import BaseModel
 
-from flext_core import m, p, r, t, u
+from flext_core import c, m, p, r, t, u
 
 Cache = u.Cache
 Mapper = u.Mapper
@@ -35,6 +36,21 @@ def _build_flags_obj(
     """Call build_flags_dict with arbitrary object for error-path testing."""
     fn: Callable[..., r[Mapping[str, bool]]] = getattr(Mapper, "build_flags_dict")
     return fn(active_flags, flag_mapping)
+
+
+@dataclass
+class AttrObject:
+    """AttrObject class."""
+
+    name: str = "name"
+    value: int = 1
+
+
+class SampleModel(BaseModel):
+    """SampleModel class."""
+
+    port: int = c.Platform.DEFAULT_HTTP_PORT
+    nested: dict[str, t.ContainerValue] = {"k": "v"}
 
 
 class BadString:
@@ -180,6 +196,9 @@ def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
     }
 
     assert mapper.convert_to_json_value(None) is None
+
+    class Model(BaseModel):
+        x: int
 
     model = Model(x=1)
     assert mapper.convert_to_json_value(model) == model
@@ -744,6 +763,9 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
     str_result = mapper.ensure_str_or_none("x")
     assert str_result.is_success and str_result.value == "x"
 
+    class DumpOnly(BaseModel):
+        a: int = 1
+
     value, found = mapper._extract_get_value(
         cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
         "a",
@@ -924,11 +946,17 @@ def test_remaining_uncovered_branches(
     assert terminal_default.is_success
     assert terminal_default.value == "fallback"
 
+    class MaybeModel(BaseModel):
+        x: str | None = None
+
     assert mapper.take(MaybeModel(x=None), "x", default="d") == "d"
     assert mapper.as_("nope", int, default=9) == 9
     assert mapper.agg([{"v": "x"}], "v") == 0
 
     assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"A": 1}
+
+    class GroupModel(BaseModel):
+        kind: str | None = None
 
     grouped = mapper._build_apply_group([GroupModel(kind=None)], {"group": "kind"})
     assert grouped == {}

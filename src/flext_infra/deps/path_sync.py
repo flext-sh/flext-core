@@ -92,9 +92,7 @@ def _rewrite_pep621(
     project_raw = doc.get(c.Infra.Toml.PROJECT, None)
     if not isinstance(project_raw, Mapping):
         return []
-    deps_raw = (
-        project_raw.get(c.Infra.Toml.DEPENDENCIES, None)
-    )
+    deps_raw = project_raw.get(c.Infra.Toml.DEPENDENCIES, None)
     if not isinstance(deps_raw, list):
         return []
     deps = _STRING_LIST_ADAPTER.validate_python(deps_raw)
@@ -138,14 +136,10 @@ def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]
     tool_raw = doc.get(c.Infra.Toml.TOOL, None)
     if not isinstance(tool_raw, Mapping):
         return []
-    poetry_raw = (
-        tool_raw.get(c.Infra.Toml.POETRY, None)
-    )
+    poetry_raw = tool_raw.get(c.Infra.Toml.POETRY, None)
     if not isinstance(poetry_raw, Mapping):
         return []
-    deps_raw = (
-        poetry_raw.get(c.Infra.Toml.DEPENDENCIES, None)
-    )
+    deps_raw = poetry_raw.get(c.Infra.Toml.DEPENDENCIES, None)
     if not isinstance(deps_raw, Mapping):
         return []
     deps = deps_raw
@@ -237,9 +231,7 @@ def main() -> int:
         root_data_result = toml_service.read(root_pyproject)
         if root_data_result.is_success:
             root_data = root_data_result.unwrap()
-            root_project = (
-                root_data.get(c.Infra.Toml.PROJECT, None)
-            )
+            root_project = root_data.get(c.Infra.Toml.PROJECT, None)
             if isinstance(root_project, Mapping):
                 root_project_map = _OBJECT_DICT_ADAPTER.validate_python(root_project)
                 root_name = _mapping_str_value(root_project_map, c.Infra.Toml.NAME)
@@ -292,9 +284,7 @@ def main() -> int:
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
-        project_obj = (
-            project_data.get(c.Infra.Toml.PROJECT, None)
-        )
+        project_obj = project_data.get(c.Infra.Toml.PROJECT, None)
         if not isinstance(project_obj, Mapping):
             continue
         project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)
@@ -310,9 +300,7 @@ def main() -> int:
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
-        project_obj = (
-            project_data.get(c.Infra.Toml.PROJECT, None)
-        )
+        project_obj = project_data.get(c.Infra.Toml.PROJECT, None)
         if not isinstance(project_obj, Mapping):
             continue
         project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)

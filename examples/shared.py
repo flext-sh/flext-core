@@ -34,6 +34,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from pydantic import ConfigDict
+
 from flext_core import FlextResult, m, r, t
 
 
@@ -184,6 +186,20 @@ class Examples:
     # ------------------------------------------------------------------
     # Shared example models
     # ------------------------------------------------------------------
+
+    class Person(m.Value):
+        """Tiny Pydantic model used across several examples."""
+
+        name: str
+        age: int
+
+    class Handle(m.Value):
+        """Tiny model used to exercise ``with_resource``."""
+
+        model_config = ConfigDict(frozen=False)
+
+        value: int
+        cleaned: bool = False
 
     # ------------------------------------------------------------------
     # Probe helpers

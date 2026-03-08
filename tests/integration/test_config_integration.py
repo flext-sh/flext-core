@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
@@ -28,7 +29,46 @@ from flext_core import (
     FlextContainer,
     FlextLogger,
     FlextSettings,
+    t,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class ConfigTestCase:
+    """Factory for configuration test cases."""
+
+    test_name: str
+    config_data: dict[str, t.ContainerValue]
+    expected_values: dict[str, t.ContainerValue] = field(default_factory=dict)
+    file_format: str = "json"
+    env_vars: dict[str, str] = field(default_factory=dict)
+    description: str = field(default="", compare=False)
+
+    def create_temp_file(self, temp_dir: Path) -> Path:
+        """Create temporary config file."""
+        file_path = temp_dir / f"test_config.{self.file_format}"
+
+        if self.file_format == "json":
+            with Path(file_path).open("w", encoding="utf-8") as f:
+                json.dump(self.config_data, f, indent=2)
+        elif self.file_format == "yaml":
+            with Path(file_path).open("w", encoding="utf-8") as f:
+                yaml.dump(self.config_data, f, default_flow_style=False)
+        elif self.file_format == "toml":
+            # Simple TOML-like format for testing
+            content = "\n".join(f"{k} = {v!r}" for k, v in self.config_data.items())
+            _ = file_path.write_text(content)
+
+        return file_path
+
+
+@dataclass(frozen=True, slots=True)
+class ThreadSafetyTest:
+    """Factory for thread safety test configurations."""
+
+    thread_count: int = 5
+    operations_per_thread: int = 10
+    description: str = field(default="", compare=False)
 
 
 class ConfigTestFactories:

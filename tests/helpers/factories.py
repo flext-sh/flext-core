@@ -10,16 +10,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import count
 from typing import ClassVar, override
 
-from flext_core import FlextResult, FlextService, m, t
+from flext_core import FlextModels, FlextResult, FlextService, m, t
 from tests.constants import TestsFlextConstants
 
 # =========================================================================
 # Test Models
 # =========================================================================
+
+
+class User(FlextModels.Entity):
+    """Test user entity."""
+
+    user_id: str
+    name: str
+    email: str
+    is_active: bool = True
 
 
 class ServiceTestType(StrEnum):
@@ -28,6 +38,18 @@ class ServiceTestType(StrEnum):
     GET_USER = "get_user"
     VALIDATE = "validate"
     FAIL = "fail"
+
+
+@dataclass(frozen=True, slots=True)
+class ServiceTestCase:
+    """Test case data container (not a test class)."""
+
+    service_type: ServiceTestType
+    input_value: str
+    expected_success: bool = True
+    expected_error: str | None = None
+    extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
+    description: str = field(default="", compare=False)
 
 
 # =========================================================================

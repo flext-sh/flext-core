@@ -10,7 +10,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 from flext_core._models.settings import FlextModelsConfig
 
 
@@ -36,7 +36,7 @@ def test_models_settings_branch_paths() -> None:
         FlextModelsConfig.ValidationConfiguration(custom_validators=[1])
 
     with pytest.raises(ValueError, match="less than or equal to 1000"):
-        FlextModelsConfig.BatchProcessingConfig(batch_size=100000, data_items=[])
+        FlextModelsConfig.BatchProcessingConfig(batch_size=100000)
 
 
 def test_models_settings_context_validator_and_non_standard_status_input() -> None:
@@ -55,8 +55,7 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
     )
     assert converted == [503]
 
-    codes: list[t.Scalar] = ["503"]
     converted_str = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy(
-        codes,
+        ["503"],
     )
     assert converted_str == [503]

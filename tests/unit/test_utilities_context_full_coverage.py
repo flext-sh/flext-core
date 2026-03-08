@@ -13,6 +13,8 @@ from datetime import UTC, datetime
 from typing import cast
 from unittest.mock import MagicMock
 
+from pydantic import BaseModel
+
 from flext_core import m, p, t, u
 
 
@@ -61,6 +63,16 @@ class TestCreateDictProxy:
         default_val = m.ConfigMap(root={"key": "value"})
         proxy = u.Context.create_dict_proxy("metadata", default=default_val)
         assert proxy._default == default_val
+
+
+class _FakeConfig(BaseModel):
+    """Fake config with model_copy support."""
+
+    timeout: int = 10
+
+    @property
+    def data(self) -> dict[str, object]:
+        return {"timeout": self.timeout}
 
 
 class _FakeRuntime:
