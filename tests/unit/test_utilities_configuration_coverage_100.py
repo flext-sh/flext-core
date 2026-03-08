@@ -20,7 +20,6 @@ from __future__ import annotations
 # mypy: disable-error-code="valid-type,misc"
 # mypy: follow-imports=skip
 from collections.abc import Mapping
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
@@ -101,8 +100,9 @@ class InvalidModelForTest(BaseModel):
     value: str = "test"
 
 
-@dataclass
-class DataclassConfigForTest:
+class DataclassConfigForTest(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     """Test dataclass configuration."""
 
     name: str

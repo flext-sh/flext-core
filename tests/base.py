@@ -14,8 +14,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import override
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
     FlextConstants,
@@ -49,9 +50,10 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
     # - Result wrapping
     # These are available through inheritance.
 
-    @dataclass(frozen=True, slots=True)
-    class HandlerTestCase:
+    class HandlerTestCase(BaseModel):
         """Factory for handler test case configurations."""
+
+        model_config = ConfigDict(frozen=True)
 
         handler_id: str
         handler_name: str | None = None
@@ -61,7 +63,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         expected_result: FlextTypes.Container | None = None
         should_fail: bool = False
         error_message: str | None = None
-        description: str = field(default="", compare=False)
+        description: str = Field(default="", exclude=True)
 
         def create_handler(
             self,

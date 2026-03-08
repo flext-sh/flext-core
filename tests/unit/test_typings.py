@@ -15,12 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
-from pydantic import (
+from pydantic import (, BaseModel, ConfigDict
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
@@ -50,8 +49,10 @@ class TypeVarCategory(StrEnum):
     CQRS = "cqrs"
 
 
-@dataclass(frozen=True, slots=True)
-class TypeVarTestCase:
+class TypeVarTestCase(BaseModel):
+
+
+    model_config = ConfigDict(frozen=True)
     """TypeVar test case definition."""
 
     name: str

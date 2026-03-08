@@ -15,11 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_tests import t, u
 
@@ -40,8 +40,9 @@ class Priority(StrEnum):
     HIGH = "high"
 
 
-@dataclass(frozen=True, slots=True)
-class ParseSequenceScenario:
+class ParseSequenceScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Parse sequence test scenario."""
 
     name: str
@@ -51,8 +52,9 @@ class ParseSequenceScenario:
     expected_error: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceListValidatorScenario:
+class CoerceListValidatorScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Coerce list validator test scenario."""
 
     name: str
@@ -61,8 +63,9 @@ class CoerceListValidatorScenario:
     expected_error: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class ParseMappingScenario:
+class ParseMappingScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Parse mapping test scenario."""
 
     name: str

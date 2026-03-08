@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
+from pydantic import TypeAdapter
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
@@ -13,6 +15,8 @@ from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, outpu
 from flext_infra.constants import c
 
 logger = FlextLogger.create_module_logger(__name__)
+_STRING_LIST_ADAPTER = TypeAdapter(list[str])
+_OBJECT_DICT_ADAPTER = TypeAdapter(dict[object, object])
 
 
 def _workspace_root() -> Path:
@@ -57,6 +61,15 @@ def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
     return f"{c.Infra.Deps.FLEXT_DEPS_DIR}/{dep_name}"
 
 
+def _mapping_str_value(mapping: Mapping[object, object], key: str) -> str | None:
+    if key not in mapping:
+        return None
+    value = mapping[key]
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
 def _extract_requirement_name(entry: str) -> str | None:
     """Extract requirement name from PEP 621 dependency entry."""
     if " @ " in entry:
@@ -76,17 +89,22 @@ def _rewrite_pep621(
     mode: str,
     internal_names: set[str],
 ) -> list[str]:
-    project = doc.get(c.Infra.Toml.PROJECT)
-    if not project or not isinstance(project, dict):
+    project_raw = doc[c.Infra.Toml.PROJECT] if c.Infra.Toml.PROJECT in doc else None
+    if not isinstance(project_raw, Mapping):
         return []
-    deps = project.get(c.Infra.Toml.DEPENDENCIES)
-    if not isinstance(deps, list):
+    deps_raw = (
+        project_raw[c.Infra.Toml.DEPENDENCIES]
+        if c.Infra.Toml.DEPENDENCIES in project_raw
+        else None
+    )
+    if not isinstance(deps_raw, list):
         return []
+    deps = _STRING_LIST_ADAPTER.validate_python(deps_raw)
 
     changes: list[str] = []
-    for index, item in enumerate(deps):
-        if not isinstance(item, str):
-            continue
+    updated_deps: list[str] = []
+    for item_raw in deps:
+        item = item_raw
 
         marker = ""
         requirement_part = item
@@ -110,24 +128,37 @@ def _rewrite_pep621(
         new_entry = f"{dep_name} @ file:{path_prefix}{new_path}{marker}"
         if item != new_entry:
             changes.append(f"  PEP621: {item} -> {new_entry}")
-            deps[index] = new_entry
+            updated_deps.append(new_entry)
+        else:
+            updated_deps.append(item)
+    if changes:
+        project_raw[c.Infra.Toml.DEPENDENCIES] = updated_deps
     return changes
 
 
 def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
-    tool = doc.get(c.Infra.Toml.TOOL)
-    if not isinstance(tool, dict):
+    tool_raw = doc[c.Infra.Toml.TOOL] if c.Infra.Toml.TOOL in doc else None
+    if not isinstance(tool_raw, Mapping):
         return []
-    poetry = tool.get(c.Infra.Toml.POETRY)
-    if not isinstance(poetry, dict):
+    poetry_raw = (
+        tool_raw[c.Infra.Toml.POETRY] if c.Infra.Toml.POETRY in tool_raw else None
+    )
+    if not isinstance(poetry_raw, Mapping):
         return []
-    deps = poetry.get(c.Infra.Toml.DEPENDENCIES)
-    if not isinstance(deps, dict):
+    deps_raw = (
+        poetry_raw[c.Infra.Toml.DEPENDENCIES]
+        if c.Infra.Toml.DEPENDENCIES in poetry_raw
+        else None
+    )
+    if not isinstance(deps_raw, Mapping):
         return []
+    deps = deps_raw
 
     changes: list[str] = []
-    for dep_key, value in deps.items():
-        if not isinstance(value, dict) or c.Infra.Toml.PATH not in value:
+    for dep_key_raw in deps:
+        dep_key = dep_key_raw
+        value = deps[dep_key_raw]
+        if not isinstance(value, Mapping) or c.Infra.Toml.PATH not in value:
             continue
         raw_path = value[c.Infra.Toml.PATH]
         if not isinstance(raw_path, str) or not raw_path.strip():
@@ -209,10 +240,16 @@ def main() -> int:
     if root_pyproject.exists():
         root_data_result = toml_service.read(root_pyproject)
         if root_data_result.is_success:
-            root_project = root_data_result.unwrap().get(c.Infra.Toml.PROJECT)
-            if isinstance(root_project, dict):
-                root_name = root_project.get(c.Infra.Toml.NAME)
-                if isinstance(root_name, str) and root_name:
+            root_data = root_data_result.unwrap()
+            root_project = (
+                root_data[c.Infra.Toml.PROJECT]
+                if c.Infra.Toml.PROJECT in root_data
+                else None
+            )
+            if isinstance(root_project, Mapping):
+                root_project_map = _OBJECT_DICT_ADAPTER.validate_python(root_project)
+                root_name = _mapping_str_value(root_project_map, c.Infra.Toml.NAME)
+                if root_name is not None:
                     internal_names.add(root_name)
 
     if not args.projects and root_pyproject.exists():
@@ -260,11 +297,17 @@ def main() -> int:
         data_result = toml_service.read(pyproject)
         if data_result.is_failure:
             continue
-        project_obj = data_result.unwrap().get(c.Infra.Toml.PROJECT)
-        if not isinstance(project_obj, dict):
+        project_data = data_result.unwrap()
+        project_obj = (
+            project_data[c.Infra.Toml.PROJECT]
+            if c.Infra.Toml.PROJECT in project_data
+            else None
+        )
+        if not isinstance(project_obj, Mapping):
             continue
-        project_name = project_obj.get(c.Infra.Toml.NAME)
-        if isinstance(project_name, str) and project_name:
+        project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)
+        project_name = _mapping_str_value(project_obj_map, c.Infra.Toml.NAME)
+        if project_name is not None:
             internal_names.add(project_name)
 
     for project_dir in project_dirs:
@@ -274,11 +317,17 @@ def main() -> int:
         data_result = toml_service.read(pyproject)
         if data_result.is_failure:
             continue
-        project_obj = data_result.unwrap().get(c.Infra.Toml.PROJECT)
-        if not isinstance(project_obj, dict):
+        project_data = data_result.unwrap()
+        project_obj = (
+            project_data[c.Infra.Toml.PROJECT]
+            if c.Infra.Toml.PROJECT in project_data
+            else None
+        )
+        if not isinstance(project_obj, Mapping):
             continue
-        project_name = project_obj.get(c.Infra.Toml.NAME)
-        if isinstance(project_name, str) and project_name:
+        project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)
+        project_name = _mapping_str_value(project_obj_map, c.Infra.Toml.NAME)
+        if project_name is not None:
             internal_names.add(project_name)
 
     for project_dir in sorted(project_dirs):

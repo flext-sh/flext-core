@@ -979,7 +979,7 @@ class FlextModelsConfig:
     class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for message dispatcher.
 
-        Replaces TypedDict DispatcherConfig from typings.py.
+        Replaces legacy dispatcher config mapping from typings.py.
         Provides type-safe configuration for message dispatcher behavior.
         """
 

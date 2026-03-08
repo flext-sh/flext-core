@@ -21,11 +21,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, override
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import m, r, s, t
 from flext_tests import FlextTestsUtilities, u
@@ -41,8 +41,9 @@ class ServiceScenarioType(StrEnum):
     EXCEPTION = "exception"
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceScenario:
+class ServiceScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Service test scenario definition."""
 
     name: str
@@ -131,26 +132,11 @@ class ServiceScenarios:
     """Centralized service test scenarios using FlextConstants."""
 
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
-        ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
-        ServiceScenario(
-            "complex_valid",
-            ServiceScenarioType.COMPLEX_VALID,
-            True,
-            {"name": "test"},
-        ),
-        ServiceScenario(
-            "complex_invalid",
-            ServiceScenarioType.COMPLEX_INVALID,
-            False,
-            {"name": ""},
-        ),
-        ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
-        ServiceScenario(
-            "exception_handling",
-            ServiceScenarioType.EXCEPTION,
-            False,
-            {"should_raise": True},
-        ),
+        ServiceScenario(name="basic_user_service", scenario_type=ServiceScenarioType.BASIC_USER, is_valid_expected=True),
+        ServiceScenario(name="complex_valid", scenario_type=ServiceScenarioType.COMPLEX_VALID, is_valid_expected=True, service_kwargs={"name": "test"}),
+        ServiceScenario(name="complex_invalid", scenario_type=ServiceScenarioType.COMPLEX_INVALID, is_valid_expected=False, service_kwargs={"name": ""}),
+        ServiceScenario(name="failing_service", scenario_type=ServiceScenarioType.FAILING, is_valid_expected=False),
+        ServiceScenario(name="exception_handling", scenario_type=ServiceScenarioType.EXCEPTION, is_valid_expected=False, service_kwargs={"should_raise": True}),
     ]
 
     @staticmethod

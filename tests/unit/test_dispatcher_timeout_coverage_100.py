@@ -16,16 +16,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core._dispatcher.timeout import TimeoutEnforcer
 
 
-@dataclass(frozen=True, slots=True)
-class TimeoutEnforcerScenario:
+class TimeoutEnforcerScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """TimeoutEnforcer test scenario."""
 
     name: str

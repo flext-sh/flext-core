@@ -2,11 +2,32 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels
+
+
+class _DocsPhaseItemModel(BaseModel):
+    """Unified item payload for docs phase reports."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+
+    phase: str = Field(description="Docs phase: audit, fix, build, generate, validate")
+    file: str = Field(default="", description="Relative file path")
+    issue_type: str = Field(default="", description="Audit issue type")
+    severity: str = Field(default="", description="Audit issue severity")
+    message: str = Field(default="", description="Item detail message")
+    links: int = Field(default=0, ge=0, description="Applied link fixes")
+    toc: int = Field(default=0, ge=0, description="Applied TOC updates")
+    path: str = Field(default="", description="Generated file path")
+    written: bool = Field(default=False, description="Generated file write flag")
+
+
+def _new_docs_phase_items() -> list[BaseModel]:
+    return []
 
 
 class FlextInfraDocsModels:
@@ -33,20 +54,8 @@ class FlextInfraDocsModels:
         path: str = Field(description="File path")
         written: bool = Field(default=False, description="Whether file was written")
 
-    class DocsPhaseItem(FlextModels.FrozenStrictModel):
+    class DocsPhaseItem(_DocsPhaseItemModel):
         """Unified item payload for docs phase reports."""
-
-        phase: str = Field(
-            description="Docs phase: audit, fix, build, generate, validate"
-        )
-        file: str = Field(default="", description="Relative file path")
-        issue_type: str = Field(default="", description="Audit issue type")
-        severity: str = Field(default="", description="Audit issue severity")
-        message: str = Field(default="", description="Item detail message")
-        links: int = Field(default=0, ge=0, description="Applied link fixes")
-        toc: int = Field(default=0, ge=0, description="Applied TOC updates")
-        path: str = Field(default="", description="Generated file path")
-        written: bool = Field(default=False, description="Generated file write flag")
 
     class DocsPhaseReport(FlextModels.FrozenStrictModel):
         """Unified report payload for docs phases."""
@@ -75,8 +84,8 @@ class FlextInfraDocsModels:
         todo_written: bool = Field(
             default=False, description="Whether TODOS.md was written"
         )
-        items: list[FlextInfraDocsModels.DocsPhaseItem] = Field(
-            default_factory=list,
+        items: Sequence[BaseModel] = Field(
+            default_factory=_new_docs_phase_items,
             description="Phase-specific item payloads",
         )
 

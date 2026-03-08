@@ -17,16 +17,17 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass
 from typing import ClassVar, cast, override
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import t, u
 
 
-@dataclass(frozen=True, slots=True)
-class TypeGuardScenario:
+class TypeGuardScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Type guard test scenario."""
 
     name: str
@@ -34,8 +35,9 @@ class TypeGuardScenario:
     expected_result: bool
 
 
-@dataclass(frozen=True, slots=True)
-class NormalizeScenario:
+class NormalizeScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Normalize to metadata value test scenario."""
 
     name: str

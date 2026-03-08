@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
+
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import m, t
 
@@ -20,9 +21,10 @@ from flext_core import m, t
 # =========================================================================
 
 
-@dataclass(frozen=True, slots=True)
-class ValidationScenario:
+class ValidationScenario(BaseModel):
     """Single scenario for validation testing."""
+
+    model_config = ConfigDict(frozen=True)
 
     name: str
     validator_type: str  # "network", "string", "numeric"
@@ -34,9 +36,10 @@ class ValidationScenario:
     description: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class ParserScenario:
+class ParserScenario(BaseModel):
     """Single scenario for parser testing."""
+
+    model_config = ConfigDict(frozen=True)
 
     name: str
     parser_method: str
@@ -47,9 +50,10 @@ class ParserScenario:
     description: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class ReliabilityScenario:
+class ReliabilityScenario(BaseModel):
     """Single scenario for reliability testing (circuit breaker, retry)."""
+
+    model_config = ConfigDict(frozen=True)
 
     name: str
     strategy: str  # "retry", "circuit_breaker", "timeout"

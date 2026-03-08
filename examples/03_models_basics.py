@@ -371,13 +371,17 @@ class OrderItem(m.Value):
         )
 
 
+def _new_order_items() -> list[OrderItem]:
+    return []
+
+
 class Order(m.AggregateRoot):
     """Order aggregate root with advanced business rules."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
 
     customer_id: str = Field(min_length=1)
-    items: list[OrderItem] = Field(default_factory=list)
+    items: list[OrderItem] = Field(default_factory=_new_order_items)
     status: c.Domain.OrderStatus = Field(
         default=c.Domain.OrderStatus.PENDING,
     )

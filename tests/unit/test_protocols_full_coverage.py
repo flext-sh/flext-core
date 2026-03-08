@@ -19,7 +19,7 @@ class _NamedProtocol(Protocol):
     def _protocol_name(self) -> str: ...
 
 
-class _SettingsModel(p.ProtocolSettings, _NamedProtocol):
+class _SettingsModel(p.ProtocolSettings):
     app_name: str = "x"
 
     @override
@@ -27,7 +27,7 @@ class _SettingsModel(p.ProtocolSettings, _NamedProtocol):
         return "settings"
 
 
-class _ProtocolModel(p.ProtocolModel, _NamedProtocol):
+class _ProtocolModel(p.ProtocolModel):
     name: str = "ok"
 
     @override

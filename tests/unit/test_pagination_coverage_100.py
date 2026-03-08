@@ -16,11 +16,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import t
 from flext_tests import u
@@ -34,8 +33,9 @@ def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:
     return fn(config)
 
 
-@dataclass(frozen=True, slots=True)
-class ExtractPageParamsScenario:
+class ExtractPageParamsScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Extract page params test scenario."""
 
     name: str
@@ -49,8 +49,9 @@ class ExtractPageParamsScenario:
     expected_error: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class ValidatePaginationParamsScenario:
+class ValidatePaginationParamsScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Validate pagination params test scenario."""
 
     name: str
@@ -62,8 +63,9 @@ class ValidatePaginationParamsScenario:
     expected_error: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class PreparePaginationDataScenario:
+class PreparePaginationDataScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Prepare pagination data test scenario."""
 
     name: str

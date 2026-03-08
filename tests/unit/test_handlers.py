@@ -15,11 +15,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 from typing import ClassVar, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextExceptions,
@@ -61,8 +60,9 @@ class FailingTestHandler(h[str, str]):
         return FlextResult[str].fail(f"Handler failed for: {message}")
 
 
-@dataclass(frozen=True, slots=True)
-class HandlerConfigScenario:
+class HandlerConfigScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Handler configuration test scenario."""
 
     name: str
@@ -75,8 +75,9 @@ class HandlerConfigScenario:
     metadata: dict[str, t.ContainerValue] | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class HandlerTypeScenario:
+class HandlerTypeScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Handler type test scenario."""
 
     name: str
@@ -88,26 +89,10 @@ class HandlerScenarios:
     """Centralized handler test scenarios using FlextConstants."""
 
     HANDLER_TYPES: ClassVar[list[HandlerTypeScenario]] = [
-        HandlerTypeScenario(
-            "command",
-            c.Cqrs.HandlerType.COMMAND,
-            c.Cqrs.HandlerType.COMMAND,
-        ),
-        HandlerTypeScenario(
-            "query",
-            c.Cqrs.HandlerType.QUERY,
-            c.Cqrs.HandlerType.QUERY,
-        ),
-        HandlerTypeScenario(
-            "event",
-            c.Cqrs.HandlerType.EVENT,
-            c.Cqrs.HandlerType.EVENT,
-        ),
-        HandlerTypeScenario(
-            "saga",
-            c.Cqrs.HandlerType.SAGA,
-            c.Cqrs.HandlerType.SAGA,
-        ),
+        HandlerTypeScenario(name="command", handler_type=c.Cqrs.HandlerType.COMMAND, handler_mode=c.Cqrs.HandlerType.COMMAND),
+        HandlerTypeScenario(name="query", handler_type=c.Cqrs.HandlerType.QUERY, handler_mode=c.Cqrs.HandlerType.QUERY),
+        HandlerTypeScenario(name="event", handler_type=c.Cqrs.HandlerType.EVENT, handler_mode=c.Cqrs.HandlerType.EVENT),
+        HandlerTypeScenario(name="saga", handler_type=c.Cqrs.HandlerType.SAGA, handler_mode=c.Cqrs.HandlerType.SAGA),
     ]
 
     VALIDATION_TYPES: ClassVar[list[tuple[str, object]]] = [
@@ -636,8 +621,9 @@ class TestFlextHandlers:
     def test_handlers_dataclass_message_validation(self) -> None:
         """Test dataclass message validation."""
 
-        @dataclass
-        class DataClassMessage:
+        class DataClassMessage(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             value: str
             number: int
 

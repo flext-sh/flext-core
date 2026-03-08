@@ -44,7 +44,9 @@ def test_categories_clear_and_symbols_are_available() -> None:
     assert categories.categories == {}
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
-    assert isinstance(u.Collection.find([1], lambda value: value == 1), int)
+    find_result = u.Collection.find([1], lambda value: value == 1)
+    assert find_result.is_success
+    assert isinstance(find_result.value, int)
 
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:

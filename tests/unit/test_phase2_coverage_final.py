@@ -15,17 +15,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextResult, FlextSettings
 from tests.test_utils import assertion_helpers
 
 
-@dataclass(frozen=True, slots=True)
-class ResultChainingScenario:
+class ResultChainingScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """FlextResult chaining test scenario."""
 
     name: str
@@ -39,27 +40,9 @@ class CoverageScenarios:
     """Centralized coverage test scenarios using FlextConstants."""
 
     CHAINING_SCENARIOS: ClassVar[list[ResultChainingScenario]] = [
-        ResultChainingScenario(
-            "map_chaining",
-            "hello",
-            ["upper", "append_excl"],
-            True,
-            "HELLO!",
-        ),
-        ResultChainingScenario(
-            "flat_map_chaining",
-            "hi",
-            ["double", "double"],
-            True,
-            "hihihihi",
-        ),
-        ResultChainingScenario(
-            "error_propagation",
-            "input",
-            ["fail", "upper"],
-            False,
-            None,
-        ),
+        ResultChainingScenario(name="map_chaining", initial_value="hello", operations=["upper", "append_excl"], expected_success=True, expected_value="HELLO!"),
+        ResultChainingScenario(name="flat_map_chaining", initial_value="hi", operations=["double", "double"], expected_success=True, expected_value="hihihihi"),
+        ResultChainingScenario(name="error_propagation", initial_value="input", operations=["fail", "upper"], expected_success=False, expected_value=None),
     ]
 
 

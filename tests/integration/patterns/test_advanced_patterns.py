@@ -14,17 +14,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 import pytest
 
 from flext_core import FlextResult, t, u
-from tests.typings import TestsFlextTypes
 
-# TypedDict definitions from consolidated test typings
-FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
-FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
-MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
+from ...models import TestsFlextModels
+
+FixtureCaseModel = TestsFlextModels.Fixtures.FixtureCaseModel
+MockScenarioModel = TestsFlextModels.Fixtures.MockScenarioData
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]
@@ -57,15 +55,15 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: MockScenarioData) -> None:
+    def __init__(self, name: str, data: MockScenarioModel) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
-        self.given: dict[str, str | int | bool] = data.get("given", {})
-        self.when: dict[str, str | int | bool] = data.get("when", {})
-        self.then: dict[str, str | int | bool] = data.get("then", {})
-        self.tags: list[str] = data.get("tags", [])
-        self.priority: str = str(data.get("priority", "normal"))
+        self.given: dict[str, str | int | bool] = data.given or {}
+        self.when: dict[str, str | int | bool] = data.when or {}
+        self.then: dict[str, str | int | bool] = data.then or {}
+        self.tags: list[str] = data.tags or []
+        self.priority: str = data.priority or "normal"
 
 
 class GivenWhenThenBuilder:
@@ -167,9 +165,7 @@ class GivenWhenThenBuilder:
                 self._given,
                 {k: str(k) for k in self._given},
                 keep_unmapped=True,
-            ).value
-            if isinstance(self._given, dict)
-            else {},
+            ).value,
             convert_dict_value,
         )
         given_converted: dict[str, str | int | bool] = {
@@ -180,9 +176,7 @@ class GivenWhenThenBuilder:
                 self._when,
                 {k: str(k) for k in self._when},
                 keep_unmapped=True,
-            ).value
-            if isinstance(self._when, dict)
-            else {},
+            ).value,
             convert_dict_value,
         )
         when_converted: dict[str, str | int | bool] = {
@@ -193,22 +187,20 @@ class GivenWhenThenBuilder:
                 self._then,
                 {k: str(k) for k in self._then},
                 keep_unmapped=True,
-            ).value
-            if isinstance(self._then, dict)
-            else {},
+            ).value,
             convert_dict_value,
         )
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
 
-        scenario_data: MockScenarioData = {
-            "given": given_converted,
-            "when": when_converted,
-            "then": then_converted,
-            "tags": self._tags,
-            "priority": self._priority,
-        }
+        scenario_data = MockScenarioModel(
+            given=given_converted,
+            when=when_converted,
+            then=then_converted,
+            tags=self._tags,
+            priority=self._priority,
+        )
         return MockScenario(self.name, scenario_data)
 
 
@@ -302,9 +294,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FixtureCaseDict] = []
-        self._success_cases: list[FixtureCaseDict] = []
-        self._failure_cases: list[FixtureCaseDict] = []
+        self._cases: list[FixtureCaseModel] = []
+        self._success_cases: list[FixtureCaseModel] = []
+        self._failure_cases: list[FixtureCaseModel] = []
 
     def add_case(
         self,
@@ -316,12 +308,12 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        cast("FixtureCaseDict", kwargs)
+        self._cases.append(FixtureCaseModel.model_validate(kwargs))
         return self
 
     def add_success_cases(
         self,
-        cases: list[FixtureCaseDict],
+        cases: list[FixtureCaseModel],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -334,7 +326,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FixtureCaseDict],
+        cases: list[FixtureCaseModel],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -345,7 +337,7 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FixtureCaseDict]:
+    def build(self) -> list[FixtureCaseModel]:
         """Build method.
 
         Returns:
@@ -362,12 +354,10 @@ class ParameterizedTestBuilder:
 
         """
         success_params = [
-            (str(c.get("email", "")), str(c.get("input", "")), True)
-            for c in self._success_cases
+            (str(c.email or ""), str(c.input or ""), True) for c in self._success_cases
         ]
         failure_params = [
-            (str(c.get("email", "")), str(c.get("input", "")), False)
-            for c in self._failure_cases
+            (str(c.email or ""), str(c.input or ""), False) for c in self._failure_cases
         ]
         return success_params + failure_params
 
@@ -379,8 +369,7 @@ class ParameterizedTestBuilder:
 
         """
         return [
-            str(c.get("input", ""))
-            for c in (*self._success_cases, *self._failure_cases)
+            str(c.input or "") for c in (*self._success_cases, *self._failure_cases)
         ]
 
 
@@ -546,20 +535,20 @@ class TestAdvancedPatterns:
             ParameterizedTestBuilder("email_validation")
             .add_success_cases(
                 [
-                    {
-                        "email": "valid@example.com",
-                        "input": "valid@example.com",
-                    },
-                    {
-                        "email": "user.name@domain.co.uk",
-                        "input": "user.name@domain.co.uk",
-                    },
+                    FixtureCaseModel(
+                        email="valid@example.com",
+                        input="valid@example.com",
+                    ),
+                    FixtureCaseModel(
+                        email="user.name@domain.co.uk",
+                        input="user.name@domain.co.uk",
+                    ),
                 ],
             )
             .add_failure_cases(
                 [
-                    {"email": "invalid-email", "input": "invalid-email"},
-                    {"email": "@domain.com", "input": "@domain.com"},
+                    FixtureCaseModel(email="invalid-email", input="invalid-email"),
+                    FixtureCaseModel(email="@domain.com", input="@domain.com"),
                 ],
             )
         )
@@ -595,13 +584,13 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: MockScenarioData = {
-            "given": {"user": "authenticated"},
-            "when": {"action": "request_data"},
-            "then": {"result": "success"},
-            "tags": ["api", "integration"],
-            "priority": "medium",
-        }
+        scenario_data = MockScenarioModel(
+            given={"user": "authenticated"},
+            when={"action": "request_data"},
+            then={"result": "success"},
+            tags=["api", "integration"],
+            priority="medium",
+        )
 
         scenario = MockScenario(
             "api_request",
@@ -704,14 +693,12 @@ class TestAdvancedPatterns:
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
         assert isinstance(nested_data, dict)
-        # nested_data is dict[str, NestedDataDict] according to FixtureDataDict
-        nested_dict = nested_data.get("id") if isinstance(nested_data, dict) else None
+        nested_dict = nested_data.get("id")
         assert nested_dict is not None or "id" in nested_data
-        # Access nested_data safely - cast to object for runtime comparison
-        if isinstance(nested_data, dict) and "id" in nested_data:
+        if "id" in nested_data:
             id_value: object = nested_data["id"]
             assert id_value == "nested-456"
-        if isinstance(nested_data, dict) and "name" in nested_data:
+        if "name" in nested_data:
             name_value: object = nested_data["name"]
             assert name_value == "Jane"
 

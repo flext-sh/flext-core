@@ -32,10 +32,6 @@ from flext_core import (
     u,
 )
 
-# Using t directly - no local type aliases (DRY + SRP)
-# All types come from t namespace - centralized type system
-# PEP 695 type aliases only when necessary for complex compositions
-
 # =====================================================================
 # DEMONSTRATION MODELS - Using m for type safety
 # =====================================================================

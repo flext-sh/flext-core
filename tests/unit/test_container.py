@@ -23,10 +23,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextContainer,
@@ -35,8 +35,8 @@ from flext_core import (
 from flext_tests import c, m, t, tm, u
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceScenario:
+class ServiceScenario(BaseModel):
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     """Test scenario for service registration and retrieval."""
 
     name: str
@@ -44,8 +44,8 @@ class ServiceScenario:
     description: str = ""
 
 
-@dataclass(frozen=True, slots=True)
-class TypedRetrievalScenario:
+class TypedRetrievalScenario(BaseModel):
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     """Test scenario for typed service retrieval."""
 
     name: str
@@ -59,31 +59,43 @@ class ContainerScenarios:
     """Centralized container test scenarios using c."""
 
     SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
-        ServiceScenario("test_service", {"key": "value"}, "Simple dict service"),
         ServiceScenario(
-            "service_instance",
-            {"instance_id": 123},
-            "Dict service instance",
+            name="test_service",
+            service={"key": "value"},
+            description="Simple dict service",
         ),
-        ServiceScenario("string_service", "test_value", "String service"),
+        ServiceScenario(
+            name="service_instance",
+            service={"instance_id": 123},
+            description="Dict service instance",
+        ),
+        ServiceScenario(
+            name="string_service", service="test_value", description="String service"
+        ),
     ]
 
     TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
         TypedRetrievalScenario(
-            "dict_service",
-            {"key": "value"},
-            dict,
-            True,
-            "Dict service",
+            name="dict_service",
+            service={"key": "value"},
+            expected_type=dict,
+            should_pass=True,
+            description="Dict service",
         ),
         TypedRetrievalScenario(
-            "string_service",
-            "test_string",
-            str,
-            True,
-            "String service",
+            name="string_service",
+            service="test_string",
+            expected_type=str,
+            should_pass=True,
+            description="String service",
         ),
-        TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
+        TypedRetrievalScenario(
+            name="list_service",
+            service=[1, 2, 3],
+            expected_type=list,
+            should_pass=True,
+            description="List service",
+        ),
     ]
 
     CONFIG_SCENARIOS: ClassVar[list[dict[str, t.Scalar]]] = [

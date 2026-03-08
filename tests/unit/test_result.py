@@ -20,11 +20,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import c, m, p, r
 from flext_tests import t, u
@@ -48,8 +48,9 @@ class ResultOperationType(StrEnum):
     RAILWAY_COMPOSITION = "railway_composition"
 
 
-@dataclass(frozen=True, slots=True)
-class ResultScenario:
+class ResultScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Generic result scenario for r tests."""
 
     name: str
@@ -63,68 +64,32 @@ class ResultScenarios:
     """Centralized result test scenarios using c."""
 
     STRING_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario(
-            "creation_success_string",
-            ResultOperationType.CREATION_SUCCESS,
-            "success",
-        ),
-        ResultScenario(
-            "creation_failure_message",
-            ResultOperationType.CREATION_FAILURE,
-            "error message",
-            False,
-        ),
-        ResultScenario("unwrap_or_success", ResultOperationType.UNWRAP_OR, "value"),
-        ResultScenario(
-            "unwrap_or_failure",
-            ResultOperationType.UNWRAP_OR,
-            "error",
-            False,
-        ),
-        ResultScenario("map_failure", ResultOperationType.MAP, "error", False),
-        ResultScenario(
-            "flat_map_failure",
-            ResultOperationType.FLAT_MAP,
-            "error",
-            False,
-        ),
-        ResultScenario("alt_success", ResultOperationType.ALT, "success"),
-        ResultScenario("alt_failure", ResultOperationType.ALT, "original_error", False),
-        ResultScenario("lash_success", ResultOperationType.LASH, "success"),
-        ResultScenario("lash_failure", ResultOperationType.LASH, "error", False),
-        ResultScenario("or_operator_success", ResultOperationType.OR_OPERATOR, "value"),
-        ResultScenario(
-            "or_operator_failure",
-            ResultOperationType.OR_OPERATOR,
-            "error",
-            False,
-        ),
+        ResultScenario(name="creation_success_string", operation_type=ResultOperationType.CREATION_SUCCESS, value="success"),
+        ResultScenario(name="creation_failure_message", operation_type=ResultOperationType.CREATION_FAILURE, value="error message", is_success_expected=False),
+        ResultScenario(name="unwrap_or_success", operation_type=ResultOperationType.UNWRAP_OR, value="value"),
+        ResultScenario(name="unwrap_or_failure", operation_type=ResultOperationType.UNWRAP_OR, value="error", is_success_expected=False),
+        ResultScenario(name="map_failure", operation_type=ResultOperationType.MAP, value="error", is_success_expected=False),
+        ResultScenario(name="flat_map_failure", operation_type=ResultOperationType.FLAT_MAP, value="error", is_success_expected=False),
+        ResultScenario(name="alt_success", operation_type=ResultOperationType.ALT, value="success"),
+        ResultScenario(name="alt_failure", operation_type=ResultOperationType.ALT, value="original_error", is_success_expected=False),
+        ResultScenario(name="lash_success", operation_type=ResultOperationType.LASH, value="success"),
+        ResultScenario(name="lash_failure", operation_type=ResultOperationType.LASH, value="error", is_success_expected=False),
+        ResultScenario(name="or_operator_success", operation_type=ResultOperationType.OR_OPERATOR, value="value"),
+        ResultScenario(name="or_operator_failure", operation_type=ResultOperationType.OR_OPERATOR, value="error", is_success_expected=False),
     ]
 
     INT_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario("unwrap_success", ResultOperationType.UNWRAP, 42),
-        ResultScenario("map_success", ResultOperationType.MAP, 5),
-        ResultScenario("flat_map_success", ResultOperationType.FLAT_MAP, 5),
-        ResultScenario("filter_passes", ResultOperationType.FILTER, 10),
-        ResultScenario("filter_fails", ResultOperationType.FILTER, 3, False),
-        ResultScenario(
-            "railway_composition",
-            ResultOperationType.RAILWAY_COMPOSITION,
-            5,
-        ),
+        ResultScenario(name="unwrap_success", operation_type=ResultOperationType.UNWRAP, value=42),
+        ResultScenario(name="map_success", operation_type=ResultOperationType.MAP, value=5),
+        ResultScenario(name="flat_map_success", operation_type=ResultOperationType.FLAT_MAP, value=5),
+        ResultScenario(name="filter_passes", operation_type=ResultOperationType.FILTER, value=10),
+        ResultScenario(name="filter_fails", operation_type=ResultOperationType.FILTER, value=3, is_success_expected=False),
+        ResultScenario(name="railway_composition", operation_type=ResultOperationType.RAILWAY_COMPOSITION, value=5),
     ]
 
     BOOL_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario(
-            "bool_conversion_success",
-            ResultOperationType.BOOL_CONVERSION,
-            True,
-        ),
-        ResultScenario(
-            "bool_conversion_failure",
-            ResultOperationType.BOOL_CONVERSION,
-            False,
-        ),
+        ResultScenario(name="bool_conversion_success", operation_type=ResultOperationType.BOOL_CONVERSION, value=True),
+        ResultScenario(name="bool_conversion_failure", operation_type=ResultOperationType.BOOL_CONVERSION, value=False),
     ]
 
 

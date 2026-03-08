@@ -17,12 +17,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
@@ -47,8 +46,9 @@ class FixturePriority(StrEnum):
     CRITICAL = "critical"
 
 
-@dataclass(frozen=True, slots=True)
-class ParseSequenceScenario:
+class ParseSequenceScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Parse sequence test scenario."""
 
     name: str
@@ -59,8 +59,9 @@ class ParseSequenceScenario:
     error_contains: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceListScenario:
+class CoerceListScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Coerce list validator test scenario."""
 
     name: str
@@ -72,8 +73,9 @@ class CoerceListScenario:
     error_contains: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class ParseMappingScenario:
+class ParseMappingScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Parse mapping test scenario."""
 
     name: str
@@ -84,8 +86,9 @@ class ParseMappingScenario:
     error_contains: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceDictScenario:
+class CoerceDictScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Coerce dict validator test scenario."""
 
     name: str
@@ -97,8 +100,9 @@ class CoerceDictScenario:
     error_contains: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class MapScenario:
+class MapScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Map method test scenario."""
 
     name: str
@@ -112,8 +116,9 @@ class MapScenario:
     error_contains: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class FindScenario:
+class FindScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Find method test scenario."""
 
     name: str
@@ -123,8 +128,9 @@ class FindScenario:
     return_key: bool = False
 
 
-@dataclass(frozen=True, slots=True)
-class FilterScenario:
+class FilterScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Filter method test scenario."""
 
     name: str
@@ -134,8 +140,9 @@ class FilterScenario:
     mapper: Callable[[Any], Any] | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class CountScenario:
+class CountScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Count method test scenario."""
 
     name: str
@@ -144,8 +151,9 @@ class CountScenario:
     predicate: Callable[[Any], bool] | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class ProcessScenario:
+class ProcessScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Process method test scenario."""
 
     name: str
@@ -160,8 +168,9 @@ class ProcessScenario:
     error_contains: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class GroupScenario:
+class GroupScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Group method test scenario."""
 
     name: str
@@ -170,8 +179,9 @@ class GroupScenario:
     expected_result: dict[int | str, list[str]]
 
 
-@dataclass(frozen=True, slots=True)
-class ChunkScenario:
+class ChunkScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Chunk method test scenario."""
 
     name: str
@@ -180,8 +190,9 @@ class ChunkScenario:
     expected_result: list[list[t.ContainerValue]]
 
 
-@dataclass(frozen=True, slots=True)
-class BatchScenario:
+class BatchScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Batch method test scenario."""
 
     name: str

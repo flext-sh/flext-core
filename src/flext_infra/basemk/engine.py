@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import override
+from typing import Protocol, override
 
 from jinja2 import (
     Environment,
@@ -16,6 +16,17 @@ from jinja2 import (
 
 from flext_core import r, s
 from flext_infra import c, m, t
+
+
+class _TemplateRenderer(Protocol):
+    def render(self, **kwargs: t.ContainerValue) -> str: ...
+
+
+def _render_template(
+    template: _TemplateRenderer,
+    context: Mapping[str, t.ContainerValue],
+) -> str:
+    return template.render(**context)
 
 
 class FlextInfraBaseMkTemplateEngine(s[str]):
@@ -74,8 +85,10 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
 
         try:
             for template_name in c.Infra.Basemk.TEMPLATE_ORDER:
-                template = self._environment.get_template(template_name)
-                rendered = template.render(**context)
+                template: _TemplateRenderer = self._environment.get_template(
+                    template_name
+                )
+                rendered = _render_template(template, context)
                 sections.append(rendered.rstrip("\n"))
             content = "\n\n".join(sections).rstrip("\n") + "\n"
             return r[str].ok(content)

@@ -4,89 +4,24 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import BaseModel
-
 from flext_core import FlextDispatcher, m, p, r, t
 
+from .models import em
 from .shared import Examples
 
 
 class Ex04FlextDispatcher(Examples):
     """Golden-file tests for ``FlextDispatcher`` public API."""
 
-    # -- Message models (Pydantic, Routable) -----------------------------------
-
-    class CreateUser(BaseModel):
-        """Command model for user creation."""
-
-        username: str
-        command_type: str = "create_user"
-        query_type: str = ""
-        event_type: str = ""
-
-    class GetUser(BaseModel):
-        """Query model for user retrieval."""
-
-        username: str
-        command_type: str = ""
-        query_type: str = "get_user"
-        event_type: str = ""
-
-    class DeleteUser(BaseModel):
-        """Command model for user deletion."""
-
-        username: str
-        command_type: str = "delete_user"
-        query_type: str = ""
-        event_type: str = ""
-
-    class FailingDelete(BaseModel):
-        """Command model that intentionally fails."""
-
-        username: str
-        command_type: str = "failing_delete"
-        query_type: str = ""
-        event_type: str = ""
-
-    class AutoCommand(BaseModel):
-        """Command routed through can_handle auto-discovery."""
-
-        payload: str
-        command_type: str = "auto_command"
-        query_type: str = ""
-        event_type: str = ""
-
-    class Ping(BaseModel):
-        """Command handled by a callable returning plain value."""
-
-        value: str
-        command_type: str = "ping"
-        query_type: str = ""
-        event_type: str = ""
-
-    class UnknownQuery(BaseModel):
-        """Query model with no registered handler."""
-
-        payload: str
-        command_type: str = ""
-        query_type: str = "unknown_query"
-        event_type: str = ""
-
-    class UserCreated(BaseModel):
-        """Event model published to subscribers."""
-
-        username: str
-        command_type: str = ""
-        query_type: str = ""
-        event_type: str = "user_created"
-
-    class NoSubscriberEvent(BaseModel):
-        """Event model without registered subscribers."""
-
-        marker: str
-        command_type: str = ""
-        query_type: str = ""
-        event_type: str = "no_subscribers"
+    CreateUser = em.Ex04.CreateUser
+    GetUser = em.Ex04.GetUser
+    DeleteUser = em.Ex04.DeleteUser
+    FailingDelete = em.Ex04.FailingDelete
+    AutoCommand = em.Ex04.AutoCommand
+    Ping = em.Ex04.Ping
+    UnknownQuery = em.Ex04.UnknownQuery
+    UserCreated = em.Ex04.UserCreated
+    NoSubscriberEvent = em.Ex04.NoSubscriberEvent
 
     # -- Handler classes -------------------------------------------------------
 

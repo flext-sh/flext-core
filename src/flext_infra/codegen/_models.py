@@ -7,6 +7,10 @@ from pydantic import Field
 from flext_core import FlextModels
 
 
+def _new_violations() -> list[FlextInfraCodegenModels.CensusViolation]:
+    return []
+
+
 class FlextInfraCodegenModels:
     """Models for codegen census, scaffold, and auto-fix pipelines."""
 
@@ -30,7 +34,8 @@ class FlextInfraCodegenModels:
 
         project: str = Field(min_length=1, description="Project name")
         violations: list[FlextInfraCodegenModels.CensusViolation] = Field(
-            default_factory=list, description="Detected violations"
+            default_factory=_new_violations,
+            description="Detected violations",
         )
         total: int = Field(ge=0, description="Total violation count")
         fixable: int = Field(ge=0, description="Count of auto-fixable violations")
@@ -52,10 +57,11 @@ class FlextInfraCodegenModels:
 
         project: str = Field(min_length=1, description="Project name")
         violations_fixed: list[FlextInfraCodegenModels.CensusViolation] = Field(
-            default_factory=list, description="Fixed violations"
+            default_factory=_new_violations,
+            description="Fixed violations",
         )
         violations_skipped: list[FlextInfraCodegenModels.CensusViolation] = Field(
-            default_factory=list,
+            default_factory=_new_violations,
             description="Skipped violations (not auto-fixable)",
         )
         files_modified: list[str] = Field(

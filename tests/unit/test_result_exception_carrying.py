@@ -25,7 +25,7 @@ from collections.abc import Sized
 import pytest
 from returns.io import IO, IOSuccess
 
-from flext_core import m, p, r
+from flext_core import m, p, r, t
 from flext_core.exceptions import e
 
 
@@ -73,7 +73,10 @@ class TestFailWithException:
     def test_fail_with_exception_and_error_data(self) -> None:
         """Verify fail() carries exception with error_data."""
         error_msg = "Validation failed"
-        error_data = {"field": "email", "reason": "invalid format"}
+        error_data: dict[str, t.ContainerValue] = {
+            "field": "email",
+            "reason": "invalid format",
+        }
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
             error_msg,

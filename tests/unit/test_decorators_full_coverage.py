@@ -5,11 +5,11 @@ from __future__ import annotations
 import time
 import warnings
 from collections.abc import Callable
-from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
@@ -51,8 +51,9 @@ class _FakeLogger:
         return None
 
 
-@dataclass
-class _ObjWithLogger:
+class _ObjWithLogger(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     logger: object
 
 

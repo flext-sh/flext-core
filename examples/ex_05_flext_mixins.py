@@ -5,10 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import override
 
-from pydantic import BaseModel
-
 from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
 
+from .models import em
 from .shared import Examples
 
 
@@ -56,30 +55,9 @@ class Ex05FlextMixins(Examples):
             """Handle data and return result."""
             return r[t.ContainerValue].ok(message)
 
-    class HandlerBad(BaseModel):
-        """Non-handler for negative ``is_handler`` check."""
-
-    class GoodProcessor(BaseModel):
-        """Processor satisfying ``p.HasModelDump`` + process + validate."""
-
-        def process(self) -> bool:
-            """Process successfully."""
-            return True
-
-        @classmethod
-        @override
-        def validate(cls, value: t.ContainerValue) -> Ex05FlextMixins.GoodProcessor:
-            """Validate for Pydantic compatibility."""
-            return cls.model_validate(value)
-
-        def _protocol_name(self) -> str:
-            return "HasModelDump"
-
-    class BadProcessor(BaseModel):
-        """Processor missing ``process`` for negative validation."""
-
-        def _protocol_name(self) -> str:
-            return "HasModelDump"
+    HandlerBad = em.Ex05.HandlerBad
+    GoodProcessor = em.Ex05.GoodProcessor
+    BadProcessor = em.Ex05.BadProcessor
 
     # -- Exercise entry --------------------------------------------------------
 

@@ -20,24 +20,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_tests import c, tm, u
 
 
-@dataclass(frozen=True, slots=True)
-class ConstantPathScenario:
+class ConstantPathScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Test scenario for constant path access."""
 
     path: str
     expected: object
 
 
-@dataclass(frozen=True, slots=True)
-class PatternValidationScenario:
+class PatternValidationScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Test scenario for pattern validation."""
 
     pattern_attr: str
@@ -49,76 +51,56 @@ class ConstantsScenarios:
     """Centralized constants test scenarios using c (FlextConstants)."""
 
     CORE_CONSTANT_PATHS: ClassVar[list[ConstantPathScenario]] = [
-        ConstantPathScenario("NAME", "FLEXT"),
-        ConstantPathScenario("Network.MIN_PORT", 1),
-        ConstantPathScenario("Network.MAX_PORT", 65535),
-        ConstantPathScenario("Validation.MIN_NAME_LENGTH", 2),
-        ConstantPathScenario("Validation.MAX_NAME_LENGTH", 100),
-        ConstantPathScenario("Validation.MAX_EMAIL_LENGTH", 254),
-        ConstantPathScenario("Validation.MIN_PHONE_DIGITS", 10),
-        ConstantPathScenario("Defaults.TIMEOUT", 30),
-        ConstantPathScenario("Reliability.DEFAULT_TIMEOUT_SECONDS", 30.0),
-        ConstantPathScenario("Utilities.MAX_TIMEOUT_SECONDS", 3600),
-        ConstantPathScenario("Logging.DEFAULT_LEVEL", "INFO"),
-        ConstantPathScenario("Platform.FLEXT_API_PORT", 8000),
-        ConstantPathScenario("Platform.DEFAULT_HOST", c.Network.LOCALHOST),
-        ConstantPathScenario("Performance.MAX_TIMEOUT_SECONDS", 600),
-        ConstantPathScenario("Performance.BatchProcessing.DEFAULT_SIZE", 1000),
-        ConstantPathScenario("Reliability.MAX_RETRY_ATTEMPTS", 3),
-        ConstantPathScenario("Security.JWT_DEFAULT_ALGORITHM", "HS256"),
-        ConstantPathScenario("Cqrs.DEFAULT_HANDLER_TYPE", "command"),
-        ConstantPathScenario("Container.DEFAULT_WORKERS", 4),
-        ConstantPathScenario("Dispatcher.DEFAULT_HANDLER_MODE", "command"),
-        ConstantPathScenario("Mixins.FIELD_CREATED_AT", "created_at"),
-        ConstantPathScenario("Messages.TYPE_MISMATCH", "Type mismatch"),
+        ConstantPathScenario(path="NAME", expected="FLEXT"),
+        ConstantPathScenario(path="Network.MIN_PORT", expected=1),
+        ConstantPathScenario(path="Network.MAX_PORT", expected=65535),
+        ConstantPathScenario(path="Validation.MIN_NAME_LENGTH", expected=2),
+        ConstantPathScenario(path="Validation.MAX_NAME_LENGTH", expected=100),
+        ConstantPathScenario(path="Validation.MAX_EMAIL_LENGTH", expected=254),
+        ConstantPathScenario(path="Validation.MIN_PHONE_DIGITS", expected=10),
+        ConstantPathScenario(path="Defaults.TIMEOUT", expected=30),
+        ConstantPathScenario(path="Reliability.DEFAULT_TIMEOUT_SECONDS", expected=30.0),
+        ConstantPathScenario(path="Utilities.MAX_TIMEOUT_SECONDS", expected=3600),
+        ConstantPathScenario(path="Logging.DEFAULT_LEVEL", expected="INFO"),
+        ConstantPathScenario(path="Platform.FLEXT_API_PORT", expected=8000),
+        ConstantPathScenario(path="Platform.DEFAULT_HOST", expected=c.Network.LOCALHOST),
+        ConstantPathScenario(path="Performance.MAX_TIMEOUT_SECONDS", expected=600),
+        ConstantPathScenario(path="Performance.BatchProcessing.DEFAULT_SIZE", expected=1000),
+        ConstantPathScenario(path="Reliability.MAX_RETRY_ATTEMPTS", expected=3),
+        ConstantPathScenario(path="Security.JWT_DEFAULT_ALGORITHM", expected="HS256"),
+        ConstantPathScenario(path="Cqrs.DEFAULT_HANDLER_TYPE", expected="command"),
+        ConstantPathScenario(path="Container.DEFAULT_WORKERS", expected=4),
+        ConstantPathScenario(path="Dispatcher.DEFAULT_HANDLER_MODE", expected="command"),
+        ConstantPathScenario(path="Mixins.FIELD_CREATED_AT", expected="created_at"),
+        ConstantPathScenario(path="Messages.TYPE_MISMATCH", expected="Type mismatch"),
     ]
 
     PATTERN_VALIDATION_SCENARIOS: ClassVar[list[PatternValidationScenario]] = [
-        PatternValidationScenario(
-            "Platform.PATTERN_EMAIL",
-            [
+        PatternValidationScenario(pattern_attr="Platform.PATTERN_EMAIL", valid_cases=[
                 "test@example.com",
                 "user.name+tag@example.co.uk",
                 "valid_email@domain.com",
-            ],
-            ["invalid.email", "@example.com", "test@", "test@.com"],
-        ),
-        PatternValidationScenario(
-            "Platform.PATTERN_URL",
-            [
+            ], invalid_cases=["invalid.email", "@example.com", "test@", "test@.com"]),
+        PatternValidationScenario(pattern_attr="Platform.PATTERN_URL", valid_cases=[
                 "https://github.com",
                 "http://FlextConstants.Network.LOCALHOST:8000",
                 "https://example.com/path?query=1",
-            ],
-            [
+            ], invalid_cases=[
                 "not-a-url",
                 "ftp://invalid.com",
                 "://missing.protocol",
                 "www.example.com",
-            ],
-        ),
-        PatternValidationScenario(
-            "Platform.PATTERN_PHONE_NUMBER",
-            ["+5511987654321", "5511987654321", "+1234567890", "11987654321"],
-            ["123", "abc1234567890", "+abc1234567890", "123456789"],
-        ),
-        PatternValidationScenario(
-            "Platform.PATTERN_UUID",
-            [
+            ]),
+        PatternValidationScenario(pattern_attr="Platform.PATTERN_PHONE_NUMBER", valid_cases=["+5511987654321", "5511987654321", "+1234567890", "11987654321"], invalid_cases=["123", "abc1234567890", "+abc1234567890", "123456789"]),
+        PatternValidationScenario(pattern_attr="Platform.PATTERN_UUID", valid_cases=[
                 "550e8400-e29b-41d4-a716-446655440000",
                 "550e8400e29b41d4a716446655440000",
-            ],
-            [
+            ], invalid_cases=[
                 "invalid-uuid",
                 "550e8400-e29b-41d4",
                 "550e8400-e29b-41d4-a716-44665544000",
-            ],
-        ),
-        PatternValidationScenario(
-            "Platform.PATTERN_PATH",
-            ["/home/user/file.txt", "C:\\Users\\file.txt", "relative/path/file.py"],
-            ["path/with<invalid>chars", 'path/with"quotes', "path/with|pipe"],
-        ),
+            ]),
+        PatternValidationScenario(pattern_attr="Platform.PATTERN_PATH", valid_cases=["/home/user/file.txt", "C:\\Users\\file.txt", "relative/path/file.py"], invalid_cases=["path/with<invalid>chars", 'path/with"quotes', "path/with|pipe"]),
     ]
 
     TYPE_CHECKS: ClassVar[list[tuple[object, type]]] = [

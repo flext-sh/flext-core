@@ -231,10 +231,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                 typing_dict = typings_report.model_dump()
                 projects_report[project_name][c.Infra.Directories.TYPINGS] = typing_dict
 
-                to_add_obj = typing_dict.get("to_add")
-                to_add: list[t.ContainerValue] = (
-                    to_add_obj if isinstance(to_add_obj, list) else []
-                )
+                to_add: list[str] = typings_report.to_add
                 if apply_typings and to_add and not args.dry_run:
                     env = {
                         **os.environ,
@@ -242,8 +239,6 @@ class FlextInfraRuntimeDevDependencyDetector:
                         "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
                     }
                     for package in to_add:
-                        if not isinstance(package, str):
-                            continue
                         run = self._runner.run_raw(
                             [
                                 c.Infra.Cli.POETRY,
@@ -317,9 +312,9 @@ class FlextInfraRuntimeDevDependencyDetector:
                 if isinstance(raw_count, int):
                     total_issues += raw_count
 
-        pip_ok = True
-        if isinstance(report_model.pip_check, dict):
-            pip_ok = bool(report_model.pip_check.get(c.Infra.ReportKeys.OK, True))
+        pip_ok = (
+            report_model.pip_check.ok if report_model.pip_check is not None else True
+        )
 
         if not args.quiet:
             logger.info(

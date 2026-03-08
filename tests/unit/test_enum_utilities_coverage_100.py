@@ -15,11 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import r, t
 from flext_tests import u
@@ -41,8 +41,9 @@ class Priority(StrEnum):
     HIGH = "high"
 
 
-@dataclass(frozen=True, slots=True)
-class IsMemberScenario:
+class IsMemberScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Is member test scenario."""
 
     name: str
@@ -50,8 +51,9 @@ class IsMemberScenario:
     expected: bool
 
 
-@dataclass(frozen=True, slots=True)
-class IsSubsetScenario:
+class IsSubsetScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Is subset test scenario."""
 
     name: str
@@ -60,8 +62,9 @@ class IsSubsetScenario:
     expected: bool
 
 
-@dataclass(frozen=True, slots=True)
-class ParseScenario:
+class ParseScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Parse test scenario."""
 
     name: str
@@ -71,8 +74,9 @@ class ParseScenario:
     expected_error: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class ParseOrDefaultScenario:
+class ParseOrDefaultScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Parse or default test scenario."""
 
     name: str
@@ -81,8 +85,9 @@ class ParseOrDefaultScenario:
     expected: Status
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceValidatorScenario:
+class CoerceValidatorScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Coerce validator test scenario."""
 
     name: str

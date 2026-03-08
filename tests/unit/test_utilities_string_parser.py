@@ -57,24 +57,12 @@ class StringParserTestFactory:
         """Generate comprehensive parse_delimited test cases."""
         return [
             # Basic cases
+            ParseDelimitedCase(text=TestsFlextConstants.Strings.BASIC_LIST, delimiter=TestsFlextConstants.Delimiters.COMMA, expected=["a", "b", "c"], description="basic"),
             ParseDelimitedCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
-                description="basic",
-            ),
-            ParseDelimitedCase(
-                TestsFlextConstants.Strings.WITH_SPACES,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "b", "c"],
-                description="with spaces",
-            ),
+                TestsFlextConstantsParseDelimitedCase(text=S, delimiter=TestsFlextConstants.Delimiters.COMMA, expected=["a", "b", "c"], description="with spaces"),
             ParseDelimitedCase(
                 TestsFlextConstants.Strings.EMPTY,
-                TestsFlextConstants.Delimiters.COMMA,
-                [],
-                description="empty string",
-            ),
+                TestsFParseDelimitedCase(text=iters.COMMA, delimiter=[], description="empty string"),
             # Options cases
             ParseDelimitedCase(
                 TestsFlextConstants.Strings.WITH_SPACES,
@@ -92,23 +80,17 @@ class StringParserTestFactory:
             ),
             ParseDelimitedCase(
                 TestsFlextConstants.Strings.WITH_EMPTY,
-                TestsFlextConstants.Delimiters.COMMA,
-                ["a", "", "c"],
-                options=ParseOptions(strip=True, remove_empty=False),
-                description="options no remove empty",
-            ),
+                TestsFlextConstants.Delimiters.CParseDelimitedCase(text=["a", "", "c"], options=ParseOptions(strip=True, remove_empty=False), description="options no remove empty"),
             # Validator cases (validator filters, doesn't fail)
             ParseDelimitedCase(
                 TestsFlextConstants.Strings.BASIC_LIST,
                 TestsFlextConstants.Delimiters.COMMA,
                 ["a", "b", "c"],
-                options=ParseOptions(
+     ParseDelimitedCase(text=ParseOptions(
                     strip=True,
                     remove_empty=True,
                     validator=lambda s: len(s) > 0,
-                ),
-                description="validator success",
-            ),
+                ), description="validator success"),
             ParseDelimitedCase(
                 "a,b",
                 TestsFlextConstants.Delimiters.COMMA,
@@ -193,12 +175,7 @@ class StringParserTestFactory:
         # Note: split_with_escape removes escape char, so "a\\,b" becomes "a,b"
         return [
             # Basic cases
-            SplitEscapeCase(
-                TestsFlextConstants.Strings.BASIC_LIST,
-                TestsFlextConstants.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="basic",
-            ),
+            SplitEscapeCase(text=TestsFlextConstants.Strings.BASIC_LIST, split_char=TestsFlextConstants.Delimiters.COMMA, expected=["a", "b", "c"], description="basic"),
             SplitEscapeCase(
                 "a\\,b,c",
                 TestsFlextConstants.Delimiters.COMMA,
@@ -206,19 +183,12 @@ class StringParserTestFactory:
                 description="escaped delimiter",
             ),
             SplitEscapeCase(
-                TestsFlextConstants.Strings.EMPTY,
-                TestsFlextConstants.Delimiters.COMMA,
-                expected=[""],
-                description="empty string",
-            ),
+                TestsFlextConstants.Strings.EMSplitEscapeCase(text=TestsFlextConstants.Delimiters.COMMA, expected=[""], description="empty string"),
             # Custom escape char
             SplitEscapeCase(
                 "a#b,c",
                 TestsFlextConstants.Delimiters.COMMA,
-                escape_char=TestsFlextConstants.EscapeChars.HASH,
-                expected=["ab", "c"],  # Escape char removed, next char is literal
-                description="custom escape char",
-            ),
+             SplitEscapeCase(text=estsFlextConstants.EscapeChars.HASH, expected=["ab", "c"], description="custom escape char"),
             # Edge cases
             SplitEscapeCase(
                 "a,b\\",
@@ -262,9 +232,7 @@ class StringParserTestFactory:
                 "a,b",
                 TestsFlextConstants.Delimiters.COMMA,
                 escape_char=TestsFlextConstants.Delimiters.COMMA,
-                expected_error=TestsFlextConstants.TestErrors.SPLIT_ESCAPE_SAME,
-                description="same split and escape",
-            ),
+                expected_error=TestSplitEscapeCase(text=TestErrors.SPLIT_ESCAPE_SAME, description="same split and escape"),
         ]
 
     @staticmethod
@@ -272,11 +240,7 @@ class StringParserTestFactory:
         """Generate comprehensive normalize_whitespace test cases."""
         return [
             # Basic cases
-            NormalizeWhitespaceCase(
-                "  hello   world  ",
-                expected="hello world",
-                description="basic",
-            ),
+            NormalizeWhitespaceCase(text="  hello   world  ", expected="hello world", description="basic"),
             NormalizeWhitespaceCase(
                 TestsFlextConstants.Strings.EMPTY,
                 expected=TestsFlextConstants.Strings.EMPTY,
@@ -285,11 +249,7 @@ class StringParserTestFactory:
             # Custom pattern
             NormalizeWhitespaceCase(
                 "hello---world",
-                pattern=TestsFlextConstants.Patterns.DASH,
-                replacement=TestsFlextConstants.Replacements.DASH,
-                expected="hello-world",
-                description="custom pattern",
-            ),
+NormalizeWhitespaceCase(text=TestsFlextConstants.Patterns.DASH, replacement=TestsFlextConstants.Replacements.DASH, expected="hello-world", description="custom pattern"),
             # Custom replacement
             NormalizeWhitespaceCase(
                 "hello   world",
@@ -310,9 +270,7 @@ class StringParserTestFactory:
             ),
             NormalizeWhitespaceCase(
                 TestsFlextConstants.Strings.SINGLE_CHAR,
-                expected=TestsFlextConstants.Strings.SINGLE_CHAR,
-                description="single char",
-            ),
+                expected=TestsFleNormalizeWhitespaceCase(text=LE_CHAR, description="single char"),
             NormalizeWhitespaceCase(
                 "hello\n\n\nworld",
                 expected="hello world",
@@ -325,37 +283,25 @@ class StringParserTestFactory:
         """Generate comprehensive apply_regex_pipeline test cases."""
         return [
             # Basic cases
-            RegexPipelineCase(
-                "hello   world",
-                [
+            RegexPipelineCase(text="hello   world", patterns=[
                     (
                         TestsFlextConstants.Patterns.WHITESPACE,
                         TestsFlextConstants.Replacements.SPACE,
                     ),
                     (r"=", "="),
-                ],
-                expected="hello world",
-                description="basic",
-            ),
+                ], expected="hello world", description="basic"),
             RegexPipelineCase(
-                TestsFlextConstants.Strings.EMPTY,
-                [
+                TestsFlextConstants.Strings.EMRegexPipelineCase(text=[
                     (
                         TestsFlextConstants.Patterns.WHITESPACE,
                         TestsFlextConstants.Replacements.SPACE,
                     ),
-                ],
-                expected=TestsFlextConstants.Strings.EMPTY,
-                description="empty string",
-            ),
+                ], expected=TestsFlextConstants.Strings.EMPTY, description="empty string"),
             # Multiple patterns - note: patterns apply sequentially
             RegexPipelineCase(
                 "cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
                 [
-                    (
-                        TestsFlextConstants.Patterns.EQUALS_SPACE,
-                        TestsFlextConstants.Replacements.EQUALS,
-                    ),
+       RegexPipelineCase(text=TestsFlextConstants.Patterns.EQUALS_SPACE, patterns=TestsFlextConstants.Replacements.EQUALS),
                     (
                         TestsFlextConstants.Patterns.COMMA_SPACE,
                         TestsFlextConstants.Replacements.COMMA,
@@ -406,7 +352,7 @@ class StringParserTestFactory:
             id = "TestId"
 
         return [
-            ObjectKeyCase(int, expected_exact="int", description="type"),
+            ObjectKeyCase(obj=int, expected_exact="int", description="type"),
             ObjectKeyCase(TestClass, expected_exact="TestClass", description="class"),
             ObjectKeyCase(
                 test_function,

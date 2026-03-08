@@ -8,7 +8,7 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c
+from flext_infra import c, t
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.alias_remover import (
     FlextInfraRefactorAliasRemover,
@@ -109,6 +109,12 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
             changes.extend(bypass_changes)
 
         return tree, changes
+
+    @staticmethod
+    def _normalize_string_items(value: t.ContainerValue) -> list[str]:
+        if not isinstance(value, list | tuple | set):
+            return []
+        return [item for item in value if isinstance(item, str)]
 
     def _expected_forwarding_params(
         self,
@@ -239,8 +245,12 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         )
 
     def _remove_aliases(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
-        allow_aliases = set(self.config.get("allow_aliases", []))
-        allow_target_suffixes = tuple(self.config.get("allow_target_suffixes", []))
+        allow_aliases_raw = self.config.get("allow_aliases", [])
+        allow_target_suffixes_raw = self.config.get("allow_target_suffixes", [])
+        allow_aliases = set(self._normalize_string_items(allow_aliases_raw))
+        allow_target_suffixes = tuple(
+            self._normalize_string_items(allow_target_suffixes_raw)
+        )
         transformer = FlextInfraRefactorAliasRemover(
             allow_aliases=allow_aliases,
             allow_target_suffixes=allow_target_suffixes,

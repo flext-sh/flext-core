@@ -217,10 +217,7 @@ class FlextInfraNamespaceValidator:
                     )
                 # Check for methods in inner class bodies
                 for inner_node in ast.walk(cls):
-                    if (
-                        isinstance(inner_node, (ast.FunctionDef, ast.AsyncFunctionDef))
-                        and inner_node is not cls
-                    ):
+                    if isinstance(inner_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         seq += 1
                         violations.append(
                             f"[NS-001-{seq:03d}] {filepath}:{inner_node.lineno}"

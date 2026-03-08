@@ -24,17 +24,18 @@ from __future__ import annotations
 
 import threading
 import time
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextContainer, FlextContext, m, t
 from flext_tests import FlextTestsUtilities, t as tests_t, u
 
 
-@dataclass(frozen=True, slots=True)
-class ContextOperationScenario:
+class ContextOperationScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Test scenario for context operations."""
 
     name: str

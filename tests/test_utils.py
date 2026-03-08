@@ -7,8 +7,9 @@ type-system-architecture.md rules with zero duplication.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import TypeVar, override
+
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextContainer,
@@ -35,9 +36,10 @@ TestResult = FlextResult[T]
 TestResultCo = FlextResult[T_co]
 
 
-@dataclass
-class StandardTestCase:
+class StandardTestCase(BaseModel):
     """Standardized test case structure for parametrized tests."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     description: str
     input_data: dict[str, t.ContainerValue]
@@ -182,9 +184,8 @@ class TestFixtureFactory:
     ) -> object:
         """Create test entity fixture."""
 
-        # Use dataclass instead of Pydantic to avoid circular dependencies
-        @dataclass
-        class TestEntity:
+        # Pydantic v2 BaseModel instead of dataclass
+        class TestEntity(BaseModel):
             unique_id: str
             name: str
 
@@ -200,8 +201,9 @@ class TestFixtureFactory:
     def create_test_value_object(value: object = "test_value") -> object:
         """Create test value object fixture."""
 
-        @dataclass(frozen=True)
-        class TestValue:
+        class TestValue(BaseModel):
+            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
             value: object
 
         return TestValue(value=value)

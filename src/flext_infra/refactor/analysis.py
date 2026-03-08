@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 from collections import Counter
 from collections.abc import Mapping
-from dataclasses import dataclass
 from operator import itemgetter
 from pathlib import Path
 from typing import override
@@ -16,13 +15,6 @@ from pydantic import TypeAdapter, ValidationError
 from flext_core import r
 from flext_infra import c, m, u
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
-
-
-@dataclass(frozen=True)
-class _HelperFileAnalysis:
-    suggestions: list[m.Infra.Refactor.HelperClassification]
-    totals: dict[str, int]
-    manual_review: list[m.Infra.Refactor.HelperClassification]
 
 
 class ImportDependencyCollector(cst.CSTVisitor):
@@ -367,7 +359,7 @@ class FlextInfraRefactorViolationAnalyzer:
         *,
         file_path: Path,
         content: str,
-    ) -> _HelperFileAnalysis:
+    ) -> m.Infra.Refactor.HelperFileAnalysis:
         suggestions: list[m.Infra.Refactor.HelperClassification] = []
         totals: Counter[str] = Counter()
         manual_review: list[m.Infra.Refactor.HelperClassification] = []
@@ -375,7 +367,7 @@ class FlextInfraRefactorViolationAnalyzer:
         try:
             module = cst.parse_module(content)
         except cst.ParserSyntaxError:
-            return _HelperFileAnalysis(
+            return m.Infra.Refactor.HelperFileAnalysis(
                 suggestions=suggestions,
                 totals=dict(totals),
                 manual_review=manual_review,
@@ -398,7 +390,7 @@ class FlextInfraRefactorViolationAnalyzer:
             if classification.manual_review:
                 manual_review.append(classification)
 
-        return _HelperFileAnalysis(
+        return m.Infra.Refactor.HelperFileAnalysis(
             suggestions=suggestions,
             totals=dict(totals),
             manual_review=manual_review,

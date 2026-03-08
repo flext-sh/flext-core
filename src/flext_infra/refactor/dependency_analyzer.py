@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 from typing import override
@@ -13,20 +12,6 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, m, u
-
-
-@dataclass(frozen=True)
-class _ProjectInfo:
-    name: str
-    path: Path
-    src_path: Path
-    package_roots: set[str]
-
-
-@dataclass(frozen=True)
-class _FileImportData:
-    imported_modules: set[str]
-    imported_symbols: set[str]
 
 
 class ImportCollector(cst.CSTVisitor):
@@ -138,8 +123,8 @@ class DependencyAnalyzer:
 
     # ── private helpers ─────────────────────────────────────────
 
-    def _discover_projects(self) -> list[_ProjectInfo]:
-        projects: list[_ProjectInfo] = []
+    def _discover_projects(self) -> list[m.Infra.Refactor.ProjectInfo]:
+        projects: list[m.Infra.Refactor.ProjectInfo] = []
         for candidate in sorted(self._workspace_root.iterdir()):
             if not candidate.is_dir() or candidate.name.startswith("."):
                 continue
@@ -147,7 +132,7 @@ class DependencyAnalyzer:
             if not src.is_dir():
                 continue
             projects.append(
-                _ProjectInfo(
+                m.Infra.Refactor.ProjectInfo(
                     name=candidate.name,
                     path=candidate,
                     src_path=src,
@@ -171,14 +156,18 @@ class DependencyAnalyzer:
                 roots.add(p.stem)
         return roots
 
-    def _build_package_index(self, projects: list[_ProjectInfo]) -> dict[str, str]:
+    def _build_package_index(
+        self, projects: list[m.Infra.Refactor.ProjectInfo]
+    ) -> dict[str, str]:
         idx: dict[str, str] = {}
         for proj in projects:
             for pkg in proj.package_roots:
                 idx.setdefault(pkg, proj.name)
         return idx
 
-    def _find_import_candidate_files(self, project: _ProjectInfo) -> list[Path]:
+    def _find_import_candidate_files(
+        self, project: m.Infra.Refactor.ProjectInfo
+    ) -> list[Path]:
         grep_files = self._scan_import_files_with_ast_grep(project.src_path)
         if grep_files.is_success and grep_files.value:
             return sorted(grep_files.value)
@@ -233,20 +222,20 @@ class DependencyAnalyzer:
         except ValidationError as exc:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(str(exc))
 
-    def _parse_imports(self, file_path: Path) -> r[_FileImportData]:
+    def _parse_imports(self, file_path: Path) -> r[m.Infra.Refactor.FileImportData]:
         try:
             src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = cst.parse_module(src)
             col = ImportCollector()
             tree.visit(col)
-            return r[_FileImportData].ok(
-                _FileImportData(
+            return r[m.Infra.Refactor.FileImportData].ok(
+                m.Infra.Refactor.FileImportData(
                     imported_modules=col.imported_modules,
                     imported_symbols=col.imported_symbols,
                 )
             )
         except (OSError, UnicodeDecodeError, cst.ParserSyntaxError) as exc:
-            return r[_FileImportData].fail(f"{file_path}: {exc}")
+            return r[m.Infra.Refactor.FileImportData].fail(f"{file_path}: {exc}")
 
 
 __all__ = ["DependencyAnalyzer"]

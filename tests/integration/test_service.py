@@ -9,11 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import override
 
 import pytest
-from pydantic import PrivateAttr
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 
 from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
 from tests.test_utils import assertion_helpers
@@ -21,8 +20,9 @@ from tests.test_utils import assertion_helpers
 from ..conftest import FunctionalExternalService
 
 
-@dataclass
-class UserServiceEntity:
+class UserServiceEntity(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     """Test user entity model using dataclass."""
 
     unique_id: str

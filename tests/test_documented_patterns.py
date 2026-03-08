@@ -22,11 +22,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from dataclasses import dataclass, field
 from typing import cast, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Test Models and Factories
@@ -45,8 +44,9 @@ from flext_core import (
 from tests.test_utils import assertion_helpers
 
 
-@dataclass
-class User:
+class User(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     """User domain model."""
 
     unique_id: str
@@ -62,29 +62,31 @@ class EmailResponse(BaseModel):
     message_id: str
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceTestCase:
+class ServiceTestCase(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Factory for service test cases to reduce duplication."""
 
     user_id: str
     expected_success: bool = True
     expected_error: str | None = None
-    description: str = field(default="", compare=False)
+    description: str = Field(default="", exclude=True)
 
     def create_user_service(self) -> GetUserService:
         """Create GetUserService instance for this test case."""
         return _make(GetUserService, user_id=self.user_id)
 
 
-@dataclass(frozen=True, slots=True)
-class RailwayTestCase:
+class RailwayTestCase(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Factory for railway pattern test cases."""
 
     user_ids: list[str]
-    operations: list[str] = field(default_factory=list)
+    operations: list[str] = Field(default_factory=list)
     expected_pipeline_length: int = 1
     should_fail_at: int | None = None
-    description: str = field(default="", compare=False)
+    description: str = Field(default="", exclude=True)
 
     def execute_v1_pipeline(self) -> FlextResult[str | User | EmailResponse]:
         """Execute V1 railway pipeline for this test case."""

@@ -23,6 +23,8 @@ from flext_core import FlextRuntime, c, p, r, t
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 
+_RELIABILITY_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.ContainerValue])
+
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
@@ -55,27 +57,25 @@ class FlextUtilitiesReliability:
         return callable(value) and not isinstance(value, type)
 
     @staticmethod
-    def _normalize_operation_result[TResult](
-        result_raw: r[TResult] | TResult,
-    ) -> r[TResult]:
-        """Convert operation result to RuntimeResult."""
-        if isinstance(result_raw, r):
-            return result_raw
-
-        # result_raw is a plain value - wrap in successful Result
-        # Safe to call ok() because at this point result_raw is TResult
-        return r.ok(result_raw)
+    def _normalize_operation_mapping[TKey, TValue](
+        value: Mapping[TKey, TValue],
+    ) -> dict[str, t.ContainerValue]:
+        normalized: dict[str, t.ContainerValue] = {}
+        for raw_key, raw_value in value.items():
+            normalized_value = (
+                raw_value
+                if FlextUtilitiesGuards.is_general_value_type(raw_value)
+                else str(raw_value)
+            )
+            normalized[str(raw_key)] = normalized_value
+        return normalized
 
     @staticmethod
     def _resolve_match_output(
         candidate: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
         value: t.ContainerValue,
     ) -> t.ContainerValue:
-        resolved_value = candidate(value) if callable(candidate) else candidate
-        try:
-            return TypeAdapter(t.ContainerValue).validate_python(resolved_value)
-        except ValidationError:
-            return str(resolved_value)
+        return candidate(value) if callable(candidate) else candidate
 
     @staticmethod
     def calculate_delay(
@@ -244,7 +244,10 @@ class FlextUtilitiesReliability:
         current: t.ContainerValue = value
         for op in ops:
             if isinstance(op, Mapping):
-                op_dict = op
+                try:
+                    op_dict = _RELIABILITY_CONTAINER_DICT_ADAPTER.validate_python(op)
+                except ValidationError:
+                    op_dict = {}
                 # Check if current is ContainerValue compatible
                 if FlextUtilitiesGuards.is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
@@ -485,7 +488,7 @@ class FlextUtilitiesReliability:
                     if op_result.is_failure:
                         if on_error == "stop":
                             err_msg = op_result.error or "Unknown error"
-                            return r.fail(
+                            return r[t.ContainerValue].fail(
                                 f"Pipeline step {i} failed: {err_msg}",
                             )
                         # on_error == "skip": continue with previous value
@@ -504,14 +507,14 @@ class FlextUtilitiesReliability:
                 OSError,
             ) as e:
                 if on_error == "stop":
-                    return r.fail(f"Pipeline step {i} failed: {e}")
+                    return r[t.ContainerValue].fail(f"Pipeline step {i} failed: {e}")
                 # on_error == "skip": continue with previous value
 
         return r.ok(current)
 
     @staticmethod
     def retry[TResult](
-        operation: Callable[[], r[TResult] | TResult],
+        operation: Callable[[], r[TResult]],
         max_attempts: int | None = None,
         delay: float | None = None,
         delay_seconds: float | None = None,
@@ -521,7 +524,7 @@ class FlextUtilitiesReliability:
         """Execute an operation with retry logic using railway patterns.
 
         Args:
-            operation: Operation to execute. Can return RuntimeResult or direct value.
+            operation: Operation to execute. Must return RuntimeResult.
             max_attempts: Maximum number of attempts
             delay: Delay between retries in seconds (alias for delay_seconds)
             delay_seconds: Delay between retries in seconds
@@ -555,7 +558,7 @@ class FlextUtilitiesReliability:
         )
 
         if max_attempts_value < c.Reliability.RETRY_COUNT_MIN:
-            return r.fail(
+            return r[TResult].fail(
                 f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}",
             )
 
@@ -563,15 +566,9 @@ class FlextUtilitiesReliability:
 
         for attempt in range(max_attempts_value):
             try:
-                result_raw = operation()
-                result = FlextUtilitiesReliability._normalize_operation_result(
-                    result_raw,
-                )
-
+                result = operation()
                 if result.is_success:
                     return result
-
-                # When is_failure is True, error is never None (fail() converts None to "")
                 last_error = result.error or "Unknown error"
 
                 # Don't delay on the last attempt
@@ -607,7 +604,7 @@ class FlextUtilitiesReliability:
                     if current_delay > 0:
                         time.sleep(current_delay)
 
-        return r.fail(
+        return r[TResult].fail(
             f"Operation failed after {max_attempts_value} attempts: {last_error}",
         )
 
@@ -656,7 +653,7 @@ class FlextUtilitiesReliability:
 
         """
         if result.is_failure:
-            return r.fail(result.error or "Unknown error")
+            return r[U].fail(result.error or "Unknown error")
         return func(result.value)
 
     @staticmethod
@@ -708,12 +705,12 @@ class FlextUtilitiesReliability:
             ) as e:
                 # If operation throws exception, consider it a failure
                 if attempt >= max_attempts - 1:
-                    return r.fail(f"Operation failed: {e}")
+                    return r[TResult].fail(f"Operation failed: {e}")
 
                 if cleanup_func:
                     cleanup_func()
 
-        return r.fail("Max retries exceeded")
+        return r[TResult].fail("Max retries exceeded")
 
     @staticmethod
     def with_timeout[TTimeout](
@@ -722,7 +719,7 @@ class FlextUtilitiesReliability:
     ) -> r[TTimeout]:
         """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= c.INITIAL_TIME:
-            return r.fail("Timeout must be positive")
+            return r[TTimeout].fail("Timeout must be positive")
 
         # Use proper typing for containers
         result_container: list[r[TTimeout] | None] = [None]
@@ -749,17 +746,17 @@ class FlextUtilitiesReliability:
 
         if thread.is_alive():
             # Thread is still running, timeout occurred
-            return r.fail(
+            return r[TTimeout].fail(
                 f"Operation timed out after {timeout_seconds} seconds",
             )
 
         if exception_container[0]:
-            return r.fail(
+            return r[TTimeout].fail(
                 f"Operation failed with exception: {exception_container[0]}",
             )
 
         if result_container[0] is None:
-            return r.fail(
+            return r[TTimeout].fail(
                 "Operation completed but returned no result",
             )
 

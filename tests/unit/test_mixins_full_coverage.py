@@ -71,6 +71,9 @@ class _ContainerForLogger:
 def test_mixins_result_and_model_conversion_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    def _normalize_general_value(_value: t.ContainerValue) -> t.ContainerValue:
+        return 1
+
     assert isinstance(c.Context.SCOPE_OPERATION, str)
     assert hasattr(u, "merge")
     assert x.fail("error").is_failure
@@ -81,7 +84,7 @@ def test_mixins_result_and_model_conversion_paths(
     monkeypatch.setattr(
         FlextRuntime,
         "normalize_to_general_value",
-        staticmethod(lambda _v: 1),
+        staticmethod(_normalize_general_value),
     )
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
@@ -261,68 +264,74 @@ def test_mixins_validation_and_protocol_paths() -> None:
     fail_result = x.Validation.validate_with_result("v", fail_validators)
     assert fail_result.is_failure
 
-    assert (
-        x.ProtocolValidation.is_handler(
-            cast(
-                "t.ContainerValue",
-                cast("object", SimpleNamespace(handle=lambda *_a, **_k: None)),
-            ),
-        )
-        is False
-    )
-    assert (
-        x.ProtocolValidation.is_service(
-            cast("p.Service[t.ContainerValue]", cast("object", SimpleNamespace())),
-        )
-        is True
-    )
-    assert x.ProtocolValidation.is_command_bus() is True
+    class _HandlerOnly:
+        def handle(self, *_args: object, **_kwargs: object) -> None:
+            return None
+
+    class _ServiceCandidate:
+        def execute(self) -> r[t.ContainerValue]:
+            return r[t.ContainerValue].ok("ok")
+
+        def get_service_info(self) -> m.ConfigMap:
+            return m.ConfigMap(root={})
+
+        def is_valid(self) -> bool:
+            return True
+
+    class _CommandBusCandidate:
+        def dispatch(self, _command: object) -> r[t.ContainerValue]:
+            return r[t.ContainerValue].ok("ok")
+
+        def publish(self, _event: object) -> r[t.ContainerValue]:
+            return r[t.ContainerValue].ok("ok")
+
+        def register_handler(
+            self,
+            _message_type: type,
+            _handler: Callable[[object], r[t.ContainerValue]],
+        ) -> r[bool]:
+            return r[bool].ok(True)
+
+    assert x.ProtocolValidation.is_handler(_HandlerOnly()) is False
+    assert x.ProtocolValidation.is_service(_ServiceCandidate()) is True
+    assert x.ProtocolValidation.is_command_bus(_CommandBusCandidate()) is True
 
     unknown = x.ProtocolValidation.validate_protocol_compliance(
-        cast(
-            "p.Handler[t.ContainerValue, t.ContainerValue]",
-            cast("object", SimpleNamespace()),
-        ),
-        "Nope",
+        _ServiceCandidate(), "Nope"
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
-        cast(
-            "p.Handler[t.ContainerValue, t.ContainerValue]",
-            cast("object", SimpleNamespace()),
-        ),
-        "Service",
+        _ServiceCandidate(), "Service"
     )
     assert unknown.is_failure
     assert known.is_success
 
-    class _ModelDumpOnly(BaseModel):
+    class _ModelDumpOnly:
         pass
 
-    missing = x.ProtocolValidation.validate_processor_protocol(
-        cast("p.HasModelDump", cast("object", _ModelDumpOnly())),
-    )
+    class _ProcessorBadCallable:
+        def model_dump(self) -> dict[str, t.ContainerValue]:
+            return {}
+
+        process: int = 1
+
+        def validate(self) -> bool:
+            return True
+
+    class _ProcessorGood:
+        def model_dump(self) -> dict[str, t.ContainerValue]:
+            return {}
+
+        def process(self) -> bool:
+            return True
+
+        def validate(self) -> bool:
+            return True
+
+    missing = x.ProtocolValidation.validate_processor_protocol(_ModelDumpOnly())
     bad_callable = x.ProtocolValidation.validate_processor_protocol(
-        cast(
-            "p.HasModelDump",
-            cast(
-                "object",
-                SimpleNamespace(model_dump=dict, process=1, validate=lambda: True),
-            ),
-        ),
+        _ProcessorBadCallable()
     )
-    good = x.ProtocolValidation.validate_processor_protocol(
-        cast(
-            "p.HasModelDump",
-            cast(
-                "object",
-                SimpleNamespace(
-                    model_dump=dict,
-                    process=lambda: True,
-                    validate=lambda: True,
-                ),
-            ),
-        ),
-    )
+    good = x.ProtocolValidation.validate_processor_protocol(_ProcessorGood())
     assert missing.is_failure
     assert bad_callable.is_failure
     assert good.is_success
@@ -393,13 +402,14 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         pass
 
     warn_service = _WarnService()
+
+    def _register_failure(_name: str) -> r[bool]:
+        return r[bool].fail("register failed")
+
     monkeypatch.setattr(
         warn_service,
         "_register_in_container",
-        lambda _name: cast(
-            "r[bool]",
-            cast("object", SimpleNamespace(is_failure=True, error=None)),
-        ),
+        _register_failure,
     )
     warn_service._init_service("svc_warn")
 

@@ -18,11 +18,10 @@ from __future__ import annotations
 import math
 from collections import UserDict
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t, u
 from flext_tests import tm
@@ -45,8 +44,9 @@ class NestedModel(BaseModel):
     count: int
 
 
-@dataclass(frozen=True, slots=True)
-class NormalizeComponentScenario:
+class NormalizeComponentScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Normalize component test scenario."""
 
     name: str
@@ -55,8 +55,9 @@ class NormalizeComponentScenario:
     expected_value: object | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class SortKeyScenario:
+class SortKeyScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Sort key test scenario."""
 
     name: str
@@ -64,8 +65,9 @@ class SortKeyScenario:
     expected_tuple: tuple[int, str]
 
 
-@dataclass(frozen=True, slots=True)
-class ClearCacheScenario:
+class ClearCacheScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Clear cache test scenario."""
 
     name: str

@@ -15,11 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m, t
 
@@ -37,8 +36,75 @@ class _TestConfig(Config):
     retries: int = 3
 
 
-@dataclass(frozen=True, slots=True)
-class CategoryOperationScenario:
+class _StatsCount(Statistics):
+    """Stats model with count field."""
+
+    count: int = 0
+
+
+class _StatsItems(Statistics):
+    """Stats model with items field."""
+
+    items: list[str] = Field(default_factory=list)
+
+
+class _StatsMixed(Statistics):
+    """Stats model with mixed field types."""
+
+    count: int = 0
+    items: list[str] = Field(default_factory=list)
+    name: str = ""
+
+
+class _StatsNullable(Statistics):
+    """Stats model with nullable fields."""
+
+    count: int | None = None
+    name: str | None = None
+
+
+class _ResultProcessed(Results):
+    """Result model with processed field."""
+
+    processed: int = 0
+
+
+class _ResultErrors(Results):
+    """Result model with errors field."""
+
+    errors: list[str] = Field(default_factory=list)
+
+
+class _ResultMetadata(Results):
+    """Result model with metadata field."""
+
+    metadata: dict[str, str] = Field(default_factory=dict)
+
+
+class _ResultMixed(Results):
+    """Result model with mixed fields."""
+
+    processed: int = 0
+    errors: list[str] = Field(default_factory=list)
+    status: str = ""
+
+
+class _ResultNullable(Results):
+    """Result model with nullable fields."""
+
+    processed: int | None = None
+    status: str | None = None
+
+
+class _TestOptions(Options):
+    """Options model for test."""
+
+    verbose: bool = False
+    color: bool = True
+
+
+class CategoryOperationScenario(BaseModel):
+    model_config = ConfigDict(frozen=True)
     """Category operation test scenario."""
 
     name: str
@@ -56,10 +122,34 @@ class CollectionsScenarios:
     """Centralized collections test scenarios using FlextConstants."""
 
     CATEGORY_OPERATIONS: ClassVar[list[CategoryOperationScenario]] = [
-        CategoryOperationScenario("add_new", "users", ["user1", "user2"], "add", True),
-        CategoryOperationScenario("add_existing", "users", ["user3"], "add", True),
-        CategoryOperationScenario("set_replace", "users", ["user4"], "set", True),
-        CategoryOperationScenario("remove", "users", [], "remove", True),
+        CategoryOperationScenario(
+            name="add_new",
+            category="users",
+            entries=["user1", "user2"],
+            operation="add",
+            expected_result=True,
+        ),
+        CategoryOperationScenario(
+            name="add_existing",
+            category="users",
+            entries=["user3"],
+            operation="add",
+            expected_result=True,
+        ),
+        CategoryOperationScenario(
+            name="set_replace",
+            category="users",
+            entries=["user4"],
+            operation="set",
+            expected_result=True,
+        ),
+        CategoryOperationScenario(
+            name="remove",
+            category="users",
+            entries=[],
+            operation="remove",
+            expected_result=True,
+        ),
     ]
 
 
@@ -187,47 +277,29 @@ class TestFlextModelsCollectionsStatistics:
 
     def test_statistics_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
-
-        class TestStats(Statistics):
-            count: int = 0
-
-        assert TestStats.aggregate([]) == {}
+        assert _StatsCount.aggregate([]) == {}
 
     def test_statistics_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
-
-        class TestStats(Statistics):
-            count: int = 0
-
-        stats1 = TestStats(count=10)
-        stats2 = TestStats(count=20)
-        result = TestStats.aggregate([stats1, stats2])
+        stats1 = _StatsCount(count=10)
+        stats2 = _StatsCount(count=20)
+        result = _StatsCount.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
         assert result["count"] == 30
 
     def test_statistics_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
-
-        class TestStats(Statistics):
-            items: list[str] = Field(default_factory=list)
-
-        stats1 = TestStats(items=["a", "b"])
-        stats2 = TestStats(items=["c"])
-        result = TestStats.aggregate([stats1, stats2])
+        stats1 = _StatsItems(items=["a", "b"])
+        stats2 = _StatsItems(items=["c"])
+        result = _StatsItems.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
         assert result["items"] == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
-
-        class TestStats(Statistics):
-            count: int = 0
-            items: list[str] = Field(default_factory=list)
-            name: str = ""
-
-        stats1 = TestStats(count=10, items=["a"], name="first")
-        stats2 = TestStats(count=20, items=["b"], name="second")
-        result = TestStats.aggregate([stats1, stats2])
+        stats1 = _StatsMixed(count=10, items=["a"], name="first")
+        stats2 = _StatsMixed(count=20, items=["b"], name="second")
+        result = _StatsMixed.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
         assert result["count"] == 30
         assert result["items"] == ["a", "b"]
@@ -235,14 +307,9 @@ class TestFlextModelsCollectionsStatistics:
 
     def test_statistics_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
-
-        class TestStats(Statistics):
-            count: int | None = None
-            name: str | None = None
-
-        stats1 = TestStats(count=10, name="first")
-        stats2 = TestStats(count=None, name=None)
-        result = TestStats.aggregate([stats1, stats2])
+        stats1 = _StatsNullable(count=10, name="first")
+        stats2 = _StatsNullable(count=None, name=None)
+        result = _StatsNullable.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
         assert result["count"] == 10
         assert result["name"] == "first"
@@ -313,66 +380,40 @@ class TestFlextModelsCollectionsResults:
 
     def test_results_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
-
-        class TestResult(Results):
-            processed: int = 0
-
-        assert TestResult.aggregate([]) == {}
+        assert _ResultProcessed.aggregate([]) == {}
 
     def test_results_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
-
-        class TestResult(Results):
-            processed: int = 0
-
-        result1 = TestResult(processed=10)
-        result2 = TestResult(processed=20)
-        aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
+        result1 = _ResultProcessed(processed=10)
+        result2 = _ResultProcessed(processed=20)
+        aggregated_raw = _ResultProcessed.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
 
     def test_results_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
-
-        class TestResult(Results):
-            errors: list[str] = Field(default_factory=list)
-
-        result1 = TestResult(errors=["error1"])
-        result2 = TestResult(errors=["error2"])
-        aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
+        result1 = _ResultErrors(errors=["error1"])
+        result2 = _ResultErrors(errors=["error2"])
+        aggregated_raw = _ResultErrors.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
 
     def test_results_aggregate_dicts(self) -> None:
         """Test aggregate with dict values."""
-
-        class TestResult(Results):
-            metadata: dict[str, str] = Field(default_factory=dict)
-
-        result1 = TestResult(metadata={"key1": "value1"})
-        result2 = TestResult(metadata={"key2": "value2"})
-        aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
+        result1 = _ResultMetadata(metadata={"key1": "value1"})
+        result2 = _ResultMetadata(metadata={"key2": "value2"})
+        aggregated_raw = _ResultMetadata.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
 
     def test_results_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
-
-        class TestResult(Results):
-            processed: int = 0
-            errors: list[str] = Field(default_factory=list)
-            status: str = ""
-
-        result1 = TestResult(processed=10, errors=["a"], status="ok")
-        result2 = TestResult(processed=20, errors=["b"], status="done")
-        aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
+        result1 = _ResultMixed(processed=10, errors=["a"], status="ok")
+        result2 = _ResultMixed(processed=20, errors=["b"], status="done")
+        aggregated_raw = _ResultMixed.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
@@ -381,15 +422,9 @@ class TestFlextModelsCollectionsResults:
 
     def test_results_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
-
-        class TestResult(Results):
-            processed: int | None = None
-            status: str | None = None
-
-        result1 = TestResult(processed=10, status="ok")
-        result2 = TestResult(processed=None, status=None)
-        aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
+        result1 = _ResultNullable(processed=10, status="ok")
+        result2 = _ResultNullable(processed=None, status=None)
+        aggregated_raw = _ResultNullable.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 10
@@ -401,26 +436,16 @@ class TestFlextModelsCollectionsOptions:
 
     def test_options_merge(self) -> None:
         """Test merge method."""
-
-        class TestOptions(Options):
-            verbose: bool = False
-            color: bool = True
-
-        options1 = TestOptions(verbose=False, color=True)
-        options2 = TestOptions(verbose=True)
+        options1 = _TestOptions(verbose=False, color=True)
+        options2 = _TestOptions(verbose=True)
         merged = options1.merge(options2)
         assert merged.verbose is True
         assert merged.color is True
 
     def test_options_merge_all_fields(self) -> None:
         """Test merge with all fields."""
-
-        class TestOptions(Options):
-            verbose: bool = False
-            color: bool = True
-
-        options1 = TestOptions(verbose=False, color=True)
-        options2 = TestOptions(verbose=True, color=False)
+        options1 = _TestOptions(verbose=False, color=True)
+        options2 = _TestOptions(verbose=True, color=False)
         merged = options1.merge(options2)
         assert merged.verbose is True
         assert merged.color is False

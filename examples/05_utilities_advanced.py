@@ -216,12 +216,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         model_result = u.load(UserModel, m.ConfigMap(root=user_data))
         if model_result.is_success:
             user = model_result.value
-            status_value = (
-                user.status.value
-                if isinstance(user.status, StatusEnum)
-                else str(user.status)
-            )
-            print(f"✅ Model from dict: {user.name} ({status_value})")
+            print(f"✅ Model from dict: {user.name} ({user.status.value})")
 
         # Create model from kwargs
         kwargs_result = u.from_kwargs(
@@ -232,12 +227,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         )
         if kwargs_result.is_success:
             user = kwargs_result.value
-            status_value = (
-                user.status.value
-                if isinstance(user.status, StatusEnum)
-                else str(user.status)
-            )
-            print(f"✅ Model from kwargs: {user.name} ({status_value})")
+            print(f"✅ Model from kwargs: {user.name} ({user.status.value})")
 
         # Merge defaults
         defaults: Mapping[str, t.JsonValue] = {
@@ -248,12 +238,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
             user = merge_result.value
-            status_value = (
-                user.status.value
-                if isinstance(user.status, StatusEnum)
-                else str(user.status)
-            )
-            print(f"✅ Merged defaults: {user.name} ({status_value})")
+            print(f"✅ Merged defaults: {user.name} ({user.status.value})")
 
     @staticmethod
     def _demonstrate_pagination() -> None:

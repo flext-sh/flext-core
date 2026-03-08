@@ -13,18 +13,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from dataclasses import dataclass
 from typing import Any, cast
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import m, t, u
 from tests.test_utils import assertion_helpers
 
 
-@dataclass
-class SimpleObj:
+class SimpleObj(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     """Simple test object."""
 
     name: str
@@ -232,7 +232,7 @@ class TestuMapperConversions:
 
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value."""
-        obj = SimpleObj("test", 1)
+        obj = SimpleObj(name="test", value=1)
         # Pass dict directly - convert_to_json_value handles any dict
         # Purpose is to CONVERT arbitrary objects to JSON-safe format
         res = u.Mapper.convert_to_json_value(cast("Any", {"obj": obj}))
@@ -243,7 +243,7 @@ class TestuMapperConversions:
 
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
-        d = {"a": SimpleObj("test", 1)}
+        d = {"a": SimpleObj(name="test", value=1)}
         # Use convert_to_json_value which handles any dict
         res = u.Mapper.convert_to_json_value(cast("Any", d))
         # Result should be a dict
@@ -255,7 +255,7 @@ class TestuMapperConversions:
 
     def test_convert_list_to_json(self) -> None:
         """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
-        test_list = [{"a": SimpleObj("test", 1)}]
+        test_list = [{"a": SimpleObj(name="test", value=1)}]
         # Use convert_to_json_value which handles any sequence
         res = u.Mapper.convert_to_json_value(cast("Any", test_list))
         # Result should be a list

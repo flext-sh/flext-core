@@ -35,6 +35,25 @@ class FlextInfraRefactorModels:
             description="Resulting source code after transformation",
         )
 
+    class ProjectInfo(FlextModels.ArbitraryTypesModel):
+        name: str = Field(min_length=1, description="Project directory name")
+        path: Path = Field(description="Absolute project path")
+        src_path: Path = Field(description="Absolute src/ path")
+        package_roots: set[str] = Field(
+            default_factory=set,
+            description="Top-level Python package roots in src/",
+        )
+
+    class FileImportData(FlextModels.ArbitraryTypesModel):
+        imported_modules: set[str] = Field(
+            default_factory=set,
+            description="Imported module roots",
+        )
+        imported_symbols: set[str] = Field(
+            default_factory=set,
+            description="Imported symbol names",
+        )
+
     class MethodInfo(FlextModels.ArbitraryTypesModel):
         """Metadata about a method used for ordering inside classes."""
 
@@ -247,7 +266,9 @@ class FlextInfraRefactorModels:
             description="Confidence histogram",
         )
         violations: list[FlextInfraRefactorModels.ClassNestingViolation] = Field(
-            default_factory=list,
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.ClassNestingViolation
+            ](),
             description="Violation details",
         )
         per_file_counts: dict[str, int] = Field(
@@ -286,11 +307,34 @@ class FlextInfraRefactorModels:
             description="Category totals",
         )
         suggestions: list[FlextInfraRefactorModels.HelperClassification] = Field(
-            default_factory=list, description="Classification suggestions"
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.HelperClassification
+            ](),
+            description="Classification suggestions",
         )
         manual_review: list[FlextInfraRefactorModels.HelperClassification] = Field(
-            default_factory=list,
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.HelperClassification
+            ](),
             description="Manual-review candidates",
+        )
+
+    class HelperFileAnalysis(FlextModels.ArbitraryTypesModel):
+        suggestions: list[FlextInfraRefactorModels.HelperClassification] = Field(
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.HelperClassification
+            ](),
+            description="Helper classifications from one file",
+        )
+        totals: dict[str, int] = Field(
+            default_factory=dict,
+            description="Category totals for file helpers",
+        )
+        manual_review: list[FlextInfraRefactorModels.HelperClassification] = Field(
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.HelperClassification
+            ](),
+            description="Helpers requiring manual review",
         )
 
     class ViolationAnalysisReport(FlextModels.ArbitraryTypesModel):
@@ -317,7 +361,9 @@ class FlextInfraRefactorModels:
         top_files: list[
             FlextInfraRefactorModels.ViolationAnalysisReport.TopFileSection
         ] = Field(
-            default_factory=list,
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.ViolationAnalysisReport.TopFileSection
+            ](),
             description="Top hotspot files",
         )
         files_scanned: int = Field(ge=0, description="Files scanned")
@@ -459,8 +505,13 @@ class FlextInfraRefactorModels:
                 default_factory=list,
                 description="Decorators to match",
             )
-            patterns: list[str | PatternRule] = Field(
-                default_factory=list,
+            patterns: list[
+                str | FlextInfraRefactorModels.RuleConfigs.MethodOrderRule.PatternRule
+            ] = Field(
+                default_factory=lambda: list[
+                    str
+                    | FlextInfraRefactorModels.RuleConfigs.MethodOrderRule.PatternRule
+                ](),
                 description="Pattern rules",
             )
             order: list[str] = Field(

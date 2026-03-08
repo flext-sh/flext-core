@@ -42,13 +42,16 @@ class FlextInfraUtilitiesYaml:
 
         """
         raw = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        parsed = safe_load(raw)
+        parsed: t.ContainerValue | None = safe_load(raw)
         if parsed is None:
             return {}
-        if not isinstance(parsed, dict):
+        if not isinstance(parsed, Mapping):
             msg = f"rules.yml must be a mapping: {path}"
             raise TypeError(msg)
-        return dict(parsed)
+        normalized: dict[str, t.ContainerValue] = {}
+        for key, value in parsed.items():
+            normalized[key] = value
+        return normalized
 
     @staticmethod
     def normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:

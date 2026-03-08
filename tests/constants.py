@@ -13,9 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final, Literal
+
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import c, m
 from flext_tests import FlextTestsConstants
@@ -377,9 +378,10 @@ class TestsFlextConstants(FlextTestsConstants):
     class Fixtures:
         """Test fixture dataclasses for flext-core tests."""
 
-        @dataclass(frozen=True, slots=True)
-        class Identifiers:
+        class Identifiers(BaseModel):
             """Test identifiers and IDs."""
+
+            model_config = ConfigDict(frozen=True)
 
             user_id: str = "test_user_123"
             session_id: str = "test_session_123"
@@ -388,9 +390,10 @@ class TestsFlextConstants(FlextTestsConstants):
             request_id: str = "test-request-456"
             correlation_id: str = "test-corr-123"
 
-        @dataclass(frozen=True, slots=True)
-        class Names:
+        class Names(BaseModel):
             """Test module and component names."""
+
+            model_config = ConfigDict(frozen=True)
 
             module_name: str = "test_module"
             handler_name: str = "test_handler"
@@ -402,9 +405,10 @@ class TestsFlextConstants(FlextTestsConstants):
             validation_app: str = "validation-test"
             source_service: str = "test_service"
 
-        @dataclass(frozen=True, slots=True)
-        class ErrorData:
+        class ErrorData(BaseModel):
             """Test error codes and messages."""
+
+            model_config = ConfigDict(frozen=True)
 
             error_code: str = "TEST_ERROR_001"
             validation_error: str = "test_error"
@@ -412,9 +416,10 @@ class TestsFlextConstants(FlextTestsConstants):
             config_error: str = "Config failed"
             timeout_error: str = "Operation timeout"
 
-        @dataclass(frozen=True, slots=True)
-        class Data:
+        class Data(BaseModel):
             """Test field names and data values."""
+
+            model_config = ConfigDict(frozen=True)
 
             field_name: str = "test_field"
             config_key: str = "test_key"
@@ -427,17 +432,19 @@ class TestsFlextConstants(FlextTestsConstants):
             result_data: str = "test_result"
             message: str = "test_message"
 
-        @dataclass(frozen=True, slots=True)
-        class PatternData:
+        class PatternData(BaseModel):
             """Test patterns and formats."""
+
+            model_config = ConfigDict(frozen=True)
 
             slug_input: str = "Test_String"
             slug_expected: str = "test_string"
             uuid_format: str = "550e8400-e29b-41d4-a716-446655440000"
 
-        @dataclass(frozen=True, slots=True)
-        class NumericValues:
+        class NumericValues(BaseModel):
             """Test port and numeric values."""
+
+            model_config = ConfigDict(frozen=True)
 
             port: int = 8080
             timeout: int = 30

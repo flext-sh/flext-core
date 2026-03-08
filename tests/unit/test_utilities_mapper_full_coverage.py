@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
-from dataclasses import dataclass
 from pathlib import Path
 from typing import cast, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import c, m, p, r, t, u
 
@@ -38,8 +37,9 @@ def _build_flags_obj(
     return fn(active_flags, flag_mapping)
 
 
-@dataclass
-class AttrObject:
+class AttrObject(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     """AttrObject class."""
 
     name: str = "name"

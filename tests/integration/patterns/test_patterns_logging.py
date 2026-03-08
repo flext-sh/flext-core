@@ -25,7 +25,7 @@ def make_result_logger(name: str) -> FlextLogger.ResultAdapter:
 
 
 class TestFlextContext:
-    """Test t.Logging.LogContext TypedDict."""
+    """Test t.Logging.LogContext mapping contract."""
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""

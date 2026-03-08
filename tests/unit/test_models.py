@@ -24,12 +24,11 @@ from __future__ import annotations
 import json
 import threading
 from collections.abc import Callable
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core import (
     c,
@@ -53,8 +52,9 @@ class ModelType(StrEnum):
     PAYLOAD = "payload"
 
 
-@dataclass(frozen=True, slots=True)
-class ModelCreationScenario:
+class ModelCreationScenario(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
     """Scenario for testing model creation."""
 
     model_type: ModelType

@@ -8,7 +8,9 @@ from returns.io import IOFailure, IOSuccess
 from returns.maybe import Nothing, Some
 
 from examples.shared import Examples
-from flext_core import FlextResult, e, r, t
+from flext_core import FlextResult, e, m, r
+
+from .models import em
 
 
 class Ex01FlextResult(Examples):
@@ -114,8 +116,12 @@ class Ex01FlextResult(Examples):
             r[str].from_io_result("bad-io-result").error,
         )
 
-        valid_data: dict[str, t.Scalar] = {"name": "Ada", "age": 30}
-        invalid_data: dict[str, t.Scalar] = {"name": "Ada", "age": "bad"}
+        valid_data = m.ConfigMap(
+            root=em.Ex01.ValidPersonPayload(name="Ada", age=30).model_dump()
+        )
+        invalid_data = m.ConfigMap(
+            root=em.Ex01.InvalidPersonPayload(name="Ada", age="bad").model_dump()
+        )
         person_model = Examples.Person
 
         from_validation_ok = r[Examples.Person].from_validation(
@@ -129,15 +135,15 @@ class Ex01FlextResult(Examples):
 
         self.check(
             "to_model.success",
-            r[dict[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
+            r[m.ConfigMap].ok(valid_data).to_model(self.Person).value.age,
         )
         self.check(
             "to_model.from_failure",
-            r[dict[str, t.Container]].fail("missing").to_model(self.Person).error,
+            r[m.ConfigMap].fail("missing").to_model(self.Person).error,
         )
         self.check(
             "to_model.validation_failure",
-            r[dict[str, t.Container]].ok(invalid_data).to_model(self.Person).is_failure,
+            r[m.ConfigMap].ok(invalid_data).to_model(self.Person).is_failure,
         )
 
     # ------------------------------------------------------------------

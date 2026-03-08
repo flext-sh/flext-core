@@ -252,11 +252,7 @@ def main() -> None:
 
     if result.is_success:
         data = result.value
-        patterns = (
-            data.root.get("patterns_demonstrated")
-            if isinstance(data.root, dict)
-            else None
-        )
+        patterns = data.root.get("patterns_demonstrated")
         if isinstance(patterns, Sequence) and not isinstance(
             patterns, (str, bytes, bytearray)
         ):

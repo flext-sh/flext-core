@@ -9,9 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from decimal import Decimal
 from typing import override
+
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
@@ -19,38 +20,43 @@ from tests.test_utils import assertion_helpers
 
 
 # Define Query and Command classes using dataclasses to avoid Pydantic circular dependencies
-@dataclass
-class CreateUserCommand:
+class CreateUserCommand(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     user_id: str
     name: str
     email: str
 
 
-@dataclass
-class FindUserQuery:
+class FindUserQuery(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     user_id: str
 
 
-@dataclass
-class OptionalFieldCommand:
+class OptionalFieldCommand(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     required_field: str
     optional_field: str | None = None
 
 
-@dataclass
-class PagedQuery:
+class PagedQuery(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     page: int
     page_size: int
 
 
-@dataclass
-class CreateUserCmd:
+class CreateUserCmd(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     user_id: str
     name: str
 
 
-@dataclass
-class GetUserQuery:
+class GetUserQuery(BaseModel):
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     user_id: str
 
 
@@ -63,8 +69,9 @@ class TestFlextModelsEntity:
     def test_entity_creation_basic(self) -> None:
         """Test basic entity creation."""
 
-        @dataclass
-        class User:
+        class User(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             unique_id: str
             name: str
             email: str
@@ -77,8 +84,9 @@ class TestFlextModelsEntity:
     def test_entity_equality(self) -> None:
         """Test entity equality based on ID."""
 
-        @dataclass
-        class User:
+        class User(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             unique_id: str
             name: str
 
@@ -112,8 +120,9 @@ class TestFlextModelsValue:
     def test_value_object_creation(self) -> None:
         """Test value object creation."""
 
-        @dataclass
-        class Email:
+        class Email(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             address: str
 
         email1 = Email(address="test@example.com")
@@ -126,8 +135,9 @@ class TestFlextModelsValue:
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
 
-        @dataclass
-        class Price:
+        class Price(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             amount: Decimal
             currency: str
 
@@ -145,8 +155,9 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
 
-        @dataclass
-        class Account:
+        class Account(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             unique_id: str
             owner_name: str
             balance: Decimal
@@ -266,13 +277,15 @@ class TestFlextModelsEdgeCases:
     def test_entity_with_complex_types(self) -> None:
         """Test entity with complex nested types."""
 
-        @dataclass
-        class Address:
+        class Address(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             street: str
             city: str
 
-        @dataclass
-        class Person:
+        class Person(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             unique_id: str
             name: str
             address: Address
@@ -284,12 +297,14 @@ class TestFlextModelsEdgeCases:
     def test_aggregate_root_with_nested_entities(self) -> None:
         """Test aggregate root containing multiple entities."""
 
-        @dataclass
-        class Item:
+        class Item(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             quantity: int
 
-        @dataclass
-        class ShoppingCart:
+        class ShoppingCart(BaseModel):
+
+            model_config = ConfigDict(arbitrary_types_allowed=True)
             unique_id: str
             customer_id: str
 

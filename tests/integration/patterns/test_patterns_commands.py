@@ -10,13 +10,8 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
-from tests.typings import TestsFlextTypes
 
-# TypedDict definitions from consolidated test typings
-CommandPayloadDict = TestsFlextTypes.Fixtures.CommandPayloadDict
-UpdateFieldDict = TestsFlextTypes.Fixtures.UpdateFieldDict
-UpdatePayloadDict = TestsFlextTypes.Fixtures.UpdatePayloadDict
-UserPayloadDict = TestsFlextTypes.Fixtures.UserPayloadDict
+from ...models import TestsFlextModels
 
 # =============================================================================
 # Import required classes for CQRS patterns
@@ -25,6 +20,11 @@ EXPECTED_BULK_SIZE = 2
 
 FlextCommandId = str
 FlextCommandType = str
+UserPayloadModel = TestsFlextModels.Fixtures.UserPayloadModel
+UpdatePayloadModel = TestsFlextModels.Fixtures.UpdatePayloadModel
+CommandPayloadModel = TestsFlextModels.Fixtures.CommandPayloadModel
+UserDataModel = TestsFlextModels.Fixtures.UserDataModel
+UpdateResultModel = TestsFlextModels.Fixtures.UpdateResultModel
 
 
 # TEST COMMAND IMPLEMENTATIONS
@@ -37,13 +37,9 @@ class CreateUserCommand(FlextModels.Command):
     username: str
     email: str
 
-    def get_payload(self) -> UserPayloadDict:
+    def get_payload(self) -> UserPayloadModel:
         """Get command payload."""
-        result: UserPayloadDict = {
-            "username": self.username,
-            "email": self.email,
-        }
-        return result
+        return UserPayloadModel(username=self.username, email=self.email)
 
     def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
@@ -62,9 +58,9 @@ class UpdateUserCommand(FlextModels.Command):
     target_user_id: str
     updates: dict[str, t.ContainerValue]
 
-    def get_payload(self) -> UpdatePayloadDict:
+    def get_payload(self) -> UpdatePayloadModel:
         """Get command payload."""
-        typed_updates: dict[str, UpdateFieldDict] = {
+        typed_updates: dict[str, t.ConfigurationMapping] = {
             key: {
                 "field_name": key,
                 "new_value": (
@@ -73,11 +69,10 @@ class UpdateUserCommand(FlextModels.Command):
             }
             for key, value in self.updates.items()
         }
-        result: UpdatePayloadDict = {
-            "target_user_id": self.target_user_id,
-            "updates": typed_updates,
-        }
-        return result
+        return UpdatePayloadModel(
+            target_user_id=self.target_user_id,
+            updates=typed_updates,
+        )
 
     def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
@@ -91,10 +86,9 @@ class UpdateUserCommand(FlextModels.Command):
 class FailingCommand(FlextModels.Command):
     """Test command that always fails validation."""
 
-    def get_payload(self) -> CommandPayloadDict:
+    def get_payload(self) -> CommandPayloadModel:
         """Get command payload."""
-        result: CommandPayloadDict = {}
-        return result
+        return CommandPayloadModel()
 
     def validate_command(self) -> FlextResult[bool]:
         """Fail validation intentionally."""
@@ -119,9 +113,7 @@ def _update_user_command(
     })
 
 
-class CreateUserCommandHandler(
-    FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]],
-):
+class CreateUserCommandHandler(FlextHandlers[CreateUserCommand, UserDataModel]):
     """Test handler for CreateUserCommand."""
 
     def __init__(self) -> None:
@@ -133,19 +125,19 @@ class CreateUserCommandHandler(
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
-        self.created_users: list[dict[str, t.ContainerValue]] = []
+        self.created_users: list[UserDataModel] = []
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
         return "create_user"
 
     @override
-    def can_handle(self, message_type: object) -> bool:
+    def can_handle(self, message_type: type) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     @override
-    def validate(self, data: object) -> FlextResult[bool]:
+    def validate(self, data: t.ContainerValue) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, CreateUserCommand):
             # Call the command's validate_command method
@@ -156,28 +148,26 @@ class CreateUserCommandHandler(
     def handle(
         self,
         message: CreateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[UserDataModel]:
         """Handle the create user command."""
-        user_data: dict[str, t.ContainerValue] = {
-            "id": f"user_{len(self.created_users) + 1}",
-            "username": message.username,
-            "email": message.email,
-        }
+        user_data = UserDataModel(
+            id=f"user_{len(self.created_users) + 1}",
+            username=message.username,
+            email=message.email,
+        )
         self.created_users.append(user_data)
 
-        return FlextResult[dict[str, t.ContainerValue]].ok(user_data)
+        return FlextResult[UserDataModel].ok(user_data)
 
     def handle_command(
         self,
         command: CreateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[UserDataModel]:
         """Handle the create user command (alias for handle)."""
         return self.handle(command)
 
 
-class UpdateUserCommandHandler(
-    FlextHandlers[UpdateUserCommand, dict[str, t.ContainerValue]],
-):
+class UpdateUserCommandHandler(FlextHandlers[UpdateUserCommand, UpdateResultModel]):
     """Test handler for UpdateUserCommand."""
 
     def __init__(self) -> None:
@@ -189,19 +179,19 @@ class UpdateUserCommandHandler(
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
-        self.updated_users: dict[str, t.ContainerValue] = {}
+        self.updated_users: dict[str, t.ConfigurationMapping] = {}
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
         return "update_user"
 
     @override
-    def can_handle(self, message_type: object) -> bool:
+    def can_handle(self, message_type: type) -> bool:
         """Check if can handle command."""
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
     @override
-    def validate(self, data: object) -> FlextResult[bool]:
+    def validate(self, data: t.ContainerValue) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, UpdateUserCommand):
             # Call the command's validate_command method
@@ -212,26 +202,28 @@ class UpdateUserCommandHandler(
     def handle(
         self,
         message: UpdateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[UpdateResultModel]:
         """Handle the update user command."""
         if message.target_user_id not in self.updated_users:
             self.updated_users[message.target_user_id] = {}
 
         user_updates = self.updated_users[message.target_user_id]
-        if isinstance(user_updates, dict):
-            user_updates.update(message.updates)
+        merged = dict(user_updates)
+        merged.update(message.updates)
+        self.updated_users[message.target_user_id] = merged
 
-        result_data: dict[str, t.ContainerValue] = {
-            "target_user_id": message.target_user_id,
-            "updated_fields": list(message.updates.keys()),
-        }
+        result_data = UpdateResultModel(
+            user_id=message.target_user_id,
+            updated_fields=list(message.updates.keys()),
+            update_count=len(message.updates),
+        )
 
-        return FlextResult[dict[str, t.ContainerValue]].ok(result_data)
+        return FlextResult[UpdateResultModel].ok(result_data)
 
     def handle_command(
         self,
         command: UpdateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[UpdateResultModel]:
         """Handle the update user command (alias for handle)."""
         return self.handle(command)
 
@@ -305,12 +297,11 @@ class TestFlextCommand:
         command = _create_user_command(username="test_user", email="test@example.com")
         payload = command.get_payload()
 
-        # UserPayloadDict has total=False, so use .get() for optional fields
-        username = payload.get("username")
+        username = payload.username
         if username != "test_user":
             msg = f"Expected {'test_user'}, got {username}"
             raise AssertionError(msg)
-        assert payload.get("email") == "test@example.com"
+        assert payload.email == "test@example.com"
 
     def test_validate_command_success(self) -> None:
         """Test successful command validation."""
@@ -386,13 +377,9 @@ class TestFlextCommandHandler:
         """Test creating command handler."""
         handler = CreateUserCommandHandler()
 
-        handler_id = (
-            handler._config_model.handler_id
-            if hasattr(handler, "_config_model")
-            else ""
-        )
-        if handler_id != "create_user_handler":
-            msg = f"Expected {'create_user_handler'}, got {handler_id}"
+        handler_id = handler.handler_name
+        if handler_id != "Create User Handler":
+            msg = f"Expected {'Create User Handler'}, got {handler_id}"
             raise AssertionError(
                 msg,
             )
@@ -412,7 +399,7 @@ class TestFlextCommandHandler:
         """Test can_handle with wrong command type."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            UserDataModel,
         ] = CreateUserCommandHandler()
 
         if handler.can_handle(UpdateUserCommand):
@@ -425,7 +412,7 @@ class TestFlextCommandHandler:
         """Test can_handle with non-command object."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            UserDataModel,
         ] = CreateUserCommandHandler()
 
         if handler.can_handle(str):
@@ -438,7 +425,7 @@ class TestFlextCommandHandler:
         """Test successful command handling."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            UserDataModel,
         ] = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
             username="john",
@@ -451,14 +438,14 @@ class TestFlextCommandHandler:
             msg = f"Expected True, got {result.is_success}"
             raise AssertionError(msg)
         assert result.value is not None
-        if (result.value or {})["username"] != "john":
-            msg = f"Expected {'john'}, got {(result.value or {})['username']}"
+        if result.value.username != "john":
+            msg = f"Expected {'john'}, got {result.value.username}"
             raise AssertionError(
                 msg,
             )
-        assert (result.value or {})["email"] == "john@example.com"
-        if "id" not in result.value:
-            msg = f"Expected {'id'} in {result.value}"
+        assert result.value.email == "john@example.com"
+        if result.value.id is None:
+            msg = "Expected id to be present"
             raise AssertionError(msg)
 
     def test_process_command_success(self) -> None:
@@ -482,7 +469,7 @@ class TestFlextCommandHandler:
         """Test processing with command validation failure."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            UserDataModel,
         ] = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
             username="",
@@ -574,6 +561,6 @@ class TestFlextCommandResults:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)
         # FlextResult doesn't have metadata, use error_data which acts as metadata
-        if command_result.error_data == {}:
+        if command_result.error_data is not None:
             # Test passes - metadata would be empty for successful results
             pass

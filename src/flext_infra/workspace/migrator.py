@@ -7,13 +7,17 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
+from pydantic import TypeAdapter
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
+from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r, s
 from flext_infra import FlextInfraDiscoveryService, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.constants import c
+
+_OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
 
 
 class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
@@ -48,7 +52,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
 
     @staticmethod
     def _ensure_table(document: tomlkit.TOMLDocument, key: str) -> Table:
-        current = document.get(key)
+        current = document.get(key, None)
         if isinstance(current, Table):
             return current
         created = tomlkit.table()
@@ -56,22 +60,34 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         return created
 
     @staticmethod
+    def _toml_get(container: TOMLDocument | Table, key: str) -> object | None:
+        return container.get(key, None)
+
+    @staticmethod
     def _has_flext_core_dependency(document: tomlkit.TOMLDocument) -> bool:
-        project = document.get(c.Infra.Toml.PROJECT)
+        project = FlextInfraProjectMigrator._toml_get(document, c.Infra.Toml.PROJECT)
         if isinstance(project, Table):
-            deps = project.get(c.Infra.Toml.DEPENDENCIES)
+            deps = FlextInfraProjectMigrator._toml_get(
+                project,
+                c.Infra.Toml.DEPENDENCIES,
+            )
             if isinstance(deps, list):
-                for dep in deps:
+                deps_list = _OBJECT_LIST_ADAPTER.validate_python(deps)
+                for dep_raw in deps_list:
+                    dep = str(dep_raw)
                     if str(dep).strip().startswith(c.Infra.Packages.CORE):
                         return True
 
-        tool = document.get(c.Infra.Toml.TOOL)
+        tool = FlextInfraProjectMigrator._toml_get(document, c.Infra.Toml.TOOL)
         if not isinstance(tool, Table):
             return False
-        poetry = tool.get(c.Infra.Toml.POETRY)
+        poetry = FlextInfraProjectMigrator._toml_get(tool, c.Infra.Toml.POETRY)
         if not isinstance(poetry, Table):
             return False
-        poetry_deps = poetry.get(c.Infra.Toml.DEPENDENCIES)
+        poetry_deps = FlextInfraProjectMigrator._toml_get(
+            poetry,
+            c.Infra.Toml.DEPENDENCIES,
+        )
         if not isinstance(poetry_deps, Table):
             return False
         return c.Infra.Packages.CORE in poetry_deps
@@ -345,18 +361,20 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
             return r[str].ok("")
 
         project_table = self._ensure_table(document, c.Infra.Toml.PROJECT)
-        dependencies = project_table.get(c.Infra.Toml.DEPENDENCIES)
-        if not isinstance(dependencies, list):
-            dependencies = tomlkit.array()
-            _ = dependencies.multiline(True)
-            project_table[c.Infra.Toml.DEPENDENCIES] = dependencies
-
-        dependencies.append("flext-core @ ../flext-core")
+        dependencies_raw = self._toml_get(project_table, c.Infra.Toml.DEPENDENCIES)
+        dependencies: list[str] = []
+        if isinstance(dependencies_raw, list):
+            dependency_items = _OBJECT_LIST_ADAPTER.validate_python(dependencies_raw)
+            dependencies = [str(dep_raw) for dep_raw in dependency_items]
+        dependency_spec = "flext-core @ ../flext-core"
+        if dependency_spec not in dependencies:
+            dependencies.append(dependency_spec)
+        project_table[c.Infra.Toml.DEPENDENCIES] = dependencies
 
         if not dry_run:
             try:
                 _ = pyproject_path.write_text(
-                    tomlkit.dumps(document),
+                    document.as_string(),
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
             except OSError as exc:

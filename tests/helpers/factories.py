@@ -10,10 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import count
 from typing import ClassVar, override
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels, FlextResult, FlextService, m, t
 from tests.constants import TestsFlextConstants
@@ -40,16 +41,17 @@ class ServiceTestType(StrEnum):
     FAIL = "fail"
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceTestCase:
+class ServiceTestCase(BaseModel):
     """Test case data container (not a test class)."""
+
+    model_config = ConfigDict(frozen=True)
 
     service_type: ServiceTestType
     input_value: str
     expected_success: bool = True
     expected_error: str | None = None
     extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
-    description: str = field(default="", compare=False)
+    description: str = Field(default="", exclude=True)
 
 
 # =========================================================================
