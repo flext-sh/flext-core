@@ -117,9 +117,12 @@ class PostCheckGate:
 
 
 class FlextInfraRefactorRuleDefinitionValidator:
+    """Validate individual refactor rule definitions for correctness."""
+
     def validate_rule_definition(
         self, rule_def: Mapping[str, t.ContainerValue]
     ) -> str | None:
+        """Validate a rule definition and return error message if invalid."""
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
         fix_action = (
             str(rule_def.get(c.Infra.ReportKeys.FIX_ACTION, "")).strip().lower()
@@ -143,24 +146,31 @@ class FlextInfraRefactorRuleDefinitionValidator:
 
 
 class FlextInfraRefactorCliSupport:
+    """CLI support utilities for the refactor engine."""
+
     @staticmethod
     def info(message: str) -> None:
+        """Write an informational message to stdout."""
         _ = sys.stdout.write(f"{message}\n")
 
     @staticmethod
     def error(message: str) -> None:
+        """Write an error message to stderr."""
         _ = sys.stderr.write(f"ERROR: {message}\n")
 
     @staticmethod
     def header(message: str) -> None:
+        """Write a section header to stdout."""
         _ = sys.stdout.write(f"\n{message}\n")
 
     @staticmethod
     def debug(message: str) -> None:
+        """Write a debug message to stdout."""
         _ = sys.stdout.write(f"DEBUG: {message}\n")
 
     @staticmethod
     def project_name_from_path(file_path: Path) -> str:
+        """Extract project name from a file path by locating pyproject.toml."""
         for parent in file_path.parents:
             if (parent / c.Infra.Files.PYPROJECT_FILENAME).exists() and (
                 parent / c.Infra.Files.MAKEFILE_FILENAME
@@ -172,10 +182,11 @@ class FlextInfraRefactorCliSupport:
     def build_impact_map(
         results: list[m.Infra.Refactor.Result],
     ) -> list[dict[str, str]]:
+        """Build an impact map from refactor results for reporting."""
         impact_map: list[dict[str, str]] = []
-        symbol_pattern = re.compile("^(.*):\\s+(.+)\\s+->\\s+(.+?)(?:\\s+\\(|$)")
-        added_pattern = re.compile("^\\[(.+)\\]\\s+Added keyword:\\s+(.+)$")
-        removed_pattern = re.compile("^\\[(.+)\\]\\s+Removed keyword:\\s+(.+)$")
+        symbol_pattern = re.compile(r"^(.*):\s+(.+)\s+->\s+(.+?)(?:\s+\(|$)")
+        added_pattern = re.compile(r"^\[(.+)\]\s+Added keyword:\s+(.+)$")
+        removed_pattern = re.compile(r"^\[(.+)\]\s+Removed keyword:\s+(.+)$")
         for result in results:
             if not result.success:
                 impact_map.append({
@@ -236,6 +247,7 @@ class FlextInfraRefactorCliSupport:
     def write_impact_map(
         results: list[m.Infra.Refactor.Result], output_path: Path
     ) -> bool:
+        """Write impact map to a JSON file."""
         impact_map = FlextInfraRefactorCliSupport.build_impact_map(results)
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -252,6 +264,7 @@ class FlextInfraRefactorCliSupport:
 
     @staticmethod
     def print_diff(original: str, refactored: str, file_path: Path) -> None:
+        """Print a unified diff between original and refactored code."""
         FlextInfraRefactorCliSupport.header(f"Diff for {file_path.name}")
         diff = difflib.unified_diff(
             original.splitlines(keepends=True),
@@ -268,6 +281,7 @@ class FlextInfraRefactorCliSupport:
 
     @staticmethod
     def print_rules_table(rules: list[dict[str, str | bool]]) -> None:
+        """Print a formatted table of available refactor rules."""
         FlextInfraRefactorCliSupport.header("Available Rules")
         if not rules:
             FlextInfraRefactorCliSupport.info("No rules loaded.")
@@ -302,6 +316,7 @@ class FlextInfraRefactorCliSupport:
 
     @staticmethod
     def print_summary(results: list[m.Infra.Refactor.Result], *, dry_run: bool) -> None:
+        """Print a summary of refactor results."""
         modified = sum(1 for item in results if item.modified)
         failed = sum(1 for item in results if not item.success)
         unchanged = sum(1 for item in results if item.success and (not item.modified))
@@ -321,6 +336,7 @@ class FlextInfraRefactorCliSupport:
     def print_violation_summary(
         analysis: m.Infra.Refactor.ViolationAnalysisReport,
     ) -> None:
+        """Print a summary of violation analysis results."""
         FlextInfraRefactorCliSupport.header("Violation Analysis")
         FlextInfraRefactorCliSupport.info(f"Files scanned: {analysis.files_scanned}")
         if not analysis.totals:
@@ -338,6 +354,7 @@ class FlextInfraRefactorCliSupport:
 
     @staticmethod
     def run_cli(engine_cls: type[FlextInfraRefactorEngine]) -> int:
+        """Run the refactor engine CLI with argument parsing."""
         parser = argparse.ArgumentParser(
             description="Flext Refactor Engine - Declarative code transformation",
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -442,8 +459,11 @@ class FlextInfraRefactorCliSupport:
 
 
 class FlextInfraRefactorMROMigrationValidator:
+    """Validate MRO migration completeness across a workspace."""
+
     @classmethod
     def validate(cls, *, workspace_root: Path, target: str) -> tuple[int, int]:
+        """Validate migration status and return remaining candidates count."""
         file_results, _ = FlextInfraRefactorMROMigrationScanner.scan_workspace(
             workspace_root=workspace_root,
             target=target,

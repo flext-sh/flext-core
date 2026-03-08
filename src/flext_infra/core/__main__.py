@@ -22,8 +22,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextRuntime, t, u
-from flext_infra import c, m, output
+from flext_core import FlextRuntime
+from flext_infra import c, m, output, t, u
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra.core.inventory import FlextInfraInventoryService
 from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor

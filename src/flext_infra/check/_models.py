@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pydantic import ConfigDict, Field, computed_field, model_serializer
 
-from flext_core import FlextModels, t
-from flext_infra.constants import FlextInfraConstants as c
+from flext_core import FlextModels
+from flext_infra import c, t
 
 
 class FlextInfraCheckModels:

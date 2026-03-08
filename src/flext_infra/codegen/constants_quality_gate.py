@@ -11,8 +11,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_core import t
-from flext_infra import c, m, u
+from flext_infra import c, m, t, u
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
 __all__ = ["FlextInfraCodegenConstantsQualityGate"]

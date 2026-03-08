@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from flext_core import FlextModels
-from flext_infra.constants import FlextInfraConstants as c
+from flext_infra import c
 
 
 class FlextInfraBasemkModels:

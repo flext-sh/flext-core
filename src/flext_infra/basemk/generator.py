@@ -7,8 +7,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, TextIO, override
 
-from flext_core import r, s, t
-from flext_infra import FlextInfraCommandRunner, c, m, p
+from flext_core import r, s
+from flext_infra import FlextInfraCommandRunner, c, m, p, t
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 
 

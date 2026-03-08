@@ -12,7 +12,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core import r, t
+from flext_core import r
+from flext_infra import t
 from flext_infra.json_io import FlextInfraJsonService
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 import libcst as cst
@@ -46,26 +47,7 @@ from flext_infra.refactor.validation import (
     FlextInfraRefactorRuleDefinitionValidator,
 )
 
-
-class _RefactorCliOutput:
-    @staticmethod
-    def info(message: str) -> None:
-        _ = sys.stdout.write(f"{message}\n")
-
-    @staticmethod
-    def error(message: str) -> None:
-        _ = sys.stderr.write(f"ERROR: {message}\n")
-
-    @staticmethod
-    def header(message: str) -> None:
-        _ = sys.stdout.write(f"\n{message}\n")
-
-    @staticmethod
-    def debug(message: str) -> None:
-        _ = sys.stdout.write(f"DEBUG: {message}\n")
-
-
-output = _RefactorCliOutput()
+output = FlextInfraRefactorCliSupport
 
 
 class FlextInfraRefactorEngine:
@@ -172,7 +154,10 @@ class FlextInfraRefactorEngine:
     def load_rules(self) -> r[list[FlextInfraRefactorRule]]:
         """Load and instantiate enabled rules from rules directory."""
         rules_result = self.rule_loader.load_rules(
-            self.rule_filters, self.rule_validator, self._build_rule
+            self.rule_filters,
+            self.rule_validator,
+            self._build_rule,
+            self._build_file_rules,
         )
         if rules_result.is_failure:
             return r[list[FlextInfraRefactorRule]].fail(rules_result.error or "")
@@ -428,8 +413,11 @@ class FlextInfraRefactorEngine:
     def set_rule_filters(self, filters: list[str]) -> None:
         self.rule_filters = [item.lower() for item in filters]
 
+    def _build_file_rules(self) -> list[ClassNestingRefactorRule]:
+        return [ClassNestingRefactorRule()]
+
     def _build_rule(
-        self, rule_def: dict[str, t.ContainerValue]
+        self, rule_def: Mapping[str, t.ContainerValue]
     ) -> FlextInfraRefactorRule | None:
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
         fix_action = (

@@ -15,7 +15,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_infra.constants import c
+from flext_infra import c
 from flext_infra.subprocess import FlextInfraCommandRunner
 
 

@@ -9,10 +9,8 @@ from typing import override
 import libcst as cst
 
 from flext_infra import c, m
-from flext_infra.refactor.mro_migrator import (
-    CONSTANT_PATTERN,
-    FlextInfraRefactorMROMigrationTransformer,
-)
+from flext_infra.refactor.mro_migrator import FlextInfraRefactorMROMigrationTransformer
+from flext_infra.refactor.mro_resolver import CONSTANT_PATTERN
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 
 

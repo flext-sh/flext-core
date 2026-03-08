@@ -13,9 +13,8 @@ from tomlkit.items import Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r, s
-from flext_infra import FlextInfraDiscoveryService, m, p
+from flext_infra import FlextInfraDiscoveryService, c, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
-from flext_infra.constants import c
 
 _OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
 

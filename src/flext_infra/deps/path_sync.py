@@ -11,8 +11,7 @@ from pydantic import TypeAdapter
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, output
-from flext_infra.constants import c
+from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, c, output
 
 logger = FlextLogger.create_module_logger(__name__)
 _STRING_LIST_ADAPTER = TypeAdapter(list[str])

@@ -255,6 +255,41 @@ class FlextInfraRefactorConstants:
     TYPED_DICT_MIN_ARGS: int = 2
     "Minimum positional args expected in TypedDict(name, fields, ...)."
 
+    NAMESPACE_FACADE_FAMILIES: ClassVar[dict[str, str]] = dict(FAMILY_SUFFIXES)
+    NAMESPACE_FACADE_FILE_PATTERNS: ClassVar[dict[str, str]] = dict(FAMILY_FILES)
+    NAMESPACE_CONSTANT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"^_?[A-Z][A-Z0-9_]+$"
+    )
+    NAMESPACE_SETTINGS_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "settings.py",
+        "_settings.py",
+    })
+    NAMESPACE_PROTECTED_FILES: ClassVar[frozenset[str]] = frozenset({
+        "settings.py",
+        "_settings.py",
+        "__init__.py",
+        "__main__.py",
+        "__version__.py",
+        "conftest.py",
+        "py.typed",
+    })
+    NAMESPACE_MIN_ALIAS_LENGTH: ClassVar[int] = 2
+    NAMESPACE_MAX_RENDERED_LOOSE_OBJECTS: ClassVar[int] = 10
+    NAMESPACE_MAX_RENDERED_IMPORT_VIOLATIONS: ClassVar[int] = 5
+    NAMESPACE_FILE_TO_FAMILY: ClassVar[dict[str, str]] = {
+        f"{suffix.lower()}.py": alias for alias, suffix in FAMILY_SUFFIXES.items()
+    }
+    NAMESPACE_FAMILY_EXPECTED_ALIAS: ClassVar[dict[str, tuple[str, str]]] = {
+        f"{suffix.lower()}.py": (alias, suffix)
+        for alias, suffix in FAMILY_SUFFIXES.items()
+    }
+    NAMESPACE_CANONICAL_PROTOCOL_FILES: ClassVar[frozenset[str]] = (
+        MRO_PROTOCOLS_FILE_NAMES
+    )
+    NAMESPACE_CANONICAL_PROTOCOL_DIR: ClassVar[str] = MRO_PROTOCOLS_DIRECTORY
+    NAMESPACE_CANONICAL_TYPINGS_FILES: ClassVar[frozenset[str]] = MRO_TYPINGS_FILE_NAMES
+    NAMESPACE_CANONICAL_TYPINGS_DIR: ClassVar[str] = MRO_TYPINGS_DIRECTORY
+
     class MethodCategory:
         MAGIC: ClassVar[str] = "magic"
         PROPERTY: ClassVar[str] = "property"

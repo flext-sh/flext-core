@@ -10,16 +10,17 @@ import shutil
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import FlextLogger, r, t
+from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
     FlextInfraTomlService,
+    c,
     m,
     output,
     p,
+    t,
 )
-from flext_infra.constants import c
 
 logger = FlextLogger.create_module_logger(__name__)
 

@@ -13,7 +13,7 @@ import pytest
 
 from flext_core import FlextContext, r
 from tests.conftest import test_framework
-from tests.models import AutomatedTestScenario
+from tests import m
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -59,7 +59,7 @@ class TestAutomatedFlextContext:
         ids=lambda case: case["description"],
     )
     def test_automated_context_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self, test_scenario: m.Tests.AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for context functionality."""
         try:

@@ -18,9 +18,9 @@ from flext_core import FlextResult, FlextService, m, t
 from ..constants import TestsFlextConstants
 from ..models import TestsFlextModels
 
-User = TestsFlextModels.Core.User
-ServiceTestType = TestsFlextModels.Core.ServiceTestType
-ServiceTestCase = TestsFlextModels.Core.ServiceTestCase
+User = TestsFlextModels.Tests.User
+ServiceTestType = TestsFlextModels.Tests.ServiceTestType
+ServiceTestCase = TestsFlextModels.Tests.ServiceTestCase
 
 
 class GetUserService(FlextService[User]):

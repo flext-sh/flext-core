@@ -14,16 +14,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 import pytest
 
 from flext_core import FlextResult, t, u
-from tests.typings import TestsFlextTypes
 
-FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
-FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
-MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
+from ... import m
+
+FixtureCaseDict = m.Tests.FixtureCaseDict
+FixtureDataDict = m.Tests.FixtureDataDict
+MockScenarioData = m.Tests.MockScenarioData
 TestFunction = Callable[[object], None]
 
 
@@ -57,11 +57,11 @@ class MockScenario:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
-        self.given: dict[str, str | int | bool] = data.get("given", {})
-        self.when: dict[str, str | int | bool] = data.get("when", {})
-        self.then: dict[str, str | int | bool] = data.get("then", {})
-        self.tags: list[str] = data.get("tags", [])
-        self.priority: str = str(data.get("priority", "normal"))
+        self.given = data.given
+        self.when = data.when
+        self.then = data.then
+        self.tags = data.tags
+        self.priority = data.priority
 
 
 class GivenWhenThenBuilder:
@@ -152,9 +152,7 @@ class GivenWhenThenBuilder:
         given_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
                 self._given, {k: str(k) for k in self._given}, keep_unmapped=True
-            ).value
-            if isinstance(self._given, dict)
-            else {},
+            ).value,
             convert_dict_value,
         )
         given_converted: dict[str, str | int | bool] = {
@@ -163,9 +161,7 @@ class GivenWhenThenBuilder:
         when_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
                 self._when, {k: str(k) for k in self._when}, keep_unmapped=True
-            ).value
-            if isinstance(self._when, dict)
-            else {},
+            ).value,
             convert_dict_value,
         )
         when_converted: dict[str, str | int | bool] = {
@@ -174,21 +170,19 @@ class GivenWhenThenBuilder:
         then_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
                 self._then, {k: str(k) for k in self._then}, keep_unmapped=True
-            ).value
-            if isinstance(self._then, dict)
-            else {},
+            ).value,
             convert_dict_value,
         )
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
-        scenario_data: MockScenarioData = {
+        scenario_data = MockScenarioData.model_validate({
             "given": given_converted,
             "when": when_converted,
             "then": then_converted,
             "tags": self._tags,
             "priority": self._priority,
-        }
+        })
         return MockScenario(self.name, scenario_data)
 
 
@@ -293,7 +287,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        cast("FixtureCaseDict", kwargs)
+        self._cases.append(FixtureCaseDict.model_validate(kwargs))
         return self
 
     def add_success_cases(
@@ -337,12 +331,10 @@ class ParameterizedTestBuilder:
 
         """
         success_params = [
-            (str(c.get("email", "")), str(c.get("input", "")), True)
-            for c in self._success_cases
+            (str(c.email), str(c.input), True) for c in self._success_cases
         ]
         failure_params = [
-            (str(c.get("email", "")), str(c.get("input", "")), False)
-            for c in self._failure_cases
+            (str(c.email), str(c.input), False) for c in self._failure_cases
         ]
         return success_params + failure_params
 
@@ -353,10 +345,7 @@ class ParameterizedTestBuilder:
             list[str]: List of test IDs.
 
         """
-        return [
-            str(c.get("input", ""))
-            for c in (*self._success_cases, *self._failure_cases)
-        ]
+        return [str(c.input) for c in (*self._success_cases, *self._failure_cases)]
 
 
 class AssertionBuilder:
@@ -514,12 +503,24 @@ class TestAdvancedPatterns:
         builder = (
             ParameterizedTestBuilder("email_validation")
             .add_success_cases([
-                {"email": "valid@example.com", "input": "valid@example.com"},
-                {"email": "user.name@domain.co.uk", "input": "user.name@domain.co.uk"},
+                FixtureCaseDict.model_validate({
+                    "email": "valid@example.com",
+                    "input": "valid@example.com",
+                }),
+                FixtureCaseDict.model_validate({
+                    "email": "user.name@domain.co.uk",
+                    "input": "user.name@domain.co.uk",
+                }),
             ])
             .add_failure_cases([
-                {"email": "invalid-email", "input": "invalid-email"},
-                {"email": "@domain.com", "input": "@domain.com"},
+                FixtureCaseDict.model_validate({
+                    "email": "invalid-email",
+                    "input": "invalid-email",
+                }),
+                FixtureCaseDict.model_validate({
+                    "email": "@domain.com",
+                    "input": "@domain.com",
+                }),
             ])
         )
         params = builder.build_pytest_params()
@@ -549,13 +550,13 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: MockScenarioData = {
+        scenario_data = MockScenarioData.model_validate({
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
             "tags": ["api", "integration"],
             "priority": "medium",
-        }
+        })
         scenario = MockScenario("api_request", scenario_data)
         assert scenario.name == "api_request"
         assert scenario.given["user"] == "authenticated"
@@ -631,14 +632,16 @@ class TestAdvancedPatterns:
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        assert isinstance(nested_data, dict)
-        nested_dict = nested_data.get("id") if isinstance(nested_data, dict) else None
-        assert nested_dict is not None or "id" in nested_data
-        if isinstance(nested_data, dict) and "id" in nested_data:
-            id_value: object = nested_data["id"]
+        nested_mapping: dict[str, t.ContainerValue] = (
+            nested_data if isinstance(nested_data, dict) else {}
+        )
+        nested_dict = nested_mapping.get("id")
+        assert nested_dict is not None or "id" in nested_mapping
+        if "id" in nested_mapping:
+            id_value: object = nested_mapping["id"]
             assert id_value == "nested-456"
-        if isinstance(nested_data, dict) and "name" in nested_data:
-            name_value: object = nested_data["name"]
+        if "name" in nested_mapping:
+            name_value: object = nested_mapping["name"]
             assert name_value == "Jane"
 
     def test_fluent_interface_pattern(self) -> None:

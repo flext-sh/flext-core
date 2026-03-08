@@ -10,12 +10,13 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
-from tests.typings import TestsFlextTypes
 
-CommandPayloadDict = TestsFlextTypes.Fixtures.CommandPayloadDict
-UpdateFieldDict = TestsFlextTypes.Fixtures.UpdateFieldDict
-UpdatePayloadDict = TestsFlextTypes.Fixtures.UpdatePayloadDict
-UserPayloadDict = TestsFlextTypes.Fixtures.UserPayloadDict
+from ... import m
+
+CommandPayloadDict = m.Tests.CommandPayloadDict
+UpdateFieldDict = m.Tests.UpdateFieldDict
+UpdatePayloadDict = m.Tests.UpdatePayloadDict
+UserPayloadDict = m.Tests.UserPayloadDict
 EXPECTED_BULK_SIZE = 2
 FlextCommandId = str
 FlextCommandType = str
@@ -29,8 +30,10 @@ class CreateUserCommand(FlextModels.Command):
 
     def get_payload(self) -> UserPayloadDict:
         """Get command payload."""
-        result: UserPayloadDict = {"username": self.username, "email": self.email}
-        return result
+        return UserPayloadDict.model_validate({
+            "username": self.username,
+            "email": self.email,
+        })
 
     def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
@@ -52,19 +55,18 @@ class UpdateUserCommand(FlextModels.Command):
     def get_payload(self) -> UpdatePayloadDict:
         """Get command payload."""
         typed_updates: dict[str, UpdateFieldDict] = {
-            key: {
+            key: UpdateFieldDict.model_validate({
                 "field_name": key,
                 "new_value": value
                 if isinstance(value, (str, int, bool))
                 else str(value),
-            }
+            })
             for key, value in self.updates.items()
         }
-        result: UpdatePayloadDict = {
+        return UpdatePayloadDict.model_validate({
             "target_user_id": self.target_user_id,
             "updates": typed_updates,
-        }
-        return result
+        })
 
     def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
@@ -80,8 +82,7 @@ class FailingCommand(FlextModels.Command):
 
     def get_payload(self) -> CommandPayloadDict:
         """Get command payload."""
-        result: CommandPayloadDict = {}
-        return result
+        return CommandPayloadDict.model_validate({})
 
     def validate_command(self) -> FlextResult[bool]:
         """Fail validation intentionally."""
@@ -265,11 +266,11 @@ class TestFlextCommand:
         """Test getting command payload."""
         command = _create_user_command(username="test_user", email="test@example.com")
         payload = command.get_payload()
-        username = payload.get("username")
+        username = payload.username
         if username != "test_user":
             msg = f"Expected {'test_user'}, got {username}"
             raise AssertionError(msg)
-        assert payload.get("email") == "test@example.com"
+        assert payload.email == "test@example.com"
 
     def test_validate_command_success(self) -> None:
         """Test successful command validation."""
@@ -470,5 +471,4 @@ class TestFlextCommandResults:
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)
-        if command_result.error_data == {}:
-            pass
+        assert command_result.error_data is None

@@ -5,18 +5,60 @@ from __future__ import annotations
 import fnmatch
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+import libcst as cst
 
 from flext_core import r
 from flext_infra import c, m, t, u
-from flext_infra.refactor._types import FlextInfraRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
+
+if TYPE_CHECKING:
+    from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
+
+
+class FlextInfraRefactorRule:
+    """Base class for flext_infra refactor rules."""
+
+    def __init__(self, config: Mapping[str, t.ContainerValue]) -> None:
+        """Initialize rule metadata from rule config."""
+        self.config = dict(config)
+        rule_id = self.config.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)
+        self.rule_id = str(rule_id)
+        name_raw = self.config.get(c.Infra.Toml.NAME, self.rule_id)
+        self.name = str(name_raw)
+        description_raw = self.config.get("description", "")
+        self.description = description_raw if isinstance(description_raw, str) else ""
+        enabled_raw = self.config.get(c.Infra.ReportKeys.ENABLED, True)
+        self.enabled = bool(enabled_raw)
+        severity_raw = self.config.get("severity", c.Infra.Severity.WARNING)
+        self.severity = str(severity_raw)
+
+    def apply(
+        self, tree: cst.Module, _file_path: Path | None = None
+    ) -> tuple[cst.Module, list[str]]:
+        """Apply the rule to a CST module and return transformed tree plus changes."""
+        return (tree, [])
+
+    def matches_filter(self, filter_pattern: str) -> bool:
+        """Return whether the rule matches a case-insensitive filter string."""
+        pattern_lower = filter_pattern.lower()
+        return (
+            pattern_lower in (self.rule_id or "").lower()
+            or pattern_lower in (self.name or "").lower()
+            or pattern_lower in (self.description or "").lower()
+        )
 
 
 class FlextInfraRefactorRuleLoader:
+    """Load and resolve refactor rules from YAML configuration files."""
+
     def __init__(self, config_path: Path) -> None:
+        """Initialize with path to the refactor engine configuration file."""
         self.config_path = config_path
 
     def load_config(self) -> r[t.ConfigurationMapping]:
+        """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.Yaml.safe_load_yaml(self.config_path)
             normalized = dict(loaded)
@@ -33,15 +75,18 @@ class FlextInfraRefactorRuleLoader:
     def extract_engine_file_filters(
         self, config: t.ConfigurationMapping
     ) -> tuple[list[str], list[str]]:
+        """Extract ignore patterns and file extensions from engine config."""
         scope = self._resolve_engine_config(config)
         return (list(scope.ignore_patterns), list(scope.file_extensions))
 
     def extract_project_scan_dirs(self, config: t.ConfigurationMapping) -> list[str]:
+        """Extract project scan directories from engine config."""
         scope = self._resolve_engine_config(config)
         return list(scope.project_scan_dirs)
 
     @staticmethod
     def discover_workspace_projects(workspace_root: Path) -> list[Path]:
+        """Discover projects within a workspace by locating pyproject.toml files."""
         projects: list[Path] = []
         root_has_pyproject = (
             workspace_root / c.Infra.Files.PYPROJECT_FILENAME
@@ -66,15 +111,13 @@ class FlextInfraRefactorRuleLoader:
         build_rule: Callable[
             [Mapping[str, t.ContainerValue]], FlextInfraRefactorRule | None
         ],
-    ) -> r[tuple[list[FlextInfraRefactorRule], list]]:
-        from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
-
+        build_file_rules: Callable[[], list[ClassNestingRefactorRule]],
+    ) -> r[tuple[list[FlextInfraRefactorRule], list[ClassNestingRefactorRule]]]:
+        """Load rules from YAML files, validate, and build rule instances."""
         try:
             rules_dir = self.config_path.parent / c.Infra.ReportKeys.RULES
             loaded_rules: list[FlextInfraRefactorRule] = []
-            loaded_file_rules: list[ClassNestingRefactorRule] = [
-                ClassNestingRefactorRule()
-            ]
+            loaded_file_rules = build_file_rules()
             unknown_rules: list[str] = []
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 try:
@@ -127,16 +170,18 @@ class FlextInfraRefactorRuleLoader:
                     loaded_rules.append(rule)
             if unknown_rules:
                 unknown = ", ".join(sorted(unknown_rules))
-                return r[tuple[list[FlextInfraRefactorRule], list]].fail(
-                    f"Unknown rule mapping for: {unknown}"
-                )
-            return r[tuple[list[FlextInfraRefactorRule], list]].ok(
-                (loaded_rules, loaded_file_rules)
-            )
+                return r[
+                    tuple[
+                        list[FlextInfraRefactorRule], list["ClassNestingRefactorRule"]
+                    ]
+                ].fail(f"Unknown rule mapping for: {unknown}")
+            return r[
+                tuple[list[FlextInfraRefactorRule], list["ClassNestingRefactorRule"]]
+            ].ok((loaded_rules, loaded_file_rules))
         except Exception as exc:
-            return r[tuple[list[FlextInfraRefactorRule], list]].fail(
-                f"Failed to load rules: {exc}"
-            )
+            return r[
+                tuple[list[FlextInfraRefactorRule], list["ClassNestingRefactorRule"]]
+            ].fail(f"Failed to load rules: {exc}")
 
     def _resolve_engine_config(
         self, config: t.ConfigurationMapping
@@ -150,10 +195,10 @@ class FlextInfraRefactorRuleLoader:
     @staticmethod
     def _coerce_rule_definitions(
         value: t.ContainerValue | None,
-    ) -> list[Mapping[str, t.ContainerValue]]:
+    ) -> list[dict[str, t.ContainerValue]]:
         if not isinstance(value, list):
             return []
-        definitions: list[Mapping[str, t.ContainerValue]] = []
+        definitions: list[dict[str, t.ContainerValue]] = []
         for item in value:
             if not isinstance(item, Mapping):
                 continue

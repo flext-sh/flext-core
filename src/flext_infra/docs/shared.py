@@ -14,14 +14,15 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import (
     FlextInfraDiscoveryService,
     FlextInfraJsonService,
     FlextInfraReportingService,
+    c,
     m,
+    t,
 )
-from flext_infra.constants import c
 
 _discovery = FlextInfraDiscoveryService()
 _json_svc = FlextInfraJsonService()

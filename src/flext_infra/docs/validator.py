@@ -14,8 +14,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
-from flext_infra import m, u
-from flext_infra.constants import c
+from flext_infra import c, m, u
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)

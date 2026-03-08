@@ -29,13 +29,13 @@ from flext_core import (
     t,
 )
 
-from .models import StandardTestCaseModel, UtilityEntityModel, UtilityValueModel
+from .models import TestsFlextModels
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 TestResult = FlextResult[T]
 TestResultCo = FlextResult[T_co]
-type StandardTestCase = StandardTestCaseModel
+type StandardTestCase = TestsFlextModels.Tests.StandardTestCaseModel
 
 
 class TestDataFactory:
@@ -64,9 +64,9 @@ class TestDataFactory:
         *,
         expected_success: bool = True,
         error_contains: str | None = None,
-    ) -> StandardTestCaseModel:
+    ) -> TestsFlextModels.Tests.StandardTestCaseModel:
         """Create standardized operation test case."""
-        return StandardTestCaseModel(
+        return TestsFlextModels.Tests.StandardTestCaseModel(
             description=description,
             input_data={"operation": operation, **input_data},
             expected_result=expected_result,
@@ -154,16 +154,20 @@ class TestFixtureFactory:
     @staticmethod
     def create_test_entity(
         unique_id: str = "test-123", name: str = "Test Entity"
-    ) -> UtilityEntityModel:
+    ) -> TestsFlextModels.Tests.UtilityEntityModel:
         """Create test entity fixture."""
-        return UtilityEntityModel(unique_id=unique_id, name=name, value=name)
+        return TestsFlextModels.Tests.UtilityEntityModel(
+            unique_id=unique_id,
+            name=name,
+            value=name,
+        )
 
     @staticmethod
     def create_test_value_object(
         value: t.ContainerValue = "test_value",
-    ) -> UtilityValueModel:
+    ) -> TestsFlextModels.Tests.UtilityValueModel:
         """Create test value object fixture."""
-        return UtilityValueModel(value=value)
+        return TestsFlextModels.Tests.UtilityValueModel(value=value)
 
     @staticmethod
     def create_test_container_instance() -> FlextContainer:

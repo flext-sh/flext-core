@@ -28,30 +28,18 @@ from pydantic import BaseModel
 
 from flext_tests import t, u
 from tests.constants import c
-from tests.models import TestsFlextModels
+from tests import m
 
 from ._models import InputPayloadMap, TestCaseMap
 
-ComplexValue = TestsFlextModels.Core.ComplexValue
-CustomEntity = TestsFlextModels.Core.CustomEntity
-DomainTestEntity = TestsFlextModels.Core.DomainTestEntity
-DomainTestValue = TestsFlextModels.Core.DomainTestValue
-ImmutableObj = TestsFlextModels.Core.ImmutableObj
-MutableObj = TestsFlextModels.Core.MutableObj
-NoConfigNoSetattr = TestsFlextModels.Core.NoConfigNoSetattr
-NoDict = TestsFlextModels.Core.NoDict
-NoSetattr = TestsFlextModels.Core.NoSetattr
-SimpleValue = TestsFlextModels.Core.SimpleValue
-type TestPayload = t.Tests.ContainerValue
-
 
 def _build_domain_test_entity(
-    *, name: str, value: TestPayload
-) -> TestsFlextModels.Core.DomainTestEntity:
-    return DomainTestEntity(name=name, value=cast("int", value))
+    *, name: str, value: t.Tests.ContainerValue
+) -> m.Tests.DomainTestEntity:
+    return m.Tests.DomainTestEntity(name=name, value=cast("int", value))
 
 
-def _convert_to_general_value(obj: object) -> TestPayload:
+def _convert_to_general_value(obj: object) -> t.Tests.ContainerValue:
     """Convert object to t.ContainerValue (handles Pydantic models).
 
     Args:
@@ -67,7 +55,7 @@ def _convert_to_general_value(obj: object) -> TestPayload:
         return obj
     if isinstance(obj, dict):
         return cast(
-            "TestPayload",
+            "t.Tests.ContainerValue",
             {
                 str(key): _convert_to_general_value(val)
                 for key, val in cast("dict[str, object]", obj).items()
@@ -75,7 +63,7 @@ def _convert_to_general_value(obj: object) -> TestPayload:
         )
     if isinstance(obj, (list, tuple)):
         return cast(
-            "TestPayload",
+            "t.Tests.ContainerValue",
             [_convert_to_general_value(elem) for elem in cast("list[object]", obj)],
         )
     return str(obj)
@@ -97,8 +85,10 @@ def _require_payload_mapping(
     raise AssertionError(msg)
 
 
-def _as_test_payload(value: t.ContainerValue | type[t.Primitives]) -> TestPayload:
-    return cast("TestPayload", value)
+def _as_test_payload(
+    value: t.ContainerValue | type[t.Primitives],
+) -> t.Tests.ContainerValue:
+    return cast("t.Tests.ContainerValue", value)
 
 
 def _as_payload_map(value: InputPayloadMap) -> Mapping[str, t.Tests.ContainerValue]:
@@ -129,10 +119,10 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=c.Tests.TestDomain.VALUE_DATA_TEST,
         count=c.Tests.TestDomain.VALUE_COUNT_5,
-        value_class=DomainTestValue,
+        value_class=m.Tests.DomainTestValue,
     )
-    custom1 = CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
-    custom2 = CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
+    custom1 = m.Tests.CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
+    custom2 = m.Tests.CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
     input_data_same_id: InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": alice_entity,
@@ -213,7 +203,7 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
     )
     entities = entities_result.value
     alice_entity, alice_no_id = entities
-    custom = CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
+    custom = m.Tests.CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
     input_data_with_id: InputPayloadMap = {"entity": alice_entity}
     input_data_no_id: InputPayloadMap = {"entity": alice_no_id}
     input_data_custom: InputPayloadMap = cast("InputPayloadMap", {"entity": custom})
@@ -256,7 +246,7 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
             c.Tests.TestDomain.VALUE_COUNT_5,
             c.Tests.TestDomain.VALUE_COUNT_10,
         ],
-        value_class=DomainTestValue,
+        value_class=m.Tests.DomainTestValue,
     )
     value1, value2 = value_objs
     alice_entity = u.Tests.DomainHelpers.create_test_entity_instance(
@@ -264,12 +254,12 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
         value=c.Tests.TestDomain.ENTITY_VALUE_10,
         entity_class=_build_domain_test_entity,
     )
-    simple1 = SimpleValue(c.Tests.TestDomain.VALUE_DATA_TEST)
-    simple2 = SimpleValue(c.Tests.TestDomain.VALUE_DATA_TEST)
+    simple1 = m.Tests.SimpleValue(c.Tests.TestDomain.VALUE_DATA_TEST)
+    simple2 = m.Tests.SimpleValue(c.Tests.TestDomain.VALUE_DATA_TEST)
     bad1 = u.Tests.BadObjects.BadModelDump()
     bad2 = u.Tests.BadObjects.BadModelDump()
-    no_dict1 = NoDict(c.Tests.TestDomain.VALUE_COUNT_5)
-    no_dict2 = NoDict(c.Tests.TestDomain.VALUE_COUNT_5)
+    no_dict1 = m.Tests.NoDict(c.Tests.TestDomain.VALUE_COUNT_5)
+    no_dict2 = m.Tests.NoDict(c.Tests.TestDomain.VALUE_COUNT_5)
     input_data_list: list[InputPayloadMap] = cast(
         "list[InputPayloadMap]",
         [
@@ -293,7 +283,10 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
                 "model_dump_exception",
                 "no_dict",
             ],
-            input_data_list=cast("list[Mapping[str, TestPayload]]", input_data_list),
+            input_data_list=cast(
+                "list[Mapping[str, t.Tests.ContainerValue]]",
+                input_data_list,
+            ),
             expected_results=[True, False, False, True, _as_test_payload(bool), True],
         ),
     )
@@ -304,13 +297,16 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=c.Tests.TestDomain.VALUE_DATA_TEST,
         count=c.Tests.TestDomain.VALUE_COUNT_5,
-        value_class=DomainTestValue,
+        value_class=m.Tests.DomainTestValue,
     )
-    simple_obj = SimpleValue(c.Tests.TestDomain.VALUE_DATA_TEST)
+    simple_obj = m.Tests.SimpleValue(c.Tests.TestDomain.VALUE_DATA_TEST)
     bad_obj = u.Tests.BadObjects.BadModelDump()
     complex_items_list: list[str] = list(c.Tests.TestDomain.COMPLEX_ITEMS)
-    complex_obj = ComplexValue(c.Tests.TestDomain.VALUE_DATA_TEST, complex_items_list)
-    no_dict_obj = NoDict(c.Tests.TestDomain.VALUE_COUNT_5)
+    complex_obj = m.Tests.ComplexValue(
+        c.Tests.TestDomain.VALUE_DATA_TEST,
+        complex_items_list,
+    )
+    no_dict_obj = m.Tests.NoDict(c.Tests.TestDomain.VALUE_COUNT_5)
     input_data_list_hash: list[InputPayloadMap] = cast(
         "list[InputPayloadMap]",
         [
@@ -333,7 +329,8 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, TestPayload]]", input_data_list_hash
+                "list[Mapping[str, t.Tests.ContainerValue]]",
+                input_data_list_hash,
             ),
             expected_results=[
                 _as_test_payload(int),
@@ -365,7 +362,7 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
     )
     entities = entities_result.value
     alice_entity, alice_no_id = entities
-    custom = CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
+    custom = m.Tests.CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
     input_data_has_id: InputPayloadMap = {"entity": alice_entity}
     input_data_no_id_validate: InputPayloadMap = {"entity": alice_no_id}
     input_data_custom_validate: InputPayloadMap = cast(
@@ -404,13 +401,13 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=c.Tests.TestDomain.VALUE_DATA_TEST,
         count=c.Tests.TestDomain.VALUE_COUNT_5,
-        value_class=DomainTestValue,
+        value_class=m.Tests.DomainTestValue,
     )
-    mutable_obj = MutableObj(c.Tests.TestDomain.VALUE_COUNT_5)
-    immutable_obj = ImmutableObj(c.Tests.TestDomain.VALUE_COUNT_5)
+    mutable_obj = m.Tests.MutableObj(c.Tests.TestDomain.VALUE_COUNT_5)
+    immutable_obj = m.Tests.ImmutableObj(c.Tests.TestDomain.VALUE_COUNT_5)
     bad_config_obj = u.Tests.BadObjects.BadConfig()
-    no_config_obj = NoConfigNoSetattr()
-    no_setattr_obj = NoSetattr()
+    no_config_obj = m.Tests.NoConfigNoSetattr()
+    no_setattr_obj = m.Tests.NoSetattr()
     return cast(
         "list[TestCaseMap]",
         u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
@@ -424,7 +421,7 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
                 "no_setattr",
             ],
             input_data_list=cast(
-                "list[Mapping[str, TestPayload]]",
+                "list[Mapping[str, t.Tests.ContainerValue]]",
                 [
                     {"obj": value_obj},
                     {"obj": mutable_obj},

@@ -41,7 +41,7 @@ if TYPE_CHECKING:
         FlextInfraWorkspaceChecker as FlextInfraCheckWorkspaceChecker,
     )
     from flext_infra.codegen import FlextInfraCodegenLazyInit
-    from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
+    from flext_infra.constants import FlextInfraConstants, c
     from flext_infra.container import (
         configure_flext_infra_dependencies,
         get_flext_infra_container,
@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
     from flext_infra.discovery import FlextInfraDiscoveryService
     from flext_infra.dispatcher import FlextInfraDispatcher
-    from flext_infra.exceptions import FlextInfraExceptions, FlextInfraExceptions as e
+    from flext_infra.exceptions import FlextInfraExceptions, e
     from flext_infra.git import FlextInfraGitService
     from flext_infra.github import (
         FlextInfraPrManager,
@@ -66,11 +66,11 @@ if TYPE_CHECKING:
     )
     from flext_infra.json_io import FlextInfraJsonService
     from flext_infra.maintenance import FlextInfraPythonVersionEnforcer
-    from flext_infra.models import FlextInfraModels, FlextInfraModels as m
+    from flext_infra.models import FlextInfraModels, m
     from flext_infra.output import FlextInfraOutput, output
     from flext_infra.paths import FlextInfraPathResolver
     from flext_infra.patterns import FlextInfraPatterns
-    from flext_infra.protocols import FlextInfraProtocols, FlextInfraProtocols as p
+    from flext_infra.protocols import FlextInfraProtocols, p
     from flext_infra.release import FlextInfraReleaseOrchestrator
     from flext_infra.reporting import FlextInfraReportingService
     from flext_infra.selection import FlextInfraProjectSelector
@@ -78,7 +78,7 @@ if TYPE_CHECKING:
     from flext_infra.templates import FlextInfraTemplateEngine
     from flext_infra.toml_io import FlextInfraTomlService
     from flext_infra.typings import FlextInfraTypes, t
-    from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
+    from flext_infra.utilities import FlextInfraUtilities, u
     from flext_infra.versioning import FlextInfraVersioningService
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "FlextInfraBaseMkGenerator"),

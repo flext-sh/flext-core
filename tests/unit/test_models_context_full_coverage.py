@@ -104,7 +104,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
                 cast("object", 123),
             )
         )
-        assert False, f"expected to raise, got {got!r}"
+        raise AssertionError(f"expected to raise, got {got!r}")got!r}")
     assert exc_info.value is not None
     with pytest.raises(TypeError, match="Value must be a dictionary or Metadata") as exc_info2:
         got2 = FlextModelsContext.ContextData.validate_dict_serializable(

@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from enum import StrEnum
 from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,7 +33,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
 
     Access patterns:
     - TestsFlextModels.FlextTestsModels.Tests.* = flext_tests test models (via composition)
-    - TestsFlextModels.Core.* = flext-core-specific test models
+    - TestsFlextModels.Tests.* = flext-core-specific test models
     - TestsFlextModels.FlextModels.Entity, .FlextModels.Value, etc. = FlextModels domain models (via composition)
 
     Rules:
@@ -43,6 +44,13 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
 
     class Tests(FlextTestsModels.Tests):
         """flext-core-specific test models namespace."""
+
+        class ServiceTestType(StrEnum):
+            """Service test type enum for test scenarios."""
+
+            GET_USER = "get_user"
+            VALIDATE = "validate"
+            FAIL = "fail"
 
         class User(FlextModels.Entity):
             """Shared user model for tests."""
@@ -247,20 +255,26 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
 
             value: FlextTypes.ContainerValue
 
-        class BddPhaseDict:
+        class BddPhaseDict(BaseModel):
             """BDD phase (given/when/then) configuration."""
+
+            model_config = ConfigDict(frozen=True)
 
             description: str
 
-        class BddPhaseData:
+        class BddPhaseData(BaseModel):
             """BDD phase data (given/when/then)."""
+
+            model_config = ConfigDict(frozen=True)
 
             description: str
             assertions: list[str]
             setup_steps: list[str]
 
-        class MockScenarioData:
+        class MockScenarioData(BaseModel):
             """Mock scenario test data."""
+
+            model_config = ConfigDict(frozen=True)
 
             given: dict[str, str | int | bool]
             when: dict[str, str | int | bool]
@@ -268,15 +282,19 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
             tags: list[str]
             priority: str
 
-        class NestedDataDict:
+        class NestedDataDict(BaseModel):
             """Nested test data."""
+
+            model_config = ConfigDict(frozen=True)
 
             key: str
             value: str | int | bool
             metadata: str
 
-        class FixtureDataDict:
+        class FixtureDataDict(BaseModel):
             """Test data for FlextTestBuilder."""
+
+            model_config = ConfigDict(frozen=True)
 
             id: str
             correlation_id: str
@@ -288,159 +306,188 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
             version: str
             nested_data: dict[str, TestsFlextModels.Tests.NestedDataDict]
 
-        class FixtureCaseDict:
+        class FixtureCaseDict(BaseModel):
             """Individual test case configuration."""
 
+            model_config = ConfigDict(frozen=True)
+
             email: str
             input: str
 
-        class SuccessCaseDict:
+        class SuccessCaseDict(BaseModel):
             """Success test case."""
 
+            model_config = ConfigDict(frozen=True)
+
             email: str
             input: str
 
-        class FailureCaseDict:
+        class FailureCaseDict(BaseModel):
             """Failure test case."""
 
+            model_config = ConfigDict(frozen=True)
+
             email: str
             input: str
 
-        class SetupDataDict:
+        class SetupDataDict(BaseModel):
             """Setup data for test suite."""
+
+            model_config = ConfigDict(frozen=True)
 
             initialization_step: str
             configuration_key: str
             configuration_value: str
             environment: str
 
-        class FixtureSuiteDict:
+        class FixtureSuiteDict(BaseModel):
             """Test suite configuration."""
+
+            model_config = ConfigDict(frozen=True)
 
             suite_name: str
             scenario_count: int
             tags: list[str]
             setup_data: dict[str, TestsFlextModels.Tests.SetupDataDict]
 
-        class UserDataFixtureDict:
+        class UserDataFixtureDict(BaseModel):
             """User fixture data."""
+
+            model_config = ConfigDict(frozen=True)
 
             username: str
             email: str
             status: str
 
-        class RequestDataFixtureDict:
+        class RequestDataFixtureDict(BaseModel):
             """Request fixture data."""
+
+            model_config = ConfigDict(frozen=True)
 
             method: str
             path: str
             headers: dict[str, str]
 
-        class FixtureFixturesDict:
+        class FixtureFixturesDict(BaseModel):
             """Test fixtures configuration."""
+
+            model_config = ConfigDict(frozen=True)
 
             user: dict[str, TestsFlextModels.Tests.UserDataFixtureDict]
             request: dict[str, TestsFlextModels.Tests.RequestDataFixtureDict]
 
-        class UserProfileDict:
+        class UserProfileDict(BaseModel):
             """User profile for property-based testing."""
+
+            model_config = ConfigDict(frozen=True)
 
             id: str
             name: str
             email: str
 
-        class ConfigTestCaseDict:
+        class ConfigTestCaseDict(BaseModel):
             """Configuration test case."""
+
+            model_config = ConfigDict(frozen=True)
 
             domain: str
             port: int
             timeout: float
             debug: bool
 
-        class PerformanceMetricsDict:
+        class PerformanceMetricsDict(BaseModel):
             """Performance metrics from testing."""
+
+            model_config = ConfigDict(frozen=True)
 
             total_operations: int
             time_elapsed: float
             ops_per_second: float
             memory_peak_mb: float
 
-        class StressTestResultDict:
+        class StressTestResultDict(BaseModel):
             """Result from stress testing."""
+
+            model_config = ConfigDict(frozen=True)
 
             iterations: int
             success_count: int
             failure_count: int
             average_time_ms: float
 
-        class AsyncPayloadDict:
+        class AsyncPayloadDict(BaseModel):
             """Async event payload."""
+
+            model_config = ConfigDict(frozen=True)
 
             data: str
             status: str
 
-        class AsyncTestDataDict:
+        class AsyncTestDataDict(BaseModel):
             """Async test data."""
+
+            model_config = ConfigDict(frozen=True)
 
             event_type: str
             timestamp: str
             payload: dict[str, TestsFlextModels.Tests.AsyncPayloadDict]
 
-        class UserPayloadDict:
+        class UserPayloadDict(BaseModel):
             """User command payload."""
+
+            model_config = ConfigDict(frozen=True)
 
             username: str
             email: str
 
-        class UpdateFieldDict:
+        class UpdateFieldDict(BaseModel):
             """Individual update field."""
+
+            model_config = ConfigDict(frozen=True)
 
             field_name: str
             new_value: str | int | bool
 
-        class UpdatePayloadDict:
+        class UpdatePayloadDict(BaseModel):
             """Update command payload."""
+
+            model_config = ConfigDict(frozen=True)
 
             target_user_id: str
             updates: dict[str, TestsFlextModels.Tests.UpdateFieldDict]
 
-        class UserDataDict:
+        class UserDataDict(BaseModel):
             """User data response."""
+
+            model_config = ConfigDict(frozen=True)
 
             id: str
             username: str
             email: str
             status: str
 
-        class UpdateResultDict:
+        class UpdateResultDict(BaseModel):
             """Update operation result."""
+
+            model_config = ConfigDict(frozen=True)
 
             user_id: str
             updated_fields: list[str]
             update_count: int
 
-        class CommandPayloadDict:
+        class CommandPayloadDict(BaseModel):
             """Generic command payload."""
 
-            id: str
-            username: str
-            email: str
+            model_config = ConfigDict(frozen=True)
 
-    Core = Tests
+            id: str = ""
+            username: str = ""
+            email: str = ""
 
 
 m = TestsFlextModels
 
-AutomatedTestScenario = TestsFlextModels.Tests.AutomatedTestScenario
-StandardTestCaseModel = TestsFlextModels.Tests.StandardTestCaseModel
-UtilityEntityModel = TestsFlextModels.Tests.UtilityEntityModel
-UtilityValueModel = TestsFlextModels.Tests.UtilityValueModel
-
 __all__ = [
-    "AutomatedTestScenario",
-    "StandardTestCaseModel",
     "TestsFlextModels",
-    "UtilityEntityModel",
-    "UtilityValueModel",
     "m",
 ]

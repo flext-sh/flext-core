@@ -19,8 +19,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from flext_core import FlextRuntime
-from flext_infra.constants import c
-from flext_infra.output import output
+from flext_infra import c, output
 
 _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
     "detect": "flext_infra.deps.detector",

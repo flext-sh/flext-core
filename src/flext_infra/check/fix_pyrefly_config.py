@@ -15,12 +15,13 @@ import tomlkit
 from pydantic import TypeAdapter
 from tomlkit import items
 
-from flext_core import FlextLogger, r, s, t
+from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraDiscoveryService,
     FlextInfraJsonService,
     FlextInfraPathResolver,
     c,
+    t,
 )
 from flext_infra.output import output
 

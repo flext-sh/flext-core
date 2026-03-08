@@ -13,14 +13,15 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import TypeAlias
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import (
     FlextInfraJsonService,
     FlextInfraProjectSelector,
     FlextInfraTemplateEngine,
+    c,
     m,
+    t,
 )
-from flext_infra.constants import c
 
 SyncOperation: TypeAlias = m.Infra.Github.SyncOperation
 

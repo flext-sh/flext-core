@@ -10,9 +10,8 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 from tomlkit.toml_document import TOMLDocument
 
-from flext_core import r, t
-from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, output
-from flext_infra.constants import c
+from flext_core import r
+from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, c, output, t
 from flext_infra.deps.path_sync import extract_dep_name
 
 _resolver = FlextInfraPathResolver()
