@@ -33,7 +33,7 @@ class DecoratorsService(s[m.ConfigMap]):
         print("\n=== Combined Decorator ===")
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        _ = container.register("logger", logger)
 
         @FlextDecorators.combined(
             inject_deps={"logger": "logger"},
@@ -57,7 +57,7 @@ class DecoratorsService(s[m.ConfigMap]):
         print("\n=== Dependency Injection Decorator ===")
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        _ = container.register("logger", logger)
 
         @FlextDecorators.inject(logger="logger")
         def process_with_logger(message: str) -> str:

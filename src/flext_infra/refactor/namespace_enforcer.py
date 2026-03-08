@@ -92,8 +92,8 @@ class NamespaceEnforcementModels:
         import_violations: list[NamespaceEnforcementModels.ImportAliasViolation] = (
             Field(default_factory=list, description="Import alias violations")
         )
-        cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation] = (
-            Field(default_factory=list, description="Cyclic import violations")
+        cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation] = Field(
+            default_factory=list, description="Cyclic import violations"
         )
         files_scanned: int = Field(default=0, ge=0, description="Total files scanned")
 
@@ -130,6 +130,9 @@ _PROTECTED_FILES: frozenset[str] = frozenset({
     "settings.py",
     "_settings.py",
     "__init__.py",
+    "__main__.py",
+    "__version__.py",
+    "conftest.py",
     "py.typed",
 })
 _MIN_ALIAS_LENGTH: int = 2
@@ -306,9 +309,13 @@ class LooseObjectDetector:
             # Runtime alias assignments (c = FlextConstants)
             return None  # Classes are OK for now, they may be namespace classes
 
-        # FunctionDef at top level is always loose (except dunder)
+        # FunctionDef at top level is always loose (except dunder and private)
         if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if stmt.name.startswith("__") and stmt.name.endswith("__"):
+                return None
+            # Private functions (_prefixed) are implementation details:
+            # Pydantic BeforeValidator callbacks, type guards, helpers.
+            if stmt.name.startswith("_"):
                 return None
             return NamespaceEnforcementModels.LooseObjectViolation(
                 file=str(file_path),
@@ -322,6 +329,9 @@ class LooseObjectDetector:
         if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
             name = stmt.target.id
             if name in cls.ALLOWED_TOP_LEVEL:
+                return None
+            # Private constants (_PREFIXED) are module implementation details
+            if name.startswith("_"):
                 return None
             if _CONSTANT_PATTERN.match(name):
                 return NamespaceEnforcementModels.LooseObjectViolation(
@@ -340,6 +350,9 @@ class LooseObjectDetector:
                     return None
                 # Skip single-letter runtime aliases
                 if len(name) <= _MIN_ALIAS_LENGTH:
+                    return None
+                # Private constants (_PREFIXED) are module implementation details
+                if name.startswith("_"):
                     return None
                 if _CONSTANT_PATTERN.match(name):
                     return NamespaceEnforcementModels.LooseObjectViolation(
@@ -407,6 +420,11 @@ class ImportAliasDetector:
             if not isinstance(stmt, ast.ImportFrom):
                 continue
             if stmt.module is None:
+                continue
+            # __init__.py files ARE the facade definition — they
+            # legitimately import from submodules (AGENTS.md §4:
+            # "Within flext-core, import concrete submodules").
+            if file_path.name == "__init__.py":
                 continue
             # Check for deep submodule imports like "from flext_core.constants import X"
             for prefix, suggestion in cls.ALIAS_MODULES.items():
@@ -583,11 +601,21 @@ class FlextInfraNamespaceEnforcer:
         apply_changes: bool,
     ) -> NamespaceEnforcementModels.ProjectEnforcementReport:
         """Enforce namespace rules on a single project."""
-        _ = apply_changes
         # 1. Facade scan
         facade_statuses = NamespaceFacadeScanner.scan_project(
             project_root=project_root, project_name=project_name
         )
+
+        if apply_changes:
+            self._ensure_missing_facades(
+                project_root=project_root,
+                project_name=project_name,
+                facade_statuses=facade_statuses,
+            )
+            facade_statuses = NamespaceFacadeScanner.scan_project(
+                project_root=project_root,
+                project_name=project_name,
+            )
 
         # 2. Collect Python files across all scan directories
         py_files = self._collect_python_files(project_root=project_root)
@@ -606,6 +634,14 @@ class FlextInfraNamespaceEnforcer:
         for py_file in py_files:
             import_violations.extend(ImportAliasDetector.scan_file(file_path=py_file))
 
+        if apply_changes and len(import_violations) > 0:
+            self._rewrite_import_alias_violations(py_files=py_files)
+            import_violations = []
+            for py_file in py_files:
+                import_violations.extend(
+                    ImportAliasDetector.scan_file(file_path=py_file)
+                )
+
         # 5. Detect cyclic imports
         cyclic_imports = CyclicImportDetector.scan_project(project_root=project_root)
 
@@ -618,6 +654,162 @@ class FlextInfraNamespaceEnforcer:
             cyclic_imports=cyclic_imports,
             files_scanned=len(py_files),
         )
+
+    @staticmethod
+    def _preferred_file_name(*, family: str) -> str:
+        if family == "c":
+            return "constants.py"
+        if family == "t":
+            return "typings.py"
+        if family == "p":
+            return "protocols.py"
+        if family == "m":
+            return "models.py"
+        return "utilities.py"
+
+    @staticmethod
+    def _base_import_for_family(*, family: str) -> str:
+        if family == "c":
+            return "from flext_core import FlextConstants"
+        if family == "t":
+            return "from flext_core import FlextTypes"
+        if family == "p":
+            return "from flext_core import FlextProtocols"
+        if family == "m":
+            return "from flext_core import FlextModels"
+        return "from flext_core import FlextUtilities"
+
+    @staticmethod
+    def _base_class_for_family(*, family: str) -> str:
+        if family == "c":
+            return "FlextConstants"
+        if family == "t":
+            return "FlextTypes"
+        if family == "p":
+            return "FlextProtocols"
+        if family == "m":
+            return "FlextModels"
+        return "FlextUtilities"
+
+    @staticmethod
+    def _write_missing_facade_file(
+        *,
+        file_path: Path,
+        family: str,
+        class_name: str,
+    ) -> None:
+        alias = family
+        import_stmt = FlextInfraNamespaceEnforcer._base_import_for_family(family=family)
+        base_class = FlextInfraNamespaceEnforcer._base_class_for_family(family=family)
+        content = (
+            '"""Auto-generated facade to enforce MRO namespace contracts."""\n\n'
+            "from __future__ import annotations\n\n"
+            f"{import_stmt}\n\n"
+            f"class {class_name}({base_class}):\n"
+            "    pass\n\n"
+            f"{alias} = {class_name}\n"
+        )
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
+
+    @classmethod
+    def _ensure_missing_facades(
+        cls,
+        *,
+        project_root: Path,
+        project_name: str,
+        facade_statuses: list[NamespaceEnforcementModels.FacadeStatus],
+    ) -> None:
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
+        if not src_dir.is_dir():
+            return
+        package_dirs = [
+            entry
+            for entry in sorted(src_dir.iterdir(), key=lambda item: item.name)
+            if entry.is_dir() and (entry / "__init__.py").is_file()
+        ]
+        if len(package_dirs) == 0:
+            return
+        primary_package = package_dirs[0]
+        stem = NamespaceFacadeScanner.project_class_stem(project_name=project_name)
+        for status in facade_statuses:
+            if status.exists:
+                continue
+            suffix = _FACADE_FAMILIES[status.family]
+            class_name = f"{stem}{suffix}"
+            file_name = cls._preferred_file_name(family=status.family)
+            target_path = primary_package / file_name
+            if target_path.exists():
+                content = target_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                mutated = False
+                class_signature = f"class {class_name}("
+                if (
+                    class_signature not in content
+                    and f"class {class_name}:" not in content
+                ):
+                    base_class = cls._base_class_for_family(family=status.family)
+                    snippet = f"\n\nclass {class_name}({base_class}):\n    pass\n"
+                    content = content.rstrip() + snippet
+                    mutated = True
+                alias_line = f"{status.family} = {class_name}"
+                if alias_line not in content:
+                    content = content.rstrip() + f"\n\n{alias_line}\n"
+                    mutated = True
+                if mutated:
+                    target_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
+                continue
+            cls._write_missing_facade_file(
+                file_path=target_path,
+                family=status.family,
+                class_name=class_name,
+            )
+
+    @staticmethod
+    def _rewrite_import_alias_violations(*, py_files: list[Path]) -> None:
+        for file_path in py_files:
+            try:
+                source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                tree = ast.parse(source)
+            except (OSError, SyntaxError, UnicodeDecodeError):
+                continue
+            changed = False
+            for stmt in tree.body:
+                if not isinstance(stmt, ast.ImportFrom):
+                    continue
+                if stmt.module is None:
+                    continue
+                if stmt.module.startswith("flext_core."):
+                    stmt.module = "flext_core"
+                    stmt.names = [
+                        ast.alias(name="c"),
+                        ast.alias(name="m"),
+                        ast.alias(name="r"),
+                        ast.alias(name="t"),
+                        ast.alias(name="u"),
+                        ast.alias(name="p"),
+                        ast.alias(name="d"),
+                        ast.alias(name="e"),
+                        ast.alias(name="h"),
+                        ast.alias(name="s"),
+                        ast.alias(name="x"),
+                    ]
+                    changed = True
+                    continue
+                if stmt.module.startswith("flext_infra."):
+                    stmt.module = "flext_infra"
+                    stmt.names = [
+                        ast.alias(name="c"),
+                        ast.alias(name="m"),
+                        ast.alias(name="t"),
+                        ast.alias(name="u"),
+                        ast.alias(name="p"),
+                    ]
+                    changed = True
+            if changed:
+                normalized = ast.unparse(tree)
+                file_path.write_text(
+                    f"{normalized}\n", encoding=c.Infra.Encoding.DEFAULT
+                )
 
     @staticmethod
     def _collect_python_files(*, project_root: Path) -> list[Path]:

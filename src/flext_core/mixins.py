@@ -510,9 +510,9 @@ class FlextMixins(FlextRuntime):
             container = self.container
             was_registered = container.has_service(service_name)
             if isinstance(self, BaseModel):
-                container.register(service_name, self)
+                _ = container.register(service_name, self)
             else:
-                container.register(service_name, service_name)
+                _ = container.register(service_name, service_name)
             if was_registered:
                 return True
             if container.has_service(service_name):

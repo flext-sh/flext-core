@@ -177,7 +177,7 @@ class FlextContainer(p.DI):
            from flext_core import FlextContainer, inject
 
            container = FlextContainer.get_global()
-           container.register(
+           _ = container.register(
                "token_factory", lambda: {"token": "abc123"}, kind="factory"
            )
 

@@ -53,7 +53,7 @@ class FlextUtilitiesFileOps:
 
         Replaces ``sys.stdout.write(...)`` where the ``int`` return is unused.
         """
-        sys.stdout.write(text)
+        _ = sys.stdout.write(text)
         sys.stdout.flush()
 
 

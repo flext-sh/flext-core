@@ -44,12 +44,12 @@ def _copy_workspace_for_dry_run(workspace: Path) -> Path:
                 ignored.add(name)
         return ignored
 
-    shutil.copytree(workspace, workspace_copy, ignore=_ignore)
+    _ = shutil.copytree(workspace, workspace_copy, ignore=_ignore)
     source_venv_cfg = workspace / ".venv" / "pyvenv.cfg"
     if source_venv_cfg.exists():
         target_venv = workspace_copy / ".venv"
         target_venv.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_venv_cfg, target_venv / "pyvenv.cfg")
+        _ = shutil.copy2(source_venv_cfg, target_venv / "pyvenv.cfg")
     return workspace_copy
 
 
@@ -58,21 +58,21 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
         prog="flext_infra refactor centralize-pydantic",
         description="Centralize BaseModel/TypedDict/dict-like aliases into _models.py using AST rewrites",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--workspace",
         type=Path,
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
     mode = parser.add_mutually_exclusive_group(required=False)
-    mode.add_argument("--dry-run", action="store_true", help="Plan only")
-    mode.add_argument("--apply", action="store_true", help="Apply migration")
-    parser.add_argument(
+    _ = mode.add_argument("--dry-run", action="store_true", help="Plan only")
+    _ = mode.add_argument("--apply", action="store_true", help="Apply migration")
+    _ = parser.add_argument(
         "--normalize-remaining",
         action="store_true",
         help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--dry-run-copy-workspace",
         action="store_true",
         help="Run dry-run against a temporary full workspace copy",
@@ -100,6 +100,7 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
         f"detected_alias_violations={summary['detected_alias_violations']}\n"
     )
     _ = sys.stdout.write(f"created_model_files={summary['created_model_files']}\n")
+    _ = sys.stdout.write(f"created_typings_files={summary['created_typings_files']}\n")
     _ = sys.stdout.write(f"workspace={workspace_path}\n")
     _ = sys.stdout.write(f"mode={('apply' if apply_changes else 'dry-run')}\n")
     return 0
@@ -110,22 +111,22 @@ def _run_migrate_to_mro(*, argv: list[str]) -> int:
         prog="flext_infra refactor migrate-mro",
         description="Migrate loose Final/TypeVar/TypeAlias declarations into MRO facade classes and rewrite references",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--workspace",
         type=Path,
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--target",
         choices=["constants", "typings", "protocols", "models", "utilities", "all"],
         default="all",
         help="Migration target scope",
     )
     mode = parser.add_mutually_exclusive_group(required=False)
-    mode.add_argument("--dry-run", action="store_true", help="Plan only")
-    mode.add_argument("--apply", action="store_true", help="Apply migration")
-    parser.add_argument(
+    _ = mode.add_argument("--dry-run", action="store_true", help="Plan only")
+    _ = mode.add_argument("--apply", action="store_true", help="Apply migration")
+    _ = parser.add_argument(
         "--dry-run-copy-workspace",
         action="store_true",
         help="Run dry-run against a temporary full workspace copy",
@@ -150,16 +151,16 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
         prog="flext_infra refactor namespace-enforce",
         description="Scan workspace for namespace violations: missing facades, loose objects, import violations, cyclic imports",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--workspace",
         type=Path,
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
     mode = parser.add_mutually_exclusive_group(required=False)
-    mode.add_argument("--dry-run", action="store_true", help="Scan only (default)")
-    mode.add_argument("--apply", action="store_true", help="Apply auto-fixes")
-    parser.add_argument(
+    _ = mode.add_argument("--dry-run", action="store_true", help="Scan only (default)")
+    _ = mode.add_argument("--apply", action="store_true", help="Apply auto-fixes")
+    _ = parser.add_argument(
         "--dry-run-copy-workspace",
         action="store_true",
         help="Run against a temporary full workspace copy",
@@ -183,21 +184,21 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         prog="flext_infra refactor ultrawork-models",
         description="Run full AST model centralization + MRO + namespace enforcement workflow",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--workspace",
         type=Path,
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
     mode = parser.add_mutually_exclusive_group(required=False)
-    mode.add_argument("--dry-run", action="store_true", help="Plan only")
-    mode.add_argument("--apply", action="store_true", help="Apply migration")
-    parser.add_argument(
+    _ = mode.add_argument("--dry-run", action="store_true", help="Plan only")
+    _ = mode.add_argument("--apply", action="store_true", help="Apply migration")
+    _ = parser.add_argument(
         "--normalize-remaining",
         action="store_true",
         help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--dry-run-copy-workspace",
         action="store_true",
         help="Run against a temporary full workspace copy",
@@ -234,6 +235,9 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     _ = sys.stdout.write(f"moved_aliases={centralize_summary['moved_aliases']}\n")
     _ = sys.stdout.write(
         f"created_model_files={centralize_summary['created_model_files']}\n"
+    )
+    _ = sys.stdout.write(
+        f"created_typings_files={centralize_summary['created_typings_files']}\n"
     )
     _ = sys.stdout.write(
         f"mro_remaining_violations={mro_report.remaining_violations}\n"

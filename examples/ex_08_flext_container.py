@@ -133,7 +133,7 @@ class Ex08FlextContainer(Examples):
         self.check("create_module_logger.custom.type", type(logger_custom).__name__)
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"
-        container.register(removable_name, self.rand_int(1, 1000))
+        _ = container.register(removable_name, self.rand_int(1, 1000))
         unregister_ok = container.unregister(removable_name)
         unregister_missing = container.unregister(missing_remove_name)
         self.check("unregister.existing.success", unregister_ok.is_success)

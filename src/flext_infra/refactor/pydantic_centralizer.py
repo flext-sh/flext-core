@@ -134,7 +134,20 @@ class FlextInfraRefactorPydanticCentralizer:
         )
 
     @staticmethod
-    def _is_dict_like_alias(node: ast.stmt, source: str) -> _AliasMove | None:
+    def _is_typings_scope(file_path: Path) -> bool:
+        posix = file_path.as_posix()
+        return posix.endswith(("/typings.py", "/_typings.py")) or "/typings/" in posix
+
+    @staticmethod
+    def _is_dict_like_expr(expr: str) -> bool:
+        return any(
+            marker in expr for marker in ("dict[", "Mapping[", "MutableMapping[")
+        )
+
+    @staticmethod
+    def _is_dict_like_alias(
+        node: ast.stmt, source: str, *, file_path: Path
+    ) -> _AliasMove | None:
         keys = (
             "dict",
             "payload",
@@ -145,15 +158,20 @@ class FlextInfraRefactorPydanticCentralizer:
             "fixture",
             "case",
         )
+        is_typings_scope = FlextInfraRefactorPydanticCentralizer._is_typings_scope(
+            file_path
+        )
         match node:
             case ast.TypeAlias():
                 alias_name = node.name.id
-                if not any(token in alias_name.lower() for token in keys):
+                if (not is_typings_scope) and (
+                    not any(token in alias_name.lower() for token in keys)
+                ):
                     return None
                 expr = ast.get_source_segment(source, node.value)
                 if expr is None:
                     return None
-                if "dict[" not in expr and "Mapping[" not in expr:
+                if not FlextInfraRefactorPydanticCentralizer._is_dict_like_expr(expr):
                     return None
                 return _AliasMove(
                     name=alias_name,
@@ -165,17 +183,19 @@ class FlextInfraRefactorPydanticCentralizer:
                 if not isinstance(node.target, ast.Name):
                     return None
                 alias_name = node.target.id
-                if not any(token in alias_name.lower() for token in keys):
+                if (not is_typings_scope) and (
+                    not any(token in alias_name.lower() for token in keys)
+                ):
                     return None
                 if node.value is None:
                     return None
                 expr = ast.get_source_segment(source, node.value)
                 if expr is None:
                     return None
-                if "dict[" not in expr and "Mapping[" not in expr:
+                if not FlextInfraRefactorPydanticCentralizer._is_dict_like_expr(expr):
                     return None
                 annotation = ast.get_source_segment(source, node.annotation) or ""
-                if "TypeAlias" not in annotation:
+                if ("TypeAlias" not in annotation) and (not is_typings_scope):
                     return None
                 return _AliasMove(
                     name=alias_name,
@@ -189,12 +209,14 @@ class FlextInfraRefactorPydanticCentralizer:
                 if not isinstance(node.targets[0], ast.Name):
                     return None
                 alias_name = node.targets[0].id
-                if not any(token in alias_name.lower() for token in keys):
+                if (not is_typings_scope) and (
+                    not any(token in alias_name.lower() for token in keys)
+                ):
                     return None
                 expr = ast.get_source_segment(source, node.value)
                 if expr is None:
                     return None
-                if "dict[" not in expr and "Mapping[" not in expr:
+                if not FlextInfraRefactorPydanticCentralizer._is_dict_like_expr(expr):
                     return None
                 return _AliasMove(
                     name=alias_name,
@@ -336,7 +358,7 @@ class FlextInfraRefactorPydanticCentralizer:
                 )
                 continue
             alias_move = FlextInfraRefactorPydanticCentralizer._is_dict_like_alias(
-                stmt, source
+                stmt, source, file_path=file_path
             )
             if alias_move is not None:
                 alias_moves.append(alias_move)
@@ -348,6 +370,13 @@ class FlextInfraRefactorPydanticCentralizer:
         if (file_path.parent / "__init__.py").exists():
             return f"from ._models import {joined}"
         return f"from _models import {joined}"
+
+    @staticmethod
+    def _dest_typings_import_statement(file_path: Path, names: list[str]) -> str:
+        joined = ", ".join(sorted(set(names)))
+        if (file_path.parent / "__init__.py").exists():
+            return f"from ._typings import {joined}"
+        return f"from _typings import {joined}"
 
     @staticmethod
     def _insert_import(source: str, import_stmt: str) -> str:
@@ -384,14 +413,24 @@ class FlextInfraRefactorPydanticCentralizer:
         )
         for start, end in ranges:
             del lines[start - 1 : end]
-        moved_names = [m.name for m in class_moves] + [a.name for a in alias_moves]
+        moved_model_names = [m.name for m in class_moves]
+        moved_alias_names = [a.name for a in alias_moves]
         updated = "\n".join(lines)
-        if len(moved_names) > 0:
+        if len(moved_model_names) > 0:
             import_stmt = FlextInfraRefactorPydanticCentralizer._dest_import_statement(
-                file_path, moved_names
+                file_path, moved_model_names
             )
             updated = FlextInfraRefactorPydanticCentralizer._insert_import(
                 updated, import_stmt
+            )
+        if len(moved_alias_names) > 0:
+            typings_import_stmt = (
+                FlextInfraRefactorPydanticCentralizer._dest_typings_import_statement(
+                    file_path, moved_alias_names
+                )
+            )
+            updated = FlextInfraRefactorPydanticCentralizer._insert_import(
+                updated, typings_import_stmt
             )
         if source.endswith("\n") and (not updated.endswith("\n")):
             updated += "\n"
@@ -418,6 +457,16 @@ class FlextInfraRefactorPydanticCentralizer:
         )
 
     @staticmethod
+    def _ensure_typings_header(dest_path: Path) -> str:
+        if dest_path.exists():
+            return dest_path.read_text(encoding="utf-8")
+        return (
+            '"""Auto-generated centralized typings."""\n\n'
+            "from __future__ import annotations\n\n"
+            "from typing import TypeAlias\n\n"
+        )
+
+    @staticmethod
     def _append_unique_blocks(
         existing: str, blocks: list[str], names: list[str]
     ) -> str:
@@ -433,6 +482,10 @@ class FlextInfraRefactorPydanticCentralizer:
         return (
             f"class {alias_move.name}(RootModel[{alias_move.alias_expr}]):\n    pass\n"
         )
+
+    @staticmethod
+    def _alias_as_type_alias(alias_move: _AliasMove) -> str:
+        return f"{alias_move.name}: TypeAlias = {alias_move.alias_expr}\n"
 
     @staticmethod
     def _normalize_disallowed_bases(file_path: Path, *, apply_changes: bool) -> bool:
@@ -464,7 +517,9 @@ class FlextInfraRefactorPydanticCentralizer:
                 model_class_count += 1
                 continue
             if (
-                FlextInfraRefactorPydanticCentralizer._is_dict_like_alias(stmt, source)
+                FlextInfraRefactorPydanticCentralizer._is_dict_like_alias(
+                    stmt, source, file_path=file_path
+                )
                 is not None
             ):
                 dict_alias_count += 1
@@ -483,6 +538,7 @@ class FlextInfraRefactorPydanticCentralizer:
         detected_model_violations = 0
         detected_alias_violations = 0
         created_model_files = 0
+        created_typings_files = 0
         for file_path in workspace_root.rglob("*.py"):
             if not FlextInfraRefactorPydanticCentralizer._is_target_python(file_path):
                 continue
@@ -506,7 +562,7 @@ class FlextInfraRefactorPydanticCentralizer:
             class_blocks = [m.source for m in class_moves]
             class_names = [m.name for m in class_moves]
             alias_blocks = [
-                FlextInfraRefactorPydanticCentralizer._alias_as_root_model(a)
+                FlextInfraRefactorPydanticCentralizer._alias_as_type_alias(a)
                 for a in alias_moves
             ]
             alias_names = [a.name for a in alias_moves]
@@ -516,7 +572,22 @@ class FlextInfraRefactorPydanticCentralizer:
                 dest_path
             )
             updated_dest = FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
-                existing_dest, class_blocks + alias_blocks, class_names + alias_names
+                existing_dest, class_blocks, class_names
+            )
+            typings_dest_path = file_path.parent / "_typings.py"
+            if len(alias_moves) > 0 and not typings_dest_path.exists():
+                created_typings_files += 1
+            existing_typings_dest = (
+                FlextInfraRefactorPydanticCentralizer._ensure_typings_header(
+                    typings_dest_path
+                )
+            )
+            updated_typings_dest = (
+                FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
+                    existing_typings_dest,
+                    alias_blocks,
+                    alias_names,
+                )
             )
             updated_source = FlextInfraRefactorPydanticCentralizer._rewrite_source(
                 file_path, class_moves, alias_moves
@@ -526,6 +597,8 @@ class FlextInfraRefactorPydanticCentralizer:
             touched_files += 1
             if apply_changes:
                 dest_path.write_text(updated_dest, encoding="utf-8")
+                if len(alias_moves) > 0:
+                    typings_dest_path.write_text(updated_typings_dest, encoding="utf-8")
                 file_path.write_text(updated_source, encoding="utf-8")
         if normalize_remaining:
             for file_path in workspace_root.rglob("*.py"):
@@ -554,4 +627,5 @@ class FlextInfraRefactorPydanticCentralizer:
             "detected_model_violations": detected_model_violations,
             "detected_alias_violations": detected_alias_violations,
             "created_model_files": created_model_files,
+            "created_typings_files": created_typings_files,
         }

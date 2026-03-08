@@ -101,16 +101,29 @@ class FlextInfraUtilitiesRefactor:
     def discover_project_roots(*, workspace_root: Path) -> list[Path]:
         """Discover project roots under a workspace."""
         roots: list[Path] = []
+
+        def _looks_like_project(path: Path) -> bool:
+            if not path.is_dir():
+                return False
+            if not (path / c.Infra.Files.MAKEFILE_FILENAME).exists():
+                return False
+            has_pyproject = (path / c.Infra.Files.PYPROJECT_FILENAME).exists()
+            has_gomod = (path / c.Infra.Files.GO_MOD).exists()
+            if not has_pyproject and (not has_gomod):
+                return False
+            has_scan_dir = any(
+                (path / dir_name).is_dir()
+                for dir_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES
+            )
+            return has_scan_dir
+
+        if _looks_like_project(workspace_root):
+            roots.append(workspace_root)
+
         for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
             if not entry.is_dir() or entry.name.startswith("."):
                 continue
-            if not (entry / c.Infra.Git.DIR).exists():
-                continue
-            if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
-                continue
-            has_pyproject = (entry / c.Infra.Files.PYPROJECT_FILENAME).exists()
-            has_gomod = (entry / c.Infra.Files.GO_MOD).exists()
-            if not has_pyproject and (not has_gomod):
+            if not _looks_like_project(entry):
                 continue
             roots.append(entry)
         if (

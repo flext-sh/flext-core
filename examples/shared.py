@@ -150,16 +150,16 @@ class Examples:
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
-                sys.stdout.write(f"PASS: {self._caller.stem} ({checks} checks)\n")
+                _ = sys.stdout.write(f"PASS: {self._caller.stem} ({checks} checks)\n")
                 return
             actual_path = self._caller.with_suffix(".actual")
-            actual_path.write_text(actual, encoding="utf-8")
-            sys.stdout.write(
+            _ = actual_path.write_text(actual, encoding="utf-8")
+            _ = sys.stdout.write(
                 f"FAIL: {self._caller.stem} — diff {expected_path.name} {actual_path.name}\n"
             )
             sys.exit(1)
-        expected_path.write_text(actual, encoding="utf-8")
-        sys.stdout.write(f"GENERATED: {expected_path.name} ({checks} checks)\n")
+        _ = expected_path.write_text(actual, encoding="utf-8")
+        _ = sys.stdout.write(f"GENERATED: {expected_path.name} ({checks} checks)\n")
 
     class Person(m.Value):
         """Tiny Pydantic model used across several examples."""

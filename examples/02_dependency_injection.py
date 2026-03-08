@@ -198,9 +198,9 @@ class DependencyInjectionService(s[m.ConfigMap]):
         )
         email_service = EmailService(config=email_config)
         email_service.status = c.Cqrs.CommonStatus.ACTIVE
-        container.register("database", db_service)
-        container.register("cache", cache_service)
-        container.register("email", email_service)
+        _ = container.register("database", db_service)
+        _ = container.register("cache", cache_service)
+        _ = container.register("email", email_service)
         return container
 
     @override

@@ -324,7 +324,7 @@ class FlextInfraRefactorViolationAnalyzer:
                 manual_review=manual_review,
             )
         import_collector = ImportDependencyCollector()
-        module.visit(import_collector)
+        _ = module.visit(import_collector)
         for stmt in module.body:
             if not isinstance(stmt, cst.FunctionDef):
                 continue

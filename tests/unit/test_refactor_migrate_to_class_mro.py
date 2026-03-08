@@ -247,6 +247,24 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
     assert set(discovered) == set(expected_paths)
 
 
+def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
+    workspace_root = tmp_path / "workspace"
+    workspace_root.mkdir(parents=True)
+
+    project_root = workspace_root / "proj-a"
+    project_root.mkdir(parents=True)
+    (project_root / "pyproject.toml").write_text(
+        "[project]\nname='proj-a'\n", encoding="utf-8"
+    )
+    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    (project_root / "src").mkdir(parents=True)
+
+    discovered = FlextInfraUtilitiesRefactor.discover_project_roots(
+        workspace_root=workspace_root
+    )
+    assert discovered == [project_root]
+
+
 def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> None:
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"

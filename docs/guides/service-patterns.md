@@ -277,7 +277,7 @@ def test_create_user_service_invalid_email():
 
 ```python
 def test_service_with_container(container: FlextContainer):
-    container.register("email_validator", MockEmailValidator())
+    _ = container.register("email_validator", MockEmailValidator())
 
     service = CreateUserService(name="Alice", email="alice@example.com")
     result = service.execute()

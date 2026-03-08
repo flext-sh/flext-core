@@ -67,7 +67,7 @@ class TestDIBridgeRealExecution:
     def test_create_container_with_real_execution(self) -> None:
         """Test create_container with real registration and resolution."""
         container = FlextContainer.create()
-        container.register("test_service", "test_value")
+        _ = container.register("test_service", "test_value")
         assert container.has_service("test_service") is True
         resolved = container.get("test_service")
         u.Tests.Result.assert_success_with_value(resolved, "test_value")
@@ -190,8 +190,8 @@ class TestContainerDIRealExecution:
     def test_wire_modules_real_execution(self) -> None:
         """Test container.wire_modules with real code."""
         container = FlextContainer()
-        container.register("logger_name", "test_logger")
-        container.register("log_level", "INFO")
+        _ = container.register("logger_name", "test_logger")
+        _ = container.register("log_level", "INFO")
         module = ModuleType("wired_module")
 
         @inject
@@ -314,8 +314,8 @@ class TestRealWiringScenarios:
     def test_handler_wiring_with_inject(self) -> None:
         """Test handler wiring with @inject decorator."""
         container = FlextContainer()
-        container.register("custom_logger", "test_logger")
-        container.register("db_pool", {"size": 10})
+        _ = container.register("custom_logger", "test_logger")
+        _ = container.register("db_pool", {"size": 10})
         handler_module = ModuleType("handler_module")
 
         @inject
@@ -340,7 +340,7 @@ class TestRealWiringScenarios:
     def test_multiple_wired_functions(self) -> None:
         """Test multiple functions wired to same container."""
         container = FlextContainer()
-        container.register("shared_config", {"env": "test"})
+        _ = container.register("shared_config", {"env": "test"})
         module = ModuleType("multi_function_module")
 
         @inject
@@ -366,8 +366,8 @@ class TestRealWiringScenarios:
     def test_nested_dependency_injection(self) -> None:
         """Test nested dependency injection scenarios."""
         container = FlextContainer()
-        container.register("base_url", "https://api.example.com")
-        container.register("api_version", "v1")
+        _ = container.register("base_url", "https://api.example.com")
+        _ = container.register("api_version", "v1")
         module = ModuleType("nested_module")
 
         @inject
@@ -385,7 +385,7 @@ class TestRealWiringScenarios:
         setattr(module, "build_url", build_url)
         setattr(module, "api_call", api_call)
         url_result = build_url()
-        container.register("built_url", url_result)
+        _ = container.register("built_url", url_result)
         container.wire_modules(modules=[module])
         try:
             api_call_func: Callable[[], dict[str, str]] = getattr(module, "api_call")
@@ -399,7 +399,7 @@ class TestRealWiringScenarios:
     def test_wire_modules_with_packages(self) -> None:
         """Test wire_modules with packages parameter."""
         container = FlextContainer()
-        container.register("test_value", "wired_value")
+        _ = container.register("test_value", "wired_value")
         test_module = ModuleType("test_module")
 
         @inject
@@ -419,7 +419,7 @@ class TestRealWiringScenarios:
     def test_scoped_container_with_wiring(self) -> None:
         """Test scoped container preserves wiring."""
         container = FlextContainer(_context=FlextContext())
-        container.register("global_service", "global_value")
+        _ = container.register("global_service", "global_value")
         scoped = container.scoped(services={"scoped_service": "scoped_value"})
         global_result = scoped.get("global_service")
         assert global_result.is_success
@@ -457,7 +457,7 @@ class TestRealWiringScenarios:
     def test_container_wire_modules_with_classes(self) -> None:
         """Test container.wire_modules with classes parameter."""
         container = FlextContainer()
-        container.register("injected_value", "test_injection")
+        _ = container.register("injected_value", "test_injection")
 
         class TestClass:
             @inject

@@ -161,7 +161,7 @@ class TestLdifIntegration:
         # Register LDIF service
         config = FlextLdifSettings(batch_size=100)
         ldif = FlextLdif(config=config)
-        container.register("ldif", ldif)
+        _ = container.register("ldif", ldif)
 
         # Retrieve and use service
         ldif_result = container.get("ldif")
@@ -424,7 +424,7 @@ def test_with_stubbed_service():
     stub_service.process.return_value = FlextResult.ok("stubbed")
 
     # Register stub
-    container.register("external_service", stub_service)
+    _ = container.register("external_service", stub_service)
 
     # Test integration
     result = integration_function()

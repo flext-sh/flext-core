@@ -72,7 +72,7 @@ class IntegrationService(s[m.ConfigMap]):
         print("\n=== FlextContainer Integration ===")
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        _ = container.register("logger", logger)
         logger_result = container.get("logger")
         if logger_result.is_success:
             print("✅ Container service resolution")

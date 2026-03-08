@@ -381,12 +381,12 @@ def setup_services_based_on_config() -> FlextResult[bool]:
     # Conditional registration
     if config.debug:
         # In debug mode: use mock services
-        container.register("cache", MockCache())
-        container.register("email_service", DebugEmailService())
+        _ = container.register("cache", MockCache())
+        _ = container.register("email_service", DebugEmailService())
     else:
         # In production: use real services
-        container.register("cache", RedisCache(config.redis_url))
-        container.register("email_service", SendgridEmailService(config.api_key))
+        _ = container.register("cache", RedisCache(config.redis_url))
+        _ = container.register("email_service", SendgridEmailService(config.api_key))
 
     return FlextResult[bool].ok(True)
 ```
@@ -659,8 +659,8 @@ service = container.get("service").value  # May crash
 # ✅ CORRECT - Register during initialization
 def initialize():
     container = FlextContainer.get_global()
-    container.register("logger", FlextLogger())
-    container.register("config", FlextSettings.load().value)
+    _ = container.register("logger", FlextLogger())
+    _ = container.register("config", FlextSettings.load().value)
 
 initialize()
 
@@ -671,7 +671,7 @@ logger_result = container.get("logger")
 # ❌ WRONG - Registering late, missing dependencies
 def some_random_function():
     container = FlextContainer.get_global()
-    container.register("database", create_db())  # Too late!
+    _ = container.register("database", create_db())  # Too late!
 ```
 
 ### 4. Type-Safe Retrieval

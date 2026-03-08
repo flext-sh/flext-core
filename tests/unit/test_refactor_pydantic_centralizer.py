@@ -58,3 +58,63 @@ def test_centralizer_does_not_touch_settings_module(tmp_path: Path) -> None:
 
     assert summary["scanned_files"] == 0
     assert settings_file.read_text(encoding="utf-8") == original_source
+
+
+def test_centralizer_moves_manual_type_aliases_to_typings_file(tmp_path: Path) -> None:
+    src_file = tmp_path / "src" / "pkg" / "service.py"
+    src_file.parent.mkdir(parents=True)
+    src_file.write_text(
+        "from __future__ import annotations\n"
+        "from typing import TypeAlias\n\n"
+        "PayloadMap: TypeAlias = dict[str, str]\n"
+        "ConfigSchema: TypeAlias = dict[str, int]\n\n"
+        "def run(data: PayloadMap) -> int:\n"
+        "    return len(data)\n",
+        encoding="utf-8",
+    )
+
+    summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
+        tmp_path,
+        apply_changes=True,
+        normalize_remaining=False,
+    )
+
+    typings_file = src_file.parent / "_typings.py"
+    updated_source = src_file.read_text(encoding="utf-8")
+    generated_typings = typings_file.read_text(encoding="utf-8")
+
+    assert summary["moved_aliases"] >= 2
+    assert summary["created_typings_files"] == 1
+    assert "PayloadMap: TypeAlias = dict[str, str]" not in updated_source
+    assert "ConfigSchema: TypeAlias = dict[str, int]" not in updated_source
+    assert "from ._typings import ConfigSchema, PayloadMap" in updated_source
+    assert "PayloadMap: TypeAlias = dict[str, str]" in generated_typings
+    assert "ConfigSchema: TypeAlias = dict[str, int]" in generated_typings
+
+
+def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
+    tmp_path: Path,
+) -> None:
+    typings_file = tmp_path / "src" / "pkg" / "typings.py"
+    typings_file.parent.mkdir(parents=True)
+    typings_file.write_text(
+        "from __future__ import annotations\n"
+        "from collections.abc import Mapping\n"
+        "from typing import TypeAlias\n\n"
+        "ScalarMap: TypeAlias = Mapping[str, str]\n",
+        encoding="utf-8",
+    )
+
+    summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
+        tmp_path,
+        apply_changes=True,
+        normalize_remaining=False,
+    )
+
+    updated_typings = typings_file.read_text(encoding="utf-8")
+    generated_models = (typings_file.parent / "_models.py").read_text(encoding="utf-8")
+
+    assert summary["moved_aliases"] == 1
+    assert "ScalarMap: TypeAlias" not in updated_typings
+    assert "from ._models import ScalarMap" in updated_typings
+    assert "class ScalarMap(RootModel[Mapping[str, str]]):" in generated_models

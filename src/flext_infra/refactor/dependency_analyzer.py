@@ -16,6 +16,7 @@ from flext_infra import c, m, u
 
 class ImportCollector(cst.CSTVisitor):
     def __init__(self) -> None:
+        super().__init__()
         self.imported_modules: set[str] = set()
         self.imported_symbols: set[str] = set()
 
@@ -67,6 +68,7 @@ class DependencyAnalyzer:
 
     def __init__(self, workspace_root: Path) -> None:
         """Initialize analyzer for the given workspace root."""
+        super().__init__()
         self._workspace_root = workspace_root.resolve()
         self._stdlib_roots = set(sys.stdlib_module_names)
         self._projects = self._discover_projects()
@@ -158,7 +160,7 @@ class DependencyAnalyzer:
         idx: dict[str, str] = {}
         for proj in projects:
             for pkg in proj.package_roots:
-                idx.setdefault(pkg, proj.name)
+                _ = idx.setdefault(pkg, proj.name)
         return idx
 
     def _find_import_candidate_files(
@@ -223,7 +225,7 @@ class DependencyAnalyzer:
             src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = cst.parse_module(src)
             col = ImportCollector()
-            tree.visit(col)
+            _ = tree.visit(col)
             return r[m.Infra.Refactor.FileImportData].ok(
                 m.Infra.Refactor.FileImportData(
                     imported_modules=col.imported_modules,

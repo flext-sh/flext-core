@@ -1,17 +1,15 @@
-"""CLI workflow tests for model centralization automation."""
+"""CLI workflow tests for refactor model automation."""
 
 from __future__ import annotations
 
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
-
-import pytest
 
 from flext_infra.refactor import __main__ as refactor_main
 
 
-def test_centralize_pydantic_cli_outputs_extended_metrics(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     module_dir = workspace / "src" / "sample_pkg"
     module_dir.mkdir(parents=True)
@@ -24,19 +22,25 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(
         "PayloadMap: TypeAlias = dict[str, str]\n",
         encoding="utf-8",
     )
-    run_code = refactor_main._run_centralize_pydantic(
-        argv=["--workspace", str(workspace), "--dry-run", "--normalize-remaining"]
-    )
-    captured = capsys.readouterr()
+    buffer = StringIO()
+    with redirect_stdout(buffer):
+        run_code = refactor_main._run_centralize_pydantic(
+            argv=[
+                "--workspace",
+                str(workspace),
+                "--dry-run",
+                "--normalize-remaining",
+            ]
+        )
+    captured = buffer.getvalue()
     assert run_code == 0
-    assert "detected_model_violations=" in captured.out
-    assert "detected_alias_violations=" in captured.out
-    assert "created_model_files=" in captured.out
+    assert "detected_model_violations=" in captured
+    assert "detected_alias_violations=" in captured
+    assert "created_model_files=" in captured
+    assert "created_typings_files=" in captured
 
 
-def test_ultrawork_models_cli_runs_dry_run_copy(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     project = workspace / "sample-project"
     module_dir = project / "src" / "sample_pkg"
@@ -52,15 +56,17 @@ def test_ultrawork_models_cli_runs_dry_run_copy(
         "    value: str\n",
         encoding="utf-8",
     )
-    run_code = refactor_main._run_ultrawork_models(
-        argv=[
-            "--workspace",
-            str(workspace),
-            "--dry-run-copy-workspace",
-            "--normalize-remaining",
-        ]
-    )
-    captured = capsys.readouterr()
+    buffer = StringIO()
+    with redirect_stdout(buffer):
+        run_code = refactor_main._run_ultrawork_models(
+            argv=[
+                "--workspace",
+                str(workspace),
+                "--dry-run-copy-workspace",
+                "--normalize-remaining",
+            ]
+        )
+    captured = buffer.getvalue()
     assert run_code == 0
-    assert "namespace_loose_objects=" in captured.out
-    assert "mro_remaining_violations=" in captured.out
+    assert "namespace_loose_objects=" in captured
+    assert "mro_remaining_violations=" in captured

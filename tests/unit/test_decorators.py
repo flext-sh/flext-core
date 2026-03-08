@@ -286,7 +286,7 @@ class TestFlextDecorators:
             service_instance: TestServiceTyped = TestServiceTyped(
                 value="from_container"
             )
-            container.register("service", service_instance)
+            _ = container.register("service", service_instance)
 
             @FlextDecorators.inject(service="service")
             def process(*, service: TestServiceTyped) -> str:
