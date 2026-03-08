@@ -22,7 +22,7 @@ class FlextInfraRefactorDeprecatedRemover(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
     ) -> cst.ClassDef | cst.RemovalSentinel:
         """Remove deprecated classes based on naming and __init__ warnings."""
         class_name = original_node.name.value
@@ -35,7 +35,7 @@ class FlextInfraRefactorDeprecatedRemover(cst.CSTTransformer):
                     if isinstance(sub_stmt, cst.SimpleStatementLine):
                         for line in sub_stmt.body:
                             if isinstance(line, cst.Expr) and isinstance(
-                                line.value, cst.Call
+                                line.value, cst.Call,
                             ):
                                 func = line.value.func
                                 if (
@@ -43,7 +43,7 @@ class FlextInfraRefactorDeprecatedRemover(cst.CSTTransformer):
                                     and func.attr.value == "warn"
                                 ):
                                     self._record_change(
-                                        f"Removed deprecated class: {class_name}"
+                                        f"Removed deprecated class: {class_name}",
                                     )
                                     return cst.RemovalSentinel.REMOVE
         return updated_node

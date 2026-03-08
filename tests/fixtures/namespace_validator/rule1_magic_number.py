@@ -6,8 +6,6 @@ from __future__ import annotations
 class FlextTestUtilities:
     """Utilities namespace."""
 
-    pass
-
 
 VALID_STATUSES = frozenset({"active", "inactive"})
 DEFAULT_HEADERS = {"content_type": "json"}

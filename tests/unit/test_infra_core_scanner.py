@@ -56,7 +56,7 @@ class TestFlextInfraTextPatternScanner:
         excluded = root / "excluded.log"
         excluded.write_text("hello")
         result = scanner.scan(
-            root, pattern="hello", includes=["*.txt"], excludes=["*.log"]
+            root, pattern="hello", includes=["*.txt"], excludes=["*.log"],
         )
         assert result.is_success
         assert result.value["files_scanned"] == 1
@@ -68,13 +68,13 @@ class TestFlextInfraTextPatternScanner:
         test_file = root / "test.txt"
         test_file.write_text("goodbye")
         result = scanner.scan(
-            root, pattern="hello", includes=["*.txt"], match_mode="absent"
+            root, pattern="hello", includes=["*.txt"], match_mode="absent",
         )
         assert result.is_success
         assert result.value["violation_count"] == 1
 
     def test_scan_with_absent_match_mode_no_violation_if_found(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test absent mode returns no violation if pattern found."""
         scanner = FlextInfraTextPatternScanner()
@@ -82,7 +82,7 @@ class TestFlextInfraTextPatternScanner:
         test_file = root / "test.txt"
         test_file.write_text("hello world")
         result = scanner.scan(
-            root, pattern="hello", includes=["*.txt"], match_mode="absent"
+            root, pattern="hello", includes=["*.txt"], match_mode="absent",
         )
         assert result.is_success
         assert result.value["violation_count"] == 0
@@ -106,7 +106,7 @@ class TestFlextInfraTextPatternScanner:
         scanner = FlextInfraTextPatternScanner()
         root = tmp_path
         result = scanner.scan(
-            root, pattern="hello", includes=["*.txt"], match_mode="invalid"
+            root, pattern="hello", includes=["*.txt"], match_mode="invalid",
         )
         assert result.is_failure
 

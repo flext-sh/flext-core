@@ -137,7 +137,7 @@ class DependencyAnalyzer:
                     path=candidate,
                     src_path=src,
                     package_roots=self._discover_package_roots(src),
-                )
+                ),
             )
         return projects
 
@@ -157,7 +157,8 @@ class DependencyAnalyzer:
         return roots
 
     def _build_package_index(
-        self, projects: list[m.Infra.Refactor.ProjectInfo]
+        self,
+        projects: list[m.Infra.Refactor.ProjectInfo],
     ) -> dict[str, str]:
         idx: dict[str, str] = {}
         for proj in projects:
@@ -166,7 +167,8 @@ class DependencyAnalyzer:
         return idx
 
     def _find_import_candidate_files(
-        self, project: m.Infra.Refactor.ProjectInfo
+        self,
+        project: m.Infra.Refactor.ProjectInfo,
     ) -> list[Path]:
         grep_files = self._scan_import_files_with_ast_grep(project.src_path)
         if grep_files.is_success and grep_files.value:
@@ -195,7 +197,9 @@ class DependencyAnalyzer:
         return r[set[Path]].ok(files)
 
     def _run_ast_grep(
-        self, src_path: Path, pattern: str
+        self,
+        src_path: Path,
+        pattern: str,
     ) -> r[list[m.Infra.Refactor.AstGrepMatchEnvelope]]:
         cmd = [
             "sg",
@@ -209,15 +213,15 @@ class DependencyAnalyzer:
         capture = u.Infra.Refactor.capture_output(cmd)
         if capture.is_failure:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(
-                capture.error or "capture failed"
+                capture.error or "capture failed",
             )
         if not capture.value:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok([])
         try:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok(
                 TypeAdapter(list[m.Infra.Refactor.AstGrepMatchEnvelope]).validate_json(
-                    capture.value
-                )
+                    capture.value,
+                ),
             )
         except ValidationError as exc:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(str(exc))
@@ -232,18 +236,10 @@ class DependencyAnalyzer:
                 m.Infra.Refactor.FileImportData(
                     imported_modules=col.imported_modules,
                     imported_symbols=col.imported_symbols,
-                )
+                ),
             )
         except (OSError, UnicodeDecodeError, cst.ParserSyntaxError) as exc:
             return r[m.Infra.Refactor.FileImportData].fail(f"{file_path}: {exc}")
-
-
-@dataclass(frozen=True, slots=True)
-class ParsedPythonModule:
-    """Parsed Python module containing source text and AST tree."""
-
-    source: str
-    tree: ast.Module
 
 
 def load_python_module(
@@ -266,7 +262,7 @@ def load_python_module(
                     stage=stage,
                     error_type=type(exc).__name__,
                     detail=str(exc),
-                )
+                ),
             )
         return None
     except OSError as exc:
@@ -277,7 +273,7 @@ def load_python_module(
                     stage=stage,
                     error_type=type(exc).__name__,
                     detail=str(exc),
-                )
+                ),
             )
         return None
     try:
@@ -290,10 +286,16 @@ def load_python_module(
                     stage=stage,
                     error_type=type(exc).__name__,
                     detail=str(exc),
-                )
+                ),
             )
         return None
     return ParsedPythonModule(source=source, tree=tree)
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedPythonModule:
+    source: str
+    tree: ast.Module
 
 
 class NamespaceFacadeScanner:
@@ -329,7 +331,7 @@ class NamespaceFacadeScanner:
                     class_name=found_class,
                     file=found_file,
                     symbol_count=symbol_count,
-                )
+                ),
             )
         return results
 
@@ -428,7 +430,7 @@ class LooseObjectDetector:
             m.Infra.Refactor.NamespaceEnforcementModels.LooseObjectViolation
         ] = []
         class_stem = NamespaceFacadeScanner.project_class_stem(
-            project_name=project_name
+            project_name=project_name,
         )
         for stmt in tree.body:
             violation = cls._check_statement(
@@ -584,7 +586,7 @@ class ImportAliasDetector:
                             line=stmt.lineno,
                             current_import=current,
                             suggested_import=suggestion,
-                        )
+                        ),
                     )
         return violations
 
@@ -639,7 +641,7 @@ class InternalImportDetector:
                     line=stmt.lineno,
                     current_import=current_import,
                     detail=detail,
-                )
+                ),
             )
         return violations
 
@@ -687,7 +689,7 @@ class ManualProtocolDetector:
                         file=str(file_path),
                         line=stmt.lineno,
                         name=stmt.name,
-                    )
+                    ),
                 )
         return violations
 
@@ -774,7 +776,7 @@ class CyclicImportDetector:
                     m.Infra.Refactor.NamespaceEnforcementModels.CyclicImportViolation.create(
                         cycle=normalized_cycle,
                         files=cycle_files,
-                    )
+                    ),
                 )
         return violations
 
@@ -854,7 +856,7 @@ class RuntimeAliasDetector:
                     kind="missing",
                     alias=expected_alias,
                     detail=f"No '{expected_alias} = ...' assignment found",
-                )
+                ),
             )
         elif len(matches) > 1:
             violations.append(
@@ -864,7 +866,7 @@ class RuntimeAliasDetector:
                     kind="duplicate",
                     alias=expected_alias,
                     detail=f"Duplicate alias assignment at lines {', '.join(str(mv[0]) for mv in matches)}",
-                )
+                ),
             )
         return violations
 
@@ -915,8 +917,8 @@ class FutureAnnotationsDetector:
                 break
         return [
             m.Infra.Refactor.NamespaceEnforcementModels.FutureAnnotationsViolation.create(
-                file=str(file_path)
-            )
+                file=str(file_path),
+            ),
         ]
 
 
@@ -960,7 +962,7 @@ class ManualTypingAliasDetector:
                         line=stmt.lineno,
                         name=alias_name,
                         detail="PEP695 alias must be centralized under typings scope",
-                    )
+                    ),
                 )
                 continue
             if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
@@ -972,7 +974,7 @@ class ManualTypingAliasDetector:
                             line=stmt.lineno,
                             name=stmt.target.id,
                             detail="TypeAlias assignment must be centralized under typings scope",
-                        )
+                        ),
                     )
         return violations
 
@@ -1031,15 +1033,31 @@ class CompatibilityAliasDetector:
                         line=stmt.lineno,
                         alias_name=alias_name,
                         target_name=target_name,
-                    )
+                    ),
                 )
         return violations
+
+
+class FlextInfraRefactorDependencyAnalyzerFacade:
+    """Facade grouping all dependency analysis detectors and scanners."""
+
+    NamespaceFacadeScanner = NamespaceFacadeScanner
+    LooseObjectDetector = LooseObjectDetector
+    ImportAliasDetector = ImportAliasDetector
+    InternalImportDetector = InternalImportDetector
+    ManualProtocolDetector = ManualProtocolDetector
+    CyclicImportDetector = CyclicImportDetector
+    RuntimeAliasDetector = RuntimeAliasDetector
+    FutureAnnotationsDetector = FutureAnnotationsDetector
+    ManualTypingAliasDetector = ManualTypingAliasDetector
+    CompatibilityAliasDetector = CompatibilityAliasDetector
 
 
 __all__ = [
     "CompatibilityAliasDetector",
     "CyclicImportDetector",
     "DependencyAnalyzer",
+    "FlextInfraRefactorDependencyAnalyzerFacade",
     "FutureAnnotationsDetector",
     "ImportAliasDetector",
     "InternalImportDetector",
@@ -1047,7 +1065,6 @@ __all__ = [
     "ManualProtocolDetector",
     "ManualTypingAliasDetector",
     "NamespaceFacadeScanner",
-    "ParsedPythonModule",
     "RuntimeAliasDetector",
     "load_python_module",
 ]

@@ -20,7 +20,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraReleaseOrchestrator": (
         "flext_infra.release.orchestrator",
         "FlextInfraReleaseOrchestrator",
-    )
+    ),
 }
 __all__ = ["FlextInfraReleaseOrchestrator"]
 

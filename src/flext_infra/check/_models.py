@@ -37,7 +37,7 @@ class FlextInfraCheckModels:
         """Execution result for a single quality gate."""
 
         result: FlextInfraCheckModels.GateResult = Field(
-            description="Gate result model"
+            description="Gate result model",
         )
         issues: list[FlextInfraCheckModels.Issue] = Field(
             default_factory=lambda: list[FlextInfraCheckModels.Issue](),
@@ -143,7 +143,7 @@ class FlextInfraCheckModels:
             level: str = Field(description="Result level (error/warning)")
             message: str = Field(description="Result message")
             locations: list[FlextInfraCheckModels.Sarif.Location] = Field(
-                description="Result locations"
+                description="Result locations",
             )
 
             @model_serializer(mode="plain")
@@ -185,7 +185,7 @@ class FlextInfraCheckModels:
                             "rules": [
                                 rule.model_dump(by_alias=True) for rule in self.rules
                             ],
-                        }
+                        },
                     },
                     "results": [
                         result.model_dump(by_alias=True) for result in self.results

@@ -269,7 +269,7 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_from_dict(
-            self, param_name: str, expected_value: t.ContainerValue
+            self, param_name: str, expected_value: t.ContainerValue,
         ) -> None:
             """Test get_parameter from dict-like object."""
             config_dict = self._create_test_dict()
@@ -285,10 +285,10 @@ class TestFlextUtilitiesConfiguration:
             config_dict = self._create_test_dict()
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 u.get_parameter(
-                    config_dict, TestConfigConstants.ParameterNames.MISSING.value
+                    config_dict, TestConfigConstants.ParameterNames.MISSING.value,
                 )
             error_msg = TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
-                TestConfigConstants.ParameterNames.MISSING.value
+                TestConfigConstants.ParameterNames.MISSING.value,
             )
             _Assertions.that(
                 str(exc_info.value),
@@ -314,7 +314,7 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_from_pydantic_model(
-            self, param_name: str, expected_value: t.ContainerValue
+            self, param_name: str, expected_value: t.ContainerValue,
         ) -> None:
             """Test get_parameter from Pydantic model."""
             config = ConfigModelForTest(
@@ -323,7 +323,7 @@ class TestFlextUtilitiesConfiguration:
                 enabled=TestConfigConstants.TestValues.TEST_ENABLED_FALSE,
             )
             result = u.get_parameter(
-                cast("p.HasModelDump", cast("object", config)), param_name
+                cast("p.HasModelDump", cast("object", config)), param_name,
             )
             _Assertions.that(
                 result,
@@ -340,14 +340,14 @@ class TestFlextUtilitiesConfiguration:
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
             assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
-                TestConfigConstants.ParameterNames.MISSING.value
+                TestConfigConstants.ParameterNames.MISSING.value,
             ) in str(exc_info.value)
 
         def test_from_pydantic_model_invalid_dump(self) -> None:
             """Test get_parameter handles invalid model_dump return."""
             config = cast("p.HasModelDump", cast("object", InvalidModelForTest()))
             result = u.get_parameter(
-                config, TestConfigConstants.ParameterNames.VALUE.value
+                config, TestConfigConstants.ParameterNames.VALUE.value,
             )
             assert result == "test"
 
@@ -365,7 +365,7 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_from_attribute_access(
-            self, param_name: str, expected_value: t.ContainerValue
+            self, param_name: str, expected_value: t.ContainerValue,
         ) -> None:
             """Test get_parameter from object attribute access."""
             config = DataclassConfigForTest(
@@ -382,7 +382,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_attribute_access_not_found(self) -> None:
             """Test get_parameter raises NotFoundError for missing attribute."""
             config = DataclassConfigForTest(
-                name=TestConfigConstants.TestValues.TEST_NAME
+                name=TestConfigConstants.TestValues.TEST_NAME,
             )
             config_cast = cast(
                 "p.HasModelDump | Mapping[str, t.ContainerValue]",
@@ -390,10 +390,10 @@ class TestFlextUtilitiesConfiguration:
             )
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 u.get_parameter(
-                    config_cast, TestConfigConstants.ParameterNames.MISSING.value
+                    config_cast, TestConfigConstants.ParameterNames.MISSING.value,
                 )
             assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
-                TestConfigConstants.ParameterNames.MISSING.value
+                TestConfigConstants.ParameterNames.MISSING.value,
             ) in str(exc_info.value)
 
         @pytest.mark.parametrize(
@@ -422,7 +422,7 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_boundary_values(
-            self, param_name: str, expected_value: t.ContainerValue
+            self, param_name: str, expected_value: t.ContainerValue,
         ) -> None:
             """Test get_parameter with boundary values."""
             config_dict = self._create_boundary_dict()
@@ -448,7 +448,7 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_on_pydantic_model_success(
-            self, param_name: str, value: t.ContainerValue, expected_success: bool
+            self, param_name: str, value: t.ContainerValue, expected_success: bool,
         ) -> None:
             """Test set_parameter on Pydantic model with validation."""
             config = ConfigModelForTest(
@@ -456,7 +456,7 @@ class TestFlextUtilitiesConfiguration:
                 timeout=TestConfigConstants.TestValues.TEST_TIMEOUT // 2,
             )
             result = u.set_parameter(
-                config, param_name, cast("t.Scalar | m.ConfigMap", value)
+                config, param_name, cast("t.Scalar | m.ConfigMap", value),
             )
             if result:
                 assert getattr(config, param_name) == value
@@ -477,12 +477,12 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_on_pydantic_model_validation_error(
-            self, param_name: str, value: t.ContainerValue
+            self, param_name: str, value: t.ContainerValue,
         ) -> None:
             """Test set_parameter handles Pydantic validation errors."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
             result = u.set_parameter(
-                config, param_name, cast("t.Scalar | m.ConfigMap", value)
+                config, param_name, cast("t.Scalar | m.ConfigMap", value),
             )
             assert result is False
 
@@ -519,12 +519,12 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_boundary_values(
-            self, param_name: str, value: t.ContainerValue
+            self, param_name: str, value: t.ContainerValue,
         ) -> None:
             """Test set_parameter with boundary values."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
             result = u.set_parameter(
-                config, param_name, cast("t.Scalar | m.ConfigMap", value)
+                config, param_name, cast("t.Scalar | m.ConfigMap", value),
             )
             assert result is True
             assert getattr(config, param_name) == value
@@ -547,7 +547,7 @@ class TestFlextUtilitiesConfiguration:
             ],
         )
         def test_get_singleton_success(
-            self, param_name: str, expected_value: t.ContainerValue
+            self, param_name: str, expected_value: t.ContainerValue,
         ) -> None:
             """Test get_singleton from singleton class."""
             result = u.get_singleton(SingletonClassForTest, param_name)
@@ -561,7 +561,7 @@ class TestFlextUtilitiesConfiguration:
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
             assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
-                TestConfigConstants.ParameterNames.MISSING.value
+                TestConfigConstants.ParameterNames.MISSING.value,
             ) in str(exc_info.value)
 
         def test_get_singleton_no_get_global(self) -> None:
@@ -572,7 +572,7 @@ class TestFlextUtilitiesConfiguration:
                     TestConfigConstants.ParameterNames.VALUE.value,
                 )
             assert TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL in str(
-                exc_info.value
+                exc_info.value,
             )
 
         def test_set_singleton_success(self) -> None:
@@ -639,7 +639,7 @@ class TestFlextUtilitiesConfiguration:
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
-                    TestConfigConstants.ParameterNames.MISSING.value
+                    TestConfigConstants.ParameterNames.MISSING.value,
                 )
                 in result.error
             )
@@ -652,7 +652,7 @@ class TestFlextUtilitiesConfiguration:
             validation_result = u.validate_config_class(ConfigModelForTest)
             _ResultAssertions.assert_result_success(validation_result)
             _Assertions.that(
-                validation_result.value, eq=True, msg="Config class must be valid"
+                validation_result.value, eq=True, msg="Config class must be valid",
             )
 
         def test_no_model_config(self) -> None:
@@ -681,7 +681,7 @@ class TestFlextUtilitiesConfiguration:
         def test_minimal(self) -> None:
             """Test create_settings_config with minimal parameters."""
             config = u.create_settings_config(
-                TestConfigConstants.SettingsConfig.ENV_PREFIX
+                TestConfigConstants.SettingsConfig.ENV_PREFIX,
             )
             _Assertions.that(
                 config["env_prefix"],
@@ -837,7 +837,7 @@ class TestFlextUtilitiesConfiguration:
         def test_no_kwargs(self) -> None:
             """Test build_options_from_kwargs with no kwargs."""
             explicit = OptionsModelForTest(
-                format=TestConfigConstants.TestValues.TEST_FORMAT_JSON
+                format=TestConfigConstants.TestValues.TEST_FORMAT_JSON,
             )
             result = u.build_options_from_kwargs(
                 model_class=OptionsModelForTest,
@@ -877,7 +877,7 @@ class TestFlextUtilitiesConfiguration:
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
-                    "StrictOptions"
+                    "StrictOptions",
                 )
                 in result.error
             )
@@ -894,7 +894,7 @@ class TestFlextUtilitiesConfiguration:
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(
-                    "FailingOptions"
+                    "FailingOptions",
                 )
                 in result.error
             )

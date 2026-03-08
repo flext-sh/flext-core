@@ -51,7 +51,7 @@ class FlextInfraJsonService(s[bool]):
             return r[t.ConfigurationMapping].ok({})
         try:
             loaded_obj: t.ContainerValue = json.loads(
-                path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             if not isinstance(loaded_obj, dict):
                 return r[t.ConfigurationMapping].fail("JSON root must be object")
@@ -60,7 +60,7 @@ class FlextInfraJsonService(s[bool]):
             return r[t.ConfigurationMapping].ok(data)
         except ValidationError as exc:
             return r[t.ConfigurationMapping].fail(
-                f"JSON object validation error: {exc}"
+                f"JSON object validation error: {exc}",
             )
         except (json.JSONDecodeError, OSError) as exc:
             return r[t.ConfigurationMapping].fail(f"JSON read error: {exc}")
@@ -132,7 +132,7 @@ class FlextInfraJsonService(s[bool]):
                     indent=indent,
                     sort_keys=sort_keys,
                     ensure_ascii=ensure_ascii,
-                )
+                ),
             )
         except (TypeError, ValueError) as exc:
             return r[str].fail(f"JSON serialize error: {exc}")

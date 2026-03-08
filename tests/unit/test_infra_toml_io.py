@@ -23,7 +23,7 @@ class TestFlextInfraTomlService:
         """Test reading an existing TOML file."""
         toml_file = tmp_path / "test.toml"
         toml_file.write_text(
-            '[section]\nkey = "value"\nnumber = 42\n', encoding="utf-8"
+            '[section]\nkey = "value"\nnumber = 42\n', encoding="utf-8",
         )
         service = FlextInfraTomlService()
         result = service.read(toml_file)
@@ -90,7 +90,7 @@ class TestFlextInfraTomlService:
         toml_file = tmp_path / "output.toml"
         service = FlextInfraTomlService()
         payload: dict[str, t.ContainerValue] = {
-            "section": {"key": "value", "number": 42}
+            "section": {"key": "value", "number": 42},
         }
         result = service.write(toml_file, payload)
         assert result.is_success

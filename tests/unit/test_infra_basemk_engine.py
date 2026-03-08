@@ -66,7 +66,7 @@ def test_generator_renders_with_config_override() -> None:
 
 def test_generator_fails_for_invalid_make_syntax() -> None:
     result = FlextInfraBaseMkGenerator(
-        template_engine=_InvalidTemplateEngine()
+        template_engine=_InvalidTemplateEngine(),
     ).generate()
     assert result.is_failure
     assert result.error is not None
@@ -94,7 +94,7 @@ def test_basemk_cli_generate_to_file(tmp_path: Path) -> None:
     assert exit_code == 0
     assert output_path.exists()
     assert output_path.read_text(encoding="utf-8").startswith(
-        "# ===================================="
+        "# ====================================",
     )
 
 

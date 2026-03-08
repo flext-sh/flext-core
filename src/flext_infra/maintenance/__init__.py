@@ -19,7 +19,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraPythonVersionEnforcer": (
         "flext_infra.maintenance.python_version",
         "FlextInfraPythonVersionEnforcer",
-    )
+    ),
 }
 __all__ = ["FlextInfraPythonVersionEnforcer"]
 

@@ -19,7 +19,7 @@ def test_run_detect_success(tmp_path: Path) -> None:
     args = Mock()
     args.project_root = tmp_path
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector"
+        "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector",
     ) as mock_detector_class:
         mock_detector = Mock()
         mock_detector.detect.return_value = Mock(is_success=True, value="workspace")
@@ -33,11 +33,11 @@ def test_run_detect_failure(tmp_path: Path) -> None:
     args = Mock()
     args.project_root = tmp_path
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector"
+        "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector",
     ) as mock_detector_class:
         mock_detector = Mock()
         mock_detector.detect.return_value = Mock(
-            is_success=False, error="Detection failed"
+            is_success=False, error="Detection failed",
         )
         mock_detector_class.return_value = mock_detector
         result = workspace_main._run_detect(args)
@@ -50,7 +50,7 @@ def test_run_sync_success(tmp_path: Path) -> None:
     args.project_root = tmp_path
     args.canonical_root = None
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraSyncService"
+        "flext_infra.workspace.__main__.FlextInfraSyncService",
     ) as mock_sync_class:
         mock_sync = Mock()
         mock_sync.sync.return_value = Mock(is_success=True)
@@ -65,7 +65,7 @@ def test_run_sync_failure(tmp_path: Path) -> None:
     args.project_root = tmp_path
     args.canonical_root = None
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraSyncService"
+        "flext_infra.workspace.__main__.FlextInfraSyncService",
     ) as mock_sync_class:
         mock_sync = Mock()
         mock_sync.sync.return_value = Mock(is_success=False, error="Sync failed")
@@ -82,11 +82,11 @@ def test_run_orchestrate_success() -> None:
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
+        "flext_infra.workspace.__main__.FlextInfraOrchestratorService",
     ) as mock_orch_class:
         mock_orch = Mock()
         mock_orch.orchestrate.return_value = Mock(
-            is_success=True, value=[Mock(exit_code=0), Mock(exit_code=0)]
+            is_success=True, value=[Mock(exit_code=0), Mock(exit_code=0)],
         )
         mock_orch_class.return_value = mock_orch
         result = workspace_main._run_orchestrate(args)
@@ -112,11 +112,11 @@ def test_run_orchestrate_with_failures() -> None:
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
+        "flext_infra.workspace.__main__.FlextInfraOrchestratorService",
     ) as mock_orch_class:
         mock_orch = Mock()
         mock_orch.orchestrate.return_value = Mock(
-            is_success=True, value=[Mock(exit_code=0), Mock(exit_code=1)]
+            is_success=True, value=[Mock(exit_code=0), Mock(exit_code=1)],
         )
         mock_orch_class.return_value = mock_orch
         result = workspace_main._run_orchestrate(args)
@@ -131,11 +131,11 @@ def test_run_orchestrate_failure() -> None:
     args.fail_fast = False
     args.make_arg = cast("list[str]", [])
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
+        "flext_infra.workspace.__main__.FlextInfraOrchestratorService",
     ) as mock_orch_class:
         mock_orch = Mock()
         mock_orch.orchestrate.return_value = Mock(
-            is_success=False, error="Orchestration failed"
+            is_success=False, error="Orchestration failed",
         )
         mock_orch_class.return_value = mock_orch
         result = workspace_main._run_orchestrate(args)
@@ -148,11 +148,11 @@ def test_run_migrate_success(tmp_path: Path) -> None:
     args.workspace_root = tmp_path
     args.dry_run = False
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraProjectMigrator"
+        "flext_infra.workspace.__main__.FlextInfraProjectMigrator",
     ) as mock_migrator_class:
         mock_migrator = Mock()
         mock_migrator.migrate.return_value = Mock(
-            is_success=True, is_failure=False, value=[Mock(errors=[], changes=[])]
+            is_success=True, is_failure=False, value=[Mock(errors=[], changes=[])],
         )
         mock_migrator_class.return_value = mock_migrator
         result = workspace_main._run_migrate(args)
@@ -165,11 +165,11 @@ def test_run_migrate_failure(tmp_path: Path) -> None:
     args.workspace_root = tmp_path
     args.dry_run = False
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraProjectMigrator"
+        "flext_infra.workspace.__main__.FlextInfraProjectMigrator",
     ) as mock_migrator_class:
         mock_migrator = Mock()
         mock_migrator.migrate.return_value = Mock(
-            is_success=False, is_failure=True, error="Migration failed"
+            is_success=False, is_failure=True, error="Migration failed",
         )
         mock_migrator_class.return_value = mock_migrator
         result = workspace_main._run_migrate(args)
@@ -182,7 +182,7 @@ def test_run_migrate_with_project_errors(tmp_path: Path) -> None:
     args.workspace_root = tmp_path
     args.dry_run = False
     with patch(
-        "flext_infra.workspace.__main__.FlextInfraProjectMigrator"
+        "flext_infra.workspace.__main__.FlextInfraProjectMigrator",
     ) as mock_migrator_class:
         mock_migrator = Mock()
         mock_migrator.migrate.return_value = Mock(
@@ -313,7 +313,7 @@ def test_main_calls_sys_exit(tmp_path: Path) -> None:
     """Test main() calls sys.exit."""
     with patch("sys.argv", ["workspace", "detect", "--project-root", str(tmp_path)]):
         with patch(
-            "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector"
+            "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector",
         ) as mock_detector_class:
             mock_detector = Mock()
             mock_detector_class.return_value = mock_detector

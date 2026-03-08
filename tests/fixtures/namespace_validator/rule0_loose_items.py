@@ -16,7 +16,6 @@ MAX_RETRIES = 3
 
 def helper() -> None:
     """Loose function — NOT in allowlist."""
-    pass
 
 
 class Status(StrEnum):

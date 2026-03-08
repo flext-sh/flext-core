@@ -136,13 +136,13 @@ class TestContext100Coverage:
         context.set("global_key", "global_value").value
         context.set("user_key", "user_value", scope="user").value
         global_result = context.get(
-            "global_key", scope=FlextConstants.Context.SCOPE_GLOBAL
+            "global_key", scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         assert global_result.is_success
         user_result = context.get("user_key", scope="user")
         assert user_result.is_success
         wrong_result = context.get(
-            "user_key", scope=FlextConstants.Context.SCOPE_GLOBAL
+            "user_key", scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         assert wrong_result.is_failure
 
@@ -150,13 +150,13 @@ class TestContext100Coverage:
         """Test set with different scope."""
         context = FlextContext()
         result1 = context.set(
-            "global_key", "global_value", scope=FlextConstants.Context.SCOPE_GLOBAL
+            "global_key", "global_value", scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         assert result1.is_success
         result2 = context.set("user_key", "user_value", scope="user")
         assert result2.is_success
         global_result = context.get(
-            "global_key", scope=FlextConstants.Context.SCOPE_GLOBAL
+            "global_key", scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         user_result = context.get("user_key", scope="user")
         assert global_result.is_success
@@ -253,7 +253,7 @@ class TestContext100Coverage:
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
             FlextModelsContext.ContextData.model_validate({
-                "metadata": invalid_metadata
+                "metadata": invalid_metadata,
             })
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
@@ -363,7 +363,7 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
         scope_data = FlextModelsContext.ContextScopeData(
-            scope_name="global", data={}
+            scope_name="global", data={},
         )
         assert isinstance(scope_data.data, dict)
         assert scope_data.data == {}
@@ -385,7 +385,7 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
         scope_data = FlextModelsContext.ContextScopeData(
-            scope_name="global", metadata={}
+            scope_name="global", metadata={},
         )
         assert isinstance(scope_data.metadata, dict)
         assert scope_data.metadata == {}
@@ -398,7 +398,7 @@ class TestContext100Coverage:
 
         model = TestModel()
         stats = FlextModelsContext.ContextStatistics.model_validate({
-            "operations": model
+            "operations": model,
         })
         assert isinstance(stats.operations, dict)
         assert "field" in stats.operations
@@ -407,7 +407,7 @@ class TestContext100Coverage:
         """Test ContextStatistics._validate_operations with None."""
         none_operations: t.ContainerValue = None
         stats = FlextModelsContext.ContextStatistics.model_validate({
-            "operations": none_operations
+            "operations": none_operations,
         })
         assert isinstance(stats.operations, dict)
         assert stats.operations == {}
@@ -420,7 +420,7 @@ class TestContext100Coverage:
 
         model = TestModel()
         metadata = FlextModelsContext.ContextMetadata.model_validate({
-            "custom_fields": model
+            "custom_fields": model,
         })
         assert isinstance(metadata.custom_fields, dict)
         assert "field" in metadata.custom_fields
@@ -429,7 +429,7 @@ class TestContext100Coverage:
         """Test ContextMetadata._validate_custom_fields with None."""
         none_custom_fields: t.ContainerValue = None
         metadata = FlextModelsContext.ContextMetadata.model_validate({
-            "custom_fields": none_custom_fields
+            "custom_fields": none_custom_fields,
         })
         assert isinstance(metadata.custom_fields, dict)
         assert metadata.custom_fields == {}

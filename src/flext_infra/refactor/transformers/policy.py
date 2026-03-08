@@ -35,7 +35,7 @@ class FlextInfraRefactorTransformerPolicyUtilities:
 
     @staticmethod
     def target_allowed(
-        *, policy: m.Infra.Refactor.ClassNestingPolicy, target_namespace: str
+        *, policy: m.Infra.Refactor.ClassNestingPolicy, target_namespace: str,
     ) -> bool:
         """Check whether policy allows writing the symbol to target namespace."""
         allowed_targets = tuple(policy.allowed_targets)

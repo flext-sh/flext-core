@@ -58,7 +58,7 @@ class TestAutomatedFlextHandlers:
         ids=lambda case: case["description"],
     )
     def test_automated_handlers_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario
+        self, test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for handlers functionality."""
         try:
@@ -66,11 +66,11 @@ class TestAutomatedFlextHandlers:
             result = self._execute_handlers_operation(instance, test_scenario["input"])
             if test_scenario["expected_success"]:
                 _ = assertion_helpers.assert_flext_result_success(
-                    result, f"h operation failed: {test_scenario['description']}"
+                    result, f"h operation failed: {test_scenario['description']}",
                 )
             else:
                 _ = assertion_helpers.assert_flext_result_failure(
-                    result, f"h operation should fail: {test_scenario['description']}"
+                    result, f"h operation should fail: {test_scenario['description']}",
                 )
         except Exception as e:
             if not test_scenario["expected_success"]:
@@ -105,7 +105,7 @@ class TestAutomatedFlextHandlers:
 
         def operation() -> r[t.ContainerValue]:
             return self._execute_handlers_operation(
-                instance, {"performance_test": True}
+                instance, {"performance_test": True},
             )
 
         start = time.perf_counter()
@@ -113,7 +113,7 @@ class TestAutomatedFlextHandlers:
         elapsed = time.perf_counter() - start
         assert elapsed < 1.0
         _ = assertion_helpers.assert_flext_result_success(
-            result, "h performance test exceeded timeout"
+            result, "h performance test exceeded timeout",
         )
 
     def test_automated_handlers_resource_management(self) -> None:
@@ -126,7 +126,7 @@ class TestAutomatedFlextHandlers:
             cleanup_result = cleanup()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cast("r[t.ContainerValue]", cleanup_result), "h cleanup failed"
+                    cast("r[t.ContainerValue]", cleanup_result), "h cleanup failed",
                 )
 
     def _execute_handlers_operation(

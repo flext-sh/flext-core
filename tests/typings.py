@@ -45,7 +45,7 @@ class TestsFlextTypes(FlextTestsTypes, FlextInfraTypes):
         ]
         "Service configuration mapping specific to flext-core services."
         type HandlerConfigMapping = Mapping[
-            str, FlextTypes.ContainerValue | Sequence[str] | Mapping[str, str] | None
+            str, FlextTypes.ContainerValue | Sequence[str] | Mapping[str, str] | None,
         ]
         "Handler configuration mapping specific to flext-core handlers."
 

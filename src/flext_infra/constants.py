@@ -554,11 +554,11 @@ class FlextInfraConstants(FlextConstants):
             PROJECT_SECTION: Final[str] = "[project]"
             "TOML section header for project metadata."
             SEMVER_RE: Final[re.Pattern[str]] = re.compile(
-                "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-dev)?$"
+                "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-dev)?$",
             )
             "Regex pattern for parsing semantic version strings."
             DEV_BRANCH_RE: Final[re.Pattern[str]] = re.compile(
-                "^(\\d+\\.\\d+\\.\\d+)-dev$"
+                "^(\\d+\\.\\d+\\.\\d+)-dev$",
             )
             "Regex pattern for matching development branch names."
             VALID_BUMP_TYPES: Final[frozenset[str]] = frozenset({

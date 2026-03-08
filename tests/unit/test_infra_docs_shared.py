@@ -28,7 +28,7 @@ class TestFlextInfraDocScope:
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         scope = FlextInfraDocScope(
-            name="test-project", path=tmp_path, report_dir=report_dir
+            name="test-project", path=tmp_path, report_dir=report_dir,
         )
         assert scope.name == "test-project"
         assert scope.path == tmp_path
@@ -120,7 +120,7 @@ class TestFlextInfraDocsShared:
         """Test build_scopes with custom output directory."""
         custom_output = str(tmp_path / "custom_output")
         result = FlextInfraDocsShared.build_scopes(
-            root=tmp_path, project=None, projects=None, output_dir=custom_output
+            root=tmp_path, project=None, projects=None, output_dir=custom_output,
         )
         assert result.is_success or result.is_failure
 
@@ -195,14 +195,14 @@ class TestFlextInfraDocsShared:
     def test_selected_project_names_with_project(self, tmp_path: Path) -> None:
         """Test _selected_project_names with single project."""
         names = FlextInfraDocsShared._selected_project_names(
-            tmp_path, "test-proj", None
+            tmp_path, "test-proj", None,
         )
         assert names == ["test-proj"]
 
     def test_selected_project_names_with_projects_comma(self, tmp_path: Path) -> None:
         """Test _selected_project_names with comma-separated projects."""
         names = FlextInfraDocsShared._selected_project_names(
-            tmp_path, None, "proj1,proj2,proj3"
+            tmp_path, None, "proj1,proj2,proj3",
         )
         assert "proj1" in names
         assert "proj2" in names
@@ -210,7 +210,7 @@ class TestFlextInfraDocsShared:
     def test_selected_project_names_with_projects_space(self, tmp_path: Path) -> None:
         """Test _selected_project_names with space-separated projects."""
         names = FlextInfraDocsShared._selected_project_names(
-            tmp_path, None, "proj1 proj2 proj3"
+            tmp_path, None, "proj1 proj2 proj3",
         )
         assert "proj1" in names
         assert "proj2" in names
@@ -231,7 +231,7 @@ class TestFlextInfraDocsShared:
         """Test write_json with Pydantic model."""
         json_file = tmp_path / "test.json"
         report = AuditReport(
-            phase="audit", scope="test", items=[], checks=[], strict=False, passed=True
+            phase="audit", scope="test", items=[], checks=[], strict=False, passed=True,
         )
         result = FlextInfraDocsShared.write_json(json_file, report)
         assert result.is_success or result.is_failure
@@ -369,7 +369,7 @@ class TestFlextInfraDocsShared:
     def test_build_scopes_report_dir_path_resolution(self, tmp_path: Path) -> None:
         """Test build_scopes resolves report_dir paths correctly."""
         result = FlextInfraDocsShared.build_scopes(
-            root=tmp_path, project=None, projects=None, output_dir=".reports/docs"
+            root=tmp_path, project=None, projects=None, output_dir=".reports/docs",
         )
         if result.is_success:
             for scope in result.value:
@@ -378,7 +378,7 @@ class TestFlextInfraDocsShared:
     def test_selected_project_names_mixed_separators(self, tmp_path: Path) -> None:
         """Test _selected_project_names with mixed separators."""
         names = FlextInfraDocsShared._selected_project_names(
-            tmp_path, None, "proj1, proj2, proj3"
+            tmp_path, None, "proj1, proj2, proj3",
         )
         assert "proj1" in names
         assert "proj2" in names
@@ -411,13 +411,13 @@ class TestFlextInfraDocsShared:
         assert content["number"] == 42
 
     def test_write_markdown_with_oserror_returns_failure(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test write_markdown returns failure on OSError."""
         md_file = tmp_path / "test.md"
 
         def mock_write_text(
-            self: object, data: str, *args: object, **kwargs: object
+            self: object, data: str, *args: object, **kwargs: object,
         ) -> None:
             msg = "Permission denied"
             raise OSError(msg)
@@ -441,7 +441,7 @@ class TestFlextInfraDocsShared:
         assert result.is_success
 
     def test_build_scopes_with_nonexistent_project_skips_it(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test build_scopes skips nonexistent projects gracefully."""
         result = FlextInfraDocsShared.build_scopes(
@@ -468,7 +468,7 @@ class TestFlextInfraDocsShared:
         assert "test-proj" in scope_names
 
     def test_build_scopes_catches_oserror(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test build_scopes returns failure on OSError during resolution."""
         original_resolve = Path.resolve

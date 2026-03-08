@@ -20,7 +20,7 @@ class TestMaintenanceMain:
     def test_main_success_returns_zero(self) -> None:
         """Test main() returns 0 on success."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -31,7 +31,7 @@ class TestMaintenanceMain:
     def test_main_success_with_none_value(self) -> None:
         """Test main() returns 0 when result value is 0."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -42,7 +42,7 @@ class TestMaintenanceMain:
     def test_main_success_with_nonzero_value(self) -> None:
         """Test main() returns value when result is non-zero."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -53,7 +53,7 @@ class TestMaintenanceMain:
     def test_main_failure_returns_one(self) -> None:
         """Test main() returns 1 on failure."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -65,7 +65,7 @@ class TestMaintenanceMain:
     def test_main_failure_with_none_error(self) -> None:
         """Test main() handles None error message."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -80,7 +80,7 @@ class TestMaintenanceMain:
     def test_main_with_check_flag(self) -> None:
         """Test main() passes check flag to enforcer."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -92,7 +92,7 @@ class TestMaintenanceMain:
     def test_main_without_check_flag(self) -> None:
         """Test main() without check flag."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -104,7 +104,7 @@ class TestMaintenanceMain:
     def test_main_with_verbose_flag(self) -> None:
         """Test main() passes verbose flag to enforcer."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -116,7 +116,7 @@ class TestMaintenanceMain:
     def test_main_with_verbose_short_flag(self) -> None:
         """Test main() with -v short flag."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -128,7 +128,7 @@ class TestMaintenanceMain:
     def test_main_without_verbose_flag(self) -> None:
         """Test main() without verbose flag."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -140,7 +140,7 @@ class TestMaintenanceMain:
     def test_main_with_both_flags(self) -> None:
         """Test main() with both check and verbose flags."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -160,7 +160,7 @@ class TestMaintenanceMain:
         """Test main() with None argv uses sys.argv."""
         with patch("sys.argv", ["prog"]):
             with patch(
-                "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+                "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
             ) as mock_enforcer_class:
                 mock_enforcer = Mock()
                 mock_enforcer_class.return_value = mock_enforcer
@@ -171,7 +171,7 @@ class TestMaintenanceMain:
     def test_main_creates_enforcer_instance(self) -> None:
         """Test main() creates FlextInfraPythonVersionEnforcer instance."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -182,7 +182,7 @@ class TestMaintenanceMain:
     def test_main_calls_execute_method(self) -> None:
         """Test main() calls execute method on enforcer."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -193,7 +193,7 @@ class TestMaintenanceMain:
     def test_main_error_output_called_on_failure(self) -> None:
         """Test main() calls output.error on failure."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -205,7 +205,7 @@ class TestMaintenanceMain:
     def test_main_error_output_not_called_on_success(self) -> None:
         """Test main() does not call output.error on success."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -217,7 +217,7 @@ class TestMaintenanceMain:
     def test_main_with_empty_argv_list(self) -> None:
         """Test main() with empty argv list."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -228,10 +228,10 @@ class TestMaintenanceMain:
     def test_main_runtime_configured(self) -> None:
         """Test main() ensures FlextRuntime is configured."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextRuntime.ensure_structlog_configured"
+            "flext_infra.maintenance.__main__.FlextRuntime.ensure_structlog_configured",
         ) as mock_config:
             with patch(
-                "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+                "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
             ) as mock_enforcer_class:
                 mock_enforcer = Mock()
                 mock_enforcer_class.return_value = mock_enforcer
@@ -242,7 +242,7 @@ class TestMaintenanceMain:
     def test_main_check_and_verbose_together(self) -> None:
         """Test main() with check and verbose flags together."""
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -256,7 +256,7 @@ class TestMaintenanceMain:
         """Test main() passes error message to output.error."""
         error_msg = "specific error message"
         with patch(
-            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+            "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
         ) as mock_enforcer_class:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
@@ -269,7 +269,7 @@ class TestMaintenanceMain:
         """Test main() calls sys.exit."""
         with patch("sys.argv", ["maintenance"]):
             with patch(
-                "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer"
+                "flext_infra.maintenance.__main__.FlextInfraPythonVersionEnforcer",
             ) as mock_enforcer_class:
                 mock_enforcer = Mock()
                 mock_enforcer_class.return_value = mock_enforcer

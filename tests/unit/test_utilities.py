@@ -119,34 +119,34 @@ class Testu:
         UtilityScenarios.TYPE_GUARD_CASES["string"],
     )
     def test_type_guard_string(
-        self, description: str, value: object, expected: bool
+        self, description: str, value: object, expected: bool,
     ) -> None:
         """Test string type guards."""
         result = u.is_type(cast("t.ContainerValue", value), "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
-        ("description", "value", "expected"), UtilityScenarios.TYPE_GUARD_CASES["dict"]
+        ("description", "value", "expected"), UtilityScenarios.TYPE_GUARD_CASES["dict"],
     )
     def test_type_guard_dict(
-        self, description: str, value: object, expected: bool
+        self, description: str, value: object, expected: bool,
     ) -> None:
         """Test dict type guards."""
         result = u.is_type(cast("t.ContainerValue", value), "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
-        ("description", "value", "expected"), UtilityScenarios.TYPE_GUARD_CASES["list"]
+        ("description", "value", "expected"), UtilityScenarios.TYPE_GUARD_CASES["list"],
     )
     def test_type_guard_list(
-        self, description: str, value: object, expected: bool
+        self, description: str, value: object, expected: bool,
     ) -> None:
         """Test list type guards."""
         result = u.is_type(cast("t.ContainerValue", value), "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
-        ("method_name", "kind"), UtilityScenarios.GENERATOR_METHODS
+        ("method_name", "kind"), UtilityScenarios.GENERATOR_METHODS,
     )
     def test_generators_operations(self, method_name: str, kind: str | None) -> None:
         """Test ID and timestamp generation operations."""
@@ -157,10 +157,10 @@ class Testu:
         assert isinstance(result, str) and len(result) > 0
 
     @pytest.mark.parametrize(
-        ("length", "expected_length"), UtilityScenarios.SHORT_ID_LENGTHS
+        ("length", "expected_length"), UtilityScenarios.SHORT_ID_LENGTHS,
     )
     def test_generators_short_id_lengths(
-        self, length: int | None, expected_length: int
+        self, length: int | None, expected_length: int,
     ) -> None:
         """Test short ID generation with various lengths."""
         short_id = (
@@ -173,7 +173,7 @@ class Testu:
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
         batch_id = u.generate(
-            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,)
+            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,),
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
@@ -189,20 +189,20 @@ class Testu:
         assert id1 != id2
 
     @pytest.mark.parametrize(
-        ("input_text", "expected_pattern"), UtilityScenarios.TEXT_CLEAN_CASES
+        ("input_text", "expected_pattern"), UtilityScenarios.TEXT_CLEAN_CASES,
     )
     def test_text_processor_clean_text(
-        self, input_text: str, expected_pattern: str
+        self, input_text: str, expected_pattern: str,
     ) -> None:
         """Test text cleaning."""
         result = u.Text.clean_text(input_text)
         assert result.replace(" ", "") == expected_pattern.replace(" ", "")
 
     @pytest.mark.parametrize(
-        ("text", "max_length", "should_truncate"), UtilityScenarios.TEXT_TRUNCATE_CASES
+        ("text", "max_length", "should_truncate"), UtilityScenarios.TEXT_TRUNCATE_CASES,
     )
     def test_text_processor_truncate(
-        self, text: str, max_length: int, should_truncate: bool
+        self, text: str, max_length: int, should_truncate: bool,
     ) -> None:
         """Test text truncation."""
         result = u.Text.truncate_text(text, max_length=max_length)
@@ -223,10 +223,10 @@ class Testu:
             _ = u.Text.safe_string("")
 
     @pytest.mark.parametrize(
-        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZE_CASES
+        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZE_CASES,
     )
     def test_cache_normalize_component(
-        self, input_data: object, expected_type: type | tuple[type, ...]
+        self, input_data: object, expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
         normalized = u.Cache.normalize_component(cast("t.ContainerValue", input_data))
@@ -268,7 +268,7 @@ class Testu:
 
             cache_obj = TestWithCache()
             result = u.Cache.has_cache_attributes(
-                cast("t.ContainerValue", cast("object", cache_obj))
+                cast("t.ContainerValue", cast("object", cache_obj)),
             )
             assert result is expected
         else:
@@ -278,7 +278,7 @@ class Testu:
 
             no_cache_obj = TestNoCache()
             result = u.Cache.has_cache_attributes(
-                cast("t.ContainerValue", cast("object", no_cache_obj))
+                cast("t.ContainerValue", cast("object", no_cache_obj)),
             )
             assert result is expected
 
@@ -292,7 +292,7 @@ class Testu:
         UtilityScenarios.TYPE_CHECKER_CASES,
     )
     def test_type_checker_can_handle(
-        self, accepted_types: tuple[type, ...], message_type: type, expected: bool
+        self, accepted_types: tuple[type, ...], message_type: type, expected: bool,
     ) -> None:
         """Test type checking."""
         result = u.Checker.can_handle_message_type(accepted_types, message_type)
@@ -322,7 +322,7 @@ class Testu:
             return r[str].ok("success")
 
         result: r[str] = u.Reliability.retry(
-            quick_success, max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS
+            quick_success, max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS,
         )
         u.Tests.Result.assert_success_with_value(result, "success")
 

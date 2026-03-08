@@ -117,11 +117,11 @@ class TestFlextModels:
         entity = TestEntity(name="Test User", email="test@example.com")
         tm.that(entity.name, eq="Test User", msg="Entity name must match input")
         tm.that(
-            entity.email, eq="test@example.com", msg="Entity email must match input"
+            entity.email, eq="test@example.com", msg="Entity email must match input",
         )
         tm.that("@" in entity.email, eq=True, msg="Entity email must contain @")
         tm.that(
-            entity.unique_id, none=False, empty=False, msg="Entity must have unique_id"
+            entity.unique_id, none=False, empty=False, msg="Entity must have unique_id",
         )
         tm.that(entity.unique_id, is_=str, msg="Entity unique_id must be string")
         dumped = entity.model_dump()
@@ -246,7 +246,7 @@ class TestFlextModels:
         tm.that(initial_version, gt=0, msg="Initial version must be positive")
         entity.increment_version()
         tm.that(
-            entity.version, eq=initial_version + 1, msg="Version must increment by 1"
+            entity.version, eq=initial_version + 1, msg="Version must increment by 1",
         )
         tm.that(
             entity.version,
@@ -263,7 +263,7 @@ class TestFlextModels:
         entity = TimestampedEntity(name="Test")
         initial_created = entity.created_at
         tm.that(
-            initial_created, none=False, msg="Entity must have created_at timestamp"
+            initial_created, none=False, msg="Entity must have created_at timestamp",
         )
         entity.update_timestamp()
         tm.that(
@@ -412,10 +412,10 @@ class TestFlextModels:
 
         entity = TestEntity(name="test")
         tm.that(
-            len(entity.domain_events), eq=0, msg="New entity must have no domain events"
+            len(entity.domain_events), eq=0, msg="New entity must have no domain events",
         )
         result = entity.add_domain_event(
-            "test_event", m.ConfigMap(root={"data": "value"})
+            "test_event", m.ConfigMap(root={"data": "value"}),
         )
         _ = u.Tests.Result.assert_success(result)
         tm.that(
@@ -437,7 +437,7 @@ class TestFlextModels:
         )
         cleared_events = entity.clear_domain_events()
         tm.that(
-            len(cleared_events), eq=1, msg="clear_domain_events must return 1 event"
+            len(cleared_events), eq=1, msg="clear_domain_events must return 1 event",
         )
         tm.that(
             len(entity.domain_events),
@@ -462,11 +462,11 @@ class TestFlextModels:
                 msg="Error message must indicate empty event name",
             )
         result = entity.add_domain_event(
-            "valid", m.ConfigMap(root={"string": "value", "number": 42})
+            "valid", m.ConfigMap(root={"string": "value", "number": 42}),
         )
         _ = u.Tests.Result.assert_success(result)
         tm.that(
-            len(entity.domain_events), eq=1, msg="Entity must have 1 valid domain event"
+            len(entity.domain_events), eq=1, msg="Entity must have 1 valid domain event",
         )
 
     def test_entity_initial_version(self) -> None:
@@ -602,7 +602,7 @@ class TestFlextModels:
     def test_query_creation(self) -> None:
         """Test Query creation."""
         query = m.Query(
-            query_type="find_users", filters=m.Dict(root={"active": "true"})
+            query_type="find_users", filters=m.Dict(root={"active": "true"}),
         )
         assert hasattr(query, "query_id")
         assert query.query_id is not None
@@ -722,7 +722,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_event(
-            "failing_event", m.ConfigMap(root={"data": "value"})
+            "failing_event", m.ConfigMap(root={"data": "value"}),
         )
         _ = u.Tests.Result.assert_success(result)
 
@@ -766,7 +766,7 @@ class TestFlextModels:
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
         request = m.ProcessingRequest(
-            data=m.ConfigMap(root={"input": "data"}), enable_validation=True
+            data=m.ConfigMap(root={"input": "data"}), enable_validation=True,
         )
         assert getattr(request.data, "root", request.data) == {"input": "data"}
         assert request.enable_validation is True
@@ -779,7 +779,7 @@ class TestFlextModels:
             return value
 
         reg = m.HandlerRegistration(
-            name="TestHandler", handler=dummy_handler, event_types=["CreateUser"]
+            name="TestHandler", handler=dummy_handler, event_types=["CreateUser"],
         )
         assert reg.name == "TestHandler"
         assert callable(reg.handler)
@@ -789,7 +789,7 @@ class TestFlextModels:
         """Test BatchProcessingConfig model — source has recursion bug in validate_cross_fields."""
         with pytest.raises(RecursionError):
             m.BatchProcessingConfig(
-                batch_size=100, continue_on_error=True, data_items=[1, 2, 3]
+                batch_size=100, continue_on_error=True, data_items=[1, 2, 3],
             )
 
     def test_handler_execution_config_model(self) -> None:
@@ -935,7 +935,7 @@ class TestFlextModels:
     def test_validation_configuration_model(self) -> None:
         """Test ValidationConfiguration model with correct fields."""
         val_config = m.ValidationConfiguration(
-            validate_on_assignment=True, validate_on_read=False, custom_validators=[]
+            validate_on_assignment=True, validate_on_read=False, custom_validators=[],
         )
         assert val_config.validate_on_assignment is True
 
@@ -990,7 +990,7 @@ class TestFlextModels:
     def test_handler_execution_context_model(self) -> None:
         """Test HandlerExecutionContext model creation."""
         context = m.HandlerExecutionContext.create_for_handler(
-            handler_name="ProcessOrderCommand", handler_mode="command"
+            handler_name="ProcessOrderCommand", handler_mode="command",
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"

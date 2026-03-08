@@ -20,11 +20,11 @@ class FlextInfraPatterns:
     """
 
     MYPY_HINT_RE: re.Pattern[str] = re.compile(
-        r'note: Hint: "python3 -m pip install ([^"]+)"'
+        r'note: Hint: "python3 -m pip install ([^"]+)"',
     )
     "Match mypy install hint messages, capturing the package name."
     MYPY_STUB_RE: re.Pattern[str] = re.compile(
-        r'Library stubs not installed for "([^"]+)"'
+        r'Library stubs not installed for "([^"]+)"',
     )
     "Match mypy missing stub messages, capturing the library name."
     INTERNAL_PREFIXES: tuple[str, ...] = ("flext_",)
@@ -36,7 +36,7 @@ class FlextInfraPatterns:
     HEADING_RE: re.Pattern[str] = re.compile("^#{1,6}\\s+(.+?)\\s*$", re.MULTILINE)
     "Match any markdown heading (h1-h6), capturing the text."
     HEADING_H2_H3_RE: re.Pattern[str] = re.compile(
-        "^(##|###)\\s+(.+?)\\s*$", re.MULTILINE
+        "^(##|###)\\s+(.+?)\\s*$", re.MULTILINE,
     )
     "Match h2/h3 headings, capturing level (group 1) and text (group 2)."
     ANCHOR_LINK_RE: re.Pattern[str] = re.compile("\\[([^\\]]+)\\]\\(#([^)]+)\\)")

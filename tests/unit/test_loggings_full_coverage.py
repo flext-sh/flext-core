@@ -78,7 +78,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     value: t.ContainerValue = "ok"
     assert value == "ok"
     logger_obj = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
     assert logger_obj._context == {}
     assert logger_obj() is logger_obj
@@ -109,14 +109,14 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     def _create_module_logger(_cls: type[object], _name: str) -> FlextLogger:
         return FlextLogger.create_bound_logger(
-            "mod", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+            "mod", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
         )
 
     monkeypatch.setattr(
-        FlextLogger, "create_module_logger", classmethod(_create_module_logger)
+        FlextLogger, "create_module_logger", classmethod(_create_module_logger),
     )
     created = FlextLogger.for_container(
-        cast("p.DI", cast("object", _Container())), extra="v"
+        cast("p.DI", cast("object", _Container())), extra="v",
     )
     assert isinstance(created, FlextLogger)
     with FlextLogger.with_container_context(
@@ -165,7 +165,7 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch: pytest.MonkeyPatch) 
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        shim.contextvars, "unbind_contextvars", _raise_unbind_contextvars
+        shim.contextvars, "unbind_contextvars", _raise_unbind_contextvars,
     )
     lvl_unbind = FlextLogger.unbind_context_for_level("DEBUG", "a")
     assert lvl_unbind.is_failure
@@ -218,7 +218,7 @@ def test_loggings_instance_and_message_format_paths(
 
     assert (
         FlextLogger._extract_class_name(
-            cast("types.FrameType", cast("object", _Frame()))
+            cast("types.FrameType", cast("object", _Frame())),
         )
         is None
     )
@@ -227,7 +227,7 @@ def test_loggings_instance_and_message_format_paths(
 def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", fake))
+        "x", cast("p.Log.StructlogLogger", cast("object", fake)),
     )
 
     def _no_frame() -> types.FrameType | None:
@@ -263,15 +263,15 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
 
     assert (
         FlextLogger._find_workspace_root(
-            cast("Path", cast("object", _NoMarkers(Path("/tmp"))))
+            cast("Path", cast("object", _NoMarkers(Path("/tmp")))),
         )
         is None
     )
     logger_boom = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
     logger_boom._structlog_instance = cast(
-        "p.Log.StructlogLogger", cast("object", _FakeBindable())
+        "p.Log.StructlogLogger", cast("object", _FakeBindable()),
     )
 
     def _raise_info(*_args: object, **_kwargs: object) -> None:
@@ -289,7 +289,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
 def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", fake))
+        "x", cast("p.Log.StructlogLogger", cast("object", fake)),
     )
 
     def _raise_cfg(_cls: type[object]) -> p.Config:
@@ -299,15 +299,15 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(FlextSettings, "get_global", classmethod(_raise_cfg))
     assert logger._should_include_stack_trace() is True
     with_exception = logger.build_exception_context(
-        exception=ValueError("x"), exc_info=False, context={"k": "v"}
+        exception=ValueError("x"), exc_info=False, context={"k": "v"},
     )
     assert "stack_trace" in with_exception
     with_exc_info = logger.build_exception_context(
-        exception=None, exc_info=True, context={}
+        exception=None, exc_info=True, context={},
     )
     assert "stack_trace" in with_exc_info
     broken = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
 
     def _raise_error(*_args: object, **_kwargs: object) -> None:
@@ -342,16 +342,16 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     captured: dict[str, object] = {}
 
     def _for_container(
-        cls: type[object], _container: object, level: object = None
+        cls: type[object], _container: object, level: object = None,
     ) -> FlextLogger:
         captured["level"] = level
         return FlextLogger.create_bound_logger(
-            "ctx", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+            "ctx", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
         )
 
     monkeypatch.setattr(FlextLogger, "for_container", classmethod(_for_container))
     with FlextLogger.with_container_context(
-        cast("p.DI", cast("object", _Container())), trace_id="t1"
+        cast("p.DI", cast("object", _Container())), trace_id="t1",
     ):
         pass
     assert captured["level"] is None
@@ -370,7 +370,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
             raise RuntimeError(msg)
 
     trace_logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _TraceLogger()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _TraceLogger())),
     )
     trace_logger.trace("%s", "a")
 
@@ -394,7 +394,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(c.Validation, "LEVEL_PREFIX_PARTS_COUNT", 2)
     assert (
         FlextLogger._extract_class_name(
-            cast("types.FrameType", cast("object", _UpperFrame()))
+            cast("types.FrameType", cast("object", _UpperFrame())),
         )
         == "MyClass"
     )
@@ -418,14 +418,14 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         return "example.py"
 
     monkeypatch.setattr(
-        FlextLogger, "_convert_to_relative_path", staticmethod(_relative_filename)
+        FlextLogger, "_convert_to_relative_path", staticmethod(_relative_filename),
     )
 
     def _extract_class_name(_frame: types.FrameType) -> str | None:
         return None
 
     monkeypatch.setattr(
-        FlextLogger, "_extract_class_name", staticmethod(_extract_class_name)
+        FlextLogger, "_extract_class_name", staticmethod(_extract_class_name),
     )
     source = FlextLogger._get_caller_source_path()
     assert source is not None and source.endswith(" run")
@@ -435,7 +435,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        FlextLogger, "_get_calling_frame", staticmethod(_raise_calling_frame)
+        FlextLogger, "_get_calling_frame", staticmethod(_raise_calling_frame),
     )
     assert FlextLogger._get_caller_source_path() is None
 
@@ -448,7 +448,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         return Path("/repo")
 
     monkeypatch.setattr(
-        FlextLogger, "_find_workspace_root", staticmethod(_workspace_root)
+        FlextLogger, "_find_workspace_root", staticmethod(_workspace_root),
     )
     assert FlextLogger._convert_to_relative_path("/tmp/example.py") == "example.py"
 
@@ -459,7 +459,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
             raise TypeError(msg)
 
     err_logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _ErrorLogger()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _ErrorLogger())),
     )
     err_logger.error("boom", exception=ValueError("x"))
 
@@ -474,16 +474,16 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
     captured: dict[str, object] = {}
 
     def _for_container(
-        cls: type[object], _container: object, level: object = None
+        cls: type[object], _container: object, level: object = None,
     ) -> FlextLogger:
         captured["level"] = level
         return FlextLogger.create_bound_logger(
-            "ctx", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+            "ctx", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
         )
 
     monkeypatch.setattr(FlextLogger, "for_container", classmethod(_for_container))
     with FlextLogger.with_container_context(
-        cast("p.DI", cast("object", _Container())), level="DEBUG"
+        cast("p.DI", cast("object", _Container())), level="DEBUG",
     ):
         pass
     assert captured["level"] == "DEBUG"
@@ -501,7 +501,7 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
 
     monkeypatch.setattr(p.Log, "StructlogLogger", _StructlogLogger)
     trace_logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _StructlogLogger()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _StructlogLogger())),
     )
     trace_logger.trace("%s", "value")
     trace_logger.error("boom", exception=ValueError("x"))
@@ -515,7 +515,7 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
         return Path("/repo")
 
     monkeypatch.setattr(
-        FlextLogger, "_find_workspace_root", staticmethod(_workspace_root)
+        FlextLogger, "_find_workspace_root", staticmethod(_workspace_root),
     )
     assert FlextLogger._convert_to_relative_path("/tmp/outside.py") == "outside.py"
 
@@ -523,6 +523,6 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
         return None
 
     monkeypatch.setattr(
-        FlextLogger, "_find_workspace_root", staticmethod(_no_workspace_root)
+        FlextLogger, "_find_workspace_root", staticmethod(_no_workspace_root),
     )
     assert FlextLogger._convert_to_relative_path("/tmp/outside.py") == "outside.py"

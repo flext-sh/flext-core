@@ -136,7 +136,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
@@ -150,7 +150,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].fail("invalid")
@@ -164,7 +164,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 0
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("0.9.0")
@@ -178,11 +178,11 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].fail(
-                "read error"
+                "read error",
             )
             with pytest.raises(RuntimeError):
                 _resolve_version(args, tmp_path)
@@ -194,7 +194,7 @@ class TestReleaseMainVersionResolution:
         args.bump = "minor"
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -209,7 +209,7 @@ class TestReleaseMainVersionResolution:
         args.bump = "invalid"
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -224,7 +224,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -240,7 +240,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -255,7 +255,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 0
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService"
+            "flext_infra.release.__main__.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -308,21 +308,21 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
-                            "1.0.0"
+                            "1.0.0",
                         )
                         with patch(
-                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator"
+                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator",
                         ) as mock_orch:
                             mock_orch_inst = mock_orch.return_value
                             mock_orch_inst.run_release.return_value = r[bool].ok(True)
@@ -346,11 +346,11 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].fail(
-                        "not found"
+                        "not found",
                     )
                     with patch("flext_infra.release.__main__.output") as mock_output:
                         result = main()
@@ -374,19 +374,19 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.parse_semver.return_value = r[str].fail("invalid")
                         with patch(
-                            "flext_infra.release.__main__.output"
+                            "flext_infra.release.__main__.output",
                         ) as mock_output:
                             result = main()
                             assert result == 1
@@ -409,28 +409,28 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
-                            "1.0.0"
+                            "1.0.0",
                         )
                         with patch(
-                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator"
+                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator",
                         ) as mock_orch:
                             mock_orch_inst = mock_orch.return_value
                             mock_orch_inst.run_release.return_value = r[bool].fail(
-                                "release failed"
+                                "release failed",
                             )
                             with patch(
-                                "flext_infra.release.__main__.output"
+                                "flext_infra.release.__main__.output",
                             ) as mock_output:
                                 result = main()
                                 assert result == 1
@@ -445,21 +445,21 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
-                            "1.0.0"
+                            "1.0.0",
                         )
                         with patch(
-                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator"
+                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator",
                         ) as mock_orch:
                             mock_orch_inst = mock_orch.return_value
                             mock_orch_inst.run_release.return_value = r[bool].ok(True)
@@ -487,21 +487,21 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
-                            "1.0.0"
+                            "1.0.0",
                         )
                         with patch(
-                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator"
+                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator",
                         ) as mock_orch:
                             mock_orch_inst = mock_orch.return_value
                             mock_orch_inst.run_release.return_value = r[bool].ok(True)
@@ -528,21 +528,21 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
-                            "1.0.0"
+                            "1.0.0",
                         )
                         with patch(
-                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator"
+                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator",
                         ) as mock_orch:
                             mock_orch_inst = mock_orch.return_value
                             mock_orch_inst.run_release.return_value = r[bool].ok(True)
@@ -569,21 +569,21 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver"
+                    "flext_infra.release.__main__.FlextInfraPathResolver",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
-                        tmp_path
+                        tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService"
+                        "flext_infra.release.__main__.FlextInfraVersioningService",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
-                            "1.0.0"
+                            "1.0.0",
                         )
                         with patch(
-                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator"
+                            "flext_infra.release.__main__.FlextInfraReleaseOrchestrator",
                         ) as mock_orch:
                             mock_orch_inst = mock_orch.return_value
                             mock_orch_inst.run_release.return_value = r[bool].ok(True)
@@ -607,7 +607,7 @@ class TestResolveVersionInteractive:
         args.interactive = 1
         with patch("builtins.input", return_value="invalid"):
             with patch(
-                "flext_infra.release.__main__.FlextInfraVersioningService"
+                "flext_infra.release.__main__.FlextInfraVersioningService",
             ) as mock_vs:
                 mock_vs_inst = mock_vs.return_value
                 mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -622,7 +622,7 @@ class TestResolveVersionInteractive:
         args.interactive = 1
         with patch("builtins.input", return_value="major"):
             with patch(
-                "flext_infra.release.__main__.FlextInfraVersioningService"
+                "flext_infra.release.__main__.FlextInfraVersioningService",
             ) as mock_vs:
                 mock_vs_inst = mock_vs.return_value
                 mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")

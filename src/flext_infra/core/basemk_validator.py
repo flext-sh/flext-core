@@ -46,13 +46,13 @@ class FlextInfraBaseMkValidator:
                         passed=False,
                         violations=["missing root base.mk"],
                         summary="missing root base.mk",
-                    )
+                    ),
                 )
             source_hash = self._sha256(source)
             mismatched: list[str] = []
             checked = 0
             for pyproject in sorted(
-                workspace_root.glob(f"*/{c.Infra.Files.PYPROJECT_FILENAME}")
+                workspace_root.glob(f"*/{c.Infra.Files.PYPROJECT_FILENAME}"),
             ):
                 local_base = pyproject.parent / c.Infra.Files.BASE_MK
                 if not local_base.exists():
@@ -69,12 +69,12 @@ class FlextInfraBaseMkValidator:
             )
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=mismatched, summary=summary
-                )
+                    passed=passed, violations=mismatched, summary=summary,
+                ),
             )
         except OSError as exc:
             return r[m.Infra.Core.ValidationReport].fail(
-                f"base.mk validation failed: {exc}"
+                f"base.mk validation failed: {exc}",
             )
 
 

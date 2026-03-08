@@ -50,7 +50,7 @@ class FlextInfraRefactorConstants:
         "remove_redundant_casts",
     })
     FUTURE_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
-        "ensure_future_annotations"
+        "ensure_future_annotations",
     })
     FUTURE_CHECKS: ClassVar[frozenset[str]] = frozenset({"missing_future_import"})
     MRO_TARGETS: ClassVar[frozenset[str]] = frozenset({
@@ -188,20 +188,20 @@ class FlextInfraRefactorConstants:
     "Relative path from the refactor package to the nesting mappings YAML."
     VIOLATION_PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = {
         "container_invariance": re.compile(
-            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
+            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]",
         ),
         "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
         "direct_submodule_import": re.compile(
-            r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
+            r"\bfrom\s+flext_core\.[\w\.]+\s+import\b",
         ),
         "legacy_typing_mapping": re.compile(
-            r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
+            r"\bfrom\s+typing\s+import\s+.*\bMapping\b",
         ),
         "runtime_alias_violation": re.compile(
-            r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
+            r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*",
         ),
         "strenum_usage": re.compile(
-            r"\bclass\s+[A-Za-z_][A-Za-z0-9_]*\s*\(\s*(?:\w+\.)?StrEnum\s*\)"
+            r"\bclass\s+[A-Za-z_][A-Za-z0-9_]*\s*\(\s*(?:\w+\.)?StrEnum\s*\)",
         ),
         "literal_usage": re.compile(r"\bLiteral\s*\["),
         "manual_mapping_constant": re.compile(
@@ -209,10 +209,10 @@ class FlextInfraRefactorConstants:
             re.MULTILINE,
         ),
         "manual_typing_alias": re.compile(
-            r"(?m)^\s*(?:type\s+[A-Za-z_][A-Za-z0-9_]*\s*=|[A-Za-z_][A-Za-z0-9_]*\s*:\s*TypeAlias\s*=)"
+            r"(?m)^\s*(?:type\s+[A-Za-z_][A-Za-z0-9_]*\s*=|[A-Za-z_][A-Za-z0-9_]*\s*:\s*TypeAlias\s*=)",
         ),
         "compatibility_alias": re.compile(
-            r"(?m)^\s*[A-Za-z_][A-Za-z0-9_]*\s*=\s*[A-Za-z_][A-Za-z0-9_]*\s*$"
+            r"(?m)^\s*[A-Za-z_][A-Za-z0-9_]*\s*=\s*[A-Za-z_][A-Za-z0-9_]*\s*$",
         ),
     }
     "Regex patterns for violation analysis."
@@ -258,7 +258,7 @@ class FlextInfraRefactorConstants:
     NAMESPACE_FACADE_FAMILIES: ClassVar[dict[str, str]] = dict(FAMILY_SUFFIXES)
     NAMESPACE_FACADE_FILE_PATTERNS: ClassVar[dict[str, str]] = dict(FAMILY_FILES)
     NAMESPACE_CONSTANT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"^_?[A-Z][A-Z0-9_]+$"
+        r"^_?[A-Z][A-Z0-9_]+$",
     )
     NAMESPACE_SETTINGS_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
         "settings.py",

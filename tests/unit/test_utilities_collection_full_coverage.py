@@ -65,7 +65,7 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     )
     assert deep.is_success
     broken = u.Collection.merge(
-        cast("dict[str, t.ContainerValue]", None), {"x": 1}, strategy="deep"
+        cast("dict[str, t.ContainerValue]", None), {"x": 1}, strategy="deep",
     )
     assert broken.is_failure
 
@@ -97,7 +97,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     failed = u.Collection.batch([1], lambda _item: r[int].fail("hard"), on_error="fail")
     assert failed.is_failure
     failed_exc = u.Collection.batch(
-        [1], lambda _item: (_ for _ in ()).throw(ValueError("x"))
+        [1], lambda _item: (_ for _ in ()).throw(ValueError("x")),
     )
     assert failed_exc.is_failure
     progress_calls: list[tuple[int, int]] = []
@@ -112,7 +112,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 def test_process_outer_exception_and_coercion_branches() -> None:
     processed: r[list[object]] = u.Collection.process(
-        cast("list[object]", _BadSequence()), lambda x: x
+        cast("list[object]", _BadSequence()), lambda x: x,
     )
     assert processed.is_failure
     assert u.Collection._coerce_value_to_float(1.5) == pytest.approx(1.5)
@@ -128,7 +128,7 @@ def test_process_outer_exception_and_coercion_branches() -> None:
 def test_parse_mapping_outer_exception() -> None:
     with pytest.raises(RuntimeError, match="boom"):
         u.Collection.parse_mapping(
-            _Color, cast("dict[str, str | _Color]", _BadMapping())
+            _Color, cast("dict[str, str | _Color]", _BadMapping()),
         )
 
 
@@ -142,7 +142,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
         error = "boom"
 
     collected = u.Collection.batch(
-        [1], lambda _item: _FailureResult(), on_error="collect"
+        [1], lambda _item: _FailureResult(), on_error="collect",
     )
     assert collected.is_success
     collected_value = collected.value

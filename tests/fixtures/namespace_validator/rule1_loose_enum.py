@@ -8,8 +8,6 @@ from enum import StrEnum
 class FlextTestModels:
     """Models namespace."""
 
-    pass
-
 
 class Status(StrEnum):
     """StrEnum outside Constants — VIOLATION."""

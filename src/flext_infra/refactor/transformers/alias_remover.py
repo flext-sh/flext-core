@@ -26,7 +26,7 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
 
     @override
     def leave_Assign(
-        self, original_node: cst.Assign, updated_node: cst.Assign
+        self, original_node: cst.Assign, updated_node: cst.Assign,
     ) -> cst.BaseSmallStatement | cst.RemovalSentinel:
         if self._scope_depth > 0:
             return updated_node
@@ -40,7 +40,7 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
             if target in self._allow_aliases:
                 return updated_node
             if self._allow_target_suffixes and value.endswith(
-                self._allow_target_suffixes
+                self._allow_target_suffixes,
             ):
                 return updated_node
             if target != value and target not in {"__version__", "__all__"}:
@@ -53,7 +53,7 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         del original_node
         self._scope_depth -= 1
@@ -61,7 +61,7 @@ class FlextInfraRefactorAliasRemover(cst.CSTTransformer):
 
     @override
     def leave_FunctionDef(
-        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef,
     ) -> cst.FunctionDef:
         del original_node
         self._scope_depth -= 1

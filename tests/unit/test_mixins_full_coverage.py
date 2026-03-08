@@ -53,7 +53,7 @@ class _ContainerForLogger:
         raise AssertionError(msg)
 
     def register(
-        self, name: str, value: object, *, kind: str = "service"
+        self, name: str, value: object, *, kind: str = "service",
     ) -> _ContainerForLogger:
         self.register_calls.append((name, kind))
         if kind == "factory":
@@ -70,7 +70,7 @@ def test_mixins_result_and_model_conversion_paths(
     conf = m.ConfigMap(root={"a": "b"})
     assert x.to_dict(conf) is conf
     monkeypatch.setattr(
-        FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1)
+        FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1),
     )
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
@@ -154,7 +154,7 @@ def test_mixins_container_registration_and_logger_paths(
             return self
 
     monkeypatch.setattr(
-        _Service, "container", property(lambda _self: _AlreadyContainer())
+        _Service, "container", property(lambda _self: _AlreadyContainer()),
     )
     assert service._register_in_container("svc").is_success
 
@@ -171,7 +171,7 @@ def test_mixins_container_registration_and_logger_paths(
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
         staticmethod(
-            lambda: _ContainerForLogger(True, logger=SimpleNamespace(name="l"))
+            lambda: _ContainerForLogger(True, logger=SimpleNamespace(name="l")),
         ),
     )
     logger_from_di = _Service._get_or_create_logger()
@@ -208,7 +208,7 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
     service = _Service()
     service._log_config_once(m.ConfigMap(root={"k": "v"}), message="cfg")
     service._with_operation_context(
-        "run", params={"k": "v"}, stack_trace="s", normal="n"
+        "run", params={"k": "v"}, stack_trace="s", normal="n",
     )
     service._clear_operation_context()
     monkeypatch.delattr(x.CQRS.MetricsTracker, "_metrics", raising=False)
@@ -229,12 +229,12 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 def test_mixins_validation_and_protocol_paths() -> None:
     validators: list[Callable[[t.ContainerValue], r[bool]]] = [
-        lambda _v: r[bool].ok(False)
+        lambda _v: r[bool].ok(False),
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
     fail_validators: list[Callable[[t.ContainerValue], r[bool]]] = [
-        lambda _v: r[bool].fail("no")
+        lambda _v: r[bool].fail("no"),
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)
     assert fail_result.is_failure
@@ -243,13 +243,13 @@ def test_mixins_validation_and_protocol_paths() -> None:
             cast(
                 "t.ContainerValue",
                 cast("object", SimpleNamespace(handle=lambda *_a, **_k: None)),
-            )
+            ),
         )
         is False
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service[t.ContainerValue]", cast("object", SimpleNamespace()))
+            cast("p.Service[t.ContainerValue]", cast("object", SimpleNamespace())),
         )
         is False
     )
@@ -285,7 +285,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
         pass
 
     missing = x.ProtocolValidation.validate_processor_protocol(
-        cast("p.HasModelDump", cast("object", _ModelDumpOnly()))
+        cast("p.HasModelDump", cast("object", _ModelDumpOnly())),
     )
     bad_callable = x.ProtocolValidation.validate_processor_protocol(
         cast(
@@ -294,7 +294,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
                 "object",
                 SimpleNamespace(model_dump=dict, process=1, validate=lambda: True),
             ),
-        )
+        ),
     )
     good = x.ProtocolValidation.validate_processor_protocol(
         cast(
@@ -302,10 +302,10 @@ def test_mixins_validation_and_protocol_paths() -> None:
             cast(
                 "object",
                 SimpleNamespace(
-                    model_dump=dict, process=lambda: True, validate=lambda: True
+                    model_dump=dict, process=lambda: True, validate=lambda: True,
                 ),
             ),
-        )
+        ),
     )
     assert missing.is_failure
     assert bad_callable.is_failure
@@ -356,7 +356,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
             return self
 
     monkeypatch.setattr(
-        _ModelService, "container", property(lambda _self: _RegContainer())
+        _ModelService, "container", property(lambda _self: _RegContainer()),
     )
     assert model_service._register_in_container("svc_model").is_success
     assert isinstance(captured["value"], _ModelMarker)
@@ -379,7 +379,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         warn_service,
         "_register_in_container",
         lambda _name: cast(
-            "r[bool]", cast("object", SimpleNamespace(is_failure=True, error=None))
+            "r[bool]", cast("object", SimpleNamespace(is_failure=True, error=None)),
         ),
     )
     warn_service._init_service("svc_warn")

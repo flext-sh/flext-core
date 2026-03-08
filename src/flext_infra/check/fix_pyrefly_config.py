@@ -54,10 +54,10 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].fail("Use run() directly")
 
     def find_pyproject_files(
-        self, project_paths: list[Path] | None = None
+        self, project_paths: list[Path] | None = None,
     ) -> r[list[Path]]:
         return self._discovery.find_all_pyproject_files(
-            self._workspace_root, project_paths=project_paths
+            self._workspace_root, project_paths=project_paths,
         )
 
     def process_file(self, path: Path, *, dry_run: bool = False) -> r[list[str]]:
@@ -73,7 +73,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         if not isinstance(tool_data, dict):
             return r[list[str]].ok([])
         typed_tool_data = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-            tool_data
+            tool_data,
         )
         pyrefly_data = typed_tool_data.get(c.Infra.Toml.PYREFLY)
         if not isinstance(pyrefly_data, Mapping):
@@ -104,13 +104,13 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].ok(all_fixes)
 
     def run(
-        self, projects: Sequence[str], *, dry_run: bool = False, verbose: bool = False
+        self, projects: Sequence[str], *, dry_run: bool = False, verbose: bool = False,
     ) -> r[list[str]]:
         project_paths = [self._resolve_project_path(project) for project in projects]
         files_result = self.find_pyproject_files(project_paths or None)
         if files_result.is_failure:
             return r[list[str]].fail(
-                files_result.error or "failed to find pyproject files"
+                files_result.error or "failed to find pyproject files",
             )
         messages: list[str] = []
         total_fixes = 0
@@ -119,7 +119,7 @@ class FlextInfraConfigFixer(s[list[str]]):
             fixes_result = self.process_file(path, dry_run=dry_run)
             if fixes_result.is_failure:
                 return r[list[str]].fail(
-                    fixes_result.error or f"failed to process {path}"
+                    fixes_result.error or f"failed to process {path}",
                 )
             fixes: list[str] = fixes_result.value
             if not fixes:
@@ -139,7 +139,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].ok(messages)
 
     def _ensure_project_excludes_tk(
-        self, pyrefly: MutableMapping[str, t.ContainerValue]
+        self, pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
@@ -158,7 +158,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         return fixes
 
     def _fix_search_paths_tk(
-        self, pyrefly: MutableMapping[str, t.ContainerValue], project_dir: Path
+        self, pyrefly: MutableMapping[str, t.ContainerValue], project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
         search_path = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
@@ -172,7 +172,7 @@ class FlextInfraConfigFixer(s[list[str]]):
                 if path_item == "../typings/generated":
                     new_paths.append("typings/generated")
                     fixes.append(
-                        "search-path ../typings/generated -> typings/generated"
+                        "search-path ../typings/generated -> typings/generated",
                     )
                 elif path_item == "../typings":
                     new_paths.append(c.Infra.Directories.TYPINGS)
@@ -201,7 +201,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         return fixes
 
     def _remove_ignore_sub_config_tk(
-        self, pyrefly: MutableMapping[str, t.ContainerValue]
+        self, pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
@@ -239,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     fixer = FlextInfraConfigFixer()
     result = fixer.run(
-        projects=args.projects, dry_run=args.dry_run, verbose=args.verbose
+        projects=args.projects, dry_run=args.dry_run, verbose=args.verbose,
     )
     if result.is_failure:
         output.error(result.error or "pyrefly config fix failed")

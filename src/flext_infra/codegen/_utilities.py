@@ -192,7 +192,7 @@ class FlextInfraUtilitiesCodegen:
 
     @staticmethod
     def derive_lazy_map(
-        tree: ast.Module, current_pkg: str
+        tree: ast.Module, current_pkg: str,
     ) -> dict[str, tuple[str, str]]:
         """Derive lazy import mappings from import statements in the AST.
 
@@ -211,7 +211,7 @@ class FlextInfraUtilitiesCodegen:
                 if raw_module in c.Infra.Codegen.SKIP_MODULES:
                     continue
                 module_path = FlextInfraUtilitiesCodegen.resolve_module(
-                    raw_module, node.level, current_pkg
+                    raw_module, node.level, current_pkg,
                 )
                 if module_path == current_pkg:
                     continue

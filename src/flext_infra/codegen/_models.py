@@ -45,7 +45,7 @@ class FlextInfraCodegenModels:
 
         project: str = Field(min_length=1, description="Project name")
         files_created: list[str] = Field(
-            default_factory=list, description="Newly created file paths"
+            default_factory=list, description="Newly created file paths",
         )
         files_skipped: list[str] = Field(
             default_factory=list,
@@ -65,23 +65,23 @@ class FlextInfraCodegenModels:
             description="Skipped violations (not auto-fixable)",
         )
         files_modified: list[str] = Field(
-            default_factory=list, description="Modified file paths"
+            default_factory=list, description="Modified file paths",
         )
 
     class CodegenPipelineResult(FlextModels.ArbitraryTypesModel):
         """Full pipeline result combining census, scaffold, auto-fix phases."""
 
         census_before: FlextInfraCodegenModels.CensusReport = Field(
-            description="Census report before transformations"
+            description="Census report before transformations",
         )
         scaffold: FlextInfraCodegenModels.ScaffoldResult = Field(
-            description="Scaffold phase result"
+            description="Scaffold phase result",
         )
         auto_fix: FlextInfraCodegenModels.AutoFixResult = Field(
-            description="Auto-fix phase result"
+            description="Auto-fix phase result",
         )
         census_after: FlextInfraCodegenModels.CensusReport = Field(
-            description="Census report after transformations"
+            description="Census report after transformations",
         )
 
 

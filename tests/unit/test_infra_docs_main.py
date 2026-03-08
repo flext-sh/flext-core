@@ -37,7 +37,7 @@ class TestRunAudit:
         args.check = "all"
         args.strict = 1
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -64,7 +64,7 @@ class TestRunAudit:
         args.check = "all"
         args.strict = 1
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -90,7 +90,7 @@ class TestRunAudit:
         args.check = "all"
         args.strict = 1
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -109,7 +109,7 @@ class TestRunAudit:
         args.check = "all"
         args.strict = 1
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -128,7 +128,7 @@ class TestRunAudit:
         args.check = "all"
         args.strict = 1
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -147,7 +147,7 @@ class TestRunAudit:
         args.check = "links"
         args.strict = 1
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -166,7 +166,7 @@ class TestRunAudit:
         args.check = "all"
         args.strict = 0
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocAuditor"
+            "flext_infra.docs.__main__.FlextInfraDocAuditor",
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
@@ -238,7 +238,7 @@ class TestRunBuild:
         args.projects = None
         args.output_dir = ".reports/docs"
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocBuilder"
+            "flext_infra.docs.__main__.FlextInfraDocBuilder",
         ) as mock_builder_class:
             mock_builder = Mock()
             mock_builder_class.return_value = mock_builder
@@ -256,7 +256,7 @@ class TestRunBuild:
         args.projects = None
         args.output_dir = ".reports/docs"
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocBuilder"
+            "flext_infra.docs.__main__.FlextInfraDocBuilder",
         ) as mock_builder_class:
             mock_builder = Mock()
             mock_builder_class.return_value = mock_builder
@@ -274,7 +274,7 @@ class TestRunBuild:
         args.projects = None
         args.output_dir = ".reports/docs"
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocBuilder"
+            "flext_infra.docs.__main__.FlextInfraDocBuilder",
         ) as mock_builder_class:
             mock_builder = Mock()
             mock_builder_class.return_value = mock_builder
@@ -296,7 +296,7 @@ class TestRunGenerate:
         args.output_dir = ".reports/docs"
         args.apply = False
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocGenerator"
+            "flext_infra.docs.__main__.FlextInfraDocGenerator",
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
@@ -313,7 +313,7 @@ class TestRunGenerate:
         args.output_dir = ".reports/docs"
         args.apply = False
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocGenerator"
+            "flext_infra.docs.__main__.FlextInfraDocGenerator",
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
@@ -331,7 +331,7 @@ class TestRunGenerate:
         args.output_dir = ".reports/docs"
         args.apply = True
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocGenerator"
+            "flext_infra.docs.__main__.FlextInfraDocGenerator",
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
@@ -354,7 +354,7 @@ class TestRunValidate:
         args.check = "all"
         args.apply = False
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocValidator"
+            "flext_infra.docs.__main__.FlextInfraDocValidator",
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
@@ -374,7 +374,7 @@ class TestRunValidate:
         args.check = "all"
         args.apply = False
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocValidator"
+            "flext_infra.docs.__main__.FlextInfraDocValidator",
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
@@ -394,7 +394,7 @@ class TestRunValidate:
         args.check = "all"
         args.apply = False
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocValidator"
+            "flext_infra.docs.__main__.FlextInfraDocValidator",
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
@@ -413,7 +413,7 @@ class TestRunValidate:
         args.check = "links"
         args.apply = False
         with patch(
-            "flext_infra.docs.__main__.FlextInfraDocValidator"
+            "flext_infra.docs.__main__.FlextInfraDocValidator",
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
@@ -430,7 +430,7 @@ class TestMain:
         """Test main() routes audit command."""
         with patch("sys.argv", ["prog", "audit", "--root", "."]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocAuditor"
+                "flext_infra.docs.__main__.FlextInfraDocAuditor",
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
@@ -442,7 +442,7 @@ class TestMain:
         """Test main() routes fix command."""
         with patch("sys.argv", ["prog", "fix", "--root", "."]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocFixer"
+                "flext_infra.docs.__main__.FlextInfraDocFixer",
             ) as mock_fixer_class:
                 mock_fixer = Mock()
                 mock_fixer_class.return_value = mock_fixer
@@ -454,7 +454,7 @@ class TestMain:
         """Test main() routes build command."""
         with patch("sys.argv", ["prog", "build", "--root", "."]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocBuilder"
+                "flext_infra.docs.__main__.FlextInfraDocBuilder",
             ) as mock_builder_class:
                 mock_builder = Mock()
                 mock_builder_class.return_value = mock_builder
@@ -466,7 +466,7 @@ class TestMain:
         """Test main() routes generate command."""
         with patch("sys.argv", ["prog", "generate", "--root", "."]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocGenerator"
+                "flext_infra.docs.__main__.FlextInfraDocGenerator",
             ) as mock_gen_class:
                 mock_gen = Mock()
                 mock_gen_class.return_value = mock_gen
@@ -478,7 +478,7 @@ class TestMain:
         """Test main() routes validate command."""
         with patch("sys.argv", ["prog", "validate", "--root", "."]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocValidator"
+                "flext_infra.docs.__main__.FlextInfraDocValidator",
             ) as mock_val_class:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
@@ -538,7 +538,7 @@ class TestMain:
         """Test main() audit with custom root path."""
         with patch("sys.argv", ["prog", "audit", "--root", "/custom/path"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocAuditor"
+                "flext_infra.docs.__main__.FlextInfraDocAuditor",
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
@@ -551,7 +551,7 @@ class TestMain:
         """Test main() audit with project filter."""
         with patch("sys.argv", ["prog", "audit", "--project", "test-proj"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocAuditor"
+                "flext_infra.docs.__main__.FlextInfraDocAuditor",
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
@@ -564,7 +564,7 @@ class TestMain:
         """Test main() audit with strict flag."""
         with patch("sys.argv", ["prog", "audit", "--strict", "0"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocAuditor"
+                "flext_infra.docs.__main__.FlextInfraDocAuditor",
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
@@ -577,7 +577,7 @@ class TestMain:
         """Test main() fix with apply flag."""
         with patch("sys.argv", ["prog", "fix", "--apply"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocFixer"
+                "flext_infra.docs.__main__.FlextInfraDocFixer",
             ) as mock_fixer_class:
                 mock_fixer = Mock()
                 mock_fixer_class.return_value = mock_fixer
@@ -590,7 +590,7 @@ class TestMain:
         """Test main() generate with apply flag."""
         with patch("sys.argv", ["prog", "generate", "--apply"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocGenerator"
+                "flext_infra.docs.__main__.FlextInfraDocGenerator",
             ) as mock_gen_class:
                 mock_gen = Mock()
                 mock_gen_class.return_value = mock_gen
@@ -603,7 +603,7 @@ class TestMain:
         """Test main() validate with apply flag."""
         with patch("sys.argv", ["prog", "validate", "--apply"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocValidator"
+                "flext_infra.docs.__main__.FlextInfraDocValidator",
             ) as mock_val_class:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
@@ -616,7 +616,7 @@ class TestMain:
         """Test main() audit with check parameter."""
         with patch("sys.argv", ["prog", "audit", "--check", "links"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocAuditor"
+                "flext_infra.docs.__main__.FlextInfraDocAuditor",
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
@@ -629,7 +629,7 @@ class TestMain:
         """Test main() validate with check parameter."""
         with patch("sys.argv", ["prog", "validate", "--check", "links"]):
             with patch(
-                "flext_infra.docs.__main__.FlextInfraDocValidator"
+                "flext_infra.docs.__main__.FlextInfraDocValidator",
             ) as mock_val_class:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val

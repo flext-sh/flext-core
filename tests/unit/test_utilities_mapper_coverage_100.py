@@ -348,7 +348,7 @@ class TestuMapperAdvanced:
         """Test build transform options."""
         data: dict[str, str | None] = {"a": "UPPER", "b": None, "c": ""}
         ops: dict[str, t.ContainerValue] | None = {
-            "transform": {"normalize": True, "strip_none": True, "strip_empty": True}
+            "transform": {"normalize": True, "strip_none": True, "strip_empty": True},
         }
         res = u.Mapper.build(data, ops=ops)
         assert res == {"a": "UPPER"}
@@ -361,7 +361,7 @@ class TestuMapperAdvanced:
         assert isinstance(res, list) and len(res) > 0
         assert isinstance(res[0], dict) and res[0].get("a") == 1
         ops_getter: dict[str, t.ContainerValue] | None = {
-            "sort": operator.itemgetter("a")
+            "sort": operator.itemgetter("a"),
         }
         res = u.Mapper.build(data, ops=ops_getter)
         assert isinstance(res, list) and len(res) > 0

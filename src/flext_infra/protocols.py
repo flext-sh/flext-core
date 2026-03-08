@@ -68,7 +68,7 @@ class FlextInfraProtocols(FlextProtocols):
             """Contract for project quality gate runners."""
 
             def run(
-                self, project: str, gates: Sequence[str]
+                self, project: str, gates: Sequence[str],
             ) -> r[list[m.Infra.Check.ProjectResult]]:
                 """Execute quality gates for a project."""
                 ...
@@ -121,7 +121,7 @@ class FlextInfraProtocols(FlextProtocols):
             """Contract for project orchestration services."""
 
             def orchestrate(
-                self, projects: Sequence[str], verb: str
+                self, projects: Sequence[str], verb: str,
             ) -> r[list[m.Infra.Core.CommandOutput]]:
                 """Orchestrate operations across multiple projects."""
                 ...
@@ -131,7 +131,7 @@ class FlextInfraProtocols(FlextProtocols):
             """Contract for project discovery services."""
 
             def discover_projects(
-                self, workspace_root: Path
+                self, workspace_root: Path,
             ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
                 """Discover projects in a workspace root."""
                 ...

@@ -37,7 +37,7 @@ class FlextInfraProjectSelector(s[list[m.Infra.Workspace.ProjectInfo]]):
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
 
     def resolve_projects(
-        self, workspace_root: Path, names: list[str]
+        self, workspace_root: Path, names: list[str],
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         """Resolve project names into ProjectInfo structures.
 
@@ -52,23 +52,23 @@ class FlextInfraProjectSelector(s[list[m.Infra.Workspace.ProjectInfo]]):
         discover_result = self._discovery.discover_projects(workspace_root)
         if discover_result.is_failure:
             return r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                discover_result.error or "discovery failed"
+                discover_result.error or "discovery failed",
             )
         projects = discover_result.value
         if not names:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok(
-                sorted(projects, key=lambda p: p.name)
+                sorted(projects, key=lambda p: p.name),
             )
         by_name = {p.name: p for p in projects}
         missing = [name for name in names if name not in by_name]
         if missing:
             missing_text = ", ".join(sorted(missing))
             return r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                f"unknown projects: {missing_text}"
+                f"unknown projects: {missing_text}",
             )
         resolved = [by_name[name] for name in names]
         return r[list[m.Infra.Workspace.ProjectInfo]].ok(
-            sorted(resolved, key=lambda p: p.name)
+            sorted(resolved, key=lambda p: p.name),
         )
 
 

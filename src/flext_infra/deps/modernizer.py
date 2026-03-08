@@ -97,7 +97,7 @@ class FlextInfraPyprojectModernizer:
             return ["invalid TOML"]
         is_root = path.parent.resolve() == self.root.resolve()
         shared_path, shared_written = _ensure_ruff_shared_template(
-            path.parent, self.root
+            path.parent, self.root,
         )
         changes: list[str] = []
         if shared_written:
@@ -110,7 +110,7 @@ class FlextInfraPyprojectModernizer:
         changes.extend(EnsureFormattingToolingPhase().apply(doc))
         changes.extend(EnsureNamespaceToolingPhase().apply(doc, path=path))
         changes.extend(
-            EnsureRuffConfigPhase().apply(doc, path=path, workspace_root=self.root)
+            EnsureRuffConfigPhase().apply(doc, path=path, workspace_root=self.root),
         )
         changes.extend(EnsurePyrightConfigPhase().apply(doc, is_root=is_root))
         tool = _toml_get(doc, c.Infra.Toml.TOOL)
@@ -176,7 +176,7 @@ class FlextInfraPyprojectModernizer:
         for path in files:
             project_dir = path.parent
             result = self._runner.run_raw(
-                [c.Infra.Cli.POETRY, c.Infra.Cli.PoetryCmd.CHECK], cwd=project_dir
+                [c.Infra.Cli.POETRY, c.Infra.Cli.PoetryCmd.CHECK], cwd=project_dir,
             )
             if result.is_failure:
                 has_warning = True

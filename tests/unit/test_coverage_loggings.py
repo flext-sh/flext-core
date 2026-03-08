@@ -51,7 +51,7 @@ class TestGlobalContextManagement:
         """Test binding global context."""
         FlextLogger.clear_global_context()
         result = FlextLogger.bind_global_context(
-            request_id="req-123", user_id="usr-456"
+            request_id="req-123", user_id="usr-456",
         )
         _ = assertion_helpers.assert_flext_result_success(result)
 
@@ -74,7 +74,7 @@ class TestGlobalContextManagement:
         """Test unbinding multiple keys at once."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(
-            request_id="req-123", user_id="usr-456", correlation_id="cor-789"
+            request_id="req-123", user_id="usr-456", correlation_id="cor-789",
         )
         result = FlextLogger.unbind_global_context("request_id", "user_id")
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -283,7 +283,7 @@ class TestInstanceCreation:
     def test_logger_init_with_service_context(self) -> None:
         """Test initializing logger with service context."""
         logger = FlextLogger(
-            "service_logger", _service_name="my-service", _service_version="1.0.0"
+            "service_logger", _service_name="my-service", _service_version="1.0.0",
         )
         assert logger.name == "service_logger"
 
@@ -461,7 +461,7 @@ class TestLoggingMethods:
         logger = make_result_logger("test")
         assert logger is not None
         result = logger.critical(
-            "Critical with context", alert_level="high", system="payment"
+            "Critical with context", alert_level="high", system="payment",
         )
         _ = assertion_helpers.assert_flext_result_success(result)
 
@@ -627,7 +627,7 @@ class TestResultIntegration:
         logger = make_result_logger("test")
         result = r[str].ok("test_value")
         log_result = logger.with_result().info(
-            f"Operation completed with: {result.value}"
+            f"Operation completed with: {result.value}",
         )
         assert log_result.is_success
 

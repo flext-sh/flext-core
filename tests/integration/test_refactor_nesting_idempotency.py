@@ -16,7 +16,7 @@ class TestIdempotency:
         test_file.write_text("\nclass TimeoutEnforcer:\n    pass\n")
         config_file = tmp_path / "mappings.yml"
         config_file.write_text(
-            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n"
+            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
         result = rule.apply(test_file, dry_run=False)
@@ -30,7 +30,7 @@ class TestIdempotency:
         test_file.write_text("\nclass TimeoutEnforcer:\n    pass\n")
         config_file = tmp_path / "mappings.yml"
         config_file.write_text(
-            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n"
+            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
         result1 = rule.apply(test_file, dry_run=False)
@@ -45,7 +45,7 @@ class TestIdempotency:
         test_file.write_text("\nclass TimeoutEnforcer:\n    pass\n")
         config_file = tmp_path / "mappings.yml"
         config_file.write_text(
-            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n"
+            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
         for _ in range(3):

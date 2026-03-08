@@ -5,35 +5,30 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_infra import m, u
-from flext_infra.refactor.analysis import (
-    CompatibilityAliasDetector,
-    CyclicImportDetector,
-    FutureAnnotationsDetector,
-    ImportAliasDetector,
-    InternalImportDetector,
-    LooseObjectDetector,
-    ManualProtocolDetector,
-    ManualTypingAliasDetector,
-    NamespaceFacadeScanner,
-    RuntimeAliasDetector,
+from flext_infra.refactor.dependency_analyzer import (
+    FlextInfraRefactorDependencyAnalyzerFacade,
 )
 from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
 from flext_infra.refactor.output import render_namespace_enforcement_report
 
-
+da = FlextInfraRefactorDependencyAnalyzerFacade
 NamespaceEnforcementModels = m.Infra.Refactor.NamespaceEnforcementModels
 
 
 class FlextInfraNamespaceEnforcer:
+    """Orchestrate namespace enforcement across a workspace."""
+
     def __init__(self, *, workspace_root: Path) -> None:
+        """Initialize with the workspace root path."""
         super().__init__()
         self._workspace_root = workspace_root.resolve()
 
     def enforce(
-        self, *, apply_changes: bool = False
+        self, *, apply_changes: bool = False,
     ) -> NamespaceEnforcementModels.WorkspaceEnforcementReport:
+        """Run namespace enforcement across all projects in the workspace."""
         project_roots = u.Infra.Refactor.discover_project_roots(
-            workspace_root=self._workspace_root
+            workspace_root=self._workspace_root,
         )
         project_reports: list[NamespaceEnforcementModels.ProjectEnforcementReport] = []
         total_missing = 0
@@ -93,7 +88,7 @@ class FlextInfraNamespaceEnforcer:
         apply_changes: bool,
     ) -> NamespaceEnforcementModels.ProjectEnforcementReport:
         parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation] = []
-        facade_statuses = NamespaceFacadeScanner.scan_project(
+        facade_statuses = da.NamespaceFacadeScanner.scan_project(
             project_root=project_root,
             project_name=project_name,
             parse_failures=parse_failures,
@@ -104,44 +99,44 @@ class FlextInfraNamespaceEnforcer:
                 project_name=project_name,
                 facade_statuses=facade_statuses,
             )
-            facade_statuses = NamespaceFacadeScanner.scan_project(
+            facade_statuses = da.NamespaceFacadeScanner.scan_project(
                 project_root=project_root,
                 project_name=project_name,
                 parse_failures=parse_failures,
             )
         py_files = NamespaceEnforcementRewriter.collect_python_files(
-            project_root=project_root
+            project_root=project_root,
         )
         loose_objects: list[NamespaceEnforcementModels.LooseObjectViolation] = []
         for py_file in py_files:
             loose_objects.extend(
-                LooseObjectDetector.scan_file(
+                da.LooseObjectDetector.scan_file(
                     file_path=py_file,
                     project_name=project_name,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         import_violations: list[NamespaceEnforcementModels.ImportAliasViolation] = []
         for py_file in py_files:
             import_violations.extend(
-                ImportAliasDetector.scan_file(
+                da.ImportAliasDetector.scan_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         if apply_changes and len(import_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_import_alias_violations(
-                py_files=py_files
+                py_files=py_files,
             )
             import_violations = []
             for py_file in py_files:
                 import_violations.extend(
-                    ImportAliasDetector.scan_file(
+                    da.ImportAliasDetector.scan_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
-                    )
+                    ),
                 )
-        cyclic_imports = CyclicImportDetector.scan_project(
+        cyclic_imports = da.CyclicImportDetector.scan_project(
             project_root=project_root,
             parse_failures=parse_failures,
         )
@@ -150,66 +145,66 @@ class FlextInfraNamespaceEnforcer:
         ] = []
         for py_file in py_files:
             internal_import_violations.extend(
-                InternalImportDetector.scan_file(
+                da.InternalImportDetector.scan_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         runtime_alias_violations: list[
             NamespaceEnforcementModels.RuntimeAliasViolation
         ] = []
         for py_file in py_files:
             runtime_alias_violations.extend(
-                RuntimeAliasDetector.scan_file(
+                da.RuntimeAliasDetector.scan_file(
                     file_path=py_file,
                     project_name=project_name,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         if apply_changes and len(runtime_alias_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_runtime_alias_violations(
-                py_files=py_files
+                py_files=py_files,
             )
             runtime_alias_violations = []
             for py_file in py_files:
                 runtime_alias_violations.extend(
-                    RuntimeAliasDetector.scan_file(
+                    da.RuntimeAliasDetector.scan_file(
                         file_path=py_file,
                         project_name=project_name,
                         parse_failures=parse_failures,
-                    )
+                    ),
                 )
         future_violations: list[
             NamespaceEnforcementModels.FutureAnnotationsViolation
         ] = []
         for py_file in py_files:
             future_violations.extend(
-                FutureAnnotationsDetector.scan_file(
+                da.FutureAnnotationsDetector.scan_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         if apply_changes and len(future_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_missing_future_annotations(
-                py_files=py_files
+                py_files=py_files,
             )
             future_violations = []
             for py_file in py_files:
                 future_violations.extend(
-                    FutureAnnotationsDetector.scan_file(
+                    da.FutureAnnotationsDetector.scan_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
-                    )
+                    ),
                 )
         manual_protocol_violations: list[
             NamespaceEnforcementModels.ManualProtocolViolation
         ] = []
         for py_file in py_files:
             manual_protocol_violations.extend(
-                ManualProtocolDetector.scan_file(
+                da.ManualProtocolDetector.scan_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         if apply_changes and len(manual_protocol_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_manual_protocol_violations(
@@ -220,20 +215,20 @@ class FlextInfraNamespaceEnforcer:
             manual_protocol_violations = []
             for py_file in py_files:
                 manual_protocol_violations.extend(
-                    ManualProtocolDetector.scan_file(
+                    da.ManualProtocolDetector.scan_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
-                    )
+                    ),
                 )
         manual_typing_violations: list[
             NamespaceEnforcementModels.ManualTypingAliasViolation
         ] = []
         for py_file in py_files:
             manual_typing_violations.extend(
-                ManualTypingAliasDetector.scan_file(
+                da.ManualTypingAliasDetector.scan_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         if apply_changes and len(manual_typing_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_manual_typing_alias_violations(
@@ -244,20 +239,20 @@ class FlextInfraNamespaceEnforcer:
             manual_typing_violations = []
             for py_file in py_files:
                 manual_typing_violations.extend(
-                    ManualTypingAliasDetector.scan_file(
+                    da.ManualTypingAliasDetector.scan_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
-                    )
+                    ),
                 )
         compatibility_alias_violations: list[
             NamespaceEnforcementModels.CompatibilityAliasViolation
         ] = []
         for py_file in py_files:
             compatibility_alias_violations.extend(
-                CompatibilityAliasDetector.scan_file(
+                da.CompatibilityAliasDetector.scan_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
-                )
+                ),
             )
         if apply_changes and len(compatibility_alias_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_compatibility_alias_violations(
@@ -267,10 +262,10 @@ class FlextInfraNamespaceEnforcer:
             compatibility_alias_violations = []
             for py_file in py_files:
                 compatibility_alias_violations.extend(
-                    CompatibilityAliasDetector.scan_file(
+                    da.CompatibilityAliasDetector.scan_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
-                    )
+                    ),
                 )
         return NamespaceEnforcementModels.ProjectEnforcementReport.create(
             project=project_name,
@@ -293,20 +288,11 @@ class FlextInfraNamespaceEnforcer:
     def render_text(
         report: NamespaceEnforcementModels.WorkspaceEnforcementReport,
     ) -> str:
+        """Render a workspace enforcement report as plain text."""
         return render_namespace_enforcement_report(report)
 
 
 __all__ = [
-    "CompatibilityAliasDetector",
-    "CyclicImportDetector",
     "FlextInfraNamespaceEnforcer",
-    "FutureAnnotationsDetector",
-    "ImportAliasDetector",
-    "InternalImportDetector",
-    "LooseObjectDetector",
-    "ManualProtocolDetector",
-    "ManualTypingAliasDetector",
     "NamespaceEnforcementModels",
-    "NamespaceFacadeScanner",
-    "RuntimeAliasDetector",
 ]

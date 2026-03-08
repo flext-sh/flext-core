@@ -59,7 +59,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         def create_handler(
             self,
             process_fn: Callable[
-                [FlextTypes.Container], FlextResult[FlextTypes.Container]
+                [FlextTypes.Container], FlextResult[FlextTypes.Container],
             ]
             | None = None,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
@@ -127,7 +127,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
             handler_name: str | None = None,
             handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
             process_fn: Callable[
-                [FlextTypes.Container], FlextResult[FlextTypes.Container]
+                [FlextTypes.Container], FlextResult[FlextTypes.Container],
             ]
             | None = None,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
@@ -145,7 +145,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
             """
 
             class DynamicTestHandler(
-                FlextHandlers[FlextTypes.Container, FlextTypes.Container]
+                FlextHandlers[FlextTypes.Container, FlextTypes.Container],
             ):
                 """Dynamic test handler implementation."""
 
@@ -164,18 +164,18 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
 
                 @override
                 def handle(
-                    self, message: FlextTypes.Container
+                    self, message: FlextTypes.Container,
                 ) -> FlextResult[FlextTypes.Container]:
                     """Handle message with proper error handling."""
                     try:
                         if process_fn:
                             return process_fn(message)
                         return FlextResult[FlextTypes.Container].ok(
-                            f"Handled: {message}"
+                            f"Handled: {message}",
                         )
                     except Exception as e:
                         return FlextResult[FlextTypes.Container].fail(
-                            f"Handler error: {e}"
+                            f"Handler error: {e}",
                         )
 
             return DynamicTestHandler()
@@ -206,7 +206,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 return FlextResult[FlextTypes.Container].ok(result_value)
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
-                handler_id, process_fn=always_succeed
+                handler_id, process_fn=always_succeed,
             )
 
         @staticmethod
@@ -237,7 +237,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 return FlextResult[FlextTypes.Container].fail(error_message)
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
-                handler_id, process_fn=always_fail
+                handler_id, process_fn=always_fail,
             )
 
         @staticmethod
@@ -268,11 +268,11 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                     return FlextResult[FlextTypes.Container].ok(result)
                 except Exception as e:
                     return FlextResult[FlextTypes.Container].fail(
-                        f"Transformation failed: {e}"
+                        f"Transformation failed: {e}",
                     )
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
-                handler_id, process_fn=transform
+                handler_id, process_fn=transform,
             )
 
 

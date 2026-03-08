@@ -98,7 +98,7 @@ class TestFlextInfraConstantsExcludedNamespace:
 
     def test_common_excluded_dirs_is_frozenset(self) -> None:
         assert isinstance(
-            FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS, frozenset
+            FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS, frozenset,
         )
 
     def test_common_excluded_dirs_contains_standard_dirs(self) -> None:
@@ -137,13 +137,13 @@ class TestFlextInfraConstantsExcludedNamespace:
 
     def test_excluded_dirs_are_frozensets(self) -> None:
         assert isinstance(
-            FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS, frozenset
+            FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS, frozenset,
         )
         assert isinstance(
-            FlextInfraConstants.Infra.Excluded.PYPROJECT_SKIP_DIRS, frozenset
+            FlextInfraConstants.Infra.Excluded.PYPROJECT_SKIP_DIRS, frozenset,
         )
         assert isinstance(
-            FlextInfraConstants.Infra.Excluded.CHECK_EXCLUDED_DIRS, frozenset
+            FlextInfraConstants.Infra.Excluded.CHECK_EXCLUDED_DIRS, frozenset,
         )
 
 

@@ -1,6 +1,9 @@
+"""Namespace enforcement rewriting operations."""
+
 from __future__ import annotations
 
 import ast
+import operator
 import re
 import token
 import tokenize
@@ -10,17 +13,21 @@ from pathlib import Path
 
 from flext_infra import c, m
 from flext_infra.refactor.dependency_analyzer import (
-    ManualProtocolDetector,
-    NamespaceFacadeScanner,
+    FlextInfraRefactorDependencyAnalyzerFacade,
     load_python_module,
 )
 
+da = FlextInfraRefactorDependencyAnalyzerFacade
+
 
 class NamespaceEnforcementRewriter:
+    """Rewrite source files to enforce namespace conventions."""
+
     @staticmethod
     def _preferred_file_name(*, family: str) -> str:
         pattern = c.Infra.Refactor.NAMESPACE_FACADE_FILE_PATTERNS.get(
-            family, "utilities.py"
+            family,
+            "utilities.py",
         )
         return pattern.lstrip("*")
 
@@ -42,7 +49,7 @@ class NamespaceEnforcementRewriter:
     ) -> None:
         alias = family
         import_stmt = NamespaceEnforcementRewriter._base_import_for_family(
-            family=family
+            family=family,
         )
         base_class = NamespaceEnforcementRewriter._base_class_for_family(family=family)
         content = (
@@ -64,6 +71,7 @@ class NamespaceEnforcementRewriter:
         project_name: str,
         facade_statuses: list[m.Infra.Refactor.NamespaceEnforcementModels.FacadeStatus],
     ) -> None:
+        """Create missing facade module files for the project."""
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src_dir.is_dir():
             return
@@ -75,7 +83,7 @@ class NamespaceEnforcementRewriter:
         if len(package_dirs) == 0:
             return
         primary_package = package_dirs[0]
-        stem = NamespaceFacadeScanner.project_class_stem(project_name=project_name)
+        stem = da.NamespaceFacadeScanner.project_class_stem(project_name=project_name)
         for status in facade_statuses:
             if status.exists:
                 continue
@@ -101,7 +109,8 @@ class NamespaceEnforcementRewriter:
                     mutated = True
                 if mutated:
                     _ = target_path.write_text(
-                        content, encoding=c.Infra.Encoding.DEFAULT
+                        content,
+                        encoding=c.Infra.Encoding.DEFAULT,
                     )
                 continue
             cls._write_missing_facade_file(
@@ -112,8 +121,9 @@ class NamespaceEnforcementRewriter:
 
     @staticmethod
     def rewrite_import_alias_violations(*, py_files: list[Path]) -> None:
+        """Rewrite deep import aliases to use facade shortcuts."""
         deep_import_re = re.compile(
-            r"^(\s*)from\s+(flext_core|flext_infra)\.\S+\s+import\s+.+$"
+            r"^(\s*)from\s+(flext_core|flext_infra)\.\S+\s+import\s+.+$",
         )
         alias_map: dict[str, str] = {
             "flext_core": "from flext_core import c, m, r, t, u, p",
@@ -147,14 +157,16 @@ class NamespaceEnforcementRewriter:
                 new_lines.append(line)
             if changed:
                 _ = file_path.write_text(
-                    "".join(new_lines), encoding=c.Infra.Encoding.DEFAULT
+                    "".join(new_lines),
+                    encoding=c.Infra.Encoding.DEFAULT,
                 )
 
     @staticmethod
     def rewrite_runtime_alias_violations(*, py_files: list[Path]) -> None:
+        """Rewrite runtime alias statements to match expected patterns."""
         for file_path in py_files:
             expected = c.Infra.Refactor.NAMESPACE_FAMILY_EXPECTED_ALIAS.get(
-                file_path.name
+                file_path.name,
             )
             if expected is None:
                 continue
@@ -186,6 +198,7 @@ class NamespaceEnforcementRewriter:
 
     @staticmethod
     def rewrite_missing_future_annotations(*, py_files: list[Path]) -> None:
+        """Add missing future annotations imports to source files."""
         for file_path in py_files:
             if file_path.name == "py.typed":
                 continue
@@ -225,6 +238,7 @@ class NamespaceEnforcementRewriter:
             m.Infra.Refactor.NamespaceEnforcementModels.ManualProtocolViolation
         ],
     ) -> None:
+        """Move manual protocol definitions to their canonical files."""
         grouped_names: dict[Path, set[str]] = defaultdict(set)
         for violation in violations:
             grouped_names[Path(violation.file)].add(violation.name)
@@ -265,7 +279,7 @@ class NamespaceEnforcementRewriter:
                 continue
             if stmt.name not in protocol_names:
                 continue
-            if not ManualProtocolDetector.is_protocol_class(stmt):
+            if not da.ManualProtocolDetector.is_protocol_class(stmt):
                 continue
             block = ast.get_source_segment(source, stmt)
             if block is None:
@@ -314,6 +328,7 @@ class NamespaceEnforcementRewriter:
             m.Infra.Refactor.NamespaceEnforcementModels.ParseFailureViolation
         ],
     ) -> None:
+        """Move manual typing aliases to their canonical files."""
         grouped_names: dict[Path, set[str]] = defaultdict(set)
         for violation in violations:
             grouped_names[Path(violation.file)].add(violation.name)
@@ -440,6 +455,7 @@ class NamespaceEnforcementRewriter:
             m.Infra.Refactor.NamespaceEnforcementModels.ParseFailureViolation
         ],
     ) -> None:
+        """Rewrite compatibility alias violations in source files."""
         grouped: dict[Path, dict[str, str]] = defaultdict(dict)
         for violation in violations:
             grouped[Path(violation.file)][violation.alias_name] = violation.target_name
@@ -475,7 +491,7 @@ class NamespaceEnforcementRewriter:
             kept_source = "".join(kept_lines)
             line_buffer = kept_source.splitlines(keepends=True)
             replacements_by_line: dict[int, list[tuple[int, int, str]]] = defaultdict(
-                list
+                list,
             )
             token_generator = tokenize.generate_tokens(StringIO(kept_source).readline)
             for tok in token_generator:
@@ -499,7 +515,7 @@ class NamespaceEnforcementRewriter:
                 line_text = line_buffer[line_idx]
                 for start_col, end_col, replacement in sorted(
                     replacements,
-                    key=lambda item: item[0],
+                    key=operator.itemgetter(0),
                     reverse=True,
                 ):
                     line_text = (
@@ -536,8 +552,8 @@ class NamespaceEnforcementRewriter:
         if len(blocks) == 0:
             return
         project_name = project_root.name
-        class_stem = NamespaceFacadeScanner.project_class_stem(
-            project_name=project_name
+        class_stem = da.NamespaceFacadeScanner.project_class_stem(
+            project_name=project_name,
         )
         protocols_class = f"{class_stem}Protocols"
         target_source = (
@@ -565,7 +581,8 @@ class NamespaceEnforcementRewriter:
             updated = updated.rstrip() + "\n\n" + block + "\n"
         target_file.parent.mkdir(parents=True, exist_ok=True)
         _ = target_file.write_text(
-            updated.rstrip() + "\n", encoding=c.Infra.Encoding.DEFAULT
+            updated.rstrip() + "\n",
+            encoding=c.Infra.Encoding.DEFAULT,
         )
 
     @staticmethod
@@ -620,16 +637,19 @@ class NamespaceEnforcementRewriter:
                     line_index = stmt.lineno - 1
                     line_text = new_lines[line_index]
                     new_lines[line_index] = line_text.replace(
-                        source_module, target_module
+                        source_module,
+                        target_module,
                     )
                     changed = True
             if changed:
                 _ = py_file.write_text(
-                    "".join(new_lines), encoding=c.Infra.Encoding.DEFAULT
+                    "".join(new_lines),
+                    encoding=c.Infra.Encoding.DEFAULT,
                 )
 
     @staticmethod
     def collect_python_files(*, project_root: Path) -> list[Path]:
+        """Collect all Python files under the project source and test dirs."""
         files: list[Path] = []
         for dir_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES:
             scan_dir = project_root / dir_name

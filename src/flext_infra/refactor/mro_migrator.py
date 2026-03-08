@@ -32,7 +32,7 @@ class FlextInfraRefactorMROMigrationTransformer:
 
     @staticmethod
     def migrate_file(
-        *, scan_result: m.Infra.Refactor.MROScanReport
+        *, scan_result: m.Infra.Refactor.MROScanReport,
     ) -> tuple[str, m.Infra.Refactor.MROFileMigration, dict[str, str]]:
         """Transform a candidate file and return code plus symbol map."""
         source = Path(scan_result.file).read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -42,7 +42,7 @@ class FlextInfraRefactorMROMigrationTransformer:
         retained_module_body: list[cst.CSTNode] = []
         for stmt in module.body:
             moved = FlextInfraRefactorMROMigrationTransformer._extract_moved_statement(
-                statement=stmt, candidate_symbols=candidate_symbols
+                statement=stmt, candidate_symbols=candidate_symbols,
             )
             if moved is None:
                 retained_module_body.append(stmt)
@@ -102,13 +102,13 @@ class FlextInfraRefactorMROMigrationTransformer:
             if not symbol.startswith("_"):
                 continue
             value = FlextInfraRefactorMROMigrationTransformer._statement_value(
-                statement=moved_by_symbol[symbol]
+                statement=moved_by_symbol[symbol],
             )
             if value is None:
                 continue
             replacement_values[symbol] = value
         inline_transformer = FlextInfraRefactorMROPrivateInlineTransformer(
-            replacement_values=replacement_values
+            replacement_values=replacement_values,
         )
         updated_module = updated_module.visit(inline_transformer)
         migration = _new_file_migration(
@@ -121,7 +121,7 @@ class FlextInfraRefactorMROMigrationTransformer:
 
     @staticmethod
     def _extract_moved_statement(
-        *, statement: cst.CSTNode, candidate_symbols: set[str]
+        *, statement: cst.CSTNode, candidate_symbols: set[str],
     ) -> tuple[str, cst.CSTNode] | None:
         if isinstance(statement, cst.ClassDef):
             symbol = statement.name.value
@@ -162,13 +162,13 @@ class FlextInfraRefactorMROMigrationTransformer:
         alias_replacement_values: dict[str, cst.BaseExpression] = {}
         for statement in class_def.body.body:
             alias = FlextInfraRefactorMROMigrationTransformer._extract_alias_assignment(
-                statement=statement
+                statement=statement,
             )
             if alias is not None and alias[1] in moved_by_symbol:
                 alias_by_symbol[alias[1]] = alias[0]
                 private_value = (
                     FlextInfraRefactorMROMigrationTransformer._statement_value(
-                        statement=moved_by_symbol[alias[1]]
+                        statement=moved_by_symbol[alias[1]],
                     )
                 )
                 if private_value is not None:
@@ -180,9 +180,9 @@ class FlextInfraRefactorMROMigrationTransformer:
         moved_lines: list[cst.CSTNode] = []
         for symbol in ordered_symbols:
             target = alias_by_symbol.get(
-                symbol
+                symbol,
             ) or FlextInfraRefactorMROMigrationTransformer._default_target(
-                symbol=symbol
+                symbol=symbol,
             )
             if target in added_targets:
                 continue
@@ -215,7 +215,7 @@ class FlextInfraRefactorMROMigrationTransformer:
             final_body = [cst.SimpleStatementLine(body=[cst.Pass()])]
         return (
             class_def.with_changes(
-                body=class_def.body.with_changes(body=tuple(final_body))
+                body=class_def.body.with_changes(body=tuple(final_body)),
             ),
             symbol_map,
         )
@@ -228,13 +228,13 @@ class FlextInfraRefactorMROMigrationTransformer:
         ordered_symbols: list[str],
     ) -> tuple[cst.ClassDef, dict[str, str]]:
         class_template = cst.ClassDef(
-            name=cst.Name(class_name), body=cst.IndentedBlock(body=())
+            name=cst.Name(class_name), body=cst.IndentedBlock(body=()),
         )
         class_body: list[cst.BaseStatement] = []
         symbol_map: dict[str, str] = {}
         for symbol in ordered_symbols:
             target = FlextInfraRefactorMROMigrationTransformer._default_target(
-                symbol=symbol
+                symbol=symbol,
             )
             symbol_map[symbol] = target
             moved_node = FlextInfraRefactorMROMigrationTransformer._retarget_statement(
@@ -246,7 +246,7 @@ class FlextInfraRefactorMROMigrationTransformer:
                 class_body.append(moved_node)
         return (
             class_template.with_changes(
-                body=class_template.body.with_changes(body=tuple(class_body))
+                body=class_template.body.with_changes(body=tuple(class_body)),
             ),
             symbol_map,
         )
@@ -303,12 +303,12 @@ class FlextInfraRefactorMROMigrationTransformer:
                 return cst.SimpleStatementLine(
                     body=[
                         statement.with_changes(
-                            target=cst.Name(target_name), value=replacement_value
-                        )
-                    ]
+                            target=cst.Name(target_name), value=replacement_value,
+                        ),
+                    ],
                 )
             return cst.SimpleStatementLine(
-                body=[statement.with_changes(target=cst.Name(target_name))]
+                body=[statement.with_changes(target=cst.Name(target_name))],
             )
         if isinstance(statement, cst.Assign):
             assign_value = replacement_value or statement.value
@@ -317,8 +317,8 @@ class FlextInfraRefactorMROMigrationTransformer:
                     statement.with_changes(
                         targets=(cst.AssignTarget(target=cst.Name(target_name)),),
                         value=assign_value,
-                    )
-                ]
+                    ),
+                ],
             )
         msg = "unsupported constant statement type"
         raise ValueError(msg)

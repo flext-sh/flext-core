@@ -11,8 +11,8 @@ from collections.abc import Mapping
 import pytest
 
 from flext_core import r, t
-from tests.conftest import test_framework
 from tests import m
+from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -58,7 +58,7 @@ class TestAutomatedFlextUtilities:
         ids=lambda case: case["description"],
     )
     def test_automated_utilities_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario
+        self, test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for utilities functionality."""
         try:
@@ -85,7 +85,7 @@ class TestAutomatedFlextUtilities:
         instance = fixture_factory.create_test_utilities_instance()
         result = self._execute_utilities_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextUtilities type safety test"
+            result, "FlextUtilities type safety test",
         )
 
     def test_automated_utilities_error_handling(self) -> None:
@@ -109,12 +109,12 @@ class TestAutomatedFlextUtilities:
 
         def operation() -> r[bool]:
             return self._execute_utilities_operation(
-                instance, {"performance_test": True}
+                instance, {"performance_test": True},
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextUtilities performance test exceeded timeout"
+            result, "FlextUtilities performance test exceeded timeout",
         )
 
     def test_automated_utilities_resource_management(self) -> None:
@@ -122,18 +122,18 @@ class TestAutomatedFlextUtilities:
         instance = fixture_factory.create_test_utilities_instance()
         result = self._execute_utilities_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextUtilities resource test"
+            result, "FlextUtilities resource test",
         )
         instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextUtilities cleanup failed"
+                    cleanup_result, "FlextUtilities cleanup failed",
                 )
 
     def _execute_utilities_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue]
+        self, instance: object, input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on utilities instance.
 

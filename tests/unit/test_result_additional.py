@@ -51,7 +51,7 @@ def test_map_error_identity_and_transform() -> None:
     success = r[int].ok(1)
     assert success.map_error(lambda msg: msg + "_x") is success
     failure: r[int] = r[int].fail(
-        "bad", error_code="E1", error_data=m.ConfigMap(root={"k": "v"})
+        "bad", error_code="E1", error_data=m.ConfigMap(root={"k": "v"}),
     )
     transformed = failure.map_error(lambda msg: f"{msg}_mapped")
     assert transformed.is_failure
@@ -88,7 +88,7 @@ def test_create_from_callable_and_repr() -> None:
     _ = u.Tests.Result.assert_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
     error_callable: Callable[[], int] = cast(
-        "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error"))
+        "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error")),
     )
     error_result = r[int].create_from_callable(error_callable)
     _ = u.Tests.Result.assert_failure(error_result)

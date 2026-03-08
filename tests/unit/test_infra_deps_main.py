@@ -52,7 +52,7 @@ class TestMainHelpAndErrors:
         with patch("sys.argv", ["prog", "-h"]):
             with patch("flext_infra.deps.__main__.output.info") as mock_info:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -63,7 +63,7 @@ class TestMainHelpAndErrors:
         with patch("sys.argv", ["prog", "--help"]):
             with patch("flext_infra.deps.__main__.output.info") as mock_info:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -74,7 +74,7 @@ class TestMainHelpAndErrors:
         with patch("sys.argv", ["prog"]):
             with patch("flext_infra.deps.__main__.output.info") as mock_info:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 1
@@ -85,7 +85,7 @@ class TestMainHelpAndErrors:
         with patch("sys.argv", ["prog", "unknown"]):
             with patch("flext_infra.deps.__main__.output.error") as mock_error:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 1
@@ -96,7 +96,7 @@ class TestMainHelpAndErrors:
         with patch("sys.argv", ["prog", "-h"]):
             with patch("flext_infra.deps.__main__.output.info") as mock_info:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
                     calls = [str(call) for call in mock_info.call_args_list]
@@ -116,7 +116,7 @@ class TestMainSubcommandDispatch:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -132,7 +132,7 @@ class TestMainSubcommandDispatch:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -148,7 +148,7 @@ class TestMainSubcommandDispatch:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -164,7 +164,7 @@ class TestMainSubcommandDispatch:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -180,7 +180,7 @@ class TestMainSubcommandDispatch:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -200,7 +200,7 @@ class TestMainReturnValues:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -215,7 +215,7 @@ class TestMainReturnValues:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -230,7 +230,7 @@ class TestMainReturnValues:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 42
@@ -245,7 +245,7 @@ class TestMainReturnValues:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -260,7 +260,7 @@ class TestMainReturnValues:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
@@ -275,7 +275,7 @@ class TestMainReturnValues:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 1
@@ -294,7 +294,7 @@ class TestMainModuleImport:
                 return_value=mock_module,
             ) as mock_import:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
                     mock_import.assert_called_with("flext_infra.deps.detector")
@@ -309,7 +309,7 @@ class TestMainModuleImport:
                 return_value=mock_module,
             ) as mock_import:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
                     mock_import.assert_called_with("flext_infra.deps.modernizer")
@@ -324,7 +324,7 @@ class TestMainModuleImport:
                 return_value=mock_module,
             ) as mock_import:
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
                     mock_import.assert_called_with("flext_infra.deps.path_sync")
@@ -344,7 +344,7 @@ class TestMainSysArgvModification:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
                     assert "detect" in sys.argv[0]
@@ -360,7 +360,7 @@ class TestMainSysArgvModification:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
                     assert "-q" in sys.argv
@@ -376,7 +376,7 @@ class TestMainStructlogConfiguration:
         mock_module.main = Mock(return_value=0)
         with patch("sys.argv", ["prog", "detect"]):
             with patch(
-                "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
             ) as mock_ensure:
                 with patch(
                     "flext_infra.deps.__main__.importlib.import_module",
@@ -425,7 +425,7 @@ class TestMainExceptionHandling:
                 return_value=mock_module,
             ):
                 with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured"
+                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     with pytest.raises(Exception, match="Test error"):
                         main()

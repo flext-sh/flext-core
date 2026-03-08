@@ -36,7 +36,7 @@ class TestCoreMainBaseMkValidate:
         args = MagicMock()
         args.root = str(tmp_path)
         with patch(
-            "flext_infra.core.__main__.FlextInfraBaseMkValidator"
+            "flext_infra.core.__main__.FlextInfraBaseMkValidator",
         ) as mock_validator:
             mock_validator_inst = mock_validator.return_value
             mock_report = MagicMock()
@@ -54,7 +54,7 @@ class TestCoreMainBaseMkValidate:
         args = MagicMock()
         args.root = str(tmp_path)
         with patch(
-            "flext_infra.core.__main__.FlextInfraBaseMkValidator"
+            "flext_infra.core.__main__.FlextInfraBaseMkValidator",
         ) as mock_validator:
             mock_validator_inst = mock_validator.return_value
             mock_report = MagicMock()
@@ -72,11 +72,11 @@ class TestCoreMainBaseMkValidate:
         args = MagicMock()
         args.root = str(tmp_path)
         with patch(
-            "flext_infra.core.__main__.FlextInfraBaseMkValidator"
+            "flext_infra.core.__main__.FlextInfraBaseMkValidator",
         ) as mock_validator:
             mock_validator_inst = mock_validator.return_value
             mock_validator_inst.validate.return_value = r[MagicMock].fail(
-                "validation error"
+                "validation error",
             )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_basemk_validate(args)
@@ -93,11 +93,11 @@ class TestCoreMainInventory:
         args.root = str(tmp_path)
         args.output_dir = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraInventoryService"
+            "flext_infra.core.__main__.FlextInfraInventoryService",
         ) as mock_service:
             mock_service_inst = mock_service.return_value
             mock_service_inst.generate.return_value = r[dict[str, object]].ok({
-                "reports_written": ["/path/to/report.json"]
+                "reports_written": ["/path/to/report.json"],
             })
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_inventory(args)
@@ -110,11 +110,11 @@ class TestCoreMainInventory:
         args.root = str(tmp_path)
         args.output_dir = str(tmp_path / "output")
         with patch(
-            "flext_infra.core.__main__.FlextInfraInventoryService"
+            "flext_infra.core.__main__.FlextInfraInventoryService",
         ) as mock_service:
             mock_service_inst = mock_service.return_value
             mock_service_inst.generate.return_value = r[dict[str, object]].ok({
-                "reports_written": list[str]()
+                "reports_written": list[str](),
             })
             with patch("flext_infra.core.__main__.output"):
                 result = _run_inventory(args)
@@ -126,11 +126,11 @@ class TestCoreMainInventory:
         args.root = str(tmp_path)
         args.output_dir = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraInventoryService"
+            "flext_infra.core.__main__.FlextInfraInventoryService",
         ) as mock_service:
             mock_service_inst = mock_service.return_value
             mock_service_inst.generate.return_value = r[dict[str, object]].fail(
-                "generation error"
+                "generation error",
             )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_inventory(args)
@@ -156,7 +156,7 @@ class TestCoreMainPytestDiag:
         args.slowest = None
         args.skips = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
@@ -185,7 +185,7 @@ class TestCoreMainPytestDiag:
         args.slowest = None
         args.skips = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
@@ -215,7 +215,7 @@ class TestCoreMainPytestDiag:
         args.slowest = None
         args.skips = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
@@ -245,7 +245,7 @@ class TestCoreMainPytestDiag:
         args.slowest = None
         args.skips = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
@@ -275,7 +275,7 @@ class TestCoreMainPytestDiag:
         args.slowest = str(slowest_path)
         args.skips = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
@@ -305,7 +305,7 @@ class TestCoreMainPytestDiag:
         args.slowest = None
         args.skips = str(skips_path)
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
@@ -334,11 +334,11 @@ class TestCoreMainPytestDiag:
         args.slowest = None
         args.skips = None
         with patch(
-            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
+            "flext_infra.core.__main__.FlextInfraPytestDiagExtractor",
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
             mock_extractor_inst.extract.return_value = r[dict[str, object]].fail(
-                "extraction error"
+                "extraction error",
             )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_pytest_diag(args)
@@ -358,11 +358,11 @@ class TestCoreMainScan:
         args.exclude = list[str]()
         args.match = "present"
         with patch(
-            "flext_infra.core.__main__.FlextInfraTextPatternScanner"
+            "flext_infra.core.__main__.FlextInfraTextPatternScanner",
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
             mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({
-                "violation_count": 0
+                "violation_count": 0,
             })
             result = _run_scan(args)
             assert result == 0
@@ -376,11 +376,11 @@ class TestCoreMainScan:
         args.exclude = list[str]()
         args.match = "present"
         with patch(
-            "flext_infra.core.__main__.FlextInfraTextPatternScanner"
+            "flext_infra.core.__main__.FlextInfraTextPatternScanner",
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
             mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({
-                "violation_count": 5
+                "violation_count": 5,
             })
             result = _run_scan(args)
             assert result == 1
@@ -394,11 +394,11 @@ class TestCoreMainScan:
         args.exclude = ["test_*.py"]
         args.match = "present"
         with patch(
-            "flext_infra.core.__main__.FlextInfraTextPatternScanner"
+            "flext_infra.core.__main__.FlextInfraTextPatternScanner",
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
             mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({
-                "violation_count": 0
+                "violation_count": 0,
             })
             result = _run_scan(args)
             assert result == 0
@@ -412,11 +412,11 @@ class TestCoreMainScan:
         args.exclude = list[str]()
         args.match = "present"
         with patch(
-            "flext_infra.core.__main__.FlextInfraTextPatternScanner"
+            "flext_infra.core.__main__.FlextInfraTextPatternScanner",
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
             mock_scanner_inst.scan.return_value = r[dict[str, object]].fail(
-                "scan error"
+                "scan error",
             )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_scan(args)
@@ -434,7 +434,7 @@ class TestCoreMainSkillValidate:
         args.skill = "test-skill"
         args.mode = "baseline"
         with patch(
-            "flext_infra.core.__main__.FlextInfraSkillValidator"
+            "flext_infra.core.__main__.FlextInfraSkillValidator",
         ) as mock_validator:
             mock_validator_inst = mock_validator.return_value
             mock_report = MagicMock()
@@ -454,7 +454,7 @@ class TestCoreMainSkillValidate:
         args.skill = "test-skill"
         args.mode = "strict"
         with patch(
-            "flext_infra.core.__main__.FlextInfraSkillValidator"
+            "flext_infra.core.__main__.FlextInfraSkillValidator",
         ) as mock_validator:
             mock_validator_inst = mock_validator.return_value
             mock_report = MagicMock()
@@ -474,11 +474,11 @@ class TestCoreMainSkillValidate:
         args.skill = "test-skill"
         args.mode = "baseline"
         with patch(
-            "flext_infra.core.__main__.FlextInfraSkillValidator"
+            "flext_infra.core.__main__.FlextInfraSkillValidator",
         ) as mock_validator:
             mock_validator_inst = mock_validator.return_value
             mock_validator_inst.validate.return_value = r[MagicMock].fail(
-                "validation error"
+                "validation error",
             )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_skill_validate(args)
@@ -547,7 +547,7 @@ class TestCoreMainStubValidate:
         with patch("flext_infra.core.__main__.FlextInfraStubSupplyChain") as mock_chain:
             mock_chain_inst = mock_chain.return_value
             mock_chain_inst.validate.return_value = r[MagicMock].fail(
-                "validation error"
+                "validation error",
             )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_stub_validate(args)
@@ -563,7 +563,7 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "basemk-validate", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_basemk_validate", return_value=0
+                    "flext_infra.core.__main__._run_basemk_validate", return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -574,7 +574,7 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "inventory", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_inventory", return_value=0
+                    "flext_infra.core.__main__._run_inventory", return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -589,7 +589,7 @@ class TestCoreMainFlow:
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_pytest_diag", return_value=0
+                    "flext_infra.core.__main__._run_pytest_diag", return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -604,7 +604,7 @@ class TestCoreMainFlow:
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_scan", return_value=0
+                    "flext_infra.core.__main__._run_scan", return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -619,7 +619,7 @@ class TestCoreMainFlow:
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_skill_validate", return_value=0
+                    "flext_infra.core.__main__._run_skill_validate", return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -630,7 +630,7 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "stub-validate", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_stub_validate", return_value=0
+                    "flext_infra.core.__main__._run_stub_validate", return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0

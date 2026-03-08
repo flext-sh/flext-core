@@ -35,7 +35,7 @@ class FlextInfraRefactorRule:
         self.severity = str(severity_raw)
 
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None
+        self, tree: cst.Module, _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Apply the rule to a CST module and return transformed tree plus changes."""
         return (tree, [])
@@ -73,7 +73,7 @@ class FlextInfraRefactorRuleLoader:
             return r[t.ConfigurationMapping].fail(f"Failed to load config: {exc}")
 
     def extract_engine_file_filters(
-        self, config: t.ConfigurationMapping
+        self, config: t.ConfigurationMapping,
     ) -> tuple[list[str], list[str]]:
         """Extract ignore patterns and file extensions from engine config."""
         scope = self._resolve_engine_config(config)
@@ -109,7 +109,7 @@ class FlextInfraRefactorRuleLoader:
         rule_filters: list[str],
         validator: FlextInfraRefactorRuleDefinitionValidator,
         build_rule: Callable[
-            [Mapping[str, t.ContainerValue]], FlextInfraRefactorRule | None
+            [Mapping[str, t.ContainerValue]], FlextInfraRefactorRule | None,
         ],
         build_file_rules: Callable[[], list[ClassNestingRefactorRule]],
     ) -> r[tuple[list[FlextInfraRefactorRule], list[ClassNestingRefactorRule]]]:
@@ -125,7 +125,7 @@ class FlextInfraRefactorRuleLoader:
                 except (OSError, TypeError):
                     continue
                 typed_rules = self._coerce_rule_definitions(
-                    rule_config.get(c.Infra.ReportKeys.RULES)
+                    rule_config.get(c.Infra.ReportKeys.RULES),
                 )
                 for typed_rule_def in typed_rules:
                     if c.Infra.ReportKeys.ID not in typed_rule_def:
@@ -144,7 +144,7 @@ class FlextInfraRefactorRuleLoader:
                             typed_rule_def.get(
                                 c.Infra.ReportKeys.FIX_ACTION,
                                 typed_rule_def.get(c.Infra.ReportKeys.ACTION, ""),
-                            )
+                            ),
                         )
                         .strip()
                         .lower()
@@ -162,9 +162,9 @@ class FlextInfraRefactorRuleLoader:
                         unknown_rules.append(
                             str(
                                 typed_rule_def.get(
-                                    c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN
-                                )
-                            )
+                                    c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN,
+                                ),
+                            ),
                         )
                         continue
                     loaded_rules.append(rule)
@@ -172,7 +172,7 @@ class FlextInfraRefactorRuleLoader:
                 unknown = ", ".join(sorted(unknown_rules))
                 return r[
                     tuple[
-                        list[FlextInfraRefactorRule], list["ClassNestingRefactorRule"]
+                        list[FlextInfraRefactorRule], list["ClassNestingRefactorRule"],
                     ]
                 ].fail(f"Unknown rule mapping for: {unknown}")
             return r[
@@ -184,7 +184,7 @@ class FlextInfraRefactorRuleLoader:
             ].fail(f"Failed to load rules: {exc}")
 
     def _resolve_engine_config(
-        self, config: t.ConfigurationMapping
+        self, config: t.ConfigurationMapping,
     ) -> m.Infra.Refactor.EngineConfig:
         scope_raw = config.get("refactor_engine")
         scope_map: t.ConfigurationMapping = (

@@ -79,7 +79,7 @@ class FlextInfraCodegenLazyInit(s[int]):
             else:
                 ok += 1
         output.info(
-            f"Lazy-init summary: {ok} generated, {errors} errors, {unmapped_count} with unmapped exports ({total} files scanned)"
+            f"Lazy-init summary: {ok} generated, {errors} errors, {unmapped_count} with unmapped exports ({total} files scanned)",
         )
         return unmapped_count
 
@@ -124,7 +124,7 @@ class FlextInfraCodegenLazyInit(s[int]):
             n_mapped = len(filtered) + len(inline_constants)
             return len(exports_set) - n_mapped
         generated = _generate_file(
-            docstring_source, exports, filtered, inline_constants, current_pkg
+            docstring_source, exports, filtered, inline_constants, current_pkg,
         )
         u.write_file(path, generated, encoding=c.Infra.Encoding.DEFAULT)
         _run_ruff_fix(path)

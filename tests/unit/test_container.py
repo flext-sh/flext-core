@@ -58,16 +58,16 @@ class ContainerScenarios:
     SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("test_service", {"key": "value"}, "Simple dict service"),
         ServiceScenario(
-            "service_instance", {"instance_id": 123}, "Dict service instance"
+            "service_instance", {"instance_id": 123}, "Dict service instance",
         ),
         ServiceScenario("string_service", "test_value", "String service"),
     ]
     TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
         TypedRetrievalScenario(
-            "dict_service", {"key": "value"}, dict, True, "Dict service"
+            "dict_service", {"key": "value"}, dict, True, "Dict service",
         ),
         TypedRetrievalScenario(
-            "string_service", "test_string", str, True, "String service"
+            "string_service", "test_string", str, True, "String service",
         ),
         TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
     ]
@@ -101,20 +101,20 @@ class TestFlextContainer:
         )
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name,
     )
     def test_register_service(
-        self, scenario: ServiceScenario, clean_container: FlextContainer
+        self, scenario: ServiceScenario, clean_container: FlextContainer,
     ) -> None:
         """Test service registration with various types using fixtures."""
         result = clean_container.register(scenario.name, scenario.service)
         assert result is clean_container
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name,
     )
     def test_with_service_fluent(
-        self, scenario: ServiceScenario, clean_container: FlextContainer
+        self, scenario: ServiceScenario, clean_container: FlextContainer,
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
@@ -153,13 +153,13 @@ class TestFlextContainer:
         ids=["dict", "string"],
     )
     def test_register_factory(
-        self, return_value: t.RegisterableService, clean_container: FlextContainer
+        self, return_value: t.RegisterableService, clean_container: FlextContainer,
     ) -> None:
         """Test factory registration using fixtures."""
         factory = u.Tests.ContainerHelpers.create_factory(return_value)
         factory_typed: Callable[[], t.RegisterableService] = factory
         clean_container.register(
-            f"factory_{type(return_value).__name__}", factory_typed, kind="factory"
+            f"factory_{type(return_value).__name__}", factory_typed, kind="factory",
         )
         factory_name = f"factory_{type(return_value).__name__}"
         tm.that(
@@ -174,14 +174,14 @@ class TestFlextContainer:
         ids=["dict", "string"],
     )
     def test_with_factory_fluent(
-        self, return_value: t.RegisterableService, clean_container: FlextContainer
+        self, return_value: t.RegisterableService, clean_container: FlextContainer,
     ) -> None:
         """Test fluent interface for factory using fixtures."""
         container = clean_container
         factory = u.Tests.ContainerHelpers.create_factory(return_value)
         factory_typed: Callable[[], t.RegisterableService] = factory
         result = container.register(
-            f"factory_{type(return_value).__name__}", factory_typed, kind="factory"
+            f"factory_{type(return_value).__name__}", factory_typed, kind="factory",
         )
         tm.that(
             result is container,
@@ -196,11 +196,11 @@ class TestFlextContainer:
         )
 
     def test_register_factory_non_callable(
-        self, clean_container: FlextContainer
+        self, clean_container: FlextContainer,
     ) -> None:
         """Test that registering non-callable with factory kind handles gracefully."""
         non_callable: Callable[[], t.ContainerValue] = cast(
-            "Callable[[], t.ContainerValue]", "not_callable"
+            "Callable[[], t.ContainerValue]", "not_callable",
         )
         clean_container.register("invalid", non_callable, kind="factory")
         tm.that(
@@ -222,10 +222,10 @@ class TestFlextContainer:
         )
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name,
     )
     def test_get_service(
-        self, scenario: ServiceScenario, clean_container: FlextContainer
+        self, scenario: ServiceScenario, clean_container: FlextContainer,
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
@@ -237,7 +237,7 @@ class TestFlextContainer:
         """Test getting non-existent service using fixtures."""
         result: r[t.RegisterableService] = clean_container.get("nonexistent")
         u.Tests.Result.assert_result_failure_with_error(
-            result, expected_error="not found"
+            result, expected_error="not found",
         )
 
     def test_get_factory_service(self, clean_container: FlextContainer) -> None:
@@ -249,11 +249,11 @@ class TestFlextContainer:
         u.Tests.Result.assert_success_with_value(result, factory_result)
 
     def test_get_factory_called_each_time(
-        self, clean_container: FlextContainer
+        self, clean_container: FlextContainer,
     ) -> None:
         """Test that factory is called each time get() is invoked using fixtures."""
         factory, get_count = u.Tests.ContainerHelpers.create_counting_factory(
-            "service_value"
+            "service_value",
         )
         clean_container.register("factory_service", factory, kind="factory")
         result1: r[t.RegisterableService] = clean_container.get("factory_service")
@@ -262,20 +262,20 @@ class TestFlextContainer:
         result2: r[t.RegisterableService] = clean_container.get("factory_service")
         _ = u.Tests.Result.assert_success(result2)
         tm.that(
-            get_count(), eq=2, msg="Factory must be called twice after second get()"
+            get_count(), eq=2, msg="Factory must be called twice after second get()",
         )
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS, ids=lambda s: s.name,
     )
     def test_get_typed_correct(
-        self, scenario: TypedRetrievalScenario, clean_container: FlextContainer
+        self, scenario: TypedRetrievalScenario, clean_container: FlextContainer,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         _ = container.register(scenario.name, scenario.service)
         typed_result: r[t.RegisterableService] = container.get(
-            scenario.name, type_cls=scenario.expected_type
+            scenario.name, type_cls=scenario.expected_type,
         )
         if scenario.should_pass:
             _ = u.Tests.Result.assert_success(typed_result)
@@ -302,7 +302,7 @@ class TestFlextContainer:
         """Test typed retrieval of non-existent service using fixtures."""
         result = clean_container.get("nonexistent", type_cls=dict[str, str])
         u.Tests.Result.assert_result_failure_with_error(
-            result, expected_error="not found"
+            result, expected_error="not found",
         )
 
     @pytest.mark.parametrize(
@@ -311,7 +311,7 @@ class TestFlextContainer:
         ids=["exists", "not_exists"],
     )
     def test_has_service(
-        self, has_service: bool, expected: bool, clean_container: FlextContainer
+        self, has_service: bool, expected: bool, clean_container: FlextContainer,
     ) -> None:
         """Test has_service returns correct value using fixtures."""
         container = clean_container
@@ -341,10 +341,10 @@ class TestFlextContainer:
         services = container.list_services()
         tm.that(services, is_=list, msg="list_services must return a list")
         tm.that(
-            len(services), eq=0, msg="Empty container must return empty services list"
+            len(services), eq=0, msg="Empty container must return empty services list",
         )
         tm.that(
-            services, empty=True, msg="Empty container must have empty services list"
+            services, empty=True, msg="Empty container must have empty services list",
         )
 
     def test_list_services_mixed(self, clean_container: FlextContainer) -> None:
@@ -366,7 +366,7 @@ class TestFlextContainer:
         ids=["service", "factory"],
     )
     def test_unregister(
-        self, service_type: str, use_factory: bool, clean_container: FlextContainer
+        self, service_type: str, use_factory: bool, clean_container: FlextContainer,
     ) -> None:
         """Test unregistering services and factories using fixtures."""
         container = clean_container
@@ -393,7 +393,7 @@ class TestFlextContainer:
         """Test unregistering non-existent service fails using fixtures."""
         unregister_result = clean_container.unregister("nonexistent")
         u.Tests.Result.assert_result_failure_with_error(
-            unregister_result, expected_error="not found"
+            unregister_result, expected_error="not found",
         )
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
@@ -438,7 +438,7 @@ class TestFlextContainer:
         container = FlextContainer()
         config = container.get_config()
         tm.that(
-            config, is_=m.ConfigMap, none=False, msg="get_config must return ConfigMap"
+            config, is_=m.ConfigMap, none=False, msg="get_config must return ConfigMap",
         )
         tm.that(
             "enable_singleton" in config.root or "max_services" in config.root,

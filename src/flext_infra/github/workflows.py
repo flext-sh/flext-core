@@ -59,14 +59,14 @@ class FlextInfraWorkflowSyncer:
         except OSError as exc:
             return r[str].fail(f"failed to read template: {exc}")
         header = self._templates.GENERATED_SHELL_HEADER.format(
-            source="flext_infra.github.workflows"
+            source="flext_infra.github.workflows",
         )
         if body.startswith(header):
             return r[str].ok(body)
         return r[str].ok(header + body)
 
     def resolve_source_workflow(
-        self, workspace_root: Path, source_workflow: Path | None = None
+        self, workspace_root: Path, source_workflow: Path | None = None,
     ) -> r[Path]:
         """Resolve the source workflow file path.
 
@@ -123,7 +123,7 @@ class FlextInfraWorkflowSyncer:
                 if current != rendered_template:
                     if apply:
                         _ = destination.write_text(
-                            rendered_template, encoding=c.Infra.Encoding.DEFAULT
+                            rendered_template, encoding=c.Infra.Encoding.DEFAULT,
                         )
                     operations.append(
                         SyncOperation(
@@ -131,7 +131,7 @@ class FlextInfraWorkflowSyncer:
                             path=str(destination.relative_to(project_root)),
                             action="update",
                             reason="force overwrite ci.yml",
-                        )
+                        ),
                     )
                 else:
                     operations.append(
@@ -140,13 +140,13 @@ class FlextInfraWorkflowSyncer:
                             path=str(destination.relative_to(project_root)),
                             action="noop",
                             reason="already synced",
-                        )
+                        ),
                     )
             else:
                 if apply:
                     workflows_dir.mkdir(parents=True, exist_ok=True)
                     _ = destination.write_text(
-                        rendered_template, encoding=c.Infra.Encoding.DEFAULT
+                        rendered_template, encoding=c.Infra.Encoding.DEFAULT,
                     )
                 operations.append(
                     SyncOperation(
@@ -154,11 +154,11 @@ class FlextInfraWorkflowSyncer:
                         path=str(destination.relative_to(project_root)),
                         action="create",
                         reason="missing ci.yml",
-                    )
+                    ),
                 )
             if prune and workflows_dir.exists():
                 candidates = sorted(workflows_dir.glob("*.yml")) + sorted(
-                    workflows_dir.glob("*.yaml")
+                    workflows_dir.glob("*.yaml"),
                 )
                 for path in candidates:
                     if path.name in c.Infra.Github.MANAGED_FILES:
@@ -171,7 +171,7 @@ class FlextInfraWorkflowSyncer:
                             path=str(path.relative_to(project_root)),
                             action="prune",
                             reason="remove non-canonical workflow",
-                        )
+                        ),
                     )
         except OSError as exc:
             return r[list[SyncOperation]].fail(f"sync error: {exc}")
@@ -202,17 +202,17 @@ class FlextInfraWorkflowSyncer:
         source_result = self.resolve_source_workflow(workspace_root, source_workflow)
         if source_result.is_failure:
             return r[list[SyncOperation]].fail(
-                source_result.error or "source resolution failed"
+                source_result.error or "source resolution failed",
             )
         template_result = self.render_template(source_result.value)
         if template_result.is_failure:
             return r[list[SyncOperation]].fail(
-                template_result.error or "template render failed"
+                template_result.error or "template render failed",
             )
         projects_result = self._selector.resolve_projects(workspace_root, [])
         if projects_result.is_failure:
             return r[list[SyncOperation]].fail(
-                projects_result.error or "project discovery failed"
+                projects_result.error or "project discovery failed",
             )
         all_operations: list[SyncOperation] = []
         for project in projects_result.value:
@@ -230,7 +230,7 @@ class FlextInfraWorkflowSyncer:
         return r[list[SyncOperation]].ok(all_operations)
 
     def _write_report(
-        self, report_path: Path, *, apply: bool, operations: list[SyncOperation]
+        self, report_path: Path, *, apply: bool, operations: list[SyncOperation],
     ) -> None:
         """Write a JSON report of sync operations."""
         by_action: MutableMapping[str, int] = {}

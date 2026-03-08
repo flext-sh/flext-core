@@ -23,7 +23,7 @@ class TestCorrelationDomain:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
-            correlation_id=explicit_id
+            correlation_id=explicit_id,
         ) as correlation_id:
             assert correlation_id == explicit_id
             assert FlextContext.Correlation.get_correlation_id() == explicit_id
@@ -114,7 +114,7 @@ class TestContextDataModel:
 
     def test_context_with_context_data_model(self) -> None:
         context_data = m.ContextData(
-            data=m.Dict(root={"key1": "value1", "key2": "value2"})
+            data=m.Dict(root={"key1": "value1", "key2": "value2"}),
         )
         context = FlextContext(context_data)
         result1 = context.get("key1")

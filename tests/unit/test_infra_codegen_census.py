@@ -118,21 +118,21 @@ class TestFixabilityClassification:
 
     def test_ns000_not_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
-            "[NS-000-001] src/file.py:1 — Structure violation"
+            "[NS-000-001] src/file.py:1 — Structure violation",
         )
         assert result is not None
         assert result.fixable is False
 
     def test_ns001_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
-            "[NS-001-001] src/file.py:1 — Constant violation"
+            "[NS-001-001] src/file.py:1 — Constant violation",
         )
         assert result is not None
         assert result.fixable is True
 
     def test_ns002_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
-            "[NS-002-001] src/file.py:1 — TypeVar violation"
+            "[NS-002-001] src/file.py:1 — TypeVar violation",
         )
         assert result is not None
         assert result.fixable is True
@@ -141,7 +141,7 @@ class TestFixabilityClassification:
         """Different sub-rule numbers under NS-000 are still not fixable."""
         for sub in ("001", "002", "099"):
             result = FlextInfraCodegenCensus._parse_violation(
-                f"[NS-000-{sub}] src/x.py:1 — msg"
+                f"[NS-000-{sub}] src/x.py:1 — msg",
             )
             assert result is not None
             assert result.fixable is False
@@ -163,7 +163,7 @@ class TestViolationPattern:
     def test_named_groups_present(self) -> None:
         expected_groups = {"rule", "module", "line", "message"}
         match = c.Infra.Codegen.VIOLATION_PATTERN.match(
-            "[NS-001-001] src/file.py:10 — msg"
+            "[NS-001-001] src/file.py:10 — msg",
         )
         assert match is not None
         assert set(match.groupdict().keys()) == expected_groups
@@ -192,7 +192,7 @@ class TestCensusReportModel:
 
     def test_empty_report(self) -> None:
         report = FlextInfraModels.Infra.Codegen.CensusReport(
-            project="test-project", violations=[], total=0, fixable=0
+            project="test-project", violations=[], total=0, fixable=0,
         )
         assert report.project == "test-project"
         assert report.total == 0
@@ -202,13 +202,13 @@ class TestCensusReportModel:
     def test_report_with_mixed_violations(self) -> None:
         violations = [
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/a.py", rule="NS-000", line=1, message="m1", fixable=False
+                module="src/a.py", rule="NS-000", line=1, message="m1", fixable=False,
             ),
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/b.py", rule="NS-001", line=2, message="m2", fixable=True
+                module="src/b.py", rule="NS-001", line=2, message="m2", fixable=True,
             ),
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/c.py", rule="NS-002", line=3, message="m3", fixable=True
+                module="src/c.py", rule="NS-002", line=3, message="m3", fixable=True,
             ),
         ]
         report = FlextInfraModels.Infra.Codegen.CensusReport(

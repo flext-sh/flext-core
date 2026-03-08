@@ -62,7 +62,7 @@ class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
 
     @override
     def handle(
-        self, message: dict[str, t.ContainerValue]
+        self, message: dict[str, t.ContainerValue],
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle dict message."""
         return FlextResult[dict[str, t.ContainerValue]].ok({
@@ -240,7 +240,7 @@ class TestuTypeChecker:
     def test_check_dict_compatibility_both_dict(self) -> None:
         """Test _check_dict_compatibility with both types being dict."""
         result = u.Checker._check_dict_compatibility(
-            _type_origin(dict), dict, _type_origin(dict), _type_origin(dict)
+            _type_origin(dict), dict, _type_origin(dict), _type_origin(dict),
         )
         assert result is True
 
@@ -251,7 +251,7 @@ class TestuTypeChecker:
             """Custom dict subclass."""
 
         result = u.Checker._check_dict_compatibility(
-            _type_origin(dict), CustomDict, _type_origin(dict), _type_origin(dict)
+            _type_origin(dict), CustomDict, _type_origin(dict), _type_origin(dict),
         )
         assert result is True
 
@@ -286,7 +286,7 @@ class TestuTypeChecker:
     def test_extract_message_type_from_handle_with_annotation(self) -> None:
         """Test _extract_message_type_from_handle with type annotation."""
         message_type_result = u.Checker._extract_message_type_from_handle(
-            ExplicitTypeHandler
+            ExplicitTypeHandler,
         )
         assert message_type_result.is_success
         assert message_type_result.value is str
@@ -294,14 +294,14 @@ class TestuTypeChecker:
     def test_extract_message_type_from_handle_no_handle_method(self) -> None:
         """Test _extract_message_type_from_handle without handle method."""
         message_type_result = u.Checker._extract_message_type_from_handle(
-            NoHandleMethod
+            NoHandleMethod,
         )
         assert message_type_result.is_failure
 
     def test_extract_message_type_from_handle_non_callable(self) -> None:
         """Test _extract_message_type_from_handle with non-callable handle."""
         message_type_result = u.Checker._extract_message_type_from_handle(
-            NonCallableHandle
+            NonCallableHandle,
         )
         assert message_type_result.is_failure
 
@@ -313,7 +313,7 @@ class TestuTypeChecker:
             return str(x)
 
         signature = u.Checker._get_method_signature(
-            cast("t.HandlerCallable", test_func)
+            cast("t.HandlerCallable", test_func),
         )
         assert signature.is_success
         signature_value = signature.value
@@ -323,7 +323,7 @@ class TestuTypeChecker:
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
         signature = u.Checker._get_method_signature(
-            cast("t.HandlerCallable", "not callable")
+            cast("t.HandlerCallable", "not callable"),
         )
         assert signature.is_failure
 
@@ -338,7 +338,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u.Checker._get_type_hints_safe(
-            cast("t.HandlerCallable", TestClass.handle), TestClass
+            cast("t.HandlerCallable", TestClass.handle), TestClass,
         )
         assert "message" in hints
         message_type = hints.get("message")
@@ -356,7 +356,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u.Checker._get_type_hints_safe(
-            cast("t.HandlerCallable", TestClass.handle), TestClass
+            cast("t.HandlerCallable", TestClass.handle), TestClass,
         )
         assert isinstance(hints, dict)
 
@@ -384,7 +384,7 @@ class TestuTypeChecker:
         base_type: t.TypeHintSpecifier = cast("t.TypeOriginSpecifier", Base)
         derived_type: t.TypeHintSpecifier = cast("t.TypeOriginSpecifier", Derived)
         result = u.Checker._handle_type_or_origin_check(
-            base_type, derived_type, base_type, base_type
+            base_type, derived_type, base_type, base_type,
         )
         assert result is True
 
@@ -407,7 +407,7 @@ class TestuTypeChecker:
         """Test _handle_instance_check handles TypeError gracefully."""
         custom_type = type("CustomType", (), {})
         custom_type_spec: t.TypeHintSpecifier = cast(
-            "t.TypeOriginSpecifier", custom_type
+            "t.TypeOriginSpecifier", custom_type,
         )
         result = u.Checker._handle_instance_check(custom_type_spec, custom_type_spec)
         assert isinstance(result, bool)
@@ -421,7 +421,7 @@ class TestuTypeChecker:
         """Test boundary case: None as message type."""
         accepted = (str,)
         result = u.Checker.can_handle_message_type(
-            accepted, cast("str | type[t.ContainerValue]", None)
+            accepted, cast("str | type[t.ContainerValue]", None),
         )
         assert isinstance(result, bool)
 

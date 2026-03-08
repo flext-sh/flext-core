@@ -12,8 +12,6 @@ JsonValue: TypeAlias = t.Primitives | None
 class FlextTestModels:
     """Models namespace."""
 
-    pass
-
 
 m = FlextTestModels
 __all__ = ["FlextTestModels", "m"]

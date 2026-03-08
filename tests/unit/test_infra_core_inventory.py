@@ -19,7 +19,7 @@ class TestFlextInfraInventoryService:
         assert hasattr(service, "_json")
 
     def test_generate_with_empty_workspace_returns_success(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test that generate returns success for empty workspace."""
         service = FlextInfraInventoryService()
@@ -107,7 +107,7 @@ class TestFlextInfraInventoryService:
         assert result.value.total_scripts == 1
 
     def test_generate_with_missing_scripts_dir_returns_success(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test that generate handles missing scripts directory."""
         service = FlextInfraInventoryService()
@@ -127,7 +127,7 @@ class TestFlextInfraInventoryService:
         assert isinstance(result.value.reports_written, list)
 
     def test_generate_with_json_write_failure_returns_failure(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test that generate handles JSON write failures."""
         service = FlextInfraInventoryService()
@@ -186,7 +186,7 @@ class TestFlextInfraInventoryService:
         workspace_root = tmp_path
         json_service = getattr(service, "_json")
         with patch.object(
-            type(json_service), "write", return_value=Mock(is_failure=False)
+            type(json_service), "write", return_value=Mock(is_failure=False),
         ):
             result = service.generate(workspace_root)
             assert result.is_success
@@ -199,7 +199,7 @@ class TestFlextInfraInventoryService:
         output_dir.mkdir()
         json_service = getattr(service, "_json")
         with patch.object(
-            type(json_service), "write", return_value=Mock(is_failure=False)
+            type(json_service), "write", return_value=Mock(is_failure=False),
         ):
             result = service.generate(workspace_root, output_dir=output_dir)
             assert result.is_success
@@ -212,7 +212,7 @@ class TestFlextInfraInventoryService:
         output_dir.mkdir()
         json_service = getattr(service, "_json")
         with patch.object(
-            type(json_service), "write", return_value=Mock(is_failure=False)
+            type(json_service), "write", return_value=Mock(is_failure=False),
         ):
             result = service.generate(workspace_root, output_dir=output_dir)
             assert result.is_success
@@ -230,14 +230,14 @@ class TestFlextInfraInventoryService:
         assert result.is_success
 
     def test_generate_with_exception_returns_failure_result(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test that generate handles exceptions and returns failure (lines 104-105)."""
         service = FlextInfraInventoryService()
         workspace_root = tmp_path
         json_service = getattr(service, "_json")
         with patch.object(
-            type(json_service), "write", side_effect=ValueError("test error")
+            type(json_service), "write", side_effect=ValueError("test error"),
         ):
             result = service.generate(workspace_root, output_dir=tmp_path / "reports")
             assert result.is_failure

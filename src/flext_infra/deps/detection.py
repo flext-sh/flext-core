@@ -52,16 +52,16 @@ class FlextInfraDependencyDetectionModels(m):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
         dep001: list[t.Infra.IssueMap] = Field(
-            default_factory=lambda: list[t.Infra.IssueMap]()
+            default_factory=lambda: list[t.Infra.IssueMap](),
         )
         dep002: list[t.Infra.IssueMap] = Field(
-            default_factory=lambda: list[t.Infra.IssueMap]()
+            default_factory=lambda: list[t.Infra.IssueMap](),
         )
         dep003: list[t.Infra.IssueMap] = Field(
-            default_factory=lambda: list[t.Infra.IssueMap]()
+            default_factory=lambda: list[t.Infra.IssueMap](),
         )
         dep004: list[t.Infra.IssueMap] = Field(
-            default_factory=lambda: list[t.Infra.IssueMap]()
+            default_factory=lambda: list[t.Infra.IssueMap](),
         )
 
     class DeptryReport(m.ArbitraryTypesModel):
@@ -71,7 +71,7 @@ class FlextInfraDependencyDetectionModels(m):
         unused: list[str | None] = Field(default_factory=lambda: list[str | None]())
         transitive: list[str | None] = Field(default_factory=lambda: list[str | None]())
         dev_in_runtime: list[str | None] = Field(
-            default_factory=lambda: list[str | None]()
+            default_factory=lambda: list[str | None](),
         )
         raw_count: int = Field(default=0, ge=0)
 
@@ -130,7 +130,7 @@ class FlextInfraDependencyDetectionService:
         return groups
 
     def build_project_report(
-        self, project_name: str, deptry_issues: list[t.Infra.IssueMap]
+        self, project_name: str, deptry_issues: list[t.Infra.IssueMap],
     ) -> dm.ProjectDependencyReport:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
@@ -151,7 +151,7 @@ class FlextInfraDependencyDetectionService:
         )
 
     def discover_projects(
-        self, workspace_root: Path, projects_filter: list[str] | None = None
+        self, workspace_root: Path, projects_filter: list[str] | None = None,
     ) -> r[list[Path]]:
         """Discover projects with pyproject.toml in workspace."""
         names = projects_filter or []
@@ -196,7 +196,7 @@ class FlextInfraDependencyDetectionService:
                     for spec in typings:
                         if isinstance(spec, str):
                             names.add(
-                                spec.split("[")[0].split(">=")[0].split("==")[0].strip()
+                                spec.split("[")[0].split(">=")[0].split("==")[0].strip(),
                             )
                 elif typings is not None and isinstance(typings, Mapping):
                     names.update(str(key) for key in typings)
@@ -224,7 +224,7 @@ class FlextInfraDependencyDetectionService:
             hints_result = self.run_mypy_stub_hints(project_path, venv_bin)
             if hints_result.is_failure:
                 return r[dm.TypingsReport].fail(
-                    hints_result.error or "typing hint detection failed"
+                    hints_result.error or "typing hint detection failed",
                 )
             typed_hints: tuple[list[str], list[str]] = hints_result.value
             hinted, missing_modules = typed_hints
@@ -257,7 +257,7 @@ class FlextInfraDependencyDetectionService:
         return r[dm.TypingsReport].ok(report)
 
     def load_dependency_limits(
-        self, limits_path: Path | None = None
+        self, limits_path: Path | None = None,
     ) -> Mapping[str, t.Infra.InfraValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or Path(__file__).resolve().parent / "dependency_limits.toml"
@@ -273,7 +273,7 @@ class FlextInfraDependencyDetectionService:
         return limits
 
     def module_to_types_package(
-        self, module_name: str, limits: Mapping[str, t.Infra.InfraValue]
+        self, module_name: str, limits: Mapping[str, t.Infra.InfraValue],
     ) -> str | None:
         """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
@@ -318,11 +318,11 @@ class FlextInfraDependencyDetectionService:
             for excluded in extend_exclude:
                 cmd.extend(["--extend-exclude", excluded])
         result = self.runner.run_raw(
-            cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM
+            cmd, cwd=project_path, timeout=c.Infra.Timeouts.MEDIUM,
         )
         if result.is_failure:
             return r[tuple[list[t.Infra.IssueMap], int]].fail(
-                result.error or "deptry execution failed"
+                result.error or "deptry execution failed",
             )
         issues: list[t.Infra.IssueMap] = []
         if out_file.exists():
@@ -381,7 +381,7 @@ class FlextInfraDependencyDetectionService:
         result = self.runner.run_raw(cmd, cwd=project_path, timeout=timeout, env=env)
         if result.is_failure:
             return r[tuple[list[str], list[str]]].fail(
-                result.error or "mypy execution failed"
+                result.error or "mypy execution failed",
             )
         cmd_result: m.Infra.Core.CommandOutput = result.value
         output = f"{cmd_result.stdout}\n{cmd_result.stderr}"
@@ -398,7 +398,7 @@ class FlextInfraDependencyDetectionService:
         return r[tuple[list[str], list[str]]].ok((sorted(hinted), sorted(missing)))
 
     def run_pip_check(
-        self, workspace_root: Path, venv_bin: Path
+        self, workspace_root: Path, venv_bin: Path,
     ) -> r[tuple[list[str], int]]:
         """Run pip check to detect dependency conflicts in workspace."""
         pip = venv_bin / "pip"
@@ -423,7 +423,7 @@ _service = FlextInfraDependencyDetectionService()
 
 
 def discover_projects(
-    workspace_root: Path, projects_filter: list[str] | None = None
+    workspace_root: Path, projects_filter: list[str] | None = None,
 ) -> r[list[Path]]:
     """Discover projects with pyproject.toml in workspace."""
     return _service.discover_projects(workspace_root, projects_filter=projects_filter)
@@ -458,7 +458,7 @@ def classify_issues(issues: list[t.Infra.IssueMap]) -> dm.DeptryIssueGroups:
 
 
 def build_project_report(
-    project_name: str, deptry_issues: list[t.Infra.IssueMap]
+    project_name: str, deptry_issues: list[t.Infra.IssueMap],
 ) -> dm.ProjectDependencyReport:
     """Build a project dependency report from classified deptry issues."""
     return _service.build_project_report(project_name, deptry_issues)
@@ -472,14 +472,14 @@ def load_dependency_limits(
 
 
 def run_mypy_stub_hints(
-    project_path: Path, venv_bin: Path, *, timeout: int = c.Infra.Timeouts.DEFAULT
+    project_path: Path, venv_bin: Path, *, timeout: int = c.Infra.Timeouts.DEFAULT,
 ) -> r[tuple[list[str], list[str]]]:
     """Run mypy to detect missing type stubs and hinted packages."""
     return _service.run_mypy_stub_hints(project_path, venv_bin, timeout=timeout)
 
 
 def module_to_types_package(
-    module_name: str, limits: Mapping[str, t.Infra.InfraValue]
+    module_name: str, limits: Mapping[str, t.Infra.InfraValue],
 ) -> str | None:
     """Map a module name to its corresponding types-* package."""
     return _service.module_to_types_package(module_name, limits)
@@ -499,7 +499,7 @@ def get_required_typings(
 ) -> r[dm.TypingsReport]:
     """Analyze project and generate typing stubs requirements report."""
     return _service.get_required_typings(
-        project_path, venv_bin, limits_path=limits_path, include_mypy=include_mypy
+        project_path, venv_bin, limits_path=limits_path, include_mypy=include_mypy,
     )
 
 

@@ -87,7 +87,7 @@ class MockScenario:
         self.then = _to_general_mapping(mapper.get(data, "then", default={}))
         self.tags = _to_string_list(mapper.get(data, "tags", default=[]))
         self.priority = _to_string(
-            mapper.get(data, "priority", default="normal"), default="normal"
+            mapper.get(data, "priority", default="normal"), default="normal",
         )
 
 
@@ -105,21 +105,21 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(
-        self, _description: str, **kwargs: FlextTypes.Container
+        self, _description: str, **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
         return self
 
     def when(
-        self, _description: str, **kwargs: FlextTypes.Container
+        self, _description: str, **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
         return self
 
     def then(
-        self, _description: str, **kwargs: FlextTypes.Container
+        self, _description: str, **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -203,7 +203,7 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
-        self, email: str | None = None, input_value: str | None = None
+        self, email: str | None = None, input_value: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
         case: FixtureCaseDict = {}
@@ -215,14 +215,14 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self, cases: list[FixtureCaseDict]
+        self, cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
         return self
 
     def add_failure_cases(
-        self, cases: list[FixtureCaseDict]
+        self, cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
@@ -425,7 +425,7 @@ class TestPropertyBasedPatterns:
             "id": st.uuids().map(str),
             "name": st.text(),
             "email": st.emails(),
-        })
+        }),
     )
     def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
         """Property-based test for user profiles."""
@@ -453,7 +453,7 @@ class TestPropertyBasedPatterns:
             alphabet=st.characters(exclude_categories=("C", "Cs")),
             min_size=1,
             max_size=100,
-        )
+        ),
     )
     def test_unicode_handling_property_based(self, unicode_text: str) -> None:
         """Property-based test for Unicode handling."""
@@ -510,7 +510,7 @@ class TestPerformanceAnalysis:
         _ = gc.collect()
         large_list = list(range(10000))
         filtered_list = list(
-            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0)
+            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0),
         )
         sorted_list = sorted(filtered_list, reverse=True)
         assert len(large_list) == 10000
@@ -587,7 +587,7 @@ class TestAdvancedPatterns:
             return all(isinstance(item, str) for item in x)
 
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
-            "banana"
+            "banana",
         ).satisfies(check_all_strings, "all items should be strings").assert_all()
 
     @mark_test_pattern("arrange_act_assert")
@@ -729,9 +729,9 @@ class TestRealWorldScenarios:
                 }
 
             AssertionBuilder(result).is_not_none().satisfies(
-                check_status_success, "should be successful"
+                check_status_success, "should be successful",
             ).satisfies(check_correlation_id, "should have correlation ID").satisfies(
-                check_valid_method, "should have valid HTTP method"
+                check_valid_method, "should have valid HTTP method",
             ).assert_all()
 
     @given(
@@ -741,11 +741,11 @@ class TestRealWorldScenarios:
             debug=st.booleans(),
             timeout_seconds=st.integers(min_value=1, max_value=300),
             environment=st.sampled_from(["development", "staging", "production"]),
-        )
+        ),
     )
     @settings()
     def test_configuration_validation_comprehensive(
-        self, config: dict[str, FlextTypes.Container]
+        self, config: dict[str, FlextTypes.Container],
     ) -> None:
         """Comprehensive configuration validation testing."""
         required_fields = ["database_url", "debug", "timeout_seconds"]
@@ -758,7 +758,7 @@ class TestRealWorldScenarios:
         scenario = (
             GivenWhenThenBuilder("configuration_validation")
             .given(
-                "a configuration object", config_environment=str(config["environment"])
+                "a configuration object", config_environment=str(config["environment"]),
             )
             .when("configuration is validated", action="validate")
             .then("all required fields are present", validated=True)

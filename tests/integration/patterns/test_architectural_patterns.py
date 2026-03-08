@@ -42,7 +42,7 @@ class TestEnterprisePatterns:
                         "provider": "twilio",
                     })
                 return FlextResult[dict[str, str]].fail(
-                    f"Unknown service type: {service_type}"
+                    f"Unknown service type: {service_type}",
                 )
 
         email_service = ServiceFactory.create_service("email")
@@ -87,7 +87,7 @@ class TestEnterprisePatterns:
                 """Build the configuration."""
                 if not self._config:
                     return FlextResult[dict[str, t.ContainerValue]].fail(
-                        "Configuration cannot be empty"
+                        "Configuration cannot be empty",
                     )
                 return FlextResult[dict[str, t.ContainerValue]].ok(self._config.copy())
 
@@ -136,7 +136,7 @@ class TestEnterprisePatterns:
                 if entity_id in self._data:
                     return FlextResult[t.ContainerValue].ok(self._data[entity_id])
                 return FlextResult[t.ContainerValue].fail(
-                    f"Entity not found: {entity_id}"
+                    f"Entity not found: {entity_id}",
                 )
 
             def get_query_count(self) -> int:
@@ -148,7 +148,7 @@ class TestEnterprisePatterns:
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
             assertion_helpers.assert_flext_result_success(
-                result, f"Save operation {i} should succeed"
+                result, f"Save operation {i} should succeed",
             )
         save_duration = time.perf_counter() - start_time
         assert save_duration < 1.0, (

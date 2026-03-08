@@ -151,7 +151,7 @@ class FlextInfraUtilitiesRefactor:
 
         """
         roots = FlextInfraUtilitiesRefactor.discover_project_roots(
-            workspace_root=workspace_root
+            workspace_root=workspace_root,
         )
         files: list[Path] = []
         for project_root in roots:
@@ -162,19 +162,19 @@ class FlextInfraUtilitiesRefactor:
                 examples_dir = project_root / c.Infra.Directories.EXAMPLES
                 if examples_dir.is_dir():
                     files.extend(
-                        sorted(examples_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                        sorted(examples_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)),
                     )
             if include_scripts:
                 scripts_dir = project_root / c.Infra.Directories.SCRIPTS
                 if scripts_dir.is_dir():
                     files.extend(
-                        sorted(scripts_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                        sorted(scripts_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)),
                     )
             if include_tests:
                 tests_dir = project_root / c.Infra.Directories.TESTS
                 if tests_dir.is_dir():
                     files.extend(
-                        sorted(tests_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                        sorted(tests_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)),
                     )
         return files
 

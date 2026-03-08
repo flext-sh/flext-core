@@ -47,7 +47,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test run_release with invalid phase name."""
         orchestrator = FlextInfraReleaseOrchestrator()
         result = orchestrator.run_release(
-            root=workspace_root, version="1.0.0", tag="v1.0.0", phases=["invalid_phase"]
+            root=workspace_root, version="1.0.0", tag="v1.0.0", phases=["invalid_phase"],
         )
         assert result.is_failure
 
@@ -59,7 +59,7 @@ class TestFlextInfraReleaseOrchestrator:
             return_value=r[bool].ok(True),
         ):
             result = orchestrator.run_release(
-                root=workspace_root, version="1.0.0", tag="v1.0.0", phases=[]
+                root=workspace_root, version="1.0.0", tag="v1.0.0", phases=[],
             )
         assert result.is_success
 
@@ -165,7 +165,7 @@ class TestFlextInfraReleaseOrchestrator:
         assert result.is_success
 
     def test_run_release_phase_failure_stops_execution(
-        self, workspace_root: Path
+        self, workspace_root: Path,
     ) -> None:
         """Test that phase failure stops further execution."""
         orchestrator = FlextInfraReleaseOrchestrator()
@@ -282,7 +282,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_validate runs make validate command."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraCommandRunner"
+            "flext_infra.release.orchestrator.FlextInfraCommandRunner",
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             mock_runner.run_checked.return_value = r[bool].ok(True)
@@ -294,13 +294,13 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_version updates pyproject.toml files."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
             mock_vs_inst.replace_project_version.return_value = None
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=False
+                workspace_root, "1.0.0", [], dry_run=False,
             )
             assert result.is_success
 
@@ -308,7 +308,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_version rejects invalid semantic version."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].fail("invalid version")
@@ -319,12 +319,12 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_version appends -dev suffix."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dev_suffix=True
+                workspace_root, "1.0.0", [], dev_suffix=True,
             )
             assert result.is_success
 
@@ -332,12 +332,12 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_version with dry_run=True."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=True
+                workspace_root, "1.0.0", [], dry_run=True,
             )
             assert result.is_success
 
@@ -345,7 +345,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_build creates output directory."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
@@ -360,7 +360,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_build handles directory creation failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
@@ -372,16 +372,16 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_build reports project build failures."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraCommandRunner"
+                "flext_infra.release.orchestrator.FlextInfraCommandRunner",
             ) as mock_runner_cls:
                 mock_runner = mock_runner_cls.return_value
                 output_model = FlextInfraModels.Infra.Core.CommandOutput(
-                    exit_code=1, stdout="error", stderr=""
+                    exit_code=1, stdout="error", stderr="",
                 )
                 mock_runner.run_raw.return_value = r[
                     FlextInfraModels.Infra.Core.CommandOutput
@@ -393,7 +393,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_publish generates release notes."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
@@ -402,7 +402,7 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[bool].ok(True),
             ):
                 result = orchestrator.phase_publish(
-                    workspace_root, "1.0.0", "v1.0.0", [], dry_run=True
+                    workspace_root, "1.0.0", "v1.0.0", [], dry_run=True,
                 )
                 assert result.is_success
 
@@ -410,7 +410,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_publish with dry_run=True skips changelog update."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
@@ -419,10 +419,10 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[bool].ok(True),
             ):
                 with patch(
-                    "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog"
+                    "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog",
                 ) as mock_changelog:
                     result = orchestrator.phase_publish(
-                        workspace_root, "1.0.0", "v1.0.0", [], dry_run=True
+                        workspace_root, "1.0.0", "v1.0.0", [], dry_run=True,
                     )
                     assert result.is_success
                     mock_changelog.assert_not_called()
@@ -431,7 +431,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_publish updates changelog when not dry_run."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
@@ -448,7 +448,7 @@ class TestFlextInfraReleaseOrchestrator:
                         return_value=r[bool].ok(True),
                     ):
                         result = orchestrator.phase_publish(
-                            workspace_root, "1.0.0", "v1.0.0", [], dry_run=False
+                            workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
                         )
                         assert result.is_success
 
@@ -456,7 +456,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_publish pushes when push=True."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReportingService"
+            "flext_infra.release.orchestrator.FlextInfraReportingService",
         ) as mock_rep:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
@@ -491,7 +491,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _create_branches creates workspace branch."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.checkout.return_value = r[bool].ok(True)
@@ -508,7 +508,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _build_targets includes root as first target."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraProjectSelector"
+            "flext_infra.release.orchestrator.FlextInfraProjectSelector",
         ) as mock_sel:
             mock_sel_inst = mock_sel.return_value
             mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
@@ -518,11 +518,11 @@ class TestFlextInfraReleaseOrchestrator:
     def test_run_make_success(self, workspace_root: Path) -> None:
         """Test _run_make returns exit code and output."""
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraCommandRunner"
+            "flext_infra.release.orchestrator.FlextInfraCommandRunner",
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             output_model = FlextInfraModels.Infra.Core.CommandOutput(
-                exit_code=0, stdout="build ok", stderr=""
+                exit_code=0, stdout="build ok", stderr="",
             )
             mock_runner.run_raw.return_value = r[
                 FlextInfraModels.Infra.Core.CommandOutput
@@ -535,7 +535,7 @@ class TestFlextInfraReleaseOrchestrator:
     def test_run_make_failure(self, workspace_root: Path) -> None:
         """Test _run_make handles command failure."""
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraCommandRunner"
+            "flext_infra.release.orchestrator.FlextInfraCommandRunner",
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             mock_runner.run_raw.return_value = r[tuple[int, str]].fail("command failed")
@@ -555,12 +555,12 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[str].ok(""),
             ):
                 with patch(
-                    "flext_infra.release.orchestrator.FlextInfraProjectSelector"
+                    "flext_infra.release.orchestrator.FlextInfraProjectSelector",
                 ) as mock_sel:
                     mock_sel_inst = mock_sel.return_value
                     mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
                     result = orchestrator._generate_notes(
-                        workspace_root, "1.0.0", "v1.0.0", [], notes_path
+                        workspace_root, "1.0.0", "v1.0.0", [], notes_path,
                     )
                     assert result.is_success
                     assert notes_path.exists()
@@ -578,15 +578,15 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[str].ok(""),
             ):
                 with patch(
-                    "flext_infra.release.orchestrator.FlextInfraProjectSelector"
+                    "flext_infra.release.orchestrator.FlextInfraProjectSelector",
                 ) as mock_sel:
                     mock_sel_inst = mock_sel.return_value
                     mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
                     with patch(
-                        "pathlib.Path.write_text", side_effect=OSError("write failed")
+                        "pathlib.Path.write_text", side_effect=OSError("write failed"),
                     ):
                         result = orchestrator._generate_notes(
-                            workspace_root, "1.0.0", "v1.0.0", [], notes_path
+                            workspace_root, "1.0.0", "v1.0.0", [], notes_path,
                         )
                         assert result.is_failure
 
@@ -594,7 +594,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag returns previous tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.previous_tag.return_value = r[str].ok("v0.9.0")
@@ -606,7 +606,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag returns empty when no previous tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.previous_tag.return_value = r[str].ok("")
@@ -618,7 +618,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag handles git failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.previous_tag.return_value = r[str].fail("git error")
@@ -629,7 +629,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _collect_changes collects commits between tags."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git_inst = mock_git_cls.return_value
             mock_git_inst.log.return_value = r[str].ok("- abc1234 fix: bug (author)")
@@ -640,7 +640,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _collect_changes handles git failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git_inst = mock_git_cls.return_value
             mock_git_inst.log.return_value = r[str].fail("git error")
@@ -653,7 +653,7 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "notes.md"
         notes_path.write_text("# Release v1.0.0\n")
         result = orchestrator._update_changelog(
-            workspace_root, "1.0.0", "v1.0.0", notes_path
+            workspace_root, "1.0.0", "v1.0.0", notes_path,
         )
         assert result.is_success
         changelog = workspace_root / "docs" / "CHANGELOG.md"
@@ -668,7 +668,7 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "notes.md"
         notes_path.write_text("# Release v1.0.0\n")
         result = orchestrator._update_changelog(
-            workspace_root, "1.0.0", "v1.0.0", notes_path
+            workspace_root, "1.0.0", "v1.0.0", notes_path,
         )
         assert result.is_success
         content = changelog.read_text()
@@ -681,7 +681,7 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path.write_text("# Release v1.0.0\n")
         with patch("pathlib.Path.write_text", side_effect=OSError("write failed")):
             result = orchestrator._update_changelog(
-                workspace_root, "1.0.0", "v1.0.0", notes_path
+                workspace_root, "1.0.0", "v1.0.0", notes_path,
             )
             assert result.is_failure
 
@@ -708,7 +708,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _push_release pushes branch and tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.push_release.return_value = r[bool].ok(True)
@@ -720,7 +720,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _push_release handles branch push failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.push_release.return_value = r[bool].fail("push failed")
@@ -731,7 +731,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _bump_next_dev bumps to next dev version."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.bump_version.return_value = r[str].ok("1.1.0")
@@ -740,7 +740,7 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[bool].ok(True),
             ):
                 result = orchestrator._bump_next_dev(
-                    workspace_root, "1.0.0", [], "minor"
+                    workspace_root, "1.0.0", [], "minor",
                 )
                 assert result.is_success
 
@@ -748,7 +748,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _bump_next_dev handles bump failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.bump_version.return_value = r[str].fail("invalid bump")
@@ -761,13 +761,13 @@ class TestFlextInfraReleaseOrchestrator:
         pyproject = workspace_root / "pyproject.toml"
         pyproject.write_text('version = "1.0.0"\n')
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_versioning_cls:
             mock_versioning = mock_versioning_cls.return_value
             mock_versioning.parse_semver.return_value = r[str].ok("1.0.0")
             mock_versioning.replace_project_version.return_value = None
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=False
+                workspace_root, "1.0.0", [], dry_run=False,
             )
             assert result.is_success
 
@@ -775,12 +775,12 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_version skips missing files (line 194)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraVersioningService"
+            "flext_infra.release.orchestrator.FlextInfraVersioningService",
         ) as mock_versioning_cls:
             mock_versioning = mock_versioning_cls.return_value
             mock_versioning.parse_semver.return_value = r[str].ok("1.0.0")
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=False
+                workspace_root, "1.0.0", [], dry_run=False,
             )
             assert result.is_success
 
@@ -788,10 +788,10 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_build handles make execution failure (lines 249-250)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._build_targets"
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._build_targets",
         ) as mock_targets:
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._run_make"
+                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._run_make",
             ) as mock_make:
                 mock_targets.return_value = [("root", workspace_root)]
                 mock_make.return_value = r[tuple[int, str]].fail("make failed")
@@ -802,11 +802,11 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_publish handles notes generation failure (line 328)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes"
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes",
         ) as mock_notes:
             mock_notes.return_value = r[bool].fail("notes generation failed")
             result = orchestrator.phase_publish(
-                workspace_root, "1.0.0", "v1.0.0", [], dry_run=False
+                workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
             )
             assert result.is_failure
 
@@ -816,15 +816,15 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "RELEASE_NOTES.md"
         notes_path.write_text("# Release v1.0.0\n")
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes"
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes",
         ) as mock_notes:
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog"
+                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog",
             ) as mock_changelog:
                 mock_notes.return_value = r[bool].ok(True)
                 mock_changelog.return_value = r[bool].fail("changelog update failed")
                 result = orchestrator.phase_publish(
-                    workspace_root, "1.0.0", "v1.0.0", [], dry_run=False
+                    workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
                 )
                 assert result.is_failure
 
@@ -834,19 +834,19 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "RELEASE_NOTES.md"
         notes_path.write_text("# Release v1.0.0\n")
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes"
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes",
         ) as mock_notes:
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog"
+                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog",
             ) as mock_changelog:
                 with patch(
-                    "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._create_tag"
+                    "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._create_tag",
                 ) as mock_tag:
                     mock_notes.return_value = r[bool].ok(True)
                     mock_changelog.return_value = r[bool].ok(True)
                     mock_tag.return_value = r[bool].fail("tag creation failed")
                     result = orchestrator.phase_publish(
-                        workspace_root, "1.0.0", "v1.0.0", [], dry_run=False
+                        workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
                     )
                     assert result.is_failure
 
@@ -856,16 +856,16 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "RELEASE_NOTES.md"
         notes_path.write_text("# Release v1.0.0\n")
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes"
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._generate_notes",
         ) as mock_notes:
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog"
+                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog",
             ) as mock_changelog:
                 with patch(
-                    "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._create_tag"
+                    "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._create_tag",
                 ) as mock_tag:
                     with patch(
-                        "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._push_release"
+                        "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._push_release",
                     ) as mock_push:
                         mock_notes.return_value = r[bool].ok(True)
                         mock_changelog.return_value = r[bool].ok(True)
@@ -902,7 +902,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _create_branches handles git failure (line 401)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.checkout.return_value = r[bool].fail("git failed")
@@ -913,10 +913,10 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _create_branches handles project branch failure (lines 407-412)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraProjectSelector"
+                "flext_infra.release.orchestrator.FlextInfraProjectSelector",
             ) as mock_selector_cls:
                 mock_git = mock_git_cls.return_value
                 mock_selector = mock_selector_cls.return_value
@@ -925,13 +925,13 @@ class TestFlextInfraReleaseOrchestrator:
                     r[bool].fail("project branch failed"),
                 ]
                 mock_project = SimpleNamespace(
-                    name="proj1", path=workspace_root / "proj1"
+                    name="proj1", path=workspace_root / "proj1",
                 )
                 mock_selector.resolve_projects.return_value = r[list[str]].ok([
-                    mock_project
+                    mock_project,
                 ])
                 result = orchestrator._create_branches(
-                    workspace_root, "1.0.0", ["proj1"]
+                    workspace_root, "1.0.0", ["proj1"],
                 )
                 assert result.is_failure
 
@@ -942,12 +942,12 @@ class TestFlextInfraReleaseOrchestrator:
         proj_dir.mkdir()
         (proj_dir / "pyproject.toml").touch()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraProjectSelector"
+            "flext_infra.release.orchestrator.FlextInfraProjectSelector",
         ) as mock_selector_cls:
             mock_selector = mock_selector_cls.return_value
             mock_project = SimpleNamespace(name="proj1", path=proj_dir)
             mock_selector.resolve_projects.return_value = r[list[str]].ok([
-                mock_project
+                mock_project,
             ])
             result = orchestrator._version_files(workspace_root, ["proj1"])
             assert len(result) >= 1
@@ -956,12 +956,12 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _build_targets deduplicates targets (line 448)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraProjectSelector"
+            "flext_infra.release.orchestrator.FlextInfraProjectSelector",
         ) as mock_selector_cls:
             mock_selector = mock_selector_cls.return_value
             mock_project = SimpleNamespace(name="proj1", path=workspace_root / "proj1")
             mock_selector.resolve_projects.return_value = r[list[str]].ok([
-                mock_project
+                mock_project,
             ])
             result = orchestrator._build_targets(workspace_root, ["proj1"])
             names = [name for name, _ in result]
@@ -971,7 +971,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag finds previous tag (line 545)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraGitService"
+            "flext_infra.release.orchestrator.FlextInfraGitService",
         ) as mock_git_cls:
             mock_git = mock_git_cls.return_value
             mock_git.previous_tag.return_value = r[str].ok("v0.9.0")
@@ -985,7 +985,7 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "RELEASE_NOTES.md"
         notes_path.write_text("# Release v1.0.0\n\nChanges here.\n")
         result = orchestrator._update_changelog(
-            workspace_root, "1.0.0", "v1.0.0", notes_path
+            workspace_root, "1.0.0", "v1.0.0", notes_path,
         )
         assert result.is_success
         changelog = workspace_root / "docs" / "CHANGELOG.md"
@@ -1046,7 +1046,7 @@ class TestFlextInfraReleaseOrchestratorPhaseBuild:
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch.object(orchestrator, "_build_targets", return_value=[]):
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraReportingService"
+                "flext_infra.release.orchestrator.FlextInfraReportingService",
             ) as mock_reporting:
                 mock_instance = mock_reporting.return_value
                 mock_instance.get_report_dir.return_value = workspace_root / "reports"
@@ -1156,7 +1156,7 @@ class TestFlextInfraReleaseOrchestratorChangeCollection:
         with patch("flext_infra.release.orchestrator.FlextInfraGitService") as mock_git:
             mock_git_instance = mock_git.return_value
             mock_git_instance.log.return_value = r[str].ok(
-                "- abc1234 Fix bug (Alice)\n- def5678 Add feature (Bob)\n"
+                "- abc1234 Fix bug (Alice)\n- def5678 Add feature (Bob)\n",
             )
             result = orchestrator._collect_changes(workspace_root, "v0.9.0", "v1.0.0")
             assert result.is_success

@@ -22,7 +22,7 @@ def test_handle_lazy_init_success(tmp_path: Path) -> None:
     args.root = tmp_path
     args.check = False
     with patch(
-        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit"
+        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit",
     ) as mock_gen_class:
         mock_gen = Mock()
         mock_gen.run.return_value = 0
@@ -37,7 +37,7 @@ def test_handle_lazy_init_with_unmapped_exports(tmp_path: Path) -> None:
     args.root = tmp_path
     args.check = True
     with patch(
-        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit"
+        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit",
     ) as mock_gen_class:
         mock_gen = Mock()
         mock_gen.run.return_value = 3
@@ -52,7 +52,7 @@ def test_handle_lazy_init_check_mode(tmp_path: Path) -> None:
     args.root = tmp_path
     args.check = True
     with patch(
-        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit"
+        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit",
     ) as mock_gen_class:
         mock_gen = Mock()
         mock_gen.run.return_value = 0
@@ -68,7 +68,7 @@ def test_handle_lazy_init_enforce_mode(tmp_path: Path) -> None:
     args.root = tmp_path
     args.check = False
     with patch(
-        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit"
+        "flext_infra.codegen.__main__.FlextInfraCodegenLazyInit",
     ) as mock_gen_class:
         mock_gen = Mock()
         mock_gen.run.return_value = 0

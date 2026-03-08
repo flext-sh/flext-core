@@ -56,7 +56,7 @@ class TestFlextInfraCodegenLazyInit:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test package."""\nfrom test_pkg.module import TestClass\n__all__ = ["TestClass"]\n'
+            '"""Test package."""\nfrom test_pkg.module import TestClass\n__all__ = ["TestClass"]\n',
         )
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
@@ -199,7 +199,7 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test."""\n__version__ = "1.0.0"\nfrom module import Test\n__all__ = ["__version__", "Test"]'
+            '"""Test."""\n__version__ = "1.0.0"\nfrom module import Test\n__all__ = ["__version__", "Test"]',
         )
         result = generator._process_file(init_file, check_only=False)
         assert result is not None
@@ -212,7 +212,7 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test."""\n_LAZY_IMPORTS = {"Test": ("module", "Test")}\n__all__ = ["Test"]'
+            '"""Test."""\n_LAZY_IMPORTS = {"Test": ("module", "Test")}\n__all__ = ["Test"]',
         )
         result = generator._process_file(init_file, check_only=False)
         assert result is not None
@@ -380,7 +380,7 @@ class TestLazyInitEdgeCases:
                 ("VeryLongClassName1", "VeryLongClassName1"),
                 ("VeryLongClassName2", "VeryLongClassName2"),
                 ("VeryLongClassName3", "VeryLongClassName3"),
-            ]
+            ],
         }
         lines = _generate_type_checking(groups)
         assert any("module" in line for line in lines)
@@ -423,7 +423,7 @@ class TestLazyInitEdgeCases:
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
         content = _generate_file(
-            docstring, exports, filtered, inline_constants, "test_pkg"
+            docstring, exports, filtered, inline_constants, "test_pkg",
         )
         assert docstring in content
 
@@ -450,7 +450,7 @@ class TestLazyInitEdgeCases:
         assert result >= 0
 
     def test_run_with_unmapped_exports_increments_unmapped_count(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test run() increments unmapped_count when exports are unmapped (lines 101-102)."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
@@ -458,7 +458,7 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]'
+            '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]',
         )
         result = generator.run(check_only=False)
         assert result > 0
@@ -470,13 +470,13 @@ class TestLazyInitEdgeCases:
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
         init_file.write_text(
-            '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]'
+            '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]',
         )
         result = generator._process_file(init_file, check_only=False)
         assert result == 1
 
     def test_parse_existing_lazy_imports_with_non_dict_value(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test _parse_existing_lazy_imports returns empty dict for invalid dict (line 280)."""
         code = '_LAZY_IMPORTS = "not a dict"'
@@ -499,7 +499,7 @@ class TestLazyInitEdgeCases:
         assert "sys" not in lazy_map
 
     def test_derive_lazy_map_fixes_single_letter_aliases_mapping(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test _derive_lazy_map fixes single-letter aliases (lines 353-356)."""
         code = "from flext_core import FlextConstants\nc = FlextConstants"
@@ -521,7 +521,7 @@ class TestLazyInitEdgeCases:
         assert "(" in content or len(lines) > 1
 
     def test_generate_type_checking_with_multiple_modules_spacing(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test _generate_type_checking adds blank lines between module groups (line 435)."""
         groups: dict[str, list[tuple[str, str]]] = defaultdict(list)

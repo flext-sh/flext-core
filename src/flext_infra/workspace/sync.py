@@ -109,7 +109,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
         resolved = project_root.resolve()
         if not resolved.is_dir():
             return r[m.Infra.Workspace.SyncResult].fail(
-                f"project root does not exist: {resolved}"
+                f"project root does not exist: {resolved}",
             )
         lock_path = resolved / ".sync.lock"
         lock_path.parent.mkdir(parents=True, exist_ok=True)
@@ -120,35 +120,35 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
                     changed = 0
                     effective_root = canonical_root or self._canonical_root
                     basemk_result = self._sync_basemk(
-                        resolved, config, canonical_root=effective_root
+                        resolved, config, canonical_root=effective_root,
                     )
                     if basemk_result.is_failure:
                         return r[m.Infra.Workspace.SyncResult].fail(
-                            basemk_result.error or "base.mk sync failed"
+                            basemk_result.error or "base.mk sync failed",
                         )
                     changed += 1 if basemk_result.value else 0
                     gitignore_result = self._ensure_gitignore_entries(
-                        resolved, c.Infra.Workspace.REQUIRED_GITIGNORE_ENTRIES
+                        resolved, c.Infra.Workspace.REQUIRED_GITIGNORE_ENTRIES,
                     )
                     if gitignore_result.is_failure:
                         return r[m.Infra.Workspace.SyncResult].fail(
-                            gitignore_result.error or ".gitignore sync failed"
+                            gitignore_result.error or ".gitignore sync failed",
                         )
                     changed += 1 if gitignore_result.value else 0
                     return r[m.Infra.Workspace.SyncResult].ok(
                         m.Infra.Workspace.SyncResult(
-                            files_changed=changed, source=resolved, target=resolved
-                        )
+                            files_changed=changed, source=resolved, target=resolved,
+                        ),
                     )
                 finally:
                     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
         except OSError as exc:
             return r[m.Infra.Workspace.SyncResult].fail(
-                f"sync lock acquisition failed: {exc}"
+                f"sync lock acquisition failed: {exc}",
             )
 
     def _ensure_gitignore_entries(
-        self, project_root: Path, required: list[str]
+        self, project_root: Path, required: list[str],
     ) -> r[bool]:
         """Idempotently add missing .gitignore entries.
 
@@ -168,7 +168,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             existing_lines: list[str] = []
             if gitignore.exists():
                 existing_lines = gitignore.read_text(
-                    encoding=c.Infra.Encoding.DEFAULT
+                    encoding=c.Infra.Encoding.DEFAULT,
                 ).splitlines()
             existing_patterns = {
                 line.strip() for line in existing_lines if line.strip()
@@ -178,7 +178,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
                 return r[bool].ok(False)
             with gitignore.open("a", encoding=c.Infra.Encoding.DEFAULT) as handle:
                 _ = handle.write(
-                    "\n# --- workspace-sync: required ignores (auto-managed) ---\n"
+                    "\n# --- workspace-sync: required ignores (auto-managed) ---\n",
                 )
                 for pattern in missing:
                     _ = handle.write(f"{pattern}\n")
@@ -230,10 +230,10 @@ def main() -> int:
     """CLI entry point for workspace sync."""
     parser = argparse.ArgumentParser(description="Workspace base.mk sync")
     _ = parser.add_argument(
-        "--project-root", type=Path, default=Path(), help="Project root directory"
+        "--project-root", type=Path, default=Path(), help="Project root directory",
     )
     _ = parser.add_argument(
-        "--canonical-root", type=Path, default=None, help="Canonical workspace root"
+        "--canonical-root", type=Path, default=None, help="Canonical workspace root",
     )
     args = parser.parse_args()
     service = FlextInfraSyncService(canonical_root=args.canonical_root)

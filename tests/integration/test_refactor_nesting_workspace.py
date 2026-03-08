@@ -21,7 +21,7 @@ class TestWorkspaceLevelRefactor:
             src_dir.mkdir(parents=True)
             test_file = src_dir / "models.py"
             test_file.write_text(
-                f"\nclass {proj.replace('-', '').title()}Model:\n    pass\n"
+                f"\nclass {proj.replace('-', '').title()}Model:\n    pass\n",
             )
         scanner = FlextInfraRefactorLooseClassScanner()
         files_scanned = 0
@@ -42,7 +42,7 @@ class TestWorkspaceLevelRefactor:
         proj_b = tmp_path / "project-b" / "src" / "project_b"
         proj_b.mkdir(parents=True)
         (proj_b / "consumer.py").write_text(
-            "\nfrom project_a.core import CoreService\n\ndef use_service(svc: CoreService) -> None:\n    pass\n"
+            "\nfrom project_a.core import CoreService\n\ndef use_service(svc: CoreService) -> None:\n    pass\n",
         )
         analyzer = DependencyAnalyzer(tmp_path)
         graph_result = analyzer.build_import_graph()
@@ -58,7 +58,7 @@ class TestWorkspaceLevelRefactor:
             src_dir.mkdir(parents=True)
             (src_dir / "__init__.py").write_text("")
             (src_dir / "utils.py").write_text(
-                '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n'
+                '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n',
             )
         scanner = FlextInfraRefactorLooseClassScanner()
         all_violations: list[t.Infra.ContainerDict] = []
@@ -66,7 +66,7 @@ class TestWorkspaceLevelRefactor:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success
             all_violations.extend(
-                cast("list[t.Infra.ContainerDict]", result.value.get("violations", []))
+                cast("list[t.Infra.ContainerDict]", result.value.get("violations", [])),
             )
         assert len(all_violations) >= 3
         for v in all_violations:

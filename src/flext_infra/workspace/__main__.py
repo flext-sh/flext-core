@@ -87,33 +87,33 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Workspace management utilities")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     detect_parser = subparsers.add_parser(
-        "detect", help="Detect workspace or standalone mode"
+        "detect", help="Detect workspace or standalone mode",
     )
     _ = detect_parser.add_argument(
-        "--project-root", required=True, type=Path, help="Path to the project directory"
+        "--project-root", required=True, type=Path, help="Path to the project directory",
     )
     sync_parser = subparsers.add_parser("sync", help="Sync base.mk to project root")
     _ = sync_parser.add_argument(
-        "--project-root", required=True, type=Path, help="Path to the project directory"
+        "--project-root", required=True, type=Path, help="Path to the project directory",
     )
     _ = sync_parser.add_argument(
-        "--canonical-root", type=Path, default=None, help="Canonical workspace root"
+        "--canonical-root", type=Path, default=None, help="Canonical workspace root",
     )
     orch_parser = subparsers.add_parser(
-        "orchestrate", help="Run make verb across projects"
+        "orchestrate", help="Run make verb across projects",
     )
     _ = orch_parser.add_argument("--verb", required=True, help="Make verb to execute")
     _ = orch_parser.add_argument(
-        "--fail-fast", action="store_true", help="Stop on first failure"
+        "--fail-fast", action="store_true", help="Stop on first failure",
     )
     _ = orch_parser.add_argument(
-        "--make-arg", action="append", default=[], help="Additional make arguments"
+        "--make-arg", action="append", default=[], help="Additional make arguments",
     )
     _ = orch_parser.add_argument(
-        "projects", nargs="*", help="Project directories to orchestrate"
+        "projects", nargs="*", help="Project directories to orchestrate",
     )
     migrate_parser = subparsers.add_parser(
-        "migrate", help="Migrate workspace projects to flext_infra tooling"
+        "migrate", help="Migrate workspace projects to flext_infra tooling",
     )
     _ = migrate_parser.add_argument(
         "--workspace-root",

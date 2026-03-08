@@ -11,12 +11,8 @@ from typing import override
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
 
-from ... import m
+from ...models import m
 
-CommandPayloadDict = m.Tests.CommandPayloadDict
-UpdateFieldDict = m.Tests.UpdateFieldDict
-UpdatePayloadDict = m.Tests.UpdatePayloadDict
-UserPayloadDict = m.Tests.UserPayloadDict
 EXPECTED_BULK_SIZE = 2
 FlextCommandId = str
 FlextCommandType = str
@@ -28,9 +24,9 @@ class CreateUserCommand(FlextModels.Command):
     username: str
     email: str
 
-    def get_payload(self) -> UserPayloadDict:
+    def get_payload(self) -> m.Tests.UserPayloadDict:
         """Get command payload."""
-        return UserPayloadDict.model_validate({
+        return m.Tests.UserPayloadDict.model_validate({
             "username": self.username,
             "email": self.email,
         })
@@ -52,10 +48,10 @@ class UpdateUserCommand(FlextModels.Command):
     target_user_id: str
     updates: dict[str, t.ContainerValue]
 
-    def get_payload(self) -> UpdatePayloadDict:
+    def get_payload(self) -> m.Tests.UpdatePayloadDict:
         """Get command payload."""
-        typed_updates: dict[str, UpdateFieldDict] = {
-            key: UpdateFieldDict.model_validate({
+        typed_updates: dict[str, m.Tests.UpdateFieldDict] = {
+            key: m.Tests.UpdateFieldDict.model_validate({
                 "field_name": key,
                 "new_value": value
                 if isinstance(value, (str, int, bool))
@@ -63,7 +59,7 @@ class UpdateUserCommand(FlextModels.Command):
             })
             for key, value in self.updates.items()
         }
-        return UpdatePayloadDict.model_validate({
+        return m.Tests.UpdatePayloadDict.model_validate({
             "target_user_id": self.target_user_id,
             "updates": typed_updates,
         })
@@ -80,9 +76,9 @@ class UpdateUserCommand(FlextModels.Command):
 class FailingCommand(FlextModels.Command):
     """Test command that always fails validation."""
 
-    def get_payload(self) -> CommandPayloadDict:
+    def get_payload(self) -> m.Tests.CommandPayloadDict:
         """Get command payload."""
-        return CommandPayloadDict.model_validate({})
+        return m.Tests.CommandPayloadDict.model_validate({})
 
     def validate_command(self) -> FlextResult[bool]:
         """Fail validation intentionally."""
@@ -94,7 +90,7 @@ def _create_user_command(*, username: str, email: str) -> CreateUserCommand:
 
 
 def _update_user_command(
-    *, target_user_id: str, updates: dict[str, t.ContainerValue]
+    *, target_user_id: str, updates: dict[str, t.ContainerValue],
 ) -> UpdateUserCommand:
     return UpdateUserCommand.model_validate({
         "target_user_id": target_user_id,
@@ -103,7 +99,7 @@ def _update_user_command(
 
 
 class CreateUserCommandHandler(
-    FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]]
+    FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]],
 ):
     """Test handler for CreateUserCommand."""
 
@@ -136,7 +132,7 @@ class CreateUserCommandHandler(
 
     @override
     def handle(
-        self, message: CreateUserCommand
+        self, message: CreateUserCommand,
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the create user command."""
         user_data: dict[str, t.ContainerValue] = {
@@ -148,14 +144,14 @@ class CreateUserCommandHandler(
         return FlextResult[dict[str, t.ContainerValue]].ok(user_data)
 
     def handle_command(
-        self, command: CreateUserCommand
+        self, command: CreateUserCommand,
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the create user command (alias for handle)."""
         return self.handle(command)
 
 
 class UpdateUserCommandHandler(
-    FlextHandlers[UpdateUserCommand, dict[str, t.ContainerValue]]
+    FlextHandlers[UpdateUserCommand, dict[str, t.ContainerValue]],
 ):
     """Test handler for UpdateUserCommand."""
 
@@ -188,7 +184,7 @@ class UpdateUserCommandHandler(
 
     @override
     def handle(
-        self, message: UpdateUserCommand
+        self, message: UpdateUserCommand,
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the update user command."""
         if message.target_user_id not in self.updated_users:
@@ -203,7 +199,7 @@ class UpdateUserCommandHandler(
         return FlextResult[dict[str, t.ContainerValue]].ok(result_data)
 
     def handle_command(
-        self, command: UpdateUserCommand
+        self, command: UpdateUserCommand,
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle the update user command (alias for handle)."""
         return self.handle(command)
@@ -247,7 +243,7 @@ class TestFlextCommand:
     def test_command_creation_with_auto_id(self) -> None:
         """Test creating command with auto-generated ID."""
         command: CreateUserCommand = _create_user_command(
-            username="john_doe", email="john@example.com"
+            username="john_doe", email="john@example.com",
         )
         assert command.username == "john_doe"
         assert command.email == "john@example.com"
@@ -374,7 +370,7 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = _create_user_command(
-            username="john", email="john@example.com"
+            username="john", email="john@example.com",
         )
         result = handler.handle(command)
         if not result.is_success:
@@ -393,7 +389,7 @@ class TestFlextCommandHandler:
         """Test complete command processing flow."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
-            username="jane", email="jane@example.com"
+            username="jane", email="jane@example.com",
         )
         result = handler.handle(command)
         if not result.is_success:
@@ -422,7 +418,7 @@ class TestFlextCommandHandler:
     def test_process_command_cannot_handle(self) -> None:
         """Test validation failure for wrong command type."""
         wrong_command: UpdateUserCommand = _update_user_command(
-            target_user_id="123", updates={"name": "test"}
+            target_user_id="123", updates={"name": "test"},
         )
         result = CreateUserCommandHandler().validate(wrong_command)
         if not result.is_failure:

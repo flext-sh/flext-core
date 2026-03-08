@@ -79,21 +79,21 @@ class RailwayTestCase:
         if not self.user_ids:
             return FlextResult.fail("No user IDs provided")
         user_result: FlextResult[User] = _make(
-            GetUserService, user_id=self.user_ids[0]
+            GetUserService, user_id=self.user_ids[0],
         ).execute()
         result: FlextResult[User | str | EmailResponse] = cast(
-            "FlextResult[User | str | EmailResponse]", user_result
+            "FlextResult[User | str | EmailResponse]", user_result,
         )
         for op in self.operations:
             if op == "get_email":
                 result = result.map(
-                    lambda user: user.email if isinstance(user, User) else str(user)
+                    lambda user: user.email if isinstance(user, User) else str(user),
                 )
             elif op == "send_email":
                 email_result: FlextResult[EmailResponse] = result.flat_map(
                     lambda email: _make(
-                        SendEmailService, to=str(email), subject="Test"
-                    ).execute()
+                        SendEmailService, to=str(email), subject="Test",
+                    ).execute(),
                 )
                 result = cast("FlextResult[User | str | EmailResponse]", email_result)
             elif op == "get_status":
@@ -102,7 +102,7 @@ class RailwayTestCase:
                         response.status
                         if isinstance(response, EmailResponse)
                         else str(response)
-                    )
+                    ),
                 )
         return result
 
@@ -121,7 +121,7 @@ class RailwayTestCase:
             elif op == "send_email":
                 email_to = str(user) if not isinstance(user, str) else user
                 response_obj: EmailResponse = _service_result(
-                    _make(SendEmailService, to=email_to, subject="Test")
+                    _make(SendEmailService, to=email_to, subject="Test"),
                 )
                 user = response_obj.status
         return user
@@ -203,7 +203,7 @@ class GetUserService(FlextService[User]):
                 unique_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
-            )
+            ),
         )
 
 
@@ -248,15 +248,15 @@ class MultiOperationService(FlextService[m.ConfigMap]):
         match self.operation:
             case "double":
                 return FlextResult.ok(
-                    m.ConfigMap(root={"operation": "double", "result": self.value * 2})
+                    m.ConfigMap(root={"operation": "double", "result": self.value * 2}),
                 )
             case "square":
                 return FlextResult.ok(
-                    m.ConfigMap(root={"operation": "square", "result": self.value**2})
+                    m.ConfigMap(root={"operation": "square", "result": self.value**2}),
                 )
             case "negate":
                 return FlextResult.ok(
-                    m.ConfigMap(root={"operation": "negate", "result": -self.value})
+                    m.ConfigMap(root={"operation": "negate", "result": -self.value}),
                 )
             case _:
                 return FlextResult.fail(f"Unknown operation: {self.operation}")
@@ -369,7 +369,7 @@ class TestPattern4RailwayV2Property:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
-        self, case: RailwayTestCase
+        self, case: RailwayTestCase,
     ) -> None:
         """V2 Property: .execute() available for railway pattern."""
         user_result = _service_result(_make(GetUserService, user_id="123"))
@@ -387,8 +387,8 @@ class TestPattern4RailwayV2Property:
             .execute()
             .flat_map(
                 lambda user: _make(
-                    SendEmailService, to=user.email, subject="Hello"
-                ).execute()
+                    SendEmailService, to=user.email, subject="Hello",
+                ).execute(),
             )
             .map(lambda response: response.message_id)
         )
@@ -417,8 +417,8 @@ class TestPattern5MonadicComposition:
             .flat_map(lambda user: FlextResult.ok(user.email))
             .flat_map(
                 lambda email: _make(
-                    SendEmailService, to=email, subject="Test"
-                ).execute()
+                    SendEmailService, to=email, subject="Test",
+                ).execute(),
             )
         )
         assert pipeline.is_success
@@ -432,7 +432,7 @@ class TestPattern5MonadicComposition:
                 lambda data: (
                     isinstance(data.get("value"), int)
                     and cast("int", data.get("value")) < 100
-                )
+                ),
             )
         )
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -446,8 +446,8 @@ class TestPattern5MonadicComposition:
             .filter(lambda email: "@" in email)
             .flat_map(
                 lambda email: _make(
-                    SendEmailService, to=email, subject="Test"
-                ).execute()
+                    SendEmailService, to=email, subject="Test",
+                ).execute(),
             )
             .map(lambda response: response.status)
         )
@@ -517,14 +517,14 @@ class TestPattern8MultipleOperations:
     """Test Pattern 8: Múltiplas Operações."""
 
     @pytest.mark.parametrize(
-        ("operation", "value", "expected"), TestFactories.multi_operation_cases()
+        ("operation", "value", "expected"), TestFactories.multi_operation_cases(),
     )
     def test_multiple_operations(
-        self, operation: str, value: int, expected: m.ConfigMap
+        self, operation: str, value: int, expected: m.ConfigMap,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
         result: m.ConfigMap = _service_result(
-            _make(MultiOperationService, operation=operation, value=value)
+            _make(MultiOperationService, operation=operation, value=value),
         )
         assert result["operation"] == expected["operation"]
         assert result["result"] == expected["result"]
@@ -543,8 +543,8 @@ class TestPattern8MultipleOperations:
             .map(operator.itemgetter("result"))
             .flat_map(
                 lambda result: _make(
-                    MultiOperationService, operation="square", value=result
-                ).execute()
+                    MultiOperationService, operation="square", value=result,
+                ).execute(),
             )
             .map(operator.itemgetter("result"))
         )
@@ -582,7 +582,7 @@ class TestAllPatternsIntegration:
             @override
             def execute(self) -> FlextResult[User]:
                 return FlextResult.ok(
-                    User(unique_id=self.user_id, name="Test", email="test@example.com")
+                    User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
 
         custom_pipeline = (
@@ -603,6 +603,6 @@ class TestAllPatternsIntegration:
         message_id: str = email_result.value
         assert message_id.startswith("msg-")
         calc_result: m.ConfigMap = _service_result(
-            _make(MultiOperationService, operation="double", value=10)
+            _make(MultiOperationService, operation="double", value=10),
         )
         assert calc_result["result"] == 20

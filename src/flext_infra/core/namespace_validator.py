@@ -37,7 +37,7 @@ class FlextInfraNamespaceValidator:
             return True
         if isinstance(annotation, ast.Subscript):
             return FlextInfraNamespaceValidator._annotation_contains(
-                annotation.value, name
+                annotation.value, name,
             )
         return False
 
@@ -100,7 +100,7 @@ class FlextInfraNamespaceValidator:
         return FlextInfraNamespaceValidator._derive_prefix(project_root)
 
     def validate(
-        self, project_root: Path, *, scan_tests: bool = False
+        self, project_root: Path, *, scan_tests: bool = False,
     ) -> r[m.Infra.Core.ValidationReport]:
         """Validate namespace rules 0-2 for all discovered Python files.
 
@@ -132,12 +132,12 @@ class FlextInfraNamespaceValidator:
             )
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=violations, summary=summary
-                )
+                    passed=passed, violations=violations, summary=summary,
+                ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
             return r[m.Infra.Core.ValidationReport].fail(
-                f"Namespace validation failed: {exc}"
+                f"Namespace validation failed: {exc}",
             )
 
     def _check_rule_0(self, tree: ast.Module, filepath: Path, prefix: str) -> list[str]:
@@ -156,13 +156,13 @@ class FlextInfraNamespaceValidator:
             violations.append(
                 f"[NS-000-{seq:03d}] {filepath}:{(outer_classes[0].lineno if outer_classes else 1)} — Multiple outer classes found (expected 1, got {class_count})"
                 if class_count > 1
-                else f"[NS-000-{seq:03d}] {filepath}:1 — No outer class found (expected 1, got 0)"
+                else f"[NS-000-{seq:03d}] {filepath}:1 — No outer class found (expected 1, got 0)",
             )
         for cls in outer_classes:
             if prefix and (not cls.name.startswith(prefix)):
                 seq += 1
                 violations.append(
-                    f"[NS-000-{seq:03d}] {filepath}:{cls.lineno} — Class '{cls.name}' does not start with prefix '{prefix}'"
+                    f"[NS-000-{seq:03d}] {filepath}:{cls.lineno} — Class '{cls.name}' does not start with prefix '{prefix}'",
                 )
         for node in tree.body:
             if isinstance(node, ast.ClassDef):
@@ -171,7 +171,7 @@ class FlextInfraNamespaceValidator:
                 seq += 1
                 lineno = getattr(node, "lineno", 0)
                 violations.append(
-                    f"[NS-000-{seq:03d}] {filepath}:{lineno} — Disallowed top-level statement: {type(node).__name__}"
+                    f"[NS-000-{seq:03d}] {filepath}:{lineno} — Disallowed top-level statement: {type(node).__name__}",
                 )
         return violations
 
@@ -193,24 +193,24 @@ class FlextInfraNamespaceValidator:
                 if not any(self._base_contains(b, "Constants") for b in cls.bases):
                     seq += 1
                     violations.append(
-                        f"[NS-001-{seq:03d}] {filepath}:{cls.lineno} — Constants class '{cls.name}' must inherit from a Constants base"
+                        f"[NS-001-{seq:03d}] {filepath}:{cls.lineno} — Constants class '{cls.name}' must inherit from a Constants base",
                     )
                 for inner_node in ast.walk(cls):
                     if isinstance(inner_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         seq += 1
                         violations.append(
-                            f"[NS-001-{seq:03d}] {filepath}:{inner_node.lineno} — Method '{inner_node.name}' found in Constants class"
+                            f"[NS-001-{seq:03d}] {filepath}:{inner_node.lineno} — Method '{inner_node.name}' found in Constants class",
                         )
         else:
             for node in tree.body:
                 if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-                    node.annotation, "Final"
+                    node.annotation, "Final",
                 ):
                     target_name = self._get_target_name(node.target)
                     if target_name and (not target_name.startswith("_")):
                         seq += 1
                         violations.append(
-                            f"[NS-001-{seq:03d}] {filepath}:{node.lineno} — Loose Final constant '{target_name}' belongs in constants.py"
+                            f"[NS-001-{seq:03d}] {filepath}:{node.lineno} — Loose Final constant '{target_name}' belongs in constants.py",
                         )
                 if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
                     func_name = self._get_call_name(node.value.func)
@@ -223,7 +223,7 @@ class FlextInfraNamespaceValidator:
                         ):
                             seq += 1
                             violations.append(
-                                f"[NS-001-{seq:03d}] {filepath}:{node.lineno} — Loose collection constant '{target_name}' belongs in constants.py"
+                                f"[NS-001-{seq:03d}] {filepath}:{node.lineno} — Loose collection constant '{target_name}' belongs in constants.py",
                             )
             outer_classes = [n for n in tree.body if isinstance(n, ast.ClassDef)]
             for cls in outer_classes:
@@ -235,7 +235,7 @@ class FlextInfraNamespaceValidator:
                     ):
                         seq += 1
                         violations.append(
-                            f"[NS-001-{seq:03d}] {filepath}:{inner.lineno} — Loose Enum '{inner.name}' belongs in constants.py"
+                            f"[NS-001-{seq:03d}] {filepath}:{inner.lineno} — Loose Enum '{inner.name}' belongs in constants.py",
                         )
         return violations
 
@@ -257,17 +257,17 @@ class FlextInfraNamespaceValidator:
                 if not any(self._base_contains(b, "Types") for b in cls.bases):
                     seq += 1
                     violations.append(
-                        f"[NS-002-{seq:03d}] {filepath}:{cls.lineno} — Types class '{cls.name}' must inherit from a Types base"
+                        f"[NS-002-{seq:03d}] {filepath}:{cls.lineno} — Types class '{cls.name}' must inherit from a Types base",
                     )
                 for inner in cls.body:
                     if isinstance(inner, ast.ClassDef):
                         for base in inner.bases:
                             if self._base_contains(
-                                base, "BaseModel"
+                                base, "BaseModel",
                             ) or self._base_contains(base, "Protocol"):
                                 seq += 1
                                 violations.append(
-                                    f"[NS-002-{seq:03d}] {filepath}:{inner.lineno} — Inner class '{inner.name}' in Types must not inherit from BaseModel/Protocol"
+                                    f"[NS-002-{seq:03d}] {filepath}:{inner.lineno} — Inner class '{inner.name}' in Types must not inherit from BaseModel/Protocol",
                                 )
         else:
             for node in tree.body:
@@ -277,15 +277,15 @@ class FlextInfraNamespaceValidator:
                         target_name = self._get_assign_target_name(node)
                         seq += 1
                         violations.append(
-                            f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — TypeVar '{target_name}' belongs in typings.py"
+                            f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — TypeVar '{target_name}' belongs in typings.py",
                         )
                 if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-                    node.annotation, "TypeAlias"
+                    node.annotation, "TypeAlias",
                 ):
                     target_name = self._get_target_name(node.target)
                     seq += 1
                     violations.append(
-                        f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — TypeAlias '{target_name}' belongs in typings.py"
+                        f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — TypeAlias '{target_name}' belongs in typings.py",
                     )
                 if isinstance(node, ast.TypeAlias):
                     name = getattr(node, c.Infra.Toml.NAME, None)
@@ -296,7 +296,7 @@ class FlextInfraNamespaceValidator:
                     )
                     seq += 1
                     violations.append(
-                        f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — PEP 695 TypeAlias '{name_str}' belongs in typings.py"
+                        f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — PEP 695 TypeAlias '{name_str}' belongs in typings.py",
                     )
         return violations
 
@@ -345,7 +345,7 @@ class FlextInfraNamespaceValidator:
         if isinstance(node, ast.TypeAlias):
             return filepath.name == "typings.py"
         if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-            node.annotation, "TypeAlias"
+            node.annotation, "TypeAlias",
         ):
             return filepath.name == "typings.py"
         if (

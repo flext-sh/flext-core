@@ -40,7 +40,7 @@ class FlextInfraCodegenConstantsQualityGate:
         """Execute quality gate and return structured report payload."""
         before_payload, before_source, before_load_error = self._load_before_payload()
         census_reports = FlextInfraCodegenCensus(
-            workspace_root=self._workspace_root
+            workspace_root=self._workspace_root,
         ).run()
         duplicate_groups = self._count_duplicate_constant_groups()
         modified_files = self._modified_python_files()
@@ -151,7 +151,7 @@ class FlextInfraCodegenConstantsQualityGate:
         return (raw, str(resolved), "")
 
     def _before_metrics(
-        self, before_payload: dict[str, t.ContainerValue] | None
+        self, before_payload: dict[str, t.ContainerValue] | None,
     ) -> dict[str, t.ContainerValue]:
         if before_payload is None:
             return {
@@ -200,7 +200,7 @@ class FlextInfraCodegenConstantsQualityGate:
             "layer_violations": 0,
             "cross_project_reference_violations": 0,
             "import_parse_violations": self._as_int(
-                import_scan.get("invalid_import_from_count")
+                import_scan.get("invalid_import_from_count"),
             ),
             "import_parse_errors": self._as_int(import_scan.get("parse_error_count")),
             "modified_python_files": modified_files,
@@ -212,16 +212,16 @@ class FlextInfraCodegenConstantsQualityGate:
         after_metrics: dict[str, t.ContainerValue],
     ) -> dict[str, t.ContainerValue]:
         before_violations = FlextInfraCodegenConstantsQualityGate._as_int(
-            before_metrics.get("total_violations")
+            before_metrics.get("total_violations"),
         )
         before_duplicates = FlextInfraCodegenConstantsQualityGate._as_int(
-            before_metrics.get("duplicate_groups")
+            before_metrics.get("duplicate_groups"),
         )
         after_violations = FlextInfraCodegenConstantsQualityGate._as_int(
-            after_metrics.get("total_violations")
+            after_metrics.get("total_violations"),
         )
         after_duplicates = FlextInfraCodegenConstantsQualityGate._as_int(
-            after_metrics.get("duplicate_groups")
+            after_metrics.get("duplicate_groups"),
         )
         violations_delta = (
             0 if before_violations < 0 else after_violations - before_violations
@@ -264,7 +264,7 @@ class FlextInfraCodegenConstantsQualityGate:
         })
         mro_failures = self._as_int(after_metrics.get("mro_failures"))
         cross_ref = self._as_int(
-            after_metrics.get("cross_project_reference_violations")
+            after_metrics.get("cross_project_reference_violations"),
         )
         import_parse = self._as_int(after_metrics.get("import_parse_violations"))
         import_parse_errors = self._as_int(after_metrics.get("import_parse_errors"))
@@ -339,11 +339,11 @@ class FlextInfraCodegenConstantsQualityGate:
             return "FAIL"
         if (
             FlextInfraCodegenConstantsQualityGate._as_int(
-                improvement.get("violations_increased")
+                improvement.get("violations_increased"),
             )
             > 0
             or FlextInfraCodegenConstantsQualityGate._as_int(
-                improvement.get("duplicates_increased")
+                improvement.get("duplicates_increased"),
             )
             > 0
         ):
@@ -354,7 +354,7 @@ class FlextInfraCodegenConstantsQualityGate:
         """Estimate duplicate constant groups across workspace constants.py files."""
         name_to_projects: dict[str, set[str]] = {}
         for report in FlextInfraCodegenCensus(
-            workspace_root=self._workspace_root
+            workspace_root=self._workspace_root,
         ).run():
             project_root = self._workspace_root / report.project
             constants_file = (
@@ -372,12 +372,12 @@ class FlextInfraCodegenConstantsQualityGate:
                     target = node.targets[0]
                     if isinstance(target, ast.Name) and target.id.isupper():
                         name_to_projects.setdefault(target.id, set()).add(
-                            report.project
+                            report.project,
                         )
         return sum(1 for projects in name_to_projects.values() if len(projects) > 1)
 
     def _project_findings(
-        self, census_reports: Sequence[m.Infra.Codegen.CensusReport]
+        self, census_reports: Sequence[m.Infra.Codegen.CensusReport],
     ) -> list[dict[str, t.ContainerValue]]:
         findings: list[dict[str, t.ContainerValue]] = [
             {
@@ -416,7 +416,7 @@ class FlextInfraCodegenConstantsQualityGate:
             encoding=c.Infra.Encoding.DEFAULT,
         )
         u.write_file(
-            report_text, self.render_text(report), encoding=c.Infra.Encoding.DEFAULT
+            report_text, self.render_text(report), encoding=c.Infra.Encoding.DEFAULT,
         )
         census_payload: list[dict[str, t.ContainerValue]] = [
             item.model_dump() for item in census_reports
@@ -506,7 +506,7 @@ class FlextInfraCodegenConstantsQualityGate:
         if fallback.is_file():
             try:
                 payload = json.loads(
-                    fallback.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                    fallback.read_text(encoding=c.Infra.Encoding.DEFAULT),
                 )
             except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                 return []
@@ -544,7 +544,7 @@ class FlextInfraCodegenConstantsQualityGate:
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
     def _run_pyrefly_check(
-        self, modified_files: list[str]
+        self, modified_files: list[str],
     ) -> dict[str, t.ContainerValue]:
         if not modified_files:
             return {
@@ -565,7 +565,7 @@ class FlextInfraCodegenConstantsQualityGate:
         result = self._run_external_check(cmd)
         detail = str(result.get("detail", "")).strip()
         if not bool(result.get("passed", False)) and detail.startswith(
-            "WARN PYTHONPATH"
+            "WARN PYTHONPATH",
         ):
             result["passed"] = True
         return result
@@ -614,7 +614,7 @@ class FlextInfraCodegenConstantsQualityGate:
         }
 
     def _scan_import_nodes(
-        self, modified_files: list[str]
+        self, modified_files: list[str],
     ) -> dict[str, t.ContainerValue]:
         invalid_import_from: list[str] = []
         parse_errors: list[str] = []
@@ -646,25 +646,25 @@ class FlextInfraCodegenConstantsQualityGate:
     def _extract_total_violations(payload: dict[str, t.ContainerValue]) -> int:
         if "total_violations" in payload:
             return FlextInfraCodegenConstantsQualityGate._as_int(
-                payload.get("total_violations")
+                payload.get("total_violations"),
             )
         totals = FlextInfraCodegenConstantsQualityGate._dict_or_empty(
-            payload.get("totals")
+            payload.get("totals"),
         )
         if totals:
             return (
                 FlextInfraCodegenConstantsQualityGate._as_int(
-                    totals.get("ns001_violations")
+                    totals.get("ns001_violations"),
                 )
                 + FlextInfraCodegenConstantsQualityGate._as_int(
-                    totals.get("layer_violations")
+                    totals.get("layer_violations"),
                 )
                 + FlextInfraCodegenConstantsQualityGate._as_int(
-                    totals.get("cross_project_reference_violations")
+                    totals.get("cross_project_reference_violations"),
                 )
             )
         projects = FlextInfraCodegenConstantsQualityGate._dict_list(
-            payload.get("projects")
+            payload.get("projects"),
         )
         if projects and all("total" in item for item in projects):
             return sum(
@@ -677,7 +677,7 @@ class FlextInfraCodegenConstantsQualityGate:
     def _extract_duplicate_groups(payload: dict[str, t.ContainerValue]) -> int:
         if "duplicate_groups" in payload:
             return FlextInfraCodegenConstantsQualityGate._as_int(
-                payload.get("duplicate_groups")
+                payload.get("duplicate_groups"),
             )
         duplicates = payload.get("duplicates")
         if isinstance(duplicates, list):
@@ -687,7 +687,7 @@ class FlextInfraCodegenConstantsQualityGate:
     @staticmethod
     def _extract_projects_total(payload: dict[str, t.ContainerValue]) -> int:
         totals = FlextInfraCodegenConstantsQualityGate._dict_or_empty(
-            payload.get("totals")
+            payload.get("totals"),
         )
         value = totals.get(c.Infra.ReportKeys.PROJECTS)
         if value is not None:
@@ -700,14 +700,14 @@ class FlextInfraCodegenConstantsQualityGate:
     @staticmethod
     def _extract_projects_passed(payload: dict[str, t.ContainerValue]) -> int:
         totals = FlextInfraCodegenConstantsQualityGate._dict_or_empty(
-            payload.get("totals")
+            payload.get("totals"),
         )
         return FlextInfraCodegenConstantsQualityGate._as_int(totals.get("passed"))
 
     @staticmethod
     def _extract_projects_failed(payload: dict[str, t.ContainerValue]) -> int:
         totals = FlextInfraCodegenConstantsQualityGate._dict_or_empty(
-            payload.get("totals")
+            payload.get("totals"),
         )
         return FlextInfraCodegenConstantsQualityGate._as_int(totals.get("failed"))
 

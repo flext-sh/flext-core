@@ -38,7 +38,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
 
     @override
     def leave_ImportFrom(
-        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
+        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom,
     ) -> cst.BaseSmallStatement | cst.RemovalSentinel:
         """Replace forbidden imports and capture symbol replacement map."""
         module_name = self._module_name_from_expr(original_node.module)
@@ -50,7 +50,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
                 imported_name = imported_alias.name.value
                 bound_name = imported_name
                 if imported_alias.asname is not None and isinstance(
-                    imported_alias.asname.name, cst.Name
+                    imported_alias.asname.name, cst.Name,
                 ):
                     bound_name = imported_alias.asname.name.value
                 if bound_name in self._runtime_aliases:
@@ -74,7 +74,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
                 mapped_aliases.append(imported_alias)
                 local_symbol = imported_symbol
                 if imported_alias.asname is not None and isinstance(
-                    imported_alias.asname.name, cst.Name
+                    imported_alias.asname.name, cst.Name,
                 ):
                     local_symbol = imported_alias.asname.name.value
                 alias_path = self._symbols_to_replace[imported_symbol]
@@ -95,7 +95,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
 
     @override
     def leave_Module(
-        self, original_node: cst.Module, updated_node: cst.Module
+        self, original_node: cst.Module, updated_node: cst.Module,
     ) -> cst.Module:
         """Inject missing runtime aliases import at module header."""
         del original_node
@@ -110,8 +110,8 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
                 cst.ImportFrom(
                     module=cst.Name(c.Infra.Packages.CORE_UNDERSCORE),
                     names=alias_imports,
-                )
-            ]
+                ),
+            ],
         )
         body = list(updated_node.body)
         insert_idx = 0
@@ -139,20 +139,20 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
                 continue
             break
         self._record_change(
-            f"Added: from flext_core import {', '.join(missing_aliases)}"
+            f"Added: from flext_core import {', '.join(missing_aliases)}",
         )
         new_body = body[:insert_idx] + [new_import] + body[insert_idx:]
         return updated_node.with_changes(body=new_body)
 
     @override
     def leave_Name(
-        self, original_node: cst.Name, updated_node: cst.Name
+        self, original_node: cst.Name, updated_node: cst.Name,
     ) -> cst.BaseExpression:
         """Replace imported symbol usages with configured runtime alias paths."""
         if original_node.value not in self.active_symbol_replacements:
             return updated_node
         qualified_names = self.get_metadata(
-            QualifiedNameProvider, original_node, default=set()
+            QualifiedNameProvider, original_node, default=set(),
         )
         if not qualified_names:
             return updated_node
@@ -170,7 +170,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
         return result
 
     def _extract_import_aliases(
-        self, names: Sequence[cst.ImportAlias] | cst.ImportStar
+        self, names: Sequence[cst.ImportAlias] | cst.ImportStar,
     ) -> list[cst.ImportAlias]:
         if isinstance(names, cst.ImportStar):
             return []

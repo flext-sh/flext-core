@@ -79,7 +79,7 @@ def test_ensure_future_annotations_after_docstring() -> None:
     source = '"""doc"""\n\nimport os\n'
     tree = cst.parse_module(source)
     rule = FlextInfraRefactorEnsureFutureAnnotationsRule({
-        "id": "ensure-future-annotations"
+        "id": "ensure-future-annotations",
     })
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -105,7 +105,7 @@ def test_ensure_future_annotations_moves_existing_import_to_top() -> None:
     source = "import os\nfrom __future__ import annotations\n"
     tree = cst.parse_module(source)
     rule = FlextInfraRefactorEnsureFutureAnnotationsRule({
-        "id": "ensure-future-annotations"
+        "id": "ensure-future-annotations",
     })
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -298,7 +298,7 @@ def test_symbol_propagation_renames_import_and_local_references() -> None:
         "fix_action": "propagate_symbol_renames",
         "target_modules": ["flext_infra.refactor"],
         "import_symbol_renames": {
-            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule",
         },
     })
     updated_tree, _ = rule.apply(tree)
@@ -318,7 +318,7 @@ def test_symbol_propagation_keeps_alias_reference_when_asname_used() -> None:
         "fix_action": "propagate_symbol_renames",
         "target_modules": ["flext_infra.refactor"],
         "import_symbol_renames": {
-            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule",
         },
     })
     updated_tree, _ = rule.apply(tree)
@@ -338,7 +338,7 @@ def test_symbol_propagation_updates_mro_base_references() -> None:
         "fix_action": "propagate_symbol_renames",
         "target_modules": ["flext_infra.refactor"],
         "import_symbol_renames": {
-            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule",
         },
     })
     updated_tree, _ = rule.apply(tree)
@@ -358,7 +358,7 @@ def test_signature_propagation_renames_call_keyword() -> None:
                 "enabled": True,
                 "target_simple_names": ["migrate"],
                 "keyword_renames": {"project_root": "workspace_root"},
-            }
+            },
         ],
     })
     updated_tree, _ = rule.apply(tree)
@@ -379,7 +379,7 @@ def test_signature_propagation_removes_and_adds_keywords() -> None:
                 "target_simple_names": ["run"],
                 "remove_keywords": ["legacy"],
                 "add_keywords": {"mode": '"modern"'},
-            }
+            },
         ],
     })
     updated_tree, _ = rule.apply(tree)
@@ -664,7 +664,7 @@ def test_build_impact_map_extracts_rename_entries() -> None:
         success=True,
         modified=True,
         changes=[
-            "Renamed imported symbol: LegacyRemovalRule -> FlextInfraRefactorLegacyRemovalRule (local=LegacyRemovalRule)"
+            "Renamed imported symbol: LegacyRemovalRule -> FlextInfraRefactorLegacyRemovalRule (local=LegacyRemovalRule)",
         ],
         refactored_code="",
     )
@@ -702,7 +702,7 @@ def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
     )
     config_path = tmp_path / "config.yml"
     config_path.write_text(
-        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8"
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8",
     )
     project_root = tmp_path / "project"
     src_dir = project_root / "src"
@@ -726,7 +726,7 @@ def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
 
 
 def test_main_analyze_violations_is_read_only(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     rules_dir = tmp_path / "rules"
     rules_dir.mkdir(parents=True)
@@ -737,7 +737,7 @@ def test_main_analyze_violations_is_read_only(
     )
     config_path = tmp_path / "config.yml"
     config_path.write_text(
-        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8"
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8",
     )
     src_dir = tmp_path / "src"
     src_dir.mkdir(parents=True)
@@ -763,7 +763,7 @@ def test_main_analyze_violations_is_read_only(
 
 
 def test_main_analyze_violations_writes_json_report(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     rules_dir = tmp_path / "rules"
     rules_dir.mkdir(parents=True)
@@ -774,7 +774,7 @@ def test_main_analyze_violations_writes_json_report(
     )
     config_path = tmp_path / "config.yml"
     config_path.write_text(
-        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8"
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8",
     )
     src_dir = tmp_path / "src"
     src_dir.mkdir(parents=True)
@@ -846,7 +846,7 @@ class EngineSafetyStub(FlextInfraRefactorSafetyManager):
 
     @override
     def create_pre_transformation_stash(
-        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform"
+        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform",
     ) -> r[str]:
         _ = workspace_root
         _ = label
@@ -893,7 +893,7 @@ class EngineSafetyStub(FlextInfraRefactorSafetyManager):
 
     @override
     def rollback(
-        self, workspace_root: Path | str, stash_ref: str = ""
+        self, workspace_root: Path | str, stash_ref: str = "",
     ) -> r[bool] | None:
         _ = stash_ref
         self.calls.append("rollback")

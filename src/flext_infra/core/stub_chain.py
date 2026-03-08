@@ -62,7 +62,7 @@ class FlextInfraStubSupplyChain:
         return False
 
     def analyze(
-        self, project_dir: Path, workspace_root: Path
+        self, project_dir: Path, workspace_root: Path,
     ) -> r[m.Infra.Core.StubAnalysisReport]:
         """Analyze a project for missing stubs and type packages.
 
@@ -97,11 +97,11 @@ class FlextInfraStubSupplyChain:
             return r[m.Infra.Core.StubAnalysisReport].ok(result)
         except (OSError, TypeError, ValueError) as exc:
             return r[m.Infra.Core.StubAnalysisReport].fail(
-                f"stub analysis failed for {project_dir.name}: {exc}"
+                f"stub analysis failed for {project_dir.name}: {exc}",
             )
 
     def validate(
-        self, workspace_root: Path, project_dirs: list[Path] | None = None
+        self, workspace_root: Path, project_dirs: list[Path] | None = None,
     ) -> r[m.Infra.Core.ValidationReport]:
         """Validate stub supply chain across projects.
 
@@ -127,22 +127,22 @@ class FlextInfraStubSupplyChain:
                 unresolved = data.unresolved_missing
                 if internal:
                     violations.append(
-                        f"{proj.name}: {len(internal)} internal missing imports"
+                        f"{proj.name}: {len(internal)} internal missing imports",
                     )
                 if unresolved:
                     violations.append(
-                        f"{proj.name}: {len(unresolved)} unresolved imports"
+                        f"{proj.name}: {len(unresolved)} unresolved imports",
                     )
             passed = len(violations) == 0
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=violations, summary=summary
-                )
+                    passed=passed, violations=violations, summary=summary,
+                ),
             )
         except (OSError, TypeError, ValueError) as exc:
             return r[m.Infra.Core.ValidationReport].fail(
-                f"stub validation failed: {exc}"
+                f"stub validation failed: {exc}",
             )
 
     def _run_mypy_hints(self, project_dir: Path) -> list[str]:

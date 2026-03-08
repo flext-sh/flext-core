@@ -123,7 +123,7 @@ def main() -> int:
         _ = sub.add_argument("--project")
         _ = sub.add_argument("--projects")
         _ = sub.add_argument(
-            "--output-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs"
+            "--output-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
         )
 
     audit_parser = subparsers.add_parser("audit", help="Audit documentation")
@@ -134,14 +134,14 @@ def main() -> int:
     _add_common_args(fix_parser)
     _ = fix_parser.add_argument("--apply", action="store_true")
     build_parser = subparsers.add_parser(
-        c.Infra.Directories.BUILD, help="Build MkDocs sites"
+        c.Infra.Directories.BUILD, help="Build MkDocs sites",
     )
     _add_common_args(build_parser)
     gen_parser = subparsers.add_parser("generate", help="Generate project docs")
     _add_common_args(gen_parser)
     _ = gen_parser.add_argument("--apply", action="store_true")
     val_parser = subparsers.add_parser(
-        c.Infra.Verbs.VALIDATE, help="Validate documentation"
+        c.Infra.Verbs.VALIDATE, help="Validate documentation",
     )
     _add_common_args(val_parser)
     _ = val_parser.add_argument("--check", default="all")

@@ -33,11 +33,11 @@ def main(argv: list[str] | None = None) -> int:
     """Run codegen service CLI."""
     FlextRuntime.ensure_structlog_configured()
     parser = argparse.ArgumentParser(
-        description="Code generation tools for workspace standardization"
+        description="Code generation tools for workspace standardization",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     lazy_parser = subparsers.add_parser(
-        "lazy-init", help="Generate/refresh PEP 562 lazy-import __init__.py files"
+        "lazy-init", help="Generate/refresh PEP 562 lazy-import __init__.py files",
     )
     _ = lazy_parser.add_argument(
         "--check",
@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Workspace root directory (default: cwd)",
     )
     census_parser = subparsers.add_parser(
-        "census", help="Count namespace violations across workspace projects"
+        "census", help="Count namespace violations across workspace projects",
     )
     _ = census_parser.add_argument(
         "--workspace",
@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Output format (default: text)",
     )
     scaffold_parser = subparsers.add_parser(
-        "scaffold", help="Generate missing base modules in src/ and tests/"
+        "scaffold", help="Generate missing base modules in src/ and tests/",
     )
     _ = scaffold_parser.add_argument(
         "--workspace",
@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Report what would be created without writing files",
     )
     fix_parser = subparsers.add_parser(
-        "auto-fix", help="Auto-fix namespace violations (move Finals/TypeVars)"
+        "auto-fix", help="Auto-fix namespace violations (move Finals/TypeVars)",
     )
     _ = fix_parser.add_argument(
         "--workspace",
@@ -105,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Workspace root directory (default: cwd)",
     )
     _ = pipeline_parser.add_argument(
-        "--dry-run", action="store_true", help="Report changes without modifying files"
+        "--dry-run", action="store_true", help="Report changes without modifying files",
     )
     _ = pipeline_parser.add_argument(
         "--format",
@@ -187,10 +187,10 @@ def _handle_census(args: argparse.Namespace) -> int:
         for rpt in reports:
             if rpt.total > 0:
                 output.info(
-                    f"  {rpt.project}: {rpt.total} violations ({rpt.fixable} fixable)"
+                    f"  {rpt.project}: {rpt.total} violations ({rpt.fixable} fixable)",
                 )
         output.info(
-            f"Total: {total_v} violations ({total_f} fixable) across {len(reports)} projects"
+            f"Total: {total_v} violations ({total_f} fixable) across {len(reports)} projects",
         )
     return 0
 
@@ -207,7 +207,7 @@ def _handle_scaffold(args: argparse.Namespace) -> int:
         if res.files_created:
             output.info(f"  {res.project}: created {len(res.files_created)} files")
     output.info(
-        f"Scaffold: {total_created} created, {total_skipped} skipped across {len(results)} projects"
+        f"Scaffold: {total_created} created, {total_skipped} skipped across {len(results)} projects",
     )
     return 0
 
@@ -223,10 +223,10 @@ def _handle_auto_fix(args: argparse.Namespace) -> int:
     for res in results:
         if res.violations_fixed:
             output.info(
-                f"  {res.project}: fixed {len(res.violations_fixed)} violations"
+                f"  {res.project}: fixed {len(res.violations_fixed)} violations",
             )
     output.info(
-        f"Auto-fix: {total_fixed} fixed, {total_skipped} skipped across {len(results)} projects"
+        f"Auto-fix: {total_fixed} fixed, {total_skipped} skipped across {len(results)} projects",
     )
     return 0
 
@@ -267,10 +267,10 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
         after_v = sum(r.total for r in reports_after)
         output.info(f"Census before: {before_v} violations")
         output.info(
-            f"Scaffold: {sum(len(r.files_created) for r in scaffold_results)} files created"
+            f"Scaffold: {sum(len(r.files_created) for r in scaffold_results)} files created",
         )
         output.info(
-            f"Auto-fix: {sum(len(r.violations_fixed) for r in fix_results)} violations fixed"
+            f"Auto-fix: {sum(len(r.violations_fixed) for r in fix_results)} violations fixed",
         )
         output.info(f"Census after: {after_v} violations")
         output.info(f"Improvement: {before_v - after_v} violations resolved")

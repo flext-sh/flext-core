@@ -29,7 +29,7 @@ from flext_tests import u
 def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:
     """Call extract_pagination_config with arbitrary object for testing."""
     fn: Callable[[object], Mapping[str, int]] = getattr(
-        u.Pagination, "extract_pagination_config"
+        u.Pagination, "extract_pagination_config",
     )
     return fn(config)
 
@@ -326,7 +326,7 @@ class TestuPaginationExtractPageParams:
             assert page_size == scenario.expected_page_size
         else:
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error
+                result, expected_error=scenario.expected_error,
             )
 
 
@@ -335,7 +335,7 @@ class TestuPaginationValidatePaginationParams:
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.VALIDATE_PAGINATION_PARAMS)
     def test_validate_pagination_params(
-        self, scenario: ValidatePaginationParamsScenario
+        self, scenario: ValidatePaginationParamsScenario,
     ) -> None:
         """Test validate_pagination_params with various scenarios."""
         result = u.Pagination.validate_pagination_params(
@@ -350,7 +350,7 @@ class TestuPaginationValidatePaginationParams:
             assert params["page_size"] == scenario.expected_page_size
         else:
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error
+                result, expected_error=scenario.expected_error,
             )
 
 
@@ -359,7 +359,7 @@ class TestuPaginationPreparePaginationData:
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.PREPARE_PAGINATION_DATA)
     def test_prepare_pagination_data(
-        self, scenario: PreparePaginationDataScenario
+        self, scenario: PreparePaginationDataScenario,
     ) -> None:
         """Test prepare_pagination_data with various scenarios."""
         result = u.Pagination.prepare_pagination_data(
@@ -386,7 +386,7 @@ class TestuPaginationPreparePaginationData:
                 assert pagination["has_prev"] == (scenario.page > 1)
         else:
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error
+                result, expected_error=scenario.expected_error,
             )
 
 
@@ -407,7 +407,7 @@ class TestuPaginationBuildPaginationResponse:
             },
         }
         result = u.Pagination.build_pagination_response(
-            pagination_data, message="Success"
+            pagination_data, message="Success",
         )
         _ = u.Tests.Result.assert_success(result)
         response = result.value
@@ -440,7 +440,7 @@ class TestuPaginationBuildPaginationResponse:
         pagination_data: dict[str, t.ContainerValue] = {"pagination": {}}
         result = u.Pagination.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
-            result, expected_error="Invalid pagination data structure"
+            result, expected_error="Invalid pagination data structure",
         )
 
     def test_build_pagination_response_missing_pagination(self) -> None:
@@ -448,7 +448,7 @@ class TestuPaginationBuildPaginationResponse:
         pagination_data: dict[str, t.ContainerValue] = {"data": []}
         result = u.Pagination.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
-            result, expected_error="Invalid pagination data structure"
+            result, expected_error="Invalid pagination data structure",
         )
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:

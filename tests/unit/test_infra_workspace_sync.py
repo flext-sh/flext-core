@@ -26,7 +26,7 @@ def sync_service(tmp_path: Path) -> FlextInfraSyncService:
 
 
 def test_sync_service_generates_base_mk(
-    sync_service: FlextInfraSyncService, tmp_path: Path
+    sync_service: FlextInfraSyncService, tmp_path: Path,
 ) -> None:
     """Test that sync service generates base.mk content."""
     result = sync_service.sync(project_root=tmp_path)
@@ -34,7 +34,7 @@ def test_sync_service_generates_base_mk(
 
 
 def test_sync_service_detects_changes_via_sha256(
-    sync_service: FlextInfraSyncService, tmp_path: Path
+    sync_service: FlextInfraSyncService, tmp_path: Path,
 ) -> None:
     """Test that sync service detects changes using SHA256 hash."""
     base_mk_path = tmp_path / "base.mk"
@@ -44,7 +44,7 @@ def test_sync_service_detects_changes_via_sha256(
 
 
 def test_sync_service_skips_write_when_content_unchanged(
-    sync_service: FlextInfraSyncService, tmp_path: Path
+    sync_service: FlextInfraSyncService, tmp_path: Path,
 ) -> None:
     """Test that sync service skips write when content is unchanged."""
     content = "# Same content\n"
@@ -55,7 +55,7 @@ def test_sync_service_skips_write_when_content_unchanged(
 
 
 def test_sync_service_creates_base_mk_if_missing(
-    sync_service: FlextInfraSyncService, tmp_path: Path
+    sync_service: FlextInfraSyncService, tmp_path: Path,
 ) -> None:
     """Test that sync service creates base.mk if it doesn't exist."""
     result = sync_service.sync(project_root=tmp_path)
@@ -71,7 +71,7 @@ def test_sync_service_execute_returns_failure() -> None:
 
 
 def test_sync_service_validates_gitignore_entries(
-    sync_service: FlextInfraSyncService, tmp_path: Path
+    sync_service: FlextInfraSyncService, tmp_path: Path,
 ) -> None:
     """Test that sync service validates required .gitignore entries."""
     gitignore_path = tmp_path / ".gitignore"
@@ -100,7 +100,7 @@ def test_sync_service_project_root_not_exists() -> None:
 
 
 def test_sync_service_lock_acquisition_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that sync handles lock acquisition failures gracefully."""
 
@@ -131,7 +131,7 @@ def test_sync_service_basemk_generation_failure(tmp_path: Path) -> None:
 
 
 def test_sync_service_gitignore_update_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that sync handles .gitignore update failures."""
     sync_service = FlextInfraSyncService()
@@ -155,7 +155,7 @@ def test_sync_service_atomic_write_success(tmp_path: Path) -> None:
 
 
 def test_sync_service_atomic_write_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test atomic write handles failures gracefully."""
 
@@ -235,7 +235,7 @@ def test_sync_service_ensure_gitignore_entries_all_present(tmp_path: Path) -> No
 
 
 def test_sync_service_ensure_gitignore_entries_write_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that sync handles .gitignore write failures."""
     sync_service = FlextInfraSyncService()
@@ -299,7 +299,7 @@ def test_sync_service_sync_basemk_generation_failure(tmp_path: Path) -> None:
 
 
 def test_sync_service_gitignore_sync_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test sync handles .gitignore sync failures gracefully."""
     sync_service = FlextInfraSyncService()
@@ -308,7 +308,7 @@ def test_sync_service_gitignore_sync_failure(
         return r[bool].fail(".gitignore sync failed")
 
     monkeypatch.setattr(
-        sync_service, "_ensure_gitignore_entries", mock_ensure_gitignore
+        sync_service, "_ensure_gitignore_entries", mock_ensure_gitignore,
     )
     result = sync_service.sync(project_root=tmp_path)
     assert result.is_failure

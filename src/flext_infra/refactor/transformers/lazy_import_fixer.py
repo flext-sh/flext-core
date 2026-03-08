@@ -19,7 +19,7 @@ class FlextInfraRefactorLazyImportFixer(cst.CSTTransformer):
 
     @override
     def leave_FunctionDef(
-        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef,
     ) -> cst.FunctionDef:
         """Extract imports from function body and keep other statements."""
         if not isinstance(updated_node.body, cst.IndentedBlock):
@@ -39,12 +39,12 @@ class FlextInfraRefactorLazyImportFixer(cst.CSTTransformer):
                 continue
             new_function_body.append(stmt)
         return updated_node.with_changes(
-            body=updated_node.body.with_changes(body=new_function_body)
+            body=updated_node.body.with_changes(body=new_function_body),
         )
 
     @override
     def leave_Module(
-        self, original_node: cst.Module, updated_node: cst.Module
+        self, original_node: cst.Module, updated_node: cst.Module,
     ) -> cst.Module:
         """Insert hoisted imports after docstring and __future__ imports."""
         del original_node

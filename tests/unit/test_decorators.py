@@ -123,7 +123,7 @@ class DecoratorScenarios:
             True,
         ),
         DecoratorTestCase(
-            "inject_missing_dependency", DecoratorOperationType.INJECT_MISSING, True
+            "inject_missing_dependency", DecoratorOperationType.INJECT_MISSING, True,
         ),
         DecoratorTestCase(
             "inject_with_provided_kwarg",
@@ -136,7 +136,7 @@ class DecoratorScenarios:
     ]
     LOG_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "log_operation_basic", DecoratorOperationType.LOG_OPERATION_BASIC, True
+            "log_operation_basic", DecoratorOperationType.LOG_OPERATION_BASIC, True,
         ),
         DecoratorTestCase(
             "log_operation_exception",
@@ -166,10 +166,10 @@ class DecoratorScenarios:
     ]
     RAILWAY_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "railway_success", DecoratorOperationType.RAILWAY_SUCCESS, True
+            "railway_success", DecoratorOperationType.RAILWAY_SUCCESS, True,
         ),
         DecoratorTestCase(
-            "railway_exception", DecoratorOperationType.RAILWAY_EXCEPTION, True
+            "railway_exception", DecoratorOperationType.RAILWAY_EXCEPTION, True,
         ),
     ]
     RETRY_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
@@ -234,10 +234,10 @@ class DecoratorScenarios:
     ]
     COMBINED_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "combined_basic", DecoratorOperationType.COMBINED_BASIC, True
+            "combined_basic", DecoratorOperationType.COMBINED_BASIC, True,
         ),
         DecoratorTestCase(
-            "combined_with_railway", DecoratorOperationType.COMBINED_WITH_RAILWAY, True
+            "combined_with_railway", DecoratorOperationType.COMBINED_WITH_RAILWAY, True,
         ),
     ]
 
@@ -256,7 +256,7 @@ class TestFlextDecorators:
     """Unified test suite for FlextDecorators using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.INJECT_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.INJECT_SCENARIOS, ids=lambda c: c.name,
     )
     def test_inject_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test inject decorator with various scenarios."""
@@ -264,7 +264,7 @@ class TestFlextDecorators:
 
             @FlextDecorators.inject(test_service="test_service")
             def process_data_basic(
-                data: str, *, test_service: TestService | None = None
+                data: str, *, test_service: TestService | None = None,
             ) -> str:
                 if test_service is None:
                     return f"{data}_default"
@@ -291,7 +291,7 @@ class TestFlextDecorators:
             assert process(service=explicit_service) == "explicit"
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.LOG_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.LOG_SCENARIOS, ids=lambda c: c.name,
     )
     def test_log_operation_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test log_operation decorator with various scenarios."""
@@ -313,7 +313,7 @@ class TestFlextDecorators:
                 failing_function()
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.TRACK_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.TRACK_SCENARIOS, ids=lambda c: c.name,
     )
     def test_track_performance_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test track_performance decorator with various scenarios."""
@@ -337,7 +337,7 @@ class TestFlextDecorators:
                 failing_function()
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.RAILWAY_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.RAILWAY_SCENARIOS, ids=lambda c: c.name,
     )
     def test_railway_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test railway decorator with various scenarios."""
@@ -364,7 +364,7 @@ class TestFlextDecorators:
             assert "Operation failed" in result.error
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.RETRY_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.RETRY_SCENARIOS, ids=lambda c: c.name,
     )
     def test_retry_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test retry decorator with various scenarios."""
@@ -400,7 +400,7 @@ class TestFlextDecorators:
                 always_fails()
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.TIMEOUT_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.TIMEOUT_SCENARIOS, ids=lambda c: c.name,
     )
     def test_timeout_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test timeout decorator with various scenarios."""
@@ -424,11 +424,11 @@ class TestFlextDecorators:
                 slow_operation()
             assert exc_info.value is not None
             assert "timeout" in str(exc_info.value).lower() or "0.005" in str(
-                exc_info.value
+                exc_info.value,
             )
 
     @pytest.mark.parametrize(
-        "test_case", DecoratorScenarios.COMBINED_SCENARIOS, ids=lambda c: c.name
+        "test_case", DecoratorScenarios.COMBINED_SCENARIOS, ids=lambda c: c.name,
     )
     def test_combined_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test combined decorator with various scenarios."""

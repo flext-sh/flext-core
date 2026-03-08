@@ -62,7 +62,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
 
     @classmethod
     def _copy_required_imports(
-        cls, node: ast.stmt, source_tree: ast.Module, target_tree: ast.Module
+        cls, node: ast.stmt, source_tree: ast.Module, target_tree: ast.Module,
     ) -> None:
         """Copy imports needed by node from source_tree to target_tree."""
         names_used = cls._get_top_level_names_in_node(node)
@@ -119,7 +119,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
 
     @staticmethod
     def _add_import_to_tree(
-        tree: ast.Module, pkg_name: str, module_name: str, name: str
+        tree: ast.Module, pkg_name: str, module_name: str, name: str,
     ) -> None:
         """Add a from-import to the tree if not already present."""
         full_module = f"{pkg_name}.{module_name}"
@@ -131,7 +131,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 stmt.names.append(ast.alias(name=name))
                 return
         new_import = ast.ImportFrom(
-            module=full_module, names=[ast.alias(name=name)], level=0
+            module=full_module, names=[ast.alias(name=name)], level=0,
         )
         _ = ast.fix_missing_locations(new_import)
         last_import_idx = 0
@@ -184,7 +184,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
 
     @staticmethod
     def _is_name_referenced_in_file(
-        name: str, definition_node: ast.stmt, tree: ast.Module
+        name: str, definition_node: ast.stmt, tree: ast.Module,
     ) -> bool:
         """Check if a name is referenced anywhere in the file besides its definition."""
         for stmt in tree.body:
@@ -396,7 +396,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             insert_idx = self._find_insert_position(target_tree)
             target_tree.body.insert(insert_idx, node)
             self._add_import_to_tree(
-                tree=tree, pkg_name=pkg_name, module_name="constants", name=target_name
+                tree=tree, pkg_name=pkg_name, module_name="constants", name=target_name,
             )
             violation = m.Infra.Codegen.CensusViolation(
                 module=str(source_file),

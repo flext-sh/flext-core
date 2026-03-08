@@ -78,7 +78,7 @@ class TestFlextTestsMatchers:
         data = {"key1": "value1"}
         expected = {"key1": "wrong_value"}
         with pytest.raises(
-            AssertionError, match="expected 'wrong_value', got 'value1'"
+            AssertionError, match="expected 'wrong_value', got 'value1'",
         ):
             tm.that(data, kv=expected)
 
@@ -166,7 +166,7 @@ class TestFlextTestsMatchers:
         """Test tm.ok() with is_ parameter."""
         result = r[str].ok("test")
         value = tm.ok(
-            result, where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str))
+            result, where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str)),
         )
         assert value == "test"
 
@@ -347,7 +347,7 @@ class TestFlextTestsMatchers:
     def test_fail_with_data_parameter(self) -> None:
         """Test tm.fail() with data parameter."""
         result: r[str] = r[str].fail(
-            "error", error_data=m.ConfigMap(root={"field": "email"})
+            "error", error_data=m.ConfigMap(root={"field": "email"}),
         )
         error = tm.fail(result, data={"field": "email"})
         assert error == "error"

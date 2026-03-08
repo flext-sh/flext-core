@@ -123,12 +123,12 @@ class TestMigrationScenario4:
                 return FlextResult[None].ok(None)
 
             def create_user(
-                self, username: str, email: str
+                self, username: str, email: str,
             ) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
                     return FlextResult[dict[str, str]].fail(
-                        "Username and email required"
+                        "Username and email required",
                     )
                 self._logger.info("Creating user", extra={"username": username})
                 user_data = {"username": username, "email": email}
@@ -218,12 +218,12 @@ class TestMigrationComplexity:
                 self.container = FlextContainer()
 
             def process_data(
-                self, data: dict[str, str]
+                self, data: dict[str, str],
             ) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Typical data processing method."""
                 if not data:
                     return FlextResult[dict[str, t.ContainerValue]].fail(
-                        "Data required"
+                        "Data required",
                     )
                 self.logger.info("Processing data", extra={"size": len(data)})
                 processed: dict[str, t.ContainerValue] = {

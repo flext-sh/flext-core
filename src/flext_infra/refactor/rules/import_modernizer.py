@@ -35,7 +35,7 @@ def _parse_forbidden_rules(
     ]
     try:
         return TypeAdapter(
-            list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]
+            list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig],
         ).validate_python(normalized)
     except ValidationError:
         return []
@@ -46,7 +46,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None
+        self, tree: cst.Module, _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Apply import modernizer or lazy-import hoisting based on fix action."""
         fix_action = (
@@ -57,7 +57,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         runtime_aliases = set(c.Infra.Refactor.RUNTIME_ALIAS_NAMES)
         blocked_aliases = self._collect_blocked_aliases(tree, runtime_aliases)
         blocked_aliases.update(
-            self._collect_function_shadowed_aliases(tree, runtime_aliases)
+            self._collect_function_shadowed_aliases(tree, runtime_aliases),
         )
         forbidden = self.config.get("forbidden_imports")
         if forbidden is None:
@@ -86,7 +86,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         return alias.name.attr.value
 
     def _collect_blocked_aliases(
-        self, tree: cst.Module, runtime_aliases: set[str]
+        self, tree: cst.Module, runtime_aliases: set[str],
     ) -> set[str]:
         blocked_aliases: set[str] = set()
         for stmt in tree.body:
@@ -138,7 +138,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         return blocked_aliases
 
     def _collect_function_shadowed_aliases(
-        self, tree: cst.Module, runtime_aliases: set[str]
+        self, tree: cst.Module, runtime_aliases: set[str],
     ) -> set[str]:
         shadowed_aliases: set[str] = set()
 

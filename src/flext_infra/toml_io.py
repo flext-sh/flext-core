@@ -59,7 +59,7 @@ def _find_ruff_shared_path(project_dir: Path, workspace_root: Path) -> tuple[Pat
 
 
 def ensure_ruff_shared_template(
-    project_dir: Path, workspace_root: Path
+    project_dir: Path, workspace_root: Path,
 ) -> tuple[Path, bool]:
     """Create managed ruff-shared.toml in workspace root when missing."""
     target, _ = _find_ruff_shared_path(project_dir, workspace_root)
@@ -128,7 +128,7 @@ def ensure_table(parent: Table, key: str) -> Table:
 
 
 def _toml_get(
-    container: TOMLDocument | Table, key: object
+    container: TOMLDocument | Table, key: object,
 ) -> t.ContainerValue | Item | None:
     if not isinstance(key, str):
         return None
@@ -153,7 +153,7 @@ def _toml_get(
         except ValidationError:
             return None
     if isinstance(
-        normalized_mapping, (str, int, float, bool, type(None), BaseModel, Path)
+        normalized_mapping, (str, int, float, bool, type(None), BaseModel, Path),
     ):
         return normalized_mapping
     return None
@@ -164,7 +164,7 @@ def table_string_keys(table: Table) -> list[str]:
 
 
 def ensure_pyright_execution_envs(
-    pyright: Table, expected: list[dict[str, str]], changes: list[str]
+    pyright: Table, expected: list[dict[str, str]], changes: list[str],
 ) -> None:
     """Ensure pyright executionEnvironments matches expected; append to changes if updated."""
     raw = _unwrap_item(_toml_get(pyright, "executionEnvironments"))
@@ -172,7 +172,7 @@ def ensure_pyright_execution_envs(
     if list(current) != expected:
         pyright["executionEnvironments"] = expected
         changes.append(
-            "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none"
+            "tool.pyright.executionEnvironments set with tests reportPrivateUsage=none",
         )
 
 
@@ -218,14 +218,14 @@ def _project_dev_groups(doc: tomlkit.TOMLDocument) -> dict[str, list[str]]:
     return {
         c.Infra.Toml.DEV: _as_string_list(_toml_get(optional, c.Infra.Toml.DEV)),
         c.Infra.Directories.DOCS: _as_string_list(
-            _toml_get(optional, c.Infra.Toml.DOCS)
+            _toml_get(optional, c.Infra.Toml.DOCS),
         ),
         c.Infra.Gates.SECURITY: _as_string_list(
-            _toml_get(optional, c.Infra.Toml.SECURITY)
+            _toml_get(optional, c.Infra.Toml.SECURITY),
         ),
         c.Infra.Toml.TEST: _as_string_list(_toml_get(optional, c.Infra.Toml.TEST)),
         c.Infra.Directories.TYPINGS: _as_string_list(
-            _toml_get(optional, c.Infra.Directories.TYPINGS)
+            _toml_get(optional, c.Infra.Directories.TYPINGS),
         ),
     }
 
@@ -390,7 +390,7 @@ class FlextInfraTomlService(s[bool]):
             removed.append(path)
 
     def write(
-        self, path: Path, payload: tomlkit.TOMLDocument | t.Infra.ContainerDict
+        self, path: Path, payload: tomlkit.TOMLDocument | t.Infra.ContainerDict,
     ) -> r[bool]:
         """Write a TOML payload to a file.
 

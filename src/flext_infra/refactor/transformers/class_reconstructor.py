@@ -23,7 +23,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
         """Initialize with rule order config and optional change callback."""
         try:
             self._order_config = TypeAdapter(
-                list[m.Infra.Refactor.RuleConfigs.MethodOrderRule]
+                list[m.Infra.Refactor.RuleConfigs.MethodOrderRule],
             ).validate_python(order_config)
         except ValidationError:
             self._order_config = []
@@ -32,7 +32,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         """Sort methods in every contiguous method block of a class body."""
         if not isinstance(updated_node.body, cst.IndentedBlock):
@@ -50,7 +50,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 continue
             block_end = block_start
             while block_end < len(body) and isinstance(
-                body[block_end], cst.FunctionDef
+                body[block_end], cst.FunctionDef,
             ):
                 block_end += 1
             method_indices = list(range(block_start, block_end))
@@ -71,10 +71,10 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
         if changed_blocks == 0:
             return updated_node
         self._record_change(
-            f"Reordered {reordered_methods_total} methods in class {original_node.name.value} across {changed_blocks} contiguous block(s)"
+            f"Reordered {reordered_methods_total} methods in class {original_node.name.value} across {changed_blocks} contiguous block(s)",
         )
         return updated_node.with_changes(
-            body=updated_node.body.with_changes(body=new_body)
+            body=updated_node.body.with_changes(body=new_body),
         )
 
     def _analyze_method(self, node: cst.FunctionDef) -> m.Infra.Refactor.MethodInfo:
@@ -87,7 +87,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 decorators.append(dec.decorator.attr.value)
         category = self._categorize(name, decorators)
         return m.Infra.Refactor.MethodInfo(
-            name=name, category=category, node=node, decorators=decorators
+            name=name, category=category, node=node, decorators=decorators,
         )
 
     def _categorize(self, name: str, decorators: list[str]) -> str:
@@ -114,7 +114,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             self._on_change(message)
 
     def _sort_methods(
-        self, methods: list[m.Infra.Refactor.MethodInfo]
+        self, methods: list[m.Infra.Refactor.MethodInfo],
     ) -> list[m.Infra.Refactor.MethodInfo]:
 
         def matches_rule(
@@ -152,7 +152,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                         matched = True
                     pattern_decorators = pattern.decorators
                     if pattern_decorators and decorators.intersection(
-                        pattern_decorators
+                        pattern_decorators,
                     ):
                         matched = True
                 if not matched:

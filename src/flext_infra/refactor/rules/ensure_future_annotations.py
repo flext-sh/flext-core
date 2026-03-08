@@ -15,7 +15,7 @@ class FlextInfraRefactorEnsureFutureAnnotationsRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None
+        self, tree: cst.Module, _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Ensure future annotations import exists after docstring/header."""
         changes: list[str] = []
@@ -68,13 +68,13 @@ class FlextInfraRefactorEnsureFutureAnnotationsRule(FlextInfraRefactorRule):
                     cst.ImportFrom(
                         module=cst.Name("__future__"),
                         names=[cst.ImportAlias(name=cst.Name("annotations"))],
-                    )
-                ]
+                    ),
+                ],
             )
             changes.append("Ensured: from __future__ import annotations")
         if needs_leading_blank_line:
             annotations_stmt = annotations_stmt.with_changes(
-                leading_lines=[cst.EmptyLine()]
+                leading_lines=[cst.EmptyLine()],
             )
         future_block = [annotations_stmt, *non_annotation_future_stmts]
         new_body = (

@@ -72,7 +72,7 @@ class FlextInfraPathResolver(s[Path]):
                 ):
                     return r[Path].ok(parent)
             return r[Path].fail(
-                f"workspace root not found (looking for {c.Infra.Paths.WORKSPACE_MARKERS}) starting from {file}"
+                f"workspace root not found (looking for {c.Infra.Paths.WORKSPACE_MARKERS}) starting from {file}",
             )
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")

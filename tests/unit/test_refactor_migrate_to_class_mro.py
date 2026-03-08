@@ -18,7 +18,7 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -27,10 +27,10 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
         encoding="utf-8",
     )
     _ = (src_pkg / "consumer.py").write_text(
-        "from sample_pkg.constants import VALUE\n\nresult = VALUE\n", encoding="utf-8"
+        "from sample_pkg.constants import VALUE\n\nresult = VALUE\n", encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
-        target="constants", apply_changes=True
+        target="constants", apply_changes=True,
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -54,7 +54,7 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -67,7 +67,7 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
         encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
-        target="constants", apply_changes=True
+        target="constants", apply_changes=True,
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -87,7 +87,7 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -100,7 +100,7 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
-        target="constants", apply_changes=True
+        target="constants", apply_changes=True,
     )
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     assert report.errors == ()
@@ -123,7 +123,7 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -136,7 +136,7 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
-        target="typings", apply_changes=True
+        target="typings", apply_changes=True,
     )
     typings_source = (src_pkg / "typings.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -158,7 +158,7 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -180,7 +180,7 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
         encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
-        target="protocols", apply_changes=True
+        target="protocols", apply_changes=True,
     )
     protocols_source = (src_pkg / "protocols.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -201,7 +201,7 @@ def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -
     project_root = tmp_path / "sample"
     project_root.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     file_paths = [
@@ -219,7 +219,7 @@ def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -
             encoding="utf-8",
         )
     scanned = FlextInfraRefactorMROMigrationScanner._iter_constants_files(
-        project_root=project_root
+        project_root=project_root,
     )
     assert set(scanned) == set(file_paths)
 
@@ -230,7 +230,7 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
     project_root = tmp_path / "sample"
     project_root.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (project_root / ".git").mkdir(parents=True)
@@ -254,13 +254,13 @@ def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
     project_root = workspace_root / "proj-a"
     project_root.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='proj-a'\n", encoding="utf-8"
+        "[project]\nname='proj-a'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (project_root / "src").mkdir(parents=True)
 
     discovered = FlextInfraUtilitiesRefactor.discover_project_roots(
-        workspace_root=workspace_root
+        workspace_root=workspace_root,
     )
     assert discovered == [project_root]
 
@@ -270,7 +270,7 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
     _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8"
+        "[project]\nname='sample'\n", encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -279,10 +279,10 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     _ = (src_pkg / "consumer.py").write_text(
-        "from sample_pkg.constants import VALUE\n\nresult = VALUE\n", encoding="utf-8"
+        "from sample_pkg.constants import VALUE\n\nresult = VALUE\n", encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
-        target="constants", apply_changes=True
+        target="constants", apply_changes=True,
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")

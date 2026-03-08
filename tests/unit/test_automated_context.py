@@ -12,8 +12,8 @@ from typing import cast
 import pytest
 
 from flext_core import FlextContext, r
-from tests.conftest import test_framework
 from tests import m
+from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -59,7 +59,7 @@ class TestAutomatedFlextContext:
         ids=lambda case: case["description"],
     )
     def test_automated_context_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario
+        self, test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for context functionality."""
         try:
@@ -86,7 +86,7 @@ class TestAutomatedFlextContext:
         instance = fixture_factory.create_test_context_instance()
         result = self._execute_context_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextContext type safety test"
+            result, "FlextContext type safety test",
         )
 
     def test_automated_context_error_handling(self) -> None:
@@ -113,7 +113,7 @@ class TestAutomatedFlextContext:
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextContext performance test exceeded timeout"
+            result, "FlextContext performance test exceeded timeout",
         )
 
     def test_automated_context_resource_management(self) -> None:
@@ -121,18 +121,18 @@ class TestAutomatedFlextContext:
         instance = fixture_factory.create_test_context_instance()
         result = self._execute_context_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextContext resource test"
+            result, "FlextContext resource test",
         )
         cleanup_fn = getattr(instance, "cleanup", None)
         if callable(cleanup_fn):
             cleanup_result = cleanup_fn()
             if isinstance(cleanup_result, r):
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextContext cleanup failed"
+                    cleanup_result, "FlextContext cleanup failed",
                 )
 
     def _execute_context_operation(
-        self, instance: FlextContext, input_data: Mapping[str, object]
+        self, instance: FlextContext, input_data: Mapping[str, object],
     ) -> r[object]:
         """Execute a test operation on context instance.
 

@@ -24,8 +24,8 @@ class TopLevelClassCollector(cst.CSTVisitor):
         is_top_level = self._depth == 0
         self.classes.append(
             m.Infra.Refactor.ClassOccurrence(
-                name=node.name.value, line=0, is_top_level=is_top_level
-            )
+                name=node.name.value, line=0, is_top_level=is_top_level,
+            ),
         )
         self._depth += 1
 
@@ -43,7 +43,7 @@ class FlextInfraRefactorLooseClassScanner:
         files_result = self._discover_python_files(project_root)
         if files_result.is_failure:
             return r[t.ConfigurationMapping].fail(
-                files_result.error or "discovery failed"
+                files_result.error or "discovery failed",
             )
         discovered_files: list[Path] = files_result.value
         grep_result = self._scan_with_ast_grep(project_root)
@@ -152,7 +152,7 @@ class FlextInfraRefactorLooseClassScanner:
             return r[Path].fail(str(exc))
 
     def _scan_file_with_libcst(
-        self, file_path: Path
+        self, file_path: Path,
     ) -> r[list[m.Infra.Refactor.ClassOccurrence]]:
         try:
             src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -176,13 +176,13 @@ class FlextInfraRefactorLooseClassScanner:
         capture = u.Infra.Refactor.capture_output(cmd)
         if capture.is_failure:
             return r[dict[Path, dict[str, int]]].fail(
-                capture.error or "ast-grep failed"
+                capture.error or "ast-grep failed",
             )
         if not capture.value:
             return r[dict[Path, dict[str, int]]].ok({})
         try:
             entries = TypeAdapter(
-                list[m.Infra.Refactor.AstGrepMatchEnvelope]
+                list[m.Infra.Refactor.AstGrepMatchEnvelope],
             ).validate_json(capture.value)
         except ValidationError as exc:
             return r[dict[Path, dict[str, int]]].fail(str(exc))

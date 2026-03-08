@@ -44,7 +44,7 @@ def _extract_reports_written(
 
 
 def _extract_diag_entries(
-    payload: m.Infra.Core.PytestDiagnostics | Mapping[str, t.ContainerValue], key: str
+    payload: m.Infra.Core.PytestDiagnostics | Mapping[str, t.ContainerValue], key: str,
 ) -> list[str]:
     if isinstance(payload, Mapping):
         raw = payload.get(key, [])
@@ -150,7 +150,7 @@ def _run_scan(args: argparse.Namespace) -> int:
     )
     if result.is_success:
         data: Mapping[str, t.ContainerValue] = cast(
-            "Mapping[str, t.ContainerValue]", result.value
+            "Mapping[str, t.ContainerValue]", result.value,
         )
         violation_count = data.get("violation_count", 0)
         return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
@@ -223,7 +223,7 @@ def main() -> int:
     sv.add_argument("--skill", required=True, help="Skill folder name")
     sv.add_argument("--root", default=".", help="Workspace root")
     sv.add_argument(
-        "--mode", choices=("baseline", "strict"), default=c.Infra.Modes.BASELINE
+        "--mode", choices=("baseline", "strict"), default=c.Infra.Modes.BASELINE,
     )
     stv = subparsers.add_parser("stub-validate", help="Validate stub supply chain")
     stv.add_argument("--root", default=".", help="Workspace root")

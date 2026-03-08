@@ -143,7 +143,7 @@ class TestFlextModelsAggregateRoot:
             balance: Decimal
 
         account = Account(
-            unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00")
+            unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00"),
         )
         assert account.unique_id == "acc-1"
         assert account.owner_name == "Alice"
@@ -157,7 +157,7 @@ class TestFlextModelsAggregateRoot:
 
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
         result = account.add_domain_event(
-            "MoneyDeposited", m.ConfigMap(root={"amount": 100})
+            "MoneyDeposited", m.ConfigMap(root={"amount": 100}),
         )
         _ = assertion_helpers.assert_flext_result_success(result)
 
@@ -179,7 +179,7 @@ class TestFlextModelsAggregateRoot:
 
         order = Order(unique_id="order-1", status="pending")
         result = order.add_domain_event(
-            "OrderCreated", m.ConfigMap(root={"timestamp": "2025-01-01"})
+            "OrderCreated", m.ConfigMap(root={"timestamp": "2025-01-01"}),
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(order.domain_events) > 0
@@ -224,7 +224,7 @@ class TestFlextModelsCommand:
     def test_command_creation(self) -> None:
         """Test command creation."""
         cmd = CreateUserCommand(
-            user_id="user-1", name="Alice", email="alice@example.com"
+            user_id="user-1", name="Alice", email="alice@example.com",
         )
         assert cmd.user_id == "user-1"
         assert cmd.name == "Alice"
@@ -278,7 +278,7 @@ class TestFlextModelsEdgeCases:
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
         large_data: m.ConfigMap = m.ConfigMap(
-            root={f"field_{i}": f"value_{i}" for i in range(100)}
+            root={f"field_{i}": f"value_{i}" for i in range(100)},
         )
         event = m.DomainEvent(
             event_type="BulkDataImported",
@@ -326,7 +326,7 @@ class TestFlextModelsIntegration:
         order = Order(unique_id="order-1", status="new", items_count=0)
         assert order.status == "new"
         event_result = order.add_domain_event(
-            "ItemAdded", m.ConfigMap(root={"item_id": "item-1"})
+            "ItemAdded", m.ConfigMap(root={"item_id": "item-1"}),
         )
         assert event_result.is_success
         assert len(order.domain_events) >= 0

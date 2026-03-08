@@ -22,7 +22,7 @@ class TestFlextInfraVersioningService:
         return FlextInfraVersioningService()
 
     def test_parse_semver_valid_version(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing a valid semantic version."""
         result = service.parse_semver("1.2.3")
@@ -30,7 +30,7 @@ class TestFlextInfraVersioningService:
         assert result.value == (1, 2, 3)
 
     def test_parse_semver_with_dev_suffix(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing semantic version with -dev suffix."""
         result = service.parse_semver("1.2.3-dev")
@@ -38,7 +38,7 @@ class TestFlextInfraVersioningService:
         assert result.value == (1, 2, 3)
 
     def test_parse_semver_zero_version(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing version with zeros."""
         result = service.parse_semver("0.0.0")
@@ -46,7 +46,7 @@ class TestFlextInfraVersioningService:
         assert result.value == (0, 0, 0)
 
     def test_parse_semver_large_numbers(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing version with large numbers."""
         result = service.parse_semver("999.888.777")
@@ -54,7 +54,7 @@ class TestFlextInfraVersioningService:
         assert result.value == (999, 888, 777)
 
     def test_parse_semver_invalid_format(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing invalid version format."""
         result = service.parse_semver("1.2")
@@ -62,7 +62,7 @@ class TestFlextInfraVersioningService:
         assert result.error and "invalid semver" in result.error
 
     def test_parse_semver_non_numeric(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing version with non-numeric parts."""
         result = service.parse_semver("a.b.c")
@@ -70,7 +70,7 @@ class TestFlextInfraVersioningService:
         assert result.error and "invalid semver" in result.error
 
     def test_parse_semver_extra_suffix(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test parsing version with invalid suffix."""
         result = service.parse_semver("1.2.3-beta")
@@ -102,7 +102,7 @@ class TestFlextInfraVersioningService:
         assert result.value == "1.0.0"
 
     def test_bump_version_invalid_bump_type(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test bumping with invalid bump type."""
         result = service.bump_version("1.2.3", "invalid")
@@ -110,7 +110,7 @@ class TestFlextInfraVersioningService:
         assert result.error and "invalid bump type" in result.error
 
     def test_bump_version_invalid_version(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test bumping invalid version string."""
         result = service.bump_version("not.a.version", "major")
@@ -118,7 +118,7 @@ class TestFlextInfraVersioningService:
         assert result.error and "invalid semver" in result.error
 
     def test_release_tag_from_branch_release_pattern(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test extracting tag from release branch."""
         result = service.release_tag_from_branch("release/1.2.3")
@@ -126,7 +126,7 @@ class TestFlextInfraVersioningService:
         assert result.value == "v1.2.3"
 
     def test_release_tag_from_branch_dev_pattern(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test extracting tag from dev branch."""
         result = service.release_tag_from_branch("1.2.3-dev")
@@ -134,7 +134,7 @@ class TestFlextInfraVersioningService:
         assert result.value == "v1.2.3"
 
     def test_release_tag_from_branch_invalid_pattern(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test extracting tag from invalid branch name."""
         result = service.release_tag_from_branch("feature/my-feature")
@@ -142,7 +142,7 @@ class TestFlextInfraVersioningService:
         assert result.error and "does not match release pattern" in result.error
 
     def test_release_tag_from_branch_empty_string(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test extracting tag from empty branch name."""
         result = service.release_tag_from_branch("")
@@ -150,7 +150,7 @@ class TestFlextInfraVersioningService:
         assert result.error and "does not match release pattern" in result.error
 
     def test_parse_semver_result_type(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test that parse_semver returns properly typed FlextResult."""
         result = service.parse_semver("1.2.3")
@@ -160,7 +160,7 @@ class TestFlextInfraVersioningService:
         assert len(result.value) == 3
 
     def test_bump_version_result_type(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test that bump_version returns properly typed FlextResult."""
         result = service.bump_version("1.2.3", "major")
@@ -169,7 +169,7 @@ class TestFlextInfraVersioningService:
         assert isinstance(result.value, str)
 
     def test_release_tag_from_branch_result_type(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test that release_tag_from_branch returns properly typed FlextResult."""
         result = service.release_tag_from_branch("release/1.2.3")
@@ -178,7 +178,7 @@ class TestFlextInfraVersioningService:
         assert isinstance(result.value, str)
 
     def test_execute_returns_empty_string(
-        self, service: FlextInfraVersioningService
+        self, service: FlextInfraVersioningService,
     ) -> None:
         """Test execute() returns FlextResult[str] with empty string."""
         result = service.execute()
@@ -186,7 +186,7 @@ class TestFlextInfraVersioningService:
         assert result.value == ""
 
     def test_current_workspace_version_success(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test reading current workspace version from pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
@@ -196,7 +196,7 @@ class TestFlextInfraVersioningService:
         assert result.value == "1.2.3"
 
     def test_current_workspace_version_missing_file(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test reading version when pyproject.toml is missing."""
         result = service.current_workspace_version(tmp_path)
@@ -206,7 +206,7 @@ class TestFlextInfraVersioningService:
         assert "file not found" in result.error or "read" in result.error
 
     def test_current_workspace_version_missing_project_table(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test reading version when [project] table is missing."""
         pyproject = tmp_path / "pyproject.toml"
@@ -217,7 +217,7 @@ class TestFlextInfraVersioningService:
         assert "version not found" in result.error
 
     def test_current_workspace_version_missing_version_field(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test reading version when version field is missing."""
         pyproject = tmp_path / "pyproject.toml"
@@ -228,7 +228,7 @@ class TestFlextInfraVersioningService:
         assert "version not found" in result.error
 
     def test_current_workspace_version_empty_version(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test reading version when version field is empty."""
         pyproject = tmp_path / "pyproject.toml"
@@ -239,7 +239,7 @@ class TestFlextInfraVersioningService:
         assert "version not found" in result.error
 
     def test_replace_project_version_success(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test replacing version in project pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
@@ -252,7 +252,7 @@ class TestFlextInfraVersioningService:
         assert verify.value == "2.0.0"
 
     def test_replace_project_version_missing_file(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test replacing version when pyproject.toml is missing."""
         result = service.replace_project_version(tmp_path, "2.0.0")
@@ -261,7 +261,7 @@ class TestFlextInfraVersioningService:
         assert "file not found" in result.error or "read" in result.error
 
     def test_replace_project_version_missing_project_table(
-        self, service: FlextInfraVersioningService, tmp_path: Path
+        self, service: FlextInfraVersioningService, tmp_path: Path,
     ) -> None:
         """Test replacing version when [project] table is missing."""
         pyproject = tmp_path / "pyproject.toml"

@@ -29,7 +29,7 @@ class FlextInfraTextPatternScanner:
 
     @staticmethod
     def _collect_files(
-        root: Path, includes: list[str], excludes: list[str]
+        root: Path, includes: list[str], excludes: list[str],
     ) -> list[Path]:
         """Collect files matching include/exclude globs."""
         selected: list[Path] = []
@@ -50,7 +50,7 @@ class FlextInfraTextPatternScanner:
         for file_path in files:
             try:
                 text = file_path.read_text(
-                    encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+                    encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE,
                 )
             except OSError:
                 continue
@@ -83,18 +83,18 @@ class FlextInfraTextPatternScanner:
         try:
             if not root.exists() or not root.is_dir():
                 return r[Mapping[str, t.Scalar]].fail(
-                    f"root directory does not exist: {root}"
+                    f"root directory does not exist: {root}",
                 )
             if not includes:
                 return r[Mapping[str, t.Scalar]].fail(
-                    "at least one include glob required"
+                    "at least one include glob required",
                 )
             if match_mode not in {
                 c.Infra.MatchModes.PRESENT,
                 c.Infra.MatchModes.ABSENT,
             }:
                 return r[Mapping[str, t.Scalar]].fail(
-                    f"invalid match_mode: {match_mode}"
+                    f"invalid match_mode: {match_mode}",
                 )
             regex = re.compile(pattern, flags=re.MULTILINE)
             files = self._collect_files(root, includes, excludes or [])

@@ -25,7 +25,7 @@ def test_models_settings_branch_paths() -> None:
         FlextModelsConfig.RetryConfiguration(retry_on_status_codes=[9999])
     with pytest.raises(ValueError, match="max_delay_seconds"):
         FlextModelsConfig.RetryConfiguration(
-            initial_delay_seconds=2.0, max_delay_seconds=1.0
+            initial_delay_seconds=2.0, max_delay_seconds=1.0,
         )
     with pytest.raises(TypeError, match="Validator must be callable"):
         FlextModelsConfig.ValidationConfiguration(custom_validators=[1])
@@ -43,10 +43,10 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
             return "503"
 
     converted = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy(
-        cast("list[int]", [_CodeObj()])
+        cast("list[int]", [_CodeObj()]),
     )
     assert converted == [503]
     converted_str = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy([
-        "503"
+        "503",
     ])
     assert converted_str == [503]

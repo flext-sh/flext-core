@@ -60,7 +60,7 @@ class FlextInfraCommandRunner(s[m.Infra.Core.CommandOutput]):
     def execute(self) -> r[m.Infra.Core.CommandOutput]:
         """Execute the service (required by s base class)."""
         return r[m.Infra.Core.CommandOutput].ok(
-            m.Infra.Core.CommandOutput(stdout="", stderr="", exit_code=0)
+            m.Infra.Core.CommandOutput(stdout="", stderr="", exit_code=0),
         )
 
     def run(
@@ -84,14 +84,14 @@ class FlextInfraCommandRunner(s[m.Infra.Core.CommandOutput]):
         raw_result = self.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
         if raw_result.is_failure:
             return r[m.Infra.Core.CommandOutput].fail(
-                raw_result.error or "command execution error"
+                raw_result.error or "command execution error",
             )
         output = raw_result.value
         if output.exit_code != 0:
             cmd_str = shlex.join(list(cmd))
             detail = (output.stderr or output.stdout).strip()
             return r[m.Infra.Core.CommandOutput].fail(
-                f"command failed ({output.exit_code}): {cmd_str}: {detail}"
+                f"command failed ({output.exit_code}): {cmd_str}: {detail}",
             )
         return r[m.Infra.Core.CommandOutput].ok(output)
 
@@ -156,7 +156,7 @@ class FlextInfraCommandRunner(s[m.Infra.Core.CommandOutput]):
             cmd_str = shlex.join(list(cmd))
             timeout_text = str(exc.timeout)
             return r[m.Infra.Core.CommandOutput].fail(
-                f"command timeout after {timeout_text}s: {cmd_str}"
+                f"command timeout after {timeout_text}s: {cmd_str}",
             )
         except (OSError, ValueError) as exc:
             return r[m.Infra.Core.CommandOutput].fail(f"command execution error: {exc}")

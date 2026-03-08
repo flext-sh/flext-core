@@ -19,11 +19,8 @@ import pytest
 
 from flext_core import FlextResult, t, u
 
-from ... import m
+from ...models import m
 
-FixtureCaseDict = m.Tests.FixtureCaseDict
-FixtureDataDict = m.Tests.FixtureDataDict
-MockScenarioData = m.Tests.MockScenarioData
 TestFunction = Callable[[object], None]
 
 
@@ -53,7 +50,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: MockScenarioData) -> None:
+    def __init__(self, name: str, data: m.Tests.MockScenarioData) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
@@ -78,7 +75,7 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(
-        self, _description: str, **kwargs: t.ContainerValue
+        self, _description: str, **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Given method.
 
@@ -90,7 +87,7 @@ class GivenWhenThenBuilder:
         return self
 
     def when(
-        self, _description: str, **kwargs: t.ContainerValue
+        self, _description: str, **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """When method.
 
@@ -102,7 +99,7 @@ class GivenWhenThenBuilder:
         return self
 
     def then(
-        self, _description: str, **kwargs: t.ContainerValue
+        self, _description: str, **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Then method.
 
@@ -151,7 +148,7 @@ class GivenWhenThenBuilder:
 
         given_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._given, {k: str(k) for k in self._given}, keep_unmapped=True
+                self._given, {k: str(k) for k in self._given}, keep_unmapped=True,
             ).value,
             convert_dict_value,
         )
@@ -160,7 +157,7 @@ class GivenWhenThenBuilder:
         }
         when_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._when, {k: str(k) for k in self._when}, keep_unmapped=True
+                self._when, {k: str(k) for k in self._when}, keep_unmapped=True,
             ).value,
             convert_dict_value,
         )
@@ -169,14 +166,14 @@ class GivenWhenThenBuilder:
         }
         then_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._then, {k: str(k) for k in self._then}, keep_unmapped=True
+                self._then, {k: str(k) for k in self._then}, keep_unmapped=True,
             ).value,
             convert_dict_value,
         )
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
-        scenario_data = MockScenarioData.model_validate({
+        scenario_data = m.Tests.MockScenarioData.model_validate({
             "given": given_converted,
             "when": when_converted,
             "then": then_converted,
@@ -274,12 +271,12 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FixtureCaseDict] = []
-        self._success_cases: list[FixtureCaseDict] = []
-        self._failure_cases: list[FixtureCaseDict] = []
+        self._cases: list[m.Tests.FixtureCaseDict] = []
+        self._success_cases: list[m.Tests.FixtureCaseDict] = []
+        self._failure_cases: list[m.Tests.FixtureCaseDict] = []
 
     def add_case(
-        self, **kwargs: str | int | bool | list[str]
+        self, **kwargs: str | int | bool | list[str],
     ) -> ParameterizedTestBuilder:
         """add_case method.
 
@@ -287,11 +284,11 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        self._cases.append(FixtureCaseDict.model_validate(kwargs))
+        self._cases.append(m.Tests.FixtureCaseDict.model_validate(kwargs))
         return self
 
     def add_success_cases(
-        self, cases: list[FixtureCaseDict]
+        self, cases: list[m.Tests.FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -303,7 +300,7 @@ class ParameterizedTestBuilder:
         return self
 
     def add_failure_cases(
-        self, cases: list[FixtureCaseDict]
+        self, cases: list[m.Tests.FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -314,7 +311,7 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FixtureCaseDict]:
+    def build(self) -> list[m.Tests.FixtureCaseDict]:
         """Build method.
 
         Returns:
@@ -422,7 +419,7 @@ class AssertionBuilder:
                 list[t.ContainerValue]
                 | dict[str, t.ContainerValue]
                 | str
-                | tuple[object, ...]
+                | tuple[object, ...],
             ],
             bool,
         ],
@@ -503,21 +500,21 @@ class TestAdvancedPatterns:
         builder = (
             ParameterizedTestBuilder("email_validation")
             .add_success_cases([
-                FixtureCaseDict.model_validate({
+                m.Tests.FixtureCaseDict.model_validate({
                     "email": "valid@example.com",
                     "input": "valid@example.com",
                 }),
-                FixtureCaseDict.model_validate({
+                m.Tests.FixtureCaseDict.model_validate({
                     "email": "user.name@domain.co.uk",
                     "input": "user.name@domain.co.uk",
                 }),
             ])
             .add_failure_cases([
-                FixtureCaseDict.model_validate({
+                m.Tests.FixtureCaseDict.model_validate({
                     "email": "invalid-email",
                     "input": "invalid-email",
                 }),
-                FixtureCaseDict.model_validate({
+                m.Tests.FixtureCaseDict.model_validate({
                     "email": "@domain.com",
                     "input": "@domain.com",
                 }),
@@ -550,7 +547,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data = MockScenarioData.model_validate({
+        scenario_data = m.Tests.MockScenarioData.model_validate({
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
@@ -625,7 +622,7 @@ class TestAdvancedPatterns:
                 nested_data=FlextTestBuilder()
                 .with_id("nested-456")
                 .with_user_data("Jane", "jane@example.com")
-                .build()
+                .build(),
             )
             .build()
         )

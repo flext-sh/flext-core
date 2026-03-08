@@ -77,7 +77,7 @@ def _write_complete_modules(pkg_dir: Path, package_name: str) -> None:
     for module_name in _SRC_MODULES:
         suffix = module_name.split(".")[0].title()
         _ = (pkg_dir / module_name).write_text(
-            f"class {prefix}{suffix}:\n    pass\n", encoding="utf-8"
+            f"class {prefix}{suffix}:\n    pass\n", encoding="utf-8",
         )
 
 
@@ -99,13 +99,13 @@ def _write_package_init(pkg_dir: Path, package_name: str) -> None:
 
 
 def _make_project(
-    tmp_path: Path, name: str, *, with_all_modules: bool, with_tests_dir: bool
+    tmp_path: Path, name: str, *, with_all_modules: bool, with_tests_dir: bool,
 ) -> Path:
     project = tmp_path / name
     project.mkdir()
     (project / "Makefile").touch()
     _ = (project / "pyproject.toml").write_text(
-        f"[project]\nname='{name}'\n", encoding="utf-8"
+        f"[project]\nname='{name}'\n", encoding="utf-8",
     )
     (project / ".git").mkdir()
     package_name = name.replace("-", "_")
@@ -137,14 +137,14 @@ def _make_project(
 def test_codegen_pipeline_end_to_end(tmp_path: Path) -> None:
     """Pipeline flow remains isolated, idempotent, and syntactically valid."""
     _ = _make_project(
-        tmp_path, "project-a", with_all_modules=True, with_tests_dir=False
+        tmp_path, "project-a", with_all_modules=True, with_tests_dir=False,
     )
     project_b = _make_project(
-        tmp_path, "project-b", with_all_modules=True, with_tests_dir=False
+        tmp_path, "project-b", with_all_modules=True, with_tests_dir=False,
     )
     _ = _make_project(tmp_path, "project-c", with_all_modules=True, with_tests_dir=True)
     flexcore = _make_project(
-        tmp_path, "flexcore", with_all_modules=False, with_tests_dir=True
+        tmp_path, "flexcore", with_all_modules=False, with_tests_dir=True,
     )
     package_b = project_b / "src" / "project_b"
     (package_b / "models.py").unlink()
@@ -160,7 +160,7 @@ def test_codegen_pipeline_end_to_end(tmp_path: Path) -> None:
     lazy_init = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
     with (
         patch(
-            "flext_infra.codegen.transforms.FlextInfraCodegenTransforms.run_ruff_fix"
+            "flext_infra.codegen.transforms.FlextInfraCodegenTransforms.run_ruff_fix",
         ),
         patch(
             "flext_infra.core.namespace_validator.c.Infra.Core",

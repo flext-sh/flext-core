@@ -98,7 +98,7 @@ class FlextInfraCodegenTransforms:
 
     @staticmethod
     def generate_module_skeleton(
-        class_name: str, base_class: str, docstring: str
+        class_name: str, base_class: str, docstring: str,
     ) -> str:
         """Generate a minimal base module file with correct imports."""
         import_line = FlextInfraCodegenTransforms._resolve_base_class_import(base_class)
@@ -123,7 +123,7 @@ class FlextInfraCodegenTransforms:
                     ast.Module(
                         body=[ast.Expr(value=base) for base in stmt.bases],
                         type_ignores=[],
-                    )
+                    ),
                 )
                 for base_node in ast.walk(bases_module):
                     if isinstance(base_node, ast.Name) and base_node.id == name:
@@ -132,7 +132,7 @@ class FlextInfraCodegenTransforms:
                     ast.Module(
                         body=[ast.Expr(value=kw.value) for kw in stmt.keywords],
                         type_ignores=[],
-                    )
+                    ),
                 )
                 for kw_node in ast.walk(keywords_module):
                     if isinstance(kw_node, ast.Name) and kw_node.id == name:

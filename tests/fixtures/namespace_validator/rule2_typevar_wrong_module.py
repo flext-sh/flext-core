@@ -10,8 +10,6 @@ T = TypeVar("T")
 class FlextTestModels:
     """Models namespace."""
 
-    pass
-
 
 m = FlextTestModels
 __all__ = ["FlextTestModels", "m"]

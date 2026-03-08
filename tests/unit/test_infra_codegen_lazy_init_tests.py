@@ -30,7 +30,7 @@ class TestScanTestsDefaultBehavior:
     """Verify that scan_tests=False (default) only scans src/."""
 
     def test_run_check_only_scan_tests_false_ignores_tests_dir(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """run(check_only=True, scan_tests=False) only scans src/."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
@@ -50,12 +50,12 @@ class TestScanTestsDefaultBehavior:
         assert result_default == result_explicit
 
     def test_run_scan_tests_false_does_not_modify_tests_files(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """run(scan_tests=False) never touches tests/ __init__.py files."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         tests_init = _create_init_file(
-            tmp_path / "tests" / "helpers", _VALID_TESTS_INIT
+            tmp_path / "tests" / "helpers", _VALID_TESTS_INIT,
         )
         original_content = tests_init.read_text(encoding="utf-8")
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
@@ -67,7 +67,7 @@ class TestScanTestsEnabled:
     """Verify that scan_tests=True also processes tests/ directories."""
 
     def test_run_check_only_scan_tests_true_includes_tests_dir(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """run(check_only=True, scan_tests=True) scans both src/ and tests/."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
@@ -80,12 +80,12 @@ class TestScanTestsEnabled:
         assert result_with >= result_without or result_with == result_without
 
     def test_run_scan_tests_true_processes_tests_init_files(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """run(scan_tests=True) processes tests/__init__.py files."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         tests_init = _create_init_file(
-            tmp_path / "tests" / "helpers", _VALID_TESTS_INIT
+            tmp_path / "tests" / "helpers", _VALID_TESTS_INIT,
         )
         original_content = tests_init.read_text(encoding="utf-8")
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
@@ -95,7 +95,7 @@ class TestScanTestsEnabled:
         assert new_content != original_content or "__all__" in new_content
 
     def test_run_scan_tests_true_with_nested_tests_packages(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """scan_tests=True finds deeply nested tests/__init__.py files."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
@@ -108,12 +108,12 @@ class TestScanTestsEnabled:
         assert nested_init.exists()
 
     def test_run_scan_tests_true_check_only_does_not_modify(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """run(check_only=True, scan_tests=True) reports but doesn't write."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         tests_init = _create_init_file(
-            tmp_path / "tests" / "helpers", _VALID_TESTS_INIT
+            tmp_path / "tests" / "helpers", _VALID_TESTS_INIT,
         )
         original_content = tests_init.read_text(encoding="utf-8")
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
@@ -157,7 +157,7 @@ class TestSrcBehaviorNoRegression:
     """Ensure scan_tests does not regress existing src/ behavior."""
 
     def test_src_only_results_unchanged_with_scan_tests_false(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """src/ processing is identical regardless of scan_tests flag when no tests/ exist."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
@@ -167,7 +167,7 @@ class TestSrcBehaviorNoRegression:
         assert result_false == result_true
 
     def test_src_file_processed_identically_with_and_without_scan_tests(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """src/ __init__.py content is the same whether scan_tests is True or False."""
         src_content = (

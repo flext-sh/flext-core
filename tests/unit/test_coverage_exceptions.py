@@ -41,7 +41,7 @@ class ExceptionScenarios:
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
-            "validation_basic", FlextExceptions.ValidationError, "Invalid input", {}, {}
+            "validation_basic", FlextExceptions.ValidationError, "Invalid input", {}, {},
         ),
         ExceptionCreationScenario(
             "validation_with_field",
@@ -187,7 +187,7 @@ class TestFlextExceptionsHierarchy:
     """Test complete exception hierarchy using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.EXCEPTION_CREATION, ids=lambda s: s.name
+        "scenario", ExceptionScenarios.EXCEPTION_CREATION, ids=lambda s: s.name,
     )
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
@@ -209,7 +209,7 @@ class TestFlextExceptionsHierarchy:
                 for key, type_value in type_kwargs.items():
                     metadata_kwargs[key] = type_value.__name__
             exception_ctor = cast(
-                "Callable[..., FlextExceptions.BaseError]", scenario.exception_type
+                "Callable[..., FlextExceptions.BaseError]", scenario.exception_type,
             )
             error = exception_ctor(scenario.message, **metadata_kwargs)
         else:
@@ -252,7 +252,7 @@ class TestExceptionIntegration:
         try:
             error_msg = "Validation failed"
             raise FlextExceptions.ValidationError(
-                error_msg, field="email", value="invalid"
+                error_msg, field="email", value="invalid",
             )
         except FlextExceptions.ValidationError as e:
             result = FlextResult[bool].fail(f"Error in user creation: {e}")
@@ -274,7 +274,7 @@ class TestExceptionEdgeCases:
         ids=["empty", "unicode", "long", "special_chars"],
     )
     def test_exception_message_variations(
-        self, message: str, expected_in_str: bool
+        self, message: str, expected_in_str: bool,
     ) -> None:
         """Test exception with various message formats."""
         error = FlextExceptions.ValidationError(message)
@@ -324,7 +324,7 @@ class TestExceptionProperties:
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
         error = FlextExceptions.NotFoundError(
-            "Resource not found", resource_id="123", resource_type="User"
+            "Resource not found", resource_id="123", resource_type="User",
         )
         assert "Resource not found" in str(error)
 
@@ -341,7 +341,7 @@ class TestExceptionContext:
         }
         metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
         error = FlextExceptions.ValidationError(
-            "Validation failed in context", metadata=metadata_typed
+            "Validation failed in context", metadata=metadata_typed,
         )
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
@@ -381,7 +381,7 @@ class TestExceptionSerialization:
     def test_exception_to_dict(self) -> None:
         """Test converting exception to dictionary."""
         error = FlextExceptions.ValidationError(
-            "Invalid email", field="email", value="not-valid"
+            "Invalid email", field="email", value="not-valid",
         )
         error_dict = error.to_dict()
         assert error_dict["error_type"] == "ValidationError"
@@ -421,7 +421,7 @@ class TestExceptionFactory:
         }
         kwargs_typed: dict[str, t.MetadataValue] = converted_kwargs
         create_error = cast(
-            "Callable[..., FlextExceptions.BaseError]", FlextExceptions.create
+            "Callable[..., FlextExceptions.BaseError]", FlextExceptions.create,
         )
         error = create_error(message, **kwargs_typed)
         assert isinstance(error, expected_type)

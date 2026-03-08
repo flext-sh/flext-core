@@ -25,7 +25,7 @@ def main() -> int:
     if len(argv) > 0 and argv[0] in {"ultrawork-models", "ultrawork"}:
         return _run_ultrawork_models(argv=argv[1:])
     _ = sys.stderr.write(
-        "Usage: python -m flext_infra.refactor [centralize-pydantic|migrate-mro|namespace-enforce|ultrawork-models] ...\n"
+        "Usage: python -m flext_infra.refactor [centralize-pydantic|migrate-mro|namespace-enforce|ultrawork-models] ...\n",
     )
     return 2
 
@@ -94,10 +94,10 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
     _ = sys.stdout.write(f"moved_aliases={summary['moved_aliases']}\n")
     _ = sys.stdout.write(f"normalized_files={summary['normalized_files']}\n")
     _ = sys.stdout.write(
-        f"detected_model_violations={summary['detected_model_violations']}\n"
+        f"detected_model_violations={summary['detected_model_violations']}\n",
     )
     _ = sys.stdout.write(
-        f"detected_alias_violations={summary['detected_alias_violations']}\n"
+        f"detected_alias_violations={summary['detected_alias_violations']}\n",
     )
     _ = sys.stdout.write(f"created_model_files={summary['created_model_files']}\n")
     _ = sys.stdout.write(f"parse_syntax_errors={summary['parse_syntax_errors']}\n")
@@ -105,10 +105,10 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
     _ = sys.stdout.write(f"parse_io_errors={summary['parse_io_errors']}\n")
     _ = sys.stdout.write(f"created_typings_files={summary['created_typings_files']}\n")
     _ = sys.stdout.write(
-        f"skipped_non_necessary_apply={summary.get('skipped_non_necessary_apply', 0)}\n"
+        f"skipped_non_necessary_apply={summary.get('skipped_non_necessary_apply', 0)}\n",
     )
     _ = sys.stdout.write(
-        f"skipped_nonpackage_apply={summary['skipped_nonpackage_apply']}\n"
+        f"skipped_nonpackage_apply={summary['skipped_nonpackage_apply']}\n",
     )
     _ = sys.stdout.write(f"workspace={workspace_path}\n")
     _ = sys.stdout.write(f"mode={('apply' if apply_changes else 'dry-run')}\n")
@@ -243,74 +243,74 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         apply_changes=apply_changes,
     )
     namespace_report = FlextInfraNamespaceEnforcer(
-        workspace_root=workspace_path
+        workspace_root=workspace_path,
     ).enforce(apply_changes=apply_changes)
     _ = sys.stdout.write(f"workspace={workspace_path}\n")
     _ = sys.stdout.write(f"mode={('apply' if apply_changes else 'dry-run')}\n")
     _ = sys.stdout.write(f"scanned_files={centralize_summary['scanned_files']}\n")
     _ = sys.stdout.write(f"touched_files={centralize_summary['touched_files']}\n")
     _ = sys.stdout.write(
-        f"detected_model_violations={centralize_summary['detected_model_violations']}\n"
+        f"detected_model_violations={centralize_summary['detected_model_violations']}\n",
     )
     _ = sys.stdout.write(
-        f"detected_alias_violations={centralize_summary['detected_alias_violations']}\n"
+        f"detected_alias_violations={centralize_summary['detected_alias_violations']}\n",
     )
     _ = sys.stdout.write(f"moved_classes={centralize_summary['moved_classes']}\n")
     _ = sys.stdout.write(f"moved_aliases={centralize_summary['moved_aliases']}\n")
     _ = sys.stdout.write(
-        f"created_model_files={centralize_summary['created_model_files']}\n"
+        f"created_model_files={centralize_summary['created_model_files']}\n",
     )
     _ = sys.stdout.write(
-        f"parse_syntax_errors={centralize_summary['parse_syntax_errors']}\n"
+        f"parse_syntax_errors={centralize_summary['parse_syntax_errors']}\n",
     )
     _ = sys.stdout.write(
-        f"parse_encoding_errors={centralize_summary['parse_encoding_errors']}\n"
+        f"parse_encoding_errors={centralize_summary['parse_encoding_errors']}\n",
     )
     _ = sys.stdout.write(f"parse_io_errors={centralize_summary['parse_io_errors']}\n")
     _ = sys.stdout.write(
-        f"created_typings_files={centralize_summary['created_typings_files']}\n"
+        f"created_typings_files={centralize_summary['created_typings_files']}\n",
     )
     _ = sys.stdout.write(
         "skipped_non_necessary_apply="
-        f"{centralize_summary.get('skipped_non_necessary_apply', 0)}\n"
+        f"{centralize_summary.get('skipped_non_necessary_apply', 0)}\n",
     )
     _ = sys.stdout.write(
-        f"skipped_nonpackage_apply={centralize_summary['skipped_nonpackage_apply']}\n"
+        f"skipped_nonpackage_apply={centralize_summary['skipped_nonpackage_apply']}\n",
     )
     _ = sys.stdout.write(
-        f"mro_remaining_violations={mro_report.remaining_violations}\n"
+        f"mro_remaining_violations={mro_report.remaining_violations}\n",
     )
     _ = sys.stdout.write(f"mro_failures={mro_report.mro_failures}\n")
     _ = sys.stdout.write(
-        f"namespace_missing_facades={namespace_report.total_facades_missing}\n"
+        f"namespace_missing_facades={namespace_report.total_facades_missing}\n",
     )
     _ = sys.stdout.write(
-        f"namespace_loose_objects={namespace_report.total_loose_objects}\n"
+        f"namespace_loose_objects={namespace_report.total_loose_objects}\n",
     )
     _ = sys.stdout.write(
-        f"namespace_import_violations={namespace_report.total_import_violations}\n"
+        f"namespace_import_violations={namespace_report.total_import_violations}\n",
     )
     _ = sys.stdout.write(
-        f"namespace_cyclic_imports={namespace_report.total_cyclic_imports}\n"
+        f"namespace_cyclic_imports={namespace_report.total_cyclic_imports}\n",
     )
     _ = sys.stdout.write(
         "namespace_runtime_alias_violations="
-        f"{namespace_report.total_runtime_alias_violations}\n"
+        f"{namespace_report.total_runtime_alias_violations}\n",
     )
     _ = sys.stdout.write(
-        f"namespace_missing_future={namespace_report.total_future_violations}\n"
+        f"namespace_missing_future={namespace_report.total_future_violations}\n",
     )
     _ = sys.stdout.write(
         "namespace_manual_protocols="
-        f"{namespace_report.total_manual_protocol_violations}\n"
+        f"{namespace_report.total_manual_protocol_violations}\n",
     )
     _ = sys.stdout.write(
         "namespace_manual_typing_aliases="
-        f"{namespace_report.total_manual_typing_violations}\n"
+        f"{namespace_report.total_manual_typing_violations}\n",
     )
     _ = sys.stdout.write(
         "namespace_compatibility_aliases="
-        f"{namespace_report.total_compatibility_alias_violations}\n"
+        f"{namespace_report.total_compatibility_alias_violations}\n",
     )
     if len(mro_report.errors) > 0:
         for error in mro_report.errors:

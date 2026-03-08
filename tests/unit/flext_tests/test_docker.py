@@ -103,7 +103,7 @@ class TestFlextTestsDocker:
         assert client1 is client2
 
     def test_load_dirty_state_file_not_exists(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test loading dirty state when file doesn't exist."""
         docker_manager._state_file = Path("/tmp/nonexistent_state.json")
@@ -111,12 +111,12 @@ class TestFlextTestsDocker:
         assert docker_manager._dirty_containers == set()
 
     def test_load_dirty_state_file_exists(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test loading dirty state from existing file."""
         test_data = {"dirty_containers": ["container1", "container2"]}
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".json"
+            encoding="utf-8", mode="w", delete=False, suffix=".json",
         ) as f:
             json.dump(test_data, f)
             temp_file = Path(f.name)
@@ -129,7 +129,7 @@ class TestFlextTestsDocker:
             temp_file.unlink()
 
     def test_save_dirty_state(
-        self, docker_manager: FlextTestsDocker, tmp_path: Path
+        self, docker_manager: FlextTestsDocker, tmp_path: Path,
     ) -> None:
         """Test saving dirty state to file.
 
@@ -190,21 +190,21 @@ class TestFlextTestsDocker:
         assert isinstance(containers, dict)
 
     def test_compose_up_returns_flext_result(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test compose_up returns r."""
         result = docker_manager.compose_up("docker-compose.yml")
         assert isinstance(result, r)
 
     def test_compose_down_returns_flext_result(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test compose_down returns r."""
         result = docker_manager.compose_down("docker-compose.yml")
         assert isinstance(result, r)
 
     def test_start_existing_container_not_found(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test starting non-existent container."""
         result = docker_manager.start_existing_container("nonexistent_container")
@@ -212,7 +212,7 @@ class TestFlextTestsDocker:
         assert "not found" in str(result.error).lower()
 
     def test_get_container_info_not_found(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test getting info for non-existent container."""
         result = docker_manager.get_container_info("nonexistent_container")
@@ -225,24 +225,24 @@ class TestFlextTestsDocker:
         _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_wait_for_port_ready_immediate(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test wait_for_port_ready returns quickly for unavailable port."""
         result = docker_manager.wait_for_port_ready(
-            c.Network.LOOPBACK_IP, 59999, max_wait=1
+            c.Network.LOOPBACK_IP, 59999, max_wait=1,
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_start_compose_stack_returns_result(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test start_compose_stack returns r."""
         result = docker_manager.start_compose_stack("docker-compose.yml")
         assert isinstance(result, r)
 
     def test_cleanup_dirty_containers_empty(
-        self, docker_manager: FlextTestsDocker
+        self, docker_manager: FlextTestsDocker,
     ) -> None:
         """Test cleanup with no dirty containers."""
         docker_manager._dirty_containers.clear()

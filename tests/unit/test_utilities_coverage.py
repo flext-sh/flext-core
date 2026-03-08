@@ -47,7 +47,7 @@ def test_utilities_vals_result_contract() -> None:
     failed_values_result = r[Mapping[str, int]].fail("failed")
     values_from_failed_result = u.vals(failed_values_result, default=[0])
     assert values_from_failed_result.is_success and values_from_failed_result.value == [
-        0
+        0,
     ]
     empty_mapping: dict[str, int] = {}
     empty_without_default = u.vals(empty_mapping)

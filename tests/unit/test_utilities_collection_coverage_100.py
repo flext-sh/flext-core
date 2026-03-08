@@ -592,7 +592,7 @@ class CollectionUtilitiesScenarios:
             items=["cat", "dog", "house"],
             key=lambda x: len(x),
             expected_result={3: ["cat", "dog"], 5: ["house"]},
-        )
+        ),
     ]
     CHUNK_CASES: ClassVar[list[ChunkScenario]] = [
         ChunkScenario(
@@ -600,7 +600,7 @@ class CollectionUtilitiesScenarios:
             items=[1, 2, 3, 4, 5],
             size=2,
             expected_result=[[1, 2], [3, 4], [5]],
-        )
+        ),
     ]
 
 
@@ -639,7 +639,7 @@ class TestuCollectionParseSequence:
     def test_parse_sequence_error_message_format(self) -> None:
         """Test parse_sequence error message format."""
         result = u.Collection.parse_sequence(
-            FixtureStatus, ["active", "invalid1", "invalid2"]
+            FixtureStatus, ["active", "invalid1", "invalid2"],
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
@@ -651,7 +651,7 @@ class TestuCollectionCoerceListValidator:
     """Real tests for u.Collection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.COERCE_LIST_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.COERCE_LIST_CASES, ids=lambda s: s.name,
     )
     def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
@@ -665,7 +665,7 @@ class TestuCollectionCoerceListValidator:
                 assert isinstance(val, scenario.enum_cls)
         else:
             with pytest.raises(
-                scenario.error_type or Exception, match=scenario.error_contains or ""
+                scenario.error_type or Exception, match=scenario.error_contains or "",
             ):
                 _ = validator(scenario.value)
 
@@ -680,7 +680,7 @@ class TestuCollectionCoerceListValidator:
         assert len(model1.statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model1.statuses)
         model2 = TestModel.model_validate({
-            "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING]
+            "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING],
         })
         assert len(model2.statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model2.statuses)
@@ -713,7 +713,7 @@ class TestuCollectionParseMapping:
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
         result = u.Collection.parse_mapping(
-            FixturePriority, {"task1": "low", "task2": "medium", "task3": "high"}
+            FixturePriority, {"task1": "low", "task2": "medium", "task3": "high"},
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
@@ -723,7 +723,7 @@ class TestuCollectionParseMapping:
     def test_parse_mapping_error_message_format(self) -> None:
         """Test parse_mapping error message format."""
         result = u.Collection.parse_mapping(
-            FixtureStatus, {"user1": "active", "user2": "invalid1", "user3": "invalid2"}
+            FixtureStatus, {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
@@ -735,7 +735,7 @@ class TestuCollectionCoerceDictValidator:
     """Real tests for u.Collection.coerce_dict_validator."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.COERCE_DICT_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.COERCE_DICT_CASES, ids=lambda s: s.name,
     )
     def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
         """Test coerce_dict_validator with various scenarios."""
@@ -749,7 +749,7 @@ class TestuCollectionCoerceDictValidator:
                 assert isinstance(val, scenario.enum_cls)
         else:
             with pytest.raises(
-                scenario.error_type or Exception, match=scenario.error_contains or ""
+                scenario.error_type or Exception, match=scenario.error_contains or "",
             ):
                 _ = validator(scenario.value)
 
@@ -761,7 +761,7 @@ class TestuCollectionCoerceDictValidator:
             user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
 
         model1 = TestModel.model_validate({
-            "user_statuses": {"user1": "active", "user2": "pending"}
+            "user_statuses": {"user1": "active", "user2": "pending"},
         })
         assert len(model1.user_statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model1.user_statuses.values())
@@ -769,7 +769,7 @@ class TestuCollectionCoerceDictValidator:
             "user_statuses": {
                 "user1": FixtureStatus.ACTIVE,
                 "user2": FixtureStatus.PENDING,
-            }
+            },
         })
         assert len(model2.user_statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model2.user_statuses.values())
@@ -779,7 +779,7 @@ class TestuCollectionMap:
     """Real tests for u.Collection.map."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.MAP_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.MAP_CASES, ids=lambda s: s.name,
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
@@ -793,7 +793,7 @@ class TestuCollectionFind:
     """Real tests for u.Collection.find."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.FIND_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.FIND_CASES, ids=lambda s: s.name,
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
@@ -809,12 +809,12 @@ class TestuCollectionFilter:
     """Real tests for u.Collection.filter."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.FILTER_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.FILTER_CASES, ids=lambda s: s.name,
     )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
         result = u.Collection.filter(
-            scenario.items, scenario.predicate, mapper=scenario.mapper
+            scenario.items, scenario.predicate, mapper=scenario.mapper,
         )
         assert result == scenario.expected_result
 
@@ -823,7 +823,7 @@ class TestuCollectionCount:
     """Real tests for u.Collection.count."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.COUNT_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.COUNT_CASES, ids=lambda s: s.name,
     )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
@@ -835,7 +835,7 @@ class TestuCollectionProcess:
     """Real tests for u.Collection.process."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.PROCESS_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.PROCESS_CASES, ids=lambda s: s.name,
     )
     def test_process(self, scenario: ProcessScenario) -> None:
         """Test process with various scenarios."""
@@ -860,7 +860,7 @@ class TestuCollectionGroup:
     """Real tests for u.Collection.group."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.GROUP_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.GROUP_CASES, ids=lambda s: s.name,
     )
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group with various scenarios."""
@@ -872,7 +872,7 @@ class TestuCollectionChunk:
     """Real tests for u.Collection.chunk."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.CHUNK_CASES, ids=lambda s: s.name
+        "scenario", CollectionUtilitiesScenarios.CHUNK_CASES, ids=lambda s: s.name,
     )
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""

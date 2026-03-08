@@ -36,7 +36,7 @@ class GetUserService(FlextService[User]):
                 user_id=self.user_id,
                 name=f"{TestsFlextConstants.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                 email=f"user{self.user_id}{TestsFlextConstants.Services.DEFAULT_EMAIL_DOMAIN}",
-            )
+            ),
         )
 
 
@@ -51,7 +51,7 @@ class ValidatingService(FlextService[str]):
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
             return FlextResult[str].fail(
-                f"Value must be at least {self.min_length} characters"
+                f"Value must be at least {self.min_length} characters",
             )
         return FlextResult[str].ok(self.value_input.upper())
 
@@ -184,7 +184,7 @@ class ValidatingServiceFactory:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
         return ValidatingService.model_construct(
-            value_input=actual_value, min_length=min_length
+            value_input=actual_value, min_length=min_length,
         )
 
     @classmethod
@@ -203,7 +203,7 @@ class FailingServiceFactory:
 
     @classmethod
     def build(
-        cls, *, error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
+        cls, *, error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingService:
         """Build a FailingService instance."""
         return FailingService.model_construct(error_message=error_message)
@@ -260,7 +260,7 @@ class ValidatingServiceAutoFactory:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
         return ValidatingServiceAuto.model_construct(
-            value_input=actual_value, min_length=min_length
+            value_input=actual_value, min_length=min_length,
         )
 
     @classmethod
@@ -279,7 +279,7 @@ class FailingServiceAutoFactory:
 
     @classmethod
     def build(
-        cls, *, error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
+        cls, *, error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
         return FailingServiceAuto.model_construct(error_message=error_message)
@@ -374,7 +374,7 @@ class ServiceFactoryRegistry:
 
     @classmethod
     def create_service(
-        cls, case: ServiceTestCase
+        cls, case: ServiceTestCase,
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type using pattern matching."""
         service: FlextService[User] | FlextService[str]
@@ -383,7 +383,7 @@ class ServiceFactoryRegistry:
                 service = GetUserServiceFactory.build(user_id=case.input_value)
             case ServiceTestType.VALIDATE:
                 service = ValidatingServiceFactory.build(
-                    value_input=case.input_value, min_length=case.extra_param
+                    value_input=case.input_value, min_length=case.extra_param,
                 )
             case ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
@@ -424,7 +424,7 @@ class TestDataGenerators:
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
-            )
+            ),
         ]
 
     @staticmethod
@@ -478,7 +478,7 @@ class GenericModelFactory:
 
     @staticmethod
     def service_snapshot(
-        name: str, version: str | None = None, status: str = "active"
+        name: str, version: str | None = None, status: str = "active",
     ) -> m.Service:
         """Create ServiceSnapshot."""
         return m.Service(name=name, version=version, status=status)
@@ -498,18 +498,18 @@ class GenericModelFactory:
 
     @staticmethod
     def health_status(
-        *, healthy: bool = True, checks: dict[str, bool] | None = None
+        *, healthy: bool = True, checks: dict[str, bool] | None = None,
     ) -> m.Health:
         """Create HealthStatus."""
         return m.Health(healthy=healthy, checks=m.Dict.model_validate(checks or {}))
 
     @staticmethod
     def operation_progress(
-        success: int = 0, failure: int = 0, skipped: int = 0
+        success: int = 0, failure: int = 0, skipped: int = 0,
     ) -> m.Operation:
         """Create OperationProgress."""
         return m.Operation(
-            success_count=success, failure_count=failure, skipped_count=skipped
+            success_count=success, failure_count=failure, skipped_count=skipped,
         )
 
     @staticmethod

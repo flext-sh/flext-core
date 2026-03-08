@@ -16,7 +16,7 @@ def _force_handler(obj: object) -> _DispatchableHandler:
     """
 
     def _wrapper(
-        *_args: object, **_kwargs: object
+        *_args: object, **_kwargs: object,
     ) -> p.ResultLike[t.ContainerValue] | t.ContainerValue | None:
         return None
 

@@ -212,7 +212,7 @@ class TestuCollectionParseSequence:
     """Test FlextUtilitiesCollection.parse_sequence."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionScenarios.PARSE_SEQUENCE, ids=lambda s: s.name
+        "scenario", CollectionScenarios.PARSE_SEQUENCE, ids=lambda s: s.name,
     )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
@@ -233,7 +233,7 @@ class TestuCollectionCoerceListValidator:
     """Test FlextUtilitiesCollection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionScenarios.COERCE_LIST_VALIDATOR, ids=lambda s: s.name
+        "scenario", CollectionScenarios.COERCE_LIST_VALIDATOR, ids=lambda s: s.name,
     )
     def test_coerce_list_validator(self, scenario: CoerceListValidatorScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
@@ -255,7 +255,7 @@ class TestuCollectionParseMapping:
     """Test FlextUtilitiesCollection.parse_mapping."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionScenarios.PARSE_MAPPING, ids=lambda s: s.name
+        "scenario", CollectionScenarios.PARSE_MAPPING, ids=lambda s: s.name,
     )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""

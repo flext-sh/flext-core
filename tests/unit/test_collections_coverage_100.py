@@ -77,7 +77,7 @@ class TestFlextModelsCollectionsCategories:
         assert categories.get("nonexistent") == []
 
     @pytest.mark.parametrize(
-        "scenario", CollectionsScenarios.CATEGORY_OPERATIONS, ids=_scenario_id
+        "scenario", CollectionsScenarios.CATEGORY_OPERATIONS, ids=_scenario_id,
     )
     def test_categories_operations(self, scenario: CategoryOperationScenario) -> None:
         """Test category operations with various scenarios."""

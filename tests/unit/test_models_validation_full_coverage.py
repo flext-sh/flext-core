@@ -72,7 +72,7 @@ def test_normalize_to_list_wraps_int() -> None:
 
 def test_validate_config_dict_normalizes_dict() -> None:
     result = m.Validators.validate_config_dict(
-        cast("t.ContainerValue", {"key": "value"})
+        cast("t.ContainerValue", {"key": "value"}),
     )
     assert isinstance(result, dict)
     assert result["key"] == "value"
@@ -80,7 +80,7 @@ def test_validate_config_dict_normalizes_dict() -> None:
 
 def test_validate_tags_list_normalizes() -> None:
     result = m.Validators.validate_tags_list(
-        cast("t.ContainerValue", ["tag1", "  TAG1  ", "tag2"])
+        cast("t.ContainerValue", ["tag1", "  TAG1  ", "tag2"]),
     )
     assert isinstance(result, list)
     assert len(result) <= 3
@@ -88,7 +88,7 @@ def test_validate_tags_list_normalizes() -> None:
 
 def test_validate_tags_list_from_string() -> None:
     result = m.Validators.validate_tags_list(
-        cast("t.ContainerValue", ["hello", "world"])
+        cast("t.ContainerValue", ["hello", "world"]),
     )
     assert "hello" in result
     assert "world" in result

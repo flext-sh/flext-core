@@ -160,7 +160,7 @@ class TestExtractRequirementName:
     def test_extract_requirement_name_with_marker(self) -> None:
         """Test _extract_requirement_name with environment marker."""
         name = _extract_requirement_name(
-            'flext-core @ file://.flext-deps/flext-core ; python_version >= "3.8"'
+            'flext-core @ file://.flext-deps/flext-core ; python_version >= "3.8"',
         )
         assert name == "flext-core"
 
@@ -172,7 +172,7 @@ class TestRewritePep621:
         """Test _rewrite_pep621 with no project section."""
         doc = TOMLDocument()
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names=set()
+            doc, is_root=True, mode="workspace", internal_names=set(),
         )
         assert changes == []
 
@@ -181,7 +181,7 @@ class TestRewritePep621:
         doc = TOMLDocument()
         doc["project"] = tomlkit.table()
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names=set()
+            doc, is_root=True, mode="workspace", internal_names=set(),
         )
         assert changes == []
 
@@ -190,7 +190,7 @@ class TestRewritePep621:
         doc = TOMLDocument()
         doc["project"] = {"dependencies": "not-a-list"}
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names=set()
+            doc, is_root=True, mode="workspace", internal_names=set(),
         )
         assert changes == []
 
@@ -198,10 +198,10 @@ class TestRewritePep621:
         """Test _rewrite_pep621 rewrites path dependency."""
         doc = TOMLDocument()
         doc["project"] = {
-            "dependencies": ["flext-core @ file://.flext-deps/flext-core"]
+            "dependencies": ["flext-core @ file://.flext-deps/flext-core"],
         }
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"},
         )
         assert len(changes) > 0
         assert len(changes) > 0
@@ -215,7 +215,7 @@ class TestRewritePep621:
         doc = TOMLDocument()
         doc["project"] = {"dependencies": ["requests>=2.0.0"]}
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"},
         )
         assert changes == []
 
@@ -224,11 +224,11 @@ class TestRewritePep621:
         doc = TOMLDocument()
         doc["project"] = {
             "dependencies": [
-                'flext-core @ file://.flext-deps/flext-core ; python_version >= "3.8"'
-            ]
+                'flext-core @ file://.flext-deps/flext-core ; python_version >= "3.8"',
+            ],
         }
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"},
         )
         assert len(changes) > 0
         unwrapped = doc.unwrap()
@@ -238,10 +238,10 @@ class TestRewritePep621:
         """Test _rewrite_pep621 skips non-string items."""
         doc = TOMLDocument()
         doc["project"] = {
-            "dependencies": [123, "flext-core @ file://.flext-deps/flext-core"]
+            "dependencies": [123, "flext-core @ file://.flext-deps/flext-core"],
         }
         changes = _rewrite_pep621(
-            doc, is_root=True, mode="workspace", internal_names={"flext-core"}
+            doc, is_root=True, mode="workspace", internal_names={"flext-core"},
         )
         assert len(changes) == 1
 
@@ -249,10 +249,10 @@ class TestRewritePep621:
         """Test _rewrite_pep621 in subproject mode."""
         doc = TOMLDocument()
         doc["project"] = {
-            "dependencies": ["flext-core @ file://.flext-deps/flext-core"]
+            "dependencies": ["flext-core @ file://.flext-deps/flext-core"],
         }
         changes = _rewrite_pep621(
-            doc, is_root=False, mode="workspace", internal_names={"flext-core"}
+            doc, is_root=False, mode="workspace", internal_names={"flext-core"},
         )
         assert len(changes) > 0
         unwrapped = doc.unwrap()
@@ -294,8 +294,8 @@ class TestRewritePoetry:
         doc = TOMLDocument()
         doc["tool"] = {
             "poetry": {
-                "dependencies": {"flext-core": {"path": ".flext-deps/flext-core"}}
-            }
+                "dependencies": {"flext-core": {"path": ".flext-deps/flext-core"}},
+            },
         }
         changes = _rewrite_poetry(doc, is_root=True, mode="workspace")
         assert len(changes) > 0
@@ -342,8 +342,8 @@ class TestRewritePoetry:
         doc = TOMLDocument()
         doc["tool"] = {
             "poetry": {
-                "dependencies": {"flext-core": {"path": ".flext-deps/flext-core"}}
-            }
+                "dependencies": {"flext-core": {"path": ".flext-deps/flext-core"}},
+            },
         }
         changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
         assert len(changes) > 0
@@ -365,10 +365,10 @@ class TestRewriteDepPaths:
         """Test rewrite_dep_paths successfully rewrites paths."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n'
+            '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n',
         )
         result = rewrite_dep_paths(
-            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
+            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True,
         )
         assert result.is_success
         assert len(result.value) > 0
@@ -395,7 +395,7 @@ class TestRewriteDepPaths:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\ndependencies = ["requests>=2.0.0"]\n')
         result = rewrite_dep_paths(
-            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
+            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True,
         )
         assert result.is_success
         assert result.value == []
@@ -404,7 +404,7 @@ class TestRewriteDepPaths:
         """Test rewrite_dep_paths when read fails."""
         pyproject = tmp_path / "pyproject.toml"
         result = rewrite_dep_paths(
-            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
+            pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True,
         )
         assert result.is_failure
 
@@ -412,12 +412,12 @@ class TestRewriteDepPaths:
         """Test rewrite_dep_paths when write fails."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n'
+            '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n',
         )
         with patch("flext_infra.FlextInfraTomlService.write_document") as mock_write:
             mock_write.return_value = r[bool].fail("write failed")
             result = rewrite_dep_paths(
-                pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True
+                pyproject, mode="workspace", internal_names={"flext-core"}, is_root=True,
             )
             assert result.is_failure
 
@@ -494,7 +494,7 @@ class TestMain:
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                    "discovery failed"
+                    "discovery failed",
                 ),
             ),
             patch("sys.argv", ["prog"]),
@@ -511,7 +511,7 @@ class TestMain:
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                    "rewrite failed"
+                    "rewrite failed",
                 ),
             ),
             patch("sys.argv", ["prog"]),
@@ -538,7 +538,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch(
@@ -546,7 +546,7 @@ class TestMain:
                 side_effect=[
                     r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
                     r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                        "project rewrite failed"
+                        "project rewrite failed",
                     ),
                 ],
             ),
@@ -589,7 +589,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch(
@@ -638,7 +638,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch(
@@ -691,7 +691,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch("sys.argv", ["prog"]),
@@ -718,7 +718,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch("sys.argv", ["prog"]),
@@ -745,7 +745,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch("sys.argv", ["prog"]),
@@ -772,7 +772,7 @@ class TestMain:
                         stack="python",
                         has_tests=False,
                         has_src=False,
-                    )
+                    ),
                 ]),
             ),
             patch("sys.argv", ["prog"]),
@@ -799,7 +799,7 @@ class TestPathSyncEdgeCases:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[tool.poetry.dependencies]\npython = "^3.13"')
         result = rewrite_dep_paths(
-            pyproject, mode="poetry", internal_names=set(), dry_run=True
+            pyproject, mode="poetry", internal_names=set(), dry_run=True,
         )
         assert result.is_success
 
@@ -814,7 +814,7 @@ def test_rewrite_dep_paths_with_internal_names(tmp_path: Path) -> None:
     """Test rewrite_dep_paths with internal dependency names."""
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text(
-        '[project]\ndependencies = ["flext-core @ file:.flext-deps/flext-core"]\n'
+        '[project]\ndependencies = ["flext-core @ file:.flext-deps/flext-core"]\n',
     )
     result = rewrite_dep_paths(
         pyproject,
@@ -900,7 +900,7 @@ def test_rewrite_pep621_non_string_item(tmp_path: Path) -> None:
     assert isinstance(project, MutableMapping)
     project["dependencies"] = [123]
     changes = _rewrite_pep621(
-        doc, is_root=False, mode="workspace", internal_names={"flext-core"}
+        doc, is_root=False, mode="workspace", internal_names={"flext-core"},
     )
     assert len(changes) == 0
 
@@ -909,7 +909,7 @@ def test_rewrite_pep621_no_project_table(tmp_path: Path) -> None:
     """Test _rewrite_pep621 with missing project table."""
     doc = tomlkit.document()
     changes = _rewrite_pep621(
-        doc, is_root=False, mode="workspace", internal_names={"flext-core"}
+        doc, is_root=False, mode="workspace", internal_names={"flext-core"},
     )
     assert len(changes) == 0
 
@@ -988,7 +988,7 @@ def test_rewrite_pep621_invalid_path_dep_regex(tmp_path: Path) -> None:
     assert isinstance(project, MutableMapping)
     project["dependencies"] = ["  flext-core @ file://.flext-deps/flext-core"]
     changes = _rewrite_pep621(
-        doc, is_root=True, mode="workspace", internal_names={"flext-core"}
+        doc, is_root=True, mode="workspace", internal_names={"flext-core"},
     )
     assert len(changes) == 0
 
@@ -1003,7 +1003,7 @@ def test_main_with_changes_and_dry_run(tmp_path: Path) -> None:
             with patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
-                    "  PEP621: old -> new"
+                    "  PEP621: old -> new",
                 ]),
             ):
                 with patch("flext_infra.deps.path_sync.output.info") as mock_info:
@@ -1023,7 +1023,7 @@ def test_main_with_changes_no_dry_run(tmp_path: Path) -> None:
             with patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
-                    "  PEP621: old -> new"
+                    "  PEP621: old -> new",
                 ]),
             ):
                 with patch("flext_infra.deps.path_sync.output.info") as mock_info:

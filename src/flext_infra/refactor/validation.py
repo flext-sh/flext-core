@@ -28,7 +28,7 @@ class PostCheckGate:
         """Initialize gate."""
 
     def validate(
-        self, result: m.Infra.Refactor.Result, expected: Mapping[str, t.ContainerValue]
+        self, result: m.Infra.Refactor.Result, expected: Mapping[str, t.ContainerValue],
     ) -> tuple[bool, list[str]]:
         """Validate a refactor result against expected post-checks and gates."""
         errors: list[str] = []
@@ -40,7 +40,7 @@ class PostCheckGate:
             return (True, [])
         file_path = result.file_path
         post_checks = u.Infra.Refactor.string_list(
-            expected.get(c.Infra.ReportKeys.POST_CHECKS)
+            expected.get(c.Infra.ReportKeys.POST_CHECKS),
         )
         quality_gates = u.Infra.Refactor.string_list(expected.get("quality_gates"))
         if self._check_enabled("imports_resolve", post_checks):
@@ -48,7 +48,7 @@ class PostCheckGate:
         source_symbol_raw = expected.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "")
         source_symbol = source_symbol_raw if isinstance(source_symbol_raw, str) else ""
         expected_chain = u.Infra.Refactor.string_list(
-            expected.get("expected_base_chain")
+            expected.get("expected_base_chain"),
         )
         if (
             source_symbol
@@ -79,7 +79,7 @@ class PostCheckGate:
         return unresolved
 
     def _validate_mro(
-        self, file_path: Path, class_name: str, expected_bases: Sequence[str]
+        self, file_path: Path, class_name: str, expected_bases: Sequence[str],
     ) -> list[str]:
         try:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -93,7 +93,7 @@ class PostCheckGate:
                 expected_prefix = list(expected_bases)[: len(actual_clean)]
                 if actual_clean != expected_prefix:
                     return [
-                        f"mro_mismatch:{class_name}:expected={expected_prefix}:actual={actual_clean}"
+                        f"mro_mismatch:{class_name}:expected={expected_prefix}:actual={actual_clean}",
                     ]
                 return []
         return [f"class_not_found:{class_name}"]
@@ -120,7 +120,7 @@ class FlextInfraRefactorRuleDefinitionValidator:
     """Validate individual refactor rule definitions for correctness."""
 
     def validate_rule_definition(
-        self, rule_def: Mapping[str, t.ContainerValue]
+        self, rule_def: Mapping[str, t.ContainerValue],
     ) -> str | None:
         """Validate a rule definition and return error message if invalid."""
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
@@ -191,7 +191,7 @@ class FlextInfraRefactorCliSupport:
             if not result.success:
                 impact_map.append({
                     c.Infra.Toml.PROJECT: FlextInfraRefactorCliSupport.project_name_from_path(
-                        result.file_path
+                        result.file_path,
                     ),
                     c.Infra.ReportKeys.FILE: str(result.file_path),
                     "kind": "failure",
@@ -203,7 +203,7 @@ class FlextInfraRefactorCliSupport:
             if not result.changes:
                 continue
             project_name = FlextInfraRefactorCliSupport.project_name_from_path(
-                result.file_path
+                result.file_path,
             )
             for change in result.changes:
                 symbol_match = symbol_pattern.match(change)
@@ -245,7 +245,7 @@ class FlextInfraRefactorCliSupport:
 
     @staticmethod
     def write_impact_map(
-        results: list[m.Infra.Refactor.Result], output_path: Path
+        results: list[m.Infra.Refactor.Result], output_path: Path,
     ) -> bool:
         """Write impact map to a JSON file."""
         impact_map = FlextInfraRefactorCliSupport.build_impact_map(results)
@@ -258,7 +258,7 @@ class FlextInfraRefactorCliSupport:
             return True
         except OSError:
             FlextInfraRefactorCliSupport.error(
-                f"Failed to write impact map {output_path}"
+                f"Failed to write impact map {output_path}",
             )
             return False
 
@@ -395,11 +395,11 @@ class FlextInfraRefactorCliSupport:
             files_to_analyze: list[Path] = []
             if args.project:
                 files_to_analyze = engine.collect_project_files(
-                    args.project, pattern=args.pattern
+                    args.project, pattern=args.pattern,
                 )
             elif args.workspace_root:
                 files_to_analyze = engine.collect_workspace_files(
-                    args.workspace_root, pattern=args.pattern
+                    args.workspace_root, pattern=args.pattern,
                 )
             elif args.file:
                 if not args.file.exists():
@@ -409,7 +409,7 @@ class FlextInfraRefactorCliSupport:
             elif args.files:
                 files_to_analyze = [item for item in args.files if item.exists()]
             analysis = FlextInfraRefactorViolationAnalyzer.analyze_files(
-                files_to_analyze
+                files_to_analyze,
             )
             FlextInfraRefactorCliSupport.print_violation_summary(analysis)
             if args.analysis_output is not None:
@@ -419,17 +419,17 @@ class FlextInfraRefactorCliSupport:
                     ensure_ascii=True,
                 )
                 FlextInfraRefactorCliSupport.info(
-                    f"Analysis report written: {args.analysis_output}"
+                    f"Analysis report written: {args.analysis_output}",
                 )
             return 0
         results: list[m.Infra.Refactor.Result] = []
         if args.project:
             results = engine.refactor_project(
-                args.project, dry_run=args.dry_run, pattern=args.pattern
+                args.project, dry_run=args.dry_run, pattern=args.pattern,
             )
         elif args.workspace_root:
             results = engine.refactor_workspace(
-                args.workspace_root, dry_run=args.dry_run, pattern=args.pattern
+                args.workspace_root, dry_run=args.dry_run, pattern=args.pattern,
             )
         elif args.file:
             if not args.file.exists():
@@ -441,7 +441,7 @@ class FlextInfraRefactorCliSupport:
             if args.show_diff and result_single.modified:
                 refactored_code = result_single.refactored_code or original_code
                 FlextInfraRefactorCliSupport.print_diff(
-                    original_code, refactored_code, args.file
+                    original_code, refactored_code, args.file,
                 )
         elif args.files:
             existing_files = [item for item in args.files if item.exists()]
@@ -452,7 +452,7 @@ class FlextInfraRefactorCliSupport:
         FlextInfraRefactorCliSupport.print_summary(results, dry_run=args.dry_run)
         if args.impact_map_output is not None:
             _ = FlextInfraRefactorCliSupport.write_impact_map(
-                results, args.impact_map_output
+                results, args.impact_map_output,
             )
         failed = sum(1 for item in results if not item.success)
         return 0 if failed == 0 else 1

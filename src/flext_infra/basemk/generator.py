@@ -14,7 +14,7 @@ from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 
 class TemplateRenderer(Protocol):
     def render_all(
-        self, config: m.Infra.Basemk.BaseMkConfig | None = None
+        self, config: m.Infra.Basemk.BaseMkConfig | None = None,
     ) -> r[str]: ...
 
 
@@ -39,7 +39,7 @@ class FlextInfraBaseMkGenerator(s[str]):
         return self.generate()
 
     def generate(
-        self, config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None = None
+        self, config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
@@ -52,7 +52,7 @@ class FlextInfraBaseMkGenerator(s[str]):
         return self._validate_generated_output(render_result.value)
 
     def write(
-        self, content: str, *, output: Path | None = None, stream: TextIO | None = None
+        self, content: str, *, output: Path | None = None, stream: TextIO | None = None,
     ) -> r[bool]:
         """Write generated content to file or stream."""
         if output is None:
@@ -72,11 +72,11 @@ class FlextInfraBaseMkGenerator(s[str]):
             return r[bool].fail(f"base.mk write failed: {exc}")
 
     def _normalize_config(
-        self, config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None
+        self, config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None,
     ) -> r[m.Infra.Basemk.BaseMkConfig]:
         if config is None:
             return r[m.Infra.Basemk.BaseMkConfig].ok(
-                FlextInfraBaseMkTemplateEngine.default_config()
+                FlextInfraBaseMkTemplateEngine.default_config(),
             )
         if isinstance(config, m.Infra.Basemk.BaseMkConfig):
             return r[m.Infra.Basemk.BaseMkConfig].ok(config)
@@ -85,7 +85,7 @@ class FlextInfraBaseMkGenerator(s[str]):
             return r[m.Infra.Basemk.BaseMkConfig].ok(normalized)
         except (TypeError, ValueError) as exc:
             return r[m.Infra.Basemk.BaseMkConfig].fail(
-                f"base.mk configuration validation failed: {exc}"
+                f"base.mk configuration validation failed: {exc}",
             )
 
     def _validate_generated_output(self, content: str) -> r[str]:
@@ -97,7 +97,7 @@ class FlextInfraBaseMkGenerator(s[str]):
                 makefile_path = temp_dir / c.Infra.Files.MAKEFILE_FILENAME
                 _ = base_mk_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
                 _ = makefile_path.write_text(
-                    "include base.mk\n", encoding=c.Infra.Encoding.DEFAULT
+                    "include base.mk\n", encoding=c.Infra.Encoding.DEFAULT,
                 )
                 process_result = self._get_runner.run([
                     c.Infra.Cli.MAKE,
@@ -109,7 +109,7 @@ class FlextInfraBaseMkGenerator(s[str]):
                 if process_result.is_failure:
                     error_text = process_result.error or "make validation failed"
                     return r[str].fail(
-                        f"generated base.mk validation failed: {error_text}"
+                        f"generated base.mk validation failed: {error_text}",
                     )
         except OSError as exc:
             return r[str].fail(f"generated base.mk validation failed: {exc}")

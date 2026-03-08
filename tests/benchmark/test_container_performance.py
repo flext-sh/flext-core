@@ -132,13 +132,13 @@ class PerformanceBenchmark:
 
         """
         _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [container.has_service(f"service_{i}") for i in range(count)]
+            lambda: [container.has_service(f"service_{i}") for i in range(count)],
         )
         return elapsed
 
     @staticmethod
     def benchmark_list_services(
-        container: FlextContainer, iterations: int = 100
+        container: FlextContainer, iterations: int = 100,
     ) -> float:
         """Benchmark list_services() calls.
 
@@ -151,7 +151,7 @@ class PerformanceBenchmark:
 
         """
         _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [container.list_services() for _ in range(iterations)]
+            lambda: [container.list_services() for _ in range(iterations)],
         )
         return elapsed
 
@@ -161,7 +161,7 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"],
     )
     def test_register_performance(self, count: int) -> None:
         """Benchmark register() with different volumes."""
@@ -170,7 +170,7 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"],
     )
     def test_get_performance(self, count: int) -> None:
         """Benchmark get() with different volumes."""
@@ -195,7 +195,7 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"],
     )
     def test_has_service_performance(self, count: int) -> None:
         """Benchmark has_service() with different volumes."""

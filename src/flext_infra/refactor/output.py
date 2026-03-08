@@ -48,7 +48,7 @@ def render_namespace_enforcement_report(
                 + ", ".join(
                     f"{s.family} ({c.Infra.Refactor.NAMESPACE_FACADE_FAMILIES[s.family]})"
                     for s in missing
-                )
+                ),
             )
         if proj.loose_objects:
             lines.append(f"  Loose objects: {len(proj.loose_objects)}")
@@ -66,7 +66,7 @@ def render_namespace_enforcement_report(
             )
             if len(proj.import_violations) > max_imports:
                 lines.append(
-                    f"    ... and {len(proj.import_violations) - max_imports} more"
+                    f"    ... and {len(proj.import_violations) - max_imports} more",
                 )
         if proj.internal_import_violations:
             lines.append(f"  Internal imports: {len(proj.internal_import_violations)}")
@@ -76,7 +76,7 @@ def render_namespace_enforcement_report(
             )
             if len(proj.internal_import_violations) > max_imports:
                 lines.append(
-                    f"    ... and {len(proj.internal_import_violations) - max_imports} more"
+                    f"    ... and {len(proj.internal_import_violations) - max_imports} more",
                 )
         if proj.cyclic_imports:
             lines.append(f"  Cyclic imports: {len(proj.cyclic_imports)}")
@@ -85,7 +85,7 @@ def render_namespace_enforcement_report(
             )
         if proj.runtime_alias_violations:
             lines.append(
-                f"  Runtime alias violations: {len(proj.runtime_alias_violations)}"
+                f"  Runtime alias violations: {len(proj.runtime_alias_violations)}",
             )
             lines.extend(
                 f"    {rv.file} [{rv.kind}] alias='{rv.alias}' {rv.detail}"
@@ -93,12 +93,12 @@ def render_namespace_enforcement_report(
             )
         if proj.future_violations:
             lines.append(
-                f"  Missing __future__ annotations: {len(proj.future_violations)}"
+                f"  Missing __future__ annotations: {len(proj.future_violations)}",
             )
             lines.extend(f"    {fv.file}" for fv in proj.future_violations[:max_loose])
             if len(proj.future_violations) > max_loose:
                 lines.append(
-                    f"    ... and {len(proj.future_violations) - max_loose} more"
+                    f"    ... and {len(proj.future_violations) - max_loose} more",
                 )
         if proj.manual_protocol_violations:
             lines.append(f"  Manual protocols: {len(proj.manual_protocol_violations)}")
@@ -108,11 +108,11 @@ def render_namespace_enforcement_report(
             )
             if len(proj.manual_protocol_violations) > max_loose:
                 lines.append(
-                    f"    ... and {len(proj.manual_protocol_violations) - max_loose} more"
+                    f"    ... and {len(proj.manual_protocol_violations) - max_loose} more",
                 )
         if proj.manual_typing_violations:
             lines.append(
-                f"  Manual typing aliases: {len(proj.manual_typing_violations)}"
+                f"  Manual typing aliases: {len(proj.manual_typing_violations)}",
             )
             lines.extend(
                 f"    {tv.file}:{tv.line} {tv.name}"
@@ -120,11 +120,11 @@ def render_namespace_enforcement_report(
             )
             if len(proj.manual_typing_violations) > max_loose:
                 lines.append(
-                    f"    ... and {len(proj.manual_typing_violations) - max_loose} more"
+                    f"    ... and {len(proj.manual_typing_violations) - max_loose} more",
                 )
         if proj.compatibility_alias_violations:
             lines.append(
-                f"  Compatibility aliases: {len(proj.compatibility_alias_violations)}"
+                f"  Compatibility aliases: {len(proj.compatibility_alias_violations)}",
             )
             lines.extend(
                 f"    {cv.file}:{cv.line} {cv.alias_name}={cv.target_name}"
@@ -132,7 +132,7 @@ def render_namespace_enforcement_report(
             )
             if len(proj.compatibility_alias_violations) > max_loose:
                 lines.append(
-                    f"    ... and {len(proj.compatibility_alias_violations) - max_loose} more"
+                    f"    ... and {len(proj.compatibility_alias_violations) - max_loose} more",
                 )
         if proj.parse_failures:
             lines.append(f"  Parse failures: {len(proj.parse_failures)}")

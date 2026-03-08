@@ -133,7 +133,7 @@ class TestFlextInfraMainCLI:
         """Test main() ensures structlog is configured."""
         with patch("sys.argv", ["flext-infra", "-h"]):
             with patch(
-                "flext_core.FlextRuntime.ensure_structlog_configured"
+                "flext_core.FlextRuntime.ensure_structlog_configured",
             ) as mock_ensure:
                 with patch("flext_infra.__main__.output"):
                     FlextInfraMainCLI.main()

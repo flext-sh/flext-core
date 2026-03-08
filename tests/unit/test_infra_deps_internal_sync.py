@@ -28,7 +28,7 @@ class TestFlextInfraInternalDependencySyncService:
     def test_validate_git_ref_invalid(self) -> None:
         """Test git ref validation with invalid reference."""
         result = FlextInfraInternalDependencySyncService.validate_git_ref(
-            "invalid@ref!"
+            "invalid@ref!",
         )
         assert result.is_failure
 
@@ -70,7 +70,7 @@ class TestParseGitmodules:
         """Test parsing a valid .gitmodules file."""
         gitmodules = tmp_path / ".gitmodules"
         gitmodules.write_text(
-            '[submodule "flext-core"]\n\tpath = flext-core\n\turl = git@github.com:flext-sh/flext-core.git\n[submodule "flext-api"]\n\tpath = flext-api\n\turl = git@github.com:flext-sh/flext-api.git\n'
+            '[submodule "flext-core"]\n\tpath = flext-core\n\turl = git@github.com:flext-sh/flext-core.git\n[submodule "flext-api"]\n\tpath = flext-api\n\turl = git@github.com:flext-sh/flext-api.git\n',
         )
         service = FlextInfraInternalDependencySyncService()
         result = service.parse_gitmodules(gitmodules)
@@ -116,8 +116,8 @@ class TestParseRepoMap:
                 "flext-core": {
                     "ssh_url": "git@github.com:flext-sh/flext-core.git",
                     "https_url": "https://github.com/flext-sh/flext-core.git",
-                }
-            }
+                },
+            },
         })
         result = service.parse_repo_map(Path("/fake/map.toml"))
         assert result.is_success
@@ -154,7 +154,7 @@ class TestParseRepoMap:
         service = FlextInfraInternalDependencySyncService()
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, object]].ok({
-            "repo": {"flext-core": "string-value"}
+            "repo": {"flext-core": "string-value"},
         })
         result = service.parse_repo_map(Path("/fake/map.toml"))
         assert result.is_success
@@ -165,7 +165,7 @@ class TestParseRepoMap:
         service = FlextInfraInternalDependencySyncService()
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, object]].ok({
-            "repo": {"flext-core": {"other": "val"}}
+            "repo": {"flext-core": {"other": "val"}},
         })
         result = service.parse_repo_map(Path("/fake/map.toml"))
         assert result.is_success
@@ -177,8 +177,8 @@ class TestParseRepoMap:
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, object]].ok({
             "repo": {
-                "flext-core": {"ssh_url": "git@github.com:flext-sh/flext-core.git"}
-            }
+                "flext-core": {"ssh_url": "git@github.com:flext-sh/flext-core.git"},
+            },
         })
         result = service.parse_repo_map(Path("/fake/map.toml"))
         assert result.is_success
@@ -192,7 +192,7 @@ class TestResolveRef:
         """Test ref resolution from GITHUB_HEAD_REF env var."""
         service = FlextInfraInternalDependencySyncService()
         with patch.dict(
-            "os.environ", {"GITHUB_ACTIONS": "true", "GITHUB_HEAD_REF": "feature/test"}
+            "os.environ", {"GITHUB_ACTIONS": "true", "GITHUB_HEAD_REF": "feature/test"},
         ):
             result = service.resolve_ref(Path("/fake"))
         assert result == "feature/test"
@@ -256,7 +256,7 @@ class TestIsRelativeTo:
         """Test path is not relative to parent."""
         other = Path("/completely/different")
         assert not FlextInfraInternalDependencySyncService.is_relative_to(
-            other, tmp_path
+            other, tmp_path,
         )
 
 
@@ -307,7 +307,7 @@ class TestWorkspaceRootFromParents:
         project = tmp_path / "sub" / "project"
         project.mkdir(parents=True)
         result = FlextInfraInternalDependencySyncService.workspace_root_from_parents(
-            project
+            project,
         )
         assert result == tmp_path
 
@@ -316,7 +316,7 @@ class TestWorkspaceRootFromParents:
         project = tmp_path / "isolated"
         project.mkdir()
         result = FlextInfraInternalDependencySyncService.workspace_root_from_parents(
-            project
+            project,
         )
         assert result is None or isinstance(result, Path)
 
@@ -324,7 +324,7 @@ class TestWorkspaceRootFromParents:
         """Test .gitmodules found in project root itself."""
         (tmp_path / ".gitmodules").touch()
         result = FlextInfraInternalDependencySyncService.workspace_root_from_parents(
-            tmp_path
+            tmp_path,
         )
         assert result == tmp_path
 
@@ -360,7 +360,7 @@ class TestIsWorkspaceMode:
         mock_git.run.return_value = r[str].ok(str(tmp_path))
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
+            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             is_ws, root = service.is_workspace_mode(tmp_path / "sub")
         assert is_ws is True
@@ -376,7 +376,7 @@ class TestIsWorkspaceMode:
         mock_git.run.return_value = r[str].ok("")
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
+            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             is_ws, root = service.is_workspace_mode(project)
         assert is_ws is True
@@ -391,7 +391,7 @@ class TestIsWorkspaceMode:
         mock_git.run.return_value = r[str].ok("")
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
+            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             is_ws, root = service.is_workspace_mode(project)
         assert is_ws is False
@@ -404,28 +404,28 @@ class TestOwnerFromRemoteUrl:
     def test_ssh_url(self) -> None:
         """Test extracting owner from SSH URL."""
         result = FlextInfraInternalDependencySyncService.owner_from_remote_url(
-            "git@github.com:flext-sh/flext-core.git"
+            "git@github.com:flext-sh/flext-core.git",
         )
         assert result == "flext-sh"
 
     def test_https_url(self) -> None:
         """Test extracting owner from HTTPS URL."""
         result = FlextInfraInternalDependencySyncService.owner_from_remote_url(
-            "https://github.com/flext-sh/flext-core.git"
+            "https://github.com/flext-sh/flext-core.git",
         )
         assert result == "flext-sh"
 
     def test_http_url(self) -> None:
         """Test extracting owner from HTTP URL."""
         result = FlextInfraInternalDependencySyncService.owner_from_remote_url(
-            "http://github.com/flext-sh/flext-core.git"
+            "http://github.com/flext-sh/flext-core.git",
         )
         assert result == "flext-sh"
 
     def test_invalid_url(self) -> None:
         """Test None returned for invalid URL."""
         result = FlextInfraInternalDependencySyncService.owner_from_remote_url(
-            "not-a-github-url"
+            "not-a-github-url",
         )
         assert result is None
 
@@ -438,7 +438,7 @@ class TestInferOwnerFromOrigin:
         service = FlextInfraInternalDependencySyncService()
         mock_git = Mock()
         mock_git.config_get.return_value = r[str].ok(
-            "git@github.com:flext-sh/flext-core.git"
+            "git@github.com:flext-sh/flext-core.git",
         )
         service.git = mock_git
         result = service.infer_owner_from_origin(Path("/fake"))
@@ -532,7 +532,7 @@ class TestEnsureCheckout:
         service.git = mock_git
         dep_path = tmp_path / "dep"
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_success
 
@@ -544,7 +544,7 @@ class TestEnsureCheckout:
         service.git = mock_git
         dep_path = tmp_path / "dep"
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_failure
 
@@ -560,7 +560,7 @@ class TestEnsureCheckout:
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_success
 
@@ -576,7 +576,7 @@ class TestEnsureCheckout:
         service = FlextInfraInternalDependencySyncService()
         dep_path = tmp_path / "dep"
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "invalid@ref!"
+            dep_path, "https://github.com/flext-sh/flext.git", "invalid@ref!",
         )
         assert result.is_failure
 
@@ -590,7 +590,7 @@ class TestEnsureCheckout:
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_failure
 
@@ -605,7 +605,7 @@ class TestEnsureCheckout:
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_failure
 
@@ -620,7 +620,7 @@ class TestEnsureCheckout:
         other.mkdir()
         dep_path.symlink_to(other)
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_success
 
@@ -634,7 +634,7 @@ class TestEnsureCheckout:
         dep_path.mkdir()
         (dep_path / "somefile").write_text("old")
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main"
+            dep_path, "https://github.com/flext-sh/flext.git", "main",
         )
         assert result.is_success
 
@@ -645,7 +645,7 @@ class TestIsInternalPathDep:
     def test_flext_deps_prefix(self) -> None:
         """Test .flext-deps/foo returns foo."""
         result = FlextInfraInternalDependencySyncService.is_internal_path_dep(
-            ".flext-deps/foo"
+            ".flext-deps/foo",
         )
         assert result == "foo"
 
@@ -662,7 +662,7 @@ class TestIsInternalPathDep:
     def test_nested_path_rejected(self) -> None:
         """Test nested path is rejected."""
         result = FlextInfraInternalDependencySyncService.is_internal_path_dep(
-            "./some/nested/path"
+            "./some/nested/path",
         )
         assert result is None
 
@@ -679,7 +679,7 @@ class TestIsInternalPathDep:
     def test_with_leading_dotslash(self) -> None:
         """Test ./ prefix is stripped."""
         result = FlextInfraInternalDependencySyncService.is_internal_path_dep(
-            "./.flext-deps/foo"
+            "./.flext-deps/foo",
         )
         assert result == "foo"
 
@@ -709,8 +709,8 @@ class TestCollectInternalDeps:
                     "dependencies": {
                         "flext-core": {"path": ".flext-deps/flext-core"},
                         "requests": "^2.28",
-                    }
-                }
+                    },
+                },
             },
             "project": dict[str, object](),
         })
@@ -729,7 +729,7 @@ class TestCollectInternalDeps:
                 "dependencies": [
                     "flext-core @ file:.flext-deps/flext-core",
                     "requests>=2.28",
-                ]
+                ],
             },
         })
         (tmp_path / "pyproject.toml").write_text("")
@@ -751,7 +751,7 @@ class TestCollectInternalDeps:
         service = FlextInfraInternalDependencySyncService()
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, object]].ok({
-            "project": dict[str, object]()
+            "project": dict[str, object](),
         })
         (tmp_path / "pyproject.toml").write_text("")
         result = service.collect_internal_deps(tmp_path)
@@ -802,7 +802,7 @@ class TestSync:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".gitmodules").write_text(
-            '[submodule "flext-api"]\n\tpath = flext-api\n\turl = git@github.com:flext-sh/flext-api.git\n'
+            '[submodule "flext-api"]\n\tpath = flext-api\n\turl = git@github.com:flext-sh/flext-api.git\n',
         )
         sibling = workspace / "flext-api"
         sibling.mkdir()
@@ -814,8 +814,8 @@ class TestSync:
         service.toml.read.return_value = r[dict[str, object]].ok({
             "tool": {
                 "poetry": {
-                    "dependencies": {"flext-api": {"path": ".flext-deps/flext-api"}}
-                }
+                    "dependencies": {"flext-api": {"path": ".flext-deps/flext-api"}},
+                },
             },
             "project": dict[str, object](),
         })
@@ -823,7 +823,7 @@ class TestSync:
         mock_git.run.return_value = r[str].ok("")
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
+            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             result = service.sync(project)
         assert result.is_success
@@ -839,8 +839,8 @@ class TestSync:
             r[dict[str, object]].ok({
                 "tool": {
                     "poetry": {
-                        "dependencies": {"flext-api": {"path": ".flext-deps/flext-api"}}
-                    }
+                        "dependencies": {"flext-api": {"path": ".flext-deps/flext-api"}},
+                    },
                 },
                 "project": dict[str, object](),
             }),
@@ -852,7 +852,7 @@ class TestSync:
         service.git = mock_git
         (project / "flext-repo-map.toml").write_text("")
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""}
+            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             result = service.sync(project)
         assert result.is_failure
@@ -866,7 +866,7 @@ class TestMain:
         """Test main returns 0 on success."""
         with (
             patch(
-                "flext_infra.deps.internal_sync.FlextInfraInternalDependencySyncService.sync"
+                "flext_infra.deps.internal_sync.FlextInfraInternalDependencySyncService.sync",
             ) as mock_sync,
             patch(
                 "argparse.ArgumentParser.parse_args",
@@ -881,7 +881,7 @@ class TestMain:
         """Test main returns 1 on failure."""
         with (
             patch(
-                "flext_infra.deps.internal_sync.FlextInfraInternalDependencySyncService.sync"
+                "flext_infra.deps.internal_sync.FlextInfraInternalDependencySyncService.sync",
             ) as mock_sync,
             patch(
                 "argparse.ArgumentParser.parse_args",
@@ -897,7 +897,7 @@ class TestValidateGitRefEdgeCases:
     """Test edge cases for git ref validation."""
 
     @pytest.mark.parametrize(
-        "ref", ["feature/my-branch", "v1.0.0", "release/2.0", "fix/issue-123"]
+        "ref", ["feature/my-branch", "v1.0.0", "release/2.0", "fix/issue-123"],
     )
     def test_valid_refs(self, ref: str) -> None:
         """Test various valid git ref formats."""
@@ -961,7 +961,7 @@ class TestEnsureSymlinkEdgeCases:
         target = tmp_path / "target"
         with patch("pathlib.Path.symlink_to", side_effect=OSError("Permission denied")):
             result = FlextInfraInternalDependencySyncService.ensure_symlink(
-                target, source
+                target, source,
             )
             assert result.is_failure
             assert isinstance(result.error, str)
@@ -980,7 +980,7 @@ class TestEnsureCheckoutEdgeCases:
         (dep_path / "file.txt").write_text("content")
         with patch("shutil.rmtree", side_effect=OSError("Permission denied")):
             result = service.ensure_checkout(
-                dep_path, "https://github.com/test/repo.git", "main"
+                dep_path, "https://github.com/test/repo.git", "main",
             )
             assert result.is_failure
             assert isinstance(result.error, str)
@@ -994,7 +994,7 @@ class TestCollectInternalDepsEdgeCases:
         """Test _collect_internal_deps with poetry dependencies."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         service = FlextInfraInternalDependencySyncService()
         result = service.collect_internal_deps(tmp_path)
@@ -1005,7 +1005,7 @@ class TestCollectInternalDepsEdgeCases:
         """Test _collect_internal_deps with PEP 621 dependencies."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[project]\ndependencies = ["flext-core @ file:../flext-core"]\n'
+            '[project]\ndependencies = ["flext-core @ file:../flext-core"]\n',
         )
         service = FlextInfraInternalDependencySyncService()
         result = service.collect_internal_deps(tmp_path)
@@ -1023,7 +1023,7 @@ class TestCollectInternalDepsEdgeCases:
         """Test _collect_internal_deps ignores invalid path formats."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nexternal-lib = { path = "some/nested/path" }\n'
+            '[tool.poetry.dependencies]\nexternal-lib = { path = "some/nested/path" }\n',
         )
         service = FlextInfraInternalDependencySyncService()
         result = service.collect_internal_deps(tmp_path)
@@ -1038,7 +1038,7 @@ class TestSyncMethodEdgeCases:
         """Test sync handles repo map parsing failure."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         map_file = tmp_path / "flext-repo-map.toml"
         map_file.write_text("invalid toml {")
@@ -1051,13 +1051,13 @@ class TestSyncMethodEdgeCases:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".gitmodules").write_text(
-            '[submodule "flext-core"]\n\turl = git@github.com:flext-sh/flext-core.git\n'
+            '[submodule "flext-core"]\n\turl = git@github.com:flext-sh/flext-core.git\n',
         )
         project = workspace / "project"
         project.mkdir()
         pyproject = project / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         with patch.dict("os.environ", {"FLEXT_WORKSPACE_ROOT": str(workspace)}):
             service = FlextInfraInternalDependencySyncService()
@@ -1072,7 +1072,7 @@ class TestSyncMethodEdgeCases:
         """Test sync synthesizes repo map from origin."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         service = FlextInfraInternalDependencySyncService()
         with (
@@ -1087,7 +1087,7 @@ class TestSyncMethodEdgeCases:
         """Test sync fails when repo mapping is missing."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         service = FlextInfraInternalDependencySyncService()
         with patch.object(service, "infer_owner_from_origin", return_value=None):
@@ -1099,18 +1099,18 @@ class TestSyncMethodEdgeCases:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".gitmodules").write_text(
-            '[submodule "flext-core"]\n\turl = git@github.com:flext-sh/flext-core.git\n'
+            '[submodule "flext-core"]\n\turl = git@github.com:flext-sh/flext-core.git\n',
         )
         (workspace / "flext-core").mkdir()
         project = workspace / "project"
         project.mkdir()
         pyproject = project / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         service = FlextInfraInternalDependencySyncService()
         with patch.object(
-            service, "ensure_symlink", return_value=r[bool].fail("symlink failed")
+            service, "ensure_symlink", return_value=r[bool].fail("symlink failed"),
         ):
             with patch.dict("os.environ", {"FLEXT_WORKSPACE_ROOT": str(workspace)}):
                 result = service.sync(project)
@@ -1120,15 +1120,15 @@ class TestSyncMethodEdgeCases:
         """Test sync handles checkout failure."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         map_file = tmp_path / "flext-repo-map.toml"
         map_file.write_text(
-            '[repo.flext-core]\nssh_url = "git@github.com:flext-sh/flext-core.git"\nhttps_url = "https://github.com/flext-sh/flext-core.git"\n'
+            '[repo.flext-core]\nssh_url = "git@github.com:flext-sh/flext-core.git"\nhttps_url = "https://github.com/flext-sh/flext-core.git"\n',
         )
         service = FlextInfraInternalDependencySyncService()
         with patch.object(
-            service, "ensure_checkout", return_value=r[bool].fail("checkout failed")
+            service, "ensure_checkout", return_value=r[bool].fail("checkout failed"),
         ):
             result = service.sync(tmp_path)
             assert result.is_failure
@@ -1146,7 +1146,7 @@ class TestSyncMethodEdgeCases:
         """Test _collect_internal_deps skips non-string paths (line 298)."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            "[tool.poetry.dependencies]\nflext-core = { path = 123 }\n"
+            "[tool.poetry.dependencies]\nflext-core = { path = 123 }\n",
         )
         service = FlextInfraInternalDependencySyncService()
         result = service.collect_internal_deps(tmp_path)
@@ -1154,7 +1154,7 @@ class TestSyncMethodEdgeCases:
         assert len(result.value) == 0
 
     def test_collect_internal_deps_with_invalid_pep621_regex(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test _collect_internal_deps skips invalid PEP621 regex (line 316)."""
         pyproject = tmp_path / "pyproject.toml"
@@ -1168,7 +1168,7 @@ class TestSyncMethodEdgeCases:
         """Test _collect_internal_deps skips external paths (line 319)."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[project]\ndependencies = ["flext-core @ file:///external/path"]\n'
+            '[project]\ndependencies = ["flext-core @ file:///external/path"]\n',
         )
         service = FlextInfraInternalDependencySyncService()
         result = service.collect_internal_deps(tmp_path)
@@ -1180,17 +1180,17 @@ class TestSyncMethodEdgeCases:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".gitmodules").write_text(
-            '[submodule "flext-core"]\n\turl = git@github.com:flext-sh/flext-core.git\n'
+            '[submodule "flext-core"]\n\turl = git@github.com:flext-sh/flext-core.git\n',
         )
         project = workspace / "project"
         project.mkdir()
         map_file = project / "flext-repo-map.toml"
         map_file.write_text(
-            '[repos]\nflext-api = "https://github.com/flext-sh/flext-api.git"\n'
+            '[repos]\nflext-api = "https://github.com/flext-sh/flext-api.git"\n',
         )
         pyproject = project / "pyproject.toml"
         pyproject.write_text(
-            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
+            '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n',
         )
         with patch.dict("os.environ", {"FLEXT_WORKSPACE_ROOT": str(workspace)}):
             service = FlextInfraInternalDependencySyncService()

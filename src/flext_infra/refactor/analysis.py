@@ -119,7 +119,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
                     target_namespace = mapped_entry.target_namespace
                     confidence = mapped_entry.confidence
                     rewrite_scope = cls._normalize_rewrite_scope(
-                        mapped_entry.rewrite_scope
+                        mapped_entry.rewrite_scope,
                     )
                 elif parsed_violation.expected_prefix:
                     target_namespace = parsed_violation.expected_prefix
@@ -131,7 +131,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
                         target_namespace=target_namespace,
                         confidence=confidence,
                         rewrite_scope=rewrite_scope,
-                    )
+                    ),
                 )
                 confidence_counts[confidence] += 1
                 per_file_counts[normalized_file] += 1
@@ -190,18 +190,18 @@ class FlextInfraRefactorClassNestingAnalyzer:
             typed_doc = u.Infra.Yaml.safe_load_yaml(mapping_path)
         except (OSError, TypeError) as exc:
             return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].fail(
-                str(exc)
+                str(exc),
             )
         raw_nesting = typed_doc.get(c.Infra.ReportKeys.CLASS_NESTING)
         if not isinstance(raw_nesting, list):
             return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].ok({})
         try:
             entries = TypeAdapter(
-                list[m.Infra.Refactor.ClassNestingMapping]
+                list[m.Infra.Refactor.ClassNestingMapping],
             ).validate_python(raw_nesting)
         except ValidationError as exc:
             return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].fail(
-                str(exc)
+                str(exc),
             )
         index: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping] = {}
         for entry in entries:
@@ -249,7 +249,7 @@ class FlextInfraRefactorViolationAnalyzer:
 
     @classmethod
     def analyze_files(
-        cls, files: list[Path]
+        cls, files: list[Path],
     ) -> m.Infra.Refactor.ViolationAnalysisReport:
         """Return aggregate and per-file violation counts."""
         totals: Counter[str] = Counter()
@@ -263,7 +263,7 @@ class FlextInfraRefactorViolationAnalyzer:
             except (OSError, UnicodeDecodeError):
                 continue
             helper_analysis = cls._analyze_file_helpers(
-                file_path=file_path, content=content
+                file_path=file_path, content=content,
             )
             helper_suggestions.extend(helper_analysis.suggestions)
             helper_totals.update(helper_analysis.totals)
@@ -290,7 +290,7 @@ class FlextInfraRefactorViolationAnalyzer:
         ranked_files.sort(key=itemgetter(1), reverse=True)
         hottest_files = [
             m.Infra.Refactor.ViolationAnalysisReport.TopFileSection(
-                file=file_name, total=total, counts=counts
+                file=file_name, total=total, counts=counts,
             )
             for file_name, total, counts in ranked_files[:25]
         ]
@@ -310,7 +310,7 @@ class FlextInfraRefactorViolationAnalyzer:
 
     @classmethod
     def _analyze_file_helpers(
-        cls, *, file_path: Path, content: str
+        cls, *, file_path: Path, content: str,
     ) -> m.Infra.Refactor.HelperFileAnalysis:
         suggestions: list[m.Infra.Refactor.HelperClassification] = []
         totals: Counter[str] = Counter()
@@ -339,7 +339,7 @@ class FlextInfraRefactorViolationAnalyzer:
             if classification.manual_review:
                 manual_review.append(classification)
         return m.Infra.Refactor.HelperFileAnalysis(
-            suggestions=suggestions, totals=dict(totals), manual_review=manual_review
+            suggestions=suggestions, totals=dict(totals), manual_review=manual_review,
         )
 
     @classmethod
@@ -367,10 +367,10 @@ class FlextInfraRefactorViolationAnalyzer:
                 decorator_dependencies.add(imported)
         dependencies.update(decorator_dependencies)
         matched_categories = cls._match_categories(
-            dependencies=dependencies, has_decorators=bool(function.decorators)
+            dependencies=dependencies, has_decorators=bool(function.decorators),
         )
         category, manual, reason = cls._resolve_category(
-            dependencies=dependencies, matched_categories=matched_categories
+            dependencies=dependencies, matched_categories=matched_categories,
         )
         namespace_root = c.Infra.Refactor.NAMESPACE_PREFIXES[category]
         return m.Infra.Refactor.HelperClassification(
@@ -385,7 +385,7 @@ class FlextInfraRefactorViolationAnalyzer:
 
     @classmethod
     def _match_categories(
-        cls, *, dependencies: set[str], has_decorators: bool
+        cls, *, dependencies: set[str], has_decorators: bool,
     ) -> set[str]:
         matched: set[str] = set()
         for dependency in dependencies:
@@ -402,7 +402,7 @@ class FlextInfraRefactorViolationAnalyzer:
 
     @classmethod
     def _resolve_category(
-        cls, *, dependencies: set[str], matched_categories: set[str]
+        cls, *, dependencies: set[str], matched_categories: set[str],
     ) -> tuple[str, bool, str]:
         if len(matched_categories) > 1:
             ordered = [

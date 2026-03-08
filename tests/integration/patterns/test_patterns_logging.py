@@ -212,7 +212,7 @@ class TestFlextLogger:
         assert hasattr(bound_logger, "debug")
         result = bound_logger.info("Test message with bound context")
         assertion_helpers.assert_flext_result_success(
-            result, "Bound logger should work for logging"
+            result, "Bound logger should work for logging",
         )
 
     def test_backward_compatibility_function(self) -> None:
@@ -230,7 +230,7 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
         result = logger.info("Compatibility test message")
         assertion_helpers.assert_flext_result_success(
-            result, "Logger should work with standard patterns"
+            result, "Logger should work with standard patterns",
         )
 
     def test_module_level_function(self) -> None:
@@ -248,7 +248,7 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
         result = logger.info("Module-level logger test message")
         assertion_helpers.assert_flext_result_success(
-            result, "Module-level logger should work"
+            result, "Module-level logger should work",
         )
 
 
@@ -294,7 +294,7 @@ class TestFlextLoggerUsage:
         result_info = logger.info("User action", user_id="123", action="login")
         assert result_info.is_success, "Info logging with context should succeed"
         result_error = logger.error(
-            "Operation failed", error_code="E001", duration_ms=150.5
+            "Operation failed", error_code="E001", duration_ms=150.5,
         )
         assert result_error.is_success, "Error logging with context should succeed"
 
@@ -336,7 +336,7 @@ class TestFlextLoggerUsage:
         ]
         for i, result in enumerate(results):
             assertion_helpers.assert_flext_result_success(
-                result, f"Log entry {i + 1} should succeed"
+                result, f"Log entry {i + 1} should succeed",
             )
 
     @pytest.mark.performance
@@ -355,7 +355,7 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "debug")
         result = perf_logger.info("Performance test message")
         assertion_helpers.assert_flext_result_success(
-            result, "Performance logging should succeed"
+            result, "Performance logging should succeed",
         )
         result2 = perf_logger.debug("Performance debug message")
         assert result2.is_success, "Performance debug logging should succeed"
@@ -398,7 +398,7 @@ class TestFlextLoggerIntegration:
         result_start = bound_logger.info("Starting user registration")
         assert result_start.is_success, "Initial log should succeed"
         validation_logger = bound_logger.bind(
-            step="validation", user_email="test@example.com"
+            step="validation", user_email="test@example.com",
         )
         result_debug_val = validation_logger.debug("Validating user input")
         assert result_debug_val.is_success, "Validation debug log should succeed"
@@ -408,7 +408,7 @@ class TestFlextLoggerIntegration:
         result_debug_db = database_logger.debug("Saving user to database")
         assert result_debug_db.is_success, "Database debug log should succeed"
         result_info_db = database_logger.info(
-            "User saved successfully", user_id="user-456"
+            "User saved successfully", user_id="user-456",
         )
         assert result_info_db.is_success, "Database info log should succeed"
         result_complete = bound_logger.info("User registration completed")
@@ -437,7 +437,7 @@ class TestFlextLoggerIntegration:
                 user_id="user-123",
             )
             assertion_helpers.assert_flext_result_success(
-                result, "Exception logging should succeed"
+                result, "Exception logging should succeed",
             )
 
     @pytest.mark.performance

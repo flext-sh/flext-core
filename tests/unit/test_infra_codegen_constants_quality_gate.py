@@ -15,7 +15,7 @@ def test_main_constants_quality_gate_dispatch(tmp_path: Path) -> None:
     """main() dispatches constants-quality-gate command to handler."""
     argv = ["constants-quality-gate", "--workspace", str(tmp_path)]
     with patch(
-        "flext_infra.codegen.__main__._handle_constants_quality_gate"
+        "flext_infra.codegen.__main__._handle_constants_quality_gate",
     ) as mock_handle:
         mock_handle.return_value = 0
         result = codegen_main.main(argv)
@@ -36,7 +36,7 @@ def test_main_constants_quality_gate_parses_before_report(tmp_path: Path) -> Non
         "json",
     ]
     with patch(
-        "flext_infra.codegen.__main__._handle_constants_quality_gate"
+        "flext_infra.codegen.__main__._handle_constants_quality_gate",
     ) as mock_handle:
         mock_handle.return_value = 0
         result = codegen_main.main(argv)
@@ -53,7 +53,7 @@ def test_handle_constants_quality_gate_json_conditional_pass_exits_zero(
     """JSON mode returns success for CONDITIONAL_PASS verdict."""
     argv = ["constants-quality-gate", "--workspace", str(tmp_path), "--format", "json"]
     with patch(
-        "flext_infra.codegen.__main__.FlextInfraCodegenConstantsQualityGate"
+        "flext_infra.codegen.__main__.FlextInfraCodegenConstantsQualityGate",
     ) as mock_gate_cls:
         gate_instance = Mock()
         gate_instance.run.return_value = {
@@ -73,7 +73,7 @@ def test_handle_constants_quality_gate_text_fail_exits_one(tmp_path: Path) -> No
     """Text mode returns failure for FAIL verdict."""
     argv = ["constants-quality-gate", "--workspace", str(tmp_path), "--format", "text"]
     with patch(
-        "flext_infra.codegen.__main__.FlextInfraCodegenConstantsQualityGate"
+        "flext_infra.codegen.__main__.FlextInfraCodegenConstantsQualityGate",
     ) as mock_gate_cls:
         gate_instance = Mock()
         gate_instance.run.return_value = {

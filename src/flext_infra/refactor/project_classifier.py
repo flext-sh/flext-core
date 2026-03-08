@@ -23,25 +23,25 @@ class ProjectClassifier:
         """Return classification and family chains for this project."""
         project_name, dependencies = self._read_project_metadata()
         internal_dependencies = self._internal_dependencies(
-            dependencies=dependencies, project_name=project_name
+            dependencies=dependencies, project_name=project_name,
         )
         family_bases, local_facade_classes = self._discover_facade_inheritance()
         family_chains = self._build_confirmed_family_chains(
-            internal_dependencies=internal_dependencies, family_bases=family_bases
+            internal_dependencies=internal_dependencies, family_bases=family_bases,
         )
         project_kind = self._infer_project_kind(
             internal_dependencies=internal_dependencies,
             local_facade_classes=local_facade_classes,
         )
         return m.Infra.Refactor.ProjectClassification(
-            project_kind=project_kind, family_chains=family_chains
+            project_kind=project_kind, family_chains=family_chains,
         )
 
     def _read_project_metadata(self) -> tuple[str, list[str]]:
         if not self._pyproject_path.is_file():
             return ("", [])
         parsed: dict[str, str | list[str] | dict[str, str | list[str]]] = tomllib.loads(
-            self._pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            self._pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT),
         )
         raw_project = parsed.get(c.Infra.Toml.PROJECT)
         if not isinstance(raw_project, dict):
@@ -60,7 +60,7 @@ class ProjectClassifier:
         return (project_name, dependencies)
 
     def _internal_dependencies(
-        self, *, dependencies: list[str], project_name: str
+        self, *, dependencies: list[str], project_name: str,
     ) -> list[str]:
         internal: list[str] = []
         for dependency in dependencies:
@@ -104,7 +104,7 @@ class ProjectClassifier:
         return (family_bases, local_facade_classes)
 
     def _parse_family_file(
-        self, file_path: Path, suffix: str
+        self, file_path: Path, suffix: str,
     ) -> tuple[set[str], set[str]]:
         try:
             tree = ast.parse(file_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
@@ -134,12 +134,12 @@ class ProjectClassifier:
         return ""
 
     def _build_confirmed_family_chains(
-        self, *, internal_dependencies: list[str], family_bases: dict[str, set[str]]
+        self, *, internal_dependencies: list[str], family_bases: dict[str, set[str]],
     ) -> dict[str, list[str]]:
         family_chains: dict[str, list[str]] = {}
         for family, suffix in c.Infra.Refactor.FAMILY_SUFFIXES.items():
             expected_parents = self._expected_parents_for_family(
-                family_suffix=suffix, internal_dependencies=internal_dependencies
+                family_suffix=suffix, internal_dependencies=internal_dependencies,
             )
             confirmed_bases = family_bases.get(family, set())
             confirmed_expected = [
@@ -152,7 +152,7 @@ class ProjectClassifier:
         return family_chains
 
     def _expected_parents_for_family(
-        self, *, family_suffix: str, internal_dependencies: list[str]
+        self, *, family_suffix: str, internal_dependencies: list[str],
     ) -> list[str]:
         expected: list[str] = []
         for dependency in internal_dependencies:
@@ -180,7 +180,7 @@ class ProjectClassifier:
         return "".join(part.capitalize() for part in parts)
 
     def _infer_project_kind(
-        self, *, internal_dependencies: list[str], local_facade_classes: set[str]
+        self, *, internal_dependencies: list[str], local_facade_classes: set[str],
     ) -> str:
         if not internal_dependencies:
             return "core"

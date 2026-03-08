@@ -22,7 +22,7 @@ def detector() -> FlextInfraWorkspaceDetector:
 
 
 def test_detector_detects_workspace_mode_with_parent_git(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection with parent .git directory present."""
     project_root = tmp_path / "project"
@@ -34,7 +34,7 @@ def test_detector_detects_workspace_mode_with_parent_git(
 
 
 def test_detector_detects_standalone_mode_without_parent_git(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection of standalone mode when parent repo is not 'flext'."""
     project_root = tmp_path / "project"
@@ -46,7 +46,7 @@ def test_detector_detects_standalone_mode_without_parent_git(
 
 
 def test_detector_returns_standalone_when_no_parent_git(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection returns standalone when no parent .git exists."""
     project_root = tmp_path / "project"
@@ -57,7 +57,7 @@ def test_detector_returns_standalone_when_no_parent_git(
 
 
 def test_detector_handles_git_command_errors(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection handles git command errors gracefully."""
     project_root = tmp_path / "project"
@@ -97,7 +97,7 @@ def test_detector_execute_returns_failure() -> None:
 
 
 def test_detector_handles_empty_origin_url(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection when git origin URL is empty."""
     project_root = tmp_path / "project"
@@ -113,7 +113,7 @@ def test_detector_handles_empty_origin_url(
 
 
 def test_detector_handles_git_command_failure(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection when git command returns failure."""
     project_root = tmp_path / "project"
@@ -129,7 +129,7 @@ def test_detector_handles_git_command_failure(
 
 
 def test_detector_detects_workspace_mode_with_flext_repo(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection of workspace mode when parent repo is 'flext'."""
     project_root = tmp_path / "project"
@@ -138,7 +138,7 @@ def test_detector_detects_workspace_mode_with_flext_repo(
     parent_git.mkdir()
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].ok(
-        "https://github.com/flext-sh/flext.git"
+        "https://github.com/flext-sh/flext.git",
     )
     detector._git = mock_git
     result = detector.detect(project_root)
@@ -147,7 +147,7 @@ def test_detector_detects_workspace_mode_with_flext_repo(
 
 
 def test_detector_detects_standalone_with_non_flext_repo(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection of standalone mode when parent repo is not 'flext'."""
     project_root = tmp_path / "project"
@@ -156,7 +156,7 @@ def test_detector_detects_standalone_with_non_flext_repo(
     parent_git.mkdir()
     mock_git = Mock()
     mock_git.config_get.return_value = r[str].ok(
-        "https://github.com/other-org/other-repo.git"
+        "https://github.com/other-org/other-repo.git",
     )
     detector._git = mock_git
     result = detector.detect(project_root)
@@ -165,7 +165,7 @@ def test_detector_detects_standalone_with_non_flext_repo(
 
 
 def test_detector_handles_runner_failure(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection when git service returns failure."""
     project_root = tmp_path / "project"
@@ -181,7 +181,7 @@ def test_detector_handles_runner_failure(
 
 
 def test_detector_handles_exception_during_detection(
-    detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    detector: FlextInfraWorkspaceDetector, tmp_path: Path,
 ) -> None:
     """Test detection handles exceptions gracefully."""
     project_root = tmp_path / "project"

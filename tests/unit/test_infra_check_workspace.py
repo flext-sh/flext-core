@@ -56,7 +56,7 @@ class TestFlextInfraWorkspaceChecker:
         """Test that run_projects handles missing project directories gracefully."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         result = checker.run_projects(
-            ["nonexistent"], ["lint"], reports_dir=tmp_path / "reports"
+            ["nonexistent"], ["lint"], reports_dir=tmp_path / "reports",
         )
         assert result.is_success
         assert len(result.value) == 0

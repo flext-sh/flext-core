@@ -16,7 +16,7 @@ def _build_config(project_name: str | None) -> m.Infra.Basemk.BaseMkConfig | Non
     if project_name is None:
         return None
     return FlextInfraBaseMkTemplateEngine.default_config().model_copy(
-        update={"project_name": project_name}
+        update={"project_name": project_name},
     )
 
 
@@ -28,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="base.mk generation utilities")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     generate_parser = subparsers.add_parser(
-        "generate", help="Generate base.mk content from templates"
+        "generate", help="Generate base.mk content from templates",
     )
     _ = generate_parser.add_argument(
         "--output",
@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Write generated content to file path (defaults to stdout)",
     )
     _ = generate_parser.add_argument(
-        "--project-name", type=str, help="Override project name in generated base.mk"
+        "--project-name", type=str, help="Override project name in generated base.mk",
     )
     args = parser.parse_args(argv)
     if args.command != "generate":
@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
         output.error(generated_result.error or "base.mk generation failed")
         return 1
     write_result = generator.write(
-        generated_result.value, output=args.output, stream=sys.stdout
+        generated_result.value, output=args.output, stream=sys.stdout,
     )
     if write_result.is_failure:
         output.error(write_result.error or "base.mk write failed")

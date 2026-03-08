@@ -107,7 +107,7 @@ class TestCloneRuntime:
         runtime = _FakeRuntime()
         new_context = _FakeContext()
         cloned = u.Context.clone_runtime(
-            runtime, context=cast("p.Context", cast("object", new_context))
+            runtime, context=cast("p.Context", cast("object", new_context)),
         )
         assert cloned._context is new_context
 
@@ -121,7 +121,7 @@ class TestCloneRuntime:
         """When config_overrides provided, model_copy is called with them."""
         runtime = _FakeRuntime()
         cloned = u.Context.clone_runtime(
-            runtime, config_overrides=m.ConfigMap(root={"timeout": 30})
+            runtime, config_overrides=m.ConfigMap(root={"timeout": 30}),
         )
         assert isinstance(cloned._config, _FakeConfig)
         assert cloned._config.data["timeout"] == 30
@@ -152,10 +152,10 @@ class TestCloneContainer:
         expected = MagicMock()
         container.scoped.return_value = expected
         result = u.Context.clone_container(
-            container, scope_id="test-scope", overrides={"service": "mock"}
+            container, scope_id="test-scope", overrides={"service": "mock"},
         )
         container.scoped.assert_called_once_with(
-            subproject="test-scope", services={"service": "mock"}
+            subproject="test-scope", services={"service": "mock"},
         )
         assert result is expected
 

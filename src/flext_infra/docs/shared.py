@@ -34,7 +34,7 @@ class FlextInfraDocsShared:
 
     @staticmethod
     def _selected_project_names(
-        root: Path, project: str | None, projects: str | None
+        root: Path, project: str | None, projects: str | None,
     ) -> list[str]:
         """Resolve CLI project flags to a concrete name list."""
         if project:
@@ -47,7 +47,7 @@ class FlextInfraDocsShared:
                 ]
             return requested
         result: r[list[m.Infra.Workspace.ProjectInfo]] = _discovery.discover_projects(
-            root
+            root,
         )
         if result.is_success:
             return [p.name for p in result.value]
@@ -55,7 +55,7 @@ class FlextInfraDocsShared:
 
     @staticmethod
     def build_scopes(
-        root: Path, project: str | None, projects: str | None, output_dir: str
+        root: Path, project: str | None, projects: str | None, output_dir: str,
     ) -> r[list[m.Infra.Docs.FlextInfraDocScope]]:
         """Build DocScope objects for workspace root and each selected project."""
         try:
@@ -64,10 +64,10 @@ class FlextInfraDocsShared:
                     name=c.Infra.ReportKeys.ROOT,
                     path=root,
                     report_dir=(root / output_dir).resolve(),
-                )
+                ),
             ]
             names = FlextInfraDocsShared._selected_project_names(
-                root, project, projects
+                root, project, projects,
             )
             for name in names:
                 path = (root / name).resolve()
@@ -78,13 +78,13 @@ class FlextInfraDocsShared:
                     continue
                 scopes.append(
                     m.Infra.Docs.FlextInfraDocScope(
-                        name=name, path=path, report_dir=(path / output_dir).resolve()
-                    )
+                        name=name, path=path, report_dir=(path / output_dir).resolve(),
+                    ),
                 )
             return r[list[m.Infra.Docs.FlextInfraDocScope]].ok(scopes)
         except (OSError, TypeError, ValueError) as exc:
             return r[list[m.Infra.Docs.FlextInfraDocScope]].fail(
-                f"scope resolution failed: {exc}"
+                f"scope resolution failed: {exc}",
             )
 
     @staticmethod
@@ -112,7 +112,7 @@ class FlextInfraDocsShared:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             _ = path.write_text(
-                "\n".join(lines).rstrip() + "\n", encoding=c.Infra.Encoding.DEFAULT
+                "\n".join(lines).rstrip() + "\n", encoding=c.Infra.Encoding.DEFAULT,
             )
             return r[bool].ok(True)
         except OSError as exc:

@@ -33,10 +33,10 @@ class FlextInfraDepsConstants:
         "src",
     ]
     GIT_REF_RE: Final[re.Pattern[str]] = re.compile(
-        r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$"
+        r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$",
     )
     GITHUB_REPO_URL_RE: Final[re.Pattern[str]] = re.compile(
-        "^(?:git@github\\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?|https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?)$"
+        "^(?:git@github\\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?|https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?)$",
     )
     PEP621_PATH_RE: Final[re.Pattern[str]] = re.compile("@\\s*(?:file:)?(?P<path>.+)$")
     SKIP_DIRS: Final[frozenset[str]] = frozenset({
@@ -62,10 +62,10 @@ class FlextInfraDepsConstants:
     RECENT_LINES_FOR_DEV_DEP: Final[int] = 4
     FLEXT_DEPS_DIR: Final[str] = ".flext-deps"
     PEP621_PATH_DEP_RE: Final[re.Pattern[str]] = re.compile(
-        "^(?P<name>[A-Za-z0-9_.-]+)\\s*@\\s*(?:file:(?://)?)?(?P<path>.+)$"
+        "^(?P<name>[A-Za-z0-9_.-]+)\\s*@\\s*(?:file:(?://)?)?(?P<path>.+)$",
     )
     PEP621_NAME_RE: Final[re.Pattern[str]] = re.compile(
-        "^\\s*(?P<name>[A-Za-z0-9_.-]+)"
+        "^\\s*(?P<name>[A-Za-z0-9_.-]+)",
     )
     PYTEST_STANDARD_MARKERS: tuple[str, ...] = (
         "unit: unit tests",

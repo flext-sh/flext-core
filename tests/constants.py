@@ -157,7 +157,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
                 NEGATE = "negate"
 
             type OperationLiteral = Literal[
-                "get_email", "send_email", "get_status", "double", "square", "negate"
+                "get_email", "send_email", "get_status", "double", "square", "negate",
             ]
             OP_GET_EMAIL: Final[str] = Operation.GET_EMAIL
             OP_SEND_EMAIL: Final[str] = Operation.SEND_EMAIL

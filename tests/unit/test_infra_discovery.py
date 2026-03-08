@@ -48,7 +48,7 @@ class TestFlextInfraDiscoveryService:
         return tmp_path
 
     def test_discover_projects_happy_path(
-        self, service: FlextInfraDiscoveryService, workspace_with_projects: Path
+        self, service: FlextInfraDiscoveryService, workspace_with_projects: Path,
     ) -> None:
         """Test discovering projects in a valid workspace."""
         result = service.discover_projects(workspace_with_projects)
@@ -62,7 +62,7 @@ class TestFlextInfraDiscoveryService:
         assert projects[1].has_src is False
 
     def test_discover_projects_empty_workspace(
-        self, service: FlextInfraDiscoveryService, tmp_path: Path
+        self, service: FlextInfraDiscoveryService, tmp_path: Path,
     ) -> None:
         """Test discovering projects in an empty workspace."""
         result = service.discover_projects(tmp_path)
@@ -70,7 +70,7 @@ class TestFlextInfraDiscoveryService:
         assert result.value == []
 
     def test_discover_projects_nonexistent_path(
-        self, service: FlextInfraDiscoveryService
+        self, service: FlextInfraDiscoveryService,
     ) -> None:
         """Test discovering projects with nonexistent path."""
         nonexistent = Path("/nonexistent/path/to/workspace")
@@ -81,7 +81,7 @@ class TestFlextInfraDiscoveryService:
         assert "discovery failed" in result.error
 
     def test_find_all_pyproject_files_happy_path(
-        self, service: FlextInfraDiscoveryService, tmp_path: Path
+        self, service: FlextInfraDiscoveryService, tmp_path: Path,
     ) -> None:
         """Test finding all pyproject.toml files."""
         (tmp_path / "project1").mkdir()
@@ -97,7 +97,7 @@ class TestFlextInfraDiscoveryService:
         assert all(f.name == "pyproject.toml" for f in files)
 
     def test_find_all_pyproject_files_with_skip_dirs(
-        self, service: FlextInfraDiscoveryService, tmp_path: Path
+        self, service: FlextInfraDiscoveryService, tmp_path: Path,
     ) -> None:
         """Test finding pyproject files with directory exclusion."""
         (tmp_path / "project1").mkdir()
@@ -105,7 +105,7 @@ class TestFlextInfraDiscoveryService:
         (tmp_path / "skip_me").mkdir()
         (tmp_path / "skip_me" / "pyproject.toml").touch()
         result = service.find_all_pyproject_files(
-            tmp_path, skip_dirs=frozenset({"skip_me"})
+            tmp_path, skip_dirs=frozenset({"skip_me"}),
         )
         assert result.is_success
         files = result.value
@@ -113,7 +113,7 @@ class TestFlextInfraDiscoveryService:
         assert "skip_me" not in str(files[0])
 
     def test_find_all_pyproject_files_with_project_paths(
-        self, service: FlextInfraDiscoveryService, tmp_path: Path
+        self, service: FlextInfraDiscoveryService, tmp_path: Path,
     ) -> None:
         """Test finding pyproject files for specific projects."""
         proj1 = tmp_path / "project1"
@@ -129,7 +129,7 @@ class TestFlextInfraDiscoveryService:
         assert files[0].parent == proj1
 
     def test_discover_projects_result_type(
-        self, service: FlextInfraDiscoveryService, workspace_with_projects: Path
+        self, service: FlextInfraDiscoveryService, workspace_with_projects: Path,
     ) -> None:
         """Test that result is properly typed FlextResult."""
         result = service.discover_projects(workspace_with_projects)
@@ -140,7 +140,7 @@ class TestFlextInfraDiscoveryService:
             assert isinstance(item, m.Infra.Workspace.ProjectInfo)
 
     def test_discover_projects_empty_workspace_v2(
-        self, service: FlextInfraDiscoveryService, tmp_path: Path
+        self, service: FlextInfraDiscoveryService, tmp_path: Path,
     ) -> None:
         """Test discover_projects returns empty list for empty workspace."""
         result = service.discover_projects(tmp_path)
@@ -179,7 +179,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         assert result.value == []
 
     def test_find_all_pyproject_files_with_permission_error(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test find_all_pyproject_files handles permission errors (lines 156-157)."""
         service = FlextInfraDiscoveryService()
@@ -189,7 +189,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         assert len(result.value) >= 1
 
     def test_discover_projects_skips_no_pyproject_no_gomod(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test discover_projects skips dirs with Makefile but no pyproject/go.mod (line 75)."""
         service = FlextInfraDiscoveryService()
@@ -203,7 +203,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         assert len(result.value) == 0
 
     def test_find_all_pyproject_files_oserror_on_rglob(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
+        self, tmp_path: Path, monkeypatch: MonkeyPatch,
     ) -> None:
         """Test find_all_pyproject_files handles OSError from rglob (lines 138-139)."""
         service = FlextInfraDiscoveryService()
@@ -219,7 +219,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         assert "pyproject file scan failed" in result.error
 
     def test_submodule_names_with_gitmodules_oserror(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
+        self, tmp_path: Path, monkeypatch: MonkeyPatch,
     ) -> None:
         """Test _submodule_names handles OSError on read_text (lines 154-157)."""
         workspace_root = tmp_path

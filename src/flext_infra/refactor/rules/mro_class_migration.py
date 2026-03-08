@@ -19,7 +19,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None
+        self, tree: cst.Module, _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         if _file_path is None:
             return (tree, [])
@@ -42,8 +42,8 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
                 continue
             candidates.append(
                 m.Infra.Refactor.MROSymbolCandidate(
-                    symbol=stmt.target.id, line=stmt.lineno
-                )
+                    symbol=stmt.target.id, line=stmt.lineno,
+                ),
             )
         if len(candidates) == 0:
             return (tree, [])
@@ -56,7 +56,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         )
         updated_source, migration, _ = (
             FlextInfraRefactorMROMigrationTransformer.migrate_file(
-                scan_result=scan_result
+                scan_result=scan_result,
             )
         )
         if len(migration.moved_symbols) == 0 or updated_source == source:
@@ -69,7 +69,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
 def _first_constants_class_name(tree: ast.Module) -> str:
     for stmt in tree.body:
         if isinstance(stmt, ast.ClassDef) and stmt.name.endswith(
-            c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX
+            c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX,
         ):
             return stmt.name
     return ""

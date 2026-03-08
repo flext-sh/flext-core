@@ -76,7 +76,7 @@ class FlextInfraRefactorEngine:
 
     @staticmethod
     def write_impact_map(
-        results: list[m.Infra.Refactor.Result], output_path: Path
+        results: list[m.Infra.Refactor.Result], output_path: Path,
     ) -> bool:
         return FlextInfraRefactorCliSupport.write_impact_map(results, output_path)
 
@@ -85,7 +85,7 @@ class FlextInfraRefactorEngine:
         sys.exit(FlextInfraRefactorCliSupport.run_cli(FlextInfraRefactorEngine))
 
     def collect_project_files(
-        self, project_path: Path, *, pattern: str = c.Infra.Extensions.PYTHON_GLOB
+        self, project_path: Path, *, pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
         """Collect project files that match current engine scope filters."""
         scan_dirs = self.rule_loader.extract_project_scan_dirs(self.config)
@@ -96,7 +96,7 @@ class FlextInfraRefactorEngine:
             output.error(f"No configured scan directories in {project_path}: {dirs}")
             return []
         ignore_items, extension_items = self.rule_loader.extract_engine_file_filters(
-            self.config
+            self.config,
         )
         ignore_patterns = {str(item) for item in ignore_items}
         allowed_extensions = {str(item) for item in extension_items}
@@ -120,7 +120,7 @@ class FlextInfraRefactorEngine:
         return files
 
     def collect_workspace_files(
-        self, workspace_root: Path, *, pattern: str = c.Infra.Extensions.PYTHON_GLOB
+        self, workspace_root: Path, *, pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
         """Collect all candidate files under workspace projects."""
         root = workspace_root.resolve()
@@ -172,7 +172,7 @@ class FlextInfraRefactorEngine:
         return r[list[FlextInfraRefactorRule]].ok(loaded_rules)
 
     def refactor_file(
-        self, file_path: Path, *, dry_run: bool = False
+        self, file_path: Path, *, dry_run: bool = False,
     ) -> m.Infra.Refactor.Result:
         """Refactor one file with currently loaded rules."""
         try:
@@ -230,7 +230,7 @@ class FlextInfraRefactorEngine:
             )
 
     def refactor_files(
-        self, file_paths: list[Path], *, dry_run: bool = False
+        self, file_paths: list[Path], *, dry_run: bool = False,
     ) -> list[m.Infra.Refactor.Result]:
         """Refactor many files and collect individual results."""
         results: list[m.Infra.Refactor.Result] = []
@@ -244,7 +244,7 @@ class FlextInfraRefactorEngine:
                         modified=False,
                         changes=["Skipped non-Python file"],
                         refactored_code=None,
-                    )
+                    ),
                 )
                 continue
             result = self.refactor_file(file_path, dry_run=dry_run)
@@ -252,7 +252,7 @@ class FlextInfraRefactorEngine:
             if result.success:
                 if result.modified:
                     output.info(
-                        f"{('[DRY-RUN] ' if dry_run else '')}Modified: {file_path.name}"
+                        f"{('[DRY-RUN] ' if dry_run else '')}Modified: {file_path.name}",
                     )
                     for change in result.changes:
                         output.info(f"  - {change}")
@@ -274,7 +274,7 @@ class FlextInfraRefactorEngine:
         stash_ref = ""
         if apply_safety and (not dry_run):
             stash_result = self.safety_manager.create_pre_transformation_stash(
-                project_path
+                project_path,
             )
             if stash_result.is_failure:
                 error_msg = stash_result.error or "pre-transformation stash failed"
@@ -287,7 +287,7 @@ class FlextInfraRefactorEngine:
                         error=error_msg,
                         changes=[],
                         refactored_code=None,
-                    )
+                    ),
                 ]
             stash_ref = stash_result.value
         files = self.collect_project_files(project_path, pattern=pattern)
@@ -303,7 +303,7 @@ class FlextInfraRefactorEngine:
             if checkpoint_result.is_failure:
                 output.error(checkpoint_result.error or "checkpoint save failed")
             validation_result = self.safety_manager.run_semantic_validation(
-                project_path
+                project_path,
             )
             if validation_result.is_failure:
                 error_msg = validation_result.error or "semantic validation failed"
@@ -320,7 +320,7 @@ class FlextInfraRefactorEngine:
                         error=error_msg,
                         changes=[],
                         refactored_code=None,
-                    )
+                    ),
                 )
             else:
                 clear_result = self.safety_manager.clear_checkpoint()
@@ -344,7 +344,7 @@ class FlextInfraRefactorEngine:
         project_paths = self.rule_loader.discover_workspace_projects(root)
         if not project_paths:
             output.error(
-                f"No projects discovered under workspace root: {workspace_root}"
+                f"No projects discovered under workspace root: {workspace_root}",
             )
             return []
         output.info(f"Discovered {len(project_paths)} projects in workspace")
@@ -364,7 +364,7 @@ class FlextInfraRefactorEngine:
                         error=error_msg,
                         changes=[],
                         refactored_code=None,
-                    )
+                    ),
                 ]
             stash_ref = stash_result.value
         for project in project_paths:
@@ -372,7 +372,7 @@ class FlextInfraRefactorEngine:
                 break
             output.header(f"Project: {project}")
             project_results = self.refactor_project(
-                project, dry_run=dry_run, pattern=pattern, apply_safety=False
+                project, dry_run=dry_run, pattern=pattern, apply_safety=False,
             )
             results.extend(project_results)
             if apply_safety and (not dry_run):
@@ -402,7 +402,7 @@ class FlextInfraRefactorEngine:
                         error=error_msg,
                         changes=[],
                         refactored_code=None,
-                    )
+                    ),
                 )
             else:
                 clear_result = self.safety_manager.clear_checkpoint()
@@ -417,7 +417,7 @@ class FlextInfraRefactorEngine:
         return [ClassNestingRefactorRule()]
 
     def _build_rule(
-        self, rule_def: Mapping[str, t.ContainerValue]
+        self, rule_def: Mapping[str, t.ContainerValue],
     ) -> FlextInfraRefactorRule | None:
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
         fix_action = (
@@ -425,7 +425,7 @@ class FlextInfraRefactorEngine:
                 rule_def.get(
                     c.Infra.ReportKeys.FIX_ACTION,
                     rule_def.get(c.Infra.ReportKeys.ACTION, ""),
-                )
+                ),
             )
             .strip()
             .lower()

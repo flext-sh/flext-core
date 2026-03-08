@@ -157,7 +157,7 @@ def test_orchestrate_with_project_execution_failure(tmp_path: Path) -> None:
     verb = "test"
     mock_runner = Mock(spec=FlextInfraCommandRunner)
     mock_runner.run_to_file.return_value = Mock(
-        is_success=False, error="Execution failed"
+        is_success=False, error="Execution failed",
     )
     orchestrator._runner = mock_runner
     result = orchestrator.orchestrate(projects, verb, fail_fast=False)
@@ -179,7 +179,7 @@ def test_orchestrate_with_runner_failure_fail_fast(tmp_path: Path) -> None:
     verb = "test"
     mock_runner = Mock(spec=FlextInfraCommandRunner)
     mock_runner.run_to_file.return_value = Mock(
-        is_success=False, error="Execution failed"
+        is_success=False, error="Execution failed",
     )
     orchestrator._runner = mock_runner
     result = orchestrator.orchestrate(projects, verb, fail_fast=True)
@@ -188,7 +188,7 @@ def test_orchestrate_with_runner_failure_fail_fast(tmp_path: Path) -> None:
 
 
 def test_orchestrate_run_project_failure_with_fail_fast(
-    tmp_path: Path, monkeypatch: MonkeyPatch
+    tmp_path: Path, monkeypatch: MonkeyPatch,
 ) -> None:
     """Test orchestrate handles _run_project failure with fail_fast (lines 94-105)."""
     orchestrator = FlextInfraOrchestratorService()
@@ -197,13 +197,13 @@ def test_orchestrate_run_project_failure_with_fail_fast(
     call_count = [0]
 
     def mock_run_project(
-        self: object, project: str, verb: str, idx: int, make_args: list[str]
+        self: object, project: str, verb: str, idx: int, make_args: list[str],
     ) -> object:
         call_count[0] += 1
         if call_count[0] == 1:
             return r[m.Infra.Core.CommandOutput].fail("project execution failed")
         return r[m.Infra.Core.CommandOutput].ok(
-            m.Infra.Core.CommandOutput(stdout="", stderr="", exit_code=0, duration=0.0)
+            m.Infra.Core.CommandOutput(stdout="", stderr="", exit_code=0, duration=0.0),
         )
 
     monkeypatch.setattr(FlextInfraOrchestratorService, "_run_project", mock_run_project)

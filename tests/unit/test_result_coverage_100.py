@@ -71,7 +71,7 @@ class TestrCoverage:
         ],
     )
     def test_ok_creates_success_with_various_types(
-        self, value: object, expected: object
+        self, value: object, expected: object,
     ) -> None:
         """Test creating success results with different value types."""
         result = r[object].ok(value)
@@ -220,7 +220,7 @@ class TestrCoverage:
         """Test filter fails when predicate is false."""
         result = r[int].ok(5).filter(lambda x: x > 10)
         _ResultAssertions.assert_failure_with_error(
-            result, "Value did not pass filter predicate"
+            result, "Value did not pass filter predicate",
         )
 
     def test_filter_failure_skips_predicate(self) -> None:
@@ -282,7 +282,7 @@ class TestrCoverage:
             return r[object].fail("Not an int")
 
         result: r[object] = cast(
-            "r[object]", r[int].ok(5).flow_through(double, add_ten)
+            "r[object]", r[int].ok(5).flow_through(double, add_ten),
         )
         _ResultAssertions.assert_success(result)
         assert result.value == 20
@@ -299,7 +299,7 @@ class TestrCoverage:
             return r[object].fail("Should not reach here")
 
         result: r[object] = cast(
-            "r[object]", r[str].ok("test").flow_through(double, add_ten)
+            "r[object]", r[str].ok("test").flow_through(double, add_ten),
         )
         _ResultAssertions.assert_failure(result)
         assert result.error == "Not an int"
@@ -371,7 +371,7 @@ class TestrCoverage:
             return "success"
 
         success_func_typed: p.VariadicCallable[str] = cast(
-            "p.VariadicCallable[str]", success_func
+            "p.VariadicCallable[str]", success_func,
         )
         wrapped_func = r.safe(success_func_typed)
         result: r[str] = wrapped_func()
@@ -385,7 +385,7 @@ class TestrCoverage:
             raise ValueError(error_msg)
 
         failing_func_typed: p.VariadicCallable[str] = cast(
-            "p.VariadicCallable[str]", failing_func
+            "p.VariadicCallable[str]", failing_func,
         )
         wrapped_func = r.safe(failing_func_typed)
         result: r[str] = wrapped_func()
@@ -553,7 +553,7 @@ class TestrCoverage:
         """Test error code and error data metadata."""
         error_data: m.ConfigMap = m.ConfigMap(root={"details": "something"})
         result: r[str] = r[str].fail(
-            "Error", error_code="CODE_123", error_data=error_data
+            "Error", error_code="CODE_123", error_data=error_data,
         )
         assert result.error_code == "CODE_123"
         assert result.error_data == error_data

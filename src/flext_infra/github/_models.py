@@ -58,7 +58,7 @@ class FlextInfraGithubModels:
         project: str = Field(..., description="Project name.")
         path: str = Field(..., description="File path relative to project root.")
         action: str = Field(
-            ..., description="Sync action (create, update, noop, prune)."
+            ..., description="Sync action (create, update, noop, prune).",
         )
         reason: str = Field(..., description="Reason for the action.")
 

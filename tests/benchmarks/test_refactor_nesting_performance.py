@@ -23,7 +23,7 @@ class TestPerformanceBenchmarks:
                 file_dir.mkdir(parents=True, exist_ok=True)
                 test_file = file_dir / f"module_{i}.py"
                 test_file.write_text(
-                    f'\nclass LooseClass{i}:\n    """Loose class {i}."""\n    pass\n\ndef helper_{i}():\n    return {i}\n'
+                    f'\nclass LooseClass{i}:\n    """Loose class {i}."""\n    pass\n\ndef helper_{i}():\n    return {i}\n',
                 )
             scanner = FlextInfraRefactorLooseClassScanner()
             start = time.perf_counter()
@@ -40,7 +40,7 @@ class TestPerformanceBenchmarks:
                 file_dir.mkdir(parents=True, exist_ok=True)
                 test_file = file_dir / f"file_{i}.py"
                 test_file.write_text(
-                    f'\n"""Module {i} with substantial content."""\nfrom __future__ import annotations\n\nfrom typing import Optional, List, Dict, Any\n\nclass ClassA{i}:\n    """Class A variant {i}."""\n    \n    def __init__(self, value: int) -> None:\n        self.value = value\n    \n    def process(self, items: List[str]) -> Dict[str, Any]:\n        return {{"items": items, "value": self.value}}\n\nclass ClassB{i}:\n    """Class B variant {i}."""\n    \n    @staticmethod\n    def helper(x: Optional[int]) -> int:\n        return x or 0\n\ndef standalone_func_{i}(a: int, b: int) -> int:\n    return a + b\n'
+                    f'\n"""Module {i} with substantial content."""\nfrom __future__ import annotations\n\nfrom typing import Optional, List, Dict, Any\n\nclass ClassA{i}:\n    """Class A variant {i}."""\n    \n    def __init__(self, value: int) -> None:\n        self.value = value\n    \n    def process(self, items: List[str]) -> Dict[str, Any]:\n        return {{"items": items, "value": self.value}}\n\nclass ClassB{i}:\n    """Class B variant {i}."""\n    \n    @staticmethod\n    def helper(x: Optional[int]) -> int:\n        return x or 0\n\ndef standalone_func_{i}(a: int, b: int) -> int:\n    return a + b\n',
                 )
             scanner = FlextInfraRefactorLooseClassScanner()
             tracemalloc.start()
@@ -56,11 +56,11 @@ class TestPerformanceBenchmarks:
             tmp_path = Path(tmp_dir)
             test_file = tmp_path / "test.py"
             test_file.write_text(
-                "\nclass TimeoutEnforcer:\n    def enforce(self, timeout: int) -> bool:\n        return True\n\nclass RateLimiter:\n    def limit(self, rate: int) -> bool:\n        return True\n"
+                "\nclass TimeoutEnforcer:\n    def enforce(self, timeout: int) -> bool:\n        return True\n\nclass RateLimiter:\n    def limit(self, rate: int) -> bool:\n        return True\n",
             )
             config_file = tmp_path / "mappings.yml"
             config_file.write_text(
-                "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n"
+                "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n",
             )
             rule = ClassNestingRefactorRule(config_file)
             start = time.perf_counter()

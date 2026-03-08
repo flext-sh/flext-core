@@ -110,7 +110,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
 
     monkeypatch.setattr(parser, "_safe_text_length", _raise_type_error_value)
     split_failure = parser.parse_delimited(
-        cast("str", cast("object", _SplitRaises())), ","
+        cast("str", cast("object", _SplitRaises())), ",",
     )
     assert split_failure.is_failure
 
@@ -149,7 +149,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
     str_conversion_result = u.Parser()._extract_key_from_str_conversion(
-        cast("t.ContainerValue", cast("object", _StrRaises()))
+        cast("t.ContainerValue", cast("object", _StrRaises())),
     )
     assert str_conversion_result.is_failure
 
@@ -169,20 +169,20 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast("t.ContainerValue", object())
+        cast("t.ContainerValue", object()),
     )
     assert (
         parser3.get_object_key(cast("t.ContainerValue", cast("object", _OddNoStr())))
         == "_OddNoStr"
     )
     invalid_type = parser3._extract_pattern_components(
-        cast("tuple[str, str, int]", cast("object", ("a", 1, 0)))
+        cast("tuple[str, str, int]", cast("object", ("a", 1, 0))),
     )
     invalid_flag = parser3._extract_pattern_components(
-        cast("tuple[str, str, int]", cast("object", ("a", "b", "x")))
+        cast("tuple[str, str, int]", cast("object", ("a", "b", "x"))),
     )
     invalid_len = parser3._extract_pattern_components(
-        cast("tuple[str, str]", ("only",))
+        cast("tuple[str, str]", ("only",)),
     )
     assert invalid_type.is_failure
     assert invalid_flag.is_failure
@@ -237,12 +237,12 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert primitive_float is not None and primitive_float.is_success
     assert primitive_str is not None and primitive_str.is_success
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_float", staticmethod(_raise_value_error_float)
+        u.Parser.__mro__[1], "_coerce_to_float", staticmethod(_raise_value_error_float),
     )
     failed_float = parser._parse_try_primitive("x", float, 1.2, None, "field: ")
     assert failed_float is not None and failed_float.is_failure
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_bool", staticmethod(_raise_type_error_bool)
+        u.Parser.__mro__[1], "_coerce_to_bool", staticmethod(_raise_type_error_bool),
     )
     failed_bool = parser._parse_try_primitive("x", bool, True, None, "field: ")
     assert failed_bool is not None and failed_bool.is_failure
@@ -282,7 +282,7 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            cast("t.ContainerValue", cast("object", _BadStr())), default="d"
+            cast("t.ContainerValue", cast("object", _BadStr())), default="d",
         )
         == "d"
     )
@@ -293,14 +293,14 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert (
         parser.conv_str(
-            cast("t.ContainerValue", cast("object", _BadConv())), default="d"
+            cast("t.ContainerValue", cast("object", _BadConv())), default="d",
         )
         == "d"
     )
     assert parser.conv_str_list(5) == ["5"]
     assert parser.norm_str("abc") == "abc"
     assert parser.norm_list({"a": "", "b": "B"}, case="lower", filter_truthy=True) == {
-        "b": "b"
+        "b": "b",
     }
     assert parser.norm_list(["A", "b"], case="lower", to_set=True) == {"a", "b"}
     assert parser.norm_join(["A", "B"], sep="-") == "A-B"
@@ -321,7 +321,7 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
 def test_parser_success_and_edge_paths_cover_major_branches() -> None:
     parser = u.Parser()
     opts = m.CollectionsParseOptions(
-        strip=True, remove_empty=True, validator=lambda value: len(value) > 1
+        strip=True, remove_empty=True, validator=lambda value: len(value) > 1,
     )
     processed = parser.parse_delimited(" a, b, cc ,, ddd ", ",", options=opts)
     assert processed.is_success
@@ -343,7 +343,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     parser = u.Parser()
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
-        cast("t.ContainerValue", cast("object", type("Obj", (), {"id": "x1"})()))
+        cast("t.ContainerValue", cast("object", type("Obj", (), {"id": "x1"})())),
     )
     assert mapped.is_success and mapped.value == "n1"
     assert attrs.is_success and attrs.value == "x1"
@@ -382,12 +382,12 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_int", staticmethod(_raise_value_error_int)
+        u.Parser.__mro__[1], "_coerce_to_int", staticmethod(_raise_value_error_int),
     )
     failed_int = parser._parse_try_primitive("x", int, 1, None, "field: ")
     assert failed_int is not None and failed_int.is_failure
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_str", staticmethod(_raise_type_error_str)
+        u.Parser.__mro__[1], "_coerce_to_str", staticmethod(_raise_type_error_str),
     )
     failed_str = parser._parse_try_primitive("x", str, "d", None, "field: ")
     assert failed_str is not None and failed_str.is_failure
@@ -397,7 +397,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert (
         abs(
             parser._convert_to_float(cast("t.ContainerValue", object()), default=1.5)
-            - 1.5
+            - 1.5,
         )
         < 1e-09
     )

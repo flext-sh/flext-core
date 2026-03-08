@@ -105,7 +105,7 @@ def main() -> int:
         else [part.strip() for part in args.phase.split(",") if part.strip()]
     )
     needs_version = bool(
-        {c.Infra.Toml.VERSION, c.Infra.Directories.BUILD, "publish"} & set(phases)
+        {c.Infra.Toml.VERSION, c.Infra.Directories.BUILD, "publish"} & set(phases),
     )
     if needs_version:
         try:

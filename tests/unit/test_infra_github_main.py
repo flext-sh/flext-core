@@ -23,10 +23,10 @@ main = github_main.main
 
 
 def _orchestration_result(
-    *, fail: int = 0, total: int = 1
+    *, fail: int = 0, total: int = 1,
 ) -> m.Infra.Github.PrOrchestrationResult:
     return m.Infra.Github.PrOrchestrationResult(
-        total=total, success=max(total - fail, 0), fail=fail, results=[]
+        total=total, success=max(total - fail, 0), fail=fail, results=[],
     )
 
 
@@ -36,7 +36,7 @@ class TestRunWorkflows:
     def test_run_workflows_success(self, tmp_path: Path) -> None:
         """Test successful workflow sync."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
@@ -48,12 +48,12 @@ class TestRunWorkflows:
     def test_run_workflows_failure(self, tmp_path: Path) -> None:
         """Test workflow sync failure."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
             mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].fail(
-                "sync failed"
+                "sync failed",
             )
             argv = ["--workspace-root", str(tmp_path)]
             result = run_workflows(argv)
@@ -62,7 +62,7 @@ class TestRunWorkflows:
     def test_run_workflows_with_apply_flag(self, tmp_path: Path) -> None:
         """Test workflow sync with apply flag."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
@@ -77,7 +77,7 @@ class TestRunWorkflows:
     def test_run_workflows_with_prune_flag(self, tmp_path: Path) -> None:
         """Test workflow sync with prune flag."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
@@ -91,7 +91,7 @@ class TestRunWorkflows:
     def test_run_workflows_with_report(self, tmp_path: Path) -> None:
         """Test workflow sync with report output."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
@@ -110,12 +110,12 @@ class TestRunLint:
     def test_run_lint_success(self, tmp_path: Path) -> None:
         """Test successful linting."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter"
+            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
             mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
             )
             argv = ["--root", str(tmp_path)]
             result = run_lint(argv)
@@ -124,7 +124,7 @@ class TestRunLint:
     def test_run_lint_failure(self, tmp_path: Path) -> None:
         """Test linting failure."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter"
+            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
@@ -136,12 +136,12 @@ class TestRunLint:
     def test_run_lint_with_report(self, tmp_path: Path) -> None:
         """Test linting with report output."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter"
+            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
             mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
             )
             report_path = tmp_path / "report.json"
             argv = ["--root", str(tmp_path), "--report", str(report_path)]
@@ -153,12 +153,12 @@ class TestRunLint:
     def test_run_lint_with_strict_flag(self, tmp_path: Path) -> None:
         """Test linting with strict flag."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter"
+            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
             mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
             )
             argv = ["--root", str(tmp_path), "--strict"]
             result = run_lint(argv)
@@ -199,7 +199,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_success(self, tmp_path: Path) -> None:
         """Test successful PR workspace orchestration."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -213,7 +213,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_failure(self, tmp_path: Path) -> None:
         """Test PR workspace orchestration failure."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -227,7 +227,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_with_failures(self, tmp_path: Path) -> None:
         """Test PR workspace with failures in results."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -241,7 +241,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_with_projects(self, tmp_path: Path) -> None:
         """Test PR workspace with specific projects."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -264,7 +264,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_with_branch(self, tmp_path: Path) -> None:
         """Test PR workspace with branch checkout."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -280,7 +280,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_with_checkpoint(self, tmp_path: Path) -> None:
         """Test PR workspace with checkpoint enabled."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -296,7 +296,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_with_fail_fast(self, tmp_path: Path) -> None:
         """Test PR workspace with fail-fast enabled."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -312,7 +312,7 @@ class TestRunPrWorkspace:
     def test_run_pr_workspace_with_pr_args(self, tmp_path: Path) -> None:
         """Test PR workspace with PR operation arguments."""
         with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
@@ -366,7 +366,7 @@ class TestMain:
         original_argv = sys.argv.copy()
         try:
             with patch(
-                "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+                "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
             ) as mock_syncer_class:
                 mock_syncer = Mock()
                 mock_syncer_class.return_value = mock_syncer
@@ -387,12 +387,12 @@ class TestMain:
         original_argv = sys.argv.copy()
         try:
             with patch(
-                "flext_infra.github.__main__.FlextInfraWorkflowLinter"
+                "flext_infra.github.__main__.FlextInfraWorkflowLinter",
             ) as mock_linter_class:
                 mock_linter = Mock()
                 mock_linter_class.return_value = mock_linter
                 mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                    m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"})
+                    m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
                 )
                 sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                 result = main()
@@ -424,7 +424,7 @@ class TestMain:
         original_argv = sys.argv.copy()
         try:
             with patch(
-                "flext_infra.github.__main__.FlextInfraPrWorkspaceManager"
+                "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
             ) as mock_manager_class:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
@@ -458,7 +458,7 @@ class TestMain:
         try:
             with patch("flext_infra.github.__main__.FlextRuntime") as mock_runtime:
                 with patch(
-                    "flext_infra.github.__main__.FlextInfraWorkflowLinter"
+                    "flext_infra.github.__main__.FlextInfraWorkflowLinter",
                 ) as mock_linter_class:
                     mock_linter = Mock()
                     mock_linter_class.return_value = mock_linter
@@ -466,8 +466,8 @@ class TestMain:
                         m.Infra.Github.WorkflowLintResult
                     ].ok(
                         m.Infra.Github.WorkflowLintResult.model_validate({
-                            "status": "ok"
-                        })
+                            "status": "ok",
+                        }),
                     )
                     sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                     main()
@@ -480,16 +480,16 @@ class TestMain:
         original_argv = sys.argv.copy()
         try:
             with patch(
-                "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+                "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
             ) as mock_syncer_class:
                 mock_syncer = Mock()
                 mock_syncer_class.return_value = mock_syncer
                 ops = [
                     SyncOperation(
-                        project="p1", path="ci.yml", action="create", reason="new"
+                        project="p1", path="ci.yml", action="create", reason="new",
                     ),
                     SyncOperation(
-                        project="p2", path="ci.yml", action="update", reason="changed"
+                        project="p2", path="ci.yml", action="update", reason="changed",
                     ),
                 ]
                 mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok(ops)

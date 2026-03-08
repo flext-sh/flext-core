@@ -11,8 +11,6 @@ E = TypeVar("E")
 class FlextTestTypes:
     """Type namespace for tests."""
 
-    pass
-
 
 t = FlextTestTypes
 __all__ = ["FlextTestTypes", "t"]

@@ -200,7 +200,7 @@ class TestFlextSettingsSingletonIntegration:
             config_file_path.write_text(json.dumps(config_data), encoding="utf-8")
             assert config_file_path.exists()
             assert config_file_path.read_text(encoding="utf-8") == json.dumps(
-                config_data
+                config_data,
             )
             config = FlextSettings.get_global()
             assert config.app_name is not None
@@ -266,7 +266,7 @@ class TestFlextSettingsSingletonIntegration:
             assert json.loads(json_file.read_text(encoding="utf-8")) == json_config
             env_file = temp_directory / ".env"
             env_file.write_text(
-                "FLEXT_APP_NAME=from-env\nFLEXT_HOST=env-host\n", encoding="utf-8"
+                "FLEXT_APP_NAME=from-env\nFLEXT_HOST=env-host\n", encoding="utf-8",
             )
             assert env_file.exists()
             assert "FLEXT_APP_NAME=from-env" in env_file.read_text(encoding="utf-8")
@@ -374,11 +374,11 @@ class TestFlextSettingsSingletonIntegration:
                     config_explicit,
                     "is_debug_enabled",
                     getattr(config_explicit, "debug", False),
-                )
+                ),
             )
             assert config_explicit.trace is False
             config_no_debug = FlextSettings(
-                log_level=FlextConstants.Settings.LogLevel.WARNING, debug=False
+                log_level=FlextConstants.Settings.LogLevel.WARNING, debug=False,
             )
             assert (
                 config_no_debug.effective_log_level
@@ -389,7 +389,7 @@ class TestFlextSettingsSingletonIntegration:
                     config_no_debug,
                     "is_debug_enabled",
                     getattr(config_no_debug, "debug", False),
-                )
+                ),
             )
         finally:
             for key, value in saved_env_vars.items():

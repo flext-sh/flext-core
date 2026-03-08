@@ -52,7 +52,7 @@ def _create_test_project(tmp_path: Path, *, with_all_modules: bool = True) -> Pa
     if with_all_modules:
         for mod in _SRC_MODULE_FILES:
             (pkg / mod).write_text(
-                f"class TestProject{mod.split('.')[0].title()}:\n    pass\n"
+                f"class TestProject{mod.split('.')[0].title()}:\n    pass\n",
             )
     return project
 

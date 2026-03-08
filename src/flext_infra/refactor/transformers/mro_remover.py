@@ -18,7 +18,7 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         del original_node
         if not isinstance(updated_node.body, cst.IndentedBlock):
@@ -40,7 +40,7 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
                     break
             new_body.append(stmt)
         return updated_node.with_changes(
-            body=updated_node.body.with_changes(body=new_body)
+            body=updated_node.body.with_changes(body=new_body),
         )
 
     def _attribute_root_name(self, expr: cst.BaseExpression) -> str:

@@ -32,7 +32,7 @@ class ConcreteTestService(FlextService[bool]):
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
         return FlextModelsService.RuntimeBootstrapOptions(
-            config_overrides={"app_name": "test_app"}, subproject="test"
+            config_overrides={"app_name": "test_app"}, subproject="test",
         )
 
     @override
@@ -53,7 +53,7 @@ class TestServiceBootstrap:
     def test_create_runtime_with_options(self) -> None:
         """Test _create_runtime creates ServiceRuntime with bootstrap options."""
         runtime = ConcreteTestService._create_runtime(
-            config_overrides={"app_name": "runtime_app"}, subproject="test"
+            config_overrides={"app_name": "runtime_app"}, subproject="test",
         )
         assert runtime.config is not None
         assert runtime.context is not None

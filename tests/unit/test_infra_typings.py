@@ -32,7 +32,7 @@ class TestFlextInfraTypesImport:
     def test_flext_infra_types_has_general_value_type(self) -> None:
         """Test that FlextInfraTypes has ContainerValue type."""
         assert hasattr(FlextTypes, "ContainerValue") or hasattr(
-            FlextInfraTypes, "ContainerValue"
+            FlextInfraTypes, "ContainerValue",
         )
 
     def test_flext_infra_types_has_dict_type(self) -> None:
@@ -50,25 +50,25 @@ class TestFlextInfraTypesImport:
     def test_flext_infra_types_has_metadata_value_type(self) -> None:
         """Test that FlextInfraTypes has MetadataValue type."""
         assert hasattr(FlextTypes, "MetadataValue") or hasattr(
-            FlextInfraTypes, "MetadataValue"
+            FlextInfraTypes, "MetadataValue",
         )
 
     def test_flext_infra_types_has_configuration_mapping_type(self) -> None:
         """Test that FlextInfraTypes has ConfigurationMapping type."""
         assert hasattr(FlextTypes, "ConfigurationMapping") or hasattr(
-            FlextInfraTypes, "ConfigurationMapping"
+            FlextInfraTypes, "ConfigurationMapping",
         )
 
     def test_flext_infra_types_has_serializable_type(self) -> None:
         """Test that FlextInfraTypes has Serializable type."""
         assert hasattr(FlextTypes, "Serializable") or hasattr(
-            FlextInfraTypes, "Serializable"
+            FlextInfraTypes, "Serializable",
         )
 
     def test_flext_infra_types_has_registerable_service_type(self) -> None:
         """Test that FlextInfraTypes has RegisterableService type."""
         assert hasattr(FlextTypes, "RegisterableService") or hasattr(
-            FlextInfraTypes, "RegisterableService"
+            FlextInfraTypes, "RegisterableService",
         )
 
     def test_flext_infra_types_has_container_type(self) -> None:
@@ -78,17 +78,17 @@ class TestFlextInfraTypesImport:
     def test_flext_infra_types_has_factory_callable_type(self) -> None:
         """Test that FlextInfraTypes has FactoryCallable type."""
         assert hasattr(FlextTypes, "FactoryCallable") or hasattr(
-            FlextInfraTypes, "FactoryCallable"
+            FlextInfraTypes, "FactoryCallable",
         )
 
     def test_flext_infra_types_has_resource_callable_type(self) -> None:
         """Test that FlextInfraTypes has ResourceCallable type."""
         assert hasattr(FlextTypes, "ResourceCallable") or hasattr(
-            FlextInfraTypes, "ResourceCallable"
+            FlextInfraTypes, "ResourceCallable",
         )
 
     def test_flext_infra_types_has_validation_namespace(self) -> None:
         """Test that FlextInfraTypes has Validation namespace."""
         assert hasattr(FlextTypes, "Validation") or hasattr(
-            FlextInfraTypes, "Validation"
+            FlextInfraTypes, "Validation",
         )

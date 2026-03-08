@@ -155,7 +155,7 @@ class TestFlextConstants:
     """Comprehensive test suite for FlextConstants using u."""
 
     @pytest.mark.parametrize(
-        "scenario", ConstantsScenarios.CORE_CONSTANT_PATHS, ids=lambda s: s.path
+        "scenario", ConstantsScenarios.CORE_CONSTANT_PATHS, ids=lambda s: s.path,
     )
     def test_core_constant_values(self, scenario: ConstantPathScenario) -> None:
         """Test all core constant values using parametrized test cases."""
@@ -174,11 +174,11 @@ class TestFlextConstants:
         ids=lambda s: s.pattern_attr,
     )
     def test_validation_regex_patterns(
-        self, scenario: PatternValidationScenario
+        self, scenario: PatternValidationScenario,
     ) -> None:
         """Test regex patterns with comprehensive valid and invalid cases."""
         compiled_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            scenario.pattern_attr
+            scenario.pattern_attr,
         )
         for valid_case in scenario.valid_cases:
             match_result = compiled_pattern.match(valid_case)
@@ -206,7 +206,7 @@ class TestFlextConstants:
         ),
     )
     def test_type_safety_constant_types(
-        self, value: object, expected_type: type
+        self, value: object, expected_type: type,
     ) -> None:
         """Test that constants have correct types."""
         tm.that(value, is_=expected_type, msg=f"Expected {value} to be {expected_type}")
@@ -235,19 +235,19 @@ class TestFlextConstants:
         documented_classes = [c.Network, c.Validation, c.Errors, c.Platform, c.Logging]
         for cls in documented_classes:
             tm.that(
-                cls.__doc__, none=False, msg=f"Missing docstring for {cls.__name__}"
+                cls.__doc__, none=False, msg=f"Missing docstring for {cls.__name__}",
             )
 
     def test_edge_cases_pattern_edge_cases(self) -> None:
         """Test regex patterns with edge cases."""
         email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "Platform.PATTERN_EMAIL"
+            "Platform.PATTERN_EMAIL",
         )
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
         tm.that(len(long_email), lte=c.Validation.MAX_EMAIL_LENGTH)
         tm.that(email_pattern.match(long_email), none=False)
         phone_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "Platform.PATTERN_PHONE_NUMBER"
+            "Platform.PATTERN_PHONE_NUMBER",
         )
         tm.that(phone_pattern.match("+123456789012345"), none=False)
         tm.that(phone_pattern.match("+1234567890"), none=False)
@@ -276,7 +276,7 @@ class TestFlextConstants:
     def test_integration_pattern_and_validation_consistency(self) -> None:
         """Test that patterns work with validation constants."""
         email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "Platform.PATTERN_EMAIL"
+            "Platform.PATTERN_EMAIL",
         )
         max_length_email = "a" * (c.Validation.MAX_EMAIL_LENGTH - 9) + "@test.com"
         tm.that(len(max_length_email), lte=c.Validation.MAX_EMAIL_LENGTH)

@@ -16,11 +16,11 @@ class TestProjectLevelRefactor:
         src_dir.mkdir(parents=True)
         test_file = src_dir / "dispatcher.py"
         test_file.write_text(
-            "\nclass TimeoutEnforcer:\n    pass\n\nclass RateLimiter:\n    pass\n"
+            "\nclass TimeoutEnforcer:\n    pass\n\nclass RateLimiter:\n    pass\n",
         )
         config_file = tmp_path / "mappings.yml"
         config_file.write_text(
-            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n"
+            "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
         result = rule.apply(test_file, dry_run=True)
@@ -33,11 +33,11 @@ class TestProjectLevelRefactor:
         src_dir.mkdir()
         test_file = src_dir / "test.py"
         test_file.write_text(
-            "\nfrom typing import Optional\n\nclass Helper:\n    def process(self, x: Optional[int] = None) -> int:\n        return x or 0\n"
+            "\nfrom typing import Optional\n\nclass Helper:\n    def process(self, x: Optional[int] = None) -> int:\n        return x or 0\n",
         )
         config_file = tmp_path / "mappings.yml"
         config_file.write_text(
-            "\nclass_nesting:\n  - loose_name: Helper\n    current_file: src/test.py\n    target_namespace: FlextUtilities\n    target_name: Helper\n    confidence: high\n"
+            "\nclass_nesting:\n  - loose_name: Helper\n    current_file: src/test.py\n    target_namespace: FlextUtilities\n    target_name: Helper\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
         result = rule.apply(test_file, dry_run=True)

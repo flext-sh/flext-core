@@ -82,7 +82,7 @@ def _extract_requirement_name(entry: str) -> str | None:
 
 
 def _rewrite_pep621(
-    doc: TOMLDocument, *, is_root: bool, mode: str, internal_names: set[str]
+    doc: TOMLDocument, *, is_root: bool, mode: str, internal_names: set[str],
 ) -> list[str]:
     project_raw = doc.get(c.Infra.Toml.PROJECT, None)
     if not isinstance(project_raw, Mapping):
@@ -166,7 +166,7 @@ def rewrite_dep_paths(
         return r[list[str]].fail(doc_result.error or "failed to read TOML document")
     doc = doc_result.unwrap()
     changes = _rewrite_pep621(
-        doc, is_root=is_root, mode=mode, internal_names=internal_names
+        doc, is_root=is_root, mode=mode, internal_names=internal_names,
     )
     changes += _rewrite_poetry(doc, is_root=is_root, mode=mode)
     if changes and (not dry_run):
@@ -179,7 +179,7 @@ def rewrite_dep_paths(
 def main() -> int:
     """Execute dependency path rewriting from command line."""
     parser = argparse.ArgumentParser(
-        description="Rewrite internal FLEXT dependency paths for workspace/standalone mode."
+        description="Rewrite internal FLEXT dependency paths for workspace/standalone mode.",
     )
     _ = parser.add_argument(
         "--mode",
@@ -188,7 +188,7 @@ def main() -> int:
         help="Target mode (default: auto-detect)",
     )
     _ = parser.add_argument(
-        "--dry-run", action="store_true", help="Print changes without writing"
+        "--dry-run", action="store_true", help="Print changes without writing",
     )
     _ = parser.add_argument(
         "--project",
@@ -308,7 +308,7 @@ def main() -> int:
             total_changes += len(changes)
     if total_changes == 0:
         output.info(
-            "[sync-dep-paths] No changes needed - all paths already match target mode."
+            "[sync-dep-paths] No changes needed - all paths already match target mode.",
         )
     else:
         action = "would change" if args.dry_run else "changed"

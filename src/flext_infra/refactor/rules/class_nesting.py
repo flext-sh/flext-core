@@ -28,7 +28,7 @@ class PreCheckGate:
     def __init__(self, policy_path: Path | None = None) -> None:
         """Initialize the gate with an optional path to class-policy YAML."""
         self._policy_path = policy_path or Path(__file__).with_name(
-            "class-policy-v2.yml"
+            "class-policy-v2.yml",
         )
         self._schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
         self._policy_by_family: dict[str, m.Infra.Refactor.ClassNestingPolicy] = (
@@ -36,7 +36,7 @@ class PreCheckGate:
         )
 
     def validate_entry(
-        self, entry: t.Infra.StrMap
+        self, entry: t.Infra.StrMap,
     ) -> tuple[bool, t.Infra.StrMap | None]:
         """Return (ok, violation) for a single mapping entry."""
         source_symbol = entry.get(c.Infra.ReportKeys.LOOSE_NAME, "")
@@ -139,10 +139,10 @@ class PreCheckGate:
         policy_entry = policy_entry_raw
         class_rule = class_rule_raw
         policy_entry_required = u.Infra.Refactor.string_list(
-            policy_entry.get("required", [])
+            policy_entry.get("required", []),
         )
         class_rule_required = u.Infra.Refactor.string_list(
-            class_rule.get("required", [])
+            class_rule.get("required", []),
         )
         policy_matrix = u.Infra.Refactor.mapping_list(loaded.get("policy_matrix"))
         for entry in policy_matrix:
@@ -155,7 +155,7 @@ class PreCheckGate:
         return True
 
     def _has_required_fields(
-        self, entry: t.ContainerValue, required_fields: list[str]
+        self, entry: t.ContainerValue, required_fields: list[str],
     ) -> bool:
         if not isinstance(entry, dict):
             return False
@@ -187,7 +187,7 @@ class ClassNestingRefactorRule:
     def __init__(self, config_path: Path | None = None) -> None:
         """Initialize rule with an optional path to the YAML config."""
         self._config_path = config_path or Path(__file__).with_name(
-            "class-nesting-mappings.yml"
+            "class-nesting-mappings.yml",
         )
         self._policy_path = Path(__file__).with_name("class-policy-v2.yml")
         self._pre_check_gate = PreCheckGate()
@@ -196,7 +196,7 @@ class ClassNestingRefactorRule:
         self._cached_policy_context: t.Infra.PolicyContext | None = None
 
     def apply(
-        self, file_path: Path, *, dry_run: bool = False
+        self, file_path: Path, *, dry_run: bool = False,
     ) -> m.Infra.Refactor.Result:
         """Transform *file_path* according to loaded mappings and policy."""
         try:
@@ -213,19 +213,19 @@ class ClassNestingRefactorRule:
             mappings = self._load_config()
             confidence_threshold = self._confidence_threshold(mappings)
             class_mappings = self._class_nesting_mappings(
-                mappings, file_path, confidence_threshold
+                mappings, file_path, confidence_threshold,
             )
             helper_mappings = self._helper_consolidation_mappings(
-                mappings, file_path, confidence_threshold
+                mappings, file_path, confidence_threshold,
             )
             class_renames = self._class_rename_mappings(
-                mappings, file_path, confidence_threshold
+                mappings, file_path, confidence_threshold,
             )
             policy_context = self._policy_context_from_document()
             class_families = self._families_for_scope(
                 entries=self._entries_for_source_file(
                     u.Infra.Refactor.entry_list(
-                        mappings.get(c.Infra.ReportKeys.CLASS_NESTING)
+                        mappings.get(c.Infra.ReportKeys.CLASS_NESTING),
                     ),
                     file_path,
                     confidence_threshold,
@@ -235,7 +235,7 @@ class ClassNestingRefactorRule:
             helper_families = self._families_for_scope(
                 entries=self._entries_for_source_file(
                     u.Infra.Refactor.entry_list(
-                        mappings.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
+                        mappings.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION),
                     ),
                     file_path,
                     confidence_threshold,
@@ -243,7 +243,7 @@ class ClassNestingRefactorRule:
                 symbol_key="helper_name",
             )
             precheck_violations = self._run_precheck(
-                mappings, file_path, confidence_threshold
+                mappings, file_path, confidence_threshold,
             )
             if precheck_violations:
                 return m.Infra.Refactor.Result(
@@ -256,19 +256,19 @@ class ClassNestingRefactorRule:
                 )
             changes: list[str] = []
             tree = self._apply_class_nesting(
-                tree, class_mappings, changes, policy_context, class_families
+                tree, class_mappings, changes, policy_context, class_families,
             )
             tree = self._apply_helper_consolidation(
-                tree, helper_mappings, changes, policy_context, helper_families
+                tree, helper_mappings, changes, policy_context, helper_families,
             )
             tree = self._apply_nested_class_propagation(
-                tree, class_renames, changes, policy_context, class_families
+                tree, class_renames, changes, policy_context, class_families,
             )
             result_code = tree.code
             modified = result_code != source
             if modified and (not dry_run):
                 post_payload = self._build_postcheck_payload(
-                    mappings, file_path, confidence_threshold
+                    mappings, file_path, confidence_threshold,
                 )
                 post_ok, post_errors = self._post_check_gate.validate(
                     m.Infra.Refactor.Result(
@@ -323,12 +323,12 @@ class ClassNestingRefactorRule:
         class_nesting_raw = loaded.get(c.Infra.ReportKeys.CLASS_NESTING)
         if isinstance(class_nesting_raw, list):
             config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
-                u.Infra.Refactor.mapping_list(class_nesting_raw)
+                u.Infra.Refactor.mapping_list(class_nesting_raw),
             )
         helper_raw = loaded.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
         if isinstance(helper_raw, list):
             config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
-                u.Infra.Refactor.mapping_list(helper_raw)
+                u.Infra.Refactor.mapping_list(helper_raw),
             )
         self._cached_config = config
         return config
@@ -346,13 +346,13 @@ class ClassNestingRefactorRule:
 
     def _confidence_allowed(self, confidence: str, threshold: str) -> bool:
         confidence_rank = c.Infra.Refactor.CONFIDENCE_RANKS.get(
-            confidence.strip().lower(), 0
+            confidence.strip().lower(), 0,
         )
         threshold_rank = c.Infra.Refactor.CONFIDENCE_RANKS.get(threshold, 0)
         return confidence_rank >= threshold_rank
 
     def _class_nesting_mappings(
-        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str
+        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str,
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_source_file(
@@ -367,7 +367,7 @@ class ClassNestingRefactorRule:
         return mappings
 
     def _run_precheck(
-        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str
+        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str,
     ) -> list[str]:
         violations: list[str] = []
         entries = self._entries_for_source_file(
@@ -377,7 +377,7 @@ class ClassNestingRefactorRule:
         )
         helper_entries = self._entries_for_source_file(
             u.Infra.Refactor.entry_list(
-                config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
+                config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION),
             ),
             file_path,
             confidence_threshold,
@@ -392,17 +392,17 @@ class ClassNestingRefactorRule:
                         violation[c.Infra.ReportKeys.SOURCE_SYMBOL],
                         violation[c.Infra.ReportKeys.VIOLATION_TYPE],
                         violation[c.Infra.ReportKeys.SUGGESTED_FIX],
-                    ])
+                    ]),
                 )
         return violations
 
     def _helper_consolidation_mappings(
-        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str
+        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str,
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_source_file(
             u.Infra.Refactor.entry_list(
-                config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
+                config.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION),
             ),
             file_path,
             confidence_threshold,
@@ -414,7 +414,7 @@ class ClassNestingRefactorRule:
         return mappings
 
     def _class_rename_mappings(
-        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str
+        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str,
     ) -> dict[str, str]:
         mappings: dict[str, str] = {}
         for entry in self._entries_for_scope(
@@ -483,7 +483,7 @@ class ClassNestingRefactorRule:
         return accepted
 
     def _coerce_entries(
-        self, entries: list[dict[str, t.ContainerValue]]
+        self, entries: list[dict[str, t.ContainerValue]],
     ) -> list[t.Infra.StrMap]:
         coerced: list[t.Infra.StrMap] = []
         for typed in entries:
@@ -513,7 +513,7 @@ class ClassNestingRefactorRule:
         return coerced
 
     def _build_postcheck_payload(
-        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str
+        self, config: t.Infra.RuleConfig, file_path: Path, confidence_threshold: str,
     ) -> t.Infra.ContainerDict:
         payload: t.Infra.ContainerDict = {
             c.Infra.ReportKeys.SOURCE_SYMBOL: "",
@@ -538,7 +538,7 @@ class ClassNestingRefactorRule:
             if rule.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "") != source_symbol:
                 continue
             payload["expected_base_chain"] = u.Infra.Refactor.string_list(
-                rule.get("expected_base_chain")
+                rule.get("expected_base_chain"),
             )
             post_checks_raw = rule.get(c.Infra.ReportKeys.POST_CHECKS, [])
             post_checks: list[str] = []
@@ -567,7 +567,7 @@ class ClassNestingRefactorRule:
         return loaded_dict
 
     def _policy_document_schema_valid(
-        self, loaded: dict[str, t.ContainerValue]
+        self, loaded: dict[str, t.ContainerValue],
     ) -> bool:
         schema_path = self._policy_path.with_name("class-policy-v2.schema.json")
         schema_result = u.Infra.Io.read_json(schema_path)
@@ -590,10 +590,10 @@ class ClassNestingRefactorRule:
         policy_entry = policy_entry_raw
         class_rule = class_rule_raw
         policy_entry_required = u.Infra.Refactor.string_list(
-            policy_entry.get("required", [])
+            policy_entry.get("required", []),
         )
         class_rule_required = u.Infra.Refactor.string_list(
-            class_rule.get("required", [])
+            class_rule.get("required", []),
         )
         for entry in u.Infra.Refactor.mapping_list(loaded.get("policy_matrix")):
             if not self._has_required_fields(entry, policy_entry_required):
@@ -604,14 +604,14 @@ class ClassNestingRefactorRule:
         return True
 
     def _has_required_fields(
-        self, entry: t.ContainerValue, required_fields: list[str]
+        self, entry: t.ContainerValue, required_fields: list[str],
     ) -> bool:
         if not isinstance(entry, dict):
             return False
         return all(key in entry for key in required_fields)
 
     def _scope_applies_to_file(
-        self, entry: t.Infra.StrMap, current_file: Path, candidate_file: Path
+        self, entry: t.Infra.StrMap, current_file: Path, candidate_file: Path,
     ) -> bool:
         rewrite_scope = self._rewrite_scope(entry)
         if rewrite_scope == c.Infra.ReportKeys.WORKSPACE:
@@ -679,7 +679,7 @@ class ClassNestingRefactorRule:
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
-                f"Applied FlextInfraRefactorClassNestingTransformer ({len(mappings)} mappings)"
+                f"Applied FlextInfraRefactorClassNestingTransformer ({len(mappings)} mappings)",
             )
         return updated_tree
 
@@ -699,7 +699,7 @@ class ClassNestingRefactorRule:
         updated_tree = tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
-                f"Applied HelperConsolidationTransformer ({len(mappings)} mappings)"
+                f"Applied HelperConsolidationTransformer ({len(mappings)} mappings)",
             )
         return updated_tree
 
@@ -720,7 +720,7 @@ class ClassNestingRefactorRule:
         updated_tree = wrapped_tree.visit(transformer)
         if updated_tree.code != tree.code:
             changes.append(
-                f"Applied NestedClassPropagationTransformer ({len(mappings)} renames)"
+                f"Applied NestedClassPropagationTransformer ({len(mappings)} renames)",
             )
         return updated_tree
 
@@ -740,7 +740,7 @@ class ClassNestingRefactorRule:
         return policy_context
 
     def _families_for_scope(
-        self, *, entries: list[t.Infra.StrMap], symbol_key: str
+        self, *, entries: list[t.Infra.StrMap], symbol_key: str,
     ) -> dict[str, str]:
         families: dict[str, str] = {}
         for entry in entries:

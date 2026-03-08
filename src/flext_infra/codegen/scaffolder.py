@@ -80,7 +80,7 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
         prefix = FlextInfraNamespaceValidator.derive_prefix(project_path)
         if not prefix:
             return m.Infra.Codegen.ScaffoldResult(
-                project=project_path.name, files_created=[], files_skipped=[]
+                project=project_path.name, files_created=[], files_skipped=[],
             )
         files_created: list[str] = []
         files_skipped: list[str] = []
@@ -129,7 +129,7 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
             class_name = f"{test_prefix}{prefix}{suffix}"
             docstring = f"{doc_suffix} for {prefix.lower()}."
             content = FlextInfraCodegenTransforms.generate_module_skeleton(
-                class_name=class_name, base_class=base_class, docstring=docstring
+                class_name=class_name, base_class=base_class, docstring=docstring,
             )
             u.write_file(filepath, content, encoding=c.Infra.Encoding.DEFAULT)
             FlextInfraCodegenTransforms.run_ruff_fix(filepath)

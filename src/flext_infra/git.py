@@ -95,7 +95,7 @@ class FlextInfraGitService(s[str]):
 
         """
         result = self._runner.capture(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STATUS, "--porcelain"], cwd=repo_root
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STATUS, "--porcelain"], cwd=repo_root,
         )
         if result.is_failure:
             return r[bool].fail(result.error or "git status failed")
@@ -177,7 +177,7 @@ class FlextInfraGitService(s[str]):
         """
         targets = list(paths) if paths else ["-A"]
         return self._runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.ADD, *targets], cwd=repo_root
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.ADD, *targets], cwd=repo_root,
         )
 
     def commit(self, repo_root: Path, message: str) -> r[bool]:
@@ -192,7 +192,7 @@ class FlextInfraGitService(s[str]):
 
         """
         return self._runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.COMMIT, "-m", message], cwd=repo_root
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.COMMIT, "-m", message], cwd=repo_root,
         )
 
     def push(
@@ -265,7 +265,7 @@ class FlextInfraGitService(s[str]):
 
         """
         result = self._runner.capture(
-            [c.Infra.Cli.GIT, c.Infra.ReportKeys.TAG, "-l", tag], cwd=repo_root
+            [c.Infra.Cli.GIT, c.Infra.ReportKeys.TAG, "-l", tag], cwd=repo_root,
         )
         if result.is_success:
             return r[bool].ok(result.value.strip() == tag)
@@ -301,7 +301,7 @@ class FlextInfraGitService(s[str]):
 
         """
         return self._runner.capture(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.TAG, f"--sort={sort}"], cwd=repo_root
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.TAG, f"--sort={sort}"], cwd=repo_root,
         )
 
     def push_tag(self, repo_root: Path, tag: str, remote: str = "") -> r[bool]:
@@ -318,11 +318,11 @@ class FlextInfraGitService(s[str]):
         """
         target = remote or c.Infra.Git.ORIGIN
         return self._runner.run_checked(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, target, tag], cwd=repo_root
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.PUSH, target, tag], cwd=repo_root,
         )
 
     def stash_push(
-        self, repo_root: Path, message: str = "", *, include_untracked: bool = False
+        self, repo_root: Path, message: str = "", *, include_untracked: bool = False,
     ) -> r[bool]:
         """Push changes to the stash.
 
@@ -359,7 +359,7 @@ class FlextInfraGitService(s[str]):
         return self._runner.run_checked(cmd, cwd=repo_root)
 
     def stash_list(
-        self, repo_root: Path, *, limit: int = 1, fmt: str = "%gd"
+        self, repo_root: Path, *, limit: int = 1, fmt: str = "%gd",
     ) -> r[str]:
         """List stash entries.
 
@@ -385,7 +385,7 @@ class FlextInfraGitService(s[str]):
         )
 
     def log(
-        self, repo_root: Path, rev_range: str = "", *, fmt: str = "- %h %s (%an)"
+        self, repo_root: Path, rev_range: str = "", *, fmt: str = "- %h %s (%an)",
     ) -> r[str]:
         """Return formatted git log.
 
@@ -415,7 +415,7 @@ class FlextInfraGitService(s[str]):
 
         """
         return self._runner.capture(
-            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CONFIG, "--get", key], cwd=path
+            [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.CONFIG, "--get", key], cwd=path,
         )
 
     def previous_tag(self, repo_root: Path, tag: str) -> r[str]:
@@ -446,7 +446,7 @@ class FlextInfraGitService(s[str]):
 
         """
         head_result = self.push(
-            repo_root, remote=c.Infra.Git.ORIGIN, branch=c.Infra.Git.HEAD
+            repo_root, remote=c.Infra.Git.ORIGIN, branch=c.Infra.Git.HEAD,
         )
         if head_result.is_failure:
             return head_result

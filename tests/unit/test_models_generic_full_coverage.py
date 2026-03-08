@@ -52,7 +52,7 @@ def test_conversion_add_skipped_skip_reason_upsert_paths() -> None:
 def test_conversion_start_and_complete_methods() -> None:
     conv = m.Conversion()
     conv.start_conversion(
-        source_format="xml", target_format="json", total_input_count=99
+        source_format="xml", target_format="json", total_input_count=99,
     )
     conv.complete_conversion()
     assert conv.source_format == "xml"

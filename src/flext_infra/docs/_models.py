@@ -61,7 +61,7 @@ class FlextInfraDocsModels:
         """Unified report payload for docs phases."""
 
         phase: str = Field(
-            description="Docs phase: audit, fix, build, generate, validate"
+            description="Docs phase: audit, fix, build, generate, validate",
         )
         scope: str = Field(description="Scope name")
         result: str = Field(default="", description="Result status")
@@ -75,14 +75,14 @@ class FlextInfraDocsModels:
         applied: bool = Field(default=False, description="Apply mode flag")
         generated: int = Field(default=0, ge=0, description="Generated files count")
         source: str = Field(
-            default="", description="Source marker for generated content"
+            default="", description="Source marker for generated content",
         )
         missing_adr_skills: list[str] = Field(
             default_factory=list,
             description="Missing ADR skill references",
         )
         todo_written: bool = Field(
-            default=False, description="Whether TODOS.md was written"
+            default=False, description="Whether TODOS.md was written",
         )
         items: Sequence[BaseModel] = Field(
             default_factory=_new_docs_phase_items,

@@ -22,13 +22,13 @@ class FlextInfraRefactorMigrateToClassMRO:
         self._workspace_root = workspace_root.resolve()
 
     def run(
-        self, *, target: str, apply_changes: bool
+        self, *, target: str, apply_changes: bool,
     ) -> m.Infra.Refactor.MROMigrationReport:
         """Run scan, transform, rewrite, and validation phases."""
         normalized_target = self._normalize_target(target=target)
         scan_results, files_scanned = (
             FlextInfraRefactorMROMigrationScanner.scan_workspace(
-                workspace_root=self._workspace_root, target=normalized_target
+                workspace_root=self._workspace_root, target=normalized_target,
             )
         )
         warnings: list[str] = []
@@ -41,7 +41,7 @@ class FlextInfraRefactorMigrateToClassMRO:
             try:
                 updated_source, migration, symbol_alias_map = (
                     FlextInfraRefactorMROMigrationTransformer.migrate_file(
-                        scan_result=scan_result
+                        scan_result=scan_result,
                     )
                 )
             except Exception as exc:
@@ -54,7 +54,7 @@ class FlextInfraRefactorMigrateToClassMRO:
             module_facade_aliases[scan_result.module] = scan_result.facade_alias
             if apply_changes:
                 Path(scan_result.file).write_text(
-                    updated_source, encoding=c.Infra.Encoding.DEFAULT
+                    updated_source, encoding=c.Infra.Encoding.DEFAULT,
                 )
         rewrite_results = FlextInfraRefactorMROImportRewriter.rewrite_workspace(
             workspace_root=self._workspace_root,
@@ -65,7 +65,7 @@ class FlextInfraRefactorMigrateToClassMRO:
         rewrites = tuple(rewrite_results)
         remaining_violations, mro_failures = (
             FlextInfraRefactorMROMigrationValidator.validate(
-                workspace_root=self._workspace_root, target=normalized_target
+                workspace_root=self._workspace_root, target=normalized_target,
             )
         )
         return m.Infra.Refactor.MROMigrationReport.model_validate({

@@ -65,7 +65,7 @@ class FlextInfraDocAuditor:
         if isinstance(by_scope_raw_value, Mapping):
             try:
                 by_scope_raw = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
-                    by_scope_raw_value, strict=True
+                    by_scope_raw_value, strict=True,
                 )
             except ValidationError:
                 by_scope_raw = {}
@@ -96,7 +96,7 @@ class FlextInfraDocAuditor:
 
     @staticmethod
     def to_markdown(
-        scope: m.Infra.Docs.FlextInfraDocScope, issues: list[m.Infra.Docs.AuditIssue]
+        scope: m.Infra.Docs.FlextInfraDocScope, issues: list[m.Infra.Docs.AuditIssue],
     ) -> list[str]:
         """Format audit issues as a markdown report."""
         return [
@@ -139,11 +139,11 @@ class FlextInfraDocAuditor:
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(
-            root=root, project=project, projects=projects, output_dir=output_dir
+            root=root, project=project, projects=projects, output_dir=output_dir,
         )
         if scopes_result.is_failure:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
-                scopes_result.error or "scope error"
+                scopes_result.error or "scope error",
             )
         default_budget, by_scope_budget = self.load_audit_budgets(root)
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
@@ -197,10 +197,10 @@ class FlextInfraDocAuditor:
             "issues": issues_payload,
         }
         _ = u.Infra.Io.write_json(
-            scope.report_dir / "audit-summary.json", summary_payload
+            scope.report_dir / "audit-summary.json", summary_payload,
         )
         _ = FlextInfraDocsShared.write_markdown(
-            scope.report_dir / "audit-report.md", self.to_markdown(scope, issues)
+            scope.report_dir / "audit-report.md", self.to_markdown(scope, issues),
         )
         max_issues = max_issues_by_scope.get(scope.name, max_issues_default)
         if strict:
@@ -239,13 +239,13 @@ class FlextInfraDocAuditor:
         )
 
     def broken_link_issues(
-        self, scope: m.Infra.Docs.FlextInfraDocScope
+        self, scope: m.Infra.Docs.FlextInfraDocScope,
     ) -> list[m.Infra.Docs.AuditIssue]:
         """Collect broken internal-link issues for markdown files in scope."""
         issues: list[m.Infra.Docs.AuditIssue] = []
         for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
             content = md_file.read_text(
-                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE,
             )
             rel = md_file.relative_to(scope.path).as_posix()
             in_fenced_code = False
@@ -271,12 +271,12 @@ class FlextInfraDocAuditor:
                                 issue_type="broken_link",
                                 severity="high",
                                 message=f"line {number}: target not found -> {raw}",
-                            )
+                            ),
                         )
         return issues
 
     def forbidden_term_issues(
-        self, scope: m.Infra.Docs.FlextInfraDocScope
+        self, scope: m.Infra.Docs.FlextInfraDocScope,
     ) -> list[m.Infra.Docs.AuditIssue]:
         """Collect forbidden-term issues for markdown files in scope."""
         issues: list[m.Infra.Docs.AuditIssue] = []
@@ -290,7 +290,7 @@ class FlextInfraDocAuditor:
             elif not scope.name.startswith("flext-"):
                 continue
             content = md_file.read_text(
-                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+                encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE,
             ).lower()
             issues.extend(
                 m.Infra.Docs.AuditIssue(
@@ -312,7 +312,7 @@ def main() -> int:
     _ = parser.add_argument("--project")
     _ = parser.add_argument("--projects")
     _ = parser.add_argument(
-        "--output-dir", default=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR
+        "--output-dir", default=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
     )
     _ = parser.add_argument("--check", default="all")
     _ = parser.add_argument("--strict", type=int, default=1)

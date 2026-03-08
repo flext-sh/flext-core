@@ -34,7 +34,7 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
     monkeypatch.setitem(
-        sys.modules, "flext_core.models", ModuleType("flext_core.models")
+        sys.modules, "flext_core.models", ModuleType("flext_core.models"),
     )
     assert Wrapper.Query._resolve_pagination_class() is m.Pagination
 

@@ -248,7 +248,7 @@ class Testu:
         assert id1 != id2
 
     @pytest.mark.parametrize(
-        ("method_name", "prefix"), UtilityScenarios.ID_GENERATOR_CASES
+        ("method_name", "prefix"), UtilityScenarios.ID_GENERATOR_CASES,
     )
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
@@ -305,10 +305,10 @@ class Testu:
             u.Text.safe_string("")
 
     @pytest.mark.parametrize(
-        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZATION_CASES
+        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZATION_CASES,
     )
     def test_cache_normalize_component(
-        self, input_data: t.ContainerValue | None, expected_type: type
+        self, input_data: t.ContainerValue | None, expected_type: type,
     ) -> None:
         """Test cache component normalization."""
         result = u.Cache.normalize_component(input_data)
@@ -346,7 +346,7 @@ class Testu:
                     obj_dict[str(k)] = (
                         v
                         if isinstance(
-                            v, (str, int, float, bool, type(None), list, dict)
+                            v, (str, int, float, bool, type(None), list, dict),
                         )
                         else str(v)
                     )
@@ -398,7 +398,7 @@ class Testu:
         """Test retry with eventual success."""
         attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
         result: FlextResult[str] = u.Reliability.retry(
-            flaky_op, max_attempts=3, delay_seconds=0.01
+            flaky_op, max_attempts=3, delay_seconds=0.01,
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         assert attempt_count[0] >= 2

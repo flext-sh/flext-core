@@ -214,7 +214,7 @@ class TestFlextInfraCommandRunner:
             readonly_dir.chmod(493)
 
     def test_run_to_file_valueerror(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test run_to_file ValueError handling."""
         runner = FlextInfraCommandRunner()

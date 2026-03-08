@@ -75,7 +75,7 @@ class FlextInfraTypes(FlextTypes):
         RuleConfigList: TypeAlias = list[RuleConfig]
         "List of rule configuration dicts."
         OrchestrationSummary: TypeAlias = Mapping[
-            str, int | list[Mapping[str, FlextTypes.Scalar]]
+            str, int | list[Mapping[str, FlextTypes.Scalar]],
         ]
         "Workspace PR orchestration summary."
         FacadeFamily: TypeAlias = Literal["c", "t", "p", "m", "u"]

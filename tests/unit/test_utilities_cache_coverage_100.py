@@ -73,7 +73,7 @@ class CacheScenarios:
         NormalizeComponentScenario(
             name="nested_pydantic_model",
             component=NestedModel(
-                inner=CacheTestModel(name="inner", value=10), count=5
+                inner=CacheTestModel(name="inner", value=10), count=5,
             ),
             expected_type=dict,
         ),
@@ -84,7 +84,7 @@ class CacheScenarios:
             expected_value="hello",
         ),
         NormalizeComponentScenario(
-            name="int_primitive", component=42, expected_type=int, expected_value=42
+            name="int_primitive", component=42, expected_type=int, expected_value=42,
         ),
         NormalizeComponentScenario(
             name="float_primitive",
@@ -121,28 +121,28 @@ class CacheScenarios:
             expected_value=(),
         ),
         NormalizeComponentScenario(
-            name="list_of_ints", component=[1, 2, 3], expected_type=list
+            name="list_of_ints", component=[1, 2, 3], expected_type=list,
         ),
         NormalizeComponentScenario(
-            name="tuple_of_strings", component=("a", "b", "c"), expected_type=list
+            name="tuple_of_strings", component=("a", "b", "c"), expected_type=list,
         ),
         NormalizeComponentScenario(
-            name="simple_dict", component={"key": "value"}, expected_type=dict
+            name="simple_dict", component={"key": "value"}, expected_type=dict,
         ),
         NormalizeComponentScenario(
-            name="nested_dict", component={"a": {"b": {"c": 123}}}, expected_type=dict
+            name="nested_dict", component={"a": {"b": {"c": 123}}}, expected_type=dict,
         ),
         NormalizeComponentScenario(
-            name="custom_object", component=str(object()), expected_type=str
+            name="custom_object", component=str(object()), expected_type=str,
         ),
     ]
     SORT_KEY: ClassVar[list[SortKeyScenario]] = [
         SortKeyScenario(name="string_key", key="hello", expected_tuple=(0, "hello")),
         SortKeyScenario(
-            name="string_uppercase", key="HELLO", expected_tuple=(0, "hello")
+            name="string_uppercase", key="HELLO", expected_tuple=(0, "hello"),
         ),
         SortKeyScenario(
-            name="string_mixed_case", key="HeLlO", expected_tuple=(0, "hello")
+            name="string_mixed_case", key="HeLlO", expected_tuple=(0, "hello"),
         ),
         SortKeyScenario(name="int_key", key=42, expected_tuple=(1, "42")),
         SortKeyScenario(name="float_key", key=math.pi, expected_tuple=(1, "")),
@@ -154,7 +154,7 @@ class CacheScenarios:
             expected_tuple=(0, str(object()).lower()),
         ),
         SortKeyScenario(
-            name="list_key", key=str([1, 2]), expected_tuple=(0, str([1, 2]).lower())
+            name="list_key", key=str([1, 2]), expected_tuple=(0, str([1, 2]).lower()),
         ),
         SortKeyScenario(
             name="dict_key",
@@ -181,7 +181,7 @@ class TestuCacheNormalizeComponent:
     """Test FlextUtilitiesCache.normalize_component."""
 
     @pytest.mark.parametrize(
-        "scenario", CacheScenarios.NORMALIZE_COMPONENT, ids=lambda s: s.name
+        "scenario", CacheScenarios.NORMALIZE_COMPONENT, ids=lambda s: s.name,
     )
     def test_normalize_component(self, scenario: NormalizeComponentScenario) -> None:
         """Test normalize_component with various scenarios."""
@@ -215,20 +215,20 @@ class TestuCacheNormalizeComponent:
         """Test normalize_component converts set to tuple."""
         component = {3, 1, 2}
         result = u.Cache.normalize_component(
-            cast("t.ContainerValue | BaseModel", component)
+            cast("t.ContainerValue | BaseModel", component),
         )
         assert isinstance(result, tuple)
         result_tuple = result
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
         tm.that(
-            set(result_tuple), eq={1, 2, 3}, msg="Result tuple must contain {1, 2, 3}"
+            set(result_tuple), eq={1, 2, 3}, msg="Result tuple must contain {1, 2, 3}",
         )
 
     def test_normalize_set_with_nested_values(self) -> None:
         """Test normalize_component with set containing nested values."""
         component = {1, "test", math.pi, None}
         result = u.Cache.normalize_component(
-            cast("t.ContainerValue | BaseModel", component)
+            cast("t.ContainerValue | BaseModel", component),
         )
         tm.that(result, is_=(tuple, list), none=False, msg="Result must be tuple or list")
         result_tuple = cast("tuple[t.ContainerValue, ...]", result)
@@ -248,7 +248,7 @@ class TestuCacheNormalizeComponent:
             [1, 2, 3],
         ]
         component: Sequence[t.ContainerValue] = cast(
-            "Sequence[t.ContainerValue]", component_raw
+            "Sequence[t.ContainerValue]", component_raw,
         )
         result = u.Cache.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")

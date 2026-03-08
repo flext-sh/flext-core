@@ -4,32 +4,9 @@ from __future__ import annotations
 
 import ast
 import operator
-from dataclasses import dataclass
 from pathlib import Path
 
-
-@dataclass(slots=True, frozen=True)
-class _ClassMove:
-    name: str
-    start: int
-    end: int
-    source: str
-    kind: str
-
-
-@dataclass(slots=True, frozen=True)
-class _AliasMove:
-    name: str
-    start: int
-    end: int
-    alias_expr: str
-
-
-@dataclass(slots=True)
-class _CentralizerFailureStats:
-    parse_syntax_errors: int = 0
-    parse_encoding_errors: int = 0
-    parse_io_errors: int = 0
+from flext_infra import m
 
 
 class FlextInfraRefactorPydanticCentralizer:
@@ -154,8 +131,8 @@ class FlextInfraRefactorPydanticCentralizer:
 
     @staticmethod
     def _is_dict_like_alias(
-        node: ast.stmt, source: str, *, file_path: Path
-    ) -> _AliasMove | None:
+        node: ast.stmt, source: str, *, file_path: Path,
+    ) -> m.Infra.Refactor.AliasMove | None:
         keys = (
             "dict",
             "payload",
@@ -167,7 +144,7 @@ class FlextInfraRefactorPydanticCentralizer:
             "case",
         )
         is_typings_scope = FlextInfraRefactorPydanticCentralizer._is_typings_scope(
-            file_path
+            file_path,
         )
         match node:
             case ast.TypeAlias():
@@ -181,7 +158,7 @@ class FlextInfraRefactorPydanticCentralizer:
                     return None
                 if not FlextInfraRefactorPydanticCentralizer._is_dict_like_expr(expr):
                     return None
-                return _AliasMove(
+                return m.Infra.Refactor.AliasMove(
                     name=alias_name,
                     start=node.lineno,
                     end=node.end_lineno or node.lineno,
@@ -205,7 +182,7 @@ class FlextInfraRefactorPydanticCentralizer:
                 annotation = ast.get_source_segment(source, node.annotation) or ""
                 if ("TypeAlias" not in annotation) and (not is_typings_scope):
                     return None
-                return _AliasMove(
+                return m.Infra.Refactor.AliasMove(
                     name=alias_name,
                     start=node.lineno,
                     end=node.end_lineno or node.lineno,
@@ -226,7 +203,7 @@ class FlextInfraRefactorPydanticCentralizer:
                     return None
                 if not FlextInfraRefactorPydanticCentralizer._is_dict_like_expr(expr):
                     return None
-                return _AliasMove(
+                return m.Infra.Refactor.AliasMove(
                     name=alias_name,
                     start=node.lineno,
                     end=node.end_lineno or node.lineno,
@@ -236,7 +213,9 @@ class FlextInfraRefactorPydanticCentralizer:
                 return None
 
     @staticmethod
-    def _typed_dict_factory_model(node: ast.Assign) -> _ClassMove | None:
+    def _typed_dict_factory_model(
+        node: ast.Assign,
+    ) -> m.Infra.Refactor.ClassMove | None:
         if len(node.targets) != 1:
             return None
         target = node.targets[0]
@@ -270,7 +249,7 @@ class FlextInfraRefactorPydanticCentralizer:
             ):
                 total_false = True
         for key_node, value_node in zip(
-            field_map_arg.keys, field_map_arg.values, strict=True
+            field_map_arg.keys, field_map_arg.values, strict=True,
         ):
             if not isinstance(key_node, ast.Constant):
                 continue
@@ -280,7 +259,7 @@ class FlextInfraRefactorPydanticCentralizer:
             annotation = ast.unparse(value_node)
             if total_false:
                 field_lines.append(
-                    f"    {key_value}: {annotation} | None = Field(default=None)"
+                    f"    {key_value}: {annotation} | None = Field(default=None)",
                 )
             else:
                 field_lines.append(f"    {key_value}: {annotation}")
@@ -292,7 +271,7 @@ class FlextInfraRefactorPydanticCentralizer:
             '    model_config = ConfigDict(extra="forbid")\n'
             f"{rendered_fields}\n"
         )
-        return _ClassMove(
+        return m.Infra.Refactor.ClassMove(
             name=target.id,
             start=node.lineno,
             end=node.end_lineno or node.lineno,
@@ -310,7 +289,7 @@ class FlextInfraRefactorPydanticCentralizer:
     @staticmethod
     def _build_model_from_typed_dict(node: ast.ClassDef, source: str) -> str:
         total_false = FlextInfraRefactorPydanticCentralizer._typed_dict_total_false(
-            node
+            node,
         )
         fields: list[str] = []
         for stmt in node.body:
@@ -320,7 +299,7 @@ class FlextInfraRefactorPydanticCentralizer:
                     continue
                 if total_false:
                     fields.append(
-                        f"    {stmt.target.id}: {ann} | None = Field(default=None)"
+                        f"    {stmt.target.id}: {ann} | None = Field(default=None)",
                     )
                 else:
                     fields.append(f"    {stmt.target.id}: {ann}")
@@ -330,12 +309,14 @@ class FlextInfraRefactorPydanticCentralizer:
         return f'class {node.name}(BaseModel):\n    model_config = ConfigDict(extra="forbid")\n{body}\n'
 
     @staticmethod
-    def _collect_moves(file_path: Path) -> tuple[list[_ClassMove], list[_AliasMove]]:
+    def _collect_moves(
+        file_path: Path,
+    ) -> tuple[list[m.Infra.Refactor.ClassMove], list[m.Infra.Refactor.AliasMove]]:
         source = file_path.read_text(encoding="utf-8")
         tree = ast.parse(source)
         lines = source.splitlines()
-        class_moves: list[_ClassMove] = []
-        alias_moves: list[_AliasMove] = []
+        class_moves: list[m.Infra.Refactor.ClassMove] = []
+        alias_moves: list[m.Infra.Refactor.AliasMove] = []
         for stmt in tree.body:
             typed_dict_factory_move = (
                 FlextInfraRefactorPydanticCentralizer._typed_dict_factory_model(stmt)
@@ -352,21 +333,21 @@ class FlextInfraRefactorPydanticCentralizer:
                 end = stmt.end_lineno or stmt.lineno
                 snippet = "\n".join(lines[start - 1 : end])
                 base_names = FlextInfraRefactorPydanticCentralizer._class_base_names(
-                    stmt
+                    stmt,
                 )
                 kind = "typed_dict" if "TypedDict" in base_names else "base_model"
                 if kind == "typed_dict":
                     snippet = FlextInfraRefactorPydanticCentralizer._build_model_from_typed_dict(
-                        stmt, source
+                        stmt, source,
                     )
                 class_moves.append(
-                    _ClassMove(
-                        name=stmt.name, start=start, end=end, source=snippet, kind=kind
-                    )
+                    m.Infra.Refactor.ClassMove(
+                        name=stmt.name, start=start, end=end, source=snippet, kind=kind,
+                    ),
                 )
                 continue
             alias_move = FlextInfraRefactorPydanticCentralizer._is_dict_like_alias(
-                stmt, source, file_path=file_path
+                stmt, source, file_path=file_path,
             )
             if alias_move is not None:
                 alias_moves.append(alias_move)
@@ -376,8 +357,10 @@ class FlextInfraRefactorPydanticCentralizer:
     def _collect_moves_safe(
         file_path: Path,
         *,
-        failure_stats: _CentralizerFailureStats,
-    ) -> tuple[list[_ClassMove], list[_AliasMove]] | None:
+        failure_stats: m.Infra.Refactor.CentralizerFailureStats,
+    ) -> (
+        tuple[list[m.Infra.Refactor.ClassMove], list[m.Infra.Refactor.AliasMove]] | None
+    ):
         try:
             return FlextInfraRefactorPydanticCentralizer._collect_moves(file_path)
         except SyntaxError:
@@ -427,7 +410,9 @@ class FlextInfraRefactorPydanticCentralizer:
 
     @staticmethod
     def _rewrite_source(
-        file_path: Path, class_moves: list[_ClassMove], alias_moves: list[_AliasMove]
+        file_path: Path,
+        class_moves: list[m.Infra.Refactor.ClassMove],
+        alias_moves: list[m.Infra.Refactor.AliasMove],
     ) -> str:
         source = file_path.read_text(encoding="utf-8")
         lines = source.splitlines()
@@ -445,10 +430,10 @@ class FlextInfraRefactorPydanticCentralizer:
         updated = "\n".join(lines)
         if len(moved_all_names) > 0:
             import_stmt = FlextInfraRefactorPydanticCentralizer._dest_import_statement(
-                file_path, moved_all_names
+                file_path, moved_all_names,
             )
             updated = FlextInfraRefactorPydanticCentralizer._insert_import(
-                updated, import_stmt
+                updated, import_stmt,
             )
         if source.endswith("\n") and (not updated.endswith("\n")):
             updated += "\n"
@@ -486,7 +471,7 @@ class FlextInfraRefactorPydanticCentralizer:
 
     @staticmethod
     def _append_unique_blocks(
-        existing: str, blocks: list[str], names: list[str]
+        existing: str, blocks: list[str], names: list[str],
     ) -> str:
         updated = existing
         for name, block in zip(names, blocks, strict=True):
@@ -496,13 +481,13 @@ class FlextInfraRefactorPydanticCentralizer:
         return updated
 
     @staticmethod
-    def _alias_as_root_model(alias_move: _AliasMove) -> str:
+    def _alias_as_root_model(alias_move: m.Infra.Refactor.AliasMove) -> str:
         return (
             f"class {alias_move.name}(RootModel[{alias_move.alias_expr}]):\n    pass\n"
         )
 
     @staticmethod
-    def _alias_as_type_alias(alias_move: _AliasMove) -> str:
+    def _alias_as_type_alias(alias_move: m.Infra.Refactor.AliasMove) -> str:
         return f"{alias_move.name}: TypeAlias = {alias_move.alias_expr}\n"
 
     @staticmethod
@@ -519,8 +504,9 @@ class FlextInfraRefactorPydanticCentralizer:
 
     @staticmethod
     def _filter_moves_for_necessity(
-        class_moves: list[_ClassMove], alias_moves: list[_AliasMove]
-    ) -> tuple[list[_ClassMove], list[_AliasMove]]:
+        class_moves: list[m.Infra.Refactor.ClassMove],
+        alias_moves: list[m.Infra.Refactor.AliasMove],
+    ) -> tuple[list[m.Infra.Refactor.ClassMove], list[m.Infra.Refactor.AliasMove]]:
         filtered_classes = [
             move
             for move in class_moves
@@ -544,7 +530,7 @@ class FlextInfraRefactorPydanticCentralizer:
                 continue
             if (
                 FlextInfraRefactorPydanticCentralizer._is_dict_like_alias(
-                    stmt, source, file_path=file_path
+                    stmt, source, file_path=file_path,
                 )
                 is not None
             ):
@@ -553,7 +539,7 @@ class FlextInfraRefactorPydanticCentralizer:
 
     @staticmethod
     def centralize_workspace(
-        workspace_root: Path, *, apply_changes: bool, normalize_remaining: bool
+        workspace_root: Path, *, apply_changes: bool, normalize_remaining: bool,
     ) -> dict[str, int]:
         """Centralize model contracts and normalize namespace scaffolds."""
         moved_classes = 0
@@ -567,7 +553,7 @@ class FlextInfraRefactorPydanticCentralizer:
         created_typings_files = 0
         skipped_nonpackage_apply = 0
         skipped_non_necessary_apply = 0
-        failure_stats = _CentralizerFailureStats()
+        failure_stats = m.Infra.Refactor.CentralizerFailureStats()
         for file_path in workspace_root.rglob("*.py"):
             if not FlextInfraRefactorPydanticCentralizer._is_target_python(file_path):
                 continue
@@ -611,10 +597,10 @@ class FlextInfraRefactorPydanticCentralizer:
             if not dest_path.exists():
                 created_model_files += 1
             existing_dest = FlextInfraRefactorPydanticCentralizer._ensure_dest_header(
-                dest_path
+                dest_path,
             )
             updated_dest = FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
-                existing_dest, class_blocks, class_names
+                existing_dest, class_blocks, class_names,
             )
             updated_dest = FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
                 updated_dest,
@@ -622,14 +608,14 @@ class FlextInfraRefactorPydanticCentralizer:
                 alias_names,
             )
             updated_source = FlextInfraRefactorPydanticCentralizer._rewrite_source(
-                file_path, apply_class_moves, apply_alias_moves
+                file_path, apply_class_moves, apply_alias_moves,
             )
             moved_classes += len(apply_class_moves)
             moved_aliases += len(apply_alias_moves)
             touched_files += 1
             if apply_changes:
                 if not FlextInfraRefactorPydanticCentralizer._can_apply_import_rewrite(
-                    file_path
+                    file_path,
                 ):
                     skipped_nonpackage_apply += 1
                     continue
@@ -638,16 +624,16 @@ class FlextInfraRefactorPydanticCentralizer:
         if normalize_remaining:
             for file_path in workspace_root.rglob("*.py"):
                 if not FlextInfraRefactorPydanticCentralizer._is_target_python(
-                    file_path
+                    file_path,
                 ):
                     continue
                 if FlextInfraRefactorPydanticCentralizer._is_allowed_model_path(
-                    file_path
+                    file_path,
                 ):
                     continue
                 try:
                     changed = FlextInfraRefactorPydanticCentralizer._normalize_disallowed_bases(
-                        file_path, apply_changes=apply_changes
+                        file_path, apply_changes=apply_changes,
                     )
                 except (SyntaxError, UnicodeDecodeError, OSError):
                     continue

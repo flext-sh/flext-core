@@ -63,7 +63,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         project = FlextInfraProjectMigrator._toml_get(document, c.Infra.Toml.PROJECT)
         if isinstance(project, Table):
             deps = FlextInfraProjectMigrator._toml_get(
-                project, c.Infra.Toml.DEPENDENCIES
+                project, c.Infra.Toml.DEPENDENCIES,
             )
             if isinstance(deps, list):
                 deps_list = _OBJECT_LIST_ADAPTER.validate_python(deps)
@@ -78,7 +78,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         if not isinstance(poetry, Table):
             return False
         poetry_deps = FlextInfraProjectMigrator._toml_get(
-            poetry, c.Infra.Toml.DEPENDENCIES
+            poetry, c.Infra.Toml.DEPENDENCIES,
         )
         if not isinstance(poetry_deps, Table):
             return False
@@ -109,22 +109,22 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
     @override
     def execute(self) -> r[list[m.Infra.Workspace.MigrationResult]]:
         return r[list[m.Infra.Workspace.MigrationResult]].fail(
-            "Use migrate() method directly"
+            "Use migrate() method directly",
         )
 
     def migrate(
-        self, *, workspace_root: Path, dry_run: bool = False
+        self, *, workspace_root: Path, dry_run: bool = False,
     ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         """Migrate all projects in workspace."""
         root = workspace_root.resolve()
         if not root.is_dir():
             return r[list[m.Infra.Workspace.MigrationResult]].fail(
-                f"workspace root does not exist: {root}"
+                f"workspace root does not exist: {root}",
             )
         discovered = self._discovery.discover_projects(root)
         if discovered.is_failure:
             return r[list[m.Infra.Workspace.MigrationResult]].fail(
-                discovered.error or "project discovery failed"
+                discovered.error or "project discovery failed",
             )
         projects = list(discovered.value)
         workspace_project = self._workspace_root_project(root)
@@ -151,20 +151,20 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         if self._sha256_text(current) == self._sha256_text(generated.value):
             if dry_run:
                 return r[str].ok(
-                    self._action_text("base.mk already up-to-date", dry_run=True)
+                    self._action_text("base.mk already up-to-date", dry_run=True),
                 )
             return r[str].ok("")
         if not dry_run:
             try:
                 _ = target.write_text(
-                    generated.value, encoding=c.Infra.Encoding.DEFAULT
+                    generated.value, encoding=c.Infra.Encoding.DEFAULT,
                 )
             except OSError as exc:
                 return r[str].fail(f"base.mk update failed: {exc}")
         return r[str].ok(
             self._action_text(
-                "base.mk regenerated via BaseMkGenerator", dry_run=dry_run
-            )
+                "base.mk regenerated via BaseMkGenerator", dry_run=dry_run,
+            ),
         )
 
     def _migrate_gitignore(self, project_root: Path, *, dry_run: bool) -> r[str]:
@@ -191,7 +191,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         if not missing and len(filtered) == len(existing_lines):
             if dry_run:
                 return r[str].ok(
-                    self._action_text(".gitignore already normalized", dry_run=True)
+                    self._action_text(".gitignore already normalized", dry_run=True),
                 )
             return r[str].ok("")
         next_lines = list(filtered)
@@ -199,7 +199,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
             if next_lines and next_lines[-1].strip():
                 next_lines.append("")
             next_lines.append(
-                "# --- workspace-migrate: required ignores (auto-managed) ---"
+                "# --- workspace-migrate: required ignores (auto-managed) ---",
             )
             next_lines.extend(missing)
         if not dry_run:
@@ -210,8 +210,8 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
                 return r[str].fail(f".gitignore update failed: {exc}")
         return r[str].ok(
             self._action_text(
-                ".gitignore cleaned from scripts/ and normalized", dry_run=dry_run
-            )
+                ".gitignore cleaned from scripts/ and normalized", dry_run=dry_run,
+            ),
         )
 
     def _migrate_makefile(self, project_root: Path, *, dry_run: bool) -> r[str]:
@@ -230,7 +230,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         if updated == original:
             if dry_run:
                 return r[str].ok(
-                    self._action_text("Makefile already migrated", dry_run=True)
+                    self._action_text("Makefile already migrated", dry_run=True),
                 )
             return r[str].ok("")
         if not dry_run:
@@ -239,44 +239,44 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
             except OSError as exc:
                 return r[str].fail(f"Makefile update failed: {exc}")
         return r[str].ok(
-            self._action_text("Makefile scripts/ references migrated", dry_run=dry_run)
+            self._action_text("Makefile scripts/ references migrated", dry_run=dry_run),
         )
 
     def _migrate_project(
-        self, *, project: p.Infra.ProjectInfo, dry_run: bool
+        self, *, project: p.Infra.ProjectInfo, dry_run: bool,
     ) -> m.Infra.Workspace.MigrationResult:
         changes: list[str] = []
         errors: list[str] = []
         self._append_result(
-            self._migrate_basemk(project.path, dry_run=dry_run), changes, errors
+            self._migrate_basemk(project.path, dry_run=dry_run), changes, errors,
         )
         self._append_result(
-            self._migrate_makefile(project.path, dry_run=dry_run), changes, errors
+            self._migrate_makefile(project.path, dry_run=dry_run), changes, errors,
         )
         self._append_result(
             self._migrate_pyproject(
-                project.path, project_name=project.name, dry_run=dry_run
+                project.path, project_name=project.name, dry_run=dry_run,
             ),
             changes,
             errors,
         )
         self._append_result(
-            self._migrate_gitignore(project.path, dry_run=dry_run), changes, errors
+            self._migrate_gitignore(project.path, dry_run=dry_run), changes, errors,
         )
         if not changes and (not errors):
             changes.append("no changes needed")
         return m.Infra.Workspace.MigrationResult(
-            project=project.name, changes=changes, errors=errors
+            project=project.name, changes=changes, errors=errors,
         )
 
     def _migrate_pyproject(
-        self, project_root: Path, *, project_name: str, dry_run: bool
+        self, project_root: Path, *, project_name: str, dry_run: bool,
     ) -> r[str]:
         pyproject_path = project_root / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject_path.exists():
             if dry_run:
                 return r[str].ok(
-                    self._action_text("pyproject.toml not found", dry_run=True)
+                    self._action_text("pyproject.toml not found", dry_run=True),
                 )
             return r[str].ok("")
         if project_name == c.Infra.Packages.CORE:
@@ -285,12 +285,12 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
                     self._action_text(
                         "pyproject.toml dependency unchanged for flext-core",
                         dry_run=True,
-                    )
+                    ),
                 )
             return r[str].ok("")
         try:
             document = tomlkit.parse(
-                pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
         except (ParseError, OSError) as exc:
             return r[str].fail(f"pyproject parse failed: {exc}")
@@ -300,7 +300,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
                     self._action_text(
                         "pyproject.toml already includes flext-core dependency",
                         dry_run=True,
-                    )
+                    ),
                 )
             return r[str].ok("")
         project_table = self._ensure_table(document, c.Infra.Toml.PROJECT)
@@ -316,14 +316,14 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         if not dry_run:
             try:
                 _ = pyproject_path.write_text(
-                    document.as_string(), encoding=c.Infra.Encoding.DEFAULT
+                    document.as_string(), encoding=c.Infra.Encoding.DEFAULT,
                 )
             except OSError as exc:
                 return r[str].fail(f"pyproject update failed: {exc}")
         return r[str].ok(
             self._action_text(
-                "pyproject.toml adds flext-core dependency", dry_run=dry_run
-            )
+                "pyproject.toml adds flext-core dependency", dry_run=dry_run,
+            ),
         )
 
 

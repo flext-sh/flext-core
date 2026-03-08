@@ -15,13 +15,13 @@ class FlextInfraDepsModels:
 
         project: str = Field(min_length=1, description="Project name")
         missing: list[str] = Field(
-            default_factory=list, description="Missing dependencies"
+            default_factory=list, description="Missing dependencies",
         )
         unused: list[str] = Field(
-            default_factory=list, description="Unused dependencies"
+            default_factory=list, description="Unused dependencies",
         )
         outdated: list[str] = Field(
-            default_factory=list, description="Outdated dependencies"
+            default_factory=list, description="Outdated dependencies",
         )
 
     class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):

@@ -28,12 +28,12 @@ def _write_project(project_root: Path) -> None:
         encoding="utf-8",
     )
     _ = (project_root / ".gitignore").write_text(
-        "!scripts/\n!scripts/**\n*.pyc\n", encoding="utf-8"
+        "!scripts/\n!scripts/**\n*.pyc\n", encoding="utf-8",
     )
 
 
 def _build_migrator(
-    project: im.Infra.Workspace.ProjectInfo, base_mk: str
+    project: im.Infra.Workspace.ProjectInfo, base_mk: str,
 ) -> FlextInfraProjectMigrator:
     migrator = FlextInfraProjectMigrator()
 
@@ -70,7 +70,7 @@ def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None
     assert any(change.startswith("[DRY-RUN]") for change in migration.changes)
     assert (project_root / "base.mk").read_text(encoding="utf-8") == "OLD_BASE\n"
     assert "scripts/check/workspace_check.py" in (project_root / "Makefile").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
 
@@ -200,10 +200,10 @@ def test_migrator_no_changes_needed(tmp_path: Path) -> None:
     (project_root / "base.mk").write_text("base.mk", encoding="utf-8")
     (project_root / "Makefile").write_text("migrated", encoding="utf-8")
     (project_root / "pyproject.toml").write_text(
-        '[project]\ndependencies = ["flext-core @ ../flext-core"]\n', encoding="utf-8"
+        '[project]\ndependencies = ["flext-core @ ../flext-core"]\n', encoding="utf-8",
     )
     (project_root / ".gitignore").write_text(
-        ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
+        ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8",
     )
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
@@ -343,7 +343,7 @@ def test_migrator_has_flext_core_dependency_in_poetry(tmp_path: Path) -> None:
     (project_root / "base.mk").write_text("base.mk", encoding="utf-8")
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text(
-        '[tool.poetry.dependencies]\nflext-core = "^0.1.0"\n', encoding="utf-8"
+        '[tool.poetry.dependencies]\nflext-core = "^0.1.0"\n', encoding="utf-8",
     )
     (project_root / ".gitignore").write_text("", encoding="utf-8")
     project = im.Infra.Workspace.ProjectInfo.model_validate({
@@ -536,7 +536,7 @@ def test_migrator_gitignore_already_normalized_dry_run(tmp_path: Path) -> None:
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text(
-        ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
+        ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8",
     )
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "project-a",
@@ -622,7 +622,7 @@ def test_migrator_has_flext_core_dependency_poetry_deps_not_table(
     (project_root / "base.mk").write_text("base", encoding="utf-8")
     (project_root / "Makefile").write_text("content", encoding="utf-8")
     (project_root / "pyproject.toml").write_text(
-        "[tool.poetry]\ndependencies = []\n", encoding="utf-8"
+        "[tool.poetry]\ndependencies = []\n", encoding="utf-8",
     )
     (project_root / ".gitignore").write_text("", encoding="utf-8")
     project = im.Infra.Workspace.ProjectInfo.model_validate({
@@ -662,7 +662,7 @@ def test_workspace_migrator_makefile_not_found_dry_run(tmp_path: Path) -> None:
 
 
 def test_workspace_migrator_makefile_read_error(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test _migrate_makefile handles read errors gracefully."""
     makefile = tmp_path / "Makefile"
@@ -688,7 +688,7 @@ def test_workspace_migrator_makefile_read_error(
 
 
 def test_workspace_migrator_pyproject_write_error(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test _migrate_pyproject handles write errors gracefully."""
     pyproject = tmp_path / "pyproject.toml"
@@ -708,7 +708,7 @@ def test_workspace_migrator_pyproject_write_error(
 
     monkeypatch.setattr(Path, "write_text", mock_write)
     result = migrator._migrate_pyproject(
-        tmp_path, project_name="test-proj", dry_run=False
+        tmp_path, project_name="test-proj", dry_run=False,
     )
     assert result.is_failure or result.is_success
 
@@ -737,7 +737,7 @@ def test_migrate_pyproject_flext_core_non_dry_run(tmp_path: Path) -> None:
     project_root.mkdir(parents=True)
     (project_root / ".git").mkdir()
     (project_root / "pyproject.toml").write_text(
-        '[project]\nname = "flext-core"\nversion = "0.1.0"\n', encoding="utf-8"
+        '[project]\nname = "flext-core"\nversion = "0.1.0"\n', encoding="utf-8",
     )
     project = im.Infra.Workspace.ProjectInfo.model_validate({
         "name": "flext-core",
@@ -748,7 +748,7 @@ def test_migrate_pyproject_flext_core_non_dry_run(tmp_path: Path) -> None:
     })
     migrator = _build_migrator(project, "base")
     result = migrator._migrate_pyproject(
-        project_root, project_name="flext-core", dry_run=False
+        project_root, project_name="flext-core", dry_run=False,
     )
     assert result.is_success
     assert result.value == ""

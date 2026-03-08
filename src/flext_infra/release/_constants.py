@@ -16,7 +16,7 @@ class FlextInfraReleaseConstants:
         "publish",
     })
     VERSION_RE: Final[re.Pattern[str]] = re.compile(
-        '^version\\s*=\\s*"(.+?)"', re.MULTILINE
+        '^version\\s*=\\s*"(.+?)"', re.MULTILINE,
     )
 
 

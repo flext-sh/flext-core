@@ -41,7 +41,7 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
         return set(re.findall("^\\s*path\\s*=\\s*(.+?)\\s*$", content, re.MULTILINE))
 
     def discover_projects(
-        self, workspace_root: Path
+        self, workspace_root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         """Discover all subprojects in the workspace.
 
@@ -82,12 +82,12 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
                         stack=f"{stack}/{kind}",
                         has_tests=(entry / c.Infra.Directories.TESTS).is_dir(),
                         has_src=(entry / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir(),
-                    )
+                    ),
                 )
             return r[list[m.Infra.Workspace.ProjectInfo]].ok(projects)
         except OSError as exc:
             return r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                f"project discovery failed: {exc}"
+                f"project discovery failed: {exc}",
             )
 
     @override

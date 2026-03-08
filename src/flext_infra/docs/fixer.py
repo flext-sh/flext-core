@@ -75,11 +75,11 @@ class FlextInfraDocFixer:
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(
-            root=root, project=project, projects=projects, output_dir=output_dir
+            root=root, project=project, projects=projects, output_dir=output_dir,
         )
         if scopes_result.is_failure:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
-                scopes_result.error or "scope error"
+                scopes_result.error or "scope error",
             )
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
@@ -105,7 +105,7 @@ class FlextInfraDocFixer:
         )
 
     def _fix_scope(
-        self, scope: m.Infra.Docs.FlextInfraDocScope, *, apply: bool
+        self, scope: m.Infra.Docs.FlextInfraDocScope, *, apply: bool,
     ) -> m.Infra.Docs.DocsPhaseReport:
         """Run link and TOC fixes across all markdown files in scope."""
         items: list[m.Infra.Docs.DocsPhaseItem] = []
@@ -115,8 +115,8 @@ class FlextInfraDocFixer:
                 rel = md.relative_to(scope.path).as_posix()
                 items.append(
                     m.Infra.Docs.DocsPhaseItem(
-                        phase="fix", file=rel, links=item.links, toc=item.toc
-                    )
+                        phase="fix", file=rel, links=item.links, toc=item.toc,
+                    ),
                 )
         changes_payload: list[Mapping[str, t.ContainerValue]] = [
             {c.Infra.ReportKeys.FILE: item.file, "links": item.links, "toc": item.toc}
@@ -143,7 +143,7 @@ class FlextInfraDocFixer:
             *[f"| {item.file} | {item.links} | {item.toc} |" for item in items],
         ]
         _ = FlextInfraDocsShared.write_markdown(
-            scope.report_dir / "fix-report.md", lines
+            scope.report_dir / "fix-report.md", lines,
         )
         status = c.Infra.Status.OK if apply or not items else c.Infra.Status.WARN
         logger.info(
@@ -165,11 +165,11 @@ class FlextInfraDocFixer:
         )
 
     def _process_file(
-        self, md_file: Path, *, apply: bool
+        self, md_file: Path, *, apply: bool,
     ) -> m.Infra.Docs.DocsPhaseItem:
         """Fix links and TOC in a single markdown file."""
         original = md_file.read_text(
-            encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE
+            encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE,
         )
         link_count = 0
 
@@ -187,7 +187,7 @@ class FlextInfraDocFixer:
         if apply and (link_count > 0 or toc_changed > 0) and (updated != original):
             _ = md_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
         return m.Infra.Docs.DocsPhaseItem(
-            phase="fix", file=md_file.as_posix(), links=link_count, toc=toc_changed
+            phase="fix", file=md_file.as_posix(), links=link_count, toc=toc_changed,
         )
 
     def _update_toc(self, content: str) -> tuple[str, int]:

@@ -190,7 +190,7 @@ class TestRunDeptry:
         (project / "pyproject.toml").write_text("")
         out_file = project / ".deptry-report.json"
         out_file.write_text(
-            json.dumps([{"error": {"code": "DEP001"}, "module": "foo"}])
+            json.dumps([{"error": {"code": "DEP001"}, "module": "foo"}]),
         )
         cmd_out = Mock(exit_code=0, stdout="", stderr="")
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
@@ -310,7 +310,7 @@ class TestRunPipCheck:
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
         cmd_out = Mock(
-            exit_code=1, stdout="pkg1 has requirement\npkg2 conflict\n", stderr=""
+            exit_code=1, stdout="pkg1 has requirement\npkg2 conflict\n", stderr="",
         )
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
@@ -353,7 +353,7 @@ class TestClassifyIssues:
         """Test DEP001 classification."""
         service = FlextInfraDependencyDetectionService()
         issues: list[it.Infra.IssueMap] = [
-            {"error": {"code": "DEP001"}, "module": "foo"}
+            {"error": {"code": "DEP001"}, "module": "foo"},
         ]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 1
@@ -362,7 +362,7 @@ class TestClassifyIssues:
         """Test DEP002 classification."""
         service = FlextInfraDependencyDetectionService()
         issues: list[it.Infra.IssueMap] = [
-            {"error": {"code": "DEP002"}, "module": "bar"}
+            {"error": {"code": "DEP002"}, "module": "bar"},
         ]
         result = service.classify_issues(issues)
         assert len(result.dep002) == 1
@@ -371,7 +371,7 @@ class TestClassifyIssues:
         """Test DEP003 classification."""
         service = FlextInfraDependencyDetectionService()
         issues: list[it.Infra.IssueMap] = [
-            {"error": {"code": "DEP003"}, "module": "baz"}
+            {"error": {"code": "DEP003"}, "module": "baz"},
         ]
         result = service.classify_issues(issues)
         assert len(result.dep003) == 1
@@ -380,7 +380,7 @@ class TestClassifyIssues:
         """Test DEP004 classification."""
         service = FlextInfraDependencyDetectionService()
         issues: list[it.Infra.IssueMap] = [
-            {"error": {"code": "DEP004"}, "module": "qux"}
+            {"error": {"code": "DEP004"}, "module": "qux"},
         ]
         result = service.classify_issues(issues)
         assert len(result.dep004) == 1
@@ -396,7 +396,7 @@ class TestClassifyIssues:
         """Test missing code in error is skipped."""
         service = FlextInfraDependencyDetectionService()
         issues: list[it.Infra.IssueMap] = [
-            {"error": {"other": "data"}, "module": "foo"}
+            {"error": {"other": "data"}, "module": "foo"},
         ]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 0
@@ -405,7 +405,7 @@ class TestClassifyIssues:
         """Test unknown error code is skipped."""
         service = FlextInfraDependencyDetectionService()
         issues: list[it.Infra.IssueMap] = [
-            {"error": {"code": "DEP999"}, "module": "foo"}
+            {"error": {"code": "DEP999"}, "module": "foo"},
         ]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 0
@@ -545,7 +545,7 @@ class TestModuleToTypesPackage:
         """Test limits override default mapping."""
         service = FlextInfraDependencyDetectionService()
         limits = {
-            "typing_libraries": {"module_to_package": {"yaml": "custom-types-yaml"}}
+            "typing_libraries": {"module_to_package": {"yaml": "custom-types-yaml"}},
         }
         result = service.module_to_types_package("yaml", limits)
         assert result == "custom-types-yaml"
@@ -578,11 +578,11 @@ class TestGetCurrentTypingsFromPyproject:
                             "dependencies": {
                                 "types-pyyaml": "^6.0",
                                 "types-requests": "^2.28",
-                            }
-                        }
-                    }
-                }
-            }
+                            },
+                        },
+                    },
+                },
+            },
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -595,9 +595,9 @@ class TestGetCurrentTypingsFromPyproject:
         service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "project": {
                 "optional-dependencies": {
-                    "typings": ["types-pyyaml>=6.0", "types-requests[extra]==2.28"]
-                }
-            }
+                    "typings": ["types-pyyaml>=6.0", "types-requests[extra]==2.28"],
+                },
+            },
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -608,7 +608,7 @@ class TestGetCurrentTypingsFromPyproject:
         service = FlextInfraDependencyDetectionService()
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, t.Any]].ok({
-            "project": {"optional-dependencies": {"typings": {"types-pyyaml": ">=6.0"}}}
+            "project": {"optional-dependencies": {"typings": {"types-pyyaml": ">=6.0"}}},
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -646,7 +646,7 @@ class TestGetRequiredTypings:
         service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({}),
             r[dict[str, t.Any]].ok({
-                "project": {"optional-dependencies": {"typings": list[str]()}}
+                "project": {"optional-dependencies": {"typings": list[str]()}},
             }),
         ]
         result = service.get_required_typings(tmp_path, venv_bin)
@@ -690,7 +690,7 @@ class TestGetRequiredTypings:
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         service.toml.read.side_effect = [
             r[dict[str, t.Any]].ok({
-                "typing_libraries": {"exclude": ["types-excluded"]}
+                "typing_libraries": {"exclude": ["types-excluded"]},
             }),
             r[dict[str, t.Any]].ok({}),
         ]
@@ -792,13 +792,13 @@ class TestDetectionUncoveredLines:
         """Test module_to_types_package with custom limits (line 481)."""
         service = FlextInfraDependencyDetectionService()
         limits = {
-            "typing_libraries": {"module_to_package": {"custom_module": "types-custom"}}
+            "typing_libraries": {"module_to_package": {"custom_module": "types-custom"}},
         }
         result = service.module_to_types_package("custom_module", limits)
         assert result == "types-custom"
 
     def test_get_current_typings_from_pyproject_with_no_data(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test get_current_typings_from_pyproject with no data (line 511)."""
         service = FlextInfraDependencyDetectionService()
@@ -873,7 +873,7 @@ def test_discover_projects_wrapper(tmp_path: Path) -> None:
         result = detection.discover_projects(tmp_path)
         assert result.is_success
         mock_service.discover_projects.assert_called_once_with(
-            tmp_path, projects_filter=None
+            tmp_path, projects_filter=None,
         )
 
 
@@ -922,12 +922,12 @@ def test_get_current_typings_from_pyproject_wrapper(tmp_path: Path) -> None:
     """Test get_current_typings_from_pyproject wrapper function (line 524)."""
     with patch.object(detection, "_service") as mock_service:
         mock_service.get_current_typings_from_pyproject.return_value = [
-            "types-requests"
+            "types-requests",
         ]
         result = detection.get_current_typings_from_pyproject(tmp_path)
         assert result == ["types-requests"]
         mock_service.get_current_typings_from_pyproject.assert_called_once_with(
-            tmp_path
+            tmp_path,
         )
 
 

@@ -16,14 +16,6 @@ from flext_infra.refactor._models_namespace_enforcer import (
 )
 
 
-@dataclass(frozen=True)
-class MROTargetSpec:
-    family_alias: str
-    file_names: frozenset[str]
-    package_directory: str
-    class_suffix: str
-
-
 class FlextInfraRefactorModels(
     FlextInfraRefactorAstGrepModels,
     FlextInfraNamespaceEnforcerModels,
@@ -129,11 +121,11 @@ class FlextInfraRefactorModels(
 
         family: str = Field(min_length=1, description="Facade family letter")
         expected_bases: tuple[str, ...] = Field(
-            description="Expected base class names in order"
+            description="Expected base class names in order",
         )
         resolved_mro: tuple[str, ...] = Field(description="Resolved MRO class names")
         accessible_namespaces: tuple[str, ...] = Field(
-            description="Namespaces accessible through the MRO"
+            description="Namespaces accessible through the MRO",
         )
 
     class ProjectClassification(FlextModels.ArbitraryTypesModel):
@@ -146,7 +138,7 @@ class FlextInfraRefactorModels(
             description="Project kind (core, domain, platform, integration, app)",
         )
         family_chains: dict[str, list[str]] = Field(
-            description="Family letter to MRO chain mapping"
+            description="Family letter to MRO chain mapping",
         )
 
     class ClassNestingMapping(FlextModels.ArbitraryTypesModel):
@@ -387,8 +379,60 @@ class FlextInfraRefactorModels(
             Field(description="Helper classification summary")
         )
         class_nesting: FlextInfraRefactorModels.ClassNestingReport = Field(
-            description="Class nesting analysis summary"
+            description="Class nesting analysis summary",
         )
+
+    # -- MRO Target Specification -----------------------------------------------
+
+    class MROTargetSpec(FlextModels.FrozenStrictModel):
+        """Specification for an MRO target family."""
+
+        family_alias: str = Field(min_length=1, description="Family alias letter")
+        file_names: frozenset[str] = Field(description="File name patterns")
+        package_directory: str = Field(
+            min_length=1, description="Package directory name",
+        )
+        class_suffix: str = Field(min_length=1, description="Class suffix")
+
+    # -- Pydantic Centralizer Models -------------------------------------------
+
+    class ClassMove(FlextModels.FrozenStrictModel):
+        """Tracks a class definition being moved during centralization."""
+
+        name: str = Field(min_length=1, description="Class name")
+        start: int = Field(ge=0, description="Start line number")
+        end: int = Field(ge=0, description="End line number")
+        source: str = Field(description="Source code text")
+        kind: str = Field(min_length=1, description="Model kind classification")
+
+    class AliasMove(FlextModels.FrozenStrictModel):
+        """Tracks a type alias being moved during centralization."""
+
+        name: str = Field(min_length=1, description="Alias name")
+        start: int = Field(ge=0, description="Start line number")
+        end: int = Field(ge=0, description="End line number")
+        alias_expr: str = Field(description="Alias expression text")
+
+    class CentralizerFailureStats(FlextModels.ArbitraryTypesModel):
+        """Mutable statistics for centralizer parse failures."""
+
+        parse_syntax_errors: int = Field(
+            default=0, ge=0, description="Syntax error count",
+        )
+        parse_encoding_errors: int = Field(
+            default=0, ge=0, description="Encoding error count",
+        )
+        parse_io_errors: int = Field(default=0, ge=0, description="I/O error count")
+
+    # -- Namespace Enforcer Models ---------------------------------------------
+
+    class ParsedPythonModule(FlextModels.ArbitraryTypesModel):
+        """Result of parsing a Python source file into AST."""
+
+        model_config = ConfigDict(frozen=True)
+
+        source: str = Field(description="Raw source text")
+        tree: ast.Module = Field(description="Parsed AST module node")
 
 
 __all__ = ["FlextInfraRefactorModels"]

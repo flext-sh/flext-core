@@ -28,13 +28,15 @@ from pydantic import BaseModel
 
 from flext_tests import t, u
 from tests.constants import c
-from tests import m
+from tests.models import m
 
 from ._models import InputPayloadMap, TestCaseMap
 
 
 def _build_domain_test_entity(
-    *, name: str, value: t.Tests.ContainerValue
+    *,
+    name: str,
+    value: t.Tests.ContainerValue,
 ) -> m.Tests.DomainTestEntity:
     return m.Tests.DomainTestEntity(name=name, value=cast("int", value))
 
@@ -115,6 +117,7 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
         f"Failed to create entities: {entities_result.error}"
     )
     entities = entities_result.value
+    assert isinstance(entities, list)
     alice_entity, bob_entity, alice_no_id = entities
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=c.Tests.TestDomain.VALUE_DATA_TEST,
@@ -140,7 +143,8 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
         "entity_b": bob_entity,
     }
     input_data_custom: InputPayloadMap = cast(
-        "InputPayloadMap", {"entity_a": custom1, "entity_b": custom2}
+        "InputPayloadMap",
+        {"entity_a": custom1, "entity_b": custom2},
     )
     return cast(
         "list[TestCaseMap]",
@@ -202,6 +206,7 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
         f"Failed to create entities: {entities_result.error}"
     )
     entities = entities_result.value
+    assert isinstance(entities, list)
     alice_entity, alice_no_id = entities
     custom = m.Tests.CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
     input_data_with_id: InputPayloadMap = {"entity": alice_entity}
@@ -361,12 +366,14 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
         f"Failed to create entities: {entities_result.error}"
     )
     entities = entities_result.value
+    assert isinstance(entities, list)
     alice_entity, alice_no_id = entities
     custom = m.Tests.CustomEntity(c.Tests.TestDomain.CUSTOM_ID_1)
     input_data_has_id: InputPayloadMap = {"entity": alice_entity}
     input_data_no_id_validate: InputPayloadMap = {"entity": alice_no_id}
     input_data_custom_validate: InputPayloadMap = cast(
-        "InputPayloadMap", {"entity": custom}
+        "InputPayloadMap",
+        {"entity": custom},
     )
     return cast(
         "list[TestCaseMap]",
@@ -452,7 +459,8 @@ class TestuDomain:
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result, test_case
+            lambda: operation_result,
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -524,7 +532,8 @@ class TestuDomain:
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result, test_case
+            lambda: operation_result,
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -539,7 +548,8 @@ class TestuDomain:
             _require_payload_mapping(test_case["input_data"]),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result, test_case
+            lambda: operation_result,
+            test_case,
         )
 
     def test_validate_immutable_config_type_error(self) -> None:

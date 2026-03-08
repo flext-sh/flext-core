@@ -113,7 +113,7 @@ class TestFlextTestsBuilders:
         builder.with_validation_fields(count=3)
         data = _as_builder_dict(builder.build())
         validation_fields = cast(
-            "dict[str, t.ContainerValue]", data["validation_fields"]
+            "dict[str, t.ContainerValue]", data["validation_fields"],
         )
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
         assert len(valid_emails) == 3
@@ -330,7 +330,7 @@ class TestFlextTestsBuilders:
             validate_with=cast(
                 "t.Tests.ContainerValue",
                 lambda d: cast("t.Tests.Builders.BuilderOutputDict", d)["count"] == 5,
-            )
+            ),
         )
         if isinstance(build_result, dict):
             data = build_result
@@ -351,7 +351,7 @@ class TestFlextTestsBuilders:
                 lambda d: (
                     cast("int", cast("t.Tests.Builders.BuilderOutputDict", d)["x"]) * 2
                 ),
-            )
+            ),
         )
         doubled = cast("int", build_result)
         assert doubled == 2
@@ -370,7 +370,7 @@ class TestFlextTestsBuilders:
         """Test to_result() with error parameter."""
         builder = tb()
         result = _as_builder_result(
-            builder.to_result(error="Failed", error_code="E001")
+            builder.to_result(error="Failed", error_code="E001"),
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
@@ -392,7 +392,7 @@ class TestFlextTestsBuilders:
             validate=cast(
                 "t.Tests.ContainerValue",
                 lambda d: cast("t.Tests.Builders.BuilderDict", d)["count"] == 5,
-            )
+            ),
         )
         result = _as_builder_result(result_raw)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -432,7 +432,7 @@ class TestFlextTestsBuilders:
         """Test batch() creates batch of scenarios."""
         builder = tb()
         builder.batch(
-            "cases", [("valid", "test@example.com"), ("invalid", "not-email")]
+            "cases", [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = _as_builder_dict(builder.build())
         cases = cast("list[t.ContainerValue]", data["cases"])
@@ -642,7 +642,7 @@ class TestFlextTestsBuilders:
     def test_batch_parametrized_delegates_to_tu(self) -> None:
         """Test tb.Tests.Batch.parametrized() delegates to tu.Tests.GenericHelpers."""
         cases = tb.Tests.Batch.parametrized(
-            success_values=[1, 2, 3], failure_errors=["error1", "error2"]
+            success_values=[1, 2, 3], failure_errors=["error1", "error2"],
         )
         assert len(cases) > 0
         assert all(isinstance(c, tuple) and len(c) == 2 for c in cases)

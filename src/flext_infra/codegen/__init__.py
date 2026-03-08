@@ -20,7 +20,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraCodegenLazyInit": (
         "flext_infra.codegen.lazy_init",
         "FlextInfraCodegenLazyInit",
-    )
+    ),
 }
 __all__ = ["FlextInfraCodegenLazyInit"]
 

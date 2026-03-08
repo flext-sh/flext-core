@@ -23,7 +23,7 @@ class _TemplateRenderer(Protocol):
 
 
 def _render_template(
-    template: _TemplateRenderer, context: Mapping[str, t.ContainerValue]
+    template: _TemplateRenderer, context: Mapping[str, t.ContainerValue],
 ) -> str:
     return template.render(**context)
 
@@ -84,7 +84,7 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
         try:
             for template_name in c.Infra.Basemk.TEMPLATE_ORDER:
                 template: _TemplateRenderer = self._environment.get_template(
-                    template_name
+                    template_name,
                 )
                 rendered = _render_template(template, context)
                 sections.append(rendered.rstrip("\n"))

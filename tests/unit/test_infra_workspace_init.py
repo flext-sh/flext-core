@@ -24,7 +24,7 @@ class TestFlextInfraWorkspace:
         """Test lazy import of FlextInfraOrchestratorService."""
         workspace_module = importlib.import_module("flext_infra.workspace")
         orchestrator_cls = getattr(
-            workspace_module, "FlextInfraOrchestratorService"
+            workspace_module, "FlextInfraOrchestratorService",
         )
 
         assert orchestrator_cls is not None
@@ -40,7 +40,7 @@ class TestFlextInfraWorkspace:
         """Test lazy import of FlextInfraProjectMigrator."""
         workspace_module = importlib.import_module("flext_infra.workspace")
         migrator_cls = getattr(
-            workspace_module, "FlextInfraProjectMigrator"
+            workspace_module, "FlextInfraProjectMigrator",
         )
 
         assert migrator_cls is not None

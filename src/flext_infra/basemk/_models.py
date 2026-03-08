@@ -18,7 +18,7 @@ class FlextInfraBasemkModels:
         python_version: str = Field(min_length=1, description="Target Python version")
         core_stack: str = Field(min_length=1, description="Core stack classification")
         package_manager: str = Field(
-            default=c.Infra.Toml.POETRY, description="Dependency manager"
+            default=c.Infra.Toml.POETRY, description="Dependency manager",
         )
         source_dir: str = Field(
             default=c.Infra.Paths.DEFAULT_SRC_DIR,
@@ -33,7 +33,7 @@ class FlextInfraBasemkModels:
             description="Enabled quality gates",
         )
         test_command: str = Field(
-            default=c.Infra.Toml.PYTEST, description="Default test command"
+            default=c.Infra.Toml.PYTEST, description="Default test command",
         )
 
 

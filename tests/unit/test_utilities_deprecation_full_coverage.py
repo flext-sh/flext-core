@@ -14,7 +14,7 @@ def test_deprecated_class_noop_init_branch() -> None:
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     legacy_base = type("LegacyBase", (object,), {"__init__": None})
     legacy = u.Deprecation.deprecated_class(replacement="New", version="1.0")(
-        legacy_base
+        legacy_base,
     )
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")

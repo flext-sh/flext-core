@@ -12,8 +12,8 @@ from typing import Any
 import pytest
 
 from flext_core import r, t
-from tests.conftest import test_framework
 from tests import m
+from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -59,13 +59,13 @@ class TestAutomatedFlextDispatcher:
         ids=lambda case: case["description"],
     )
     def test_automated_dispatcher_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario
+        self, test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for dispatcher functionality."""
         try:
             instance = fixture_factory.create_test_dispatcher_instance()
             result = self._execute_dispatcher_operation(
-                instance, test_scenario["input"]
+                instance, test_scenario["input"],
             )
             if test_scenario["expected_success"]:
                 _ = assertion_helpers.assert_flext_result_success(
@@ -88,7 +88,7 @@ class TestAutomatedFlextDispatcher:
         instance = fixture_factory.create_test_dispatcher_instance()
         result = self._execute_dispatcher_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextDispatcher type safety test"
+            result, "FlextDispatcher type safety test",
         )
 
     def test_automated_dispatcher_error_handling(self) -> None:
@@ -112,12 +112,12 @@ class TestAutomatedFlextDispatcher:
 
         def operation() -> object:
             return self._execute_dispatcher_operation(
-                instance, {"performance_test": True}
+                instance, {"performance_test": True},
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextDispatcher performance test exceeded timeout"
+            result, "FlextDispatcher performance test exceeded timeout",
         )
 
     def test_automated_dispatcher_resource_management(self) -> None:
@@ -125,18 +125,18 @@ class TestAutomatedFlextDispatcher:
         instance = fixture_factory.create_test_dispatcher_instance()
         result = self._execute_dispatcher_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextDispatcher resource test"
+            result, "FlextDispatcher resource test",
         )
         instance_obj: Any = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextDispatcher cleanup failed"
+                    cleanup_result, "FlextDispatcher cleanup failed",
                 )
 
     def _execute_dispatcher_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue]
+        self, instance: object, input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on dispatcher instance.
 

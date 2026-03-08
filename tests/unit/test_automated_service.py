@@ -11,8 +11,8 @@ from collections.abc import Mapping
 import pytest
 
 from flext_core import r, t
-from tests.conftest import test_framework
 from tests import m
+from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -58,7 +58,7 @@ class TestAutomatedFlextService:
         ids=lambda case: case["description"],
     )
     def test_automated_service_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario
+        self, test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for service functionality."""
         try:
@@ -85,7 +85,7 @@ class TestAutomatedFlextService:
         instance = fixture_factory.create_test_service_instance()
         result = self._execute_service_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextService type safety test"
+            result, "FlextService type safety test",
         )
 
     def test_automated_service_error_handling(self) -> None:
@@ -112,7 +112,7 @@ class TestAutomatedFlextService:
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextService performance test exceeded timeout"
+            result, "FlextService performance test exceeded timeout",
         )
 
     def test_automated_service_resource_management(self) -> None:
@@ -120,18 +120,18 @@ class TestAutomatedFlextService:
         instance = fixture_factory.create_test_service_instance()
         result = self._execute_service_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextService resource test"
+            result, "FlextService resource test",
         )
         instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextService cleanup failed"
+                    cleanup_result, "FlextService cleanup failed",
                 )
 
     def _execute_service_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue]
+        self, instance: object, input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on service instance.
 

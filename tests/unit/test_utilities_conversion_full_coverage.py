@@ -41,16 +41,16 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
     none_result = u.Conversion.to_flexible_value(None)
     assert none_result.is_failure
     model_result = u.Conversion.to_flexible_value(
-        cast("StrictJsonValue", cast("object", _Model(value=1)))
+        cast("StrictJsonValue", cast("object", _Model(value=1))),
     )
     assert model_result.is_failure
     mapping_value: Mapping[str, t.ContainerValue] = {"x": 1}
     mapping_result = u.Conversion.to_flexible_value(
-        cast("StrictJsonValue", mapping_value)
+        cast("StrictJsonValue", mapping_value),
     )
     assert mapping_result.is_failure
     datetime_result = u.Conversion.to_flexible_value(
-        cast("StrictJsonValue", cast("object", datetime.now(UTC)))
+        cast("StrictJsonValue", cast("object", datetime.now(UTC))),
     )
     assert datetime_result.is_success
     assert u.Conversion.to_str_list_safe(None) == []

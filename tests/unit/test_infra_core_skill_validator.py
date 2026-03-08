@@ -43,7 +43,7 @@ class TestSafeLoadYaml:
         assert result == {}
 
     def test_safe_load_yaml_with_non_dict_raises_type_error(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test loading YAML with non-dict content raises TypeError."""
         yaml_file = tmp_path / "list.yml"
@@ -164,7 +164,7 @@ class TestFlextInfraSkillValidator:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml"
+            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml",
         )
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             result = validator.validate(workspace_root, "test-skill")
@@ -181,7 +181,7 @@ class TestFlextInfraSkillValidator:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: custom-rule\n    type: custom\n    script: check.py"
+            "rules:\n  - id: custom-rule\n    type: custom\n    script: check.py",
         )
         with patch.object(validator, "_run_custom_count", return_value=0):
             result = validator.validate(workspace_root, "test-skill")
@@ -202,7 +202,7 @@ class TestFlextInfraSkillValidator:
         baseline_file.write_text('{"counts": {"group1": 5}}')
         with patch.object(validator, "_json") as mock_json:
             mock_json.read.return_value = r[dict[str, object]].ok({
-                "counts": {"group1": 5}
+                "counts": {"group1": 5},
             })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
@@ -221,7 +221,7 @@ class TestFlextInfraSkillValidator:
         baseline_file.write_text('{"counts": {"group1": 5, "group2": 3}}')
         with patch.object(validator, "_json") as mock_json:
             mock_json.read.return_value = r[dict[str, object]].ok({
-                "counts": {"group1": 5, "group2": 3}
+                "counts": {"group1": 5, "group2": 3},
             })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
@@ -240,7 +240,7 @@ class TestFlextInfraSkillValidator:
         baseline_file.write_text('{"counts": {"group1": "not_an_int"}}')
         with patch.object(validator, "_json") as mock_json:
             mock_json.read.return_value = r[dict[str, object]].ok({
-                "counts": {"group1": "not_an_int"}
+                "counts": {"group1": "not_an_int"},
             })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
@@ -270,7 +270,7 @@ class TestFlextInfraSkillValidator:
         assert count == 0
 
     def test_run_ast_grep_count_with_nonexistent_rule_file(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test _run_ast_grep_count with nonexistent rule file."""
         validator = FlextInfraSkillValidator()
@@ -445,7 +445,7 @@ class TestFlextInfraSkillValidator:
         """Test _render_template with absolute path."""
         template = "/absolute/path/{skill}/file.json"
         result = FlextInfraSkillValidator._render_template(
-            tmp_path, template, "my-skill"
+            tmp_path, template, "my-skill",
         )
         assert result == Path("/absolute/path/my-skill/file.json")
 
@@ -453,7 +453,7 @@ class TestFlextInfraSkillValidator:
         """Test _render_template with relative path."""
         template = ".reports/{skill}/report.json"
         result = FlextInfraSkillValidator._render_template(
-            tmp_path, template, "my-skill"
+            tmp_path, template, "my-skill",
         )
         assert "my-skill" in str(result)
         assert "report.json" in str(result)
@@ -533,11 +533,11 @@ class TestFlextInfraSkillValidator:
         skill_dir.mkdir()
         skill_md = skill_dir / "SKILL.md"
         skill_md.write_text(
-            "# Test Skill\n\nrules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yaml\n"
+            "# Test Skill\n\nrules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yaml\n",
         )
         rule_file = skill_dir / "rule.yaml"
         rule_file.write_text(
-            'id: test-rule\nlanguage: python\nrule: {pattern: "import sys"}\n'
+            'id: test-rule\nlanguage: python\nrule: {pattern: "import sys"}\n',
         )
         src_dir = workspace_root / "src"
         src_dir.mkdir()
@@ -556,11 +556,11 @@ class TestFlextInfraSkillValidator:
         skill_dir.mkdir()
         skill_md = skill_dir / "SKILL.md"
         skill_md.write_text(
-            "# Test Skill\n\nrules:\n  - id: custom-rule\n    type: custom\n    script: check.py\n"
+            "# Test Skill\n\nrules:\n  - id: custom-rule\n    type: custom\n    script: check.py\n",
         )
         check_script = skill_dir / "check.py"
         check_script.write_text(
-            '#!/usr/bin/env python\nimport json\nprint(json.dumps({"violation_count": 2}))\n'
+            '#!/usr/bin/env python\nimport json\nprint(json.dumps({"violation_count": 2}))\n',
         )
         check_script.chmod(493)
         result = validator.validate(workspace_root, "test-skill")
@@ -575,13 +575,13 @@ class TestFlextInfraSkillValidator:
         project_path.mkdir()
         rule_file = skill_dir / "rule.yaml"
         rule_file.write_text(
-            'id: test\nlanguage: python\nrule: {pattern: "import sys"}\n'
+            'id: test\nlanguage: python\nrule: {pattern: "import sys"}\n',
         )
         rule = {"file": str(rule_file)}
         include_globs = ["**/*.py"]
         exclude_globs: list[str] = []
         count = validator._run_ast_grep_count(
-            rule, skill_dir, project_path, include_globs, exclude_globs
+            rule, skill_dir, project_path, include_globs, exclude_globs,
         )
         assert isinstance(count, int)
         assert count >= 0
@@ -595,13 +595,13 @@ class TestFlextInfraSkillValidator:
         project_path.mkdir()
         rule_file = skill_dir / "rule.yaml"
         rule_file.write_text(
-            'id: test\nlanguage: python\nrule: {pattern: "import sys"}\n'
+            'id: test\nlanguage: python\nrule: {pattern: "import sys"}\n',
         )
         rule = {"file": str(rule_file)}
         include_globs: list[str] = []
         exclude_globs = ["**/test_*.py"]
         count = validator._run_ast_grep_count(
-            rule, skill_dir, project_path, include_globs, exclude_globs
+            rule, skill_dir, project_path, include_globs, exclude_globs,
         )
         assert isinstance(count, int)
         assert count >= 0
@@ -615,7 +615,7 @@ class TestFlextInfraSkillValidator:
         project_path.mkdir()
         check_script = skill_dir / "check.py"
         check_script.write_text(
-            '#!/usr/bin/env python\nimport json\nprint()  # empty line\nprint(json.dumps({"violation_count": 1}))\nprint()  # another empty line\n'
+            '#!/usr/bin/env python\nimport json\nprint()  # empty line\nprint(json.dumps({"violation_count": 1}))\nprint()  # another empty line\n',
         )
         check_script.chmod(493)
         rule = {"script": str(check_script)}
@@ -632,7 +632,7 @@ class TestFlextInfraSkillValidator:
         project_path.mkdir()
         check_script = skill_dir / "check.py"
         check_script.write_text(
-            '#!/usr/bin/env python\nprint("invalid json")  # not valid JSON\nprint("{\\"violation_count\\": 1}")  # valid JSON\n'
+            '#!/usr/bin/env python\nprint("invalid json")  # not valid JSON\nprint("{\\"violation_count\\": 1}")  # valid JSON\n',
         )
         check_script.chmod(493)
         rule = {"script": str(check_script)}
@@ -650,7 +650,7 @@ class TestFlextInfraSkillValidatorAstGrepViolations:
         skill_dir.mkdir()
         rules_file = skill_dir / "rules.yml"
         rules_file.write_text(
-            "rules:\n  - id: test_rule\n    type: ast-grep\n    rule:\n      pattern: 'console.log($MSG)'\n"
+            "rules:\n  - id: test_rule\n    type: ast-grep\n    rule:\n      pattern: 'console.log($MSG)'\n",
         )
         assert skill_dir.exists()
 
@@ -660,7 +660,7 @@ class TestFlextInfraSkillValidatorAstGrepViolations:
         skill_dir.mkdir()
         rules_file = skill_dir / "rules.yml"
         rules_file.write_text(
-            "rules:\n  - id: test_rule\n    type: custom\n    rule:\n      script: 'echo 1'\n"
+            "rules:\n  - id: test_rule\n    type: custom\n    rule:\n      script: 'echo 1'\n",
         )
         assert skill_dir.exists()
 
@@ -675,13 +675,13 @@ class TestFlextInfraSkillValidatorBaselineComparison:
         rules_file = skill_dir / "rules.yml"
         baseline_file = skill_dir / "baseline.json"
         rules_file.write_text(
-            "rules:\n  baseline:\n    strategy: total\n    file: baseline.json\n"
+            "rules:\n  baseline:\n    strategy: total\n    file: baseline.json\n",
         )
         baseline_file.write_text('{"counts": {"group1": 5, "group2": 3}}')
         assert baseline_file.exists()
 
     def test_validate_skill_with_baseline_per_group_strategy(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test baseline comparison with per-group strategy (lines 186-189)."""
         skill_dir = tmp_path / "test_skill"
@@ -689,7 +689,7 @@ class TestFlextInfraSkillValidatorBaselineComparison:
         rules_file = skill_dir / "rules.yml"
         baseline_file = skill_dir / "baseline.json"
         rules_file.write_text(
-            "rules:\n  baseline:\n    strategy: per-group\n    file: baseline.json\n"
+            "rules:\n  baseline:\n    strategy: per-group\n    file: baseline.json\n",
         )
         baseline_file.write_text('{"counts": {"group1": 5, "group2": 3}}')
         assert baseline_file.exists()
@@ -720,7 +720,7 @@ class TestFlextInfraSkillValidatorUncoveredLines:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml"
+            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml",
         )
         with patch.object(validator, "_run_ast_grep_count", return_value=5):
             result = validator.validate(workspace_root, "test-skill")
@@ -737,7 +737,7 @@ class TestFlextInfraSkillValidatorUncoveredLines:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: custom-rule\n    type: custom\n    script: check.py"
+            "rules:\n  - id: custom-rule\n    type: custom\n    script: check.py",
         )
         with patch.object(validator, "_run_custom_count", return_value=3):
             result = validator.validate(workspace_root, "test-skill")
@@ -754,21 +754,21 @@ class TestFlextInfraSkillValidatorUncoveredLines:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: total\n  file: baseline.json"
+            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: total\n  file: baseline.json",
         )
         baseline_file = skill_dir / "baseline.json"
         baseline_file.write_text('{"counts": {"group1": 10}}')
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             with patch.object(validator, "_json") as mock_json:
                 mock_json.read.return_value = r[dict[str, object]].ok({
-                    "counts": {"group1": 10}
+                    "counts": {"group1": 10},
                 })
                 result = validator.validate(workspace_root, "test-skill")
                 assert result.is_success
                 assert result.value.passed
 
     def test_validate_baseline_comparison_per_group_strategy(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """Test baseline comparison with per-group strategy (lines 186-189)."""
         validator = FlextInfraSkillValidator()
@@ -779,14 +779,14 @@ class TestFlextInfraSkillValidatorUncoveredLines:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: per-group\n  file: baseline.json"
+            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: per-group\n  file: baseline.json",
         )
         baseline_file = skill_dir / "baseline.json"
         baseline_file.write_text('{"counts": {"group1": 5, "group2": 3}}')
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             with patch.object(validator, "_json") as mock_json:
                 mock_json.read.return_value = r[dict[str, object]].ok({
-                    "counts": {"group1": 5, "group2": 3}
+                    "counts": {"group1": 5, "group2": 3},
                 })
                 result = validator.validate(workspace_root, "test-skill")
                 assert result.is_success
@@ -802,7 +802,7 @@ class TestFlextInfraSkillValidatorUncoveredLines:
         skill_dir.mkdir()
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: total\n  file: nonexistent.json"
+            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: total\n  file: nonexistent.json",
         )
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             result = validator.validate(workspace_root, "test-skill")
@@ -829,7 +829,7 @@ class TestSkillValidatorBaselineComparison:
         baseline_file.write_text('{"counts": {"violations": 10, "errors": 5}}')
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: total\n  file: baseline.json"
+            "rules:\n  - id: test-rule\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: total\n  file: baseline.json",
         )
         rule_file = skill_dir / "rule.yml"
         rule_file.write_text("id: test-rule\nlanguage: python\nrule: {pattern: 'test'}")
@@ -852,7 +852,7 @@ class TestSkillValidatorBaselineComparison:
         baseline_file.write_text('{"counts": {"rule1": 10, "rule2": 5}}')
         rules_yml = skill_dir / "rules.yml"
         rules_yml.write_text(
-            "rules:\n  - id: rule1\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: per-rule\n  file: baseline.json"
+            "rules:\n  - id: rule1\n    type: ast-grep\n    file: rule.yml\nbaseline:\n  strategy: per-rule\n  file: baseline.json",
         )
         rule_file = skill_dir / "rule.yml"
         rule_file.write_text("id: rule1\nlanguage: python\nrule: {pattern: 'test'}")

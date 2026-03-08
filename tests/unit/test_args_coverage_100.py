@@ -96,7 +96,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def get_parse_kwargs_scenarios() -> Mapping[
-            str, TestFlextUtilitiesArgs.ParseKwargsScenario
+            str, TestFlextUtilitiesArgs.ParseKwargsScenario,
         ]:
             """Get parse kwargs test scenarios."""
             status_enum = TestFlextUtilitiesArgs.StatusEnum
@@ -146,7 +146,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def get_validated_scenarios() -> Mapping[
-            str, TestFlextUtilitiesArgs.ValidatedScenario
+            str, TestFlextUtilitiesArgs.ValidatedScenario,
         ]:
             """Get validated decorator test scenarios."""
             status_enum = TestFlextUtilitiesArgs.StatusEnum
@@ -188,7 +188,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def create_validated_function() -> Callable[
-            [TestFlextUtilitiesArgs.StatusEnum], str
+            [TestFlextUtilitiesArgs.StatusEnum], str,
         ]:
             """Create validated function for testing."""
 
@@ -200,7 +200,7 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def create_validated_with_result_function() -> Callable[
-            [TestFlextUtilitiesArgs.StatusEnum], r[str]
+            [TestFlextUtilitiesArgs.StatusEnum], r[str],
         ]:
             """Create validated_with_result function for testing."""
 
@@ -209,7 +209,7 @@ class TestFlextUtilitiesArgs:
                 return r.ok(status.value)
 
             return cast(
-                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]", process
+                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]", process,
             )
 
     class TestValidated:
@@ -222,7 +222,7 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios[scenario_name]
             process = TestFlextUtilitiesArgs.Factories.create_validated_function()
             status_value = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                scenario.input_value
+                scenario.input_value,
             )
             result = process(status_value)
             assert result == scenario.expected_result
@@ -233,7 +233,7 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios["invalid_enum"]
             with pytest.raises(ValueError):
                 _ = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                    scenario.input_value
+                    scenario.input_value,
                 )
 
         @staticmethod
@@ -250,7 +250,7 @@ class TestFlextUtilitiesArgs:
 
             values = TestFlextUtilitiesArgs.Constants.Values
             status_val = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE
+                values.STATUS_ACTIVE,
             )
             priority_val = TestFlextUtilitiesArgs.PriorityEnum(values.PRIORITY_HIGH)
             result = process(status_val, priority_val, values.NAME_JOHN)
@@ -270,7 +270,7 @@ class TestFlextUtilitiesArgs:
             )
             values = TestFlextUtilitiesArgs.Constants.Values
             status_val = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE
+                values.STATUS_ACTIVE,
             )
             result = process(status_val)
             u.Tests.Result.assert_success_with_value(result, values.STATUS_ACTIVE)
@@ -281,13 +281,13 @@ class TestFlextUtilitiesArgs:
             values = TestFlextUtilitiesArgs.Constants.Values
             with pytest.raises(ValueError):
                 _ = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                    values.STATUS_INVALID
+                    values.STATUS_INVALID,
                 )
             process = (
                 TestFlextUtilitiesArgs.Factories.create_validated_with_result_function()
             )
             valid_status = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE
+                values.STATUS_ACTIVE,
             )
             result = process(valid_status)
             _ = assertion_helpers.assert_flext_result_success(result)
@@ -304,11 +304,11 @@ class TestFlextUtilitiesArgs:
                 raise ValueError(errors.INTERNAL_ERROR)
 
             status_val = TestFlextUtilitiesArgs.Factories.create_status_enum(
-                values.STATUS_ACTIVE
+                values.STATUS_ACTIVE,
             )
             result = process(status_val)
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=errors.INTERNAL_ERROR
+                result, expected_error=errors.INTERNAL_ERROR,
             )
 
     class TestParseKwargs:
@@ -342,7 +342,7 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios["invalid_enum_value"]
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error
+                result, expected_error=scenario.expected_error,
             )
 
     class TestGetEnumParams:
@@ -420,7 +420,7 @@ class TestFlextUtilitiesArgs:
                 __annotations__ = {"invalid": object()}
 
             params = u.Args.get_enum_params(
-                cast("p.CallableWithHints", cast("object", BadFunction))
+                cast("p.CallableWithHints", cast("object", BadFunction)),
             )
             assert params == {}
 
@@ -430,7 +430,7 @@ class TestFlextUtilitiesArgs:
 
             def process(
                 status: Annotated[
-                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2"
+                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2",
                 ],
             ) -> bool:
                 return True
@@ -445,7 +445,7 @@ class TestFlextUtilitiesArgs:
 
             def process(
                 status: Annotated[
-                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2"
+                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2",
                 ],
             ) -> bool:
                 return True

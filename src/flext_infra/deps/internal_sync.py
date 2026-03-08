@@ -138,24 +138,24 @@ class FlextInfraInternalDependencySyncService:
                 parsed_map_result = self.parse_repo_map(map_file)
                 if parsed_map_result.is_failure:
                     return r[int].fail(
-                        parsed_map_result.error or "failed to parse standalone map"
+                        parsed_map_result.error or "failed to parse standalone map",
                     )
                 repo_map = {**parsed_map_result.value, **repo_map}
         elif not map_file.exists():
             owner = self.infer_owner_from_origin(project_root)
             if owner is None:
                 return r[int].fail(
-                    "missing flext-repo-map.toml for standalone dependency resolution and unable to infer GitHub owner from remote.origin.url"
+                    "missing flext-repo-map.toml for standalone dependency resolution and unable to infer GitHub owner from remote.origin.url",
                 )
             repo_map = self.synthesized_repo_map(
-                owner, {dep_path.name for dep_path in deps.values()}
+                owner, {dep_path.name for dep_path in deps.values()},
             )
             logger.warning("sync_deps_synthesized_repo_map", owner=owner)
         else:
             parsed_map_result = self.parse_repo_map(map_file)
             if parsed_map_result.is_failure:
                 return r[int].fail(
-                    parsed_map_result.error or "failed to parse repo map"
+                    parsed_map_result.error or "failed to parse repo map",
                 )
             repo_map = parsed_map_result.value
         ref_name = self.resolve_ref(project_root)
@@ -172,7 +172,7 @@ class FlextInfraInternalDependencySyncService:
                     symlink_result = self.ensure_symlink(dep_path, sibling)
                     if symlink_result.is_failure:
                         return r[int].fail(
-                            symlink_result.error or f"failed symlink for {repo_name}"
+                            symlink_result.error or f"failed symlink for {repo_name}",
                         )
                     continue
             urls = repo_map[repo_name]
@@ -180,7 +180,7 @@ class FlextInfraInternalDependencySyncService:
             checkout_result = self.ensure_checkout(dep_path, selected_url, ref_name)
             if checkout_result.is_failure:
                 return r[int].fail(
-                    checkout_result.error or f"checkout failed for {repo_name}"
+                    checkout_result.error or f"checkout failed for {repo_name}",
                 )
         return r[int].ok(0)
 
@@ -192,7 +192,7 @@ class FlextInfraInternalDependencySyncService:
         data_result = self.toml.read(pyproject)
         if data_result.is_failure:
             return r[Mapping[str, Path]].fail(
-                data_result.error or f"failed to read {pyproject}"
+                data_result.error or f"failed to read {pyproject}",
             )
         data = data_result.value
         tool = data.get(c.Infra.Toml.TOOL)
@@ -276,7 +276,7 @@ class FlextInfraInternalDependencySyncService:
         checkout = self.git.checkout(dep_path, safe_ref_name)
         if checkout.is_failure:
             return r[bool].fail(
-                f"checkout failed for {dep_path.name}: {checkout.error}"
+                f"checkout failed for {dep_path.name}: {checkout.error}",
             )
         _ = self.git.pull(dep_path, remote=c.Infra.Git.ORIGIN, branch=safe_ref_name)
         return r[bool].ok(True)
@@ -297,7 +297,7 @@ class FlextInfraInternalDependencySyncService:
         if env_workspace_root is not None:
             return (True, env_workspace_root)
         superproject = self.git.run(
-            ["rev-parse", "--show-superproject-working-tree"], cwd=project_root
+            ["rev-parse", "--show-superproject-working-tree"], cwd=project_root,
         )
         if superproject.is_success:
             value = superproject.value.strip()
@@ -321,7 +321,7 @@ class FlextInfraInternalDependencySyncService:
             if not repo_url:
                 continue
             mapping[repo_name] = m.Infra.Github.RepoUrls(
-                ssh_url=repo_url, https_url=self.ssh_to_https(repo_url)
+                ssh_url=repo_url, https_url=self.ssh_to_https(repo_url),
             )
         return mapping
 
@@ -330,7 +330,7 @@ class FlextInfraInternalDependencySyncService:
         data_result = self.toml.read(path)
         if data_result.is_failure:
             return r[Mapping[str, m.Infra.Github.RepoUrls]].fail(
-                data_result.error or "failed to read repository map"
+                data_result.error or "failed to read repository map",
             )
         data = data_result.value
         repos_obj = data.get("repo", {})
@@ -344,7 +344,7 @@ class FlextInfraInternalDependencySyncService:
             https_url = str(values.get("https_url", self.ssh_to_https(ssh_url)))
             if ssh_url:
                 result[repo_name] = m.Infra.Github.RepoUrls(
-                    ssh_url=ssh_url, https_url=https_url
+                    ssh_url=ssh_url, https_url=https_url,
                 )
         return r[Mapping[str, m.Infra.Github.RepoUrls]].ok(result)
 
@@ -366,14 +366,14 @@ class FlextInfraInternalDependencySyncService:
         return c.Infra.Git.MAIN
 
     def synthesized_repo_map(
-        self, owner: str, repo_names: set[str]
+        self, owner: str, repo_names: set[str],
     ) -> Mapping[str, m.Infra.Github.RepoUrls]:
         """Build default repository URL mapping from owner and repo set."""
         result: MutableMapping[str, m.Infra.Github.RepoUrls] = {}
         for repo_name in sorted(repo_names):
             ssh_url = f"git@github.com:{owner}/{repo_name}.git"
             result[repo_name] = m.Infra.Github.RepoUrls(
-                ssh_url=ssh_url, https_url=self.ssh_to_https(ssh_url)
+                ssh_url=ssh_url, https_url=self.ssh_to_https(ssh_url),
             )
         return result
 

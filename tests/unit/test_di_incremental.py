@@ -76,7 +76,7 @@ class TestDIBridgeRealExecution:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
             FlextRuntime.DependencyIntegration.create_layered_bridge(
-                config=m.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}})
+                config=m.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
         assert bridge is not None
@@ -95,7 +95,7 @@ class TestDependencyIntegrationRealExecution:
         """Test register_object with real container execution."""
         di_container = FlextRuntime.DependencyIntegration.create_container()
         provider = FlextRuntime.DependencyIntegration.register_object(
-            di_container, "test_object", {"key": "value"}
+            di_container, "test_object", {"key": "value"},
         )
         assert provider() == {"key": "value"}
         assert hasattr(di_container, "test_object")
@@ -111,7 +111,7 @@ class TestDependencyIntegrationRealExecution:
             return {"calls": call_count["count"]}
 
         provider = FlextRuntime.DependencyIntegration.register_factory(
-            di_container, "cached_factory", factory, cache=True
+            di_container, "cached_factory", factory, cache=True,
         )
         result1 = provider()
         assert result1 == {"calls": 1}
@@ -129,7 +129,7 @@ class TestDependencyIntegrationRealExecution:
             return {"calls": call_count["count"]}
 
         provider = FlextRuntime.DependencyIntegration.register_factory(
-            di_container, "factory_no_cache", factory, cache=False
+            di_container, "factory_no_cache", factory, cache=False,
         )
         result1 = provider()
         assert result1 == {"calls": 1}
@@ -150,7 +150,7 @@ class TestDependencyIntegrationRealExecution:
             lifecycle["closed"] = True
 
         provider = FlextRuntime.DependencyIntegration.register_resource(
-            di_container, "db_connection", resource_factory
+            di_container, "db_connection", resource_factory,
         )
         resource = provider()
         assert resource == {"connected": True}
@@ -160,7 +160,7 @@ class TestDependencyIntegrationRealExecution:
         """Test wire with @inject decorator real execution."""
         di_container = FlextRuntime.DependencyIntegration.create_container()
         FlextRuntime.DependencyIntegration.register_object(
-            di_container, "api_key", "secret123"
+            di_container, "api_key", "secret123",
         )
         FlextRuntime.DependencyIntegration.register_object(di_container, "timeout", 30)
         module = ModuleType("test_module")
@@ -176,7 +176,7 @@ class TestDependencyIntegrationRealExecution:
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
         try:
             api_call_func: Callable[[], dict[str, str | int]] = getattr(
-                module, "api_call"
+                module, "api_call",
             )
             result = api_call_func()
             assert result == {"key": "secret123", "timeout": 30}
@@ -196,7 +196,7 @@ class TestContainerDIRealExecution:
 
         @inject
         def log_message(
-            name: str = Provide["logger_name"], level: str = Provide["log_level"]
+            name: str = Provide["logger_name"], level: str = Provide["log_level"],
         ) -> dict[str, str]:
             return {"logger": name, "level": level}
 
@@ -275,7 +275,7 @@ class TestServiceBootstrapWithDI:
     def test_create_service_runtime_with_wiring(self) -> None:
         """Test create_service_runtime with wire_modules."""
         runtime = s._create_runtime(
-            services={"api_key": "test_key"}, wire_modules=[sys.modules[__name__]]
+            services={"api_key": "test_key"}, wire_modules=[sys.modules[__name__]],
         )
         assert runtime.container is not None
         container_instance = runtime.container
@@ -372,13 +372,13 @@ class TestRealWiringScenarios:
 
         @inject
         def build_url(
-            base: str = Provide["base_url"], version: str = Provide["api_version"]
+            base: str = Provide["base_url"], version: str = Provide["api_version"],
         ) -> str:
             return f"{base}/{version}"
 
         @inject
         def api_call(
-            url: str = Provide["built_url"], base: str = Provide["base_url"]
+            url: str = Provide["built_url"], base: str = Provide["base_url"],
         ) -> dict[str, str]:
             return {"url": url, "base": base}
 
@@ -484,7 +484,7 @@ class TestRealWiringScenarios:
         container.wire_modules(modules=[module])
         try:
             func_with_missing_wired: Callable[[], str] = getattr(
-                module, "func_with_missing"
+                module, "func_with_missing",
             )
             assert callable(func_with_missing_wired)
         finally:

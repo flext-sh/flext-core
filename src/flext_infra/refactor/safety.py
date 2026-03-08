@@ -24,7 +24,7 @@ class FlextInfraRefactorSafetyManager:
         self._runner: p.Infra.SafetyRunner = effective_runner
         self._git = FlextInfraGitService(effective_runner)
         self._checkpoint_path = checkpoint_path or Path(
-            ".sisyphus/refactor/safety-checkpoint.json"
+            ".sisyphus/refactor/safety-checkpoint.json",
         )
         self._test_command = test_command or [
             c.Infra.Toml.PYTHON,
@@ -74,7 +74,7 @@ class FlextInfraRefactorSafetyManager:
         return self._git.is_repo(workspace_root)
 
     def create_pre_transformation_stash(
-        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform"
+        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform",
     ) -> r[str]:
         """Stash uncommitted changes and return the stash reference."""
         self._last_workspace_root = workspace_root
@@ -87,7 +87,7 @@ class FlextInfraRefactorSafetyManager:
             return r[str].ok("")
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         push = self._git.stash_push(
-            workspace_root, f"{label}:{stamp}", include_untracked=True
+            workspace_root, f"{label}:{stamp}", include_untracked=True,
         )
         if push.is_failure:
             return r[str].fail(push.error or "git stash push failed")
@@ -103,7 +103,7 @@ class FlextInfraRefactorSafetyManager:
     def rollback(self, workspace_root: str, /) -> None: ...
 
     def rollback(
-        self, workspace_root: Path | str, stash_ref: str = ""
+        self, workspace_root: Path | str, stash_ref: str = "",
     ) -> r[bool] | None:
         """Restore previously stashed state, resolving workspace from context."""
         if isinstance(workspace_root, Path):
@@ -162,7 +162,7 @@ class FlextInfraRefactorSafetyManager:
                 status=status,
                 stash_ref=stash_ref,
                 processed_targets=processed_targets,
-            )
+            ),
         )
 
     def load_checkpoint(self) -> r[m.Infra.Refactor.Checkpoint]:
@@ -172,7 +172,7 @@ class FlextInfraRefactorSafetyManager:
         try:
             text = self._checkpoint_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             return r[m.Infra.Refactor.Checkpoint].ok(
-                m.Infra.Refactor.Checkpoint.model_validate_json(text)
+                m.Infra.Refactor.Checkpoint.model_validate_json(text),
             )
         except (OSError, ValueError) as exc:
             return r[m.Infra.Refactor.Checkpoint].fail(str(exc))
