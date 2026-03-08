@@ -16,14 +16,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRuntime, m, r, t
+from flext_core import FlextRuntime, m, r
 from flext_tests import u
 from tests.test_utils import assertion_helpers
 
@@ -44,167 +43,6 @@ class FixturePriority(StrEnum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
-
-class ParseSequenceScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Parse sequence test scenario."""
-
-    name: str
-    enum_cls: type[StrEnum]
-    values: list[str | StrEnum]
-    expected_success: bool
-    expected_count: int | None = None
-    error_contains: str | None = None
-
-
-class CoerceListScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Coerce list validator test scenario."""
-
-    name: str
-    enum_cls: type[StrEnum]
-    value: t.ContainerValue
-    expected_success: bool
-    expected_count: int | None = None
-    error_type: type[Exception] | None = None
-    error_contains: str | None = None
-
-
-class ParseMappingScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Parse mapping test scenario."""
-
-    name: str
-    enum_cls: type[StrEnum]
-    mapping: dict[str, str | StrEnum]
-    expected_success: bool
-    expected_keys: list[str] | None = None
-    error_contains: str | None = None
-
-
-class CoerceDictScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Coerce dict validator test scenario."""
-
-    name: str
-    enum_cls: type[StrEnum]
-    value: t.ContainerValue
-    expected_success: bool
-    expected_keys: list[str] | None = None
-    error_type: type[Exception] | None = None
-    error_contains: str | None = None
-
-
-class MapScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Map method test scenario."""
-
-    name: str
-    items: list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
-    mapper: Callable[[Any], Any]
-    expected_result: (
-        list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
-    )
-    default_error: str = "Operation failed"
-    expected_failure: bool = False
-    error_contains: str | None = None
-
-
-class FindScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Find method test scenario."""
-
-    name: str
-    items: list[Any] | tuple[Any, ...] | dict[str, Any]
-    predicate: Callable[[Any], bool]
-    expected_result: object
-    return_key: bool = False
-
-
-class FilterScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Filter method test scenario."""
-
-    name: str
-    items: list[Any] | tuple[Any, ...] | dict[str, Any]
-    predicate: Callable[[Any], bool]
-    expected_result: list[Any] | tuple[Any, ...] | dict[str, Any]
-    mapper: Callable[[Any], Any] | None = None
-
-
-class CountScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Count method test scenario."""
-
-    name: str
-    items: Sequence[Any]
-    expected_count: int
-    predicate: Callable[[Any], bool] | None = None
-
-
-class ProcessScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Process method test scenario."""
-
-    name: str
-    items: Sequence[Any]
-    processor: Callable[[Any], Any]
-    expected_result: object
-    on_error: str = "collect"
-    predicate: Callable[[Any], bool] | None = None
-    filter_keys: set[str] | None = None
-    exclude_keys: set[str] | None = None
-    expected_failure: bool = False
-    error_contains: str | None = None
-
-
-class GroupScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Group method test scenario."""
-
-    name: str
-    items: list[str] | tuple[str, ...]
-    key: Callable[[str], int | str]
-    expected_result: dict[int | str, list[str]]
-
-
-class ChunkScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Chunk method test scenario."""
-
-    name: str
-    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...]
-    size: int
-    expected_result: list[list[t.ContainerValue]]
-
-
-class BatchScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Batch method test scenario."""
-
-    name: str
-    items: list[t.ContainerValue]
-    operation: Callable[[object], object]
-    expected_result: object
-    size: int = 100
-    on_error: str = "collect"
-    pre_validate: Callable[[object], bool] | None = None
-    flatten: bool = False
-    expected_failure: bool = False
-    error_contains: str | None = None
 
 
 class CollectionUtilitiesScenarios:
@@ -721,9 +559,6 @@ class TestuCollectionCoerceListValidator:
         """Test coerce_list_validator integration with Pydantic."""
         _ = u.Collection.coerce_list_validator(FixtureStatus)
 
-        class TestModel(BaseModel):
-            statuses: list[FixtureStatus] = Field(default_factory=list)
-
         # Test with string list
         model1 = TestModel.model_validate({"statuses": ["active", "pending"]})
         assert len(model1.statuses) == 2
@@ -828,9 +663,6 @@ class TestuCollectionCoerceDictValidator:
     def test_coerce_dict_validator_with_pydantic(self) -> None:
         """Test coerce_dict_validator integration with Pydantic."""
         _ = u.Collection.coerce_dict_validator(FixtureStatus)
-
-        class TestModel(BaseModel):
-            user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
 
         # Test with string dict
         model1 = TestModel.model_validate(

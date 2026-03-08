@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from pydantic import BaseModel
 
 from flext_core import r
 from flext_tests import u
@@ -103,10 +102,6 @@ class TestFlextTestsUtilitiesTestContext:
 
     def test_temporary_attribute_change(self) -> None:
         """Test temporary_attribute changes attribute temporarily."""
-
-        class TestObject(BaseModel):
-            attribute: str = "original"
-
         obj = TestObject()
 
         with u.Tests.TestContext.temporary_attribute(
@@ -121,10 +116,6 @@ class TestFlextTestsUtilitiesTestContext:
 
     def test_temporary_attribute_new(self) -> None:
         """Test temporary_attribute adds new attribute temporarily."""
-
-        class TestObject(BaseModel):
-            pass
-
         obj = TestObject()
 
         with u.Tests.TestContext.temporary_attribute(
@@ -140,10 +131,6 @@ class TestFlextTestsUtilitiesTestContext:
 
     def test_temporary_attribute_exception_restores(self) -> None:
         """Test temporary_attribute restores value even when exception occurs."""
-
-        class TestObject(BaseModel):
-            attribute: str = "original"
-
         obj = TestObject()
 
         with u.Tests.TestContext.temporary_attribute(

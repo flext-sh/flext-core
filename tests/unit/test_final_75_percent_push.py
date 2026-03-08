@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextContainer,
@@ -28,51 +27,110 @@ from flext_core import (
 )
 
 
-class ResultOperationScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """FlextResult operation test scenario."""
-
-    name: str
-    initial_value: int | None
-    operations: list[str]
-    expected_success: bool
-    expected_value: int | None = None
-
-
-class ExceptionTypeScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Exception type test scenario."""
-
-    name: str
-    exception_type: type[FlextExceptions.BaseError]
-    message: str
-    expected_in_str: str
-
-
 class CoverageScenarios:
     """Centralized coverage test scenarios using FlextConstants."""
 
     RESULT_OPERATIONS: ClassVar[list[ResultOperationScenario]] = [
-        ResultOperationScenario(name="map", initial_value=5, operations=["map"], expected_success=True, expected_value=10),
-        ResultOperationScenario(name="flat_map", initial_value=5, operations=["flat_map"], expected_success=True, expected_value=10),
-        ResultOperationScenario(name="flat_map_fail", initial_value=5, operations=["flat_map_fail"], expected_success=False, expected_value=None),
-        ResultOperationScenario(name="lash_success", initial_value=42, operations=["lash"], expected_success=True, expected_value=42),
-        ResultOperationScenario(name="lash_failure", initial_value=None, operations=["lash"], expected_success=True, expected_value=99),
-        ResultOperationScenario(name="chaining", initial_value=10, operations=["map", "map"], expected_success=True, expected_value=40),
-        ResultOperationScenario(name="failure_propagation", initial_value=None, operations=["map", "map"], expected_success=False, expected_value=None),
+        ResultOperationScenario(
+            name="map",
+            initial_value=5,
+            operations=["map"],
+            expected_success=True,
+            expected_value=10,
+        ),
+        ResultOperationScenario(
+            name="flat_map",
+            initial_value=5,
+            operations=["flat_map"],
+            expected_success=True,
+            expected_value=10,
+        ),
+        ResultOperationScenario(
+            name="flat_map_fail",
+            initial_value=5,
+            operations=["flat_map_fail"],
+            expected_success=False,
+            expected_value=None,
+        ),
+        ResultOperationScenario(
+            name="lash_success",
+            initial_value=42,
+            operations=["lash"],
+            expected_success=True,
+            expected_value=42,
+        ),
+        ResultOperationScenario(
+            name="lash_failure",
+            initial_value=None,
+            operations=["lash"],
+            expected_success=True,
+            expected_value=99,
+        ),
+        ResultOperationScenario(
+            name="chaining",
+            initial_value=10,
+            operations=["map", "map"],
+            expected_success=True,
+            expected_value=40,
+        ),
+        ResultOperationScenario(
+            name="failure_propagation",
+            initial_value=None,
+            operations=["map", "map"],
+            expected_success=False,
+            expected_value=None,
+        ),
     ]
 
     EXCEPTION_TYPES: ClassVar[list[ExceptionTypeScenario]] = [
-        ExceptionTypeScenario(name="base", exception_type=FlextExceptions.BaseError, message="test", expected_in_str="test"),
-        ExceptionTypeScenario(name="validation", exception_type=FlextExceptions.ValidationError, message="invalid", expected_in_str="VALIDATION_ERROR"),
-        ExceptionTypeScenario(name="type_error", exception_type=FlextExceptions.TypeError, message="wrong type", expected_in_str="TYPE_ERROR"),
-        ExceptionTypeScenario(name="operation", exception_type=FlextExceptions.OperationError, message="failed", expected_in_str="OPERATION_ERROR"),
-        ExceptionTypeScenario(name="auth", exception_type=FlextExceptions.AuthenticationError, message="auth issue", expected_in_str="AUTH"),
-        ExceptionTypeScenario(name="config", exception_type=FlextExceptions.ConfigurationError, message="config issue", expected_in_str="CONFIG"),
-        ExceptionTypeScenario(name="connection", exception_type=FlextExceptions.ConnectionError, message="connection issue", expected_in_str="CONNECTION"),
-        ExceptionTypeScenario(name="timeout", exception_type=FlextExceptions.TimeoutError, message="timeout issue", expected_in_str="TIMEOUT"),
+        ExceptionTypeScenario(
+            name="base",
+            exception_type=FlextExceptions.BaseError,
+            message="test",
+            expected_in_str="test",
+        ),
+        ExceptionTypeScenario(
+            name="validation",
+            exception_type=FlextExceptions.ValidationError,
+            message="invalid",
+            expected_in_str="VALIDATION_ERROR",
+        ),
+        ExceptionTypeScenario(
+            name="type_error",
+            exception_type=FlextExceptions.TypeError,
+            message="wrong type",
+            expected_in_str="TYPE_ERROR",
+        ),
+        ExceptionTypeScenario(
+            name="operation",
+            exception_type=FlextExceptions.OperationError,
+            message="failed",
+            expected_in_str="OPERATION_ERROR",
+        ),
+        ExceptionTypeScenario(
+            name="auth",
+            exception_type=FlextExceptions.AuthenticationError,
+            message="auth issue",
+            expected_in_str="AUTH",
+        ),
+        ExceptionTypeScenario(
+            name="config",
+            exception_type=FlextExceptions.ConfigurationError,
+            message="config issue",
+            expected_in_str="CONFIG",
+        ),
+        ExceptionTypeScenario(
+            name="connection",
+            exception_type=FlextExceptions.ConnectionError,
+            message="connection issue",
+            expected_in_str="CONNECTION",
+        ),
+        ExceptionTypeScenario(
+            name="timeout",
+            exception_type=FlextExceptions.TimeoutError,
+            message="timeout issue",
+            expected_in_str="TIMEOUT",
+        ),
     ]
 
 

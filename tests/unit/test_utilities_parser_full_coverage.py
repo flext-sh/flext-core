@@ -7,7 +7,6 @@ from enum import StrEnum
 from typing import cast, override
 
 import pytest
-from pydantic import BaseModel
 
 from flext_core import c, m, r, t, u
 
@@ -35,11 +34,6 @@ class _StrRaises:
 class _Status(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
-
-
-class _Model(BaseModel):
-    name: str
-    count: int
 
 
 def _raise_type_error_value(_value: object) -> str:

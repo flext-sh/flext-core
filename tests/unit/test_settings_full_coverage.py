@@ -11,10 +11,6 @@ from pydantic_settings import BaseSettings
 from flext_core import FlextSettings, c, m, r, u
 
 
-class _SubSettings(FlextSettings):
-    pass
-
-
 def test_settings_materialize_and_context_overrides() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)

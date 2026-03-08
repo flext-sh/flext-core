@@ -9,7 +9,6 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
@@ -49,12 +48,6 @@ class _FakeLogger:
 
     def exception(self, _message: str, **_kwargs: object) -> None:
         return None
-
-
-class _ObjWithLogger(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    logger: object
 
 
 def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:

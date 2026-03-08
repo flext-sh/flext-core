@@ -378,11 +378,7 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import BaseModel, ValidationError  # noqa: PLC0415
-
-        class User(BaseModel):
-            name: str
-            age: int
+        from pydantic import ValidationError  # noqa: PLC0415
 
         invalid_data = {"name": "Alice", "age": "not_an_int"}
         result = r[User].from_validation(invalid_data, User)

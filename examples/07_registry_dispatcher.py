@@ -32,24 +32,16 @@ from flext_core import (
     u,
 )
 
+from .models import em
+
+CreateUserCommand = em.Ex07.CreateUserCommand
+UserCreatedEvent = em.Ex07.UserCreatedEvent
+GetUserQuery = em.Ex07.GetUserQuery
+_DemoPlugin = em.Ex07.DemoPlugin
+
 # ═══════════════════════════════════════════════════════════════════
 # HANDLER IMPLEMENTATIONS
 # ═══════════════════════════════════════════════════════════════════
-
-
-class CreateUserCommand(m.Command):
-    """Create user command."""
-
-    name: str
-    email: str
-
-
-class UserCreatedEvent(m.DomainEvent):
-    """User created event."""
-
-    event_type: str = "user_created"
-    aggregate_id: str
-    name: str
 
 
 class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
@@ -66,12 +58,6 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
                 name=message.name,
             ),
         )
-
-
-class GetUserQuery(m.Query):
-    """Get user query."""
-
-    user_id: str
 
 
 class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
@@ -92,15 +78,6 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
                 },
             ),
         )
-
-
-class _DemoPlugin(m.Value):
-    """Demo plugin for registry demonstration."""
-
-    name: str
-
-    def _protocol_name(self) -> str:
-        return f"demo-plugin::{self.name}"
 
 
 # ═══════════════════════════════════════════════════════════════════

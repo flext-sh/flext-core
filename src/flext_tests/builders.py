@@ -460,11 +460,7 @@ class FlextTestsBuilders:
                 resolved_value,
                 str | bytes,
             ):
-                transformed_items: list[t.Tests.ContainerValue] = []
-                for item in resolved_value:
-                    transformed_items.append(
-                        params.transform(self._to_payload_value(item)),
-                    )
+                transformed_items: list[t.Tests.ContainerValue] = [params.transform(self._to_payload_value(item)) for item in resolved_value]
                 resolved_value = transformed_items
             else:
                 resolved_value = params.transform(

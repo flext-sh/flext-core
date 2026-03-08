@@ -8,21 +8,12 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from pydantic import BaseModel
 
 from flext_core import p, r, t, u
 
 
-class _DumpErrorModel(BaseModel):
-    value: int = 1
-
-
 class _DuckDumpError:
     model_dump = "duck boom"
-
-
-class _Opts(BaseModel):
-    value: int = 1
 
 
 class _ContainerOK:

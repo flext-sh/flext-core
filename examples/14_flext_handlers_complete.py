@@ -21,27 +21,11 @@ from typing import override
 
 from flext_core import c, h, m, r, s, u
 
+from .models import em
 
-class CreateUserCommand(m.Command):
-    """Command to create a user."""
-
-    user_id: str
-    name: str
-    email: str
-
-
-class GetUserQuery(m.Query):
-    """Query to get a user."""
-
-    user_id: str
-
-
-class UserDTO(m.Value):
-    """User data transfer object."""
-
-    id: str
-    name: str
-    email: str
+CreateUserCommand = em.Ex14.CreateUserCommand
+GetUserQuery = em.Ex14.GetUserQuery
+UserDTO = em.Ex14.UserDTO
 
 
 # Handlers using h directly

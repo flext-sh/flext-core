@@ -19,9 +19,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
-from flext_tests import t, u
+from flext_tests import u
 
 
 class Status(StrEnum):
@@ -38,41 +37,6 @@ class Priority(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
-
-
-class ParseSequenceScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Parse sequence test scenario."""
-
-    name: str
-    values: list[str | Status]
-    expected_success: bool
-    expected_count: int | None
-    expected_error: str | None
-
-
-class CoerceListValidatorScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Coerce list validator test scenario."""
-
-    name: str
-    value: t.ContainerValue
-    expected_success: bool
-    expected_error: str | None
-
-
-class ParseMappingScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Parse mapping test scenario."""
-
-    name: str
-    mapping: dict[str, str | Status]
-    expected_success: bool
-    expected_count: int | None
-    expected_error: str | None
 
 
 class CollectionScenarios:

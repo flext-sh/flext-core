@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TypeVar, override
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -34,18 +32,6 @@ T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 TestResult = FlextResult[T]
 TestResultCo = FlextResult[T_co]
-
-
-class StandardTestCase(BaseModel):
-    """Standardized test case structure for parametrized tests."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    description: str
-    input_data: dict[str, t.ContainerValue]
-    expected_result: object
-    expected_success: bool = True
-    error_contains: str | None = None
 
 
 class TestDataFactory:
@@ -183,29 +169,13 @@ class TestFixtureFactory:
         name: str = "Test Entity",
     ) -> object:
         """Create test entity fixture."""
-
         # Pydantic v2 BaseModel instead of dataclass
-        class TestEntity(BaseModel):
-            unique_id: str
-            name: str
-
-            @override
-            def __eq__(self, other: object) -> bool:
-                if not isinstance(other, TestEntity):
-                    return NotImplemented
-                return self.unique_id == other.unique_id
 
         return TestEntity(unique_id=unique_id, name=name)
 
     @staticmethod
     def create_test_value_object(value: object = "test_value") -> object:
         """Create test value object fixture."""
-
-        class TestValue(BaseModel):
-            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-
-            value: object
-
         return TestValue(value=value)
 
     @staticmethod

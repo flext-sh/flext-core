@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextDispatcher, m, p, t
+from flext_core import FlextDispatcher, p, t
 from flext_core.dispatcher import _DispatchableHandler
 
 # --- Type-safe test helpers for runtime-only error paths ---
@@ -37,31 +37,6 @@ def _force_routable(obj: object) -> p.Routable:
 
 
 # --- Test Models ---
-
-
-class SampleCommand(m.Command):
-    """Refined sample command."""
-
-    command_type: str = "sample_command"
-    payload: str
-
-
-class SampleQuery(m.Query):
-    """Refined sample query."""
-
-    query_type: str | None = "sample_query"
-
-
-class SampleEvent(m.Event):
-    """Refined sample event."""
-
-    event_type: str = "sample_event"
-
-
-class UnregisteredCommand(m.Command):
-    """Command that won't be registered."""
-
-    command_type: str = "unregistered"
 
 
 # --- Test Handlers ---

@@ -238,22 +238,7 @@ class TestEventDrivenPatterns:
     @pytest.mark.ddd
     def test_domain_event_pattern(self) -> None:
         """Test Domain Event pattern implementation."""
-
         # Event classes
-        class UserCreatedEvent(m.DomainEvent):
-            """Domain event for user creation using FlextModels foundation."""
-
-            user_id: str
-            user_name: str
-            timestamp: float
-
-        class UserUpdatedEvent(m.DomainEvent):
-            """Domain event for user updates."""
-
-            user_id: str
-            old_name: str
-            new_name: str
-            timestamp: float
 
         # Event handler
         class UserEventHandler:

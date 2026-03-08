@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections import UserDict as UserDictBase
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from flext_core import (
     FlextConstants,
@@ -375,10 +375,6 @@ class TestContext100Coverage:
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
-
-        class TestModel(BaseModel):
-            field: str = "value"
-
         # Test with Pydantic model (should convert via model_dump)
         model: TestModel = TestModel()
         export = FlextModelsContext.ContextExport.model_validate({"data": model})
@@ -454,10 +450,6 @@ class TestContext100Coverage:
 
     def test_context_scope_data_validate_data_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_data with BaseModel."""
-
-        class TestModel(BaseModel):
-            field: str = "value"
-
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         scope_data = FlextModelsContext.ContextScopeData.model_validate({"data": model})
@@ -473,10 +465,6 @@ class TestContext100Coverage:
 
     def test_context_scope_data_validate_metadata_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_metadata with BaseModel."""
-
-        class TestModel(BaseModel):
-            field: str = "value"
-
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         scope_data = FlextModelsContext.ContextScopeData.model_validate({
@@ -494,10 +482,6 @@ class TestContext100Coverage:
 
     def test_context_statistics_validate_operations_with_basemodel(self) -> None:
         """Test ContextStatistics._validate_operations with BaseModel."""
-
-        class TestModel(BaseModel):
-            field: str = "value"
-
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         stats = FlextModelsContext.ContextStatistics.model_validate({
@@ -518,10 +502,6 @@ class TestContext100Coverage:
 
     def test_context_metadata_validate_custom_fields_with_basemodel(self) -> None:
         """Test ContextMetadata._validate_custom_fields with BaseModel."""
-
-        class TestModel(BaseModel):
-            field: str = "value"
-
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         metadata = FlextModelsContext.ContextMetadata.model_validate({

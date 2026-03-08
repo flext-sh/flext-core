@@ -27,10 +27,6 @@ def _is_flexible_value_obj(value: object) -> bool:
     return fn(value)
 
 
-class _Model(BaseModel):
-    name: str = "x"
-
-
 class _LoggerLike:
     def debug(self, *_args: object, **_kwargs: object) -> None:
         return None
@@ -76,15 +72,6 @@ def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type({"a": 1})
     assert u.Guards.is_handler_type(_Model())
     assert u.Guards.is_handler_type(cast("t.ContainerValue", _sample_handler))
-
-    class _BaseModelSubclass(BaseModel):
-        value: str = "ok"
-
-    class _DuckHandler(BaseModel):
-        value: str = "ok"
-
-        def handle(self, _value: object) -> object:
-            return None
 
     assert u.Guards.is_handler_type(cast("t.ContainerValue", _BaseModelSubclass))
     assert u.Guards.is_handler_type(cast("t.ContainerValue", _DuckHandler()))
@@ -401,9 +388,6 @@ def test_guards_issubclass_success_when_callable_is_patched(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     original_callable = builtins.callable
-
-    class _ModelSub(BaseModel):
-        value: str = "ok"
 
     def _patched_callable(value: object) -> bool:
         if value is _ModelSub:

@@ -19,7 +19,7 @@ from enum import StrEnum
 from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
-from pydantic import (, BaseModel, ConfigDict
+from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
@@ -49,46 +49,82 @@ class TypeVarCategory(StrEnum):
     CQRS = "cqrs"
 
 
-class TypeVarTestCase(BaseModel):
-
-
-    model_config = ConfigDict(frozen=True)
-    """TypeVar test case definition."""
-
-    name: str
-    category: TypeVarCategory
-    type_var: object
-    expected_not_none: bool = True
-
-
 class TypeScenarios:
     """Factory for type system test scenarios with centralized test data."""
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T", TypeVarCategory.CORE, T, True),
-        TypeVarTestCase("U", TypeVarCategory.CORE, U, True),
-        TypeVarTestCase("E", TypeVarCategory.CORE, E, True),
-        TypeVarTestCase("R", TypeVarCategory.CORE, R, True),
-        TypeVarTestCase("ResultT", TypeVarCategory.CORE, ResultT, True),
+        TypeVarTestCase(
+            name="T", category=TypeVarCategory.CORE, type_var=T, expected_not_none=True
+        ),
+        TypeVarTestCase(
+            name="U", category=TypeVarCategory.CORE, type_var=U, expected_not_none=True
+        ),
+        TypeVarTestCase(
+            name="E", category=TypeVarCategory.CORE, type_var=E, expected_not_none=True
+        ),
+        TypeVarTestCase(
+            name="R", category=TypeVarCategory.CORE, type_var=R, expected_not_none=True
+        ),
+        TypeVarTestCase(
+            name="ResultT",
+            category=TypeVarCategory.CORE,
+            type_var=ResultT,
+            expected_not_none=True,
+        ),
     ]
 
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_co", TypeVarCategory.COVARIANT, T_co, True),
+        TypeVarTestCase(
+            name="T_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=T_co,
+            expected_not_none=True,
+        ),
     ]
 
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True),
+        TypeVarTestCase(
+            name="T_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=T_contra,
+            expected_not_none=True,
+        ),
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase(
+            name="Command",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="Query",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="Event",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="Message",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+            expected_not_none=True,
+        ),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("P", TypeVarCategory.PARAMSPEC, P, True),
+        TypeVarTestCase(
+            name="P",
+            category=TypeVarCategory.PARAMSPEC,
+            type_var=P,
+            expected_not_none=True,
+        ),
     ]
 
     @staticmethod

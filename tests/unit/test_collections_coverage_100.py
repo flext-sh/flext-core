@@ -18,9 +18,9 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
-from flext_core import FlextRuntime, m, t
+from flext_core import FlextRuntime, m
 
 # Use actual classes, not type aliases, for inheritance
 Statistics = m.CollectionsStatistics
@@ -101,17 +101,6 @@ class _TestOptions(Options):
 
     verbose: bool = False
     color: bool = True
-
-
-class CategoryOperationScenario(BaseModel):
-    model_config = ConfigDict(frozen=True)
-    """Category operation test scenario."""
-
-    name: str
-    category: str
-    entries: list[str]
-    operation: str
-    expected_result: t.ContainerValue
 
 
 def _scenario_id(scenario: CategoryOperationScenario) -> str:

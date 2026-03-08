@@ -125,9 +125,6 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
         metadata_input,
     ) == {"a": 1}
 
-    class _GoodModel(BaseModel):
-        b: int = 2
-
     assert FlextModelsContext.ContextData.validate_dict_serializable(_GoodModel()) == {
         "b": 2,
     }
@@ -203,9 +200,6 @@ def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
         metadata_input,
     ) == {"m": 3}
 
-    class _GoodExportModel(BaseModel):
-        c: int = 4
-
     assert FlextModelsContext.ContextExport.validate_dict_serializable(
         _GoodExportModel(),
     ) == {"c": 4}
@@ -224,9 +218,6 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     assert _normalize_statistics_before(None) == {}
     assert _normalize_statistics_before({"a": 1}) == {"a": 1}
 
-    class StatsModel(BaseModel):
-        a: int = 1
-
     assert _normalize_statistics_before(StatsModel()) == {"a": 1}
 
     with pytest.raises(ValueError, match="Cannot normalize"):
@@ -238,8 +229,6 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
 
 
 def test_scope_data_validators_and_errors() -> None:
-    class ScopeModel(BaseModel):
-        a: int = 1
 
     assert _normalize_to_mapping(None) == {}
     assert _normalize_to_mapping({"a": 1}) == {"a": 1}
@@ -257,8 +246,6 @@ def test_scope_data_validators_and_errors() -> None:
 
 
 def test_statistics_and_custom_fields_validators() -> None:
-    class Payload(BaseModel):
-        p: int = 2
 
     assert _normalize_to_mapping({"x": 1}) == {"x": 1}
     assert _normalize_to_mapping(Payload()) == {"p": 2}

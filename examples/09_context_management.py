@@ -25,7 +25,17 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import override
 
-from flext_core import FlextContext, FlextLogger, FlextResult, FlextService, c, m, r, u
+from flext_core import (
+    FlextContext,
+    FlextLogger,
+    FlextResult,
+    FlextService,
+    c,
+    m,
+    r,
+    t,
+    u,
+)
 
 
 @contextmanager
@@ -378,7 +388,11 @@ def main() -> None:
         patterns = metadata.get("patterns_demonstrated", ())
         features = metadata.get("context_features", ())
 
-        def _seq_len(x: object) -> int:
+        def _seq_len(
+            x: Sequence[t.ContainerValue]
+            | Mapping[str, t.ContainerValue]
+            | t.ContainerValue,
+        ) -> int:
             if isinstance(x, Sequence) and not isinstance(x, (str, bytes, bytearray)):
                 return len(x)
             if isinstance(x, Mapping):

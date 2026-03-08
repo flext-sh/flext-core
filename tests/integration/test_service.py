@@ -12,23 +12,12 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from pydantic import BaseModel, ConfigDict, PrivateAttr
+from pydantic import PrivateAttr
 
-from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
+from flext_core import FlextContainer, FlextResult, FlextService, r, t
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
-
-
-class UserServiceEntity(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    """Test user entity model using dataclass."""
-
-    unique_id: str
-    name: str
-    email: str
-    active: bool = True
 
 
 class UserQueryService(FlextService[bool]):
@@ -190,12 +179,6 @@ class NotificationService(FlextService[str]):
 
 
 # Use the actual class, not the type alias
-class ServiceConfig(m.CollectionsConfig):
-    """Service configuration model with required fields."""
-
-    name: str
-    version: str
-    temp_dir: str | None = None
 
 
 def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:

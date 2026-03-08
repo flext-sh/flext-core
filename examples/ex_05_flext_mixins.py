@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
+from flext_core import FlextRuntime, c, m, r, t, x
 
 from .models import em
 from .shared import Examples
@@ -38,23 +38,7 @@ class Ex05FlextMixins(Examples):
                 "operation_count": operation_count,
             }
 
-    class HandlerLike(FlextSettings):
-        """Minimal handler-like satisfying ``x.ProtocolValidation.is_handler``."""
-
-        @classmethod
-        @override
-        def validate(cls, value: t.ContainerValue) -> Ex05FlextMixins.HandlerLike:
-            """Validate using Pydantic model_validate."""
-            return cls.model_validate(value)
-
-        def can_handle(self, message_type: type) -> bool:
-            """Report capability for handler protocol."""
-            return bool(message_type)
-
-        def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
-            """Handle data and return result."""
-            return r[t.ContainerValue].ok(message)
-
+    HandlerLike = em.Ex05.HandlerLike
     HandlerBad = em.Ex05.HandlerBad
     GoodProcessor = em.Ex05.GoodProcessor
     BadProcessor = em.Ex05.BadProcessor

@@ -70,8 +70,6 @@ def test_service_create_runtime_container_overrides_branch() -> None:
 def test_service_create_initial_runtime_prefers_custom_config_type_and_context_property() -> (
     None
 ):
-    class _CustomSettings(FlextSettings):
-        pass
 
     class _CustomSvc(_Svc):
         @classmethod

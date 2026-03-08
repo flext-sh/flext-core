@@ -41,13 +41,6 @@ class ExplodingHandler:
         return self.handle(msg)
 
 
-class AutoCommand(m.Command):
-    """Auto-routed command fixture."""
-
-    command_type: str = "AutoRoute"
-    payload: str = "auto"
-
-
 class AutoDiscoveryHandler:
     """Handler using can_handle for route resolution."""
 

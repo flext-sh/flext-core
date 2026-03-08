@@ -1013,11 +1013,6 @@ class TestInfoWithContentMeta:
 
     def test_info_validate_model_success(self, tmp_path: Path) -> None:
         """Test info() with validate_model for valid model."""
-
-        class SimpleModel(BaseModel):
-            name: str
-            age: int
-
         manager = tf(base_dir=tmp_path)
         path = manager.create(
             m.ConfigMap(root={"name": "Alice", "age": 30}),
@@ -1034,10 +1029,6 @@ class TestInfoWithContentMeta:
 
     def test_info_validate_model_failure(self, tmp_path: Path) -> None:
         """Test info() with validate_model for invalid model."""
-
-        class StrictModel(BaseModel):
-            required_field: str
-
         manager = tf(base_dir=tmp_path)
         path = manager.create(
             m.ConfigMap(root={"other_field": "value"}),
@@ -1324,11 +1315,6 @@ class TestCreateInStatic:
 
     def test_create_in_pydantic_model(self, tmp_path: Path) -> None:
         """Test create_in() for Pydantic model content."""
-
-        class UserModel(BaseModel):
-            name: str
-            age: int
-
         user = UserModel(name="Alice", age=30)
         path = tf.create_in(user, "user.json", tmp_path)
 

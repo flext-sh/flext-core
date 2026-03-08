@@ -463,14 +463,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
         @staticmethod
         def get_namespace_config(namespace: str) -> type[BaseModel]:
             if namespace == "alpha":
-
-                class _Model(BaseModel):
-                    v: str = "ok"
-
                 return _Model
-
-            class _Model2(BaseModel):
-                v: str = "ok2"
 
             return _Model2
 
@@ -661,8 +654,6 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
-            class _Model(BaseModel):
-                v: str = "x"
 
             return _Model
 
@@ -675,8 +666,6 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
-            class _Model(BaseModel):
-                v: str = "x"
 
             return _Model
 
@@ -689,8 +678,6 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         @staticmethod
         def get_namespace_config(_namespace: str) -> type[BaseModel]:
-            class _Model(BaseModel):
-                v: str = "x"
 
             return _Model
 

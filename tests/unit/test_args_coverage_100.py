@@ -20,10 +20,9 @@ from enum import StrEnum
 from typing import Annotated, Final, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import r
-from flext_tests import p, t, u
+from flext_tests import p, u
 from tests.test_utils import assertion_helpers
 
 
@@ -69,29 +68,6 @@ class TestFlextUtilitiesArgs:
             INVALID_VALUES: Final[str] = "Invalid values"
             VALIDATION: Final[str] = "validation"
             INTERNAL_ERROR: Final[str] = "Internal error"
-
-    class ParseKwargsScenario(BaseModel):
-
-        model_config = ConfigDict(frozen=True)
-        """Parse kwargs test scenario."""
-
-        name: str
-        kwargs: dict[str, t.ContainerValue]
-        enum_fields: dict[str, type[StrEnum]]
-        expected_success: bool
-        expected_status: TestFlextUtilitiesArgs.StatusEnum | None = None
-        expected_error: str | None = None
-
-    class ValidatedScenario(BaseModel):
-
-        model_config = ConfigDict(frozen=True)
-        """Validated decorator test scenario."""
-
-        name: str
-        input_value: str | TestFlextUtilitiesArgs.StatusEnum
-        expected_success: bool
-        expected_result: str | None = None
-        expected_error: str | None = None
 
     class Scenarios:
         """Centralized test scenarios."""

@@ -26,9 +26,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
-from flext_core import FlextContext, m, t, x
+from flext_core import FlextContext, m, x
 from flext_tests import u
 
 
@@ -61,62 +60,82 @@ class ResultHandlingScenarioType(StrEnum):
     TYPE_PRESERVATION = "type_preservation"
 
 
-class ServiceMixinScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Service mixin test scenario definition."""
-
-    name: str
-    scenario_type: ServiceMixinScenarioType
-    needs_init: bool = False
-    operation_context: str | None = None
-
-
-class ModelConversionScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """ModelConversion test scenario definition."""
-
-    name: str
-    scenario_type: ModelConversionScenarioType
-    input_value: t.ContainerValue
-    expected_output: m.ConfigMap
-
-
-class ResultHandlingScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """ResultHandling test scenario definition."""
-
-    name: str
-    scenario_type: ResultHandlingScenarioType
-    input_value: t.ContainerValue
-
-
 class MixinScenarios:
     """Centralized mixin test scenarios using FlextConstants."""
 
     SERVICE_SCENARIOS: ClassVar[list[ServiceMixinScenario]] = [
-        ServiceMixinScenario(name="container_register_in_container", scenario_type=ServiceMixinScenarioType.CONTAINER_REGISTER),
-        ServiceMixinScenario(name="context_mixin_property", scenario_type=ServiceMixinScenarioType.CONTEXT_PROPERTY),
-        ServiceMixinScenario(name="context_propagate", scenario_type=ServiceMixinScenarioType.CONTEXT_PROPAGATE),
-        ServiceMixinScenario(name="context_correlation_id", scenario_type=ServiceMixinScenarioType.CONTEXT_CORRELATION),
-        ServiceMixinScenario(name="logging_with_context", scenario_type=ServiceMixinScenarioType.LOGGING_WITH_CONTEXT),
-        ServiceMixinScenario(name="metrics_track", scenario_type=ServiceMixinScenarioType.METRICS_TRACK),
-        ServiceMixinScenario(name="service_init_service", scenario_type=ServiceMixinScenarioType.SERVICE_INIT, needs_init=True),
-        ServiceMixinScenario(name="service_enrich_context", scenario_type=ServiceMixinScenarioType.SERVICE_ENRICH, needs_init=True),
+        ServiceMixinScenario(
+            name="container_register_in_container",
+            scenario_type=ServiceMixinScenarioType.CONTAINER_REGISTER,
+        ),
+        ServiceMixinScenario(
+            name="context_mixin_property",
+            scenario_type=ServiceMixinScenarioType.CONTEXT_PROPERTY,
+        ),
+        ServiceMixinScenario(
+            name="context_propagate",
+            scenario_type=ServiceMixinScenarioType.CONTEXT_PROPAGATE,
+        ),
+        ServiceMixinScenario(
+            name="context_correlation_id",
+            scenario_type=ServiceMixinScenarioType.CONTEXT_CORRELATION,
+        ),
+        ServiceMixinScenario(
+            name="logging_with_context",
+            scenario_type=ServiceMixinScenarioType.LOGGING_WITH_CONTEXT,
+        ),
+        ServiceMixinScenario(
+            name="metrics_track", scenario_type=ServiceMixinScenarioType.METRICS_TRACK
+        ),
+        ServiceMixinScenario(
+            name="service_init_service",
+            scenario_type=ServiceMixinScenarioType.SERVICE_INIT,
+            needs_init=True,
+        ),
+        ServiceMixinScenario(
+            name="service_enrich_context",
+            scenario_type=ServiceMixinScenarioType.SERVICE_ENRICH,
+            needs_init=True,
+        ),
     ]
 
     MODEL_CONVERSION_SCENARIOS: ClassVar[list[ModelConversionScenario]] = [
-        ModelConversionScenario(name="to_dict_with_basemodel", scenario_type=ModelConversionScenarioType.WITH_BASEMODEL, input_value=None, expected_output=m.ConfigMap(root={"name": "test", "value": 42})),
-        ModelConversionScenario(name="to_dict_with_dict", scenario_type=ModelConversionScenarioType.WITH_DICT, input_value={"key": "value", "number": 123}, expected_output=m.ConfigMap(root={"key": "value", "number": 123})),
-        ModelConversionScenario(name="to_dict_with_none", scenario_type=ModelConversionScenarioType.WITH_NONE, input_value=None, expected_output=m.ConfigMap(root={})),
+        ModelConversionScenario(
+            name="to_dict_with_basemodel",
+            scenario_type=ModelConversionScenarioType.WITH_BASEMODEL,
+            input_value=None,
+            expected_output=m.ConfigMap(root={"name": "test", "value": 42}),
+        ),
+        ModelConversionScenario(
+            name="to_dict_with_dict",
+            scenario_type=ModelConversionScenarioType.WITH_DICT,
+            input_value={"key": "value", "number": 123},
+            expected_output=m.ConfigMap(root={"key": "value", "number": 123}),
+        ),
+        ModelConversionScenario(
+            name="to_dict_with_none",
+            scenario_type=ModelConversionScenarioType.WITH_NONE,
+            input_value=None,
+            expected_output=m.ConfigMap(root={}),
+        ),
     ]
 
     RESULT_HANDLING_SCENARIOS: ClassVar[list[ResultHandlingScenario]] = [
-        ResultHandlingScenario(name="ensure_result_raw_value", scenario_type=ResultHandlingScenarioType.RAW_VALUE, input_value=42),
-        ResultHandlingScenario(name="ensure_result_existing_result", scenario_type=ResultHandlingScenarioType.EXISTING_RESULT, input_value=None),
-        ResultHandlingScenario(name="ensure_result_type_preservation", scenario_type=ResultHandlingScenarioType.TYPE_PRESERVATION, input_value=None),
+        ResultHandlingScenario(
+            name="ensure_result_raw_value",
+            scenario_type=ResultHandlingScenarioType.RAW_VALUE,
+            input_value=42,
+        ),
+        ResultHandlingScenario(
+            name="ensure_result_existing_result",
+            scenario_type=ResultHandlingScenarioType.EXISTING_RESULT,
+            input_value=None,
+        ),
+        ResultHandlingScenario(
+            name="ensure_result_type_preservation",
+            scenario_type=ResultHandlingScenarioType.TYPE_PRESERVATION,
+            input_value=None,
+        ),
     ]
 
 

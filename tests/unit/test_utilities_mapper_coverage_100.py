@@ -16,27 +16,9 @@ import operator
 from typing import Any, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import m, t, u
 from tests.test_utils import assertion_helpers
-
-
-class SimpleObj(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    """Simple test object."""
-
-    name: str
-    value: int
-
-
-class ComplexModel(BaseModel):
-    """Complex test model."""
-
-    id: int
-    data: dict[str, t.ContainerValue]
-    items: list[str]
 
 
 class TestuMapperExtract:
@@ -362,10 +344,6 @@ class TestuMapperAdvanced:
 
     def test_model_dump_extraction(self) -> None:
         """Test extraction via model_dump."""
-
-        class Dumpable(BaseModel):
-            a: int = 1
-
         obj = Dumpable()
         assert u.Mapper.extract(cast("Any", obj), "a").value == 1
         assert u.Mapper.extract(cast("Any", obj), "b", default=2).value == 2

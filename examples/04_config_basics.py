@@ -26,71 +26,14 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import override
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import TypeAdapter, ValidationError
 
-from flext_core import FlextConstants, FlextResult, FlextService, FlextSettings, c, m, t
+from flext_core import FlextConstants, FlextResult, FlextService, c, m, t
+
+from .models import FlextCoreExampleModels
 
 _CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.ContainerValue])
-
-
-class AppConfig(FlextSettings):
-    """Application configuration with advanced Pydantic 2 features.
-
-    Uses Python 3.13+ patterns: PEP 695 type aliases, StrEnum validation,
-    and type-safe configuration management.
-    """
-
-    database_url: str = Field(
-        default=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
-        description="Database connection URL",
-    )
-    db_pool_size: int = Field(
-        default=10,
-        ge=1,
-        le=FlextConstants.Performance.MAX_DB_POOL_SIZE,
-        description="Database connection pool size",
-    )
-    api_timeout: int = Field(
-        default=30,
-    )
-    api_host: str = Field(
-        default=c.Platform.DEFAULT_HOST,
-        min_length=1,
-        max_length=FlextConstants.Network.MAX_HOSTNAME_LENGTH,
-        description="API server hostname",
-    )
-    api_port: t.Validation.PortNumber = Field(
-        default=8080,
-        description="API server port number",
-    )
-    debug: bool = Field(
-        default=False,
-        description="Enable debug mode",
-    )
-    max_workers: int = Field(
-        default=4,
-        description="Maximum number of worker threads",
-    )
-    cache_enabled: bool = Field(
-        default=True,
-        description="Enable caching",
-    )
-    cache_ttl: int = Field(
-        default=3600,
-        ge=0,
-        le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
-        description="Cache time-to-live in seconds",
-    )
-    worker_timeout: int = Field(
-        default=60,
-        description="Worker operation timeout",
-    )
-    retry_attempts: int = Field(
-        default=3,
-        ge=0,
-        le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-        description="Number of retry attempts",
-    )
+AppConfig = FlextCoreExampleModels.ExConfig.AppConfig
 
 
 class ConfigManagementService(FlextService[m.ConfigMap]):
@@ -365,7 +308,7 @@ def main() -> FlextResult[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        def _sequence_len(x: object) -> int:
+        def _sequence_len(x: t.ContainerValue) -> int:
             try:
                 return len(_CONTAINER_LIST_ADAPTER.validate_python(x))
             except ValidationError:

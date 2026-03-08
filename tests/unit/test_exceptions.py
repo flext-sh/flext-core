@@ -26,7 +26,6 @@ from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextConstants, FlextRuntime, c, e, m, t
 from flext_tests import u
@@ -66,87 +65,274 @@ class ExceptionTypeScenarioType(StrEnum):
     OPERATION = "operation"
 
 
-class ExceptionScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Exception test scenario definition."""
-
-    name: str
-    scenario_type: ExceptionScenarioType
-    exception_type: type[e.BaseError] | None = None
-    should_raise: bool = False
-    error_factory_type: str | None = None
-
-
-class ExceptionTypeScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Exception type instantiation test scenario."""
-
-    name: str
-    scenario_type: ExceptionTypeScenarioType
-    exception_class: type[e.BaseError]
-
-
 class ExceptionScenarios:
     """Centralized exception test scenarios using FlextConstants."""
 
     BASE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
-        ExceptionScenario(name="base_error_init", scenario_type=ExceptionScenarioType.BASE_ERROR, exception_type=e.BaseError),
-        ExceptionScenario(name="base_error_with_code", scenario_type=ExceptionScenarioType.WITH_CODE, exception_type=e.BaseError),
-        ExceptionScenario(name="base_error_with_correlation", scenario_type=ExceptionScenarioType.WITH_CORRELATION, exception_type=e.BaseError),
-        ExceptionScenario(name="base_error_with_metadata", scenario_type=ExceptionScenarioType.WITH_METADATA, exception_type=e.BaseError),
-        ExceptionScenario(name="base_error_with_kwargs", scenario_type=ExceptionScenarioType.WITH_EXTRA_KWARGS, exception_type=e.BaseError),
-        ExceptionScenario(name="base_error_to_dict", scenario_type=ExceptionScenarioType.TO_DICT, exception_type=e.BaseError),
-        ExceptionScenario(name="base_error_str_repr", scenario_type=ExceptionScenarioType.STRING_REPRESENTATION, exception_type=e.BaseError),
+        ExceptionScenario(
+            name="base_error_init",
+            scenario_type=ExceptionScenarioType.BASE_ERROR,
+            exception_type=e.BaseError,
+        ),
+        ExceptionScenario(
+            name="base_error_with_code",
+            scenario_type=ExceptionScenarioType.WITH_CODE,
+            exception_type=e.BaseError,
+        ),
+        ExceptionScenario(
+            name="base_error_with_correlation",
+            scenario_type=ExceptionScenarioType.WITH_CORRELATION,
+            exception_type=e.BaseError,
+        ),
+        ExceptionScenario(
+            name="base_error_with_metadata",
+            scenario_type=ExceptionScenarioType.WITH_METADATA,
+            exception_type=e.BaseError,
+        ),
+        ExceptionScenario(
+            name="base_error_with_kwargs",
+            scenario_type=ExceptionScenarioType.WITH_EXTRA_KWARGS,
+            exception_type=e.BaseError,
+        ),
+        ExceptionScenario(
+            name="base_error_to_dict",
+            scenario_type=ExceptionScenarioType.TO_DICT,
+            exception_type=e.BaseError,
+        ),
+        ExceptionScenario(
+            name="base_error_str_repr",
+            scenario_type=ExceptionScenarioType.STRING_REPRESENTATION,
+            exception_type=e.BaseError,
+        ),
     ]
 
     SPECIFIC_TYPE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
-        ExceptionScenario(name="validation_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.ValidationError),
-        ExceptionScenario(name="configuration_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.ConfigurationError),
-        ExceptionScenario(name="connection_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.ConnectionError),
-        ExceptionScenario(name="timeout_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.TimeoutError),
-        ExceptionScenario(name="authentication_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.AuthenticationError),
-        ExceptionScenario(name="authorization_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.AuthorizationError),
-        ExceptionScenario(name="not_found_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.NotFoundError),
-        ExceptionScenario(name="conflict_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.ConflictError),
-        ExceptionScenario(name="rate_limit_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.RateLimitError),
-        ExceptionScenario(name="circuit_breaker_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.CircuitBreakerError),
-        ExceptionScenario(name="type_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.TypeError),
-        ExceptionScenario(name="operation_error", scenario_type=ExceptionScenarioType.SPECIFIC_TYPE, exception_type=e.OperationError),
+        ExceptionScenario(
+            name="validation_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.ValidationError,
+        ),
+        ExceptionScenario(
+            name="configuration_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.ConfigurationError,
+        ),
+        ExceptionScenario(
+            name="connection_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.ConnectionError,
+        ),
+        ExceptionScenario(
+            name="timeout_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.TimeoutError,
+        ),
+        ExceptionScenario(
+            name="authentication_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.AuthenticationError,
+        ),
+        ExceptionScenario(
+            name="authorization_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.AuthorizationError,
+        ),
+        ExceptionScenario(
+            name="not_found_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.NotFoundError,
+        ),
+        ExceptionScenario(
+            name="conflict_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.ConflictError,
+        ),
+        ExceptionScenario(
+            name="rate_limit_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.RateLimitError,
+        ),
+        ExceptionScenario(
+            name="circuit_breaker_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.CircuitBreakerError,
+        ),
+        ExceptionScenario(
+            name="type_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.TypeError,
+        ),
+        ExceptionScenario(
+            name="operation_error",
+            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+            exception_type=e.OperationError,
+        ),
     ]
 
     FACTORY_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
-        ExceptionScenario(name="create_error_validation", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="ValidationError"),
-        ExceptionScenario(name="create_error_configuration", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="ConfigurationError"),
-        ExceptionScenario(name="create_error_connection", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="ConnectionError"),
-        ExceptionScenario(name="create_error_timeout", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="TimeoutError"),
-        ExceptionScenario(name="create_error_authentication", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="AuthenticationError"),
-        ExceptionScenario(name="create_error_authorization", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="AuthorizationError"),
-        ExceptionScenario(name="create_error_not_found", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="NotFoundError"),
-        ExceptionScenario(name="create_error_conflict", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="ConflictError"),
-        ExceptionScenario(name="create_error_rate_limit", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="RateLimitError"),
-        ExceptionScenario(name="create_error_circuit_breaker", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="CircuitBreakerError"),
-        ExceptionScenario(name="create_error_type", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="TypeError"),
-        ExceptionScenario(name="create_error_operation", scenario_type=ExceptionScenarioType.FACTORY_METHOD, exception_type=None, should_raise=False, error_factory_type="OperationError"),
-        ExceptionScenario(name="create_error_invalid", scenario_type=ExceptionScenarioType.FACTORY_INVALID),
-        ExceptionScenario(name="exception_raising", scenario_type=ExceptionScenarioType.EXCEPTION_RAISING, exception_type=e.ValidationError, should_raise=True),
-        ExceptionScenario(name="exception_chaining", scenario_type=ExceptionScenarioType.EXCEPTION_CHAINING, exception_type=e.OperationError, should_raise=True),
+        ExceptionScenario(
+            name="create_error_validation",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="ValidationError",
+        ),
+        ExceptionScenario(
+            name="create_error_configuration",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="ConfigurationError",
+        ),
+        ExceptionScenario(
+            name="create_error_connection",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="ConnectionError",
+        ),
+        ExceptionScenario(
+            name="create_error_timeout",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="TimeoutError",
+        ),
+        ExceptionScenario(
+            name="create_error_authentication",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="AuthenticationError",
+        ),
+        ExceptionScenario(
+            name="create_error_authorization",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="AuthorizationError",
+        ),
+        ExceptionScenario(
+            name="create_error_not_found",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="NotFoundError",
+        ),
+        ExceptionScenario(
+            name="create_error_conflict",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="ConflictError",
+        ),
+        ExceptionScenario(
+            name="create_error_rate_limit",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="RateLimitError",
+        ),
+        ExceptionScenario(
+            name="create_error_circuit_breaker",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="CircuitBreakerError",
+        ),
+        ExceptionScenario(
+            name="create_error_type",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="TypeError",
+        ),
+        ExceptionScenario(
+            name="create_error_operation",
+            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+            exception_type=None,
+            should_raise=False,
+            error_factory_type="OperationError",
+        ),
+        ExceptionScenario(
+            name="create_error_invalid",
+            scenario_type=ExceptionScenarioType.FACTORY_INVALID,
+        ),
+        ExceptionScenario(
+            name="exception_raising",
+            scenario_type=ExceptionScenarioType.EXCEPTION_RAISING,
+            exception_type=e.ValidationError,
+            should_raise=True,
+        ),
+        ExceptionScenario(
+            name="exception_chaining",
+            scenario_type=ExceptionScenarioType.EXCEPTION_CHAINING,
+            exception_type=e.OperationError,
+            should_raise=True,
+        ),
     ]
 
     TYPE_SCENARIOS: ClassVar[list[ExceptionTypeScenario]] = [
-        ExceptionTypeScenario(name="instantiate_validation", scenario_type=ExceptionTypeScenarioType.VALIDATION, exception_class=e.ValidationError),
-        ExceptionTypeScenario(name="instantiate_configuration", scenario_type=ExceptionTypeScenarioType.CONFIGURATION, exception_class=e.ConfigurationError),
-        ExceptionTypeScenario(name="instantiate_connection", scenario_type=ExceptionTypeScenarioType.CONNECTION, exception_class=e.ConnectionError),
-        ExceptionTypeScenario(name="instantiate_timeout", scenario_type=ExceptionTypeScenarioType.TIMEOUT, exception_class=e.TimeoutError),
-        ExceptionTypeScenario(name="instantiate_authentication", scenario_type=ExceptionTypeScenarioType.AUTHENTICATION, exception_class=e.AuthenticationError),
-        ExceptionTypeScenario(name="instantiate_authorization", scenario_type=ExceptionTypeScenarioType.AUTHORIZATION, exception_class=e.AuthorizationError),
-        ExceptionTypeScenario(name="instantiate_not_found", scenario_type=ExceptionTypeScenarioType.NOT_FOUND, exception_class=e.NotFoundError),
-        ExceptionTypeScenario(name="instantiate_conflict", scenario_type=ExceptionTypeScenarioType.CONFLICT, exception_class=e.ConflictError),
-        ExceptionTypeScenario(name="instantiate_rate_limit", scenario_type=ExceptionTypeScenarioType.RATE_LIMIT, exception_class=e.RateLimitError),
-        ExceptionTypeScenario(name="instantiate_circuit_breaker", scenario_type=ExceptionTypeScenarioType.CIRCUIT_BREAKER, exception_class=e.CircuitBreakerError),
-        ExceptionTypeScenario(name="instantiate_type_error", scenario_type=ExceptionTypeScenarioType.TYPE_ERROR, exception_class=e.TypeError),
-        ExceptionTypeScenario(name="instantiate_operation", scenario_type=ExceptionTypeScenarioType.OPERATION, exception_class=e.OperationError),
+        ExceptionTypeScenario(
+            name="instantiate_validation",
+            scenario_type=ExceptionTypeScenarioType.VALIDATION,
+            exception_class=e.ValidationError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_configuration",
+            scenario_type=ExceptionTypeScenarioType.CONFIGURATION,
+            exception_class=e.ConfigurationError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_connection",
+            scenario_type=ExceptionTypeScenarioType.CONNECTION,
+            exception_class=e.ConnectionError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_timeout",
+            scenario_type=ExceptionTypeScenarioType.TIMEOUT,
+            exception_class=e.TimeoutError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_authentication",
+            scenario_type=ExceptionTypeScenarioType.AUTHENTICATION,
+            exception_class=e.AuthenticationError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_authorization",
+            scenario_type=ExceptionTypeScenarioType.AUTHORIZATION,
+            exception_class=e.AuthorizationError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_not_found",
+            scenario_type=ExceptionTypeScenarioType.NOT_FOUND,
+            exception_class=e.NotFoundError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_conflict",
+            scenario_type=ExceptionTypeScenarioType.CONFLICT,
+            exception_class=e.ConflictError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_rate_limit",
+            scenario_type=ExceptionTypeScenarioType.RATE_LIMIT,
+            exception_class=e.RateLimitError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_circuit_breaker",
+            scenario_type=ExceptionTypeScenarioType.CIRCUIT_BREAKER,
+            exception_class=e.CircuitBreakerError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_type_error",
+            scenario_type=ExceptionTypeScenarioType.TYPE_ERROR,
+            exception_class=e.TypeError,
+        ),
+        ExceptionTypeScenario(
+            name="instantiate_operation",
+            scenario_type=ExceptionTypeScenarioType.OPERATION,
+            exception_class=e.OperationError,
+        ),
     ]
 
 

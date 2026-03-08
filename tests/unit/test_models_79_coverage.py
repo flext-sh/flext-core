@@ -10,54 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import override
-
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
 from tests.test_utils import assertion_helpers
 
-
 # Define Query and Command classes using dataclasses to avoid Pydantic circular dependencies
-class CreateUserCommand(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    user_id: str
-    name: str
-    email: str
-
-
-class FindUserQuery(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    user_id: str
-
-
-class OptionalFieldCommand(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    required_field: str
-    optional_field: str | None = None
-
-
-class PagedQuery(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    page: int
-    page_size: int
-
-
-class CreateUserCmd(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    user_id: str
-    name: str
-
-
-class GetUserQuery(BaseModel):
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    user_id: str
 
 
 # Dataclasses don't need model_rebuild
@@ -68,14 +26,6 @@ class TestFlextModelsEntity:
 
     def test_entity_creation_basic(self) -> None:
         """Test basic entity creation."""
-
-        class User(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            unique_id: str
-            name: str
-            email: str
-
         user = User(unique_id="user-1", name="Alice", email="alice@example.com")
         assert user.unique_id == "user-1"
         assert user.name == "Alice"
@@ -83,19 +33,6 @@ class TestFlextModelsEntity:
 
     def test_entity_equality(self) -> None:
         """Test entity equality based on ID."""
-
-        class User(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            unique_id: str
-            name: str
-
-            @override
-            def __eq__(self, other: object) -> bool:
-                if not isinstance(other, User):
-                    return NotImplemented
-                return self.unique_id == other.unique_id
-
         user1 = User(unique_id="user-1", name="Alice")
         user2 = User(unique_id="user-1", name="Bob")  # Different name, same ID
         user3 = User(unique_id="user-2", name="Alice")
@@ -105,10 +42,6 @@ class TestFlextModelsEntity:
 
     def test_entity_version(self) -> None:
         """Test entity versioning."""
-
-        class Order(m.Entity):
-            total: Decimal
-
         order = Order(unique_id="order-1", total=Decimal("99.99"))
         initial_version = order.version
         assert initial_version >= 1  # VersionableMixin default is 1
@@ -119,12 +52,6 @@ class TestFlextModelsValue:
 
     def test_value_object_creation(self) -> None:
         """Test value object creation."""
-
-        class Email(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            address: str
-
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
         email3 = Email(address="other@example.com")
@@ -134,13 +61,6 @@ class TestFlextModelsValue:
 
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
-
-        class Price(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            amount: Decimal
-            currency: str
-
         price = Price(amount=Decimal("10.00"), currency="USD")
 
         # Value objects are immutable - Pydantic frozen models prevent assignment
@@ -154,14 +74,6 @@ class TestFlextModelsAggregateRoot:
 
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
-
-        class Account(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            unique_id: str
-            owner_name: str
-            balance: Decimal
-
         account = Account(
             unique_id="acc-1",
             owner_name="Alice",
@@ -173,10 +85,6 @@ class TestFlextModelsAggregateRoot:
 
     def test_aggregate_root_domain_events(self) -> None:
         """Test aggregate root domain event handling."""
-
-        class BankAccount(m.AggregateRoot):
-            balance: Decimal
-
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
 
         # Add domain event
@@ -188,10 +96,6 @@ class TestFlextModelsAggregateRoot:
 
     def test_aggregate_root_domain_event_validation(self) -> None:
         """Test domain event validation."""
-
-        class Order(m.AggregateRoot):
-            total: Decimal
-
         order = Order(unique_id="order-1", total=Decimal("99.99"))
 
         # Add event with valid empty dict
@@ -200,10 +104,6 @@ class TestFlextModelsAggregateRoot:
 
     def test_aggregate_root_uncommitted_events(self) -> None:
         """Test uncommitted events tracking."""
-
-        class Order(m.AggregateRoot):
-            status: str = "pending"
-
         order = Order(unique_id="order-1", status="pending")
 
         # Add event
@@ -276,38 +176,12 @@ class TestFlextModelsEdgeCases:
 
     def test_entity_with_complex_types(self) -> None:
         """Test entity with complex nested types."""
-
-        class Address(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            street: str
-            city: str
-
-        class Person(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            unique_id: str
-            name: str
-            address: Address
-
         addr = Address(street="123 Main", city="Springfield")
         person = Person(unique_id="p-1", name="Homer", address=addr)
         assert person.address.city == "Springfield"
 
     def test_aggregate_root_with_nested_entities(self) -> None:
         """Test aggregate root containing multiple entities."""
-
-        class Item(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            quantity: int
-
-        class ShoppingCart(BaseModel):
-
-            model_config = ConfigDict(arbitrary_types_allowed=True)
-            unique_id: str
-            customer_id: str
-
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
         # Aggregate roots typically contain collections of value objects
         assert cart.customer_id == "cust-1"
@@ -342,10 +216,6 @@ class TestFlextModelsIntegration:
 
     def test_entity_command_query_flow(self) -> None:
         """Test flow: Command -> Entity -> Event -> Query."""
-
-        class User(m.Entity):
-            name: str
-
         # Create command
         cmd = CreateUserCmd(user_id="user-1", name="Alice")
         assert cmd.user_id == "user-1"
@@ -360,11 +230,6 @@ class TestFlextModelsIntegration:
 
     def test_aggregate_full_lifecycle(self) -> None:
         """Test complete aggregate lifecycle."""
-
-        class Order(m.AggregateRoot):
-            items_count: int = 0
-            status: str = "new"
-
         # Create aggregate
         order = Order(unique_id="order-1", status="new", items_count=0)
         assert order.status == "new"

@@ -23,12 +23,10 @@ from __future__ import annotations
 
 import json
 import threading
-from collections.abc import Callable
 from enum import StrEnum
-from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import ValidationError
 
 from flext_core import (
     c,
@@ -52,45 +50,6 @@ class ModelType(StrEnum):
     PAYLOAD = "payload"
 
 
-class ModelCreationScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Scenario for testing model creation."""
-
-    model_type: ModelType
-    field_data: dict[str, t.ContainerValue]
-    expected_checks: list[str]
-    description: str = ""
-
-
-class SampleAggregate(m.AggregateRoot):
-    """Sample aggregate root for testing."""
-
-    name: str
-    status: str = "active"
-
-    def change_status(self, new_status: str) -> None:
-        """Change status and add domain event."""
-        self.status = new_status
-        result = self.add_domain_event(
-            "status_changed",
-            m.ConfigMap(root={"old_status": "active", "new_status": new_status}),
-        )
-        if result.is_failure:
-            error_msg = f"Failed to add domain event: {result.error}"
-            raise ValueError(error_msg)
-
-
-class EventAggregate(m.AggregateRoot):
-    """Test aggregate for domain events."""
-
-    name: str
-
-    def trigger_event(self) -> None:
-        """Trigger a test event."""
-        _ = self.add_domain_event("test_event", m.ConfigMap(root={"data": "test"}))
-
-
 class TestFlextModels:
     """Test suite for FlextModels using FlextTestsUtilities and c."""
 
@@ -102,19 +61,6 @@ class TestFlextModels:
 
     def test_models_entity_creation(self) -> None:
         """Test entity creation and validation."""
-
-        class TestEntity(m.Entity):
-            name: str
-            email: str
-
-            @field_validator("email")
-            @classmethod
-            def validate_email(cls, v: str) -> str:
-                if "@" not in v:
-                    error_msg = "Invalid email"
-                    raise ValueError(error_msg)
-                return v
-
         entity = TestEntity(name="Test User", email="test@example.com")
         tm.that(entity.name, eq="Test User", msg="Entity name must match input")
         tm.that(
@@ -148,11 +94,6 @@ class TestFlextModels:
 
     def test_models_value_object_creation(self) -> None:
         """Test value object creation and immutability."""
-
-        class TestValue(m.Value):
-            data: str
-            count: int
-
         value = TestValue(data="test", count=42)
         tm.that(value.data, eq="test", msg="Value data must match input")
         tm.that(value.count, eq=42, msg="Value count must match input")
@@ -197,11 +138,6 @@ class TestFlextModels:
 
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
-
-        class TestCommand(m.Command):
-            command_type: str = "test_command"
-            data: str
-
         command = TestCommand.model_validate({"data": "test_data"})
         tm.that(
             command.command_type,
@@ -256,10 +192,6 @@ class TestFlextModels:
 
     def test_models_version_management(self) -> None:
         """Test version management in entities."""
-
-        class VersionedEntity(m.Entity):
-            name: str
-
         entity = VersionedEntity(name="Test")
         initial_version = entity.version
         tm.that(initial_version, gt=0, msg="Initial version must be positive")
@@ -277,10 +209,6 @@ class TestFlextModels:
 
     def test_models_timestamped_functionality(self) -> None:
         """Test timestamped functionality."""
-
-        class TimestampedEntity(m.Entity):
-            name: str
-
         entity = TimestampedEntity(name="Test")
         initial_created = entity.created_at
         tm.that(
@@ -305,27 +233,6 @@ class TestFlextModels:
 
     def test_models_validation_patterns(self) -> None:
         """Test validation patterns."""
-
-        class ValidatedEntity(m.Entity):
-            name: str
-            email: str
-
-            @field_validator("name")
-            @classmethod
-            def validate_name(cls, v: str) -> str:
-                if not v:
-                    error_msg = "Name is required"
-                    raise ValueError(error_msg)
-                return v
-
-            @field_validator("email")
-            @classmethod
-            def validate_email(cls, v: str) -> str:
-                if "@" not in v:
-                    error_msg = "Invalid email"
-                    raise ValueError(error_msg)
-                return v
-
         entity = ValidatedEntity(name="Test", email="test@example.com")
         tm.that(entity.name, eq="Test", msg="Validated entity name must match input")
         tm.that(
@@ -341,13 +248,6 @@ class TestFlextModels:
 
     def test_models_thread_safety(self) -> None:
         """Test thread safety of models."""
-
-        class ThreadSafeEntity(m.Entity):
-            counter: int = 0
-
-            def increment(self) -> None:
-                self.counter += 1
-
         entity = ThreadSafeEntity()
 
         def worker() -> None:
@@ -398,10 +298,6 @@ class TestFlextModels:
 
     def test_entity_equality_and_hash(self) -> None:
         """Test Entity equality and hash based on identity."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity1 = TestEntity(name="test", unique_id="123")
         entity2 = TestEntity(name="test", unique_id="123")
         entity3 = TestEntity(name="test", unique_id="456")
@@ -439,10 +335,6 @@ class TestFlextModels:
 
     def test_entity_domain_events(self) -> None:
         """Test domain event functionality in Entity."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity = TestEntity(name="test")
         tm.that(
             len(entity.domain_events),
@@ -484,10 +376,6 @@ class TestFlextModels:
 
     def test_entity_domain_events_validation(self) -> None:
         """Test domain event validation."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity = TestEntity(name="test")
         result = entity.add_domain_event("", m.ConfigMap(root={"data": "value"}))
         u.Tests.Result.assert_failure(result)
@@ -512,20 +400,12 @@ class TestFlextModels:
 
     def test_entity_initial_version(self) -> None:
         """Test Entity initial version state."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity = TestEntity(name="test")
         # is_initial_version was removed during infra migration
         assert entity.version == 1
 
     def test_timestampable_mixin_serialization(self) -> None:
         """Test timestamp serialization in JSON output."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity = TestEntity(name="test")
         json_data = entity.model_dump_json()
         assert '"created_at"' in json_data
@@ -535,10 +415,6 @@ class TestFlextModels:
 
     def test_timestampable_mixin_update_timestamp(self) -> None:
         """Test update_timestamp method."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity = TestEntity(name="test")
         original_updated = entity.updated_at
         entity.update_timestamp()
@@ -547,10 +423,6 @@ class TestFlextModels:
 
     def test_versionable_mixin(self) -> None:
         """Test VersionableMixin functionality."""
-
-        class TestEntity(m.Entity):
-            name: str
-
         entity = TestEntity(name="test")
         assert entity.version == 1
         entity.increment_version()
@@ -560,10 +432,6 @@ class TestFlextModels:
 
     def test_aggregate_root_inheritance(self) -> None:
         """Test AggregateRoot inherits from Entity properly."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
         aggregate = TestAggregate(name="test")
         assert all(
             hasattr(aggregate, attr) for attr in ["unique_id", "version", "created_at"]
@@ -579,31 +447,17 @@ class TestFlextModels:
         def passing_invariant() -> bool:
             return True
 
-        class TestAggregate(m.AggregateRoot):
-            name: str
-            value: int
-            _invariants: ClassVar[list[Callable[[], bool]]] = [passing_invariant]
-
         aggregate = TestAggregate(name="test", value=10)
         aggregate.check_invariants()
 
         def failing_invariant() -> bool:
             return False
 
-        class FailingAggregate(m.AggregateRoot):
-            name: str
-            _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
-
         with pytest.raises(ValidationError, match="Invariant violated"):
             _ = FailingAggregate(name="test")
 
     def test_value_object_immutability(self) -> None:
         """Test Value object immutability and equality."""
-
-        class TestValue(m.Value):
-            name: str
-            value: int
-
         value1 = TestValue(name="test", value=42)
         value2 = TestValue(name="test", value=42)
         value3 = TestValue(name="other", value=42)
@@ -619,11 +473,6 @@ class TestFlextModels:
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
-
-        class TestCommand(m.Command):
-            action: str
-            target: str
-
         command = TestCommand.model_validate({"action": "create", "target": "user"})
         assert all(hasattr(command, attr) for attr in ["command_id", "command_type"])
         assert command.command_type == "generic_command"
@@ -657,10 +506,6 @@ class TestFlextModels:
 
     def test_aggregate_root_mark_events_as_committed(self) -> None:
         """Test mark_events_as_committed method."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
         aggregate = TestAggregate(name="test")
         _ = aggregate.add_domain_event("event1", m.ConfigMap(root={"data": "value1"}))
         _ = aggregate.add_domain_event("event2", m.ConfigMap(root={"data": "value2"}))
@@ -673,10 +518,6 @@ class TestFlextModels:
 
     def test_aggregate_root_mark_events_empty(self) -> None:
         """Test mark_events_as_committed with no events."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
         aggregate = TestAggregate(name="test")
         result = aggregate.mark_events_as_committed()
         u.Tests.Result.assert_success(result)
@@ -685,10 +526,6 @@ class TestFlextModels:
 
     def test_aggregate_root_bulk_domain_events(self) -> None:
         """Test add_domain_events_bulk method."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
         aggregate = TestAggregate(name="test")
         # Convert to proper type: Sequence[tuple[str, EventDataMapping | None]]
         events = [
@@ -705,10 +542,6 @@ class TestFlextModels:
 
     def test_aggregate_root_bulk_domain_events_validation(self) -> None:
         """Test add_domain_events_bulk validation."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_events_bulk([])
         u.Tests.Result.assert_success(result)
@@ -723,10 +556,6 @@ class TestFlextModels:
 
     def test_aggregate_root_bulk_domain_events_limit(self) -> None:
         """Test add_domain_events_bulk respects max events limit."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
         aggregate = TestAggregate(name="test")
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
         events = [
@@ -739,16 +568,6 @@ class TestFlextModels:
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
         """Test domain event handler execution."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-            handler_called: bool = False
-            handler_data: dict[str, t.ContainerValue] = Field(default_factory=dict)
-
-            def _apply_test_event(self, data: dict[str, t.ContainerValue]) -> None:
-                self.handler_called = True
-                self.handler_data = data
-
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_event(
             "user_action",
@@ -760,14 +579,6 @@ class TestFlextModels:
 
     def test_aggregate_root_domain_event_handler_error(self) -> None:
         """Test domain event handler error handling."""
-
-        class TestAggregate(m.AggregateRoot):
-            name: str
-
-            def _apply_failing_event(self, data: dict[str, t.ContainerValue]) -> None:
-                error_msg = "Handler failed"
-                raise ValueError(error_msg)
-
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_event(
             "failing_event",

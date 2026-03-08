@@ -89,13 +89,11 @@ def _rewrite_pep621(
     mode: str,
     internal_names: set[str],
 ) -> list[str]:
-    project_raw = doc[c.Infra.Toml.PROJECT] if c.Infra.Toml.PROJECT in doc else None
+    project_raw = doc.get(c.Infra.Toml.PROJECT, None)
     if not isinstance(project_raw, Mapping):
         return []
     deps_raw = (
-        project_raw[c.Infra.Toml.DEPENDENCIES]
-        if c.Infra.Toml.DEPENDENCIES in project_raw
-        else None
+        project_raw.get(c.Infra.Toml.DEPENDENCIES, None)
     )
     if not isinstance(deps_raw, list):
         return []
@@ -137,18 +135,16 @@ def _rewrite_pep621(
 
 
 def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
-    tool_raw = doc[c.Infra.Toml.TOOL] if c.Infra.Toml.TOOL in doc else None
+    tool_raw = doc.get(c.Infra.Toml.TOOL, None)
     if not isinstance(tool_raw, Mapping):
         return []
     poetry_raw = (
-        tool_raw[c.Infra.Toml.POETRY] if c.Infra.Toml.POETRY in tool_raw else None
+        tool_raw.get(c.Infra.Toml.POETRY, None)
     )
     if not isinstance(poetry_raw, Mapping):
         return []
     deps_raw = (
-        poetry_raw[c.Infra.Toml.DEPENDENCIES]
-        if c.Infra.Toml.DEPENDENCIES in poetry_raw
-        else None
+        poetry_raw.get(c.Infra.Toml.DEPENDENCIES, None)
     )
     if not isinstance(deps_raw, Mapping):
         return []
@@ -242,9 +238,7 @@ def main() -> int:
         if root_data_result.is_success:
             root_data = root_data_result.unwrap()
             root_project = (
-                root_data[c.Infra.Toml.PROJECT]
-                if c.Infra.Toml.PROJECT in root_data
-                else None
+                root_data.get(c.Infra.Toml.PROJECT, None)
             )
             if isinstance(root_project, Mapping):
                 root_project_map = _OBJECT_DICT_ADAPTER.validate_python(root_project)
@@ -299,9 +293,7 @@ def main() -> int:
             continue
         project_data = data_result.unwrap()
         project_obj = (
-            project_data[c.Infra.Toml.PROJECT]
-            if c.Infra.Toml.PROJECT in project_data
-            else None
+            project_data.get(c.Infra.Toml.PROJECT, None)
         )
         if not isinstance(project_obj, Mapping):
             continue
@@ -319,9 +311,7 @@ def main() -> int:
             continue
         project_data = data_result.unwrap()
         project_obj = (
-            project_data[c.Infra.Toml.PROJECT]
-            if c.Infra.Toml.PROJECT in project_data
-            else None
+            project_data.get(c.Infra.Toml.PROJECT, None)
         )
         if not isinstance(project_obj, Mapping):
             continue

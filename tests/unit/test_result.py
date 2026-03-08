@@ -24,7 +24,6 @@ from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import c, m, p, r
 from flext_tests import t, u
@@ -48,48 +47,116 @@ class ResultOperationType(StrEnum):
     RAILWAY_COMPOSITION = "railway_composition"
 
 
-class ResultScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Generic result scenario for r tests."""
-
-    name: str
-    operation_type: ResultOperationType
-    value: t.ContainerValue
-    is_success_expected: bool = True
-    expected_result: t.ContainerValue | None = None
-
-
 class ResultScenarios:
     """Centralized result test scenarios using c."""
 
     STRING_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario(name="creation_success_string", operation_type=ResultOperationType.CREATION_SUCCESS, value="success"),
-        ResultScenario(name="creation_failure_message", operation_type=ResultOperationType.CREATION_FAILURE, value="error message", is_success_expected=False),
-        ResultScenario(name="unwrap_or_success", operation_type=ResultOperationType.UNWRAP_OR, value="value"),
-        ResultScenario(name="unwrap_or_failure", operation_type=ResultOperationType.UNWRAP_OR, value="error", is_success_expected=False),
-        ResultScenario(name="map_failure", operation_type=ResultOperationType.MAP, value="error", is_success_expected=False),
-        ResultScenario(name="flat_map_failure", operation_type=ResultOperationType.FLAT_MAP, value="error", is_success_expected=False),
-        ResultScenario(name="alt_success", operation_type=ResultOperationType.ALT, value="success"),
-        ResultScenario(name="alt_failure", operation_type=ResultOperationType.ALT, value="original_error", is_success_expected=False),
-        ResultScenario(name="lash_success", operation_type=ResultOperationType.LASH, value="success"),
-        ResultScenario(name="lash_failure", operation_type=ResultOperationType.LASH, value="error", is_success_expected=False),
-        ResultScenario(name="or_operator_success", operation_type=ResultOperationType.OR_OPERATOR, value="value"),
-        ResultScenario(name="or_operator_failure", operation_type=ResultOperationType.OR_OPERATOR, value="error", is_success_expected=False),
+        ResultScenario(
+            name="creation_success_string",
+            operation_type=ResultOperationType.CREATION_SUCCESS,
+            value="success",
+        ),
+        ResultScenario(
+            name="creation_failure_message",
+            operation_type=ResultOperationType.CREATION_FAILURE,
+            value="error message",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="unwrap_or_success",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="value",
+        ),
+        ResultScenario(
+            name="unwrap_or_failure",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="map_failure",
+            operation_type=ResultOperationType.MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="flat_map_failure",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="alt_success", operation_type=ResultOperationType.ALT, value="success"
+        ),
+        ResultScenario(
+            name="alt_failure",
+            operation_type=ResultOperationType.ALT,
+            value="original_error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="lash_success",
+            operation_type=ResultOperationType.LASH,
+            value="success",
+        ),
+        ResultScenario(
+            name="lash_failure",
+            operation_type=ResultOperationType.LASH,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="or_operator_success",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="value",
+        ),
+        ResultScenario(
+            name="or_operator_failure",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="error",
+            is_success_expected=False,
+        ),
     ]
 
     INT_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario(name="unwrap_success", operation_type=ResultOperationType.UNWRAP, value=42),
-        ResultScenario(name="map_success", operation_type=ResultOperationType.MAP, value=5),
-        ResultScenario(name="flat_map_success", operation_type=ResultOperationType.FLAT_MAP, value=5),
-        ResultScenario(name="filter_passes", operation_type=ResultOperationType.FILTER, value=10),
-        ResultScenario(name="filter_fails", operation_type=ResultOperationType.FILTER, value=3, is_success_expected=False),
-        ResultScenario(name="railway_composition", operation_type=ResultOperationType.RAILWAY_COMPOSITION, value=5),
+        ResultScenario(
+            name="unwrap_success", operation_type=ResultOperationType.UNWRAP, value=42
+        ),
+        ResultScenario(
+            name="map_success", operation_type=ResultOperationType.MAP, value=5
+        ),
+        ResultScenario(
+            name="flat_map_success",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="filter_passes", operation_type=ResultOperationType.FILTER, value=10
+        ),
+        ResultScenario(
+            name="filter_fails",
+            operation_type=ResultOperationType.FILTER,
+            value=3,
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="railway_composition",
+            operation_type=ResultOperationType.RAILWAY_COMPOSITION,
+            value=5,
+        ),
     ]
 
     BOOL_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario(name="bool_conversion_success", operation_type=ResultOperationType.BOOL_CONVERSION, value=True),
-        ResultScenario(name="bool_conversion_failure", operation_type=ResultOperationType.BOOL_CONVERSION, value=False),
+        ResultScenario(
+            name="bool_conversion_success",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=True,
+        ),
+        ResultScenario(
+            name="bool_conversion_failure",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=False,
+        ),
     ]
 
 

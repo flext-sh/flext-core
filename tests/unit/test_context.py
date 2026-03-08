@@ -27,21 +27,9 @@ import time
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextContainer, FlextContext, m, t
 from flext_tests import FlextTestsUtilities, t as tests_t, u
-
-
-class ContextOperationScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Test scenario for context operations."""
-
-    name: str
-    key: str
-    value: object
-    expected_success: bool = True
 
 
 class ContextScenarios:

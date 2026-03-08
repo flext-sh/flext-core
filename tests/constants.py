@@ -16,8 +16,6 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Final, Literal
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_core import c, m
 from flext_tests import FlextTestsConstants
 
@@ -377,79 +375,6 @@ class TestsFlextConstants(FlextTestsConstants):
 
     class Fixtures:
         """Test fixture dataclasses for flext-core tests."""
-
-        class Identifiers(BaseModel):
-            """Test identifiers and IDs."""
-
-            model_config = ConfigDict(frozen=True)
-
-            user_id: str = "test_user_123"
-            session_id: str = "test_session_123"
-            service_name: str = "test_service"
-            operation_id: str = "test_operation"
-            request_id: str = "test-request-456"
-            correlation_id: str = "test-corr-123"
-
-        class Names(BaseModel):
-            """Test module and component names."""
-
-            model_config = ConfigDict(frozen=True)
-
-            module_name: str = "test_module"
-            handler_name: str = "test_handler"
-            chain_name: str = "test_chain"
-            command_type: str = "test_command"
-            query_type: str = "test_query"
-            logger_name: str = "test_logger"
-            app_name: str = "test-app"
-            validation_app: str = "validation-test"
-            source_service: str = "test_service"
-
-        class ErrorData(BaseModel):
-            """Test error codes and messages."""
-
-            model_config = ConfigDict(frozen=True)
-
-            error_code: str = "TEST_ERROR_001"
-            validation_error: str = "test_error"
-            operation_error: str = "Op failed"
-            config_error: str = "Config failed"
-            timeout_error: str = "Operation timeout"
-
-        class Data(BaseModel):
-            """Test field names and data values."""
-
-            model_config = ConfigDict(frozen=True)
-
-            field_name: str = "test_field"
-            config_key: str = "test_key"
-            username: str = "test_user"
-            email: str = "test@example.com"
-            password: str = "test_pass"
-            string_value: str = "test_value"
-            input_data: str = "test_input"
-            request_data: str = "test_request"
-            result_data: str = "test_result"
-            message: str = "test_message"
-
-        class PatternData(BaseModel):
-            """Test patterns and formats."""
-
-            model_config = ConfigDict(frozen=True)
-
-            slug_input: str = "Test_String"
-            slug_expected: str = "test_string"
-            uuid_format: str = "550e8400-e29b-41d4-a716-446655440000"
-
-        class NumericValues(BaseModel):
-            """Test port and numeric values."""
-
-            model_config = ConfigDict(frozen=True)
-
-            port: int = 8080
-            timeout: int = 30
-            retry_count: int = 3
-            batch_size: int = 100
 
 
 # Short alias per FLEXT convention

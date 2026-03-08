@@ -25,7 +25,7 @@ from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextResult, m, p, t, u
 
@@ -48,18 +48,6 @@ class UtilityOperationType(StrEnum):
     CACHE_KEY = "cache_key"
     TEXT_CLEANING = "text_cleaning"
     TEXT_TRUNCATION = "text_truncation"
-
-
-class UtilityTestCase(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Test case for utility operations."""
-
-    operation: UtilityOperationType
-    input_data: t.ContainerValue | None = None
-    expected_type: type | None = None
-    should_succeed: bool = True
-    description: str = ""
 
 
 class UtilityScenarios:

@@ -32,30 +32,11 @@ from flext_core import (
     u,
 )
 
-# =====================================================================
-# DEMONSTRATION MODELS - Using m for type safety
-# =====================================================================
+from .models import em
 
-
-class User(m.Entity):
-    """User entity for demonstration."""
-
-    name: str
-    email: str
-
-
-class DemonstrationResult(m.Value):
-    """Result value object for demonstration metadata."""
-
-    demonstrations_completed: int
-    patterns_covered: tuple[str, ...]
-    completed_at: str
-
-
-class RunDemonstrationCommand(m.Command):
-    """Command to run demonstration."""
-
-    operation: str = "demonstration"
+User = em.Ex01.User
+DemonstrationResult = em.Ex01.DemonstrationResult
+RunDemonstrationCommand = em.Ex01.RunDemonstrationCommand
 
 
 # Handler removed due to dispatcher serialization issues

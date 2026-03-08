@@ -29,7 +29,6 @@ from typing import ClassVar, cast, override
 import pytest
 import structlog
 from dependency_injector import containers, providers
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextContainer,
@@ -92,19 +91,6 @@ class RuntimeOperationType(StrEnum):
     SETUP_SERVICE_INFRASTRUCTURE_FULL = "setup_service_infrastructure_full"
     SETUP_SERVICE_INFRASTRUCTURE_MINIMAL = "setup_service_infrastructure_minimal"
     SETUP_SERVICE_WITHOUT_CORRELATION = "setup_service_without_correlation"
-
-
-class RuntimeTestCase(BaseModel):
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-    """Runtime test case definition with parametrization data."""
-
-    name: str
-    operation: RuntimeOperationType
-    # Business Rule: test_input supports both values and types for comprehensive testing
-    # Uses t.ContainerValue | type | None to support generic aliases like list[str]
-    test_input: t.ContainerValue | type | None = None
-    expected_result: t.ContainerValue | tuple[t.ContainerValue, ...] | None = None
-    should_reset_config: bool = False
 
 
 class RuntimeScenarios:

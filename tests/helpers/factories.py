@@ -14,23 +14,12 @@ from enum import StrEnum
 from itertools import count
 from typing import ClassVar, override
 
-from pydantic import BaseModel, ConfigDict, Field
-
-from flext_core import FlextModels, FlextResult, FlextService, m, t
+from flext_core import FlextResult, FlextService, m, t
 from tests.constants import TestsFlextConstants
 
 # =========================================================================
 # Test Models
 # =========================================================================
-
-
-class User(FlextModels.Entity):
-    """Test user entity."""
-
-    user_id: str
-    name: str
-    email: str
-    is_active: bool = True
 
 
 class ServiceTestType(StrEnum):
@@ -39,19 +28,6 @@ class ServiceTestType(StrEnum):
     GET_USER = "get_user"
     VALIDATE = "validate"
     FAIL = "fail"
-
-
-class ServiceTestCase(BaseModel):
-    """Test case data container (not a test class)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    service_type: ServiceTestType
-    input_value: str
-    expected_success: bool = True
-    expected_error: str | None = None
-    extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
-    description: str = Field(default="", exclude=True)
 
 
 # =========================================================================

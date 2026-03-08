@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import c, m, r, s
+from flext_core import c, m, r, s, t
 
 
 class DatabaseService(s[m.ConfigMap]):
@@ -26,7 +26,7 @@ class DatabaseService(s[m.ConfigMap]):
     db_config: m.ConfigMap
 
     @override
-    def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
+    def execute(self, **_kwargs: t.ContainerValue) -> r[m.ConfigMap]:
         """Execute database operations.
 
         Returns:
@@ -49,7 +49,7 @@ class DatabaseService(s[m.ConfigMap]):
         return r[m.ConfigMap].ok(results)
 
     @override
-    def model_post_init(self, /, __context: object) -> None:
+    def model_post_init(self, /, __context: t.ContainerValue) -> None:
         """Post-initialization hook.
 
         Args:
@@ -94,7 +94,7 @@ class MigrationService(s[m.ConfigMap]):
         self._log_config_once(config, message="Migration configuration loaded")
 
     @override
-    def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
+    def execute(self, **_kwargs: t.ContainerValue) -> r[m.ConfigMap]:
         """Execute migration.
 
         Returns:

@@ -20,30 +20,8 @@ import math
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import t, u
-
-
-class TypeGuardScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Type guard test scenario."""
-
-    name: str
-    value: t.ContainerValue
-    expected_result: bool
-
-
-class NormalizeScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """Normalize to metadata value test scenario."""
-
-    name: str
-    value: t.ContainerValue
-    expected_type: type
-    expected_value: object | None = None
 
 
 class TypeGuardsScenarios:

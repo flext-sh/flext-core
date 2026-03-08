@@ -63,9 +63,6 @@ def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
     assert isinstance(instance, _MetaCreated)
     assert getattr(_MetaCreated, "__protocols__", ()) == (_NamedProtocol,)
 
-    class _NoProtocols(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
-        x: int = 1
-
     assert not hasattr(_NoProtocols, "get_protocols")
     assert getattr(_NoProtocols, "__protocols__", ()) == ()
 

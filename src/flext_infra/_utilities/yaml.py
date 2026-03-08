@@ -48,9 +48,7 @@ class FlextInfraUtilitiesYaml:
         if not isinstance(parsed, Mapping):
             msg = f"rules.yml must be a mapping: {path}"
             raise TypeError(msg)
-        normalized: dict[str, t.ContainerValue] = {}
-        for key, value in parsed.items():
-            normalized[key] = value
+        normalized: dict[str, t.ContainerValue] = dict(parsed.items())
         return normalized
 
     @staticmethod

@@ -24,8 +24,6 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import override
 
-from pydantic import Field
-
 from flext_core import (
     c,
     m,
@@ -48,12 +46,12 @@ class StatusEnum(StrEnum):
     INACTIVE = "inactive"
 
 
-class UserModel(m.ArbitraryTypesModel):
-    """User model for demonstration using m."""
+class UserModel(m.Value):
+    """User model for utility demonstrations."""
 
-    name: str = Field(min_length=1)
-    status: StatusEnum = StatusEnum.PENDING
-    age: int = Field(ge=0, le=150)
+    name: str
+    status: StatusEnum
+    age: int
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -141,7 +139,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
             source_dict = {str(k): v for k, v in source_value.items()}
             mapped_dict = u.transform_values(source_dict, str)
-            key_mapping_dict: dict[str, str] = {
+            key_mapping_dict: Mapping[str, str] = {
                 str(k): str(v) for k, v in mapping_value.items()
             }
             map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
@@ -157,7 +155,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
 
         # Build flags dict
         flags: list[str] = ["read", "write"]
-        flag_mapping: dict[str, str] = {
+        flag_mapping: Mapping[str, str] = {
             "read": "can_read",
             "write": "can_write",
         }
@@ -208,12 +206,14 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Model Utilities ===")
 
         # Create model from dict
-        user_data: dict[str, t.ContainerValue] = {
-            "name": "Alice",
-            "status": "active",
-            "age": 25,
-        }
-        model_result = u.load(UserModel, m.ConfigMap(root=user_data))
+        user_data = m.ConfigMap(
+            root={
+                "name": "Alice",
+                "status": "active",
+                "age": 25,
+            }
+        )
+        model_result = u.load(UserModel, user_data)
         if model_result.is_success:
             user = model_result.value
             print(f"✅ Model from dict: {user.name} ({user.status.value})")
@@ -246,7 +246,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Pagination ===")
 
         # Extract page params
-        query_params: dict[str, str] = {"page": "2", "page_size": "10"}
+        query_params: Mapping[str, str] = {"page": "2", "page_size": "10"}
         page_result = u.extract_page_params(
             query_params,
             default_page=1,

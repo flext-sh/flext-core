@@ -7,9 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Never, cast, override
+from typing import cast
 
-from pydantic import BaseModel
 from returns.io import IOResult, IOSuccess
 
 from flext_core import FlextRuntime, r, t
@@ -18,53 +17,6 @@ from flext_core import FlextRuntime, r, t
 class _ValidationLikeError(ValueError):
     def errors(self) -> list[dict[str, t.JsonValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
-
-
-class _ErrorsModel(BaseModel):
-    value: int
-
-    @classmethod
-    @override
-    def model_validate(
-        cls,
-        obj: object,
-        *,
-        strict: bool | None = None,
-        extra: str | None = None,
-        from_attributes: bool | None = None,
-        context: dict[str, object] | None = None,
-        by_alias: bool | None = None,
-        by_name: bool | None = None,
-    ) -> Never:
-        _ = strict, extra, from_attributes, context, by_alias, by_name
-        _ = obj
-        raise _ValidationLikeError
-
-
-class _PlainErrorModel(BaseModel):
-    value: int
-
-    @classmethod
-    @override
-    def model_validate(
-        cls,
-        obj: object,
-        *,
-        strict: bool | None = None,
-        extra: str | None = None,
-        from_attributes: bool | None = None,
-        context: dict[str, object] | None = None,
-        by_alias: bool | None = None,
-        by_name: bool | None = None,
-    ) -> Never:
-        _ = strict, extra, from_attributes, context, by_alias, by_name
-        _ = obj
-        msg = "plain boom"
-        raise RuntimeError(msg)
-
-
-class _TargetModel(BaseModel):
-    value: int
 
 
 def test_type_guards_and_protocol_name() -> None:

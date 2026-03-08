@@ -26,33 +26,12 @@ from collections.abc import Callable
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextContainer,
     r,
 )
 from flext_tests import c, m, t, tm, u
-
-
-class ServiceScenario(BaseModel):
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-    """Test scenario for service registration and retrieval."""
-
-    name: str
-    service: t.RegisterableService
-    description: str = ""
-
-
-class TypedRetrievalScenario(BaseModel):
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-    """Test scenario for typed service retrieval."""
-
-    name: str
-    service: t.RegisterableService
-    expected_type: type
-    should_pass: bool
-    description: str = ""
 
 
 class ContainerScenarios:

@@ -13,15 +13,6 @@ from pydantic import BaseModel
 from flext_core import c, m, r, u
 
 
-class _Cfg(BaseModel):
-    x: int = 0
-    y: str = "a"
-
-
-class _BadCopyModel(BaseModel):
-    x: int = 1
-
-
 def test_merge_defaults_and_dump_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)

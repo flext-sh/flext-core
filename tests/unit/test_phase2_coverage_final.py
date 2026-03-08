@@ -18,31 +18,36 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core import FlextResult, FlextSettings
 from tests.test_utils import assertion_helpers
-
-
-class ResultChainingScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """FlextResult chaining test scenario."""
-
-    name: str
-    initial_value: str
-    operations: list[str]
-    expected_success: bool
-    expected_value: str | None = None
 
 
 class CoverageScenarios:
     """Centralized coverage test scenarios using FlextConstants."""
 
     CHAINING_SCENARIOS: ClassVar[list[ResultChainingScenario]] = [
-        ResultChainingScenario(name="map_chaining", initial_value="hello", operations=["upper", "append_excl"], expected_success=True, expected_value="HELLO!"),
-        ResultChainingScenario(name="flat_map_chaining", initial_value="hi", operations=["double", "double"], expected_success=True, expected_value="hihihihi"),
-        ResultChainingScenario(name="error_propagation", initial_value="input", operations=["fail", "upper"], expected_success=False, expected_value=None),
+        ResultChainingScenario(
+            name="map_chaining",
+            initial_value="hello",
+            operations=["upper", "append_excl"],
+            expected_success=True,
+            expected_value="HELLO!",
+        ),
+        ResultChainingScenario(
+            name="flat_map_chaining",
+            initial_value="hi",
+            operations=["double", "double"],
+            expected_success=True,
+            expected_value="hihihihi",
+        ),
+        ResultChainingScenario(
+            name="error_propagation",
+            initial_value="input",
+            operations=["fail", "upper"],
+            expected_success=False,
+            expected_value=None,
+        ),
     ]
 
 

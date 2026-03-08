@@ -12,56 +12,11 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict
-
-from flext_core import m, t
+from flext_core import m
 
 # =========================================================================
 # Scenario Dataclasses
 # =========================================================================
-
-
-class ValidationScenario(BaseModel):
-    """Single scenario for validation testing."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: str
-    validator_type: str  # "network", "string", "numeric"
-    input_value: t.ContainerValue
-    input_params: dict[str, object] | None = None
-    should_succeed: bool = True
-    expected_value: t.ContainerValue | None = None
-    expected_error_contains: str | None = None
-    description: str | None = None
-
-
-class ParserScenario(BaseModel):
-    """Single scenario for parser testing."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: str
-    parser_method: str
-    input_data: str
-    expected_output: t.ContainerValue | None = None
-    should_succeed: bool = True
-    error_contains: str | None = None
-    description: str | None = None
-
-
-class ReliabilityScenario(BaseModel):
-    """Single scenario for reliability testing (circuit breaker, retry)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: str
-    strategy: str  # "retry", "circuit_breaker", "timeout"
-    config: m.ConfigMap
-    simulate_failures: int
-    expected_state: str
-    should_succeed: bool = True
-    description: str | None = None
 
 
 # =========================================================================

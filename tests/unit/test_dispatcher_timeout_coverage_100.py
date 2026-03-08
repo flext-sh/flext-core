@@ -19,21 +19,8 @@ import time
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 from flext_core._dispatcher.timeout import TimeoutEnforcer
-
-
-class TimeoutEnforcerScenario(BaseModel):
-
-    model_config = ConfigDict(frozen=True)
-    """TimeoutEnforcer test scenario."""
-
-    name: str
-    use_timeout_executor: bool
-    executor_workers: int
-    expected_workers: int
-    should_use_executor: bool
 
 
 class TimeoutEnforcerScenarios:
