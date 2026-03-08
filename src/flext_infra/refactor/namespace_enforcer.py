@@ -23,9 +23,8 @@ from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels
 from flext_infra import c, u
 
 
@@ -35,7 +34,7 @@ from flext_infra import c, u
 class NamespaceEnforcementModels:
     """Domain models for namespace enforcement reports."""
 
-    class FacadeStatus(FlextModels.ArbitraryTypesModel):
+    class FacadeStatus(BaseModel):
         """Status of one facade family (c/t/p/m/u) in a project."""
 
         model_config = ConfigDict(frozen=True)
@@ -48,7 +47,7 @@ class NamespaceEnforcementModels:
             default=0, ge=0, description="Number of symbols inside"
         )
 
-    class LooseObjectViolation(FlextModels.ArbitraryTypesModel):
+    class LooseObjectViolation(BaseModel):
         """A detected loose object outside any namespace class."""
 
         model_config = ConfigDict(frozen=True)
@@ -59,7 +58,7 @@ class NamespaceEnforcementModels:
         kind: str = Field(description="class|function|constant|typealias")
         suggestion: str = Field(default="", description="Suggested target namespace")
 
-    class CyclicImportViolation(FlextModels.ArbitraryTypesModel):
+    class CyclicImportViolation(BaseModel):
         """A detected cyclic import chain."""
 
         model_config = ConfigDict(frozen=True)
@@ -69,7 +68,7 @@ class NamespaceEnforcementModels:
             default_factory=tuple, description="Files involved"
         )
 
-    class ImportAliasViolation(FlextModels.ArbitraryTypesModel):
+    class ImportAliasViolation(BaseModel):
         """A detected import not using the canonical facade alias."""
 
         model_config = ConfigDict(frozen=True)
@@ -79,7 +78,18 @@ class NamespaceEnforcementModels:
         current_import: str = Field(description="Current import statement")
         suggested_import: str = Field(description="Correct facade import")
 
-    class RuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
+    class ManualProtocolViolation(BaseModel):
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+        line: int = Field(ge=1, description="Line number")
+        name: str = Field(min_length=1, description="Protocol class name")
+        suggestion: str = Field(
+            default="Move to protocols.py/protocols/*.py/_protocols.py",
+            description="Canonical destination",
+        )
+
+    class RuntimeAliasViolation(BaseModel):
         """A module missing or misusing a runtime alias (c = FlextConstants)."""
 
         model_config = ConfigDict(frozen=True)
@@ -90,14 +100,30 @@ class NamespaceEnforcementModels:
         alias: str = Field(description="Expected alias letter")
         detail: str = Field(default="", description="Explanation")
 
-    class MissingFutureAnnotationsViolation(FlextModels.ArbitraryTypesModel):
+    class MissingFutureAnnotationsViolation(BaseModel):
         """A Python module missing `from __future__ import annotations`."""
 
         model_config = ConfigDict(frozen=True)
 
         file: str = Field(min_length=1, description="Source file path")
 
-    class ProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
+    class ManualTypingAliasViolation(BaseModel):
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+        line: int = Field(ge=1, description="Line number")
+        name: str = Field(min_length=1, description="Type alias name")
+        detail: str = Field(default="", description="Violation details")
+
+    class CompatibilityAliasViolation(BaseModel):
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+        line: int = Field(ge=1, description="Line number")
+        alias_name: str = Field(min_length=1, description="Compatibility alias symbol")
+        target_name: str = Field(min_length=1, description="Target symbol")
+
+    class ProjectEnforcementReport(BaseModel):
         """Enforcement report for a single project."""
 
         project: str = Field(min_length=1, description="Project directory name")
@@ -111,8 +137,11 @@ class NamespaceEnforcementModels:
         import_violations: list[NamespaceEnforcementModels.ImportAliasViolation] = (
             Field(default_factory=list, description="Import alias violations")
         )
-        cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation] = (
-            Field(default_factory=list, description="Cyclic import violations")
+        manual_protocol_violations: list[
+            NamespaceEnforcementModels.ManualProtocolViolation
+        ] = Field(default_factory=list, description="Manual protocol violations")
+        cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation] = Field(
+            default_factory=list, description="Cyclic import violations"
         )
         runtime_alias_violations: list[
             NamespaceEnforcementModels.RuntimeAliasViolation
@@ -120,9 +149,15 @@ class NamespaceEnforcementModels:
         future_violations: list[
             NamespaceEnforcementModels.MissingFutureAnnotationsViolation
         ] = Field(default_factory=list, description="Missing __future__ violations")
+        manual_typing_violations: list[
+            NamespaceEnforcementModels.ManualTypingAliasViolation
+        ] = Field(default_factory=list, description="Type alias outside typings scope")
+        compatibility_alias_violations: list[
+            NamespaceEnforcementModels.CompatibilityAliasViolation
+        ] = Field(default_factory=list, description="Compatibility alias violations")
         files_scanned: int = Field(default=0, ge=0, description="Total files scanned")
 
-    class WorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
+    class WorkspaceEnforcementReport(BaseModel):
         """Full workspace enforcement report."""
 
         workspace: str = Field(min_length=1, description="Workspace root path")
@@ -136,6 +171,11 @@ class NamespaceEnforcementModels:
         total_import_violations: int = Field(
             default=0, ge=0, description="Import violations"
         )
+        total_manual_protocol_violations: int = Field(
+            default=0,
+            ge=0,
+            description="Manual protocol violations",
+        )
         total_cyclic_imports: int = Field(
             default=0, ge=0, description="Cyclic import chains"
         )
@@ -145,9 +185,184 @@ class NamespaceEnforcementModels:
         total_future_violations: int = Field(
             default=0, ge=0, description="Missing __future__ violations"
         )
+        total_manual_typing_violations: int = Field(
+            default=0, ge=0, description="Type aliases outside typings scope"
+        )
+        total_compatibility_alias_violations: int = Field(
+            default=0, ge=0, description="Compatibility alias violations"
+        )
         total_files_scanned: int = Field(
             default=0, ge=0, description="All files scanned"
         )
+
+
+def _new_facade_status(
+    *, family: str, exists: bool, class_name: str, file: str, symbol_count: int
+) -> NamespaceEnforcementModels.FacadeStatus:
+    return NamespaceEnforcementModels.FacadeStatus.model_validate({
+        "family": family,
+        "exists": exists,
+        "class_name": class_name,
+        "file": file,
+        "symbol_count": symbol_count,
+    })
+
+
+def _new_loose_object_violation(
+    *, file: str, line: int, name: str, kind: str, suggestion: str
+) -> NamespaceEnforcementModels.LooseObjectViolation:
+    return NamespaceEnforcementModels.LooseObjectViolation.model_validate({
+        "file": file,
+        "line": line,
+        "name": name,
+        "kind": kind,
+        "suggestion": suggestion,
+    })
+
+
+def _new_import_alias_violation(
+    *, file: str, line: int, current_import: str, suggested_import: str
+) -> NamespaceEnforcementModels.ImportAliasViolation:
+    return NamespaceEnforcementModels.ImportAliasViolation.model_validate({
+        "file": file,
+        "line": line,
+        "current_import": current_import,
+        "suggested_import": suggested_import,
+    })
+
+
+def _new_manual_protocol_violation(
+    *, file: str, line: int, name: str, suggestion: str = ""
+) -> NamespaceEnforcementModels.ManualProtocolViolation:
+    payload = {
+        "file": file,
+        "line": line,
+        "name": name,
+    }
+    if len(suggestion) > 0:
+        payload["suggestion"] = suggestion
+    return NamespaceEnforcementModels.ManualProtocolViolation.model_validate(payload)
+
+
+def _new_cyclic_import_violation(
+    *, cycle: tuple[str, ...], files: tuple[str, ...]
+) -> NamespaceEnforcementModels.CyclicImportViolation:
+    return NamespaceEnforcementModels.CyclicImportViolation.model_validate({
+        "cycle": cycle,
+        "files": files,
+    })
+
+
+def _new_runtime_alias_violation(
+    *, file: str, kind: str, alias: str, detail: str, line: int = 0
+) -> NamespaceEnforcementModels.RuntimeAliasViolation:
+    return NamespaceEnforcementModels.RuntimeAliasViolation.model_validate({
+        "file": file,
+        "line": line,
+        "kind": kind,
+        "alias": alias,
+        "detail": detail,
+    })
+
+
+def _new_future_annotations_violation(
+    *, file: str
+) -> NamespaceEnforcementModels.MissingFutureAnnotationsViolation:
+    return NamespaceEnforcementModels.MissingFutureAnnotationsViolation.model_validate({
+        "file": file
+    })
+
+
+def _new_manual_typing_alias_violation(
+    *, file: str, line: int, name: str, detail: str
+) -> NamespaceEnforcementModels.ManualTypingAliasViolation:
+    return NamespaceEnforcementModels.ManualTypingAliasViolation.model_validate({
+        "file": file,
+        "line": line,
+        "name": name,
+        "detail": detail,
+    })
+
+
+def _new_compatibility_alias_violation(
+    *, file: str, line: int, alias_name: str, target_name: str
+) -> NamespaceEnforcementModels.CompatibilityAliasViolation:
+    return NamespaceEnforcementModels.CompatibilityAliasViolation.model_validate({
+        "file": file,
+        "line": line,
+        "alias_name": alias_name,
+        "target_name": target_name,
+    })
+
+
+def _new_workspace_enforcement_report(
+    *,
+    workspace: str,
+    projects: list[NamespaceEnforcementModels.ProjectEnforcementReport],
+    total_facades_missing: int,
+    total_loose_objects: int,
+    total_import_violations: int,
+    total_manual_protocol_violations: int,
+    total_cyclic_imports: int,
+    total_runtime_alias_violations: int,
+    total_future_violations: int,
+    total_manual_typing_violations: int,
+    total_compatibility_alias_violations: int,
+    total_files_scanned: int,
+) -> NamespaceEnforcementModels.WorkspaceEnforcementReport:
+    return NamespaceEnforcementModels.WorkspaceEnforcementReport.model_validate({
+        "workspace": workspace,
+        "projects": projects,
+        "total_facades_missing": total_facades_missing,
+        "total_loose_objects": total_loose_objects,
+        "total_import_violations": total_import_violations,
+        "total_manual_protocol_violations": total_manual_protocol_violations,
+        "total_cyclic_imports": total_cyclic_imports,
+        "total_runtime_alias_violations": total_runtime_alias_violations,
+        "total_future_violations": total_future_violations,
+        "total_manual_typing_violations": total_manual_typing_violations,
+        "total_compatibility_alias_violations": total_compatibility_alias_violations,
+        "total_files_scanned": total_files_scanned,
+    })
+
+
+def _new_project_enforcement_report(
+    *,
+    project: str,
+    project_root: str,
+    facade_statuses: list[NamespaceEnforcementModels.FacadeStatus],
+    loose_objects: list[NamespaceEnforcementModels.LooseObjectViolation],
+    import_violations: list[NamespaceEnforcementModels.ImportAliasViolation],
+    manual_protocol_violations: list[
+        NamespaceEnforcementModels.ManualProtocolViolation
+    ],
+    cyclic_imports: list[NamespaceEnforcementModels.CyclicImportViolation],
+    runtime_alias_violations: list[NamespaceEnforcementModels.RuntimeAliasViolation],
+    future_violations: list[
+        NamespaceEnforcementModels.MissingFutureAnnotationsViolation
+    ],
+    manual_typing_violations: list[
+        NamespaceEnforcementModels.ManualTypingAliasViolation
+    ],
+    compatibility_alias_violations: list[
+        NamespaceEnforcementModels.CompatibilityAliasViolation
+    ],
+    files_scanned: int,
+) -> NamespaceEnforcementModels.ProjectEnforcementReport:
+    return NamespaceEnforcementModels.ProjectEnforcementReport.model_validate({
+        "project": project,
+        "project_root": project_root,
+        "facade_statuses": facade_statuses,
+        "loose_objects": loose_objects,
+        "import_violations": import_violations,
+        "manual_protocol_violations": manual_protocol_violations,
+        "cyclic_imports": cyclic_imports,
+        "runtime_alias_violations": runtime_alias_violations,
+        "future_violations": future_violations,
+        "manual_typing_violations": manual_typing_violations,
+        "compatibility_alias_violations": compatibility_alias_violations,
+        "files_scanned": files_scanned,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +414,7 @@ class NamespaceFacadeScanner:
                 suffix=suffix,
             )
             results.append(
-                NamespaceEnforcementModels.FacadeStatus(
+                _new_facade_status(
                     family=family,
                     exists=bool(found_class),
                     class_name=found_class,
@@ -348,7 +563,7 @@ class LooseObjectDetector:
             # Pydantic BeforeValidator callbacks, type guards, helpers.
             if stmt.name.startswith("_"):
                 return None
-            return NamespaceEnforcementModels.LooseObjectViolation(
+            return _new_loose_object_violation(
                 file=str(file_path),
                 line=stmt.lineno,
                 name=stmt.name,
@@ -365,7 +580,7 @@ class LooseObjectDetector:
             if name.startswith("_"):
                 return None
             if _CONSTANT_PATTERN.match(name):
-                return NamespaceEnforcementModels.LooseObjectViolation(
+                return _new_loose_object_violation(
                     file=str(file_path),
                     line=stmt.lineno,
                     name=name,
@@ -386,7 +601,7 @@ class LooseObjectDetector:
                 if name.startswith("_"):
                     return None
                 if _CONSTANT_PATTERN.match(name):
-                    return NamespaceEnforcementModels.LooseObjectViolation(
+                    return _new_loose_object_violation(
                         file=str(file_path),
                         line=stmt.lineno,
                         name=name,
@@ -398,7 +613,7 @@ class LooseObjectDetector:
         if isinstance(stmt, ast.TypeAlias):
             name = stmt.name.id if hasattr(stmt.name, "id") else ""
             if name and name not in cls.ALLOWED_TOP_LEVEL:
-                return NamespaceEnforcementModels.LooseObjectViolation(
+                return _new_loose_object_violation(
                     file=str(file_path),
                     line=stmt.lineno,
                     name=name,
@@ -470,7 +685,7 @@ class ImportAliasDetector:
                     )
                     current = f"from {stmt.module} import {import_names}"
                     violations.append(
-                        NamespaceEnforcementModels.ImportAliasViolation(
+                        _new_import_alias_violation(
                             file=str(file_path),
                             line=stmt.lineno,
                             current_import=current,
@@ -478,6 +693,63 @@ class ImportAliasDetector:
                         )
                     )
         return violations
+
+
+class ManualProtocolDetector:
+    CANONICAL_FILE_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "protocols.py",
+        "_protocols.py",
+    })
+    CANONICAL_DIR_NAME: ClassVar[str] = "protocols"
+
+    @classmethod
+    def scan_file(
+        cls,
+        *,
+        file_path: Path,
+    ) -> list[NamespaceEnforcementModels.ManualProtocolViolation]:
+        in_canonical_file = file_path.name in cls.CANONICAL_FILE_NAMES
+        in_canonical_dir = cls.CANONICAL_DIR_NAME in file_path.parts
+        if in_canonical_file or in_canonical_dir:
+            return []
+        if file_path.name in _PROTECTED_FILES:
+            return []
+        try:
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return []
+        violations: list[NamespaceEnforcementModels.ManualProtocolViolation] = []
+        for stmt in tree.body:
+            if not isinstance(stmt, ast.ClassDef):
+                continue
+            if cls._is_protocol_class(stmt):
+                violations.append(
+                    _new_manual_protocol_violation(
+                        file=str(file_path),
+                        line=stmt.lineno,
+                        name=stmt.name,
+                    )
+                )
+        return violations
+
+    @staticmethod
+    def _is_protocol_class(node: ast.ClassDef) -> bool:
+        for base_expr in node.bases:
+            if isinstance(base_expr, ast.Name) and base_expr.id == "Protocol":
+                return True
+            if isinstance(base_expr, ast.Attribute) and base_expr.attr == "Protocol":
+                return True
+            if isinstance(base_expr, ast.Subscript):
+                root_expr = base_expr.value
+                if isinstance(root_expr, ast.Name) and root_expr.id == "Protocol":
+                    return True
+                if (
+                    isinstance(root_expr, ast.Attribute)
+                    and root_expr.attr == "Protocol"
+                ):
+                    return True
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -539,7 +811,7 @@ class CyclicImportDetector:
                     for module_name in normalized_cycle
                 )
                 violations.append(
-                    NamespaceEnforcementModels.CyclicImportViolation(
+                    _new_cyclic_import_violation(
                         cycle=normalized_cycle,
                         files=cycle_files,
                     )
@@ -586,7 +858,7 @@ class RuntimeAliasDetector:
         cls,
         *,
         file_path: Path,
-        project_name: str,  # noqa: ARG003 — reserved for future class-name validation
+        project_name: str,
     ) -> list[NamespaceEnforcementModels.RuntimeAliasViolation]:
         """Return runtime alias violations for one file."""
         # Only check facade files inside src/ (not tests/constants.py etc.)
@@ -610,6 +882,7 @@ class RuntimeAliasDetector:
             return []
 
         violations: list[NamespaceEnforcementModels.RuntimeAliasViolation] = []
+        _ = project_name
         # Determine which alias letter this file should define
         family = cls._family_for_file(file_name=file_path.name)
         if not family:
@@ -630,7 +903,7 @@ class RuntimeAliasDetector:
         matches = [a for a in alias_assignments if a[1] == expected_alias]
         if len(matches) == 0:
             violations.append(
-                NamespaceEnforcementModels.RuntimeAliasViolation(
+                _new_runtime_alias_violation(
                     file=str(file_path),
                     kind="missing",
                     alias=expected_alias,
@@ -639,7 +912,7 @@ class RuntimeAliasDetector:
             )
         elif len(matches) > 1:
             violations.append(
-                NamespaceEnforcementModels.RuntimeAliasViolation(
+                _new_runtime_alias_violation(
                     file=str(file_path),
                     line=matches[1][0],
                     kind="duplicate",
@@ -709,11 +982,100 @@ class FutureAnnotationsDetector:
             if isinstance(stmt, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
                 break
 
-        return [
-            NamespaceEnforcementModels.MissingFutureAnnotationsViolation(
-                file=str(file_path),
-            )
-        ]
+        return [_new_future_annotations_violation(file=str(file_path))]
+
+
+class ManualTypingAliasDetector:
+    @classmethod
+    def scan_file(
+        cls,
+        *,
+        file_path: Path,
+    ) -> list[NamespaceEnforcementModels.ManualTypingAliasViolation]:
+        if file_path.suffix != ".py":
+            return []
+        posix = file_path.as_posix()
+        in_typings_scope = (
+            posix.endswith(("/typings.py", "/_typings.py")) or "/typings/" in posix
+        )
+        if in_typings_scope:
+            return []
+        try:
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return []
+        violations: list[NamespaceEnforcementModels.ManualTypingAliasViolation] = []
+        for stmt in tree.body:
+            if isinstance(stmt, ast.TypeAlias):
+                alias_name = stmt.name.id
+                violations.append(
+                    _new_manual_typing_alias_violation(
+                        file=str(file_path),
+                        line=stmt.lineno,
+                        name=alias_name,
+                        detail="PEP695 alias must be centralized under typings scope",
+                    )
+                )
+                continue
+            if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                annotation_src = ast.get_source_segment(source, stmt.annotation) or ""
+                if "TypeAlias" in annotation_src:
+                    violations.append(
+                        _new_manual_typing_alias_violation(
+                            file=str(file_path),
+                            line=stmt.lineno,
+                            name=stmt.target.id,
+                            detail="TypeAlias assignment must be centralized under typings scope",
+                        )
+                    )
+        return violations
+
+
+class CompatibilityAliasDetector:
+    @classmethod
+    def scan_file(
+        cls,
+        *,
+        file_path: Path,
+    ) -> list[NamespaceEnforcementModels.CompatibilityAliasViolation]:
+        if file_path.suffix != ".py":
+            return []
+        try:
+            tree = ast.parse(file_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return []
+        violations: list[NamespaceEnforcementModels.CompatibilityAliasViolation] = []
+        for stmt in tree.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+            if len(stmt.targets) != 1:
+                continue
+            target = stmt.targets[0]
+            if not isinstance(target, ast.Name):
+                continue
+            if not isinstance(stmt.value, ast.Name):
+                continue
+            alias_name = target.id
+            target_name = stmt.value.id
+            if len(alias_name) == 1:
+                continue
+            if alias_name in {"__all__", "__version__", "__version_info__"}:
+                continue
+            if alias_name == target_name:
+                continue
+            if alias_name.isupper() and target_name.isupper():
+                continue
+            if alias_name[0].isupper() and target_name[0].isupper():
+                violations.append(
+                    _new_compatibility_alias_violation(
+                        file=str(file_path),
+                        line=stmt.lineno,
+                        alias_name=alias_name,
+                        target_name=target_name,
+                    )
+                )
+        return violations
 
 
 # ---------------------------------------------------------------------------
@@ -746,6 +1108,9 @@ class FlextInfraNamespaceEnforcer:
         total_cyclic = 0
         total_alias_v = 0
         total_future_v = 0
+        total_manual_protocol_v = 0
+        total_manual_typing_v = 0
+        total_compat_alias_v = 0
         total_files = 0
 
         for project_root in project_roots:
@@ -762,9 +1127,12 @@ class FlextInfraNamespaceEnforcer:
             total_cyclic += len(report.cyclic_imports)
             total_alias_v += len(report.runtime_alias_violations)
             total_future_v += len(report.future_violations)
+            total_manual_protocol_v += len(report.manual_protocol_violations)
+            total_manual_typing_v += len(report.manual_typing_violations)
+            total_compat_alias_v += len(report.compatibility_alias_violations)
             total_files += report.files_scanned
 
-        return NamespaceEnforcementModels.WorkspaceEnforcementReport(
+        return _new_workspace_enforcement_report(
             workspace=str(self._workspace_root),
             projects=project_reports,
             total_facades_missing=total_missing,
@@ -773,6 +1141,9 @@ class FlextInfraNamespaceEnforcer:
             total_cyclic_imports=total_cyclic,
             total_runtime_alias_violations=total_alias_v,
             total_future_violations=total_future_v,
+            total_manual_protocol_violations=total_manual_protocol_v,
+            total_manual_typing_violations=total_manual_typing_v,
+            total_compatibility_alias_violations=total_compat_alias_v,
             total_files_scanned=total_files,
         )
 
@@ -867,15 +1238,42 @@ class FlextInfraNamespaceEnforcer:
                     FutureAnnotationsDetector.scan_file(file_path=py_file)
                 )
 
-        return NamespaceEnforcementModels.ProjectEnforcementReport(
+        manual_protocol_violations: list[
+            NamespaceEnforcementModels.ManualProtocolViolation
+        ] = []
+        for py_file in py_files:
+            manual_protocol_violations.extend(
+                ManualProtocolDetector.scan_file(file_path=py_file)
+            )
+
+        manual_typing_violations: list[
+            NamespaceEnforcementModels.ManualTypingAliasViolation
+        ] = []
+        for py_file in py_files:
+            manual_typing_violations.extend(
+                ManualTypingAliasDetector.scan_file(file_path=py_file)
+            )
+
+        compatibility_alias_violations: list[
+            NamespaceEnforcementModels.CompatibilityAliasViolation
+        ] = []
+        for py_file in py_files:
+            compatibility_alias_violations.extend(
+                CompatibilityAliasDetector.scan_file(file_path=py_file)
+            )
+
+        return _new_project_enforcement_report(
             project=project_name,
             project_root=str(project_root),
             facade_statuses=facade_statuses,
             loose_objects=loose_objects,
             import_violations=import_violations,
+            manual_protocol_violations=manual_protocol_violations,
             cyclic_imports=cyclic_imports,
             runtime_alias_violations=runtime_alias_violations,
             future_violations=future_violations,
+            manual_typing_violations=manual_typing_violations,
+            compatibility_alias_violations=compatibility_alias_violations,
             files_scanned=len(py_files),
         )
 
@@ -1049,6 +1447,9 @@ class FlextInfraNamespaceEnforcer:
             expected = expected_aliases.get(file_path.name)
             if expected is None:
                 continue
+            # Only rewrite facade files under src/ — skip tests/scripts/examples
+            if "src" not in file_path.parts:
+                continue
             alias_name, expected_suffix = expected
             try:
                 source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -1134,6 +1535,9 @@ class FlextInfraNamespaceEnforcer:
             f"Cyclic imports: {report.total_cyclic_imports}",
             f"Runtime alias violations: {report.total_runtime_alias_violations}",
             f"Missing __future__: {report.total_future_violations}",
+            f"Manual protocols: {report.total_manual_protocol_violations}",
+            f"Manual typing aliases: {report.total_manual_typing_violations}",
+            f"Compatibility aliases: {report.total_compatibility_alias_violations}",
             "",
         ]
         for proj in report.projects:
@@ -1144,6 +1548,9 @@ class FlextInfraNamespaceEnforcer:
                 or proj.import_violations
                 or proj.runtime_alias_violations
                 or proj.future_violations
+                or proj.manual_protocol_violations
+                or proj.manual_typing_violations
+                or proj.compatibility_alias_violations
             )
             if not has_violations:
                 continue
@@ -1200,6 +1607,51 @@ class FlextInfraNamespaceEnforcer:
                     lines.append(
                         f"    ... and {len(proj.future_violations) - _MAX_RENDERED_LOOSE_OBJECTS} more"
                     )
+            if proj.manual_protocol_violations:
+                lines.append(
+                    f"  Manual protocols: {len(proj.manual_protocol_violations)}"
+                )
+                lines.extend(
+                    f"    {pv.file}:{pv.line} {pv.name}"
+                    for pv in proj.manual_protocol_violations[
+                        :_MAX_RENDERED_LOOSE_OBJECTS
+                    ]
+                )
+                if len(proj.manual_protocol_violations) > _MAX_RENDERED_LOOSE_OBJECTS:
+                    lines.append(
+                        f"    ... and {len(proj.manual_protocol_violations) - _MAX_RENDERED_LOOSE_OBJECTS} more"
+                    )
+            if proj.manual_typing_violations:
+                lines.append(
+                    f"  Manual typing aliases: {len(proj.manual_typing_violations)}"
+                )
+                lines.extend(
+                    f"    {tv.file}:{tv.line} {tv.name}"
+                    for tv in proj.manual_typing_violations[
+                        :_MAX_RENDERED_LOOSE_OBJECTS
+                    ]
+                )
+                if len(proj.manual_typing_violations) > _MAX_RENDERED_LOOSE_OBJECTS:
+                    lines.append(
+                        f"    ... and {len(proj.manual_typing_violations) - _MAX_RENDERED_LOOSE_OBJECTS} more"
+                    )
+            if proj.compatibility_alias_violations:
+                lines.append(
+                    f"  Compatibility aliases: {len(proj.compatibility_alias_violations)}"
+                )
+                lines.extend(
+                    f"    {cv.file}:{cv.line} {cv.alias_name}={cv.target_name}"
+                    for cv in proj.compatibility_alias_violations[
+                        :_MAX_RENDERED_LOOSE_OBJECTS
+                    ]
+                )
+                if (
+                    len(proj.compatibility_alias_violations)
+                    > _MAX_RENDERED_LOOSE_OBJECTS
+                ):
+                    lines.append(
+                        f"    ... and {len(proj.compatibility_alias_violations) - _MAX_RENDERED_LOOSE_OBJECTS} more"
+                    )
             lines.append("")
         return "\n".join(lines) + "\n"
 
@@ -1210,6 +1662,7 @@ __all__ = [
     "FutureAnnotationsDetector",
     "ImportAliasDetector",
     "LooseObjectDetector",
+    "ManualProtocolDetector",
     "NamespaceEnforcementModels",
     "NamespaceFacadeScanner",
     "RuntimeAliasDetector",

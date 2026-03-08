@@ -60,7 +60,7 @@ def test_centralizer_does_not_touch_settings_module(tmp_path: Path) -> None:
     assert settings_file.read_text(encoding="utf-8") == original_source
 
 
-def test_centralizer_moves_manual_type_aliases_to_typings_file(tmp_path: Path) -> None:
+def test_centralizer_moves_manual_type_aliases_to_models_file(tmp_path: Path) -> None:
     src_file = tmp_path / "src" / "pkg" / "service.py"
     src_file.parent.mkdir(parents=True)
     src_file.write_text(
@@ -79,17 +79,17 @@ def test_centralizer_moves_manual_type_aliases_to_typings_file(tmp_path: Path) -
         normalize_remaining=False,
     )
 
-    typings_file = src_file.parent / "_typings.py"
+    models_file = src_file.parent / "_models.py"
     updated_source = src_file.read_text(encoding="utf-8")
-    generated_typings = typings_file.read_text(encoding="utf-8")
+    generated_models = models_file.read_text(encoding="utf-8")
 
     assert summary["moved_aliases"] >= 2
-    assert summary["created_typings_files"] == 1
+    assert summary["created_typings_files"] == 0
     assert "PayloadMap: TypeAlias = dict[str, str]" not in updated_source
     assert "ConfigSchema: TypeAlias = dict[str, int]" not in updated_source
-    assert "from _typings import ConfigSchema, PayloadMap" in updated_source
-    assert "PayloadMap: TypeAlias = dict[str, str]" in generated_typings
-    assert "ConfigSchema: TypeAlias = dict[str, int]" in generated_typings
+    assert "from _models import ConfigSchema, PayloadMap" in updated_source
+    assert "class PayloadMap(RootModel[dict[str, str]]):" in generated_models
+    assert "class ConfigSchema(RootModel[dict[str, int]]):" in generated_models
 
 
 def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
@@ -112,11 +112,9 @@ def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
     )
 
     updated_typings = typings_file.read_text(encoding="utf-8")
-    generated_typings = (typings_file.parent / "_typings.py").read_text(
-        encoding="utf-8"
-    )
+    generated_models = (typings_file.parent / "_models.py").read_text(encoding="utf-8")
 
     assert summary["moved_aliases"] == 1
     assert "ScalarMap: TypeAlias" not in updated_typings
-    assert "from _typings import ScalarMap" in updated_typings
-    assert "ScalarMap: TypeAlias = Mapping[str, str]" in generated_typings
+    assert "from _models import ScalarMap" in updated_typings
+    assert "class ScalarMap(RootModel[Mapping[str, str]]):" in generated_models

@@ -415,22 +415,14 @@ class FlextInfraRefactorPydanticCentralizer:
             del lines[start - 1 : end]
         moved_model_names = [m.name for m in class_moves]
         moved_alias_names = [a.name for a in alias_moves]
+        moved_all_names = moved_model_names + moved_alias_names
         updated = "\n".join(lines)
-        if len(moved_model_names) > 0:
+        if len(moved_all_names) > 0:
             import_stmt = FlextInfraRefactorPydanticCentralizer._dest_import_statement(
-                file_path, moved_model_names
+                file_path, moved_all_names
             )
             updated = FlextInfraRefactorPydanticCentralizer._insert_import(
                 updated, import_stmt
-            )
-        if len(moved_alias_names) > 0:
-            typings_import_stmt = (
-                FlextInfraRefactorPydanticCentralizer._dest_typings_import_statement(
-                    file_path, moved_alias_names
-                )
-            )
-            updated = FlextInfraRefactorPydanticCentralizer._insert_import(
-                updated, typings_import_stmt
             )
         if source.endswith("\n") and (not updated.endswith("\n")):
             updated += "\n"
@@ -562,7 +554,7 @@ class FlextInfraRefactorPydanticCentralizer:
             class_blocks = [m.source for m in class_moves]
             class_names = [m.name for m in class_moves]
             alias_blocks = [
-                FlextInfraRefactorPydanticCentralizer._alias_as_type_alias(a)
+                FlextInfraRefactorPydanticCentralizer._alias_as_root_model(a)
                 for a in alias_moves
             ]
             alias_names = [a.name for a in alias_moves]
@@ -574,20 +566,10 @@ class FlextInfraRefactorPydanticCentralizer:
             updated_dest = FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
                 existing_dest, class_blocks, class_names
             )
-            typings_dest_path = file_path.parent / "_typings.py"
-            if len(alias_moves) > 0 and not typings_dest_path.exists():
-                created_typings_files += 1
-            existing_typings_dest = (
-                FlextInfraRefactorPydanticCentralizer._ensure_typings_header(
-                    typings_dest_path
-                )
-            )
-            updated_typings_dest = (
-                FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
-                    existing_typings_dest,
-                    alias_blocks,
-                    alias_names,
-                )
+            updated_dest = FlextInfraRefactorPydanticCentralizer._append_unique_blocks(
+                updated_dest,
+                alias_blocks,
+                alias_names,
             )
             updated_source = FlextInfraRefactorPydanticCentralizer._rewrite_source(
                 file_path, class_moves, alias_moves
@@ -597,8 +579,6 @@ class FlextInfraRefactorPydanticCentralizer:
             touched_files += 1
             if apply_changes:
                 dest_path.write_text(updated_dest, encoding="utf-8")
-                if len(alias_moves) > 0:
-                    typings_dest_path.write_text(updated_typings_dest, encoding="utf-8")
                 file_path.write_text(updated_source, encoding="utf-8")
         if normalize_remaining:
             for file_path in workspace_root.rglob("*.py"):

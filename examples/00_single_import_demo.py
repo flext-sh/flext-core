@@ -252,16 +252,21 @@ def identity(x: r[str]) -> r[str]:
 
 def execute_validation_chain(user_data: m.ConfigMap) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
-    _ = validate_transform_user(user_data).map(
-        lambda user: (
-            f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
+    _ = (
+        validate_transform_user(user_data)
+        .map(
+            lambda user: (
+                f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
+            )
         )
-    ).flat_map(r.ok).flat_map(
-        lambda output: process_user_data(
-            user_data=user_data, operation=c.Cqrs.Action.CREATE
-        ).map(lambda result: f"{output}\nProcess: {result}")
-    ).map(print).lash(
-        lambda error: r[None].ok(print(f"Validation failed: {error}") or None)
+        .flat_map(r.ok)
+        .flat_map(
+            lambda output: process_user_data(
+                user_data=user_data, operation=c.Cqrs.Action.CREATE
+            ).map(lambda result: f"{output}\nProcess: {result}")
+        )
+        .map(print)
+        .lash(lambda error: r[None].ok(print(f"Validation failed: {error}") or None))
     )
 
 

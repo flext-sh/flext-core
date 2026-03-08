@@ -5,10 +5,9 @@ from __future__ import annotations
 import sys
 from typing import ClassVar, override
 
-from pydantic import BaseModel, ConfigDict, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import (
-from ._models import _CommandBusStub, _EntityStub, _HandlerLike, _Payload, _ProcessorProtocolBad, _ProcessorProtocolGood
     FlextContext,
     FlextExceptions,
     FlextService,
@@ -20,9 +19,15 @@ from ._models import _CommandBusStub, _EntityStub, _HandlerLike, _Payload, _Proc
     t,
 )
 
+from ._models import (
+    _CommandBusStub,
+    _EntityStub,
+    _HandlerLike,
+    _Payload,
+    _ProcessorProtocolBad,
+    _ProcessorProtocolGood,
+)
 from .shared import Examples
-
-
 
 
 class _EchoService(s[str]):
@@ -115,15 +120,11 @@ class _RuntimeFactoryService(s[str]):
         return r[str].ok("factory")
 
 
-
-
 class _TinyType:
     """Small type for Bootstrap.create_instance testing."""
 
     def __init__(self) -> None:
         self.initialized = True
-
-
 
 
 class _ServiceLike:
@@ -150,12 +151,6 @@ class _ServiceLike:
 
     def _protocol_name(self) -> str:
         return "ServiceLike"
-
-
-
-
-
-
 
 
 class Ex11FlextService(Examples):

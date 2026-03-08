@@ -318,9 +318,11 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        _ = u.Tests.Result.assert_success(
-            result
-        ) if test_case.should_succeed else u.Tests.Result.assert_failure(result)
+        _ = (
+            u.Tests.Result.assert_success(result)
+            if test_case.should_succeed
+            else u.Tests.Result.assert_failure(result)
+        )
         assert isinstance(result.value, FlextRegistry.Summary)
 
     @pytest.mark.parametrize(
@@ -335,9 +337,11 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        _ = u.Tests.Result.assert_success(
-            result
-        ) if test_case.should_succeed else u.Tests.Result.assert_failure(result)
+        _ = (
+            u.Tests.Result.assert_success(result)
+            if test_case.should_succeed
+            else u.Tests.Result.assert_failure(result)
+        )
         assert result.value is not None
 
     @pytest.mark.parametrize(
@@ -352,9 +356,11 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        _ = u.Tests.Result.assert_success(
-            result
-        ) if test_case.should_succeed else u.Tests.Result.assert_failure(result)
+        _ = (
+            u.Tests.Result.assert_success(result)
+            if test_case.should_succeed
+            else u.Tests.Result.assert_failure(result)
+        )
         assert result.value is not None
 
     @pytest.mark.parametrize(

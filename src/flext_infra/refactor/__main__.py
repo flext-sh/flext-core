@@ -180,6 +180,10 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
         or report.total_loose_objects > 0
         or report.total_import_violations > 0
         or report.total_runtime_alias_violations > 0
+        or report.total_manual_protocol_violations > 0
+        or report.total_manual_typing_violations > 0
+        or report.total_compatibility_alias_violations > 0
+        or report.total_future_violations > 0
     )
     if has_violations:
         return 1
@@ -261,6 +265,25 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     )
     _ = sys.stdout.write(
         f"namespace_cyclic_imports={namespace_report.total_cyclic_imports}\n"
+    )
+    _ = sys.stdout.write(
+        "namespace_runtime_alias_violations="
+        f"{namespace_report.total_runtime_alias_violations}\n"
+    )
+    _ = sys.stdout.write(
+        f"namespace_missing_future={namespace_report.total_future_violations}\n"
+    )
+    _ = sys.stdout.write(
+        "namespace_manual_protocols="
+        f"{namespace_report.total_manual_protocol_violations}\n"
+    )
+    _ = sys.stdout.write(
+        "namespace_manual_typing_aliases="
+        f"{namespace_report.total_manual_typing_violations}\n"
+    )
+    _ = sys.stdout.write(
+        "namespace_compatibility_aliases="
+        f"{namespace_report.total_compatibility_alias_violations}\n"
     )
     if len(mro_report.errors) > 0:
         for error in mro_report.errors:

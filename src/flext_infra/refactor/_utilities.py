@@ -111,11 +111,10 @@ class FlextInfraUtilitiesRefactor:
             has_gomod = (path / c.Infra.Files.GO_MOD).exists()
             if not has_pyproject and (not has_gomod):
                 return False
-            has_scan_dir = any(
+            return any(
                 (path / dir_name).is_dir()
                 for dir_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES
             )
-            return has_scan_dir
 
         if _looks_like_project(workspace_root):
             roots.append(workspace_root)

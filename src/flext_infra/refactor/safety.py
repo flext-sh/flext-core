@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import overload
 
 from flext_core import r
-from flext_infra import c, m, p, u
-from flext_infra import FlextInfraGitService
-from flext_infra import FlextInfraCommandRunner
+from flext_infra import FlextInfraCommandRunner, FlextInfraGitService, c, m, p, u
 
 
 class FlextInfraRefactorSafetyManager:
