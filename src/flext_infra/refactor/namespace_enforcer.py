@@ -16,9 +16,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast
-import io
+import ast  
 import re
+from io import StringIO
 import token
 import tokenize
 from collections import defaultdict
@@ -81,6 +81,16 @@ class NamespaceEnforcementModels:
         line: int = Field(ge=1, description="Line number")
         current_import: str = Field(description="Current import statement")
         suggested_import: str = Field(description="Correct facade import")
+
+    class InternalImportViolation(BaseModel):
+        """Import violation record for private module/symbol usage."""
+
+        model_config = ConfigDict(frozen=True)
+
+        file: str = Field(min_length=1, description="Source file path")
+        line: int = Field(ge=1, description="Line number")
+        current_import: str = Field(description="Current import statement")
+        detail: str = Field(description="Violation details")
 
     class ManualProtocolViolation(BaseModel):
         """Protocol class defined outside canonical protocols module paths."""
@@ -157,6 +167,11 @@ class NamespaceEnforcementModels:
         import_violations: list[NamespaceEnforcementModels.ImportAliasViolation] = (
             Field(default_factory=list, description="Import alias violations")
         )
+        internal_import_violations: list[
+            NamespaceEnforcementModels.InternalImportViolation
+        ] = Field(
+            default_factory=list, description="Private/internal import violations"
+        )
         manual_protocol_violations: list[
             NamespaceEnforcementModels.ManualProtocolViolation
         ] = Field(default_factory=list, description="Manual protocol violations")
@@ -194,6 +209,9 @@ class NamespaceEnforcementModels:
         total_loose_objects: int = Field(default=0, ge=0, description="Loose objects")
         total_import_violations: int = Field(
             default=0, ge=0, description="Import violations"
+        )
+        total_internal_import_violations: int = Field(
+            default=0, ge=0, description="Private/internal import violations"
         )
         total_manual_protocol_violations: int = Field(
             default=0,
@@ -313,6 +331,17 @@ def _new_import_alias_violation(
     })
 
 
+def _new_internal_import_violation(
+    *, file: str, line: int, current_import: str, detail: str
+) -> NamespaceEnforcementModels.InternalImportViolation:
+    return NamespaceEnforcementModels.InternalImportViolation.model_validate({
+        "file": file,
+        "line": line,
+        "current_import": current_import,
+        "detail": detail,
+    })
+
+
 def _new_manual_protocol_violation(
     *, file: str, line: int, name: str, suggestion: str = ""
 ) -> NamespaceEnforcementModels.ManualProtocolViolation:
@@ -395,6 +424,7 @@ def _new_workspace_enforcement_report(
     total_facades_missing: int,
     total_loose_objects: int,
     total_import_violations: int,
+    total_internal_import_violations: int,
     total_manual_protocol_violations: int,
     total_cyclic_imports: int,
     total_runtime_alias_violations: int,
@@ -410,6 +440,7 @@ def _new_workspace_enforcement_report(
         "total_facades_missing": total_facades_missing,
         "total_loose_objects": total_loose_objects,
         "total_import_violations": total_import_violations,
+        "total_internal_import_violations": total_internal_import_violations,
         "total_manual_protocol_violations": total_manual_protocol_violations,
         "total_cyclic_imports": total_cyclic_imports,
         "total_runtime_alias_violations": total_runtime_alias_violations,
@@ -428,6 +459,9 @@ def _new_project_enforcement_report(
     facade_statuses: list[NamespaceEnforcementModels.FacadeStatus],
     loose_objects: list[NamespaceEnforcementModels.LooseObjectViolation],
     import_violations: list[NamespaceEnforcementModels.ImportAliasViolation],
+    internal_import_violations: list[
+        NamespaceEnforcementModels.InternalImportViolation
+    ],
     manual_protocol_violations: list[
         NamespaceEnforcementModels.ManualProtocolViolation
     ],
@@ -451,6 +485,7 @@ def _new_project_enforcement_report(
         "facade_statuses": facade_statuses,
         "loose_objects": loose_objects,
         "import_violations": import_violations,
+        "internal_import_violations": internal_import_violations,
         "manual_protocol_violations": manual_protocol_violations,
         "cyclic_imports": cyclic_imports,
         "runtime_alias_violations": runtime_alias_violations,
@@ -835,6 +870,57 @@ class ImportAliasDetector:
         return violations
 
 
+class InternalImportDetector:
+    """Detect direct private imports that bypass public facade imports."""
+
+    @classmethod
+    def scan_file(
+        cls,
+        *,
+        file_path: Path,
+        parse_failures: list[NamespaceEnforcementModels.ParseFailureViolation]
+        | None = None,
+    ) -> list[NamespaceEnforcementModels.InternalImportViolation]:
+        """Return internal/private import violations for one Python file."""
+        parsed = _load_python_module(
+            file_path,
+            stage="internal-import-scan",
+            parse_failures=parse_failures,
+        )
+        if parsed is None:
+            return []
+        tree = parsed.tree
+        violations: list[NamespaceEnforcementModels.InternalImportViolation] = []
+        for stmt in tree.body:
+            if not isinstance(stmt, ast.ImportFrom):
+                continue
+            if stmt.module is None:
+                continue
+            if file_path.name == "__init__.py":
+                continue
+            imported_names = [alias.name for alias in stmt.names if alias.name != "*"]
+            import_list = ", ".join(imported_names) if imported_names else "*"
+            current_import = f"from {stmt.module} import {import_list}"
+            has_private_module = "._" in stmt.module
+            has_private_symbol = any(name.startswith("_") for name in imported_names)
+            if not (has_private_module or has_private_symbol):
+                continue
+            detail = (
+                "private module import"
+                if has_private_module
+                else "private symbol import"
+            )
+            violations.append(
+                _new_internal_import_violation(
+                    file=str(file_path),
+                    line=stmt.lineno,
+                    current_import=current_import,
+                    detail=detail,
+                )
+            )
+        return violations
+
+
 class ManualProtocolDetector:
     """Detect Protocol-like classes outside canonical `protocols*` locations."""
 
@@ -950,7 +1036,7 @@ class CyclicImportDetector:
         # Detect cycles via topological sort
         violations: list[NamespaceEnforcementModels.CyclicImportViolation] = []
         try:
-            TopologicalSorter(graph).static_order()
+            _ = TopologicalSorter(graph).static_order()
         except CycleError as exc:
             cycle_nodes = exc.args[1] if len(exc.args) > 1 else ()
             if cycle_nodes:
@@ -1261,6 +1347,7 @@ class FlextInfraNamespaceEnforcer:
 
     def __init__(self, *, workspace_root: Path) -> None:
         """Create enforcer bound to a workspace root."""
+        super().__init__()
         self._workspace_root = workspace_root.resolve()
 
     def enforce(
@@ -1274,6 +1361,7 @@ class FlextInfraNamespaceEnforcer:
         total_missing = 0
         total_loose = 0
         total_import_v = 0
+        total_internal_import_v = 0
         total_cyclic = 0
         total_alias_v = 0
         total_future_v = 0
@@ -1294,6 +1382,7 @@ class FlextInfraNamespaceEnforcer:
             total_missing += sum(1 for s in report.facade_statuses if not s.exists)
             total_loose += len(report.loose_objects)
             total_import_v += len(report.import_violations)
+            total_internal_import_v += len(report.internal_import_violations)
             total_cyclic += len(report.cyclic_imports)
             total_alias_v += len(report.runtime_alias_violations)
             total_future_v += len(report.future_violations)
@@ -1309,6 +1398,7 @@ class FlextInfraNamespaceEnforcer:
             total_facades_missing=total_missing,
             total_loose_objects=total_loose,
             total_import_violations=total_import_v,
+            total_internal_import_violations=total_internal_import_v,
             total_cyclic_imports=total_cyclic,
             total_runtime_alias_violations=total_alias_v,
             total_future_violations=total_future_v,
@@ -1387,6 +1477,17 @@ class FlextInfraNamespaceEnforcer:
             project_root=project_root,
             parse_failures=parse_failures,
         )
+
+        internal_import_violations: list[
+            NamespaceEnforcementModels.InternalImportViolation
+        ] = []
+        for py_file in py_files:
+            internal_import_violations.extend(
+                InternalImportDetector.scan_file(
+                    file_path=py_file,
+                    parse_failures=parse_failures,
+                )
+            )
 
         # 6. Detect runtime alias violations
         runtime_alias_violations: list[
@@ -1519,6 +1620,7 @@ class FlextInfraNamespaceEnforcer:
             facade_statuses=facade_statuses,
             loose_objects=loose_objects,
             import_violations=import_violations,
+            internal_import_violations=internal_import_violations,
             manual_protocol_violations=manual_protocol_violations,
             cyclic_imports=cyclic_imports,
             runtime_alias_violations=runtime_alias_violations,
@@ -1565,7 +1667,7 @@ class FlextInfraNamespaceEnforcer:
             f"{alias} = {class_name}\n"
         )
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
+        _ = file_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
 
     @classmethod
     def _ensure_missing_facades(
@@ -1611,7 +1713,7 @@ class FlextInfraNamespaceEnforcer:
                     content = content.rstrip() + f"\n\n{alias_line}\n"
                     mutated = True
                 if mutated:
-                    target_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
+                    _ = target_path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
                 continue
             cls._write_missing_facade_file(
                 file_path=target_path,
@@ -1663,7 +1765,7 @@ class FlextInfraNamespaceEnforcer:
                         continue
                 new_lines.append(line)
             if changed:
-                file_path.write_text(
+                _ = file_path.write_text(
                     "".join(new_lines), encoding=c.Infra.Encoding.DEFAULT
                 )
 
@@ -1698,7 +1800,7 @@ class FlextInfraNamespaceEnforcer:
             ]
             kept_source = "\n".join(kept_lines).rstrip()
             rewritten = f"{kept_source}\n\n{alias_name} = {target_class}\n"
-            file_path.write_text(rewritten, encoding=c.Infra.Encoding.DEFAULT)
+            _ = file_path.write_text(rewritten, encoding=c.Infra.Encoding.DEFAULT)
 
     @staticmethod
     def _rewrite_missing_future_annotations(*, py_files: list[Path]) -> None:
@@ -1726,7 +1828,7 @@ class FlextInfraNamespaceEnforcer:
                 + ["", "from __future__ import annotations", ""]
                 + lines[insert_idx:]
             )
-            file_path.write_text(
+            _ = file_path.write_text(
                 "\n".join(new_lines).rstrip() + "\n",
                 encoding=c.Infra.Encoding.DEFAULT,
             )
@@ -1815,7 +1917,7 @@ class FlextInfraNamespaceEnforcer:
             filtered_lines.append(line_content)
         rewritten = "\n".join(filtered_lines).rstrip()
         normalized = re.sub(r"\n{3,}", "\n\n", rewritten)
-        source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
+        _ = source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
         moved_names = tuple(sorted({node.name for node in class_nodes}))
         return (source_file, target_file, moved_names)
 
@@ -1905,7 +2007,7 @@ class FlextInfraNamespaceEnforcer:
                 filtered_lines.append(line_content)
         rewritten = "\n".join(filtered_lines).rstrip()
         normalized = re.sub(r"\n{3,}", "\n\n", rewritten)
-        source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
+        _ = source_file.write_text(normalized + "\n", encoding=c.Infra.Encoding.DEFAULT)
 
     @staticmethod
     def _manual_typings_target_file(*, project_root: Path, source_file: Path) -> Path:
@@ -1942,7 +2044,7 @@ class FlextInfraNamespaceEnforcer:
             updated = updated.rstrip() + "\n\nfrom typing import TypeAlias\n"
         updated = updated.rstrip() + "\n\n" + merged_blocks + "\n"
         target_file.parent.mkdir(parents=True, exist_ok=True)
-        target_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
+        _ = target_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
 
     @staticmethod
     def _rewrite_compatibility_alias_violations(
@@ -1989,8 +2091,8 @@ class FlextInfraNamespaceEnforcer:
             replacements_by_line: dict[int, list[tuple[int, int, str]]] = defaultdict(
                 list
             )
-            token_stream = tokenize.generate_tokens(io.StringIO(kept_source).readline)
-            for tok in token_stream:
+            token_generator = tokenize.generate_tokens(StringIO(kept_source).readline)
+            for tok in token_generator:
                 if tok.type != token.NAME:
                     continue
                 replacement = alias_map.get(tok.string)
@@ -2022,7 +2124,7 @@ class FlextInfraNamespaceEnforcer:
 
             rewritten = "".join(line_buffer)
             if rewritten != source:
-                file_path.write_text(rewritten, encoding=c.Infra.Encoding.DEFAULT)
+                _ = file_path.write_text(rewritten, encoding=c.Infra.Encoding.DEFAULT)
 
     @staticmethod
     def _manual_protocol_target_file(*, project_root: Path, source_file: Path) -> Path:
@@ -2080,9 +2182,69 @@ class FlextInfraNamespaceEnforcer:
             updated = updated.rstrip() + "\n\n" + block + "\n"
 
         target_file.parent.mkdir(parents=True, exist_ok=True)
-        target_file.write_text(
+        _ = target_file.write_text(
             updated.rstrip() + "\n", encoding=c.Infra.Encoding.DEFAULT
         )
+
+    @staticmethod
+    def _rewrite_moved_protocol_imports(
+        *,
+        project_root: Path,
+        py_files: list[Path],
+        protocol_moves: list[tuple[Path, Path, tuple[str, ...]]],
+    ) -> None:
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
+
+        def _module_path(file_path: Path) -> str:
+            try:
+                relative = file_path.relative_to(src_dir)
+            except ValueError:
+                return ""
+            parts = list(relative.with_suffix("").parts)
+            if parts and parts[-1] == "__init__":
+                parts = parts[:-1]
+            return ".".join(parts)
+
+        source_target_names: list[tuple[str, str, set[str]]] = []
+        for source_file, target_file, moved_names in protocol_moves:
+            source_module = _module_path(source_file)
+            target_module = _module_path(target_file)
+            if not source_module or not target_module or source_module == target_module:
+                continue
+            source_target_names.append((source_module, target_module, set(moved_names)))
+        if len(source_target_names) == 0:
+            return
+        for py_file in py_files:
+            parsed = _load_python_module(py_file)
+            if parsed is None:
+                continue
+            source = parsed.source
+            tree = parsed.tree
+            new_lines = source.splitlines(keepends=True)
+            changed = False
+            for stmt in tree.body:
+                if not isinstance(stmt, ast.ImportFrom):
+                    continue
+                if stmt.module is None:
+                    continue
+                for source_module, target_module, moved_names in source_target_names:
+                    if stmt.module != source_module:
+                        continue
+                    imported = [alias.name for alias in stmt.names if alias.name != "*"]
+                    if not any(name in moved_names for name in imported):
+                        continue
+                    if stmt.lineno <= 0 or stmt.lineno > len(new_lines):
+                        continue
+                    line_index = stmt.lineno - 1
+                    line_text = new_lines[line_index]
+                    new_lines[line_index] = line_text.replace(
+                        source_module, target_module
+                    )
+                    changed = True
+            if changed:
+                _ = py_file.write_text(
+                    "".join(new_lines), encoding=c.Infra.Encoding.DEFAULT
+                )
 
     @staticmethod
     def _collect_python_files(*, project_root: Path) -> list[Path]:
@@ -2110,6 +2272,7 @@ class FlextInfraNamespaceEnforcer:
             f"Missing facades: {report.total_facades_missing}",
             f"Loose objects: {report.total_loose_objects}",
             f"Import violations: {report.total_import_violations}",
+            f"Internal imports: {report.total_internal_import_violations}",
             f"Cyclic imports: {report.total_cyclic_imports}",
             f"Runtime alias violations: {report.total_runtime_alias_violations}",
             f"Missing __future__: {report.total_future_violations}",
@@ -2125,6 +2288,7 @@ class FlextInfraNamespaceEnforcer:
                 missing
                 or proj.loose_objects
                 or proj.import_violations
+                or proj.internal_import_violations
                 or proj.runtime_alias_violations
                 or proj.future_violations
                 or proj.manual_protocol_violations
@@ -2161,6 +2325,23 @@ class FlextInfraNamespaceEnforcer:
                 if len(proj.import_violations) > _MAX_RENDERED_IMPORT_VIOLATIONS:
                     lines.append(
                         f"    ... and {len(proj.import_violations) - _MAX_RENDERED_IMPORT_VIOLATIONS} more"
+                    )
+            if proj.internal_import_violations:
+                lines.append(
+                    f"  Internal imports: {len(proj.internal_import_violations)}"
+                )
+                lines.extend(
+                    f"    {iv.file}:{iv.line} {iv.current_import} ({iv.detail})"
+                    for iv in proj.internal_import_violations[
+                        :_MAX_RENDERED_IMPORT_VIOLATIONS
+                    ]
+                )
+                if (
+                    len(proj.internal_import_violations)
+                    > _MAX_RENDERED_IMPORT_VIOLATIONS
+                ):
+                    lines.append(
+                        f"    ... and {len(proj.internal_import_violations) - _MAX_RENDERED_IMPORT_VIOLATIONS} more"
                     )
             if proj.cyclic_imports:
                 lines.append(f"  Cyclic imports: {len(proj.cyclic_imports)}")
@@ -2252,6 +2433,7 @@ __all__ = [
     "FlextInfraNamespaceEnforcer",
     "FutureAnnotationsDetector",
     "ImportAliasDetector",
+    "InternalImportDetector",
     "LooseObjectDetector",
     "ManualProtocolDetector",
     "ManualTypingAliasDetector",

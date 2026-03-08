@@ -191,6 +191,7 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
         report.total_facades_missing > 0
         or report.total_loose_objects > 0
         or report.total_import_violations > 0
+        or report.total_internal_import_violations > 0
         or report.total_runtime_alias_violations > 0
         or report.total_manual_protocol_violations > 0
         or report.total_manual_typing_violations > 0

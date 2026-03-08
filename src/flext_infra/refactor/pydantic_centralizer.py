@@ -633,8 +633,8 @@ class FlextInfraRefactorPydanticCentralizer:
                 ):
                     skipped_nonpackage_apply += 1
                     continue
-                dest_path.write_text(updated_dest, encoding="utf-8")
-                file_path.write_text(updated_source, encoding="utf-8")
+                _ = dest_path.write_text(updated_dest, encoding="utf-8")
+                _ = file_path.write_text(updated_source, encoding="utf-8")
         if normalize_remaining:
             for file_path in workspace_root.rglob("*.py"):
                 if not FlextInfraRefactorPydanticCentralizer._is_target_python(

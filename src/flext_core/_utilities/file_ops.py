@@ -45,7 +45,7 @@ class FlextUtilitiesFileOps:
         if isinstance(content, bytes):
             path.write_bytes(content)
         else:
-            path.write_text(content, encoding=encoding)
+            _ = path.write_text(content, encoding=encoding)
 
     @staticmethod
     def write_stdout(text: str) -> None:

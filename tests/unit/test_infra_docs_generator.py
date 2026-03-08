@@ -165,7 +165,7 @@ class TestFlextInfraDocGenerator:
             items=items,
         )
         assert len(report.items) == 2
-        assert report.items[0].path == "file1.md"
+        assert report.items[0].model_dump().get("path") == "file1.md"
 
     def test_generated_file_written_field(self) -> None:
         """Test GeneratedFile written field."""
@@ -232,7 +232,7 @@ class TestFlextInfraDocGenerator:
     ) -> None:
         """Test _generate_project_mkdocs skips existing mkdocs.yml."""
         mkdocs_file = tmp_path / "mkdocs.yml"
-        mkdocs_file.write_text("site_name: Test\n")
+        _ = mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
@@ -297,7 +297,7 @@ class TestFlextInfraDocGenerator:
     ) -> None:
         """Test _write_if_needed skips unchanged content."""
         path = tmp_path / "test.md"
-        path.write_text("# Test\n")
+        _ = path.write_text("# Test\n")
         result = generator._write_if_needed(path, "# Test\n", apply=True)
         assert result.written is False
 
@@ -325,7 +325,7 @@ class TestFlextInfraDocGenerator:
         guides_dir = tmp_path / "docs/guides"
         guides_dir.mkdir(parents=True, exist_ok=True)
         guide_file = guides_dir / "test.md"
-        guide_file.write_text("# Test Guide\n\nContent.\n")
+        _ = guide_file.write_text("# Test Guide\n\nContent.\n")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path / "project", report_dir=tmp_path / "reports"
         )

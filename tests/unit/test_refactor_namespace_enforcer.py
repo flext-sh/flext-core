@@ -1,3 +1,5 @@
+"""Unit tests for namespace enforcer detection and auto-fix behaviors."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,12 +14,12 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     project = workspace / "sample-proj"
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
-    (project / "pyproject.toml").write_text(
+    _ = (project / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (pkg / "__init__.py").write_text("", encoding="utf-8")
-    (pkg / "service.py").write_text(
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (pkg / "service.py").write_text(
         "from flext_core.constants import System\n"
         "from flext_infra.constants import Infra\n"
         "\n"
@@ -49,12 +51,12 @@ def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
     project = workspace / "sample-proj"
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
-    (project / "pyproject.toml").write_text(
+    _ = (project / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (pkg / "__init__.py").write_text("", encoding="utf-8")
-    (pkg / "service.py").write_text(
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (pkg / "service.py").write_text(
         "from __future__ import annotations\n"
         "from typing import TypeAlias\n\n"
         "PayloadMap: TypeAlias = dict[str, str]\n"
@@ -77,12 +79,12 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     project = workspace / "sample-proj"
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
-    (project / "pyproject.toml").write_text(
+    _ = (project / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (pkg / "__init__.py").write_text("", encoding="utf-8")
-    (pkg / "service.py").write_text(
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (pkg / "service.py").write_text(
         "from __future__ import annotations\n"
         "from typing import Protocol\n\n"
         "class ServiceContract(Protocol):\n"
@@ -104,6 +106,34 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     assert "Manual protocols: 1" in rendered
 
 
+def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    pkg.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n", encoding="utf-8"
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (pkg / "service.py").write_text(
+        "from __future__ import annotations\n"
+        "from flext_core._utilities.guards import FlextUtilitiesGuards\n"
+        "from sample_pkg.protocols import _InternalContract\n\n"
+        "_ = FlextUtilitiesGuards\n"
+        "_ = _InternalContract\n",
+        encoding="utf-8",
+    )
+
+    report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=False
+    )
+
+    assert report.total_internal_import_violations >= 1
+    rendered = FlextInfraNamespaceEnforcer.render_text(report)
+    assert "Internal imports:" in rendered
+
+
 def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
     tmp_path: Path,
 ) -> None:
@@ -111,13 +141,13 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
     project = workspace / "sample-proj"
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
-    (project / "pyproject.toml").write_text(
+    _ = (project / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     service_file = pkg / "service.py"
-    service_file.write_text(
+    _ = service_file.write_text(
         "from __future__ import annotations\n"
         "from typing import Protocol\n\n"
         "class ServiceContract(Protocol):\n"

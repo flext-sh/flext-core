@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, cast
 
 from flext_core import r
 from flext_tests import m, tf
@@ -782,7 +782,7 @@ class TestInfoWithContentMeta:
         manager = tf(base_dir=tmp_path)
         content = json.dumps([1, 2, 3, 4, 5])
         path = tmp_path / "list.json"
-        path.write_text(content)
+        _ = path.write_text(content)
         result = manager.info(path, parse_content=True)
         _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
@@ -805,7 +805,7 @@ class TestInfoWithContentMeta:
         manager = tf(base_dir=tmp_path)
         csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA\n"
         path = tmp_path / "data.csv"
-        path.write_text(csv_content)
+        _ = path.write_text(csv_content)
         result = manager.info(path, parse_content=True, detect_fmt=True)
         _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
@@ -816,7 +816,7 @@ class TestInfoWithContentMeta:
     def test_info_validate_model_success(self, tmp_path: Path) -> None:
         """Test info() with validate_model for valid model."""
 
-        class SimpleModel:
+        class SimpleModel(BaseModel):
             name: str
             age: int
 
@@ -824,7 +824,7 @@ class TestInfoWithContentMeta:
         path = manager.create(
             m.ConfigMap(root={"name": "Alice", "age": 30}), "user.json"
         )
-        result = manager.info(path, validate_model=SimpleModel)
+        result = manager.info(path, validate_model=cast(type[BaseModel], SimpleModel))
         _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
         assert info.content_meta is not None
@@ -855,79 +855,79 @@ class TestAssertExists:
     def test_assert_exists_file_success(self, tmp_path: Path) -> None:
         """Test assert_exists() succeeds for existing file."""
         path = tmp_path / "test.txt"
-        path.write_text("content")
-        tf.assert_exists(path)
+        _ = path.write_text("content")
+        _ = tf.assert_exists(path)
 
     def test_assert_exists_file_failure(self, tmp_path: Path) -> None:
         """Test assert_exists() fails for non-existing file."""
         path = tmp_path / "nonexistent.txt"
         with pytest.raises(AssertionError):
-            tf.assert_exists(path)
+            _ = tf.assert_exists(path)
 
     def test_assert_exists_directory_success(self, tmp_path: Path) -> None:
         """Test assert_exists() succeeds for existing directory."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-        tf.assert_exists(subdir)
+        _ = tf.assert_exists(subdir)
 
     def test_assert_exists_is_file_check(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_file=True."""
         file_path = tmp_path / "test.txt"
-        file_path.write_text("content")
-        tf.assert_exists(file_path, is_file=True)
+        _ = file_path.write_text("content")
+        _ = tf.assert_exists(file_path, is_file=True)
 
     def test_assert_exists_is_dir_check(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_dir=True."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-        tf.assert_exists(subdir, is_dir=True)
+        _ = tf.assert_exists(subdir, is_dir=True)
 
     def test_assert_exists_not_empty(self, tmp_path: Path) -> None:
         """Test assert_exists() with not_empty=True."""
         path = tmp_path / "test.txt"
-        path.write_text("content")
-        tf.assert_exists(path, not_empty=True)
+        _ = path.write_text("content")
+        _ = tf.assert_exists(path, not_empty=True)
 
     def test_assert_exists_empty_file_fails(self, tmp_path: Path) -> None:
         """Test assert_exists() fails for empty file with not_empty=True."""
         path = tmp_path / "empty.txt"
-        path.write_text("")
+        _ = path.write_text("")
         with pytest.raises(AssertionError):
-            tf.assert_exists(path, not_empty=True)
+            _ = tf.assert_exists(path, not_empty=True)
 
     def test_assert_exists_readable_check(self, tmp_path: Path) -> None:
         """Test assert_exists() with readable=True validation."""
         path = tmp_path / "readable.txt"
-        path.write_text("content")
+        _ = path.write_text("content")
         path.chmod(420)
-        tf.assert_exists(path, readable=True)
+        _ = tf.assert_exists(path, readable=True)
 
     def test_assert_exists_writable_check_file(self, tmp_path: Path) -> None:
         """Test assert_exists() with writable=True for file."""
         path = tmp_path / "writable.txt"
-        path.write_text("content")
+        _ = path.write_text("content")
         path.chmod(420)
-        tf.assert_exists(path, writable=True)
+        _ = tf.assert_exists(path, writable=True)
 
     def test_assert_exists_writable_check_directory(self, tmp_path: Path) -> None:
         """Test assert_exists() with writable=True for directory."""
         subdir = tmp_path / "writable_dir"
         subdir.mkdir()
         subdir.chmod(493)
-        tf.assert_exists(subdir, writable=True)
+        _ = tf.assert_exists(subdir, writable=True)
 
     def test_assert_exists_custom_error_message(self, tmp_path: Path) -> None:
         """Test assert_exists() with custom error message."""
         path = tmp_path / "nonexistent.txt"
         with pytest.raises(AssertionError, match="Custom error"):
-            tf.assert_exists(path, msg="Custom error: file not found")
+            _ = tf.assert_exists(path, msg="Custom error: file not found")
 
     def test_assert_exists_combined_validations(self, tmp_path: Path) -> None:
         """Test assert_exists() with multiple validations at once."""
         path = tmp_path / "test.txt"
-        path.write_text("content")
+        _ = path.write_text("content")
         path.chmod(420)
-        tf.assert_exists(
+        _ = tf.assert_exists(
             path, is_file=True, not_empty=True, readable=True, writable=True
         )
 
@@ -935,27 +935,27 @@ class TestAssertExists:
         """Test assert_exists() with is_file=False (should not be a file)."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-        tf.assert_exists(subdir, is_file=False)
+        _ = tf.assert_exists(subdir, is_file=False)
 
     def test_assert_exists_is_dir_false(self, tmp_path: Path) -> None:
         """Test assert_exists() with is_dir=False (should not be a directory)."""
         path = tmp_path / "test.txt"
-        path.write_text("content")
-        tf.assert_exists(path, is_dir=False)
+        _ = path.write_text("content")
+        _ = tf.assert_exists(path, is_dir=False)
 
     def test_assert_exists_empty_directory_fails(self, tmp_path: Path) -> None:
         """Test assert_exists() fails for empty directory with not_empty=True."""
         subdir = tmp_path / "empty_dir"
         subdir.mkdir()
         with pytest.raises(AssertionError):
-            tf.assert_exists(subdir, not_empty=True)
+            _ = tf.assert_exists(subdir, not_empty=True)
 
     def test_assert_exists_not_empty_directory_success(self, tmp_path: Path) -> None:
         """Test assert_exists() succeeds for non-empty directory."""
         subdir = tmp_path / "non_empty_dir"
         subdir.mkdir()
-        (subdir / "file.txt").write_text("content")
-        tf.assert_exists(subdir, not_empty=True)
+        _ = (subdir / "file.txt").write_text("content")
+        _ = tf.assert_exists(subdir, not_empty=True)
 
 
 class TestBatchOperations:

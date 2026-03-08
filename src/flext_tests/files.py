@@ -276,10 +276,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             Path if all validations pass
 
         Examples:
-            tf.assert_exists(path)                    # Just exists
-            tf.assert_exists(path, is_file=True)      # Exists and is file
-            tf.assert_exists(path, not_empty=True)    # Exists and not empty
-            tf.assert_exists(path, is_dir=True, writable=True)  # Dir and writable
+            _ = tf.assert_exists(path)                    # Just exists
+            _ = tf.assert_exists(path, is_file=True)      # Exists and is file
+            _ = tf.assert_exists(path, not_empty=True)    # Exists and not empty
+            _ = tf.assert_exists(path, is_dir=True, writable=True)  # Dir and writable
 
         """
         if not path.exists():

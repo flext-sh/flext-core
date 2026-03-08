@@ -134,7 +134,7 @@ class TestFlextInfraDocBuilder:
     ) -> None:
         """Test _build_scope with mkdocs.yml present."""
         mkdocs_file = tmp_path / "mkdocs.yml"
-        mkdocs_file.write_text("site_name: Test\n")
+        _ = mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
@@ -185,7 +185,7 @@ class TestFlextInfraDocBuilder:
     ) -> None:
         """Test _run_mkdocs handles command failures."""
         mkdocs_file = tmp_path / "mkdocs.yml"
-        mkdocs_file.write_text("site_name: Test\n")
+        _ = mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
@@ -216,7 +216,7 @@ class TestFlextInfraDocBuilder:
     ) -> None:
         """Test _run_mkdocs returns OK when exit_code is 0."""
         mkdocs_file = tmp_path / "mkdocs.yml"
-        mkdocs_file.write_text("site_name: Test\n")
+        _ = mkdocs_file.write_text("site_name: Test\n")
         scope = FlextInfraDocScope(
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )

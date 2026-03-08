@@ -17,16 +17,16 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
-    (src_pkg / "constants.py").write_text(
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (src_pkg / "constants.py").write_text(
         "from __future__ import annotations\nfrom typing import Final\n\nVALUE: Final[int] = 42\n\nclass SampleConstants:\n    pass\n\nc = SampleConstants\n",
         encoding="utf-8",
     )
-    (src_pkg / "consumer.py").write_text(
+    _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.constants import VALUE\n\nresult = VALUE\n", encoding="utf-8"
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
@@ -53,16 +53,16 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
-    (src_pkg / "constants.py").write_text(
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (src_pkg / "constants.py").write_text(
         "from __future__ import annotations\nfrom typing import Final\n\n_TIMEOUT: Final[int] = 30\n\nclass SampleConstants:\n    TIMEOUT = _TIMEOUT\n\nc = SampleConstants\n",
         encoding="utf-8",
     )
-    (src_pkg / "consumer.py").write_text(
+    _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.constants import _TIMEOUT\n\nvalue = _TIMEOUT\n",
         encoding="utf-8",
     )
@@ -86,16 +86,16 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
-    (src_pkg / "constants.py").write_text(
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (src_pkg / "constants.py").write_text(
         "from __future__ import annotations\nfrom typing import Final\n\nVALUE: Final[int] = 42\n\nclass SampleConstants:\n    pass\n\nc = SampleConstants\n",
         encoding="utf-8",
     )
-    (src_pkg / "consumer.py").write_text(
+    _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.constants import VALUE\nfrom sample_pkg.constants import c as constants\n\nresult = VALUE\n",
         encoding="utf-8",
     )
@@ -122,16 +122,16 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
-    (src_pkg / "typings.py").write_text(
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (src_pkg / "typings.py").write_text(
         "from __future__ import annotations\nfrom typing import TypeAlias\n\nValueType: TypeAlias = str | int\n\nclass SampleTypes:\n    pass\n\nt = SampleTypes\n",
         encoding="utf-8",
     )
-    (src_pkg / "consumer.py").write_text(
+    _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.typings import ValueType\n\nvalue: ValueType = 1\n",
         encoding="utf-8",
     )
@@ -157,12 +157,12 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
-    (src_pkg / "protocols.py").write_text(
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (src_pkg / "protocols.py").write_text(
         "from __future__ import annotations\n"
         "from typing import Protocol\n\n"
         "class SampleProtocols:\n"
@@ -173,7 +173,7 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
         "p = SampleProtocols\n",
         encoding="utf-8",
     )
-    (src_pkg / "consumer.py").write_text(
+    _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.protocols import GreeterProtocol\n\n"
         "def call_greet(protocol: GreeterProtocol) -> str:\n"
         "    return protocol.greet()\n",
@@ -200,10 +200,10 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
 def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -> None:
     project_root = tmp_path / "sample"
     project_root.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     file_paths = [
         project_root / "src" / "sample_pkg" / "constants.py",
         project_root / "src" / "sample_pkg" / "_constants.py",
@@ -214,7 +214,7 @@ def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -
     ]
     for file_path in file_paths:
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(
+        _ = file_path.write_text(
             "from __future__ import annotations\nfrom typing import Final\nVALUE: Final[str] = 'x'\n",
             encoding="utf-8",
         )
@@ -229,11 +229,11 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
 ) -> None:
     project_root = tmp_path / "sample"
     project_root.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (project_root / ".git").mkdir(parents=True)
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (project_root / ".git").mkdir(parents=True)
     expected_paths = [
         project_root / "src" / "sample_pkg" / "module.py",
         project_root / "tests" / "test_module.py",
@@ -242,7 +242,7 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
     ]
     for file_path in expected_paths:
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text("from __future__ import annotations\n", encoding="utf-8")
+        _ = file_path.write_text("from __future__ import annotations\n", encoding="utf-8")
     discovered = FlextInfraUtilitiesRefactor.iter_python_files(workspace_root=tmp_path)
     assert set(discovered) == set(expected_paths)
 
@@ -253,11 +253,11 @@ def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
 
     project_root = workspace_root / "proj-a"
     project_root.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='proj-a'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (project_root / "src").mkdir(parents=True)
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (project_root / "src").mkdir(parents=True)
 
     discovered = FlextInfraUtilitiesRefactor.discover_project_roots(
         workspace_root=workspace_root
@@ -269,16 +269,16 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     project_root = tmp_path / "sample"
     src_pkg = project_root / "src" / "sample_pkg"
     src_pkg.mkdir(parents=True)
-    (project_root / "pyproject.toml").write_text(
+    _ = (project_root / "pyproject.toml").write_text(
         "[project]\nname='sample'\n", encoding="utf-8"
     )
-    (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    (src_pkg / "__init__.py").write_text("", encoding="utf-8")
-    (src_pkg / "constants.py").write_text(
+    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (src_pkg / "constants.py").write_text(
         "from __future__ import annotations\n\nVALUE = 42\n\nclass SampleConstants:\n    pass\n\nc = SampleConstants\n",
         encoding="utf-8",
     )
-    (src_pkg / "consumer.py").write_text(
+    _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.constants import VALUE\n\nresult = VALUE\n", encoding="utf-8"
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
