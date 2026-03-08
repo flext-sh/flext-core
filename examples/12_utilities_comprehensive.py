@@ -69,7 +69,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Sort dictionary keys for consistent cache keys (DRY)
         sorted_data = u.sort_dict_keys(TEST_DATA)
-        if u.is_type(sorted_data, Mapping):
+        if isinstance(sorted_data, Mapping):
             print(f"✅ Sorted keys: {list(sorted_data.keys())}")
 
         # Clear object cache
@@ -231,7 +231,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Port validation
         port_value = TEST_DATA["port"]
-        if u.is_type(port_value, int):
+        if isinstance(port_value, int):
             port_result = (
                 FlextResult[int].ok(port_value)
                 if 1 <= port_value <= 65535
@@ -327,8 +327,8 @@ def main() -> None:
         utilities = data.get("utilities_demonstrated", [])
         utilities_count = (
             len(utilities)
-            if u.is_type(utilities, Sequence)
-            and not u.is_type(utilities, str | bytes | bytearray)
+            if isinstance(utilities, Sequence)
+            and not isinstance(utilities, (str, bytes, bytearray))
             else 0
         )
         print(f"\n✅ Demonstrated {categories} utility categories")

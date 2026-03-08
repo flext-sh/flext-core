@@ -54,9 +54,9 @@ has_handlers_module.false: False
 bootstrap.create_instance: '_NoArgs'
 cqrs.record_metric: True
 cqrs.get_metrics: 5
-cqrs.push_context.mapping: True
-cqrs.current_context: 'ggoctv'
-cqrs.pop_context: 'ggoctv'
+cqrs.push_context.mapping: False
+cqrs.current_context: '-'
+cqrs.pop_context: '-'
 di.bind_configuration_exists: True
 di.register_object: True
 di.register_factory.cached: True
@@ -73,7 +73,7 @@ protocol.is_handler.true: True
 protocol.is_handler.false: False
 protocol.is_service: True
 protocol.is_command_bus: True
-protocol.validate_known: True
+protocol.validate_known: False
 protocol.validate_unknown: 'Unknown protocol: Unknown. Supported: Handler, Service, CommandBus, Repository, Configurable'
 protocol.validate_processor.good: True
 protocol.validate_processor.bad: None
@@ -95,7 +95,7 @@ mixin.ok: True
 mixin.fail: True
 mixin.ensure_result.value: True
 mixin.ensure_result.result: True
-mixin.to_dict: {'lh': 1}
+mixin.to_dict: ConfigMap
 runtime.generate_id.length: True
 runtime.generate_id.unique: True
 runtime.generate_prefixed_id.default: True

@@ -230,7 +230,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_io_result[U](
         cls,
-        io_result: IOResult[U, str],
+        io_result: IOResult[U, str] | t.ContainerValue,
     ) -> FlextResult[U | IO[U]]:
         """Build result from IOResult by unwrapping value or failure message."""
         unwrap = getattr(io_result, "unwrap", None)

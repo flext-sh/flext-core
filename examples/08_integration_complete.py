@@ -256,14 +256,14 @@ def main() -> None:
         data = result.value
 
         root_data: dict[str, t.ContainerValue] = (
-            data.root if u.is_type(data.root, dict) else {}
+            data.root if isinstance(data.root, dict) else {}
         )
         components = root_data.get("components_integrated", [])
         total = root_data.get("total_components", 0)
         if (
-            u.is_type(components, Sequence)
-            and not u.is_type(components, str | bytes | bytearray)
-            and u.is_type(total, int)
+            isinstance(components, Sequence)
+            and not isinstance(components, (str, bytes, bytearray))
+            and isinstance(total, int)
         ):
             components_list = list(components)
             print(f"\n✅ Integrated {total} components")

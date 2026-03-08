@@ -30,7 +30,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "attrs>=25.4,<26",
+  "attrs>=25.4",
   "beartype>=0.19",
   "cachetools>=5.3",
   "dependency-injector>=4.41",
@@ -48,7 +48,7 @@ dependencies = [
   "structlog>=25.4",
   "tomlkit>=0.13",
   "wrapt>=1.17",
-  "returns (>=0.26)",
+  "returns>=0.26",
 ]
 # [MANAGED] consolidated development dependencies
 # [AUTO] merged from dev/docs/security/test/typings
@@ -259,12 +259,12 @@ known-first-party = [
 
 # [MANAGED] pyright
 [tool.pyright]
+executionEnvironments = [
+  {root = "src", reportPrivateUsage = "error"},
+  {root = "tests", reportPrivateUsage = "none"},
+]
 extraPaths = [
   "src",
-]
-executionEnvironments = [
-  { root = "src", reportPrivateUsage = "error" },
-  { root = "tests", reportPrivateUsage = "none" },
 ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
@@ -290,5 +290,6 @@ section_whitelines = 1
 whitelines = 1
 [dependency-groups]
 dev = [
-  "types-defusedxml (>=0.7.0.20250822,<0.8.0.0)",
+  "types-defusedxml (>=0.7.0.20250822)",
+  "vulture (>=2.15)",
 ]

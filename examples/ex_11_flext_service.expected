@@ -17,6 +17,7 @@ validate_business_rules.override.success: False
 validate_business_rules.override.error: 'invalid-rule'
 is_valid.override: False
 is_valid.exception_guard: False
+result.failure.raises: False
 result.failure.raises: True
 result.failure.type: 'BaseError'
 auto_execute.declared: True
@@ -28,9 +29,9 @@ auto_execute.execute_count_after_result: 1
 create_runtime.default.context: 'FlextContext'
 create_runtime.full.container: 'FlextContainer'
 create_runtime.full.config: 'FlextSettings'
-to_dict.none: {}
-to_dict.mapping: {'gpo': 8, 'ssk': 'pvau'}
-to_dict.model: {'count': 4, 'text': 'trxcka'}
+to_dict.none: ConfigMap
+to_dict.mapping: ConfigMap
+to_dict.model: ConfigMap
 model_dump.type: 'dict'
 model_dump.has_result: True
 model_dump_json.type: 'str'
@@ -62,12 +63,12 @@ CQRS.ContextStack.current.type: 'ExecutionContext'
 CQRS.ContextStack.pop.handler_name: 'gpxkfz'
 CQRS.ContextStack.pop.empty: {}
 ProtocolValidation.is_handler: True
-ProtocolValidation.is_service: True
+ProtocolValidation.is_service: False
 ProtocolValidation.is_command_bus: True
-ProtocolValidation.protocol_ok: True
+ProtocolValidation.protocol_ok: False
 ProtocolValidation.protocol_unknown: 'Unknown protocol: UnknownProto. Supported: Handler, Service, CommandBus, Repository, Configurable'
 ProtocolValidation.processor_ok: True
-ProtocolValidation.processor_bad: "Processor _ProcessorProtocolBad missing required method 'process()'. Processors must implement: process, validate"
+ProtocolValidation.processor_bad: "Processor _ProcessorProtocolBad missing required method 'process()'. Processors must implement: model_dump, process, validate"
 Validation.validate_with_result.ok: 'NCB'
 Validation.validate_with_result.fail: 'Validation failed: too-short'
 

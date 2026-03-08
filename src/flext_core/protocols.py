@@ -651,14 +651,21 @@ class FlextProtocols:
             """Clear all services and factories."""
             ...
 
+        @overload
+        def get[T](
+            self,
+            name: str,
+            *,
+            type_cls: type[T],
+        ) -> r[T]: ...
+
+        @overload
         def get(
             self,
             name: str,
             *,
-            type_cls: type[T] | None = None,
-        ) -> r[t.RegisterableService]:
-            """Get service by name with optional runtime type validation."""
-            ...
+            type_cls: None = None,
+        ) -> r[t.RegisterableService]: ...
 
         def get_config(self) -> FlextModelsContainers.ConfigMap:
             """Return the merged configuration exposed by this container."""
@@ -672,33 +679,13 @@ class FlextProtocols:
             """List all registered services."""
             ...
 
-        @overload
         def register(
             self,
             name: str,
             impl: t.RegisterableService,
             *,
             kind: Literal["service", "factory", "resource"] = "service",
-            _chain: Literal[True],
-        ) -> Self: ...
-
-        @overload
-        def register(
-            self,
-            name: str,
-            impl: t.RegisterableService,
-            *,
-            kind: Literal["service", "factory", "resource"] = "service",
-        ) -> None: ...
-
-        def register(
-            self,
-            name: str,
-            impl: t.RegisterableService,
-            *,
-            kind: Literal["service", "factory", "resource"] = "service",
-            _chain: bool = False,
-        ) -> Self | None:
+        ) -> Self:
             """Register an implementation by kind."""
             ...
 
@@ -887,17 +874,6 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Registrable(BaseProtocol, Protocol):
-        """Protocol for objects that can be registered in FlextRegistry.
-
-        All plugins, providers, and registerable components must satisfy
-        this protocol structurally. Extends BaseProtocol for _protocol_name().
-        """
-
-        # BaseProtocol already provides _protocol_name() -> str
-        # No additional methods needed — BaseProtocol is sufficient
-
-    @runtime_checkable
     class Registry(BaseProtocol, Protocol):
         """Handler registry protocol for CQRS handler registration.
 
@@ -965,10 +941,7 @@ class FlextProtocols:
         def process[TResult](
             self,
             command: t.Scalar,
-            next_handler: FlextProtocols.ResourceOperation[
-                t.Scalar,
-                TResult,
-            ],
+            next_handler: Callable[[t.Scalar], FlextProtocols.Result[TResult]],
         ) -> FlextProtocols.Result[TResult]:
             """Process command."""
             ...
@@ -1217,42 +1190,6 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ResourceFactory[TResource](Protocol):
-        """Protocol for resource factory callables.
-
-        Used in with_resource pattern to create resources.
-        Replaces Callable[[], TResource] for type safety.
-        """
-
-        def __call__(self) -> TResource:
-            """Create and return a resource instance."""
-            ...
-
-    @runtime_checkable
-    class ResourceOperation[TResource, T](Protocol):
-        """Protocol for resource operation callables.
-
-        Used in with_resource pattern to operate on resources.
-        Replaces Callable[[TResource], Result[T]] for type safety.
-        """
-
-        def __call__(self, resource: TResource) -> FlextProtocols.Result[T]:
-            """Execute operation on resource, returning Result."""
-            ...
-
-    @runtime_checkable
-    class ResourceCleanup[TResource](Protocol):
-        """Protocol for resource cleanup callables.
-
-        Used in with_resource pattern for optional cleanup.
-        Replaces Callable[[TResource], None] for type safety.
-        """
-
-        def __call__(self, resource: TResource) -> None:
-            """Clean up the resource."""
-            ...
-
-    @runtime_checkable
     class ValidatorSpec(BaseProtocol, Protocol):
         """Protocol for validator specifications with operator composition.
 
@@ -1382,26 +1319,6 @@ class FlextProtocols:
             ...
 
     # =========================================================================
-    # MAPPER PROTOCOLS (For Collection Operations)
-    # =========================================================================
-
-    @runtime_checkable
-    class SingleValueMapper[T, R](BaseProtocol, Protocol):
-        """Protocol for mappers that transform single values."""
-
-        def __call__(self, value: T) -> R:
-            """Map a single value to a result."""
-            ...
-
-    @runtime_checkable
-    class KeyValueMapper[T, R](BaseProtocol, Protocol):
-        """Protocol for mappers that transform key-value pairs."""
-
-        def __call__(self, key: str, value: T) -> R:
-            """Map a key-value pair to a result."""
-            ...
-
-    # =========================================================================
     # UTILITIES PROTOCOLS
     # =========================================================================
     @runtime_checkable
@@ -1450,7 +1367,6 @@ class FlextProtocols:
         | DI
         | Service[t.ContainerValue]
         | CommandBus
-        | Registrable
     )
 
     # ServiceFactory: Factory callable that returns RegisterableService

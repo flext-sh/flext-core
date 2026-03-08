@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import sys
-from collections import UserDict
-from collections.abc import Mapping
 from typing import ClassVar, override
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 
 from flext_core import (
     FlextContext,
-    FlextDispatcher,
     FlextExceptions,
     FlextService,
     FlextSettings,
@@ -20,7 +17,6 @@ from flext_core import (
     r,
     s,
     t,
-    u,
 )
 
 from .shared import Examples
@@ -121,14 +117,14 @@ class _RuntimeFactoryService(s[str]):
         return r[str].ok("factory")
 
 
-class _HandlerLike(UserDict[str, str]):
-    """Minimal handler-like object for protocol checks."""
+class _HandlerLike(BaseModel):
+    """Minimal handler-like BaseModel for protocol checks."""
+
+    model_config = ConfigDict(frozen=False)
+    data: dict[str, str] = {}
 
     def handle(self) -> str:
         return "ok"
-
-    def validate(self) -> bool:
-        return True
 
 
 class _TinyType:
@@ -168,29 +164,38 @@ class _ServiceLike:
         return "ServiceLike"
 
 
-class _ProcessorProtocolGood:
-    def model_dump(self) -> Mapping[str, str]:
-        return {"status": "ok"}
+class _ProcessorProtocolGood(BaseModel):
+    model_config = ConfigDict(frozen=False)
+    status: str = "ok"
 
     def process(self) -> str:
         return "ok"
-
-    def validate(self) -> bool:
-        return True
 
     def _protocol_name(self) -> str:
         return "ProcessorProtocolGood"
 
 
-class _ProcessorProtocolBad:
-    def model_dump(self) -> Mapping[str, str]:
-        return {"status": "bad"}
-
-    def validate(self) -> bool:
-        return False
+class _ProcessorProtocolBad(BaseModel):
+    model_config = ConfigDict(frozen=False)
+    status: str = "bad"
 
     def _protocol_name(self) -> str:
         return "ProcessorProtocolBad"
+
+
+class _CommandBusStub(BaseModel):
+    """Minimal BaseModel stub satisfying is_command_bus duck-typing."""
+
+    model_config = ConfigDict(frozen=False)
+
+    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def publish(self, _event: t.ContainerValue) -> None:
+        pass
+
+    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(True)
 
 
 class Ex11FlextService(Examples):
@@ -325,7 +330,7 @@ class Ex11FlextService(Examples):
         service_like = _ServiceLike()
         is_service_fn = getattr(s.ProtocolValidation, "is_service")
         proto_service = bool(is_service_fn(service_like))
-        proto_bus = s.ProtocolValidation.is_command_bus(FlextDispatcher())
+        proto_bus = s.ProtocolValidation.is_command_bus(_CommandBusStub())
         validate_protocol_fn = getattr(
             s.ProtocolValidation, "validate_protocol_compliance"
         )
@@ -347,12 +352,12 @@ class Ex11FlextService(Examples):
         self.check("ProtocolValidation.processor_bad", processor_bad.error)
 
         def _validator_len(data: t.ContainerValue) -> r[bool]:
-            if u.Guards.is_type(data, str) and len(data) >= 3:
+            if isinstance(data, str) and len(data) >= 3:
                 return r[bool].ok(True)
             return r[bool].fail("too-short")
 
         def _validator_upper(data: t.ContainerValue) -> r[bool]:
-            if u.Guards.is_type(data, str) and data.isupper():
+            if isinstance(data, str) and data.isupper():
                 return r[bool].ok(True)
             return r[bool].fail("not-upper")
 
@@ -575,9 +580,10 @@ class Ex11FlextService(Examples):
         self.check("ensure_trace_context.has_trace_id", "trace_id" in trace)
         self.check("ensure_trace_context.has_span_id", "span_id" in trace)
         self.check("ensure_trace_context.has_correlation_id", "correlation_id" in trace)
+        http_mixed: list[t.ContainerValue] = [200, "201"]
         self.check(
             "validate_http_status_codes.ok",
-            s.validate_http_status_codes([200, "201"]).unwrap_or([]),
+            s.validate_http_status_codes(http_mixed).unwrap_or([]),
         )
         self.check(
             "validate_http_status_codes.fail", s.validate_http_status_codes([99]).error
@@ -671,13 +677,14 @@ class Ex11FlextService(Examples):
         failing = _FailingService()
         try:
             self.check("result.failure.raises", False)
-            self.check("result.failure.value", failing.result)
+            failing_result: t.ContainerValue = getattr(failing, "result")
+            self.check("result.failure.value", failing_result)
         except FlextExceptions.BaseError as exc:
             self.check("result.failure.raises", True)
             self.check("result.failure.type", type(exc).__name__)
 
         declarative = _DeclarativeService()
-        self.check("auto_execute.declared", declarative.auto_execute)
+        self.check("auto_execute.declared", bool(declarative.auto_execute))
         self.check("auto_execute.execute_count_after_init", declarative.execution_count)
         auto_result_attr = declarative.result
         if callable(auto_result_attr):

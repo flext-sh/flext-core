@@ -4609,16 +4609,16 @@ python-discovery = ">=1"
 
 [[package]]
 name = "vulture"
-version = "2.14"
+version = "2.15"
 description = "Find dead code"
-optional = true
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "extra == \"dev\""
+optional = false
+python-versions = ">=3.9"
+groups = ["main", "dev"]
 files = [
-    {file = "vulture-2.14-py2.py3-none-any.whl", hash = "sha256:d9a90dba89607489548a49d557f8bac8112bd25d3cbc8aeef23e860811bd5ed9"},
-    {file = "vulture-2.14.tar.gz", hash = "sha256:cb8277902a1138deeab796ec5bef7076a6e0248ca3607a3f3dee0b6d9e9b8415"},
+    {file = "vulture-2.15-py3-none-any.whl", hash = "sha256:a3d8ebef918694326620eb128fa783486c8d285b23381c2b457d864ac056ef8d"},
+    {file = "vulture-2.15.tar.gz", hash = "sha256:f9d8b4ce29c69950d323f21dceab4a4d6c694403dffbed7713c4691057e561fe"},
 ]
+markers = {main = "extra == \"dev\""}
 
 [[package]]
 name = "watchdog"
@@ -4773,4 +4773,4 @@ dev = ["autoflake", "bandit", "beartype", "black", "codespell", "deptry", "detec
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "2d0c674ebec7972c3668e0bdd4e821ce6b91955fa18c66f8f27c1aeb66d32874"
+content-hash = "21a3bc8cd34e49d14a02e40bd5c2ad7903e7d969ad185bcf49a6259cf048bece"

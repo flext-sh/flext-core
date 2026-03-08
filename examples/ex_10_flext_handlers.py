@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, override
 
-from flext_core import FlextDispatcher, FlextHandlers, c, e, h, m, r, t, u
+from pydantic import BaseModel, ConfigDict
+
+from flext_core import FlextHandlers, c, e, h, m, r, t
 
 from .shared import Examples
 
@@ -29,7 +32,9 @@ class _NoArgs:
         self.marker = "created"
 
 
-class _ProtocolHandler:
+class _ProtocolHandler(BaseModel):
+    model_config = ConfigDict(frozen=False)
+
     @staticmethod
     def _protocol_name() -> str:
         return "ProtocolHandler"
@@ -37,11 +42,13 @@ class _ProtocolHandler:
     def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         return r[t.ContainerValue].ok(message)
 
-    def validate(self, data: t.ContainerValue) -> r[bool]:
+    def check_data(self, data: t.ContainerValue) -> r[bool]:
         return r[bool].ok(data is not None)
 
 
-class _ServiceStub:
+class _ServiceStub(BaseModel):
+    model_config = ConfigDict(frozen=False)
+
     @property
     def is_valid(self) -> bool:
         return True
@@ -60,6 +67,21 @@ class _ServiceStub:
         return r[bool].ok(True)
 
 
+class _CommandBusStub(BaseModel):
+    """Minimal BaseModel stub satisfying is_command_bus duck-typing."""
+
+    model_config = ConfigDict(frozen=False)
+
+    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def publish(self, event: t.ContainerValue) -> None:
+        pass
+
+    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(True)
+
+
 class _ProcessorGood(m.Value):
     marker: str = "good"
 
@@ -69,10 +91,6 @@ class _ProcessorGood(m.Value):
 
     def process(self) -> str:
         return "ok"
-
-    @override
-    def validate(self) -> bool:
-        return True
 
 
 class _ProcessorBad(m.Value):
@@ -100,7 +118,7 @@ class _DemoHandler(h[t.ContainerValue, str]):
         if message == "explode":
             error_message = "forced boom"
             raise RuntimeError(error_message)
-        if u.is_dict_like(message):
+        if isinstance(message, Mapping):
             return r[str].ok(f"dict:{len(message)}")
         return r[str].ok(f"msg:{message}")
 
@@ -334,7 +352,7 @@ class Ex10FlextHandlers(Examples):
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
-        context_payload_query: dict[str, t.Container] = {
+        context_payload_query: dict[str, t.ContainerValue] = {
             "handler_name": context_name_1,
             "handler_mode": "query",
         }
@@ -342,7 +360,7 @@ class Ex10FlextHandlers(Examples):
             "push_context.mapping",
             handler.push_context(context_payload_query).is_success,
         )
-        context_payload_event: dict[str, t.Container] = {
+        context_payload_event: dict[str, t.ContainerValue] = {
             "handler_name": context_name_2,
             "handler_mode": "event",
         }
@@ -499,7 +517,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "protocol.is_command_bus",
-            h.ProtocolValidation.is_command_bus(FlextDispatcher()),
+            h.ProtocolValidation.is_command_bus(_CommandBusStub()),
         )
         self.check(
             "protocol.validate_known",
@@ -689,16 +707,18 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
 
+        http_mixed: list[t.ContainerValue] = [200, "404"]
         self.check(
             "runtime.validate_http.success",
-            h.validate_http_status_codes([200, "404"]).unwrap_or([]),
+            h.validate_http_status_codes(http_mixed).unwrap_or([]),
         )
         self.check(
             "runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error
         )
+        http_bad_type: list[t.ContainerValue] = [Path("x")]
         self.check(
             "runtime.validate_http.type_fail",
-            h.validate_http_status_codes([Path("x")]).error,
+            h.validate_http_status_codes(http_bad_type).error,
         )
 
         self.check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))

@@ -34,6 +34,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from pydantic import ConfigDict
+
 from flext_core import FlextResult, m, r, t
 
 
@@ -193,6 +195,8 @@ class Examples:
 
     class Handle(m.Value):
         """Tiny model used to exercise ``with_resource``."""
+
+        model_config = ConfigDict(frozen=False)
 
         value: int
         cleaned: bool = False

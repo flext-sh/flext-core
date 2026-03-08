@@ -92,7 +92,7 @@ def demonstrate_enhanced_generic_models() -> None:
     )
 
     check_values = [
-        value for value in health.checks.root.values() if u.is_type(value, bool)
+        value for value in health.checks.root.values() if isinstance(value, bool)
     ]
     total_checks = len(check_values)
     healthy_checks = sum(1 for value in check_values if value)

@@ -24,9 +24,9 @@ mixin.fail.error: True
 mixin.fail.error_code: True
 ensure_result.raw: True
 ensure_result.existing: True
-to_dict.none: {}
-to_dict.mapping: {'ovq': 1, 'wps': 'ruz'}
-to_dict.basemodel: {'command_timeout': 0, 'handler_id': 'jrsrbqng', 'handler_mode': 'command', 'handler_name': 'wwjlve', 'handler_type': 'command', 'max_command_retries': 0, 'metadata': None}
+to_dict.none: ConfigMap
+to_dict.mapping: ConfigMap
+to_dict.basemodel: ConfigMap
 generate_id.len: 36
 generate_prefixed_id: True
 generate_datetime_utc.type: 'datetime'

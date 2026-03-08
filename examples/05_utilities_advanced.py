@@ -138,7 +138,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         map_result: r[Mapping[str, t.ContainerValue]] = r[t.ConfigurationMapping].fail(
             "Invalid data types"
         )
-        if u.is_type(source_value, Mapping) and u.is_type(mapping_value, Mapping):
+        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
             source_dict = {str(k): v for k, v in source_value.items()}
             mapped_dict = u.transform_values(source_dict, str)
             key_mapping_dict: dict[str, str] = {
@@ -218,7 +218,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = model_result.value
             status_value = (
                 user.status.value
-                if not u.is_type(u.guard(user.status, StatusEnum, return_value=True), r)
+                if isinstance(user.status, StatusEnum)
                 else str(user.status)
             )
             print(f"✅ Model from dict: {user.name} ({status_value})")
@@ -234,7 +234,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = kwargs_result.value
             status_value = (
                 user.status.value
-                if not u.is_type(u.guard(user.status, StatusEnum, return_value=True), r)
+                if isinstance(user.status, StatusEnum)
                 else str(user.status)
             )
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
@@ -250,7 +250,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = merge_result.value
             status_value = (
                 user.status.value
-                if not u.is_type(u.guard(user.status, StatusEnum, return_value=True), r)
+                if isinstance(user.status, StatusEnum)
                 else str(user.status)
             )
             print(f"✅ Merged defaults: {user.name} ({status_value})")
@@ -393,9 +393,9 @@ def main() -> None:
         utilities = data.root["utilities_demonstrated"]
         categories = data.root["utility_categories"]
         if (
-            u.is_type(utilities, Sequence)
-            and not u.is_type(utilities, str | bytes | bytearray)
-            and u.is_type(categories, int)
+            isinstance(utilities, Sequence)
+            and not isinstance(utilities, (str, bytes, bytearray))
+            and isinstance(categories, int)
         ):
             utilities_list = list(utilities)
             print(f"\n✅ Demonstrated {categories} utility categories")

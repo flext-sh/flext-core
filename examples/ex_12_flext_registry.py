@@ -73,12 +73,12 @@ class Ex12FlextRegistry(Examples):
         plugin_bad_name = self.rand_str(6)
         plugin_bad_value = self.rand_str(3)
         plugin_missing_name = self.rand_str(6)
-        plugin_unreg_missing = self.rand_str(6)
+        plugin_unreg_missing_name = self.rand_str(6)
         class_ns = f"cls.{self.rand_str(6)}"
         class_plugin_name = self.rand_str(6)
         class_plugin_value = self.rand_str(8)
         class_missing_name = self.rand_str(6)
-        class_unreg_missing = self.rand_str(6)
+        class_unreg_missing_name = self.rand_str(6)
         invalid_error = self.rand_str(7)
         boom_message = self.rand_str(7)
 
@@ -126,7 +126,7 @@ class Ex12FlextRegistry(Examples):
         plugin_list = registry.list_plugins(plugin_ns)
         plugin_unreg_ok = registry.unregister_plugin(plugin_ns, plugin_name_a)
         plugin_unreg_missing = registry.unregister_plugin(
-            plugin_ns, plugin_unreg_missing
+            plugin_ns, plugin_unreg_missing_name
         )
 
         self.check("get_plugin.ok", plugin_get_ok.unwrap_or("") == plugin_value_a)
@@ -156,7 +156,7 @@ class Ex12FlextRegistry(Examples):
             class_ns, class_plugin_name, scope="class"
         )
         class_unreg_missing = registry.unregister_plugin(
-            class_ns, class_unreg_missing, scope="class"
+            class_ns, class_unreg_missing_name, scope="class"
         )
 
         self.check("register_class_plugin.ok", class_ok.is_success)

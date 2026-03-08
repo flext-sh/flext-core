@@ -127,7 +127,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
-            if u.is_type(event_value, UserCreatedEvent):
+            if isinstance(event_value, UserCreatedEvent):
                 print(f"✅ Command dispatched: {event_value.aggregate_id}")
             else:
                 print("✅ Command dispatched successfully")
@@ -170,7 +170,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value
-            if u.is_type(user_data, m.ConfigMap):
+            if isinstance(user_data, m.ConfigMap):
                 print(f"✅ Query dispatched: {user_data.get('name')}")
 
     @staticmethod
@@ -254,10 +254,12 @@ def main() -> None:
         data = result.value
         patterns = (
             data.root.get("patterns_demonstrated")
-            if u.is_type(data.root, dict)
+            if isinstance(data.root, dict)
             else None
         )
-        if u.is_type(patterns, Sequence) and not u.is_type(patterns, str | bytes | bytearray):
+        if isinstance(patterns, Sequence) and not isinstance(
+            patterns, (str, bytes, bytearray)
+        ):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
     else:

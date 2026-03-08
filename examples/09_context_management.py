@@ -189,7 +189,7 @@ class ContextManagementService(
             operation_metadata_raw = FlextContext.Variables.OperationMetadata.get()
             operation_metadata: m.ConfigMap = (
                 operation_metadata_raw
-                if u.is_type(operation_metadata_raw, m.ConfigMap)
+                if isinstance(operation_metadata_raw, m.ConfigMap)
                 else m.ConfigMap(root={})
             )
 
@@ -198,7 +198,7 @@ class ContextManagementService(
                     "operation": operation_name,
                     "start_time": (
                         start_time.isoformat()
-                        if u.is_type(start_time, datetime)
+                        if isinstance(start_time, datetime)
                         else "unknown"
                     ),
                     "metadata": operation_metadata.root,
@@ -379,9 +379,9 @@ def main() -> None:
         features = metadata.get("context_features", ())
 
         def _seq_len(x: object) -> int:
-            if u.is_type(x, Sequence) and not u.is_type(x, str | bytes | bytearray):
+            if isinstance(x, Sequence) and not isinstance(x, (str, bytes, bytearray)):
                 return len(x)
-            if u.is_type(x, Mapping):
+            if isinstance(x, Mapping):
                 return len(x)
             return 0
 

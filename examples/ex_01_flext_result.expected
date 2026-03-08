@@ -2,7 +2,7 @@
 ok.value: 10
 fail.error: 'boom'
 fail.error_code: 'E_DEMO'
-fail.error_data: {'stage': 'factory'}
+fail.error_data: ConfigMap
 safe.success.unwrap_or: 42
 safe.failure.error: "invalid literal for int() with base 10: 'x'"
 create_from_callable.success: 'created'
@@ -22,7 +22,7 @@ prop.success.value: 'value'
 prop.success.result_self: True
 prop.failure.error: 'missing'
 prop.failure.error_code: 'E_PROP'
-prop.failure.error_data: {'x': 1}
+prop.failure.error_data: ConfigMap
 unwrap.success: 'value'
 unwrap.failure.raises: True
 unwrap.failure.type: 'RuntimeError'
@@ -37,8 +37,8 @@ flat_map.success: 10
 flat_map.failure: 'flat failed'
 flat_map_chain.success: 3
 flat_map_chain.failure: True
-bind.success: "AttributeError:'FlextResult' object has no attribute 'bind'"
-bind.failure: "AttributeError:'FlextResult' object has no attribute 'bind'"
+bind.success: 8
+bind.failure: -1
 map_error.success_unchanged: 5
 map_error.failure_changed: 'alt:bad-number'
 map_error.failure_changed: 'mapped:bad-number'

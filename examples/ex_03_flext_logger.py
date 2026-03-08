@@ -176,7 +176,10 @@ class Ex03FlextLogger(Examples):
             "critical.ok",
             adapter.critical("critical value=%s", 7, key="c").is_success,
         )
-        self.check("log.ok", safe.log("INFO", "log value=%s", 8, key="l") is None)
+        self.check(
+            "log.ok",
+            adapter.info("log value=%s", 8, key="l").is_success,
+        )
 
         try:
             boom_msg = "boom"

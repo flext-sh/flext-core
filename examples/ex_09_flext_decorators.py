@@ -186,7 +186,9 @@ class Ex09FlextDecorators(Examples):
         @d.inject(service=self._token_service_name)
         def token_value(*, service: str | None = None) -> str:
             """Resolve token service from container."""
-            return service if u.Guards.is_type(service, str) else "none"
+            if isinstance(service, str):
+                return service
+            return "none"
 
         override_service = self.rand_str(12)
         self.check(
@@ -471,7 +473,7 @@ class Ex09FlextDecorators(Examples):
         self.check("with_correlation.created", corr_id is not None)
         self.check(
             "with_correlation.prefix",
-            u.Guards.is_type(corr_id, str) and corr_id.startswith("corr_"),
+            isinstance(corr_id, str) and corr_id.startswith("corr_"),
         )
 
     def _setup_container(self) -> FlextContainer:

@@ -107,16 +107,23 @@ class Ex01FlextResult(Examples):
 
         from_io_ok = r[int].from_io_result(IOSuccess(11))
         from_io_fail = r[int].from_io_result(IOFailure("x"))
-        from_io_bad = r[int].from_io_result("bad-io-result")
         self.check("from_io_result.success", from_io_ok.is_success)
         self.check("from_io_result.failure", from_io_fail.error)
-        self.check("from_io_result.invalid", from_io_bad.error)
+        self.check(
+            "from_io_result.invalid",
+            r[str].from_io_result("bad-io-result").error,
+        )
 
-        valid_data = {"name": "Ada", "age": 30}
-        invalid_data = {"name": "Ada", "age": "bad"}
+        valid_data: dict[str, t.Scalar] = {"name": "Ada", "age": 30}
+        invalid_data: dict[str, t.Scalar] = {"name": "Ada", "age": "bad"}
+        person_model = Examples.Person
 
-        from_validation_ok = r[self.Person].from_validation(valid_data, self.Person)
-        from_validation_fail = r[self.Person].from_validation(invalid_data, self.Person)
+        from_validation_ok = r[Examples.Person].from_validation(
+            valid_data, person_model
+        )
+        from_validation_fail = r[Examples.Person].from_validation(
+            invalid_data, person_model
+        )
         self.check("from_validation.success", from_validation_ok.is_success)
         self.check("from_validation.failure", from_validation_fail.is_failure)
 
