@@ -15,24 +15,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextResult, FlextSettings
 from tests.test_utils import assertion_helpers
 
 
-@dataclass(frozen=True, slots=True)
-class ResultChainingScenario:
+class ResultChainingScenario(BaseModel):
     """FlextResult chaining test scenario."""
 
-    name: str
-    initial_value: str
-    operations: list[str]
-    expected_success: bool
-    expected_value: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Result chaining scenario name")
+    initial_value: str = Field(description="Initial string value")
+    operations: list[str] = Field(description="Operation names applied in sequence")
+    expected_success: bool = Field(description="Expected success state")
+    expected_value: str | None = Field(
+        default=None, description="Expected resulting value"
+    )
 
 
 class CoverageScenarios:

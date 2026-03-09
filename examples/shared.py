@@ -28,7 +28,7 @@ Usage (inside an ``ex_*.py`` file)::
 
 from __future__ import annotations
 
-import random
+import hashlib
 import string
 import sys
 from datetime import datetime
@@ -55,7 +55,15 @@ class Examples:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
         self._results: list[str] = []
         self._caller = Path(caller_file)
-        self._rng = random.Random(self.SEED)
+        self._counter = 0
+
+    def _next_unit_float(self) -> float:
+        payload = f"{self.SEED}:{self._counter}".encode()
+        digest = hashlib.sha256(payload).digest()
+        self._counter += 1
+        raw = int.from_bytes(digest[:8], byteorder="big", signed=False)
+        max_u64 = (1 << 64) - 1
+        return raw / max_u64
 
     def check(self, label: str, value: t.ContainerValue | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
@@ -68,7 +76,7 @@ class Examples:
 
     def rand_bool(self) -> bool:
         """Return a deterministic pseudo-random boolean."""
-        return bool(self._rng.randint(0, 1))
+        return self._next_unit_float() >= 0.5
 
     def rand_dict(self, n: int = 3) -> m.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys → int values."""
@@ -78,11 +86,13 @@ class Examples:
 
     def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
         """Return a deterministic pseudo-random float rounded to 4 decimals."""
-        return round(self._rng.uniform(lo, hi), 4)
+        span = hi - lo
+        return round(lo + (self._next_unit_float() * span), 4)
 
     def rand_int(self, lo: int = -1000, hi: int = 1000) -> int:
         """Return a deterministic pseudo-random integer in ``[lo, hi]``."""
-        return self._rng.randint(lo, hi)
+        span = (hi - lo) + 1
+        return lo + int(self._next_unit_float() * span)
 
     def rand_person(self) -> Examples.Person:
         """Return a ``Person`` with random name (6 chars) and age (1–99)."""
@@ -90,7 +100,11 @@ class Examples:
 
     def rand_str(self, length: int = 8) -> str:
         """Return a deterministic pseudo-random lowercase ASCII string."""
-        return "".join(self._rng.choices(string.ascii_lowercase, k=length))
+        alphabet = string.ascii_lowercase
+        return "".join(
+            alphabet[int(self._next_unit_float() * len(alphabet)) % len(alphabet)]
+            for _ in range(length)
+        )
 
     def run(self) -> None:
         """Execute exercise → verify lifecycle."""

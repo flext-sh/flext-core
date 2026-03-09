@@ -15,11 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m, t
 
@@ -31,15 +30,16 @@ class _TestConfig(m.CollectionsConfig):
     retries: int = 3
 
 
-@dataclass(frozen=True, slots=True)
-class CategoryOperationScenario:
+class CategoryOperationScenario(BaseModel):
     """Category operation test scenario."""
 
-    name: str
-    category: str
-    entries: list[str]
-    operation: str
-    expected_result: t.ContainerValue
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Category operation scenario name")
+    category: str = Field(description="Category key")
+    entries: list[str] = Field(description="Entries associated with operation")
+    operation: str = Field(description="Category operation name")
+    expected_result: t.ContainerValue = Field(description="Expected operation result")
 
 
 def _scenario_id(scenario: CategoryOperationScenario) -> str:
@@ -50,10 +50,34 @@ class CollectionsScenarios:
     """Centralized collections test scenarios using FlextConstants."""
 
     CATEGORY_OPERATIONS: ClassVar[list[CategoryOperationScenario]] = [
-        CategoryOperationScenario("add_new", "users", ["user1", "user2"], "add", True),
-        CategoryOperationScenario("add_existing", "users", ["user3"], "add", True),
-        CategoryOperationScenario("set_replace", "users", ["user4"], "set", True),
-        CategoryOperationScenario("remove", "users", [], "remove", True),
+        CategoryOperationScenario(
+            name="add_new",
+            category="users",
+            entries=["user1", "user2"],
+            operation="add",
+            expected_result=True,
+        ),
+        CategoryOperationScenario(
+            name="add_existing",
+            category="users",
+            entries=["user3"],
+            operation="add",
+            expected_result=True,
+        ),
+        CategoryOperationScenario(
+            name="set_replace",
+            category="users",
+            entries=["user4"],
+            operation="set",
+            expected_result=True,
+        ),
+        CategoryOperationScenario(
+            name="remove",
+            category="users",
+            entries=[],
+            operation="remove",
+            expected_result=True,
+        ),
     ]
 
 

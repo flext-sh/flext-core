@@ -86,21 +86,25 @@ class HandlerScenarios:
 
     HANDLER_TYPES: ClassVar[list[HandlerTypeScenario]] = [
         HandlerTypeScenario(
-            "command",
-            c.Cqrs.HandlerType.COMMAND,
-            c.Cqrs.HandlerType.COMMAND,
+            name="command",
+            handler_type=c.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.Cqrs.HandlerType.COMMAND,
         ),
         HandlerTypeScenario(
-            "query",
-            c.Cqrs.HandlerType.QUERY,
-            c.Cqrs.HandlerType.QUERY,
+            name="query",
+            handler_type=c.Cqrs.HandlerType.QUERY,
+            handler_mode=c.Cqrs.HandlerType.QUERY,
         ),
         HandlerTypeScenario(
-            "event",
-            c.Cqrs.HandlerType.EVENT,
-            c.Cqrs.HandlerType.EVENT,
+            name="event",
+            handler_type=c.Cqrs.HandlerType.EVENT,
+            handler_mode=c.Cqrs.HandlerType.EVENT,
         ),
-        HandlerTypeScenario("saga", c.Cqrs.HandlerType.SAGA, c.Cqrs.HandlerType.SAGA),
+        HandlerTypeScenario(
+            name="saga",
+            handler_type=c.Cqrs.HandlerType.SAGA,
+            handler_mode=c.Cqrs.HandlerType.SAGA,
+        ),
     ]
     VALIDATION_TYPES: ClassVar[list[tuple[str, object]]] = [
         ("str", "test_message"),

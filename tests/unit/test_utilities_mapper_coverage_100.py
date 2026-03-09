@@ -13,9 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from dataclasses import dataclass
 
 import pytest
+from pydantic import BaseModel, Field
 
 from flext_core import m, t, u
 from tests.test_utils import assertion_helpers
@@ -23,12 +23,11 @@ from tests.test_utils import assertion_helpers
 from ._models import ComplexModel
 
 
-@dataclass
-class SimpleObj:
+class SimpleObj(BaseModel):
     """Simple test object."""
 
-    name: str
-    value: int
+    name: str = Field(description="Simple object name")
+    value: int = Field(description="Simple object value")
 
 
 class TestuMapperExtract:

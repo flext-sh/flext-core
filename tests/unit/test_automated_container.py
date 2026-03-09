@@ -68,9 +68,9 @@ class TestAutomatedFlextContainer:
             result = self._execute_container_operation(instance, test_scenario.input)
             if test_scenario.expected_success:
                 assert result.is_success, f"Expected success but got failure: {result}"
-        except Exception as e:
-            if not test_scenario.expected_success:
-                assert True, f"Expected failure and got exception: {e}"
+        except Exception:
+            if test_scenario.expected_success:
+                raise
 
     def test_automated_container_type_safety(self) -> None:
         """Test type safety compliance for container."""

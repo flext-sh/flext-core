@@ -61,6 +61,20 @@ def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
     return str(value)
 
 
+def _as_object_dict(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
+
+
+def _as_int_list(value: object) -> list[int] | None:
+    if not isinstance(value, list):
+        return None
+    if not all(isinstance(item, int) for item in value):
+        return None
+    return [item for item in value if isinstance(item, int)]
+
+
 def mark_test_pattern(
     pattern: str,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
@@ -295,10 +309,13 @@ class AssertionBuilder:
         assert item in self._data
         return self
 
-    def satisfies(self, predicate: object, message: str = "") -> AssertionBuilder:
+    def satisfies(
+        self,
+        predicate: Callable[[object], bool],
+        message: str = "",
+    ) -> AssertionBuilder:
         """Assert that the data satisfies the given predicate."""
-        if callable(predicate):
-            assert predicate(self._data), message
+        assert predicate(self._data), message
         return self
 
     def assert_all(self) -> None:
@@ -594,9 +611,9 @@ class TestAdvancedPatterns:
 
         def check_all_strings(x: object) -> bool:
             """Check if all items in a list are strings."""
-            if not isinstance(x, list):
+            values = _as_object_dict({"items": x}).get("items")
+            if not isinstance(values, list):
                 return False
-            values: list[object] = x
             return all(isinstance(item, str) for item in values)
 
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
@@ -611,22 +628,21 @@ class TestAdvancedPatterns:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: object) -> object:
-            if isinstance(data, dict) and "numbers" in data:
-                numbers = data["numbers"]
-                if isinstance(numbers, list) and all(
-                    isinstance(n, int) for n in numbers
-                ):
+            payload = _as_object_dict(data)
+            if "numbers" in payload:
+                numbers = _as_int_list(payload["numbers"])
+                if numbers is not None:
                     typed_numbers: list[int] = numbers
                     return sum(typed_numbers)
             return 0
 
         def assert_result(result: object, original_data: object) -> None:
             assert result == 15
-            if isinstance(original_data, dict) and "numbers" in original_data:
-                numbers = original_data["numbers"]
-                if isinstance(numbers, list):
-                    typed_numbers: list[object] = numbers
-                    assert len(typed_numbers) == 5
+            payload = _as_object_dict(original_data)
+            if "numbers" in payload:
+                numbers = _as_int_list(payload["numbers"])
+                if numbers is not None:
+                    assert len(numbers) == 5
 
         @arrange_act_assert(arrange_data, act_on_data, assert_result)
         def test_sum_calculation() -> None:
@@ -720,22 +736,17 @@ class TestRealWorldScenarios:
 
             def check_status_success(x: object) -> bool:
                 """Check if status is success."""
-                if not isinstance(x, dict):
-                    return False
-                payload: dict[str, object] = x
+                payload = _as_object_dict(x)
                 return payload.get("status") == "success"
 
             def check_correlation_id(x: object) -> bool:
                 """Check if correlation_id exists."""
-                if not isinstance(x, dict):
-                    return False
-                return "correlation_id" in x
+                payload = _as_object_dict(x)
+                return "correlation_id" in payload
 
             def check_valid_method(x: object) -> bool:
                 """Check if method is valid HTTP method."""
-                if not isinstance(x, dict):
-                    return False
-                payload: dict[str, object] = x
+                payload = _as_object_dict(x)
                 method = payload.get("method")
                 return isinstance(method, str) and method in {
                     "GET",

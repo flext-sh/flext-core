@@ -18,12 +18,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from flext_core import FlextExceptions, c, m, p, t, u
 
@@ -88,12 +87,11 @@ class StrictOptionsForTest(m.Value):
     value: int = Field(ge=0, le=100)
 
 
-@dataclass
-class DataclassConfigForTest:
+class DataclassConfigForTest(BaseModel):
     """Test dataclass configuration."""
 
-    name: str
-    value: int = 42
+    name: str = Field(description="Config object name")
+    value: int = Field(default=42, description="Config object value")
 
 
 class SingletonWithoutGetGlobalForTest:

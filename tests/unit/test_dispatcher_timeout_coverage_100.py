@@ -16,23 +16,26 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._dispatcher.timeout import TimeoutEnforcer
 
 
-@dataclass(frozen=True, slots=True)
-class TimeoutEnforcerScenario:
+class TimeoutEnforcerScenario(BaseModel):
     """TimeoutEnforcer test scenario."""
 
-    name: str
-    use_timeout_executor: bool
-    executor_workers: int
-    expected_workers: int
-    should_use_executor: bool
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Timeout enforcer scenario name")
+    use_timeout_executor: bool = Field(
+        description="Whether timeout executor is enabled"
+    )
+    executor_workers: int = Field(description="Configured executor worker count")
+    expected_workers: int = Field(description="Expected resolved worker count")
+    should_use_executor: bool = Field(description="Expected executor usage flag")
 
 
 class TimeoutEnforcerScenarios:

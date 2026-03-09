@@ -21,11 +21,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, override
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m, r, s, t
 from flext_tests import FlextTestsUtilities, u
@@ -41,14 +41,18 @@ class ServiceScenarioType(StrEnum):
     EXCEPTION = "exception"
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceScenario:
+class ServiceScenario(BaseModel):
     """Service test scenario definition."""
 
-    name: str
-    scenario_type: ServiceScenarioType
-    is_valid_expected: bool
-    service_kwargs: Mapping[str, t.Scalar] | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Service scenario name")
+    scenario_type: ServiceScenarioType = Field(description="Service scenario type")
+    is_valid_expected: bool = Field(description="Expected is_valid result")
+    service_kwargs: Mapping[str, t.Scalar] | None = Field(
+        default=None,
+        description="Optional scenario service kwargs",
+    )
 
 
 class UserService(s[m.ConfigMap]):

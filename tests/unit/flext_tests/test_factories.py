@@ -263,14 +263,7 @@ class TestFlextTestsFactoriesModernAPI:
     def test_batch_users_default(self) -> None:
         """Test tt.batch('user') with default count."""
         users_result = tt.batch("user")
-        if isinstance(users_result, list):
-            users = users_result
-        elif isinstance(users_result, r):
-            users = users_result.value
-            assert isinstance(users, list)
-        else:
-            msg = f"Expected list, got {type(users_result)}"
-            raise AssertionError(msg)
+        users = users_result
         users_typed: list[m.Tests.Factory.User] = [
             u for u in users if isinstance(u, m.Tests.Factory.User)
         ]

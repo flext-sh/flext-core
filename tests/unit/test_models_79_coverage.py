@@ -9,48 +9,45 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from decimal import Decimal
 from typing import override
+
+from pydantic import BaseModel, Field
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
 from tests.test_utils import assertion_helpers
 
 
-@dataclass
-class CreateUserCommand:
-    user_id: str
-    name: str
-    email: str
+class CreateUserCommand(BaseModel):
+    user_id: str = Field(description="User identifier for create command")
+    name: str = Field(description="User display name for create command")
+    email: str = Field(description="User email for create command")
 
 
-@dataclass
-class FindUserQuery:
-    user_id: str
+class FindUserQuery(BaseModel):
+    user_id: str = Field(description="User identifier for lookup query")
 
 
-@dataclass
-class OptionalFieldCommand:
-    required_field: str
-    optional_field: str | None = None
+class OptionalFieldCommand(BaseModel):
+    required_field: str = Field(description="Required command field")
+    optional_field: str | None = Field(
+        default=None, description="Optional command field"
+    )
 
 
-@dataclass
-class PagedQuery:
-    page: int
-    page_size: int
+class PagedQuery(BaseModel):
+    page: int = Field(description="Requested page number")
+    page_size: int = Field(description="Requested page size")
 
 
-@dataclass
-class CreateUserCmd:
-    user_id: str
-    name: str
+class CreateUserCmd(BaseModel):
+    user_id: str = Field(description="User identifier for integration command")
+    name: str = Field(description="User name for integration command")
 
 
-@dataclass
-class GetUserQuery:
-    user_id: str
+class GetUserQuery(BaseModel):
+    user_id: str = Field(description="User identifier for integration query")
 
 
 class TestFlextModelsEntity:
@@ -59,11 +56,10 @@ class TestFlextModelsEntity:
     def test_entity_creation_basic(self) -> None:
         """Test basic entity creation."""
 
-        @dataclass
-        class User:
-            unique_id: str
-            name: str
-            email: str
+        class User(BaseModel):
+            unique_id: str = Field(description="Unique identifier for test user")
+            name: str = Field(description="User name for entity test")
+            email: str = Field(description="User email for entity test")
 
         user = User(unique_id="user-1", name="Alice", email="alice@example.com")
         assert user.unique_id == "user-1"
@@ -73,10 +69,9 @@ class TestFlextModelsEntity:
     def test_entity_equality(self) -> None:
         """Test entity equality based on ID."""
 
-        @dataclass
-        class User:
-            unique_id: str
-            name: str
+        class User(BaseModel):
+            unique_id: str = Field(description="Unique identifier for equality test")
+            name: str = Field(description="User name for equality test")
 
             @override
             def __eq__(self, other: object) -> bool:
@@ -107,9 +102,8 @@ class TestFlextModelsValue:
     def test_value_object_creation(self) -> None:
         """Test value object creation."""
 
-        @dataclass
-        class Email:
-            address: str
+        class Email(BaseModel):
+            address: str = Field(description="Email address for value object test")
 
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
@@ -120,10 +114,9 @@ class TestFlextModelsValue:
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
 
-        @dataclass
-        class Price:
-            amount: Decimal
-            currency: str
+        class Price(BaseModel):
+            amount: Decimal = Field(description="Price amount for value object test")
+            currency: str = Field(description="Currency code for value object test")
 
         price = Price(amount=Decimal("10.00"), currency="USD")
         assert price.amount == Decimal("10.00")
@@ -136,11 +129,10 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
 
-        @dataclass
-        class Account:
-            unique_id: str
-            owner_name: str
-            balance: Decimal
+        class Account(BaseModel):
+            unique_id: str = Field(description="Unique account identifier")
+            owner_name: str = Field(description="Account owner name")
+            balance: Decimal = Field(description="Account balance")
 
         account = Account(
             unique_id="acc-1",
@@ -251,16 +243,14 @@ class TestFlextModelsEdgeCases:
     def test_entity_with_complex_types(self) -> None:
         """Test entity with complex nested types."""
 
-        @dataclass
-        class Address:
-            street: str
-            city: str
+        class Address(BaseModel):
+            street: str = Field(description="Street for nested entity test")
+            city: str = Field(description="City for nested entity test")
 
-        @dataclass
-        class Person:
-            unique_id: str
-            name: str
-            address: Address
+        class Person(BaseModel):
+            unique_id: str = Field(description="Unique person identifier")
+            name: str = Field(description="Person name")
+            address: Address = Field(description="Person address")
 
         addr = Address(street="123 Main", city="Springfield")
         person = Person(unique_id="p-1", name="Homer", address=addr)
@@ -269,14 +259,12 @@ class TestFlextModelsEdgeCases:
     def test_aggregate_root_with_nested_entities(self) -> None:
         """Test aggregate root containing multiple entities."""
 
-        @dataclass
-        class Item:
-            quantity: int
+        class Item(BaseModel):
+            quantity: int = Field(description="Item quantity for cart test")
 
-        @dataclass
-        class ShoppingCart:
-            unique_id: str
-            customer_id: str
+        class ShoppingCart(BaseModel):
+            unique_id: str = Field(description="Unique shopping cart identifier")
+            customer_id: str = Field(description="Customer identifier for cart")
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
         assert cart.customer_id == "cust-1"

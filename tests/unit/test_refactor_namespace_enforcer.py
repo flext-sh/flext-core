@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra.refactor.namespace_enforcer import FlextInfraNamespaceEnforcer
+from flext_infra.refactor.namespace_enforcer import (
+    FlextInfraNamespaceEnforcer,
+    NamespaceEnforcementModels,
+)
 
 
 def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
@@ -21,10 +24,12 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from flext_core.constants import System\n"
-        "from flext_infra.constants import Infra\n"
-        "\n"
-        "VALUE = 1\n",
+        "\n".join([
+            "from flext_core.constants import System",
+            "from flext_infra.constants import Infra",
+            "",
+            "VALUE = 1",
+        ]),
         encoding="utf-8",
     )
 
@@ -59,10 +64,13 @@ def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from __future__ import annotations\n"
-        "from typing import TypeAlias\n\n"
-        "PayloadMap: TypeAlias = dict[str, str]\n"
-        "LegacyResult = ModernResult\n",
+        "\n".join([
+            "from __future__ import annotations",
+            "from typing import TypeAlias",
+            "",
+            "PayloadMap: TypeAlias = dict[str, str]",
+            "LegacyResult = ModernResult",
+        ]),
         encoding="utf-8",
     )
 
@@ -88,11 +96,14 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from __future__ import annotations\n"
-        "from typing import Protocol\n\n"
-        "class ServiceContract(Protocol):\n"
-        "    def run(self) -> str:\n"
-        "        ...\n",
+        "\n".join([
+            "from __future__ import annotations",
+            "from typing import Protocol",
+            "",
+            "class ServiceContract(Protocol):",
+            "    def run(self) -> str:",
+            "        ...",
+        ]),
         encoding="utf-8",
     )
 
@@ -101,9 +112,14 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     )
 
     assert report.total_manual_protocol_violations == 1
-    project_report = report.projects[0]
-    assert len(project_report.manual_protocol_violations) == 1
-    violation = project_report.manual_protocol_violations[0]
+    project_report: NamespaceEnforcementModels.ProjectEnforcementReport = (
+        report.projects[0]
+    )
+    violations: list[NamespaceEnforcementModels.ManualProtocolViolation] = (
+        project_report.manual_protocol_violations
+    )
+    assert len(violations) == 1
+    violation: NamespaceEnforcementModels.ManualProtocolViolation = violations[0]
     assert violation.name == "ServiceContract"
     rendered = FlextInfraNamespaceEnforcer.render_text(report)
     assert "Manual protocols: 1" in rendered
@@ -121,11 +137,14 @@ def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> 
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from __future__ import annotations\n"
-        "from flext_core._utilities.guards import FlextUtilitiesGuards\n"
-        "from sample_pkg.protocols import _InternalContract\n\n"
-        "_ = FlextUtilitiesGuards\n"
-        "_ = _InternalContract\n",
+        "\n".join([
+            "from __future__ import annotations",
+            "from flext_core._utilities.guards import FlextUtilitiesGuards",
+            "from sample_pkg.protocols import _InternalContract",
+            "",
+            "_ = FlextUtilitiesGuards",
+            "_ = _InternalContract",
+        ]),
         encoding="utf-8",
     )
 
@@ -153,14 +172,18 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     service_file = pkg / "service.py"
     _ = service_file.write_text(
-        "from __future__ import annotations\n"
-        "from typing import Protocol\n\n"
-        "class ServiceContract(Protocol):\n"
-        "    def run(self) -> str:\n"
-        "        ...\n\n"
-        "class ServiceImpl:\n"
-        "    def run(self) -> str:\n"
-        "        return 'ok'\n",
+        "\n".join([
+            "from __future__ import annotations",
+            "from typing import Protocol",
+            "",
+            "class ServiceContract(Protocol):",
+            "    def run(self) -> str:",
+            "        ...",
+            "",
+            "class ServiceImpl:",
+            "    def run(self) -> str:",
+            "        return 'ok'",
+        ]),
         encoding="utf-8",
     )
 

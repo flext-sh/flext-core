@@ -16,24 +16,30 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextExceptions, FlextResult, c, t
 from tests.test_utils import assertion_helpers
 
 
-@dataclass(frozen=True, slots=True)
-class ExceptionCreationScenario:
+class ExceptionCreationScenario(BaseModel):
     """Exception creation test scenario."""
 
-    name: str
-    exception_type: type[FlextExceptions.BaseError]
-    message: str
-    kwargs: dict[str, t.ContainerValue | type]
-    expected_attrs: dict[str, t.ContainerValue | type]
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Exception creation scenario name")
+    exception_type: type[FlextExceptions.BaseError] = Field(
+        description="Exception class to instantiate"
+    )
+    message: str = Field(description="Exception message")
+    kwargs: dict[str, t.ContainerValue | type] = Field(
+        description="Keyword arguments for exception creation"
+    )
+    expected_attrs: dict[str, t.ContainerValue | type] = Field(
+        description="Expected attributes to validate"
+    )
 
 
 class ExceptionScenarios:
@@ -41,124 +47,127 @@ class ExceptionScenarios:
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
-            "validation_basic",
-            FlextExceptions.ValidationError,
-            "Invalid input",
-            {},
-            {},
+            name="validation_basic",
+            exception_type=FlextExceptions.ValidationError,
+            message="Invalid input",
+            kwargs={},
+            expected_attrs={},
         ),
         ExceptionCreationScenario(
-            "validation_with_field",
-            FlextExceptions.ValidationError,
-            "Email invalid",
-            {"field": "email", "value": "not-an-email"},
-            {"field": "email", "value": "not-an-email"},
+            name="validation_with_field",
+            exception_type=FlextExceptions.ValidationError,
+            message="Email invalid",
+            kwargs={"field": "email", "value": "not-an-email"},
+            expected_attrs={"field": "email", "value": "not-an-email"},
         ),
         ExceptionCreationScenario(
-            "configuration_basic",
-            FlextExceptions.ConfigurationError,
-            "Missing required field",
-            {},
-            {},
+            name="configuration_basic",
+            exception_type=FlextExceptions.ConfigurationError,
+            message="Missing required field",
+            kwargs={},
+            expected_attrs={},
         ),
         ExceptionCreationScenario(
-            "configuration_with_source",
-            FlextExceptions.ConfigurationError,
-            "Missing API key",
-            {"config_key": "API_KEY", "config_source": "environment"},
-            {"config_key": "API_KEY", "config_source": "environment"},
+            name="configuration_with_source",
+            exception_type=FlextExceptions.ConfigurationError,
+            message="Missing API key",
+            kwargs={"config_key": "API_KEY", "config_source": "environment"},
+            expected_attrs={"config_key": "API_KEY", "config_source": "environment"},
         ),
         ExceptionCreationScenario(
-            "connection",
-            FlextExceptions.ConnectionError,
-            "Failed to connect",
-            {"host": "db.example.com", "port": 5432, "timeout": 30.0},
-            {"host": "db.example.com", "port": 5432},
+            name="connection",
+            exception_type=FlextExceptions.ConnectionError,
+            message="Failed to connect",
+            kwargs={"host": "db.example.com", "port": 5432, "timeout": 30.0},
+            expected_attrs={"host": "db.example.com", "port": 5432},
         ),
         ExceptionCreationScenario(
-            "timeout",
-            FlextExceptions.TimeoutError,
-            "Operation timed out",
-            {"timeout_seconds": 30, "operation": "fetch_data"},
-            {"timeout_seconds": 30, "operation": "fetch_data"},
+            name="timeout",
+            exception_type=FlextExceptions.TimeoutError,
+            message="Operation timed out",
+            kwargs={"timeout_seconds": 30, "operation": "fetch_data"},
+            expected_attrs={"timeout_seconds": 30, "operation": "fetch_data"},
         ),
         ExceptionCreationScenario(
-            "authentication",
-            FlextExceptions.AuthenticationError,
-            "Invalid credentials",
-            {"auth_method": "basic", "user_id": "user123"},
-            {"auth_method": "basic", "user_id": "user123"},
+            name="authentication",
+            exception_type=FlextExceptions.AuthenticationError,
+            message="Invalid credentials",
+            kwargs={"auth_method": "basic", "user_id": "user123"},
+            expected_attrs={"auth_method": "basic", "user_id": "user123"},
         ),
         ExceptionCreationScenario(
-            "authorization",
-            FlextExceptions.AuthorizationError,
-            "User lacks permission",
-            {
+            name="authorization",
+            exception_type=FlextExceptions.AuthorizationError,
+            message="User lacks permission",
+            kwargs={
                 "user_id": "user123",
                 "resource": "REDACTED_LDAP_BIND_PASSWORD_panel",
                 "permission": "read",
             },
-            {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel"},
+            expected_attrs={
+                "user_id": "user123",
+                "resource": "REDACTED_LDAP_BIND_PASSWORD_panel",
+            },
         ),
         ExceptionCreationScenario(
-            "not_found",
-            FlextExceptions.NotFoundError,
-            "User not found",
-            {"resource_type": "User", "resource_id": "123"},
-            {"resource_type": "User", "resource_id": "123"},
+            name="not_found",
+            exception_type=FlextExceptions.NotFoundError,
+            message="User not found",
+            kwargs={"resource_type": "User", "resource_id": "123"},
+            expected_attrs={"resource_type": "User", "resource_id": "123"},
         ),
         ExceptionCreationScenario(
-            "conflict",
-            FlextExceptions.ConflictError,
-            "User already exists",
-            {
+            name="conflict",
+            exception_type=FlextExceptions.ConflictError,
+            message="User already exists",
+            kwargs={
                 "resource_type": "User",
                 "resource_id": "user@example.com",
                 "conflict_reason": "email_already_registered",
             },
-            {"resource_type": "User", "resource_id": "user@example.com"},
+            expected_attrs={"resource_type": "User", "resource_id": "user@example.com"},
         ),
         ExceptionCreationScenario(
-            "rate_limit",
-            FlextExceptions.RateLimitError,
-            "Too many requests",
-            {"limit": 100, "window_seconds": 60, "retry_after": 30},
-            {"limit": 100, "window_seconds": 60},
+            name="rate_limit",
+            exception_type=FlextExceptions.RateLimitError,
+            message="Too many requests",
+            kwargs={"limit": 100, "window_seconds": 60, "retry_after": 30},
+            expected_attrs={"limit": 100, "window_seconds": 60},
         ),
         ExceptionCreationScenario(
-            "circuit_breaker",
-            FlextExceptions.CircuitBreakerError,
-            "Circuit breaker is open",
-            {
+            name="circuit_breaker",
+            exception_type=FlextExceptions.CircuitBreakerError,
+            message="Circuit breaker is open",
+            kwargs={
                 "service_name": "payment_service",
                 "failure_count": 5,
                 "reset_timeout": 60,
             },
-            {"service_name": "payment_service", "failure_count": 5},
+            expected_attrs={"service_name": "payment_service", "failure_count": 5},
         ),
         ExceptionCreationScenario(
-            "type_error",
-            FlextExceptions.TypeError,
-            "Expected string, got int",
-            {"expected_type": str, "actual_type": int},
-            {"expected_type": str, "actual_type": int},
+            name="type_error",
+            exception_type=FlextExceptions.TypeError,
+            message="Expected string, got int",
+            kwargs={"expected_type": str, "actual_type": int},
+            expected_attrs={"expected_type": str, "actual_type": int},
         ),
         ExceptionCreationScenario(
-            "operation_error",
-            FlextExceptions.OperationError,
-            "Database operation failed",
-            {"operation": "INSERT", "reason": "Constraint violation"},
-            {"operation": "INSERT", "reason": "Constraint violation"},
+            name="operation_error",
+            exception_type=FlextExceptions.OperationError,
+            message="Database operation failed",
+            kwargs={"operation": "INSERT", "reason": "Constraint violation"},
+            expected_attrs={"operation": "INSERT", "reason": "Constraint violation"},
         ),
         ExceptionCreationScenario(
-            "attribute_access",
-            FlextExceptions.AttributeAccessError,
-            "Attribute not found",
-            {
+            name="attribute_access",
+            exception_type=FlextExceptions.AttributeAccessError,
+            message="Attribute not found",
+            kwargs={
                 "attribute_name": "missing_field",
                 "attribute_context": {"class": "User", "attempted_access": "read"},
             },
-            {"attribute_name": "missing_field"},
+            expected_attrs={"attribute_name": "missing_field"},
         ),
     ]
     FACTORY_CREATION: ClassVar[

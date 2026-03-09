@@ -93,3 +93,26 @@ class _ProcessorProtocolBad(BaseModel):
 
     def _protocol_name(self) -> str:
         return "ProcessorProtocolBad"
+
+
+def get_example_instances() -> tuple[
+    _ProtocolHandler,
+    _ServiceStub,
+    _CommandBusStub,
+    _Payload,
+    _HandlerLike,
+    _EntityStub,
+    _ProcessorProtocolGood,
+    _ProcessorProtocolBad,
+]:
+    """Return one instance of each example model for tests/docs that need them."""
+    return (
+        _ProtocolHandler(),
+        _ServiceStub(),
+        _CommandBusStub(),
+        _Payload(text="example", count=1),
+        _HandlerLike(),
+        _EntityStub(unique_id="example-entity"),
+        _ProcessorProtocolGood(),
+        _ProcessorProtocolBad(),
+    )

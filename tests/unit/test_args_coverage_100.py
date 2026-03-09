@@ -16,11 +16,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated, Final, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
 from flext_tests import p, t, u
@@ -70,26 +70,41 @@ class TestFlextUtilitiesArgs:
             VALIDATION: Final[str] = "validation"
             INTERNAL_ERROR: Final[str] = "Internal error"
 
-    @dataclass(frozen=True, slots=True)
-    class ParseKwargsScenario:
+    class ParseKwargsScenario(BaseModel):
         """Parse kwargs test scenario."""
 
-        name: str
-        kwargs: dict[str, t.ContainerValue]
-        enum_fields: dict[str, type[StrEnum]]
-        expected_success: bool
-        expected_status: TestFlextUtilitiesArgs.StatusEnum | None = None
-        expected_error: str | None = None
+        model_config = ConfigDict(frozen=True)
+        name: str = Field(description="Parse kwargs scenario name")
+        kwargs: dict[str, t.ContainerValue] = Field(
+            description="Keyword arguments input payload"
+        )
+        enum_fields: dict[str, type[StrEnum]] = Field(
+            description="Enum fields map for conversion"
+        )
+        expected_success: bool = Field(description="Whether parsing should succeed")
+        expected_status: TestFlextUtilitiesArgs.StatusEnum | None = Field(
+            default=None,
+            description="Expected parsed status enum",
+        )
+        expected_error: str | None = Field(
+            default=None, description="Expected error message fragment"
+        )
 
-    @dataclass(frozen=True, slots=True)
-    class ValidatedScenario:
+    class ValidatedScenario(BaseModel):
         """Validated decorator test scenario."""
 
-        name: str
-        input_value: str | TestFlextUtilitiesArgs.StatusEnum
-        expected_success: bool
-        expected_result: str | None = None
-        expected_error: str | None = None
+        model_config = ConfigDict(frozen=True)
+        name: str = Field(description="Validated decorator scenario name")
+        input_value: str | TestFlextUtilitiesArgs.StatusEnum = Field(
+            description="Input status value"
+        )
+        expected_success: bool = Field(description="Whether validation should succeed")
+        expected_result: str | None = Field(
+            default=None, description="Expected validated result value"
+        )
+        expected_error: str | None = Field(
+            default=None, description="Expected error message fragment"
+        )
 
     class Scenarios:
         """Centralized test scenarios."""

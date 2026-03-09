@@ -20,7 +20,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import dataclasses
 import logging
 from collections.abc import Callable
 from enum import StrEnum
@@ -30,6 +29,7 @@ from typing import ClassVar, cast, override
 import pytest
 import structlog
 from dependency_injector import containers, providers
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
     FlextContainer,
@@ -94,15 +94,25 @@ class RuntimeOperationType(StrEnum):
     SETUP_SERVICE_WITHOUT_CORRELATION = "setup_service_without_correlation"
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class RuntimeTestCase:
+class RuntimeTestCase(BaseModel):
     """Runtime test case definition with parametrization data."""
 
-    name: str
-    operation: RuntimeOperationType
-    test_input: t.ContainerValue | type[object] | None = None
-    expected_result: bool | tuple[object, ...] | object = None
-    should_reset_config: bool = False
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Runtime test case name")
+    operation: RuntimeOperationType = Field(description="Runtime operation type")
+    test_input: t.ContainerValue | type[object] | None = Field(
+        default=None,
+        description="Optional test input",
+    )
+    expected_result: bool | tuple[object, ...] | object = Field(
+        default=None,
+        description="Expected operation result",
+    )
+    should_reset_config: bool = Field(
+        default=False,
+        description="Whether structlog config should be reset before test",
+    )
 
 
 class RuntimeScenarios:

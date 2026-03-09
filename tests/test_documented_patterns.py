@@ -21,10 +21,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from dataclasses import dataclass, field
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
     FlextContainer,
@@ -40,39 +40,54 @@ from tests.test_utils import assertion_helpers
 from ._models import EmailResponse
 
 
-@dataclass
-class User:
+class User(BaseModel):
     """User domain model."""
 
-    unique_id: str
-    name: str
-    email: str
-    active: bool = True
+    unique_id: str = Field(description="Unique user identifier")
+    name: str = Field(description="User display name")
+    email: str = Field(description="User email address")
+    active: bool = Field(default=True, description="Whether user is active")
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceTestCase:
+class ServiceTestCase(BaseModel):
     """Factory for service test cases to reduce duplication."""
 
-    user_id: str
-    expected_success: bool = True
-    expected_error: str | None = None
-    description: str = field(default="", compare=False)
+    model_config = ConfigDict(frozen=True)
+
+    user_id: str = Field(description="User identifier for test case")
+    expected_success: bool = Field(
+        default=True, description="Whether service call is expected to succeed"
+    )
+    expected_error: str | None = Field(
+        default=None, description="Expected error substring for failure cases"
+    )
+    description: str = Field(
+        default="", description="Human-readable test case description"
+    )
 
     def create_user_service(self) -> GetUserService:
         """Create GetUserService instance for this test case."""
         return _make(GetUserService, user_id=self.user_id)
 
 
-@dataclass(frozen=True, slots=True)
-class RailwayTestCase:
+class RailwayTestCase(BaseModel):
     """Factory for railway pattern test cases."""
 
-    user_ids: list[str]
-    operations: list[str] = field(default_factory=list)
-    expected_pipeline_length: int = 1
-    should_fail_at: int | None = None
-    description: str = field(default="", compare=False)
+    model_config = ConfigDict(frozen=True)
+
+    user_ids: list[str] = Field(description="User identifiers used in pipeline")
+    operations: list[str] = Field(
+        default_factory=list, description="Pipeline operations to execute"
+    )
+    expected_pipeline_length: int = Field(
+        default=1, description="Expected number of pipeline stages"
+    )
+    should_fail_at: int | None = Field(
+        default=None, description="Optional pipeline step expected to fail"
+    )
+    description: str = Field(
+        default="", description="Human-readable railway test case description"
+    )
 
     def execute_v1_pipeline(self) -> FlextResult[str | User | EmailResponse]:
         """Execute V1 railway pipeline for this test case."""

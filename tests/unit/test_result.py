@@ -20,11 +20,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import c, m, p, r
 from flext_tests import t, u
@@ -48,15 +48,21 @@ class ResultOperationType(StrEnum):
     RAILWAY_COMPOSITION = "railway_composition"
 
 
-@dataclass(frozen=True, slots=True)
-class ResultScenario:
+class ResultScenario(BaseModel):
     """Generic result scenario for r tests."""
 
-    name: str
-    operation_type: ResultOperationType
-    value: t.ContainerValue
-    is_success_expected: bool = True
-    expected_result: t.ContainerValue | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Result scenario name")
+    operation_type: ResultOperationType = Field(description="Result operation type")
+    value: t.ContainerValue = Field(description="Input value for result operation")
+    is_success_expected: bool = Field(
+        default=True, description="Expected success state"
+    )
+    expected_result: t.ContainerValue | None = Field(
+        default=None,
+        description="Optional expected result payload",
+    )
 
 
 class ResultScenarios:

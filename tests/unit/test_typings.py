@@ -15,12 +15,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
 from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
@@ -39,14 +41,18 @@ class TypeVarCategory(StrEnum):
     CQRS = "cqrs"
 
 
-@dataclass(frozen=True, slots=True)
-class TypeVarTestCase:
+class TypeVarTestCase(BaseModel):
     """TypeVar test case definition."""
 
-    name: str
-    category: TypeVarCategory
-    type_var: object
-    expected_not_none: bool = True
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Type variable test case name")
+    category: TypeVarCategory = Field(description="Type variable category")
+    type_var: object = Field(description="Type variable object under test")
+    expected_not_none: bool = Field(
+        default=True,
+        description="Whether object is expected to be non-none",
+    )
 
 
 class TypeScenarios:

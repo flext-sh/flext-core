@@ -68,14 +68,13 @@ from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
 from flext_core._models.containers import FlextModelsContainers
+from flext_core._runtime_metadata import Metadata
 
 
 class _LazyMetadata:
     """Descriptor for lazy-loading Metadata class."""
 
     def __get__(self, obj: object, objtype: type | None = None) -> type:
-        from flext_core._runtime_metadata import Metadata
-
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
         return Metadata
 

@@ -24,12 +24,11 @@ from __future__ import annotations
 import json
 import threading
 from collections.abc import Callable
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core import c, m, t
 from flext_core._models.domain_event import _ComparableConfigMap
@@ -49,14 +48,15 @@ class ModelType(StrEnum):
     PAYLOAD = "payload"
 
 
-@dataclass(frozen=True, slots=True)
-class ModelCreationScenario:
+class ModelCreationScenario(BaseModel):
     """Scenario for testing model creation."""
 
-    model_type: ModelType
-    field_data: dict[str, t.ContainerValue]
-    expected_checks: list[str]
-    description: str = ""
+    model_config = ConfigDict(frozen=True)
+
+    model_type: ModelType = Field(description="Model type under creation test")
+    field_data: dict[str, t.ContainerValue] = Field(description="Model input payload")
+    expected_checks: list[str] = Field(description="Expected validation check labels")
+    description: str = Field(default="", description="Scenario description")
 
 
 class SampleAggregate(m.AggregateRoot):

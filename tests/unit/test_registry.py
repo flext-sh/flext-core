@@ -22,11 +22,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry, c, h, m, p, r, t
 from flext_tests import FlextTestsUtilities, u
@@ -45,19 +45,31 @@ class RegistryOperationType(StrEnum):
     ERROR_HANDLING = "error_handling"
 
 
-@dataclass(frozen=True, slots=True)
-class RegistryTestCase:
+class RegistryTestCase(BaseModel):
     """Registry test case definition with parametrization data."""
 
-    name: str
-    operation: RegistryOperationType
-    handler_count: int = 1
-    should_succeed: bool = True
-    error_pattern: str | None = None
-    with_bindings: bool = False
-    with_function_map: bool = False
-    with_summary: bool = False
-    duplicate_registration: bool = False
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Registry test case name")
+    operation: RegistryOperationType = Field(description="Registry operation type")
+    handler_count: int = Field(default=1, description="Number of handlers to generate")
+    should_succeed: bool = Field(default=True, description="Expected operation success")
+    error_pattern: str | None = Field(
+        default=None,
+        description="Expected error message pattern",
+    )
+    with_bindings: bool = Field(
+        default=False, description="Whether bindings are included"
+    )
+    with_function_map: bool = Field(
+        default=False,
+        description="Whether function map is included",
+    )
+    with_summary: bool = Field(default=False, description="Whether summary is included")
+    duplicate_registration: bool = Field(
+        default=False,
+        description="Whether registration is intentionally duplicated",
+    )
 
 
 class ConcreteTestHandler(h[t.ContainerValue, t.ContainerValue]):

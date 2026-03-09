@@ -20,7 +20,7 @@ import math
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t, u
 

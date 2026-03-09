@@ -9,7 +9,7 @@ from _models.base to maintain proper architecture layering.
 
 from __future__ import annotations
 
-from flext_core.models import m
+from flext_core._models.base import FlextModelFoundation
 
-Metadata = m.Metadata
+Metadata = FlextModelFoundation.Metadata
 __all__ = ["Metadata"]

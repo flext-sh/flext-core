@@ -174,19 +174,19 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (src_pkg / "protocols.py").write_text(
         "from __future__ import annotations\n"
-         "from typing import Protocol\n\n"
-         "class SampleProtocols:\n"
-         "    pass\n\n"
-         "class GreeterProtocol(Protocol):\n"
-         "    def greet(self) -> str:\n"
-         "        ...\n\n"
-         "p = SampleProtocols\n",
+        "from typing import Protocol\n\n"
+        "class SampleProtocols:\n"
+        "    pass\n\n"
+        "class GreeterProtocol(Protocol):\n"
+        "    def greet(self) -> str:\n"
+        "        ...\n\n"
+        "p = SampleProtocols\n",
         encoding="utf-8",
     )
     _ = (src_pkg / "consumer.py").write_text(
         "from sample_pkg.protocols import GreeterProtocol\n\n"
-         "def call_greet(protocol: GreeterProtocol) -> str:\n"
-         "    return protocol.greet()\n",
+        "def call_greet(protocol: GreeterProtocol) -> str:\n"
+        "    return protocol.greet()\n",
         encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(

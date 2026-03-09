@@ -2,12 +2,58 @@ from __future__ import annotations
 
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels
 
 
-def _empty_model_list() -> list[BaseModel]:
+def _empty_facade_statuses() -> list[NamespaceFacadeStatus]:
+    return []
+
+
+def _empty_loose_objects() -> list[NamespaceLooseObjectViolation]:
+    return []
+
+
+def _empty_import_violations() -> list[NamespaceImportAliasViolation]:
+    return []
+
+
+def _empty_internal_import_violations() -> list[NamespaceInternalImportViolation]:
+    return []
+
+
+def _empty_manual_protocol_violations() -> list[NamespaceManualProtocolViolation]:
+    return []
+
+
+def _empty_cyclic_imports() -> list[NamespaceCyclicImportViolation]:
+    return []
+
+
+def _empty_runtime_alias_violations() -> list[NamespaceRuntimeAliasViolation]:
+    return []
+
+
+def _empty_future_violations() -> list[NamespaceFutureAnnotationsViolation]:
+    return []
+
+
+def _empty_manual_typing_violations() -> list[NamespaceManualTypingAliasViolation]:
+    return []
+
+
+def _empty_compatibility_alias_violations() -> list[
+    NamespaceCompatibilityAliasViolation
+]:
+    return []
+
+
+def _empty_parse_failures() -> list[NamespaceParseFailureViolation]:
+    return []
+
+
+def _empty_project_reports() -> list[NamespaceProjectEnforcementReport]:
     return []
 
 
@@ -232,31 +278,41 @@ class NamespaceParseFailureViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
     project: str = Field(min_length=1)
     project_root: str = Field()
-    facade_statuses: list[BaseModel] = Field(default_factory=_empty_model_list)
-    loose_objects: list[BaseModel] = Field(default_factory=_empty_model_list)
-    import_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    facade_statuses: list["NamespaceFacadeStatus"] = Field(
+        default_factory=_empty_facade_statuses,
     )
-    internal_import_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    loose_objects: list["NamespaceLooseObjectViolation"] = Field(
+        default_factory=_empty_loose_objects,
     )
-    manual_protocol_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    import_violations: list["NamespaceImportAliasViolation"] = Field(
+        default_factory=_empty_import_violations,
     )
-    cyclic_imports: list[BaseModel] = Field(default_factory=_empty_model_list)
-    runtime_alias_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    internal_import_violations: list["NamespaceInternalImportViolation"] = Field(
+        default_factory=_empty_internal_import_violations,
     )
-    future_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    manual_protocol_violations: list["NamespaceManualProtocolViolation"] = Field(
+        default_factory=_empty_manual_protocol_violations,
     )
-    manual_typing_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    cyclic_imports: list["NamespaceCyclicImportViolation"] = Field(
+        default_factory=_empty_cyclic_imports,
     )
-    compatibility_alias_violations: list[BaseModel] = Field(
-        default_factory=_empty_model_list,
+    runtime_alias_violations: list["NamespaceRuntimeAliasViolation"] = Field(
+        default_factory=_empty_runtime_alias_violations,
     )
-    parse_failures: list[BaseModel] = Field(default_factory=_empty_model_list)
+    future_violations: list["NamespaceFutureAnnotationsViolation"] = Field(
+        default_factory=_empty_future_violations,
+    )
+    manual_typing_violations: list["NamespaceManualTypingAliasViolation"] = Field(
+        default_factory=_empty_manual_typing_violations,
+    )
+    compatibility_alias_violations: list["NamespaceCompatibilityAliasViolation"] = (
+        Field(
+            default_factory=_empty_compatibility_alias_violations,
+        )
+    )
+    parse_failures: list["NamespaceParseFailureViolation"] = Field(
+        default_factory=_empty_parse_failures,
+    )
     files_scanned: int = Field(default=0, ge=0)
 
     @classmethod
@@ -298,7 +354,9 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
 
 class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
     workspace: str = Field(min_length=1)
-    projects: list[BaseModel] = Field(default_factory=_empty_model_list)
+    projects: list["NamespaceProjectEnforcementReport"] = Field(
+        default_factory=_empty_project_reports,
+    )
     total_facades_missing: int = Field(default=0, ge=0)
     total_loose_objects: int = Field(default=0, ge=0)
     total_import_violations: int = Field(default=0, ge=0)

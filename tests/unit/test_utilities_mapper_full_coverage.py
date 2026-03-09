@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
 from pathlib import Path
-from typing import cast, override
+from typing import Protocol, cast, override
 
 import pytest
 from pydantic import BaseModel, Field
@@ -20,14 +20,38 @@ class _PortModel(BaseModel):
     nested: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
 
+class _AtCallable(Protocol):
+    def __call__(
+        self,
+        items: object,
+        index: int | str,
+        *,
+        default: object = None,
+    ) -> object: ...
+
+
+class _ExtractFieldCallable(Protocol):
+    def __call__(self, item: object, field_name: str) -> object: ...
+
+
+class _BuildFlagsCallable(Protocol):
+    def __call__(
+        self,
+        active_flags: object,
+        flag_mapping: Mapping[str, str],
+    ) -> r[Mapping[str, bool]]: ...
+
+
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
     """Call Mapper.at with arbitrary object for error-path testing."""
-    return u.Mapper.at(items, index, default)
+    fn: _AtCallable = getattr(u.Mapper, "at")
+    return fn(items, index, default=default)
 
 
 def _extract_field_obj(item: object, field_name: str) -> object:
     """Call _extract_field_value with arbitrary object for testing."""
-    return u.Mapper._extract_field_value(item, field_name)
+    fn: _ExtractFieldCallable = getattr(u.Mapper, "_extract_field_value")
+    return fn(item, field_name)
 
 
 def _build_flags_obj(
@@ -35,7 +59,8 @@ def _build_flags_obj(
     flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
-    return u.Mapper.build_flags_dict(active_flags, flag_mapping)
+    fn: _BuildFlagsCallable = getattr(u.Mapper, "build_flags_dict")
+    return fn(active_flags, flag_mapping)
 
 
 class AttrObject(BaseModel):
