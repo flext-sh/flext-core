@@ -133,7 +133,7 @@ class TestFlextInfraInitLazyLoading:
         assert u is not None
 
     def test_lazy_import_command_runner(self) -> None:
-        """Test lazy loading of FlextInfraCommandRunner."""
+        """Test lazy loading of FlextInfraUtilitiesSubprocess."""
         runner = flext_infra.FlextInfraUtilitiesSubprocess
         assert runner is not None
 

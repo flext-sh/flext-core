@@ -232,7 +232,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 return_value=mock_deps,
             ):
                 with patch(
-                    "flext_infra.deps.detector.FlextInfraCommandRunner",
+                    "flext_infra.deps.detector.FlextInfraUtilitiesSubprocess",
                     return_value=mock_runner,
                 ):
                     with patch("pathlib.Path.exists", return_value=True):
@@ -286,7 +286,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 return_value=mock_deps,
             ):
                 with patch(
-                    "flext_infra.deps.detector.FlextInfraCommandRunner",
+                    "flext_infra.deps.detector.FlextInfraUtilitiesSubprocess",
                     return_value=mock_runner,
                 ):
                     with patch("pathlib.Path.exists", return_value=True):
@@ -340,7 +340,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 return_value=mock_deps,
             ):
                 with patch(
-                    "flext_infra.deps.detector.FlextInfraCommandRunner",
+                    "flext_infra.deps.detector.FlextInfraUtilitiesSubprocess",
                     return_value=mock_runner,
                 ):
                     with patch("pathlib.Path.exists", return_value=True):
@@ -396,7 +396,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 return_value=mock_deps,
             ):
                 with patch(
-                    "flext_infra.deps.detector.FlextInfraCommandRunner",
+                    "flext_infra.deps.detector.FlextInfraUtilitiesSubprocess",
                     return_value=mock_runner,
                 ):
                     with patch("pathlib.Path.exists", return_value=True):
@@ -442,7 +442,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 return_value=mock_deps,
             ):
                 with patch(
-                    "flext_infra.deps.detector.FlextInfraJsonService",
+                    "flext_infra.deps.detector.FlextInfraUtilitiesIo",
                     return_value=mock_json,
                 ):
                     with patch("pathlib.Path.exists", return_value=True):
@@ -698,7 +698,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 return_value=mock_deps,
             ):
                 with patch(
-                    "flext_infra.deps.detector.FlextInfraJsonService",
+                    "flext_infra.deps.detector.FlextInfraUtilitiesIo",
                     return_value=mock_json,
                 ):
                     with patch(

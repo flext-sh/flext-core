@@ -1059,7 +1059,6 @@ if TYPE_CHECKING:
         TestInfraOutputProgress,
         TestInfraOutputStatus,
         TestInfraOutputSummary,
-        TestModuleSingleton,
         TestShouldUseColor,
         TestShouldUseUnicode,
     )
@@ -7624,7 +7623,6 @@ __all__ = [
     "TestModernizerEdgeCases",
     "TestModernizerUncoveredLines",
     "TestModuleLevelWrappers",
-    "TestModuleSingleton",
     "TestModuleToTypesPackage",
     "TestMonadicOperationsUnchanged",
     "TestMypyEmptyLineSkipping",

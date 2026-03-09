@@ -977,10 +977,10 @@ class_nesting:
     target_name: FlextInfraProjectSelector
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: FlextInfraCommandRunner
+  - loose_name: FlextInfraUtilitiesSubprocess
     current_file: flext-core/src/flext_infra/subprocess.py
     target_namespace: FlextSubprocess
-    target_name: FlextInfraCommandRunner
+    target_name: FlextInfraUtilitiesSubprocess
     confidence: low
     reason: top_level_class_without_namespace_prefix
   - loose_name: FlextInfraTemplateEngine

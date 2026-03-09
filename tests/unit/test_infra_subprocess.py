@@ -1,4 +1,4 @@
-"""Tests for FlextInfraCommandRunner.
+"""Tests for FlextInfraUtilitiesSubprocess.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,7 +14,7 @@ from flext_infra import FlextInfraUtilitiesSubprocess, m
 
 
 class TestFlextInfraCommandRunner:
-    """Test suite for FlextInfraCommandRunner."""
+    """Test suite for FlextInfraUtilitiesSubprocess."""
 
     def test_run_raw_success(self) -> None:
         """Test successful raw command execution."""

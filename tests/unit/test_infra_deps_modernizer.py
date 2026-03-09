@@ -753,7 +753,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject.write_text("[project]\nname = 'test'")
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch(
-            "flext_infra.deps.modernizer.FlextInfraCommandRunner.run_raw",
+            "flext_infra.deps.modernizer.FlextInfraUtilitiesSubprocess.run_raw",
         ) as mock_run:
             mock_result = Mock()
             mock_result.is_failure = False
@@ -768,7 +768,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject.write_text("[project]\nname = 'test'")
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch(
-            "flext_infra.deps.modernizer.FlextInfraCommandRunner.run_raw",
+            "flext_infra.deps.modernizer.FlextInfraUtilitiesSubprocess.run_raw",
         ) as mock_run:
             mock_result = Mock()
             mock_result.is_failure = True
@@ -782,7 +782,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject.write_text("[project]\nname = 'test'")
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         with patch(
-            "flext_infra.deps.modernizer.FlextInfraCommandRunner.run_raw",
+            "flext_infra.deps.modernizer.FlextInfraUtilitiesSubprocess.run_raw",
         ) as mock_run:
             mock_result = Mock()
             mock_result.is_failure = False

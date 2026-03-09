@@ -4157,16 +4157,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: FlextInfraCommandRunner
+    source_symbol: FlextInfraUtilitiesSubprocess
     target_facade_class: FlextSubprocess
-    target_namespace_path: FlextSubprocess.FlextInfraCommandRunner
+    target_namespace_path: FlextSubprocess.FlextInfraUtilitiesSubprocess
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: FlextInfraCommandRunner
+          symbol: FlextInfraUtilitiesSubprocess
       - type: target_facade_exists
         params:
           facade: FlextSubprocess

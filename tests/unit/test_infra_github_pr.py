@@ -480,9 +480,9 @@ class TestMainFunction:
                 head="feature",
                 number="",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.status.return_value = r[dict[str, object]].ok({
                 "status": "open",
@@ -505,9 +505,9 @@ class TestMainFunction:
                 head="feature",
                 number="",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.status.return_value = r[dict[str, object]].fail("error")
             mock_cls.return_value = mock_manager
@@ -531,9 +531,9 @@ class TestMainFunction:
                 body="",
                 draft=0,
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.create.return_value = r[dict[str, object]].ok({
                 "status": "created",
@@ -556,9 +556,9 @@ class TestMainFunction:
                 head="feature",
                 number="42",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.view.return_value = r[str].ok("PR view output")
             mock_cls.return_value = mock_manager
@@ -580,9 +580,9 @@ class TestMainFunction:
                 number="42",
                 checks_strict=0,
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.checks.return_value = r[dict[str, object]].ok({
                 "status": "checks-passed",
@@ -609,9 +609,9 @@ class TestMainFunction:
                 delete_branch=0,
                 release_on_merge=1,
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.merge.return_value = r[dict[str, object]].ok({
                 "status": "merged",
@@ -634,9 +634,9 @@ class TestMainFunction:
                 head="feature",
                 number="42",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.close.return_value = r[bool].ok(True)
             mock_cls.return_value = mock_manager
@@ -657,9 +657,9 @@ class TestMainFunction:
                 head="feature",
                 number="42",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.close.return_value = r[bool].fail("close failed")
             mock_cls.return_value = mock_manager
@@ -680,9 +680,9 @@ class TestMainFunction:
                 head="feature",
                 number="42",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.view.return_value = r[str].fail("not found")
             mock_cls.return_value = mock_manager
@@ -704,9 +704,9 @@ class TestMainFunction:
                 number="42",
                 checks_strict=1,
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.checks.return_value = r[dict[str, object]].fail(
                 "checks failed",
@@ -732,9 +732,9 @@ class TestMainFunction:
                 body="",
                 draft=0,
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.create.return_value = r[dict[str, object]].fail(
                 "create failed",
@@ -761,9 +761,9 @@ class TestMainFunction:
                 delete_branch=0,
                 release_on_merge=0,
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_manager.merge.return_value = r[dict[str, object]].fail("merge failed")
             mock_cls.return_value = mock_manager
@@ -851,9 +851,9 @@ class TestParseArgs:
                 head="feature",
                 number="",
             )
-            mock_git = Mock()
-            mock_git.current_branch.return_value = r[str].ok("feature")
-            mock_git_cls.return_value = mock_git
+            # git mock removed (static via u.Infra)
+            mock_u.Infra.git_current_branch.return_value = r[str].ok("feature")
+            # git is now static via u.Infra
             mock_manager = Mock()
             mock_cls.return_value = mock_manager
             with pytest.raises(RuntimeError, match="unknown action"):

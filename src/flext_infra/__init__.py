@@ -612,7 +612,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
-    "FlextInfraCommandRunner": (
+    "FlextInfraUtilitiesSubprocess": (
         "flext_infra._utilities.subprocess",
         "FlextInfraUtilitiesSubprocess",
     ),
@@ -645,10 +645,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraUtilitiesSelection": (
         "flext_infra._utilities.selection",
         "FlextInfraUtilitiesSelection",
-    ),
-    "FlextInfraUtilitiesSubprocess": (
-        "flext_infra._utilities.subprocess",
-        "FlextInfraUtilitiesSubprocess",
     ),
     "FlextInfraUtilitiesTemplates": (
         "flext_infra._utilities.templates",

@@ -289,7 +289,7 @@ class TestFlextInfraReleaseOrchestrator:
         """Test phase_validate runs make validate command."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraCommandRunner",
+            "flext_infra.release.orchestrator.FlextInfraUtilitiesSubprocess",
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             mock_runner.run_checked.return_value = r[bool].ok(True)
@@ -393,7 +393,7 @@ class TestFlextInfraReleaseOrchestrator:
             mock_rep_inst = mock_rep.return_value
             mock_rep_inst.get_report_dir.return_value = workspace_root / "reports"
             with patch(
-                "flext_infra.release.orchestrator.FlextInfraCommandRunner",
+                "flext_infra.release.orchestrator.FlextInfraUtilitiesSubprocess",
             ) as mock_runner_cls:
                 mock_runner = mock_runner_cls.return_value
                 output_model = FlextInfraModels.Infra.Core.CommandOutput(
@@ -548,7 +548,7 @@ class TestFlextInfraReleaseOrchestrator:
     def test_run_make_success(self, workspace_root: Path) -> None:
         """Test _run_make returns exit code and output."""
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraCommandRunner",
+            "flext_infra.release.orchestrator.FlextInfraUtilitiesSubprocess",
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             output_model = FlextInfraModels.Infra.Core.CommandOutput(
@@ -567,7 +567,7 @@ class TestFlextInfraReleaseOrchestrator:
     def test_run_make_failure(self, workspace_root: Path) -> None:
         """Test _run_make handles command failure."""
         with patch(
-            "flext_infra.release.orchestrator.FlextInfraCommandRunner",
+            "flext_infra.release.orchestrator.FlextInfraUtilitiesSubprocess",
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             mock_runner.run_raw.return_value = r[tuple[int, str]].fail("command failed")

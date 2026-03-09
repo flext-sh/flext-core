@@ -1230,7 +1230,7 @@ class TestWorkspaceCheckerRunCommand:
         """Test _run returns command output on success."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         with patch(
-            "flext_infra.check.workspace_check.FlextInfraCommandRunner.run_raw",
+            "flext_infra.check.workspace_check.FlextInfraUtilitiesSubprocess.run_raw",
         ) as mock_run:
             mock_run.return_value = r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0),
@@ -1243,7 +1243,7 @@ class TestWorkspaceCheckerRunCommand:
         """Test _run handles command execution failure."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         with patch(
-            "flext_infra.check.workspace_check.FlextInfraCommandRunner.run_raw",
+            "flext_infra.check.workspace_check.FlextInfraUtilitiesSubprocess.run_raw",
         ) as mock_run:
             mock_run.return_value = r[m.Infra.Core.CommandOutput].fail(
                 "execution failed",
