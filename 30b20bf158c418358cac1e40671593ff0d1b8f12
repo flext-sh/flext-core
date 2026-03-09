@@ -1,0 +1,25 @@
+src/flext_infra/codegen/_utilities.py
+  3749a8bac945c0b1 381,417
+src/flext_infra/_utilities/output.py
+  3749a8bac945c0b1 193-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.9",
+  "base_commit_sha": "30b20bf158c418358cac1e40671593ff0d1b8f12",
+  "prompts": {
+    "3749a8bac945c0b1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32cab98baffeL563kgxc0CdLpy",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 127,
+      "total_deletions": 118,
+      "accepted_lines": 117,
+      "overriden_lines": 0
+    }
+  }
+}
