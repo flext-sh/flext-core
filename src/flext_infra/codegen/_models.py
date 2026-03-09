@@ -45,7 +45,8 @@ class FlextInfraCodegenModels:
 
         project: str = Field(min_length=1, description="Project name")
         files_created: list[str] = Field(
-            default_factory=list, description="Newly created file paths",
+            default_factory=list,
+            description="Newly created file paths",
         )
         files_skipped: list[str] = Field(
             default_factory=list,
@@ -65,7 +66,8 @@ class FlextInfraCodegenModels:
             description="Skipped violations (not auto-fixable)",
         )
         files_modified: list[str] = Field(
-            default_factory=list, description="Modified file paths",
+            default_factory=list,
+            description="Modified file paths",
         )
 
     class CodegenPipelineResult(FlextModels.ArbitraryTypesModel):
@@ -82,6 +84,28 @@ class FlextInfraCodegenModels:
         )
         census_after: FlextInfraCodegenModels.CensusReport = Field(
             description="Census report after transformations",
+        )
+
+    class QualityGateCheck(FlextModels.ArbitraryTypesModel):
+        """A single quality gate check result entry."""
+
+        name: str = Field(min_length=1, description="Check identifier")
+        passed: bool = Field(description="Whether check passed")
+        detail: str = Field(default="", description="Human-readable check detail")
+        critical: bool = Field(description="Whether failure is critical")
+
+    class QualityGateProjectFinding(FlextModels.ArbitraryTypesModel):
+        """Per-project quality gate findings."""
+
+        project: str = Field(min_length=1, description="Project name")
+        violations_total: int = Field(ge=0, description="Total violations")
+        fixable_violations: int = Field(ge=0, description="Auto-fixable violations")
+        validator_passed: bool = Field(description="Whether validator passed")
+        mro_failures: int = Field(ge=0, description="MRO failure count")
+        layer_violations: int = Field(ge=0, description="Layer violation count")
+        cross_project_reference_violations: int = Field(
+            ge=0,
+            description="Cross-project reference violation count",
         )
 
 

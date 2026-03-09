@@ -41,7 +41,7 @@ class FlextInfraCodegenConstants:
     )
     "Base module definitions for tests/: (filename, class_suffix, base_class, docstring)."
     VIOLATION_PATTERN: Final[re.Pattern[str]] = re.compile(
-        "\\[(?P<rule>NS-\\d{3})-\\d{3}\\]\\s+(?P<module>[^:]+):(?P<line>\\d+)\\s+\\u2014\\s+(?P<message>.+)",
+        r"\[(?P<rule>NS-\d{3})-\d{3}\]\s+(?P<module>[^:]+):(?P<line>\d+)\s+\u2014\s+(?P<message>.+)",
     )
     "Regex to parse violation strings: [NS-00X-NNN] path:line — message."
     ALIAS_TO_SUFFIX: Final[dict[str, str]] = {
@@ -75,3 +75,18 @@ class FlextInfraCodegenConstants:
     "Stdlib modules to skip in lazy-init import derivation."
     MAX_LINE_LENGTH: Final[int] = 88
     "Maximum line length for generated import lines."
+
+    class QualityGate:
+        """Constants used by constants quality gate analysis/reporting."""
+
+        REPORT_DIR: Final[str] = ".reports/codegen/constants-quality-gate"
+        PASS_VERDICTS: Final[tuple[str, ...]] = ("PASS", "CONDITIONAL_PASS")
+        RULE_KEYS: Final[tuple[str, ...]] = ("NS-000", "NS-001", "NS-002")
+        CHECK_NAMESPACE_COMPLIANCE: Final[str] = "namespace_compliance"
+        CHECK_MRO_VALIDITY: Final[str] = "mro_validity"
+        CHECK_IMPORT_RESOLUTION: Final[str] = "import_resolution"
+        CHECK_LAYER_COMPLIANCE: Final[str] = "layer_compliance"
+        CHECK_DUPLICATION_REDUCTION: Final[str] = "duplication_reduction"
+        CHECK_TYPE_SAFETY: Final[str] = "type_safety"
+        CHECK_LINT_CLEAN: Final[str] = "lint_clean"
+        CHECK_BASELINE_LOAD: Final[str] = "baseline_load"
