@@ -237,7 +237,7 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
         encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    _ = (project_root / ".git").mkdir(parents=True)
+    (project_root / ".git").mkdir(parents=True)
     expected_paths = [
         project_root / "src" / "sample_pkg" / "module.py",
         project_root / "tests" / "test_module.py",
@@ -264,7 +264,7 @@ def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    _ = (project_root / "src").mkdir(parents=True)
+    (project_root / "src").mkdir(parents=True)
 
     discovered = FlextInfraUtilitiesRefactor.discover_project_roots(
         workspace_root=workspace_root,

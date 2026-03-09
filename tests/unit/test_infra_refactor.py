@@ -571,7 +571,7 @@ def test_engine_always_enables_class_nesting_file_rule(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     engine = FlextInfraRefactorEngine(config_path=config_path)
-    _ = engine.set_rule_filters(["custom-import-rule"])
+    engine.set_rule_filters(["custom-import-rule"])
     result = engine.load_rules()
     assert result.is_success
     assert len(engine.file_rules) == 1

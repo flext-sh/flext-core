@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import operator
 
-import pytest
-
 from flext_tests import FlextTestsDomains, u
 
 
@@ -58,7 +56,9 @@ class TestFlextTestsDomains:
         assert isinstance(payload, dict)
         assert "order_id" in payload
         assert "user_id" in payload
-        assert payload["amount"] == pytest.approx(99.99)
+        amount = payload["amount"]
+        assert isinstance(amount, float)
+        assert abs(amount - 99.99) < 1e-9
         assert payload["currency"] == "USD"
         assert payload["status"] == "pending"
 

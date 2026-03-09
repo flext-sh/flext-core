@@ -153,8 +153,7 @@ class TestServiceResultProperty:
         raw_user_v2 = service1.result
         user_v2_raw = raw_user_v2() if callable(raw_user_v2) else raw_user_v2
         assert isinstance(user_v2_raw, User)
-        raw_user_v1 = service2.execute().value
-        user_v1_raw = raw_user_v1() if callable(raw_user_v1) else raw_user_v1
+        user_v1_raw = service2.execute().value
         assert isinstance(user_v1_raw, User)
         user_v2 = user_v2_raw
         user_v1 = user_v1_raw
