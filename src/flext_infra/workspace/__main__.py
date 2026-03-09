@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-from flext_infra._utilities.output import output
+from flext_infra import u
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
@@ -29,7 +29,7 @@ def _run_detect(args: argparse.Namespace) -> int:
     result = detector.detect(args.project_root)
     if result.is_success:
         return 0
-    output.error(result.error or "detection failed")
+    u.Infra.error(result.error or "detection failed")
     return 1
 
 
@@ -39,7 +39,7 @@ def _run_sync(args: argparse.Namespace) -> int:
     result = service.sync(project_root=args.project_root)
     if result.is_success:
         return 0
-    output.error(result.error or "sync failed")
+    u.Infra.error(result.error or "sync failed")
     return 1
 
 
@@ -47,7 +47,7 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
     """Execute multi-project orchestration."""
     projects = [p for p in args.projects if p]
     if not projects:
-        output.error("no projects specified")
+        u.Infra.error("no projects specified")
         return 1
     service = FlextInfraOrchestratorService()
     result = service.orchestrate(
@@ -60,7 +60,7 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
         outputs = result.value
         failures = [o for o in outputs if o.exit_code != 0]
         return max((o.exit_code for o in failures), default=0)
-    output.error(result.error or "orchestration failed")
+    u.Infra.error(result.error or "orchestration failed")
     return 1
 
 
@@ -68,16 +68,24 @@ def _run_migrate(args: argparse.Namespace) -> int:
     service = FlextInfraProjectMigrator()
     result = service.migrate(workspace_root=args.workspace_root, dry_run=args.dry_run)
     if result.is_failure:
-        output.error(result.error or "migration failed")
+        u.Infra.error(result.error or "migration failed")
         return 1
     failed_projects = 0
     for migration in result.value:
-        for _change in migration.changes:
-            pass
-        for _error in migration.errors:
-            pass
+        u.Infra.info(f"{migration.project}:")
+        for change in migration.changes:
+            u.Infra.info(f"  + {change}")
+        for err in migration.errors:
+            u.Infra.warning(f"  ! {err}")
         if migration.errors:
             failed_projects += 1
+    total_changes = sum(len(m.changes) for m in result.value)
+    total_errors = sum(len(m.errors) for m in result.value)
+    u.Infra.info(
+        f"Total: {total_changes} change(s), {total_errors} error(s) across {len(result.value)} project(s)",
+    )
+    if args.dry_run:
+        u.Infra.info("(dry-run — no files modified)")
     return 1 if failed_projects else 0
 
 

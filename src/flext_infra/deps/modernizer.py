@@ -7,7 +7,7 @@ from pathlib import Path
 
 from tomlkit.items import Table
 
-from flext_infra import FlextInfraUtilitiesSubprocess, c, p
+from flext_infra import FlextInfraUtilitiesSubprocess, c, p, u
 from flext_infra._utilities.toml import (
     array,
     as_string_list,
@@ -186,13 +186,14 @@ class FlextInfraPyprojectModernizer:
             total += len(changes)
         if violations:
             for rel_path, changes in violations.items():
-                print(f"\n  {rel_path}:")
+                u.Infra.info(f"{rel_path}:")
                 for change in changes:
-                    print(f"    - {change}")
-            print(f"\n  Total: {total} change(s) across {len(violations)} file(s)")
+                    u.Infra.info(f"  - {change}")
+            u.Infra.info(
+                f"Total: {total} change(s) across {len(violations)} file(s)",
+            )
             if dry_run:
-                print("  (dry-run — no files modified)")
-            print()
+                u.Infra.info("(dry-run — no files modified)")
         if args.audit and total > 0:
             return 1
         if not dry_run and (not args.skip_check):
