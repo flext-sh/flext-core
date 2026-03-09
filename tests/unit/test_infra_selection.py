@@ -11,7 +11,6 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesSelection, m
 from flext_infra import FlextInfraUtilitiesDiscovery, FlextInfraUtilitiesSelection, m
 
 
@@ -31,25 +30,25 @@ class TestFlextInfraUtilitiesSelection:
         return tmp_path
 
     @pytest.fixture
-    def discovery_service(self) -> FlextInfraUtilitiesDiscovery:
-        """Create a discovery service."""
-        return FlextInfraUtilitiesDiscovery()
+    def discovery_service(self) -> type[FlextInfraUtilitiesDiscovery]:
+        """Provide discovery service class."""
+        return FlextInfraUtilitiesDiscovery
 
     @pytest.fixture
     def selector(
         self,
-        discovery_service: FlextInfraUtilitiesDiscovery,
-    ) -> FlextInfraUtilitiesSelection:
-        """Create a project selector with discovery service."""
-        return FlextInfraUtilitiesSelection(discovery=discovery_service)
+        discovery_service: type[FlextInfraUtilitiesDiscovery],
+    ) -> type[FlextInfraUtilitiesSelection]:
+        """Provide project selector utilities class."""
+        return FlextInfraUtilitiesSelection
 
     def test_resolve_projects_all_projects(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving all projects when names list is empty."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             [],
         )
@@ -60,11 +59,11 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_resolve_projects_specific_names(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving specific projects by name."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             ["beta", "alpha"],
         )
@@ -75,11 +74,11 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_resolve_projects_single_project(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving a single project."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             ["gamma"],
         )
@@ -90,11 +89,11 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_resolve_projects_unknown_project(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving with unknown project name."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             ["unknown"],
         )
@@ -104,11 +103,11 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_resolve_projects_mixed_known_unknown(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving with mix of known and unknown projects."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             ["alpha", "unknown", "beta"],
         )
@@ -118,6 +117,7 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_resolve_projects_discovery_failure(
         self,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test handling discovery service failure."""
@@ -127,25 +127,20 @@ class TestFlextInfraUtilitiesSelection:
                 "discovery failed"
             ),
         ):
-            result = FlextInfraUtilitiesSelection.resolve_projects(
+            result = selector.resolve_projects(
                 workspace_with_projects,
                 ["alpha"],
             )
-        selector = FlextInfraUtilitiesSelection(discovery=None)
-        nonexistent = Path("/nonexistent/workspace")
-        result = selector.resolve_projects(nonexistent, ["alpha"])
-        assert result.is_failure
-        assert result.error and (
-            "discovery failed" in result.error or "failed" in result.error
-        )
+            assert result.is_failure
+            assert result.error and "discovery failed" in result.error
 
     def test_resolve_projects_sorted_output(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test that resolved projects are sorted by name."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             ["gamma", "alpha", "beta"],
         )
@@ -155,11 +150,11 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_resolve_projects_result_type(
         self,
-        selector: FlextInfraUtilitiesSelection,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
         """Test that result is properly typed FlextResult."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        result = selector.resolve_projects(
             workspace_with_projects,
             [],
         )
@@ -172,22 +167,23 @@ class TestFlextInfraUtilitiesSelection:
 
     def test_selector_with_default_discovery(
         self,
+        selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
-        """Test selector creates default discovery service if not provided."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(
+        """Test selector uses default discovery service implicitly."""
+        result = selector.resolve_projects(
             workspace_with_projects,
             [],
         )
-        selector = FlextInfraUtilitiesSelection()
-        result = selector.resolve_projects(workspace_with_projects, [])
         assert result.is_success
         assert len(result.value) == 3
 
-    def test_selector_resolve_projects_empty_list(self, tmp_path: Path) -> None:
+    def test_selector_resolve_projects_empty_list(
+        self,
+        selector: type[FlextInfraUtilitiesSelection],
+        tmp_path: Path,
+    ) -> None:
         """Test resolve_projects returns empty list when no projects match."""
-        result = FlextInfraUtilitiesSelection.resolve_projects(tmp_path, [])
-        selector = FlextInfraUtilitiesSelection()
         result = selector.resolve_projects(tmp_path, [])
         assert result.is_success
         assert result.value == []

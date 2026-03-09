@@ -136,7 +136,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
@@ -150,7 +150,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].fail("invalid")
@@ -164,7 +164,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 0
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("0.9.0")
@@ -178,7 +178,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].fail(
@@ -194,7 +194,7 @@ class TestReleaseMainVersionResolution:
         args.bump = "minor"
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -209,7 +209,7 @@ class TestReleaseMainVersionResolution:
         args.bump = "invalid"
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -224,7 +224,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -240,7 +240,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 1
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -255,7 +255,7 @@ class TestReleaseMainVersionResolution:
         args.bump = ""
         args.interactive = 0
         with patch(
-            "flext_infra.release.__main__.FlextInfraVersioningService",
+            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
         ) as mock_vs:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -315,7 +315,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
@@ -381,7 +381,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.parse_semver.return_value = r[str].fail("invalid")
@@ -416,7 +416,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
@@ -452,7 +452,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
@@ -494,7 +494,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
@@ -535,7 +535,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
@@ -576,7 +576,7 @@ class TestReleaseMainFlow:
                         tmp_path,
                     )
                     with patch(
-                        "flext_infra.release.__main__.FlextInfraVersioningService",
+                        "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
                     ) as mock_vs:
                         mock_vs_inst = mock_vs.return_value
                         mock_vs_inst.current_workspace_version.return_value = r[str].ok(
@@ -607,7 +607,7 @@ class TestResolveVersionInteractive:
         args.interactive = 1
         with patch("builtins.input", return_value="invalid"):
             with patch(
-                "flext_infra.release.__main__.FlextInfraVersioningService",
+                "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
             ) as mock_vs:
                 mock_vs_inst = mock_vs.return_value
                 mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
@@ -622,7 +622,7 @@ class TestResolveVersionInteractive:
         args.interactive = 1
         with patch("builtins.input", return_value="major"):
             with patch(
-                "flext_infra.release.__main__.FlextInfraVersioningService",
+                "flext_infra.release.__main__.FlextInfraUtilitiesVersioning",
             ) as mock_vs:
                 mock_vs_inst = mock_vs.return_value
                 mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")

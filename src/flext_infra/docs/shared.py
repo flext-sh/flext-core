@@ -16,15 +16,15 @@ from pydantic import BaseModel
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraDiscoveryService,
     FlextInfraReportingService,
+    FlextInfraUtilitiesDiscovery,
     c,
     m,
     t,
     u,
 )
 
-_discovery = FlextInfraDiscoveryService()
+_discovery = FlextInfraUtilitiesDiscovery()
 _reporting = FlextInfraReportingService()
 
 

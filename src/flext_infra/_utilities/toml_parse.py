@@ -42,13 +42,13 @@ class FlextInfraUtilitiesTomlParse:
 
     @staticmethod
     def dedupe_specs(specs: list[str]) -> list[str]:
-        """Deduplicate dependency specifications by normalized name."""
+        """Deduplicate dependency specifications by normalized name, sorted by full spec string."""
         seen: dict[str, str] = {}
         for spec in specs:
             key = FlextInfraUtilitiesTomlParse.dep_name(spec)
             if key and key not in seen:
                 seen[key] = spec
-        return [seen[k] for k in sorted(seen)]
+        return sorted(seen.values())
 
     @staticmethod
     def ensure_pyright_execution_envs(

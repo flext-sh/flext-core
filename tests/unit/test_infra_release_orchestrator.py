@@ -1333,8 +1333,7 @@ class TestFlextInfraReleaseOrchestratorChangeCollection:
         with patch(_U_PATH) as mock_u:
             mock_u.Infra.git_run.return_value = r[str].ok(
                 "- abc1234 Fix bug (Alice)\n- def5678 Add feature (Bob)\n",
-            ),
-        ):
+            )
             result = orchestrator._collect_changes(workspace_root, "v0.9.0", "v1.0.0")
             assert result.is_success
             assert "Fix bug" in result.value

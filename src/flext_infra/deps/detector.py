@@ -97,8 +97,8 @@ class ConsolidateGroupsPhase:
             *existing.get(c.Infra.Directories.TYPINGS, []),
         ])
         current_dev = as_string_list(toml_get(optional, c.Infra.Toml.DEV))
-        if current_dev != merged_dev:
-            optional[c.Infra.Toml.DEV] = array(merged_dev)
+        if sorted(current_dev) != sorted(merged_dev):
+            optional[c.Infra.Toml.DEV] = array(sorted(merged_dev))
             changes.append("project.optional-dependencies.dev consolidated")
         for old_key in (
             c.Infra.Toml.DOCS,
@@ -205,7 +205,7 @@ class EnsurePytestConfigPhase:
             if name not in current_names:
                 added.append(marker)
         if added:
-            ini[c.Infra.Toml.MARKERS] = array([*current_markers, *added])
+            ini[c.Infra.Toml.MARKERS] = array(sorted([*current_markers, *added]))
             names = ", ".join(m.split(":")[0].strip() for m in added)
             changes.append(f"tool.pytest.ini_options.markers: added {names}")
         return changes
@@ -359,8 +359,10 @@ class EnsureRuffConfigPhase:
             changes.append("tool.ruff.extend removed")
 
         ruff_cfg = self._tool_config.tools.ruff
-        if as_string_list(toml_get(ruff, c.Infra.Toml.EXCLUDE)) != ruff_cfg.exclude:
-            ruff[c.Infra.Toml.EXCLUDE] = array(ruff_cfg.exclude)
+        if sorted(as_string_list(toml_get(ruff, c.Infra.Toml.EXCLUDE))) != sorted(
+            ruff_cfg.exclude,
+        ):
+            ruff[c.Infra.Toml.EXCLUDE] = array(sorted(ruff_cfg.exclude))
             changes.append("tool.ruff.exclude set")
         for key, value in {
             "fix": ruff_cfg.fix,
@@ -373,8 +375,8 @@ class EnsureRuffConfigPhase:
             if unwrap_item(toml_get(ruff, key)) != value:
                 ruff[key] = value
                 changes.append(f"tool.ruff.{key} set")
-        if as_string_list(toml_get(ruff, "src")) != ruff_cfg.src:
-            ruff["src"] = array(ruff_cfg.src)
+        if sorted(as_string_list(toml_get(ruff, "src"))) != sorted(ruff_cfg.src):
+            ruff["src"] = array(sorted(ruff_cfg.src))
             changes.append("tool.ruff.src set")
 
         ruff_format = ensure_table(ruff, "format")
@@ -389,11 +391,15 @@ class EnsureRuffConfigPhase:
                 changes.append(f"tool.ruff.format.{key} set")
 
         lint = ensure_table(ruff, c.Infra.Toml.LINT_SECTION)
-        if as_string_list(toml_get(lint, "select")) != ruff_cfg.lint.select:
-            lint["select"] = array(ruff_cfg.lint.select)
+        if sorted(as_string_list(toml_get(lint, "select"))) != sorted(
+            ruff_cfg.lint.select,
+        ):
+            lint["select"] = array(sorted(ruff_cfg.lint.select))
             changes.append("tool.ruff.lint.select set")
-        if as_string_list(toml_get(lint, c.Infra.Toml.IGNORE)) != ruff_cfg.lint.ignore:
-            lint[c.Infra.Toml.IGNORE] = array(ruff_cfg.lint.ignore)
+        if sorted(as_string_list(toml_get(lint, c.Infra.Toml.IGNORE))) != sorted(
+            ruff_cfg.lint.ignore,
+        ):
+            lint[c.Infra.Toml.IGNORE] = array(sorted(ruff_cfg.lint.ignore))
             changes.append("tool.ruff.lint.ignore set")
 
         isort = ensure_table(lint, c.Infra.Toml.ISORT)
@@ -412,14 +418,18 @@ class EnsureRuffConfigPhase:
                 del per_file_ignores[pattern]
                 changes.append(f"tool.ruff.lint.per-file-ignores.{pattern} removed")
         for pattern, rules in ruff_cfg.lint.per_file_ignores.items():
-            if as_string_list(toml_get(per_file_ignores, pattern)) != rules:
-                per_file_ignores[pattern] = array(rules)
+            if sorted(as_string_list(toml_get(per_file_ignores, pattern))) != sorted(
+                rules,
+            ):
+                per_file_ignores[pattern] = array(sorted(rules))
                 changes.append(f"tool.ruff.lint.per-file-ignores.{pattern} set")
 
-        detected_packages = discover_first_party_namespaces(path.parent)
+        detected_packages = sorted(discover_first_party_namespaces(path.parent))
         if detected_packages:
-            current_kfp = as_string_list(
-                toml_get(isort, c.Infra.Toml.KNOWN_FIRST_PARTY_HYPHEN),
+            current_kfp = sorted(
+                as_string_list(
+                    toml_get(isort, c.Infra.Toml.KNOWN_FIRST_PARTY_HYPHEN),
+                ),
             )
             if current_kfp != detected_packages:
                 isort[c.Infra.Toml.KNOWN_FIRST_PARTY_HYPHEN] = array(detected_packages)
@@ -490,7 +500,7 @@ class EnsureNamespaceToolingPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument, *, path: Path) -> list[str]:
         changes: list[str] = []
-        detected = discover_first_party_namespaces(path.parent)
+        detected = sorted(discover_first_party_namespaces(path.parent))
         if not detected:
             return changes
         tool: object | None = None
@@ -500,8 +510,10 @@ class EnsureNamespaceToolingPhase:
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         deptry = ensure_table(tool, c.Infra.Toml.DEPTRY)
-        current_deptry = as_string_list(
-            toml_get(deptry, c.Infra.Toml.KNOWN_FIRST_PARTY_UNDERSCORE),
+        current_deptry = sorted(
+            as_string_list(
+                toml_get(deptry, c.Infra.Toml.KNOWN_FIRST_PARTY_UNDERSCORE),
+            ),
         )
         if current_deptry != detected:
             deptry[c.Infra.Toml.KNOWN_FIRST_PARTY_UNDERSCORE] = array(detected)
@@ -537,9 +549,13 @@ class EnsureFormattingToolingPhase:
             "sort_first": self._tool_config.tools.tomlsort.sort_first,
         }.items():
             current = unwrap_item(toml_get(tomlsort, key))
-            if current != value:
+            if isinstance(value, list) and isinstance(current, list):
+                if sorted(str(i) for i in current) != sorted(str(i) for i in value):
+                    tomlsort[key] = array(sorted(str(item) for item in value))
+                    changes.append(f"tool.tomlsort.{key} set")
+            elif current != value:
                 if isinstance(value, list):
-                    tomlsort[key] = array([str(item) for item in value])
+                    tomlsort[key] = array(sorted(str(item) for item in value))
                 else:
                     tomlsort[key] = value
                 changes.append(f"tool.tomlsort.{key} set")

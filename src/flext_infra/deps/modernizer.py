@@ -185,9 +185,14 @@ class FlextInfraPyprojectModernizer:
             violations[rel] = changes
             total += len(changes)
         if violations:
-            for changes in violations.values():
-                for _item in changes:
-                    pass
+            for rel_path, changes in violations.items():
+                print(f"\n  {rel_path}:")
+                for change in changes:
+                    print(f"    - {change}")
+            print(f"\n  Total: {total} change(s) across {len(violations)} file(s)")
+            if dry_run:
+                print("  (dry-run — no files modified)")
+            print()
         if args.audit and total > 0:
             return 1
         if not dry_run and (not args.skip_check):
