@@ -31,7 +31,11 @@ if TYPE_CHECKING:
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
-    from flext_infra._utilities.output import FlextInfraUtilitiesOutput, output
+    from flext_infra._utilities.output import (
+        FlextInfraUtilitiesOutput,
+        FlextInfraUtilitiesOutput as FlextInfraOutput,
+        output,
+    )
     from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
     from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
     from flext_infra._utilities.reporting import FlextInfraUtilitiesReporting
@@ -612,6 +616,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.subprocess",
         "FlextInfraUtilitiesSubprocess",
     ),
+    "FlextInfraOutput": (
+        "flext_infra._utilities.output",
+        "FlextInfraUtilitiesOutput",
+    ),
     "FlextInfraUtilitiesDiscovery": (
         "flext_infra._utilities.discovery",
         "FlextInfraUtilitiesDiscovery",
@@ -850,6 +858,7 @@ __all__ = [
     "FlextInfraNamespaceEnforcer",
     "FlextInfraNamespaceValidator",
     "FlextInfraOrchestratorService",
+    "FlextInfraOutput",
     "FlextInfraPrManager",
     "FlextInfraPrWorkspaceManager",
     "FlextInfraProjectMigrator",

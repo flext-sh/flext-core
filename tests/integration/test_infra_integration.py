@@ -19,12 +19,17 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import (
-    FlextInfraBaseMkGenerator,
-    FlextInfraBaseMkTemplateEngine,
-    FlextInfraCommandRunner,
-    FlextInfraDiscoveryService,
-    FlextInfraGitService,
+from flext_infra import FlextInfraOutput, u
+from flext_infra._utilities.discovery import (
+    FlextInfraUtilitiesDiscovery as FlextInfraDiscoveryService,
+)
+from flext_infra._utilities.output import output
+from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
+from flext_infra._utilities.subprocess import (
+    FlextInfraUtilitiesSubprocess as FlextInfraCommandRunner,
+)
+from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
+from flext_infra.workspace import (
     FlextInfraOrchestratorService,
     FlextInfraUtilitiesOutput,
     FlextInfraUtilitiesPaths,
@@ -306,7 +311,7 @@ class TestIntegrationWithRealCommandServices:
             cwd=repo_root,
         )
         assert commit_result.is_success
-        branch_result = FlextInfraGitService.git_current_branch(repo_root)
+        branch_result = u.Infra.git_current_branch(repo_root)
         assert branch_result.is_success
         assert branch_result.value != ""
 

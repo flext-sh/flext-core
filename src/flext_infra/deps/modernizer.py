@@ -17,9 +17,7 @@ from flext_infra._utilities.toml import (
     toml_get,
     unwrap_item,
 )
-from flext_infra._utilities.toml_parse import (
-    FlextInfraUtilitiesTomlParse,
-)
+from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse
 from flext_infra.deps.detector import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,
@@ -41,11 +39,11 @@ project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
 
 _array = array
 _as_string_list = as_string_list
-_canonical_dev_dependencies = canonical_dev_dependencies
-_dedupe_specs = dedupe_specs
-_dep_name = dep_name
+_canonical_dev_dependencies = FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
+_dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
+_dep_name = FlextInfraUtilitiesTomlParse.dep_name
 _ensure_table = ensure_table
-_project_dev_groups = project_dev_groups
+_project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
 _read_doc = read_doc
 _table_string_keys = table_string_keys
 _toml_get = toml_get

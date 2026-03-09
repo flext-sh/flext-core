@@ -620,7 +620,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraUtilitiesIo()
         self._deps = FlextInfraDependencyDetectionService()
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from flext_infra import FlextInfraUtilitiesPatterns
+from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
 
 
 class TestFlextInfraPatternsTooling:

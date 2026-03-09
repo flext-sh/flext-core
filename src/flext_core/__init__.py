@@ -97,6 +97,7 @@ if TYPE_CHECKING:
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
+        E,
         FlextTypes,
         FlextTypes as t,
         MessageT_contra,
@@ -115,10 +116,16 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "CircuitBreakerManager": ("flext_core._dispatcher.reliability", "CircuitBreakerManager"),
+    "CircuitBreakerManager": (
+        "flext_core._dispatcher.reliability",
+        "CircuitBreakerManager",
+    ),
     "DispatchMessageProtocol": ("flext_core.dispatcher", "DispatchMessageProtocol"),
     "ExecuteProtocol": ("flext_core.dispatcher", "ExecuteProtocol"),
-    "FactoryDecoratorsDiscovery": ("flext_core._decorators.discovery", "FactoryDecoratorsDiscovery"),
+    "FactoryDecoratorsDiscovery": (
+        "flext_core._decorators.discovery",
+        "FactoryDecoratorsDiscovery",
+    ),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
     "FlextContainer": ("flext_core.container", "FlextContainer"),
     "FlextContext": ("flext_core.context", "FlextContext"),
@@ -131,14 +138,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextMixins": ("flext_core.mixins", "FlextMixins"),
     "FlextModelFoundation": ("flext_core._models.base", "FlextModelFoundation"),
     "FlextModels": ("flext_core.models", "FlextModels"),
-    "FlextModelsCollections": ("flext_core._models.collections", "FlextModelsCollections"),
+    "FlextModelsCollections": (
+        "flext_core._models.collections",
+        "FlextModelsCollections",
+    ),
     "FlextModelsConfig": ("flext_core._dispatcher.config", "FlextModelsConfig"),
     "FlextModelsContainer": ("flext_core._models.container", "FlextModelsContainer"),
     "FlextModelsContainers": ("flext_core._models.containers", "FlextModelsContainers"),
     "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
     "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
     "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
-    "FlextModelsDomainEvent": ("flext_core._models.domain_event", "FlextModelsDomainEvent"),
+    "FlextModelsDomainEvent": (
+        "flext_core._models.domain_event",
+        "FlextModelsDomainEvent",
+    ),
     "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
     "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
     "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
@@ -153,22 +166,47 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
     "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),
     "FlextUtilitiesChecker": ("flext_core._utilities.checker", "FlextUtilitiesChecker"),
-    "FlextUtilitiesCollection": ("flext_core._utilities.collection", "FlextUtilitiesCollection"),
-    "FlextUtilitiesConfiguration": ("flext_core._utilities.configuration", "FlextUtilitiesConfiguration"),
+    "FlextUtilitiesCollection": (
+        "flext_core._utilities.collection",
+        "FlextUtilitiesCollection",
+    ),
+    "FlextUtilitiesConfiguration": (
+        "flext_core._utilities.configuration",
+        "FlextUtilitiesConfiguration",
+    ),
     "FlextUtilitiesContext": ("flext_core._utilities.context", "FlextUtilitiesContext"),
-    "FlextUtilitiesConversion": ("flext_core._utilities.conversion", "FlextUtilitiesConversion"),
-    "FlextUtilitiesDeprecation": ("flext_core._utilities.deprecation", "FlextUtilitiesDeprecation"),
+    "FlextUtilitiesConversion": (
+        "flext_core._utilities.conversion",
+        "FlextUtilitiesConversion",
+    ),
+    "FlextUtilitiesDeprecation": (
+        "flext_core._utilities.deprecation",
+        "FlextUtilitiesDeprecation",
+    ),
     "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
     "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
-    "FlextUtilitiesFileOps": ("flext_core._utilities.file_ops", "FlextUtilitiesFileOps"),
-    "FlextUtilitiesGenerators": ("flext_core._utilities.generators", "FlextUtilitiesGenerators"),
+    "FlextUtilitiesFileOps": (
+        "flext_core._utilities.file_ops",
+        "FlextUtilitiesFileOps",
+    ),
+    "FlextUtilitiesGenerators": (
+        "flext_core._utilities.generators",
+        "FlextUtilitiesGenerators",
+    ),
     "FlextUtilitiesGuards": ("flext_core._utilities.guards", "FlextUtilitiesGuards"),
     "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
     "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
-    "FlextUtilitiesPagination": ("flext_core._utilities.pagination", "FlextUtilitiesPagination"),
+    "FlextUtilitiesPagination": (
+        "flext_core._utilities.pagination",
+        "FlextUtilitiesPagination",
+    ),
     "FlextUtilitiesParser": ("flext_core._utilities.parser", "FlextUtilitiesParser"),
-    "FlextUtilitiesReliability": ("flext_core._utilities.reliability", "FlextUtilitiesReliability"),
+    "FlextUtilitiesReliability": (
+        "flext_core._utilities.reliability",
+        "FlextUtilitiesReliability",
+    ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
+    "E": ("flext_core.typings", "E"),
     "HandleProtocol": ("flext_core.dispatcher", "HandleProtocol"),
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "P": ("flext_core.typings", "P"),
@@ -212,6 +250,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 __all__ = [
     "CircuitBreakerManager",
     "DispatchMessageProtocol",
+    "E",
     "ExecuteProtocol",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",
