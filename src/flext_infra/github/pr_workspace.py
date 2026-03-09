@@ -35,12 +35,12 @@ class FlextInfraPrWorkspaceManager:
 
     def __init__(
         self,
-        runner: p.CommandRunner | None = None,
+        runner: p.Infra.CommandRunner | None = None,
         selector: FlextInfraProjectSelector | None = None,
         reporting: FlextInfraReportingService | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
-        self._runner: p.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
         self._selector = selector or FlextInfraProjectSelector()
         self._reporting = reporting or FlextInfraReportingService()
 

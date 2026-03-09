@@ -40,7 +40,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         self._path_resolver = FlextInfraUtilitiesPaths()
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraUtilitiesIo()
-        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir = self._reporting.get_report_dir(
             self._workspace_root,
@@ -470,7 +470,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return cls._as_int(raw, default)
 
     @classmethod
-    def _result_exit_code(cls, result: p.CommandOutput) -> int:
+    def _result_exit_code(cls, result: p.Infra.CommandOutput) -> int:
         try:
             payload = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
                 vars(result),

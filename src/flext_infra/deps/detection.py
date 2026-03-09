@@ -55,7 +55,7 @@ class FlextInfraDependencyDetectionService:
         """Initialize the dependency detection service with selector, toml, and runner."""
         self.selector = FlextInfraProjectSelector()
         self.toml = FlextInfraUtilitiesToml()
-        self.runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def classify_issues(issues: list[t.Infra.IssueMap]) -> dm.DeptryIssueGroups:

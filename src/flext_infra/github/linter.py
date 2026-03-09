@@ -24,11 +24,11 @@ class FlextInfraWorkflowLinter:
 
     def __init__(
         self,
-        runner: p.CommandRunner | None = None,
+        runner: p.Infra.CommandRunner | None = None,
         json_io: FlextInfraUtilitiesIo | None = None,
     ) -> None:
         """Initialize the workflow linter."""
-        self._runner: p.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
         self._json = json_io or FlextInfraUtilitiesIo()
 
     def lint(

@@ -76,7 +76,7 @@ class FlextInfraPyprojectModernizer:
         """Initialize pyproject modernizer."""
         super().__init__()
         self.root = root or ROOT
-        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         tool_config_result = load_tool_config()
         if tool_config_result.is_failure:
             msg = tool_config_result.error or "failed to load deps tool config"

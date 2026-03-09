@@ -83,7 +83,7 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         if not projects_result.is_success:
             return []
         reports: list[m.Infra.Codegen.CensusReport] = []
-        discovered: Sequence[p.ProjectInfo] = projects_result.unwrap()
+        discovered: Sequence[p.Infra.ProjectInfo] = projects_result.unwrap()
         for project in discovered:
             if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue
@@ -93,7 +93,7 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
 
     def _census_project(
         self,
-        project: p.ProjectInfo,
+        project: p.Infra.ProjectInfo,
     ) -> m.Infra.Codegen.CensusReport:
         """Run census on a single project."""
         validator = FlextInfraNamespaceValidator()

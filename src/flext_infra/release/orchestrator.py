@@ -15,7 +15,6 @@ from typing import override
 
 from flext_core import FlextLogger, r, s
 from flext_infra import (
-    FlextInfraGitService,
     FlextInfraProjectSelector,
     FlextInfraReportingService,
     FlextInfraUtilitiesSubprocess,
@@ -94,7 +93,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                     log=str(log),
                 ),
             )
-            logger.info("release_phase_build_project", project=name, exit_code=code)
+            self.logger.info(
+                "release_phase_build_project", project=name, exit_code=code
+            )
         report = m.Infra.Release.BuildReport(
             version=version,
             total=len(records),
@@ -106,7 +107,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             report.model_dump(mode="json"),
             sort_keys=True,
         )
-        logger.info(
+        self.logger.info(
             "release_phase_build_report",
             report=str(output_dir / "build-report.json"),
         )
@@ -159,13 +160,13 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 push_result = self._push_release(root, tag)
                 if push_result.is_failure:
                     return push_result
-        logger.info("release_phase_publish", tag=tag, dry_run=dry_run)
+        self.logger.info("release_phase_publish", tag=tag, dry_run=dry_run)
         return r[bool].ok(True)
 
     def phase_validate(self, root: Path, *, dry_run: bool = False) -> r[bool]:
         """Execute validation phase via make validate."""
         if dry_run:
-            logger.info("release_phase_validate", action="dry-run", status="ok")
+            self.logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
         return FlextInfraUtilitiesSubprocess().run_checked(
             [c.Infra.Cli.MAKE, c.Infra.Verbs.VALIDATE, "VALIDATE_SCOPE=workspace"],
@@ -199,10 +200,12 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             changed += 1
             if not dry_run:
                 versioning.replace_project_version(path.parent, target)
-            logger.info("release_version_file_updated", path=str(path), target=target)
+            self.logger.info(
+                "release_version_file_updated", path=str(path), target=target
+            )
         if dry_run:
-            logger.info("release_phase_version_checked", checked_version=target)
-        logger.info("release_phase_version_summary", files_changed=changed)
+            self.logger.info("release_phase_version_checked", checked_version=target)
+        self.logger.info("release_phase_version_summary", files_changed=changed)
         return r[bool].ok(True)
 
     def run_release(
@@ -230,7 +233,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         for phase in phases:
             if phase not in c.Infra.Release.VALID_PHASES:
                 return r[bool].fail(f"invalid phase: {phase}")
-        logger.info(
+        self.logger.info(
             "release_run_started",
             release_version=spec.version,
             release_tag=spec.tag,
@@ -256,7 +259,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 return result
         if next_dev and (not dry_run):
             return self._bump_next_dev(root, version, names, next_bump)
-        logger.info("release_run_completed", status=c.Infra.ReportKeys.OK)
+        self.logger.info("release_run_completed", status=c.Infra.ReportKeys.OK)
         return r[bool].ok(True)
 
     def _build_targets(
@@ -294,13 +297,13 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         next_version = bump_result.value
         result = self.phase_version(root, next_version, project_names, dev_suffix=True)
         if result.is_success:
-            logger.info("release_next_dev_version", version=f"{next_version}-dev")
+            self.logger.info("release_next_dev_version", version=f"{next_version}-dev")
         return result
 
     def _collect_changes(self, root: Path, previous: str, tag: str) -> r[str]:
         """Collect Git commit messages between two tags."""
         rev = f"{previous}..{tag}" if previous else tag
-        return FlextInfraGitService().log(root, rev)
+        return u.Infra.git_run(["log", "--oneline", rev], cwd=root)
 
     def _create_branches(
         self,
@@ -309,29 +312,27 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         project_names: list[str],
     ) -> r[bool]:
         """Create local release branches for workspace and projects."""
-        git = FlextInfraGitService()
         branch = f"release/{version}"
-        result = git.checkout(root, branch, create=True)
+        result = u.Infra.git_checkout(root, branch, create=True)
         if result.is_failure:
             return result
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
-                proj_result = git.checkout(project.path, branch, create=True)
+                proj_result = u.Infra.git_checkout(project.path, branch, create=True)
                 if proj_result.is_failure:
                     return proj_result
         return r[bool].ok(True)
 
     def _create_tag(self, root: Path, tag: str) -> r[bool]:
         """Create an annotated Git tag if it does not already exist."""
-        git = FlextInfraGitService()
-        exists_result = git.tag_exists(root, tag)
+        exists_result = u.Infra.git_tag_exists(root, tag)
         if exists_result.is_failure:
             return r[bool].fail(exists_result.error or "tag check failed")
         if exists_result.value:
             return r[bool].ok(True)
-        return git.create_tag(root, tag, f"release: {tag}")
+        return u.Infra.git_create_tag(root, tag, f"release: {tag}")
 
     def _dispatch_phase(
         self,
@@ -397,11 +398,11 @@ class FlextInfraReleaseOrchestrator(s[bool]):
 
     def _previous_tag(self, root: Path, tag: str) -> r[str]:
         """Find the tag immediately preceding the given tag."""
-        return FlextInfraGitService().previous_tag(root, tag)
+        return u.Infra.git_run(["describe", "--tags", "--abbrev=0", f"{tag}^"], cwd=root)
 
     def _push_release(self, root: Path, tag: str) -> r[bool]:
         """Push branch and tag to remote origin."""
-        return FlextInfraGitService().push_release(root, tag)
+        return u.Infra.git_run_checked(["push", "origin", "HEAD", tag], cwd=root)
 
     def _update_changelog(
         self,

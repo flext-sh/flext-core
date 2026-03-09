@@ -772,7 +772,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_infra_container import (
         TestInfraContainerFunctions,
-        TestInfraServiceRegistration,
         TestInfraServiceRetrieval,
     )
     from tests.unit.test_infra_core_basemk_validator import (
@@ -7573,7 +7572,6 @@ __all__ = [
     "TestInfraOutputProgress",
     "TestInfraOutputStatus",
     "TestInfraOutputSummary",
-    "TestInfraServiceRegistration",
     "TestInfraServiceRetrieval",
     "TestInjectCommentsPhase",
     "TestInstanceCreation",

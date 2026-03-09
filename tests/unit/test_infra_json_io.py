@@ -23,7 +23,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "test.json"
         json_file.write_text('{"key": "value", "number": 42}', encoding="utf-8")
         service = FlextInfraUtilitiesIo()
-        result = service.read(json_file)
+        result = service.read_json(json_file)
         assert result.is_success
         assert result.value["key"] == "value"
         assert result.value["number"] == 42
@@ -32,7 +32,7 @@ class TestFlextInfraJsonService:
         """Test reading a nonexistent file returns empty mapping."""
         json_file = tmp_path / "missing.json"
         service = FlextInfraUtilitiesIo()
-        result = service.read(json_file)
+        result = service.read_json(json_file)
         assert result.is_success
         assert result.value == {}
 
@@ -41,7 +41,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "invalid.json"
         json_file.write_text("{invalid json}", encoding="utf-8")
         service = FlextInfraUtilitiesIo()
-        result = service.read(json_file)
+        result = service.read_json(json_file)
         assert result.is_failure
         assert isinstance(result.error, str)
         assert isinstance(result.error, str)
@@ -52,7 +52,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "array.json"
         json_file.write_text("[1, 2, 3]", encoding="utf-8")
         service = FlextInfraUtilitiesIo()
-        result = service.read(json_file)
+        result = service.read_json(json_file)
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "must be object" in result.error
@@ -62,7 +62,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "output.json"
         service = FlextInfraUtilitiesIo()
         payload: dict[str, str | int] = {"key": "value", "number": 42}
-        result = service.write(json_file, payload)
+        result = service.write_json(json_file, payload)
         assert result.is_success
         assert json_file.exists()
         content = json_file.read_text(encoding="utf-8")
@@ -74,7 +74,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "model.json"
         service = FlextInfraUtilitiesIo()
         model = SampleModel(name="test", value=123)
-        result = service.write(json_file, model)
+        result = service.write_json(json_file, model)
         assert result.is_success
         assert json_file.exists()
 
@@ -83,7 +83,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "nested" / "deep" / "file.json"
         service = FlextInfraUtilitiesIo()
         payload = {"key": "value"}
-        result = service.write(json_file, payload)
+        result = service.write_json(json_file, payload)
         assert result.is_success
         assert json_file.exists()
 
@@ -92,7 +92,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "sorted.json"
         service = FlextInfraUtilitiesIo()
         payload = {"z": 1, "a": 2, "m": 3}
-        result = service.write(json_file, payload, sort_keys=True)
+        result = service.write_json(json_file, payload, sort_keys=True)
         assert result.is_success
         content = json_file.read_text(encoding="utf-8")
         assert content.index('"a"') < content.index('"z"')
@@ -102,7 +102,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "ascii.json"
         service = FlextInfraUtilitiesIo()
         payload = {"text": "café"}
-        result = service.write(json_file, payload, ensure_ascii=True)
+        result = service.write_json(json_file, payload, ensure_ascii=True)
         assert result.is_success
         content = json_file.read_text(encoding="utf-8")
         assert "\\u" in content
@@ -114,7 +114,7 @@ class TestFlextInfraJsonService:
         json_file.chmod(292)
         service = FlextInfraUtilitiesIo()
         try:
-            result = service.write(json_file, {"key": "value"})
+            result = service.write_json(json_file, {"key": "value"})
             assert result.is_failure
         finally:
             json_file.chmod(420)
@@ -123,7 +123,7 @@ class TestFlextInfraJsonService:
         """Test write returns True on success."""
         json_file = tmp_path / "test.json"
         service = FlextInfraUtilitiesIo()
-        result = service.write(json_file, {"key": "value"})
+        result = service.write_json(json_file, {"key": "value"})
         assert result.is_success
         assert result.value is True
 

@@ -134,7 +134,7 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_command_runner(self) -> None:
         """Test lazy loading of FlextInfraCommandRunner."""
-        runner = flext_infra.FlextInfraCommandRunner
+        runner = flext_infra.FlextInfraUtilitiesSubprocess
         assert runner is not None
 
     def test_lazy_import_discovery_service(self) -> None:
@@ -144,7 +144,7 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_git_service(self) -> None:
         """Test lazy loading of FlextInfraGitService."""
-        service = flext_infra.FlextInfraGitService
+        service = flext_infra.FlextInfraUtilitiesGit
         assert service is not None
 
     def test_lazy_import_json_service(self) -> None:

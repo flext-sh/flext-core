@@ -471,7 +471,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="status",
@@ -496,7 +496,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="status",
@@ -519,7 +519,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="create",
@@ -547,7 +547,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="view",
@@ -570,7 +570,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="checks",
@@ -596,7 +596,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="merge",
@@ -625,7 +625,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="close",
@@ -648,7 +648,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="close",
@@ -671,7 +671,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="view",
@@ -694,7 +694,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="checks",
@@ -720,7 +720,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="create",
@@ -748,7 +748,7 @@ class TestMainFunction:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="merge",
@@ -842,7 +842,7 @@ class TestParseArgs:
         with (
             patch("flext_infra.github.pr._parse_args") as mock_args,
             patch("flext_infra.github.pr.FlextInfraPrManager") as mock_cls,
-            patch("flext_infra.github.pr.FlextInfraGitService") as mock_git_cls,
+            patch("flext_infra.github.pr.u") as mock_u,
         ):
             mock_args.return_value = Mock(
                 action="invalid_action",

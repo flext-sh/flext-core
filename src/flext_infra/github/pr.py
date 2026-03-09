@@ -38,11 +38,11 @@ class FlextInfraPrManager:
 
     def __init__(
         self,
-        runner: p.CommandRunner | None = None,
+        runner: p.Infra.CommandRunner | None = None,
         versioning: FlextInfraVersioningService | None = None,
     ) -> None:
         """Initialize the PR manager."""
-        self._runner: p.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
         self._versioning = versioning or FlextInfraVersioningService()
 
     def checks(

@@ -140,7 +140,7 @@ class TestFlextInfraInventoryService:
         json_service = getattr(service, "_json")
         with patch.object(
             type(json_service),
-            "write",
+            "write_json",
             return_value=Mock(is_failure=True, error="write failed"),
         ):
             result = service.generate(workspace_root, output_dir=output_dir)
@@ -190,7 +190,7 @@ class TestFlextInfraInventoryService:
         json_service = getattr(service, "_json")
         with patch.object(
             type(json_service),
-            "write",
+            "write_json",
             return_value=Mock(is_failure=False),
         ):
             result = service.generate(workspace_root)
@@ -205,7 +205,7 @@ class TestFlextInfraInventoryService:
         json_service = getattr(service, "_json")
         with patch.object(
             type(json_service),
-            "write",
+            "write_json",
             return_value=Mock(is_failure=False),
         ):
             result = service.generate(workspace_root, output_dir=output_dir)
@@ -220,7 +220,7 @@ class TestFlextInfraInventoryService:
         json_service = getattr(service, "_json")
         with patch.object(
             type(json_service),
-            "write",
+            "write_json",
             return_value=Mock(is_failure=False),
         ):
             result = service.generate(workspace_root, output_dir=output_dir)
@@ -248,7 +248,7 @@ class TestFlextInfraInventoryService:
         json_service = getattr(service, "_json")
         with patch.object(
             type(json_service),
-            "write",
+            "write_json",
             side_effect=ValueError("test error"),
         ):
             result = service.generate(workspace_root, output_dir=tmp_path / "reports")

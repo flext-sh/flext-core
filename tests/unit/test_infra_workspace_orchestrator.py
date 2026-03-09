@@ -13,7 +13,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
-from flext_infra import FlextInfraCommandRunner, m
+from flext_infra import FlextInfraUtilitiesSubprocess, m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 
 
@@ -155,7 +155,7 @@ def test_orchestrate_with_project_execution_failure(tmp_path: Path) -> None:
         Mock(name="proj2", path=tmp_path / "proj2"),
     ]
     verb = "test"
-    mock_runner = Mock(spec=FlextInfraCommandRunner)
+    mock_runner = Mock(spec=FlextInfraUtilitiesSubprocess)
     mock_runner.run_to_file.return_value = Mock(
         is_success=False,
         error="Execution failed",
@@ -178,7 +178,7 @@ def test_orchestrate_with_runner_failure_fail_fast(tmp_path: Path) -> None:
         Mock(name="proj3", path=tmp_path / "proj3"),
     ]
     verb = "test"
-    mock_runner = Mock(spec=FlextInfraCommandRunner)
+    mock_runner = Mock(spec=FlextInfraUtilitiesSubprocess)
     mock_runner.run_to_file.return_value = Mock(
         is_success=False,
         error="Execution failed",

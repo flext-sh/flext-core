@@ -36,7 +36,7 @@ class FlextInfraUtilities(FlextUtilities):
 
         from flext_infra import u
 
-        u.Infra.run_checked(["git", "status"])
+        u.Infra.git_run_checked(["status"])
         u.Infra.read_json(path)
         u.Infra.discover_projects(workspace_root)
         u.Infra.parse_semver("1.2.3")

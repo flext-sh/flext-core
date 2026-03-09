@@ -25,12 +25,12 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
     def __init__(
         self,
         *,
-        discovery: p.Discovery | None = None,
+        discovery: p.Infra.Discovery | None = None,
         generator: FlextInfraBaseMkGenerator | None = None,
     ) -> None:
         """Initialize migrator with optional custom discovery and generator services."""
         super().__init__()
-        self._discovery: p.Discovery = discovery or FlextInfraDiscoveryService()
+        self._discovery: p.Infra.Discovery = discovery or FlextInfraDiscoveryService()
         self._generator = generator or FlextInfraBaseMkGenerator()
 
     @staticmethod
@@ -258,7 +258,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
     def _migrate_project(
         self,
         *,
-        project: p.ProjectInfo,
+        project: p.Infra.ProjectInfo,
         dry_run: bool,
     ) -> m.Infra.Workspace.MigrationResult:
         changes: list[str] = []

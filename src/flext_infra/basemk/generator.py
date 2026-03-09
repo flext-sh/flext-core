@@ -26,10 +26,10 @@ class FlextInfraBaseMkGenerator(s[str]):
         """Initialize the base.mk generator."""
         super().__init__()
         self._template_engine = template_engine or FlextInfraBaseMkTemplateEngine()
-        self._runner: p.CommandRunner | None = None
+        self._runner: p.Infra.CommandRunner | None = None
 
     @property
-    def _get_runner(self) -> p.CommandRunner:
+    def _get_runner(self) -> p.Infra.CommandRunner:
         """Lazily initialize the command runner."""
         if self._runner is None:
             self._runner = FlextInfraUtilitiesSubprocess()

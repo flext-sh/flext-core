@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TypeAlias, overload
 
 from flext_core import r
-from flext_infra import FlextInfraGitService, FlextInfraUtilitiesSubprocess, c, m, p, u
+from flext_infra import FlextInfraUtilitiesSubprocess, c, m, p, u
 
 RBool: TypeAlias = r[bool]
 RStr: TypeAlias = r[str]
@@ -19,14 +19,13 @@ class FlextInfraRefactorSafetyManager:
 
     def __init__(
         self,
-        runner: p.SafetyRunner | None = None,
+        runner: p.Infra.SafetyRunner | None = None,
         checkpoint_path: Path | None = None,
         test_command: list[str] | None = None,
     ) -> None:
         """Initialize safety manager with runner, checkpoint path, and test command."""
         effective_runner = runner or FlextInfraUtilitiesSubprocess()
-        self._runner: p.SafetyRunner = effective_runner
-        self._git = FlextInfraGitService(effective_runner)
+        self._runner: p.Infra.SafetyRunner = effective_runner
         self._checkpoint_path = checkpoint_path or Path(
             ".sisyphus/refactor/safety-checkpoint.json",
         )
@@ -79,7 +78,7 @@ class FlextInfraRefactorSafetyManager:
 
     def is_git_repository(self, workspace_root: Path) -> bool:
         """Check whether workspace_root sits inside a Git work-tree."""
-        return self._git.is_repo(workspace_root)
+        return u.Infra.git_is_repo(workspace_root)
 
     def create_pre_transformation_stash(
         self,
@@ -92,7 +91,7 @@ class FlextInfraRefactorSafetyManager:
         if not self.is_git_repository(workspace_root):
             out: RStr = r[str].ok("")
             return out
-        has = self._git.has_changes(workspace_root)
+        has = u.Infra.git_has_changes(workspace_root)
         if has.is_failure:
             out2: RStr = r[str].fail(has.error or "git status failed")
             return out2
@@ -100,15 +99,14 @@ class FlextInfraRefactorSafetyManager:
             out3: RStr = r[str].ok("")
             return out3
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        push = self._git.stash_push(
-            workspace_root,
-            f"{label}:{stamp}",
-            include_untracked=True,
+        push = u.Infra.git_run_checked(
+            ["stash", "push", "-m", f"{label}:{stamp}", "--include-untracked"],
+            cwd=workspace_root,
         )
         if push.is_failure:
             out4: RStr = r[str].fail(push.error or "git stash push failed")
             return out4
-        ref = self._git.stash_list(workspace_root)
+        ref = u.Infra.git_run(["stash", "list"], cwd=workspace_root)
         if ref.is_failure:
             out5: RStr = r[str].fail(ref.error or "git stash list failed")
             return out5
@@ -236,7 +234,10 @@ class FlextInfraRefactorSafetyManager:
         if not self.is_git_repository(workspace_root):
             out: RBool = r[bool].ok(True)
             return out
-        out2: RBool = self._git.stash_pop(workspace_root, stash_ref)
+        cmd = ["stash", "pop"]
+        if stash_ref:
+            cmd.append(stash_ref)
+        out2: RBool = u.Infra.git_run_checked(cmd, cwd=workspace_root)
         return out2
 
 

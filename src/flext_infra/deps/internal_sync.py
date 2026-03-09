@@ -19,6 +19,7 @@ from flext_infra import (
     output,
     p,
     t,
+    u,
 )
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -29,7 +30,7 @@ class FlextInfraInternalDependencySyncService:
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
-        self.runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
         self.toml = FlextInfraUtilitiesToml()
 
@@ -258,7 +259,7 @@ class FlextInfraInternalDependencySyncService:
                         dep_path.unlink()
             except OSError as exc:
                 return r[bool].fail(f"cleanup failed for {dep_path.name}: {exc}")
-            cloned = u.Infra.run_checked([
+            cloned = u.Infra.git_run_checked([
                 "clone",
                 "--depth",
                 "1",
@@ -283,7 +284,7 @@ class FlextInfraInternalDependencySyncService:
 
     def infer_owner_from_origin(self, project_root: Path) -> str | None:
         """Infer GitHub owner from remote origin URL."""
-        remote = u.Infra.git_config_get(project_root, "remote.origin.url")
+        remote = u.Infra.git_run(["config", "--get", "remote.origin.url"], cwd=project_root)
         if remote.is_failure:
             return None
         return self.owner_from_remote_url(remote.value.strip())

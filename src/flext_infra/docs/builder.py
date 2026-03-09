@@ -27,7 +27,7 @@ class FlextInfraDocBuilder:
 
     def __init__(self) -> None:
         """Initialize the documentation builder."""
-        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def _write_reports(

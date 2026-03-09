@@ -15,7 +15,7 @@ from typing import override
 from urllib.parse import urlparse
 
 from flext_core import r, s
-from flext_infra import FlextInfraGitService, c, output
+from flext_infra import c, output, u
 
 
 class WorkspaceMode(StrEnum):
@@ -36,7 +36,6 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
     def __init__(self) -> None:
         """Initialize the workspace detector."""
         super().__init__()
-        self._git = FlextInfraGitService()
 
     @staticmethod
     def _repo_name_from_url(url: str) -> str:
@@ -71,7 +70,7 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
             if not git_marker.exists():
                 output.info("Running in standalone mode (no parent workspace detected)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
-            result = self._git.config_get(parent, "remote.origin.url")
+            result = u.Infra.git_run(["config", "--get", "remote.origin.url"], cwd=parent)
             if result.is_failure:
                 output.info("Running in standalone mode (unable to detect workspace)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
