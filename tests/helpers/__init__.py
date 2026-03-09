@@ -22,7 +22,9 @@ if TYPE_CHECKING:
         FailingServiceAuto,
         FailingServiceAutoFactory,
         FailingServiceFactory,
+        GenericModelFactory,
         GetUserService,
+        GetUserService as s,
         GetUserServiceAuto,
         GetUserServiceAutoFactory,
         GetUserServiceFactory,
@@ -40,6 +42,14 @@ if TYPE_CHECKING:
         ValidatingServiceFactory,
         reset_all_factories,
     )
+    from tests.helpers.scenarios import (
+        ParserScenario,
+        ParserScenarios,
+        ReliabilityScenario,
+        ReliabilityScenarios,
+        ValidationScenario,
+        ValidationScenarios,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -47,10 +57,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FailingServiceAuto": ("tests.helpers.factories", "FailingServiceAuto"),
     "FailingServiceAutoFactory": ("tests.helpers.factories", "FailingServiceAutoFactory"),
     "FailingServiceFactory": ("tests.helpers.factories", "FailingServiceFactory"),
+    "GenericModelFactory": ("tests.helpers.factories", "GenericModelFactory"),
     "GetUserService": ("tests.helpers.factories", "GetUserService"),
     "GetUserServiceAuto": ("tests.helpers.factories", "GetUserServiceAuto"),
     "GetUserServiceAutoFactory": ("tests.helpers.factories", "GetUserServiceAutoFactory"),
     "GetUserServiceFactory": ("tests.helpers.factories", "GetUserServiceFactory"),
+    "ParserScenario": ("tests.helpers.scenarios", "ParserScenario"),
+    "ParserScenarios": ("tests.helpers.scenarios", "ParserScenarios"),
+    "ReliabilityScenario": ("tests.helpers.scenarios", "ReliabilityScenario"),
+    "ReliabilityScenarios": ("tests.helpers.scenarios", "ReliabilityScenarios"),
     "ServiceFactoryRegistry": ("tests.helpers.factories", "ServiceFactoryRegistry"),
     "ServiceTestCase": ("tests.helpers.factories", "ServiceTestCase"),
     "ServiceTestCaseFactory": ("tests.helpers.factories", "ServiceTestCaseFactory"),
@@ -63,7 +78,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ValidatingServiceAuto": ("tests.helpers.factories", "ValidatingServiceAuto"),
     "ValidatingServiceAutoFactory": ("tests.helpers.factories", "ValidatingServiceAutoFactory"),
     "ValidatingServiceFactory": ("tests.helpers.factories", "ValidatingServiceFactory"),
+    "ValidationScenario": ("tests.helpers.scenarios", "ValidationScenario"),
+    "ValidationScenarios": ("tests.helpers.scenarios", "ValidationScenarios"),
     "reset_all_factories": ("tests.helpers.factories", "reset_all_factories"),
+    "s": ("tests.helpers.factories", "GetUserService"),
 }
 
 __all__ = [
@@ -71,10 +89,15 @@ __all__ = [
     "FailingServiceAuto",
     "FailingServiceAutoFactory",
     "FailingServiceFactory",
+    "GenericModelFactory",
     "GetUserService",
     "GetUserServiceAuto",
     "GetUserServiceAutoFactory",
     "GetUserServiceFactory",
+    "ParserScenario",
+    "ParserScenarios",
+    "ReliabilityScenario",
+    "ReliabilityScenarios",
     "ServiceFactoryRegistry",
     "ServiceTestCase",
     "ServiceTestCaseFactory",
@@ -87,7 +110,10 @@ __all__ = [
     "ValidatingServiceAuto",
     "ValidatingServiceAutoFactory",
     "ValidatingServiceFactory",
+    "ValidationScenario",
+    "ValidationScenarios",
     "reset_all_factories",
+    "s",
 ]
 
 

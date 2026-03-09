@@ -22,25 +22,21 @@ if TYPE_CHECKING:
         WorkspaceMode,
     )
     from flext_infra.workspace.migrator import FlextInfraProjectMigrator
-    from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
-    from flext_infra.workspace.sync import FlextInfraSyncService
+    from flext_infra.workspace.orchestrator import (
+        FlextInfraOrchestratorService,
+        FlextInfraOrchestratorService as s,
+    )
+    from flext_infra.workspace.sync import FlextInfraSyncService, main
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraOrchestratorService": (
-        "flext_infra.workspace.orchestrator",
-        "FlextInfraOrchestratorService",
-    ),
-    "FlextInfraProjectMigrator": (
-        "flext_infra.workspace.migrator",
-        "FlextInfraProjectMigrator",
-    ),
+    "FlextInfraOrchestratorService": ("flext_infra.workspace.orchestrator", "FlextInfraOrchestratorService"),
+    "FlextInfraProjectMigrator": ("flext_infra.workspace.migrator", "FlextInfraProjectMigrator"),
     "FlextInfraSyncService": ("flext_infra.workspace.sync", "FlextInfraSyncService"),
-    "FlextInfraWorkspaceDetector": (
-        "flext_infra.workspace.detector",
-        "FlextInfraWorkspaceDetector",
-    ),
+    "FlextInfraWorkspaceDetector": ("flext_infra.workspace.detector", "FlextInfraWorkspaceDetector"),
     "WorkspaceMode": ("flext_infra.workspace.detector", "WorkspaceMode"),
+    "main": ("flext_infra.workspace.sync", "main"),
+    "s": ("flext_infra.workspace.orchestrator", "FlextInfraOrchestratorService"),
 }
 
 __all__ = [
@@ -49,6 +45,8 @@ __all__ = [
     "FlextInfraSyncService",
     "FlextInfraWorkspaceDetector",
     "WorkspaceMode",
+    "main",
+    "s",
 ]
 
 

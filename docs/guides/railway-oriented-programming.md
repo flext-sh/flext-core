@@ -1,7 +1,6 @@
 # Railway-Oriented Programming with FlextResult[T]
 
 <!-- TOC START -->
-
 - [Core Concept: The Railway Metaphor](#core-concept-the-railway-metaphor)
 - [FlextResult\[T\]: The Railway Implementation](#flextresultt-the-railway-implementation)
   - [Creating Results](#creating-results)
@@ -41,7 +40,6 @@
 - [Key Takeaways](#key-takeaways)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Coverage**: 100% type-safe

@@ -484,6 +484,7 @@ split-on-trailing-comma = true
   "S603",
 ]
 "**/__init__.py" = [
+  "ANN401",
   "D107",
   "F822",
   "N999",

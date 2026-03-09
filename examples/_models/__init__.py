@@ -1,1 +1,139 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """Shared model modules for examples."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+
+if TYPE_CHECKING:
+    from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
+    from examples._models.ex01 import (
+        Ex01DemonstrationResult,
+        Ex01DemonstrationResult as r,
+        Ex01RunDemonstrationCommand,
+        Ex01User,
+    )
+    from examples._models.ex02 import (
+        Ex02CacheService,
+        Ex02DatabaseService,
+        Ex02DatabaseService as s,
+        Ex02EmailService,
+        Ex02TestConfig,
+    )
+    from examples._models.ex03 import (
+        Ex03Email,
+        Ex03Money,
+        Ex03Order,
+        Ex03OrderItem,
+        Ex03User,
+    )
+    from examples._models.ex05 import Ex05StatusEnum, Ex05UserModel
+    from examples._models.ex07 import (
+        Ex07CreateUserCommand,
+        Ex07GetUserQuery,
+        Ex07UserCreatedEvent,
+    )
+    from examples._models.ex08 import Ex08Order, Ex08User
+    from examples._models.ex10 import (
+        Ex10DerivedMessage,
+        Ex10Entity,
+        Ex10Message,
+        Ex10ProcessorBad,
+        Ex10ProcessorGood,
+    )
+    from examples._models.ex11 import Ex11HandlerLikeService
+    from examples._models.ex12 import Ex12CommandA, Ex12CommandB
+    from examples._models.ex14 import Ex14CreateUserCommand, Ex14GetUserQuery
+    from examples._models.exconfig import ExConfigAppConfig
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
+    "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
+    "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
+    "Ex01RunDemonstrationCommand": ("examples._models.ex01", "Ex01RunDemonstrationCommand"),
+    "Ex01User": ("examples._models.ex01", "Ex01User"),
+    "Ex02CacheService": ("examples._models.ex02", "Ex02CacheService"),
+    "Ex02DatabaseService": ("examples._models.ex02", "Ex02DatabaseService"),
+    "Ex02EmailService": ("examples._models.ex02", "Ex02EmailService"),
+    "Ex02TestConfig": ("examples._models.ex02", "Ex02TestConfig"),
+    "Ex03Email": ("examples._models.ex03", "Ex03Email"),
+    "Ex03Money": ("examples._models.ex03", "Ex03Money"),
+    "Ex03Order": ("examples._models.ex03", "Ex03Order"),
+    "Ex03OrderItem": ("examples._models.ex03", "Ex03OrderItem"),
+    "Ex03User": ("examples._models.ex03", "Ex03User"),
+    "Ex05StatusEnum": ("examples._models.ex05", "Ex05StatusEnum"),
+    "Ex05UserModel": ("examples._models.ex05", "Ex05UserModel"),
+    "Ex07CreateUserCommand": ("examples._models.ex07", "Ex07CreateUserCommand"),
+    "Ex07GetUserQuery": ("examples._models.ex07", "Ex07GetUserQuery"),
+    "Ex07UserCreatedEvent": ("examples._models.ex07", "Ex07UserCreatedEvent"),
+    "Ex08Order": ("examples._models.ex08", "Ex08Order"),
+    "Ex08User": ("examples._models.ex08", "Ex08User"),
+    "Ex10DerivedMessage": ("examples._models.ex10", "Ex10DerivedMessage"),
+    "Ex10Entity": ("examples._models.ex10", "Ex10Entity"),
+    "Ex10Message": ("examples._models.ex10", "Ex10Message"),
+    "Ex10ProcessorBad": ("examples._models.ex10", "Ex10ProcessorBad"),
+    "Ex10ProcessorGood": ("examples._models.ex10", "Ex10ProcessorGood"),
+    "Ex11HandlerLikeService": ("examples._models.ex11", "Ex11HandlerLikeService"),
+    "Ex12CommandA": ("examples._models.ex12", "Ex12CommandA"),
+    "Ex12CommandB": ("examples._models.ex12", "Ex12CommandB"),
+    "Ex14CreateUserCommand": ("examples._models.ex14", "Ex14CreateUserCommand"),
+    "Ex14GetUserQuery": ("examples._models.ex14", "Ex14GetUserQuery"),
+    "ExConfigAppConfig": ("examples._models.exconfig", "ExConfigAppConfig"),
+    "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
+    "s": ("examples._models.ex02", "Ex02DatabaseService"),
+}
+
+__all__ = [
+    "Ex00UserInput",
+    "Ex00UserProfile",
+    "Ex01DemonstrationResult",
+    "Ex01RunDemonstrationCommand",
+    "Ex01User",
+    "Ex02CacheService",
+    "Ex02DatabaseService",
+    "Ex02EmailService",
+    "Ex02TestConfig",
+    "Ex03Email",
+    "Ex03Money",
+    "Ex03Order",
+    "Ex03OrderItem",
+    "Ex03User",
+    "Ex05StatusEnum",
+    "Ex05UserModel",
+    "Ex07CreateUserCommand",
+    "Ex07GetUserQuery",
+    "Ex07UserCreatedEvent",
+    "Ex08Order",
+    "Ex08User",
+    "Ex10DerivedMessage",
+    "Ex10Entity",
+    "Ex10Message",
+    "Ex10ProcessorBad",
+    "Ex10ProcessorGood",
+    "Ex11HandlerLikeService",
+    "Ex12CommandA",
+    "Ex12CommandB",
+    "Ex14CreateUserCommand",
+    "Ex14GetUserQuery",
+    "ExConfigAppConfig",
+    "r",
+    "s",
+]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy-load module attributes on first access (PEP 562)."""
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+
+
+def __dir__() -> list[str]:
+    """Return list of available attributes for dir() and autocomplete."""
+    return sorted(__all__)
+
+
+cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

@@ -1,3 +1,6 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """Dependency management services.
 
 Provides the pyproject modernizer for workspace-wide dependency
@@ -16,86 +19,173 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionModels,
+        FlextInfraDependencyDetectionModels as m,
         FlextInfraDependencyDetectionService,
+        FlextInfraDependencyDetectionService as s,
+        build_project_report,
+        classify_issues,
+        discover_projects,
         dm,
+        get_current_typings_from_pyproject,
+        get_required_typings,
+        load_dependency_limits,
+        module_to_types_package,
+        run_deptry,
+        run_mypy_stub_hints,
+        run_pip_check,
     )
-    from flext_infra.deps.detector import main
+    from flext_infra.deps.detector import (
+        FlextInfraDependencyDetectorModels,
+        FlextInfraRuntimeDevDependencyDetector,
+        ddm,
+    )
     from flext_infra.deps.extra_paths import (
-        ROOT as EXTRA_PATHS_ROOT,
-        FlextInfraExtraPathsManager,
+        ROOT,
         get_dep_paths,
+        path_dep_paths,
+        path_dep_paths_pep621,
+        path_dep_paths_poetry,
         sync_extra_paths,
         sync_one,
     )
     from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
-    from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
+    from flext_infra.deps.modernizer import (
+        ConsolidateGroupsPhase,
+        EnsurePyreflyConfigPhase,
+        EnsurePyrightConfigPhase,
+        EnsurePytestConfigPhase,
+        FlextInfraPyprojectModernizer,
+        InjectCommentsPhase,
+        _array,
+        _as_string_list,
+        _canonical_dev_dependencies,
+        _dedupe_specs,
+        _dep_name,
+        _ensure_table,
+        _parser,
+        _project_dev_groups,
+        _read_doc,
+        _unwrap_item,
+        _workspace_root,
+    )
     from flext_infra.deps.path_sync import (
-        FlextInfraDependencyPathSync,
         detect_mode,
         extract_dep_name,
+        main,
         rewrite_dep_paths,
+    )
+    from flext_infra.deps.tool_config import (
+        FlextInfraToolConfigDocument,
+        load_tool_config,
     )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "EXTRA_PATHS_ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
-    "FlextInfraDependencyDetectionModels": (
-        "flext_infra.deps.detection",
-        "FlextInfraDependencyDetectionModels",
-    ),
-    "FlextInfraDependencyDetectionService": (
-        "flext_infra.deps.detection",
-        "FlextInfraDependencyDetectionService",
-    ),
-    "FlextInfraDependencyPathSync": (
-        "flext_infra.deps.path_sync",
-        "FlextInfraDependencyPathSync",
-    ),
-    "FlextInfraExtraPathsManager": (
-        "flext_infra.deps.extra_paths",
-        "FlextInfraExtraPathsManager",
-    ),
-    "FlextInfraInternalDependencySyncService": (
-        "flext_infra.deps.internal_sync",
-        "FlextInfraInternalDependencySyncService",
-    ),
-    "FlextInfraPyprojectModernizer": (
-        "flext_infra.deps.modernizer",
-        "FlextInfraPyprojectModernizer",
-    ),
+    "ConsolidateGroupsPhase": ("flext_infra.deps.modernizer", "ConsolidateGroupsPhase"),
+    "EnsurePyreflyConfigPhase": ("flext_infra.deps.modernizer", "EnsurePyreflyConfigPhase"),
+    "EnsurePyrightConfigPhase": ("flext_infra.deps.modernizer", "EnsurePyrightConfigPhase"),
+    "EnsurePytestConfigPhase": ("flext_infra.deps.modernizer", "EnsurePytestConfigPhase"),
+    "FlextInfraDependencyDetectionModels": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
+    "FlextInfraDependencyDetectionService": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
+    "FlextInfraDependencyDetectorModels": ("flext_infra.deps.detector", "FlextInfraDependencyDetectorModels"),
+    "FlextInfraInternalDependencySyncService": ("flext_infra.deps.internal_sync", "FlextInfraInternalDependencySyncService"),
+    "FlextInfraPyprojectModernizer": ("flext_infra.deps.modernizer", "FlextInfraPyprojectModernizer"),
+    "FlextInfraRuntimeDevDependencyDetector": ("flext_infra.deps.detector", "FlextInfraRuntimeDevDependencyDetector"),
+    "FlextInfraToolConfigDocument": ("flext_infra.deps.tool_config", "FlextInfraToolConfigDocument"),
+    "InjectCommentsPhase": ("flext_infra.deps.modernizer", "InjectCommentsPhase"),
+    "ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
+    "_array": ("flext_infra.deps.modernizer", "_array"),
+    "_as_string_list": ("flext_infra.deps.modernizer", "_as_string_list"),
+    "_canonical_dev_dependencies": ("flext_infra.deps.modernizer", "_canonical_dev_dependencies"),
+    "_dedupe_specs": ("flext_infra.deps.modernizer", "_dedupe_specs"),
+    "_dep_name": ("flext_infra.deps.modernizer", "_dep_name"),
+    "_ensure_table": ("flext_infra.deps.modernizer", "_ensure_table"),
+    "_parser": ("flext_infra.deps.modernizer", "_parser"),
+    "_project_dev_groups": ("flext_infra.deps.modernizer", "_project_dev_groups"),
+    "_read_doc": ("flext_infra.deps.modernizer", "_read_doc"),
+    "_unwrap_item": ("flext_infra.deps.modernizer", "_unwrap_item"),
+    "_workspace_root": ("flext_infra.deps.modernizer", "_workspace_root"),
+    "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
+    "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
+    "ddm": ("flext_infra.deps.detector", "ddm"),
     "detect_mode": ("flext_infra.deps.path_sync", "detect_mode"),
+    "discover_projects": ("flext_infra.deps.detection", "discover_projects"),
     "dm": ("flext_infra.deps.detection", "dm"),
     "extract_dep_name": ("flext_infra.deps.path_sync", "extract_dep_name"),
+    "get_current_typings_from_pyproject": ("flext_infra.deps.detection", "get_current_typings_from_pyproject"),
     "get_dep_paths": ("flext_infra.deps.extra_paths", "get_dep_paths"),
-    "main": ("flext_infra.deps.detector", "main"),
+    "get_required_typings": ("flext_infra.deps.detection", "get_required_typings"),
+    "load_dependency_limits": ("flext_infra.deps.detection", "load_dependency_limits"),
+    "load_tool_config": ("flext_infra.deps.tool_config", "load_tool_config"),
+    "m": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
+    "main": ("flext_infra.deps.path_sync", "main"),
+    "module_to_types_package": ("flext_infra.deps.detection", "module_to_types_package"),
+    "path_dep_paths": ("flext_infra.deps.extra_paths", "path_dep_paths"),
+    "path_dep_paths_pep621": ("flext_infra.deps.extra_paths", "path_dep_paths_pep621"),
+    "path_dep_paths_poetry": ("flext_infra.deps.extra_paths", "path_dep_paths_poetry"),
     "rewrite_dep_paths": ("flext_infra.deps.path_sync", "rewrite_dep_paths"),
+    "run_deptry": ("flext_infra.deps.detection", "run_deptry"),
+    "run_mypy_stub_hints": ("flext_infra.deps.detection", "run_mypy_stub_hints"),
+    "run_pip_check": ("flext_infra.deps.detection", "run_pip_check"),
+    "s": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
     "sync_extra_paths": ("flext_infra.deps.extra_paths", "sync_extra_paths"),
     "sync_one": ("flext_infra.deps.extra_paths", "sync_one"),
 }
 
 __all__ = [
-    "EXTRA_PATHS_ROOT",
+    "ROOT",
+    "ConsolidateGroupsPhase",
+    "EnsurePyreflyConfigPhase",
+    "EnsurePyrightConfigPhase",
+    "EnsurePytestConfigPhase",
     "FlextInfraDependencyDetectionModels",
     "FlextInfraDependencyDetectionService",
     "FlextInfraDependencyDetectorModels",
-    "FlextInfraDependencyPathSync",
-    "FlextInfraExtraPathsManager",
     "FlextInfraInternalDependencySyncService",
     "FlextInfraPyprojectModernizer",
     "FlextInfraRuntimeDevDependencyDetector",
+    "FlextInfraToolConfigDocument",
+    "InjectCommentsPhase",
+    "_array",
+    "_as_string_list",
+    "_canonical_dev_dependencies",
+    "_dedupe_specs",
+    "_dep_name",
+    "_ensure_table",
+    "_parser",
+    "_project_dev_groups",
+    "_read_doc",
+    "_unwrap_item",
+    "_workspace_root",
+    "build_project_report",
+    "classify_issues",
     "ddm",
     "detect_mode",
+    "discover_projects",
     "dm",
     "extract_dep_name",
+    "get_current_typings_from_pyproject",
     "get_dep_paths",
+    "get_required_typings",
+    "load_dependency_limits",
+    "load_tool_config",
+    "m",
     "main",
+    "module_to_types_package",
+    "path_dep_paths",
+    "path_dep_paths_pep621",
+    "path_dep_paths_poetry",
     "rewrite_dep_paths",
+    "run_deptry",
+    "run_mypy_stub_hints",
+    "run_pip_check",
+    "s",
     "sync_extra_paths",
     "sync_one",
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

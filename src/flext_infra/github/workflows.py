@@ -16,8 +16,8 @@ from typing import TypeAlias
 from flext_core import r
 from flext_infra import (
     FlextInfraProjectSelector,
-    FlextInfraTemplateEngine,
     FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesTemplates,
     c,
     m,
     t,
@@ -37,12 +37,12 @@ class FlextInfraWorkflowSyncer:
         self,
         selector: FlextInfraProjectSelector | None = None,
         json_io: FlextInfraUtilitiesIo | None = None,
-        templates: FlextInfraTemplateEngine | None = None,
+        templates: FlextInfraUtilitiesTemplates | None = None,
     ) -> None:
         """Initialize the workflow syncer."""
         self._selector = selector or FlextInfraProjectSelector()
         self._json = json_io or FlextInfraUtilitiesIo()
-        self._templates = templates or FlextInfraTemplateEngine()
+        self._templates = templates or FlextInfraUtilitiesTemplates()
 
     def render_template(self, template_path: Path) -> r[str]:
         """Read and render a workflow template with generated header.

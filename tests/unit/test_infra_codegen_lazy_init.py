@@ -16,17 +16,19 @@ import flext_infra.codegen as mod
 from flext_core import FlextService
 from flext_infra.codegen import FlextInfraCodegenLazyInit
 from flext_infra.codegen.lazy_init import (
-    _derive_lazy_map,
-    _extract_docstring_source,
+    _build_sibling_export_index,
     _extract_exports,
     _extract_inline_constants,
+    _extract_version_exports,
     _generate_file,
     _generate_type_checking,
     _infer_package,
-    _parse_existing_lazy_imports,
-    _resolve_module,
-    _resolve_unmapped,
+    _merge_child_exports,
+    _read_existing_docstring,
+    _resolve_aliases,
     _run_ruff_fix,
+    _scan_ast_public_defs,
+    _should_bubble_up,
 )
 
 
@@ -39,7 +41,7 @@ class TestFlextInfraCodegenLazyInit:
         assert generator is not None
 
     def test_run_with_empty_workspace_returns_zero(self, tmp_path: Path) -> None:
-        """Test run() on empty workspace returns 0 (no unmapped exports)."""
+        """Test run() on empty workspace returns 0 (no errors)."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
         assert result == 0
@@ -50,21 +52,8 @@ class TestFlextInfraCodegenLazyInit:
         result = generator.run(check_only=True)
         assert result == 0
 
-    def test_generate_output_to_sandboxed_path(self, tmp_path: Path) -> None:
-        """Test that generated output goes to sandboxed tmp_path, not src/."""
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text(
-            '"""Test package."""\nfrom test_pkg.module import TestClass\n__all__ = ["TestClass"]\n',
-        )
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        result = generator.run(check_only=False)
-        assert result >= 0
-        assert init_file.exists()
-
     def test_generator_is_flext_service(self, tmp_path: Path) -> None:
-        """Test that FlextInfraCodegenLazyInit is a FlextService[str]."""
+        """Test that FlextInfraCodegenLazyInit is a FlextService."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         assert isinstance(generator, FlextService)
 
@@ -75,349 +64,503 @@ class TestFlextInfraCodegenLazyInit:
         assert isinstance(result, int)
         assert result >= 0
 
-    def test_infer_package_deeply_nested(self) -> None:
-        """Test _infer_package with deeply nested packages."""
-        path = Path("/workspace/src/a/b/c/d/__init__.py")
-        pkg = _infer_package(path)
-        assert pkg == "a.b.c.d"
+    def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:
+        """Test execute() method returns FlextResult[int]."""
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        result = generator.execute()
+        assert result.is_success
+        assert isinstance(result.value, int)
 
-    def test_extract_exports_with_non_string_elements(self) -> None:
-        """Test _extract_exports ignores non-string elements."""
-        code = '__all__ = ["Foo", 123, "Bar"]'
+    def test_generate_from_sibling_files(self, tmp_path: Path) -> None:
+        """Test that generator discovers exports from sibling .py files."""
+        src_dir = tmp_path / "src" / "test_pkg"
+        src_dir.mkdir(parents=True)
+        # Create sibling .py file with __all__
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["TestModel"]\n\nclass TestModel:\n    pass\n',
+        )
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        result = generator.run(check_only=False)
+        assert result == 0
+        init_file = src_dir / "__init__.py"
+        assert init_file.exists()
+        content = init_file.read_text()
+        assert "TestModel" in content
+        assert "test_pkg.models" in content
+
+    def test_generate_bottom_up(self, tmp_path: Path) -> None:
+        """Test that subdirectory exports bubble up to parent."""
+        src_dir = tmp_path / "src" / "pkg"
+        sub_dir = src_dir / "sub"
+        sub_dir.mkdir(parents=True)
+        # Subdirectory has a module
+        (sub_dir / "service.py").write_text(
+            '"""Service."""\n\n__all__ = ["SubService"]\n\nclass SubService:\n    pass\n',
+        )
+        # Parent has its own module
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["PkgModel"]\n\nclass PkgModel:\n    pass\n',
+        )
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        result = generator.run(check_only=False)
+        assert result == 0
+        # Child __init__.py should have SubService
+        child_init = sub_dir / "__init__.py"
+        assert child_init.exists()
+        assert "SubService" in child_init.read_text()
+        # Parent __init__.py should have both
+        parent_init = src_dir / "__init__.py"
+        assert parent_init.exists()
+        parent_content = parent_init.read_text()
+        assert "PkgModel" in parent_content
+        assert "SubService" in parent_content
+
+    def test_generate_preserves_existing_docstring(self, tmp_path: Path) -> None:
+        """Test that existing docstring is preserved in regenerated file."""
+        src_dir = tmp_path / "src" / "test_pkg"
+        src_dir.mkdir(parents=True)
+        # Create existing __init__.py with docstring
+        (src_dir / "__init__.py").write_text(
+            '"""My custom package docstring."""\n\n__all__ = []\n',
+        )
+        # Create sibling .py file
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["Foo"]\n\nclass Foo:\n    pass\n',
+        )
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        generator.run(check_only=False)
+        content = (src_dir / "__init__.py").read_text()
+        assert "My custom package docstring" in content
+
+
+class TestInferPackage:
+    """Test _infer_package function."""
+
+    def test_src_path(self) -> None:
+        """Test inference from src/ path."""
+        path = Path("/workspace/src/test_pkg/__init__.py")
+        assert _infer_package(path) == "test_pkg"
+
+    def test_deeply_nested_src_path(self) -> None:
+        """Test inference from deeply nested src/ path."""
+        path = Path("/workspace/src/a/b/c/d/__init__.py")
+        assert _infer_package(path) == "a.b.c.d"
+
+    def test_tests_path(self) -> None:
+        """Test inference from tests/ path."""
+        path = Path("/workspace/tests/unit/__init__.py")
+        assert _infer_package(path) == "tests.unit"
+
+    def test_without_src_directory(self) -> None:
+        """Test when path doesn't contain /src/."""
+        path = Path("/workspace/lib/test/__init__.py")
+        assert _infer_package(path) == ""
+
+
+class TestReadExistingDocstring:
+    """Test _read_existing_docstring function."""
+
+    def test_with_docstring(self, tmp_path: Path) -> None:
+        """Test extracting docstring from existing __init__.py."""
+        init_file = tmp_path / "__init__.py"
+        init_file.write_text('"""Package docstring."""\nx = 1\n')
+        result = _read_existing_docstring(init_file)
+        assert "Package docstring" in result
+
+    def test_without_docstring(self, tmp_path: Path) -> None:
+        """Test returns empty when no docstring exists."""
+        init_file = tmp_path / "__init__.py"
+        init_file.write_text("x = 1\ny = 2\n")
+        result = _read_existing_docstring(init_file)
+        assert result == ""
+
+    def test_nonexistent_file(self, tmp_path: Path) -> None:
+        """Test returns empty when file doesn't exist."""
+        init_file = tmp_path / "__init__.py"
+        result = _read_existing_docstring(init_file)
+        assert result == ""
+
+    def test_with_syntax_error(self, tmp_path: Path) -> None:
+        """Test returns empty on syntax error."""
+        init_file = tmp_path / "__init__.py"
+        init_file.write_text("invalid syntax ][")
+        result = _read_existing_docstring(init_file)
+        assert result == ""
+
+    def test_with_single_quotes(self, tmp_path: Path) -> None:
+        """Test preserves single-quote docstring style."""
+        init_file = tmp_path / "__init__.py"
+        init_file.write_text("'''Module docstring.'''\nx = 1\n")
+        result = _read_existing_docstring(init_file)
+        assert "Module docstring" in result
+
+
+class TestBuildSiblingExportIndex:
+    """Test _build_sibling_export_index function."""
+
+    def test_with_all_exports(self, tmp_path: Path) -> None:
+        """Test scanning sibling files with __all__."""
+        (tmp_path / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["Foo", "Bar"]\n\nclass Foo: pass\nclass Bar: pass\n',
+        )
+        index = _build_sibling_export_index(tmp_path, "test_pkg")
+        assert "Foo" in index
+        assert "Bar" in index
+        assert index["Foo"] == ("test_pkg.models", "Foo")
+
+    def test_without_all_falls_back_to_ast(self, tmp_path: Path) -> None:
+        """Test scanning sibling files without __all__ uses AST."""
+        (tmp_path / "service.py").write_text(
+            "class PublicService:\n    pass\n\ndef public_func():\n    pass\n",
+        )
+        index = _build_sibling_export_index(tmp_path, "test_pkg")
+        assert "PublicService" in index
+        assert "public_func" in index
+
+    def test_skips_init_and_main(self, tmp_path: Path) -> None:
+        """Test that __init__.py and __main__.py are skipped."""
+        (tmp_path / "__init__.py").write_text('__all__ = ["Init"]\n')
+        (tmp_path / "__main__.py").write_text("def main(): pass\n")
+        (tmp_path / "models.py").write_text(
+            '__all__ = ["Model"]\nclass Model: pass\n',
+        )
+        index = _build_sibling_export_index(tmp_path, "test_pkg")
+        assert "Init" not in index
+        assert "main" not in index
+        assert "Model" in index
+
+    def test_skips_private_files(self, tmp_path: Path) -> None:
+        """Test that _private.py files are skipped."""
+        (tmp_path / "_internal.py").write_text("class Internal: pass\n")
+        (tmp_path / "public.py").write_text("class Public: pass\n")
+        index = _build_sibling_export_index(tmp_path, "test_pkg")
+        assert "Internal" not in index
+        assert "Public" in index
+
+    def test_skips_version_file(self, tmp_path: Path) -> None:
+        """Test that __version__.py is skipped (handled separately)."""
+        (tmp_path / "__version__.py").write_text('__version__ = "1.0.0"\n')
+        (tmp_path / "models.py").write_text(
+            '__all__ = ["Model"]\nclass Model: pass\n',
+        )
+        index = _build_sibling_export_index(tmp_path, "test_pkg")
+        assert "__version__" not in index
+        assert "Model" in index
+
+    def test_handles_syntax_error_gracefully(self, tmp_path: Path) -> None:
+        """Test that syntax errors in sibling files are skipped."""
+        (tmp_path / "broken.py").write_text("def broken(][: pass\n")
+        (tmp_path / "good.py").write_text(
+            '__all__ = ["Good"]\nclass Good: pass\n',
+        )
+        index = _build_sibling_export_index(tmp_path, "test_pkg")
+        assert "Good" in index
+
+
+class TestExtractExports:
+    """Test _extract_exports function."""
+
+    def test_with_list_all(self) -> None:
+        """Test __all__ as list."""
+        code = '__all__ = ["Foo", "Bar"]'
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
         assert has_all is True
         assert exports == ["Foo", "Bar"]
 
-    def test_extract_inline_constants_multiple(self) -> None:
-        """Test _extract_inline_constants with multiple constants."""
-        code = '__version__ = "1.0.0"\n__author__ = "Test"\n__license__ = "MIT"'
-        tree = ast.parse(code)
-        constants = _extract_inline_constants(tree)
-        assert len(constants) == 3
-        assert constants["__version__"] == "1.0.0"
-        assert constants["__author__"] == "Test"
-        assert constants["__license__"] == "MIT"
-
-    def test_resolve_module_relative_level_2(self) -> None:
-        """Test _resolve_module with level 2 relative import."""
-        result = _resolve_module("module", 2, "a.b.c.d")
-        assert result == "a.b.c.module"
-
-    def test_resolve_module_relative_level_3(self) -> None:
-        """Test _resolve_module with level 3 relative import."""
-        result = _resolve_module("module", 3, "a.b.c.d")
-        assert result == "a.b.module"
-
-    def test_extract_docstring_source_with_quotes(self) -> None:
-        """Test _extract_docstring_source preserves quote style."""
-        code = "'''Module docstring.'''\nx = 1"
-        tree = ast.parse(code)
-        docstring = _extract_docstring_source(tree, code)
-        assert "Module docstring" in docstring
-
-    def test_parse_existing_lazy_imports_with_multiple_entries(self) -> None:
-        """Test _parse_existing_lazy_imports with multiple entries."""
-        code = '_LAZY_IMPORTS = {"Foo": ("module", "Foo"), "Bar": ("other", "Bar")}'
-        tree = ast.parse(code)
-        lazy_map = _parse_existing_lazy_imports(tree)
-        assert len(lazy_map) == 2
-        assert lazy_map["Foo"] == ("module", "Foo")
-        assert lazy_map["Bar"] == ("other", "Bar")
-
-
-def test_codegen_init_getattr_raises_attribute_error() -> None:
-    """Test that accessing nonexistent attribute raises AttributeError."""
-    with pytest.raises(AttributeError):
-        mod.nonexistent_xyz_attribute
-
-
-class TestLazyInitEdgeCases:
-    """Test edge cases and error handling in lazy init generation."""
-
-    def test_process_file_with_read_error(self, tmp_path: Path) -> None:
-        """Test _process_file handles read errors gracefully."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text('"""Test."""\n__all__ = ["Test"]')
-        init_file.chmod(0)
-        try:
-            result = generator._process_file(init_file, check_only=False)
-            assert result == -1
-        finally:
-            init_file.chmod(420)
-
-    def test_process_file_with_parse_error(self, tmp_path: Path) -> None:
-        """Test _process_file handles parse errors gracefully."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text("invalid python syntax ][")
-        result = generator._process_file(init_file, check_only=False)
-        assert result == -1
-
-    def test_process_file_without_all_returns_none(self, tmp_path: Path) -> None:
-        """Test _process_file returns None when __all__ is missing."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text('"""Test."""\nfrom module import something')
-        result = generator._process_file(init_file, check_only=False)
-        assert result is None
-
-    def test_process_file_with_empty_all_returns_none(self, tmp_path: Path) -> None:
-        """Test _process_file returns None when __all__ is empty."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text('"""Test."""\n__all__ = []')
-        result = generator._process_file(init_file, check_only=False)
-        assert result is None
-
-    def test_process_file_check_only_mode(self, tmp_path: Path) -> None:
-        """Test _process_file in check_only mode doesn't modify files."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        original_content = '"""Test."""\nfrom module import Test\n__all__ = ["Test"]'
-        init_file.write_text(original_content)
-        result = generator._process_file(init_file, check_only=True)
-        assert result is not None
-        assert result >= 0
-        assert init_file.read_text() == original_content
-
-    def test_process_file_with_inline_constants(self, tmp_path: Path) -> None:
-        """Test _process_file handles inline constants correctly."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text(
-            '"""Test."""\n__version__ = "1.0.0"\nfrom module import Test\n__all__ = ["__version__", "Test"]',
-        )
-        result = generator._process_file(init_file, check_only=False)
-        assert result is not None
-        assert result >= 0
-
-    def test_process_file_with_existing_lazy_imports(self, tmp_path: Path) -> None:
-        """Test _process_file regenerates existing _LAZY_IMPORTS."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text(
-            '"""Test."""\n_LAZY_IMPORTS = {"Test": ("module", "Test")}\n__all__ = ["Test"]',
-        )
-        result = generator._process_file(init_file, check_only=False)
-        assert result is not None
-        assert result >= 0
-
-    def test_infer_package_without_src_directory(self) -> None:
-        """Test _infer_package when path doesn't contain /src/."""
-        path = Path("/workspace/lib/test/__init__.py")
-        pkg = _infer_package(path)
-        assert pkg == ""
-
-    def test_resolve_module_with_zero_level(self) -> None:
-        """Test _resolve_module with level 0 (absolute import)."""
-        result = _resolve_module("module.submodule", 0, "current.pkg")
-        assert result == "module.submodule"
-
-    def test_resolve_module_with_empty_current_pkg(self) -> None:
-        """Test _resolve_module with empty current package."""
-        result = _resolve_module("module", 1, "")
-        assert result == "module"
-
-    def test_resolve_module_with_level_exceeding_depth(self) -> None:
-        """Test _resolve_module when level exceeds package depth."""
-        result = _resolve_module("module", 5, "a.b")
-        assert result == "module" or result.startswith("a")
-
-    def test_extract_docstring_source_without_docstring(self) -> None:
-        """Test _extract_docstring_source when no docstring exists."""
-        code = "x = 1\ny = 2"
-        tree = ast.parse(code)
-        docstring = _extract_docstring_source(tree, code)
-        assert docstring == ""
-
-    def test_extract_docstring_source_with_non_string_expr(self) -> None:
-        """Test _extract_docstring_source with non-string first expression."""
-        code = "123\nx = 1"
-        tree = ast.parse(code)
-        docstring = _extract_docstring_source(tree, code)
-        assert docstring == ""
-
-    def test_extract_exports_with_tuple_all(self) -> None:
-        """Test _extract_exports with __all__ as tuple."""
+    def test_with_tuple_all(self) -> None:
+        """Test __all__ as tuple."""
         code = '__all__ = ("Foo", "Bar")'
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
         assert has_all is True
         assert exports == ["Foo", "Bar"]
 
-    def test_extract_exports_without_all(self) -> None:
-        """Test _extract_exports when __all__ is missing."""
+    def test_with_non_string_elements(self) -> None:
+        """Test ignores non-string elements."""
+        code = '__all__ = ["Foo", 123, "Bar"]'
+        tree = ast.parse(code)
+        has_all, exports = _extract_exports(tree)
+        assert has_all is True
+        assert exports == ["Foo", "Bar"]
+
+    def test_without_all(self) -> None:
+        """Test when __all__ is missing."""
         code = "x = 1"
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
         assert has_all is False
         assert exports == []
 
-    def test_extract_inline_constants_with_non_string_values(self) -> None:
-        """Test _extract_inline_constants ignores non-string values."""
+
+class TestScanAstPublicDefs:
+    """Test _scan_ast_public_defs function."""
+
+    def test_finds_classes(self) -> None:
+        """Test scanning finds public classes."""
+        tree = ast.parse("class PublicClass:\n    pass\n")
+        index: dict[str, tuple[str, str]] = {}
+        _scan_ast_public_defs(tree, "mod", index)
+        assert "PublicClass" in index
+
+    def test_skips_private(self) -> None:
+        """Test scanning skips private names."""
+        tree = ast.parse("class _PrivateClass:\n    pass\n")
+        index: dict[str, tuple[str, str]] = {}
+        _scan_ast_public_defs(tree, "mod", index)
+        assert "_PrivateClass" not in index
+
+    def test_finds_functions(self) -> None:
+        """Test scanning finds public functions."""
+        tree = ast.parse("def public_func():\n    pass\n")
+        index: dict[str, tuple[str, str]] = {}
+        _scan_ast_public_defs(tree, "mod", index)
+        assert "public_func" in index
+
+    def test_finds_assignments(self) -> None:
+        """Test scanning finds public assignments."""
+        tree = ast.parse("MY_CONST = 42\n")
+        index: dict[str, tuple[str, str]] = {}
+        _scan_ast_public_defs(tree, "mod", index)
+        assert "MY_CONST" in index
+
+
+class TestExtractInlineConstants:
+    """Test _extract_inline_constants function."""
+
+    def test_multiple_constants(self) -> None:
+        """Test extracting multiple string constants."""
+        code = '__version__ = "1.0.0"\n__author__ = "Test"\n__license__ = "MIT"'
+        tree = ast.parse(code)
+        constants = _extract_inline_constants(tree)
+        assert len(constants) == 3
+        assert constants["__version__"] == "1.0.0"
+
+    def test_ignores_non_string_values(self) -> None:
+        """Test ignores non-string constant values."""
         code = '__version__ = "1.0.0"\n__count__ = 42\n__enabled__ = True'
         tree = ast.parse(code)
         constants = _extract_inline_constants(tree)
         assert "__version__" in constants
         assert "__count__" not in constants
-        assert "__enabled__" not in constants
 
-    def test_parse_existing_lazy_imports_with_annotated_assignment(self) -> None:
-        """Test _parse_existing_lazy_imports with type-annotated assignment."""
-        code = '_LAZY_IMPORTS: dict[str, tuple[str, str]] = {"Foo": ("module", "Foo")}'
-        tree = ast.parse(code)
-        lazy_map = _parse_existing_lazy_imports(tree)
-        assert "Foo" in lazy_map
-        assert lazy_map["Foo"] == ("module", "Foo")
 
-    def test_parse_existing_lazy_imports_with_invalid_dict(self) -> None:
-        """Test _parse_existing_lazy_imports with malformed dict."""
-        code = '_LAZY_IMPORTS = {"Foo": ("module",)}'
-        tree = ast.parse(code)
-        lazy_map = _parse_existing_lazy_imports(tree)
-        assert "Foo" not in lazy_map
+class TestShouldBubbleUp:
+    """Test _should_bubble_up function."""
 
-    def test_derive_lazy_map_with_import_from(self) -> None:
-        """Test _derive_lazy_map extracts from ImportFrom statements."""
-        code = "from module import Test, Helper"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "current.pkg")
-        assert "Test" in lazy_map
-        assert "Helper" in lazy_map
+    def test_public_class_name(self) -> None:
+        """Test that public class names bubble up."""
+        assert _should_bubble_up("FlextInfraModels") is True
 
-    def test_derive_lazy_map_with_import_statement(self) -> None:
-        """Test _derive_lazy_map extracts from Import statements."""
-        code = "import module\nimport other as alias"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "current.pkg")
-        assert "module" in lazy_map
-        assert "alias" in lazy_map
+    def test_private_name_filtered(self) -> None:
+        """Test that private names are filtered."""
+        assert _should_bubble_up("_internal") is False
 
-    def test_derive_lazy_map_skips_skip_modules(self) -> None:
-        """Test _derive_lazy_map skips modules in _SKIP_MODULES."""
-        code = "from typing import List\nfrom module import Test"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "current.pkg")
-        assert "List" not in lazy_map
-        assert "Test" in lazy_map
+    def test_main_filtered(self) -> None:
+        """Test that 'main' entry point is filtered."""
+        assert _should_bubble_up("main") is False
 
-    def test_derive_lazy_map_with_assignment_aliases(self) -> None:
-        """Test _derive_lazy_map captures assignment aliases."""
-        code = "from module import FlextConstants\nc = FlextConstants"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "current.pkg")
+    def test_all_caps_filtered(self) -> None:
+        """Test that ALL_CAPS constants are filtered."""
+        assert _should_bubble_up("BLUE") is False
+        assert _should_bubble_up("SYM_ARROW") is False
+
+    def test_singleton_name_passes(self) -> None:
+        """Test that lowercase singleton names pass."""
+        assert _should_bubble_up("output") is True
+
+    def test_single_letter_alias_passes(self) -> None:
+        """Test that single-letter aliases pass."""
+        assert _should_bubble_up("c") is True
+        assert _should_bubble_up("e") is True
+
+
+class TestMergeChildExports:
+    """Test _merge_child_exports function."""
+
+    def test_merges_child_exports(self, tmp_path: Path) -> None:
+        """Test that child exports are merged into parent."""
+        sub_dir = tmp_path / "sub"
+        sub_dir.mkdir()
+        lazy_map: dict[str, tuple[str, str]] = {}
+        dir_exports = {
+            str(sub_dir): {
+                "SubService": ("pkg.sub.service", "SubService"),
+            },
+        }
+        _merge_child_exports(tmp_path, lazy_map, dir_exports)
+        assert "SubService" in lazy_map
+        assert lazy_map["SubService"] == ("pkg.sub.service", "SubService")
+
+    def test_sibling_exports_take_precedence(self, tmp_path: Path) -> None:
+        """Test that existing sibling exports are NOT overwritten."""
+        sub_dir = tmp_path / "sub"
+        sub_dir.mkdir()
+        lazy_map: dict[str, tuple[str, str]] = {
+            "Model": ("pkg.models", "Model"),
+        }
+        dir_exports = {
+            str(sub_dir): {
+                "Model": ("pkg.sub.models", "Model"),
+            },
+        }
+        _merge_child_exports(tmp_path, lazy_map, dir_exports)
+        # Sibling wins
+        assert lazy_map["Model"] == ("pkg.models", "Model")
+
+    def test_filters_all_caps(self, tmp_path: Path) -> None:
+        """Test that ALL_CAPS constants don't bubble up."""
+        sub_dir = tmp_path / "sub"
+        sub_dir.mkdir()
+        lazy_map: dict[str, tuple[str, str]] = {}
+        dir_exports = {
+            str(sub_dir): {
+                "BLUE": ("pkg.sub.colors", "BLUE"),
+                "Service": ("pkg.sub.service", "Service"),
+            },
+        }
+        _merge_child_exports(tmp_path, lazy_map, dir_exports)
+        assert "BLUE" not in lazy_map
+        assert "Service" in lazy_map
+
+
+class TestExtractVersionExports:
+    """Test _extract_version_exports function."""
+
+    def test_extracts_string_constants(self, tmp_path: Path) -> None:
+        """Test extracting __version__ as inline constant."""
+        (tmp_path / "__version__.py").write_text('__version__ = "1.0.0"\n')
+        inline, _ = _extract_version_exports(tmp_path, "test_pkg")
+        assert "__version__" in inline
+        assert inline["__version__"] == "1.0.0"
+
+    def test_extracts_non_string_as_lazy(self, tmp_path: Path) -> None:
+        """Test extracting __version_info__ as lazy import."""
+        (tmp_path / "__version__.py").write_text(
+            '__version__ = "1.0.0"\n__version_info__ = (1, 0, 0)\n',
+        )
+        inline, lazy = _extract_version_exports(tmp_path, "test_pkg")
+        assert "__version__" in inline
+        assert "__version_info__" in lazy
+        assert lazy["__version_info__"] == (
+            "test_pkg.__version__",
+            "__version_info__",
+        )
+
+    def test_no_version_file(self, tmp_path: Path) -> None:
+        """Test returns empty when __version__.py doesn't exist."""
+        inline, lazy = _extract_version_exports(tmp_path, "test_pkg")
+        assert inline == {}
+        assert lazy == {}
+
+
+class TestResolveAliases:
+    """Test _resolve_aliases function."""
+
+    def test_resolves_c_alias(self) -> None:
+        """Test resolving 'c' alias to Constants class."""
+        lazy_map: dict[str, tuple[str, str]] = {
+            "FlextConstants": ("pkg.constants", "FlextConstants"),
+        }
+        _resolve_aliases(lazy_map)
         assert "c" in lazy_map
+        assert lazy_map["c"] == ("pkg.constants", "FlextConstants")
 
-    def test_derive_lazy_map_fixes_single_letter_aliases(self) -> None:
-        """Test _derive_lazy_map fixes single-letter aliases."""
-        code = "from module import FlextConstants, FlextModels\nc = FlextConstants"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "current.pkg")
-        if "c" in lazy_map:
-            assert lazy_map["c"][1] == "FlextConstants"
+    def test_does_not_overwrite_existing(self) -> None:
+        """Test that existing alias is not overwritten."""
+        lazy_map: dict[str, tuple[str, str]] = {
+            "c": ("pkg.custom", "CustomConst"),
+            "FlextConstants": ("pkg.constants", "FlextConstants"),
+        }
+        _resolve_aliases(lazy_map)
+        # Should keep existing mapping
+        assert lazy_map["c"] == ("pkg.custom", "CustomConst")
 
-    def test_resolve_unmapped_with_alias_suffix_matching(self, tmp_path: Path) -> None:
-        """Test _resolve_unmapped resolves single-letter aliases."""
-        exports_set = {"c", "m", "t"}
-        filtered = {"FlextConstants": ("module", "FlextConstants")}
-        pkg_dir = tmp_path
-        _resolve_unmapped(exports_set, filtered, "test.pkg", pkg_dir)
-        assert "c" in filtered or "FlextConstants" in filtered
+    def test_resolves_multiple_aliases(self) -> None:
+        """Test resolving multiple aliases at once."""
+        lazy_map: dict[str, tuple[str, str]] = {
+            "FlextConstants": ("pkg.constants", "FlextConstants"),
+            "FlextModels": ("pkg.models", "FlextModels"),
+            "FlextTypes": ("pkg.typings", "FlextTypes"),
+        }
+        _resolve_aliases(lazy_map)
+        assert "c" in lazy_map
+        assert "m" in lazy_map
+        assert "t" in lazy_map
 
-    def test_resolve_unmapped_with_version_file(self, tmp_path: Path) -> None:
-        """Test _resolve_unmapped resolves __version__ from __version__.py."""
-        exports_set = {"__version__"}
-        filtered: dict[str, tuple[str, str]] = {}
-        pkg_dir = tmp_path
-        version_file = pkg_dir / "__version__.py"
-        version_file.write_text('__version__ = "1.0.0"')
-        _resolve_unmapped(exports_set, filtered, "test.pkg", pkg_dir)
-        assert "__version__" in filtered
 
-    def test_resolve_unmapped_with_version_info_file(self, tmp_path: Path) -> None:
-        """Test _resolve_unmapped resolves __version_info__ from __version__.py."""
-        exports_set = {"__version_info__"}
-        filtered: dict[str, tuple[str, str]] = {}
-        pkg_dir = tmp_path
-        version_file = pkg_dir / "__version__.py"
-        version_file.write_text("__version_info__ = (1, 0, 0)")
-        _resolve_unmapped(exports_set, filtered, "test.pkg", pkg_dir)
-        assert "__version_info__" in filtered
+class TestGenerateTypeChecking:
+    """Test _generate_type_checking function."""
 
-    def test_generate_type_checking_with_empty_groups(self) -> None:
-        """Test _generate_type_checking with no imports."""
+    def test_with_empty_groups(self) -> None:
+        """Test with no imports."""
         groups: dict[str, list[tuple[str, str]]] = {}
         lines = _generate_type_checking(groups)
         assert "if TYPE_CHECKING:" in lines
         assert any("pass" in line for line in lines)
 
-    def test_generate_type_checking_with_single_module(self) -> None:
-        """Test _generate_type_checking with single module."""
+    def test_with_single_module(self) -> None:
+        """Test with single module."""
         groups = {"module": [("Test", "Test")]}
         lines = _generate_type_checking(groups)
         assert "from module import" in " ".join(lines)
 
-    def test_generate_type_checking_with_long_import_line(self) -> None:
-        """Test _generate_type_checking wraps long import lines."""
-        groups = {
-            "module": [
-                ("VeryLongClassName1", "VeryLongClassName1"),
-                ("VeryLongClassName2", "VeryLongClassName2"),
-                ("VeryLongClassName3", "VeryLongClassName3"),
-            ],
-        }
+    def test_with_aliased_imports(self) -> None:
+        """Test with aliased imports."""
+        groups = {"module": [("c", "FlextConstants"), ("m", "FlextModels")]}
+        lines = _generate_type_checking(groups)
+        joined = " ".join(lines)
+        assert "as" in joined
+
+    def test_with_long_import_line(self) -> None:
+        """Test wraps long import lines."""
+        groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        groups["module"] = [
+            ("VeryLongClassName1", "VeryLongClassName1"),
+            ("VeryLongClassName2", "VeryLongClassName2"),
+            ("VeryLongClassName3", "VeryLongClassName3"),
+        ]
         lines = _generate_type_checking(groups)
         assert any("module" in line for line in lines)
 
-    def test_generate_type_checking_with_alias_imports(self) -> None:
-        """Test _generate_type_checking with aliased imports."""
-        groups = {"module": [("c", "FlextConstants"), ("m", "FlextModels")]}
+    def test_with_multiple_modules_spacing(self) -> None:
+        """Test blank lines between different top-level package groups."""
+        groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        groups["alpha_pkg.module"] = [("Test1", "Test1")]
+        groups["beta_pkg.module"] = [("Test2", "Test2")]
         lines = _generate_type_checking(groups)
-        output = " ".join(lines)
-        assert "as" in output
+        assert "" in lines
 
-    def test_generate_file_with_flext_core_package(self, tmp_path: Path) -> None:
-        """Test _generate_file uses correct lazy import for flext_core."""
+
+class TestGenerateFile:
+    """Test _generate_file function."""
+
+    def test_with_flext_core_package(self) -> None:
+        """Test uses correct lazy import for flext_core."""
         exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
         content = _generate_file("", exports, filtered, inline_constants, "flext_core")
         assert "flext_core._utilities.lazy" in content
 
-    def test_generate_file_with_other_package(self) -> None:
-        """Test _generate_file uses correct lazy import for other packages."""
+    def test_with_other_package(self) -> None:
+        """Test uses correct lazy import for non-core packages."""
         exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
         content = _generate_file("", exports, filtered, inline_constants, "other_pkg")
         assert "from flext_core.lazy import" in content
 
-    def test_generate_file_with_inline_constants(self) -> None:
-        """Test _generate_file includes inline constants."""
+    def test_with_inline_constants(self) -> None:
+        """Test includes inline constants."""
         exports = ["__version__", "Test"]
         filtered = {"Test": ("module", "Test")}
         inline_constants = {"__version__": "1.0.0"}
         content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
         assert '__version__ = "1.0.0"' in content
 
-    def test_generate_file_with_docstring(self) -> None:
-        """Test _generate_file preserves docstring."""
+    def test_with_docstring(self) -> None:
+        """Test preserves docstring."""
         docstring = '"""Test module."""'
         exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
@@ -431,113 +574,137 @@ class TestLazyInitEdgeCases:
         )
         assert docstring in content
 
-    def test_run_ruff_fix_with_nonexistent_file(self, tmp_path: Path) -> None:
-        """Test _run_ruff_fix handles nonexistent files gracefully."""
+    def test_has_autogen_header(self) -> None:
+        """Test generated file starts with autogen header."""
+        exports = ["Test"]
+        filtered = {"Test": ("module", "Test")}
+        inline_constants: dict[str, str] = {}
+        content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
+        assert "AUTO-GENERATED" in content
+
+    def test_has_all_list(self) -> None:
+        """Test generated file has __all__ list."""
+        exports = ["Alpha", "Beta"]
+        filtered = {"Alpha": ("mod", "Alpha"), "Beta": ("mod", "Beta")}
+        inline_constants: dict[str, str] = {}
+        content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
+        assert "__all__" in content
+        assert '"Alpha"' in content
+        assert '"Beta"' in content
+
+
+class TestRunRuffFix:
+    """Test _run_ruff_fix function."""
+
+    def test_with_nonexistent_file(self, tmp_path: Path) -> None:
+        """Test handles nonexistent files gracefully."""
         nonexistent = tmp_path / "nonexistent.py"
-        _run_ruff_fix(nonexistent)
+        _run_ruff_fix(nonexistent)  # Should not raise
 
-    def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:
-        """Test execute() method returns FlextResult[int] (line 76)."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        result = generator.execute()
-        assert result.is_success
-        assert isinstance(result.value, int)
 
-    def test_run_with_errors_increments_error_count(self, tmp_path: Path) -> None:
-        """Test run() increments error count on parse errors (line 99)."""
-        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        src_dir = tmp_path / "src" / "test_pkg"
-        src_dir.mkdir(parents=True)
-        init_file = src_dir / "__init__.py"
-        init_file.write_text('"""Test."""\ninvalid syntax ][\n__all__ = ["Test"]')
-        result = generator.run(check_only=False)
-        assert result >= 0
+def test_codegen_init_getattr_raises_attribute_error() -> None:
+    """Test that accessing nonexistent attribute raises AttributeError."""
+    with pytest.raises(AttributeError):
+        mod.nonexistent_xyz_attribute
 
-    def test_run_with_unmapped_exports_increments_unmapped_count(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        """Test run() increments unmapped_count when exports are unmapped (lines 101-102)."""
+
+class TestProcessDirectory:
+    """Test the _process_directory method (integration-level)."""
+
+    def test_generates_init_from_sibling_files(self, tmp_path: Path) -> None:
+        """Test _process_directory generates __init__.py from siblings."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
-        # Sibling .py required so _dir_has_py_files() does not skip the directory
-        (src_dir / "models.py").write_text('"""Models."""\n')
-        init_file = src_dir / "__init__.py"
-        init_file.write_text(
-            '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]',
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["TestModel"]\n\nclass TestModel:\n    pass\n',
         )
-        result = generator.run(check_only=False)
-        assert result > 0
+        dir_exports: dict[str, dict[str, tuple[str, str]]] = {}
+        result, exports = generator._process_directory(
+            src_dir,
+            check_only=False,
+            dir_exports=dir_exports,
+        )
+        assert result == 0
+        assert "TestModel" in exports
+        init_content = (src_dir / "__init__.py").read_text()
+        assert "TestModel" in init_content
 
-    def test_process_file_with_unmapped_exports_message(self, tmp_path: Path) -> None:
-        """Test _process_file formats message with unmapped exports (lines 186-189)."""
+    def test_check_only_does_not_write(self, tmp_path: Path) -> None:
+        """Test _process_directory in check_only mode doesn't write files."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
-        # Sibling .py required so _dir_has_py_files() does not skip the directory
-        (src_dir / "models.py").write_text('"""Models."""\n')
-        init_file = src_dir / "__init__.py"
-        init_file.write_text(
-            '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]',
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["TestModel"]\n\nclass TestModel:\n    pass\n',
         )
-        result = generator._process_file(init_file, check_only=False)
-        assert result == 1
+        dir_exports: dict[str, dict[str, tuple[str, str]]] = {}
+        result, exports = generator._process_directory(
+            src_dir,
+            check_only=True,
+            dir_exports=dir_exports,
+        )
+        assert result == 0
+        assert "TestModel" in exports
+        # __init__.py should NOT have been created
+        assert not (src_dir / "__init__.py").exists()
 
-    def test_parse_existing_lazy_imports_with_non_dict_value(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        """Test _parse_existing_lazy_imports returns empty dict for invalid dict (line 280)."""
-        code = '_LAZY_IMPORTS = "not a dict"'
-        tree = ast.parse(code)
-        lazy_map = _parse_existing_lazy_imports(tree)
-        assert lazy_map == {}
+    def test_skips_directory_without_package(self, tmp_path: Path) -> None:
+        """Test _process_directory skips dirs that can't infer package."""
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        random_dir = tmp_path / "random"
+        random_dir.mkdir()
+        (random_dir / "models.py").write_text("class Model: pass\n")
+        dir_exports: dict[str, dict[str, tuple[str, str]]] = {}
+        result, exports = generator._process_directory(
+            random_dir,
+            check_only=False,
+            dir_exports=dir_exports,
+        )
+        assert result is None
+        assert exports == {}
 
-    def test_derive_lazy_map_skips_current_package(self, tmp_path: Path) -> None:
-        """Test _derive_lazy_map skips imports from current package (line 324)."""
-        code = "from test_pkg import something"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "test_pkg")
-        assert "something" not in lazy_map
+    def test_includes_child_exports(self, tmp_path: Path) -> None:
+        """Test _process_directory includes child subdirectory exports."""
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        src_dir = tmp_path / "src" / "pkg"
+        sub_dir = src_dir / "sub"
+        sub_dir.mkdir(parents=True)
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["ParentModel"]\n\nclass ParentModel:\n    pass\n',
+        )
+        dir_exports = {
+            str(sub_dir): {
+                "ChildService": ("pkg.sub.service", "ChildService"),
+            },
+        }
+        result, exports = generator._process_directory(
+            src_dir,
+            check_only=False,
+            dir_exports=dir_exports,
+        )
+        assert result == 0
+        assert "ParentModel" in exports
+        assert "ChildService" in exports
 
-    def test_derive_lazy_map_skips_stdlib_imports(self, tmp_path: Path) -> None:
-        """Test _derive_lazy_map skips stdlib imports (line 334)."""
-        code = "import sys"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "test_pkg")
-        assert "sys" not in lazy_map
-
-    def test_derive_lazy_map_fixes_single_letter_aliases_mapping(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        """Test _derive_lazy_map fixes single-letter aliases (lines 353-356)."""
-        code = "from flext_core import FlextConstants\nc = FlextConstants"
-        tree = ast.parse(code)
-        lazy_map = _derive_lazy_map(tree, "test_pkg")
-        assert "c" in lazy_map
-        assert lazy_map["c"][1] == "FlextConstants"
-
-    def test_generate_type_checking_with_long_imports(self, tmp_path: Path) -> None:
-        """Test _generate_type_checking formats long imports on multiple lines (lines 424-426)."""
-        groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-        groups["module"] = [
-            ("VeryLongExportName1", "VeryLongExportName1"),
-            ("VeryLongExportName2", "VeryLongExportName2"),
-            ("VeryLongExportName3", "VeryLongExportName3"),
-        ]
-        lines = _generate_type_checking(groups)
-        content = "\n".join(lines)
-        assert "(" in content or len(lines) > 1
-
-    def test_generate_type_checking_with_multiple_modules_spacing(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        """Test _generate_type_checking adds blank lines between module groups (line 435)."""
-        groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-        groups["module_a"] = [("Test1", "Test1")]
-        groups["module_b"] = [("Test2", "Test2")]
-        lines = _generate_type_checking(groups)
-        assert "" in lines
+    def test_handles_version_file(self, tmp_path: Path) -> None:
+        """Test _process_directory handles __version__.py correctly."""
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
+        src_dir = tmp_path / "src" / "test_pkg"
+        src_dir.mkdir(parents=True)
+        (src_dir / "models.py").write_text(
+            '"""Models."""\n\n__all__ = ["Model"]\n\nclass Model:\n    pass\n',
+        )
+        (src_dir / "__version__.py").write_text(
+            '__version__ = "1.0.0"\n__version_info__ = (1, 0, 0)\n',
+        )
+        dir_exports: dict[str, dict[str, tuple[str, str]]] = {}
+        result, _ = generator._process_directory(
+            src_dir,
+            check_only=False,
+            dir_exports=dir_exports,
+        )
+        assert result == 0
+        content = (src_dir / "__init__.py").read_text()
+        assert '__version__ = "1.0.0"' in content
+        assert "__version_info__" in content

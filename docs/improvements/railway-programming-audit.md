@@ -1,7 +1,6 @@
 # Railway-Oriented Programming Guide - Audit Report
 
 <!-- TOC START -->
-
 - [Audit Summary](#audit-summary)
   - [✅ Accurate Documentation (7 methods)](#accurate-documentation-7-methods)
   - [❌ Missing Critical Methods (13 methods)](#missing-critical-methods-13-methods)
@@ -25,7 +24,6 @@
   - [Verified Instance Methods ✅](#verified-instance-methods)
   - [Still Need to Find](#still-need-to-find)
 - [Conclusion](#conclusion)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

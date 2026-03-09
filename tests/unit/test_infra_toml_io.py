@@ -13,7 +13,7 @@ import tomlkit
 from tomlkit.items import Table
 
 from flext_core import t
-from flext_infra import FlextInfraTomlService
+from flext_infra import FlextInfraUtilitiesToml
 
 
 class TestFlextInfraTomlService:
@@ -26,7 +26,7 @@ class TestFlextInfraTomlService:
             '[section]\nkey = "value"\nnumber = 42\n',
             encoding="utf-8",
         )
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         result = service.read(toml_file)
         assert result.is_success
         value = result.value
@@ -39,7 +39,7 @@ class TestFlextInfraTomlService:
     def test_read_nonexistent_file(self, tmp_path: Path) -> None:
         """Test reading a nonexistent file returns empty dict."""
         toml_file = tmp_path / "missing.toml"
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         result = service.read(toml_file)
         assert result.is_success
         assert result.value == {}
@@ -48,7 +48,7 @@ class TestFlextInfraTomlService:
         """Test reading invalid TOML returns failure."""
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("[invalid\nkey = value", encoding="utf-8")
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         result = service.read(toml_file)
         assert result.is_failure
         assert isinstance(result.error, str)
@@ -60,7 +60,7 @@ class TestFlextInfraTomlService:
         toml_file = tmp_path / "test.toml"
         content = '[section]\nkey = "value"  # comment\n'
         toml_file.write_text(content, encoding="utf-8")
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         result = service.read_document(toml_file)
         assert result.is_success
         doc = result.value
@@ -72,7 +72,7 @@ class TestFlextInfraTomlService:
     def test_read_document_nonexistent_file(self, tmp_path: Path) -> None:
         """Test reading nonexistent file as document returns failure."""
         toml_file = tmp_path / "missing.toml"
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         result = service.read_document(toml_file)
         assert result.is_failure
         assert isinstance(result.error, str)
@@ -82,14 +82,14 @@ class TestFlextInfraTomlService:
         """Test reading invalid TOML as document returns failure."""
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("[invalid\nkey = value", encoding="utf-8")
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         result = service.read_document(toml_file)
         assert result.is_failure
 
     def test_write_dict_payload(self, tmp_path: Path) -> None:
         """Test writing a dict payload to TOML file."""
         toml_file = tmp_path / "output.toml"
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         payload: dict[str, t.ContainerValue] = {
             "section": {"key": "value", "number": 42},
         }
@@ -103,7 +103,7 @@ class TestFlextInfraTomlService:
     def test_write_creates_parent_directories(self, tmp_path: Path) -> None:
         """Test write creates parent directories."""
         toml_file = tmp_path / "nested" / "deep" / "file.toml"
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         payload: dict[str, t.ContainerValue] = {"key": "value"}
         result = service.write(toml_file, payload)
         assert result.is_success
@@ -112,7 +112,7 @@ class TestFlextInfraTomlService:
     def test_write_document(self, tmp_path: Path) -> None:
         """Test writing a tomlkit document."""
         toml_file = tmp_path / "doc.toml"
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         doc = tomlkit.document()
         doc["section"] = {"key": "value"}
         result = service.write(toml_file, doc)
@@ -122,7 +122,7 @@ class TestFlextInfraTomlService:
     def test_write_preserves_formatting(self, tmp_path: Path) -> None:
         """Test write preserves formatting when using document."""
         toml_file = tmp_path / "formatted.toml"
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         doc = tomlkit.document()
         doc.add(tomlkit.comment("Configuration file"))
         doc["section"] = {"key": "value"}
@@ -136,7 +136,7 @@ class TestFlextInfraTomlService:
         toml_file = tmp_path / "readonly.toml"
         toml_file.write_text("[section]\n", encoding="utf-8")
         toml_file.chmod(292)
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         try:
             result = service.write(toml_file, {"key": "value"})
             assert result.is_failure
@@ -147,7 +147,7 @@ class TestFlextInfraTomlService:
         """Test updating a section in TOML file."""
         toml_file = tmp_path / "update.toml"
         toml_file.write_text('[section]\nkey = "old"\n', encoding="utf-8")
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         read_result = service.read_document(toml_file)
         assert read_result.is_success
         doc = read_result.value
@@ -169,20 +169,20 @@ class TestFlextInfraTomlService:
         """Test value_differs compares lists as strings."""
         current = [1, 2, 3]
         expected = [1, 2, 3]
-        assert not FlextInfraTomlService.value_differs(current, expected)
+        assert not FlextInfraUtilitiesToml.value_differs(current, expected)
         expected_diff = [1, 2, 4]
-        assert FlextInfraTomlService.value_differs(current, expected_diff)
+        assert FlextInfraUtilitiesToml.value_differs(current, expected_diff)
 
     def test_value_differs_with_scalars(self) -> None:
         """Test value_differs with scalar values."""
-        assert not FlextInfraTomlService.value_differs("same", "same")
-        assert FlextInfraTomlService.value_differs("a", "b")
-        assert not FlextInfraTomlService.value_differs(42, 42)
-        assert FlextInfraTomlService.value_differs(42, 43)
+        assert not FlextInfraUtilitiesToml.value_differs("same", "same")
+        assert FlextInfraUtilitiesToml.value_differs("a", "b")
+        assert not FlextInfraUtilitiesToml.value_differs(42, 42)
+        assert FlextInfraUtilitiesToml.value_differs(42, 43)
 
     def test_build_table_with_nested_mapping(self, tmp_path: Path) -> None:
         """Test build_table creates nested tomlkit tables."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         data: dict[str, t.ContainerValue] = {
             "section": {"key": "value", "nested": {"deep": "value"}},
             "simple": "scalar",
@@ -196,7 +196,7 @@ class TestFlextInfraTomlService:
 
     def test_sync_mapping_adds_new_keys(self, tmp_path: Path) -> None:
         """Test sync_mapping adds missing keys to target."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         target: dict[str, t.ContainerValue] = {}
         canonical: dict[str, t.ContainerValue] = {"new_key": "new_value"}
         added: list[str] = []
@@ -216,7 +216,7 @@ class TestFlextInfraTomlService:
 
     def test_sync_mapping_updates_changed_values(self, tmp_path: Path) -> None:
         """Test sync_mapping updates changed values."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         target: dict[str, t.ContainerValue] = {"key": "old_value"}
         canonical: dict[str, t.ContainerValue] = {"key": "new_value"}
         added: list[str] = []
@@ -236,7 +236,7 @@ class TestFlextInfraTomlService:
 
     def test_sync_mapping_prunes_extras(self, tmp_path: Path) -> None:
         """Test sync_mapping removes extra keys when prune_extras=True."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         target: dict[str, t.ContainerValue] = {"keep": "value", "remove": "extra"}
         canonical: dict[str, t.ContainerValue] = {"keep": "value"}
         added: list[str] = []
@@ -256,7 +256,7 @@ class TestFlextInfraTomlService:
 
     def test_sync_mapping_nested_with_prefix(self, tmp_path: Path) -> None:
         """Test sync_mapping with nested mappings and prefix."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         target: dict[str, t.ContainerValue] = {"section": {"key": "old"}}
         canonical: dict[str, t.ContainerValue] = {"section": {"key": "new"}}
         added: list[str] = []
@@ -278,7 +278,7 @@ class TestFlextInfraTomlService:
 
     def test_sync_mapping_skips_prune_when_false(self, tmp_path: Path) -> None:
         """Test sync_mapping skips pruning when prune_extras=False."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         target: dict[str, t.ContainerValue] = {"keep": "value", "extra": "stays"}
         canonical: dict[str, t.ContainerValue] = {"keep": "value"}
         added: list[str] = []
@@ -296,9 +296,16 @@ class TestFlextInfraTomlService:
         assert "extra" in target
         assert len(removed) == 0
 
+    def test_execute_returns_success(self) -> None:
+        """Test execute() returns FlextResult[bool] with True."""
+        service = FlextInfraUtilitiesToml()
+        result = service.execute()
+        assert result.is_success
+        assert result.value is True
+
     def test_build_table_with_nested_mapping_dict(self) -> None:
         """Test build_table handles nested mappings."""
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         nested: dict[str, t.ContainerValue] = {"key": {"nested": "value"}}
         result = service.build_table(nested)
         assert result is not None
@@ -309,7 +316,7 @@ class TestFlextInfraTomlService:
         When canonical has a nested mapping but target has a scalar value,
         the scalar should be replaced with a new table.
         """
-        service = FlextInfraTomlService()
+        service = FlextInfraUtilitiesToml()
         target: dict[str, t.ContainerValue] = {"section": "scalar_value"}
         canonical: dict[str, t.ContainerValue] = {"section": {"nested": "value"}}
         added: list[str] = []

@@ -1,5 +1,29 @@
 # Roadmap Objetivo de Modernização (Python 3.13, OO/MRO, Pydantic v2)
 
+
+<!-- TOC START -->
+- [Escopo](#escopo)
+- [Resultado esperado (DoD do programa)](#resultado-esperado-dod-do-programa)
+- [Princípios de execução](#princpios-de-execuo)
+- [Backlog objetivo por trilha](#backlog-objetivo-por-trilha)
+- [Trilha A — Tipagem e hierarquia OO/MRO](#trilha-a-tipagem-e-hierarquia-oomro)
+  - [Entregáveis](#entregveis)
+  - [Critérios de aceite](#critrios-de-aceite)
+- [Trilha B — Pydantic v2 avançado](#trilha-b-pydantic-v2-avanado)
+  - [Entregáveis](#entregveis)
+  - [Critérios de aceite](#critrios-de-aceite)
+- [Trilha C — Simplificação estrutural (SOLID + YAGNI)](#trilha-c-simplificao-estrutural-solid-yagni)
+  - [Entregáveis](#entregveis)
+  - [Critérios de aceite](#critrios-de-aceite)
+- [Plano de execução por ondas (foco em risco)](#plano-de-execuo-por-ondas-foco-em-risco)
+  - [Onda 1 — Baixo risco](#onda-1-baixo-risco)
+  - [Onda 2 — Médio risco](#onda-2-mdio-risco)
+  - [Onda 3 — Alto impacto](#onda-3-alto-impacto)
+- [Métricas objetivas de acompanhamento](#mtricas-objetivas-de-acompanhamento)
+- [Checklist de fechamento](#checklist-de-fechamento)
+- [Nota de contexto](#nota-de-contexto)
+<!-- TOC END -->
+
 ## Escopo
 
 Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso de retrocompatibilidade, alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no projeto.

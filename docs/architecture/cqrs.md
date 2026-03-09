@@ -1,7 +1,6 @@
 # CQRS Architecture
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [FlextHandlers](#flexthandlers)
   - [Current Implementation (V1)](#current-implementation-v1)
@@ -40,7 +39,6 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07

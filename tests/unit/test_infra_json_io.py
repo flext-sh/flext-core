@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import FlextInfraJsonService
+from flext_infra import FlextInfraUtilitiesIo
 
 from ._models import SampleModel
 
@@ -22,7 +22,7 @@ class TestFlextInfraJsonService:
         """Test reading an existing JSON file."""
         json_file = tmp_path / "test.json"
         json_file.write_text('{"key": "value", "number": 42}', encoding="utf-8")
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         result = service.read(json_file)
         assert result.is_success
         assert result.value["key"] == "value"
@@ -31,7 +31,7 @@ class TestFlextInfraJsonService:
     def test_read_nonexistent_file(self, tmp_path: Path) -> None:
         """Test reading a nonexistent file returns empty mapping."""
         json_file = tmp_path / "missing.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         result = service.read(json_file)
         assert result.is_success
         assert result.value == {}
@@ -40,7 +40,7 @@ class TestFlextInfraJsonService:
         """Test reading invalid JSON returns failure."""
         json_file = tmp_path / "invalid.json"
         json_file.write_text("{invalid json}", encoding="utf-8")
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         result = service.read(json_file)
         assert result.is_failure
         assert isinstance(result.error, str)
@@ -51,7 +51,7 @@ class TestFlextInfraJsonService:
         """Test reading JSON with non-object root returns failure."""
         json_file = tmp_path / "array.json"
         json_file.write_text("[1, 2, 3]", encoding="utf-8")
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         result = service.read(json_file)
         assert result.is_failure
         assert isinstance(result.error, str)
@@ -60,7 +60,7 @@ class TestFlextInfraJsonService:
     def test_write_dict_payload(self, tmp_path: Path) -> None:
         """Test writing a dict payload to JSON file."""
         json_file = tmp_path / "output.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         payload: dict[str, str | int] = {"key": "value", "number": 42}
         result = service.write(json_file, payload)
         assert result.is_success
@@ -72,7 +72,7 @@ class TestFlextInfraJsonService:
     def test_write_model_payload(self, tmp_path: Path) -> None:
         """Test writing a Pydantic model to JSON file."""
         json_file = tmp_path / "model.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         model = SampleModel(name="test", value=123)
         result = service.write(json_file, model)
         assert result.is_success
@@ -81,7 +81,7 @@ class TestFlextInfraJsonService:
     def test_write_creates_parent_directories(self, tmp_path: Path) -> None:
         """Test write creates parent directories."""
         json_file = tmp_path / "nested" / "deep" / "file.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         payload = {"key": "value"}
         result = service.write(json_file, payload)
         assert result.is_success
@@ -90,7 +90,7 @@ class TestFlextInfraJsonService:
     def test_write_with_sorted_keys(self, tmp_path: Path) -> None:
         """Test write with sorted keys."""
         json_file = tmp_path / "sorted.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         payload = {"z": 1, "a": 2, "m": 3}
         result = service.write(json_file, payload, sort_keys=True)
         assert result.is_success
@@ -100,7 +100,7 @@ class TestFlextInfraJsonService:
     def test_write_with_ensure_ascii(self, tmp_path: Path) -> None:
         """Test write with ensure_ascii flag."""
         json_file = tmp_path / "ascii.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         payload = {"text": "café"}
         result = service.write(json_file, payload, ensure_ascii=True)
         assert result.is_success
@@ -112,7 +112,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "readonly.json"
         json_file.write_text("{}", encoding="utf-8")
         json_file.chmod(292)
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         try:
             result = service.write(json_file, {"key": "value"})
             assert result.is_failure
@@ -122,14 +122,14 @@ class TestFlextInfraJsonService:
     def test_write_returns_true_on_success(self, tmp_path: Path) -> None:
         """Test write returns True on success."""
         json_file = tmp_path / "test.json"
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         result = service.write(json_file, {"key": "value"})
         assert result.is_success
         assert result.value is True
 
     def test_removed_direct_api_methods_raise_attribute_error(self) -> None:
         """Direct-return compatibility methods are no longer available."""
-        service = FlextInfraJsonService()
+        service = FlextInfraUtilitiesIo()
         with pytest.raises(AttributeError):
             _ = getattr(service, "load")
         with pytest.raises(AttributeError):

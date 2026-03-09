@@ -7,7 +7,6 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-
 - [Getting Started](#getting-started)
   - [Installation Guide ✅](#installation-guide)
   - [Quick Start Tutorial (Coming Soon)](#quick-start-tutorial-coming-soon)
@@ -32,7 +31,6 @@
   - [Performance Optimization (Coming Soon)](#performance-optimization-coming-soon)
   - [Security Best Practices (Coming Soon)](#security-best-practices-coming-soon)
   - [Error Handling (Coming Soon)](#error-handling-coming-soon)
-
 <!-- TOC END -->
 
 ## Getting Started

@@ -23,7 +23,7 @@ from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTempla
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.git import FlextInfraGitService
 from flext_infra.output import FlextInfraOutput, output
-from flext_infra.paths import FlextInfraPathResolver
+from flext_infra.paths import FlextInfraUtilitiesPaths
 from flext_infra.subprocess import FlextInfraCommandRunner
 from flext_infra.workspace import (
     FlextInfraOrchestratorService,
@@ -250,11 +250,11 @@ class TestPathResolverDiscoveryFlow:
         """
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
-        path_resolver = FlextInfraPathResolver()
+        path_resolver = FlextInfraUtilitiesPaths()
         discovery = FlextInfraDiscoveryService()
         assert path_resolver is not None
         assert discovery is not None
-        assert isinstance(path_resolver, FlextInfraPathResolver)
+        assert isinstance(path_resolver, FlextInfraUtilitiesPaths)
         assert isinstance(discovery, FlextInfraDiscoveryService)
 
     @pytest.mark.integration
@@ -265,9 +265,9 @@ class TestPathResolverDiscoveryFlow:
         - Path resolver methods return Path objects
         - Paths are properly typed
         """
-        path_resolver = FlextInfraPathResolver()
+        path_resolver = FlextInfraUtilitiesPaths()
         assert path_resolver is not None
-        assert isinstance(path_resolver, FlextInfraPathResolver)
+        assert isinstance(path_resolver, FlextInfraUtilitiesPaths)
 
 
 class TestCrossModuleIntegration:

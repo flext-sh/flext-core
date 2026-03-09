@@ -20,33 +20,43 @@ if TYPE_CHECKING:
     from flext_tests._validator.bypass import FlextValidatorBypass
     from flext_tests._validator.imports import FlextValidatorImports
     from flext_tests._validator.layer import FlextValidatorLayer
+    from flext_tests._validator.models import (
+        FlextValidatorModels,
+        FlextValidatorModels as m,
+        vm,
+    )
     from flext_tests._validator.settings import FlextValidatorSettings
     from flext_tests._validator.tests import FlextValidatorTests
-    from flext_tests._validator.types import FlextValidatorTypes
+    from flext_tests._validator.types import (
+        FlextValidatorTypes,
+        FlextValidatorTypes as t,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
-    "FlextValidatorImports": (
-        "flext_tests._validator.imports",
-        "FlextValidatorImports",
-    ),
+    "FlextValidatorImports": ("flext_tests._validator.imports", "FlextValidatorImports"),
     "FlextValidatorLayer": ("flext_tests._validator.layer", "FlextValidatorLayer"),
-    "FlextValidatorSettings": (
-        "flext_tests._validator.settings",
-        "FlextValidatorSettings",
-    ),
+    "FlextValidatorModels": ("flext_tests._validator.models", "FlextValidatorModels"),
+    "FlextValidatorSettings": ("flext_tests._validator.settings", "FlextValidatorSettings"),
     "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
     "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
+    "m": ("flext_tests._validator.models", "FlextValidatorModels"),
+    "t": ("flext_tests._validator.types", "FlextValidatorTypes"),
+    "vm": ("flext_tests._validator.models", "vm"),
 }
 
 __all__ = [
     "FlextValidatorBypass",
     "FlextValidatorImports",
     "FlextValidatorLayer",
+    "FlextValidatorModels",
     "FlextValidatorSettings",
     "FlextValidatorTests",
     "FlextValidatorTypes",
+    "m",
+    "t",
+    "vm",
 ]
 
 
