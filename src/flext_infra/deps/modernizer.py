@@ -20,13 +20,13 @@ from flext_infra.deps.detector import (
     EnsureRuffConfigPhase,
     InjectCommentsPhase,
 )
+from flext_infra.deps.tool_config import load_tool_config
 from flext_infra.toml_io import (
     array,
     as_string_list,
     canonical_dev_dependencies,
     dedupe_specs,
     dep_name,
-    ensure_ruff_shared_template,
     ensure_table,
     project_dev_groups,
     read_doc,
@@ -40,7 +40,6 @@ _as_string_list = as_string_list
 _canonical_dev_dependencies = canonical_dev_dependencies
 _dedupe_specs = dedupe_specs
 _dep_name = dep_name
-_ensure_ruff_shared_template = ensure_ruff_shared_template
 _ensure_table = ensure_table
 _project_dev_groups = project_dev_groups
 _read_doc = read_doc
@@ -76,6 +75,11 @@ class FlextInfraPyprojectModernizer:
         super().__init__()
         self.root = root or ROOT
         self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        tool_config_result = load_tool_config()
+        if tool_config_result.is_failure:
+            msg = tool_config_result.error or "failed to load deps tool config"
+            raise ValueError(msg)
+        self._tool_config = tool_config_result.value
 
     def find_pyproject_files(self) -> list[Path]:
         """Find all workspace pyproject.toml files."""
@@ -99,13 +103,7 @@ class FlextInfraPyprojectModernizer:
         if doc is None:
             return ["invalid TOML"]
         is_root = path.parent.resolve() == self.root.resolve()
-        shared_path, shared_written = _ensure_ruff_shared_template(
-            path.parent,
-            self.root,
-        )
         changes: list[str] = []
-        if shared_written:
-            changes.append(f"generated {shared_path.relative_to(path.parent)}")
         tool: object | None = None
         if c.Infra.Toml.TOOL in doc:
             tool = doc[c.Infra.Toml.TOOL]
@@ -136,16 +134,24 @@ class FlextInfraPyprojectModernizer:
                         del poetry[c.Infra.Toml.GROUP]
                         changes.append("removed empty poetry group container")
         changes.extend(ConsolidateGroupsPhase().apply(doc, canonical_dev))
-        changes.extend(EnsurePytestConfigPhase().apply(doc))
-        changes.extend(EnsurePyreflyConfigPhase().apply(doc, is_root=is_root))
-        changes.extend(EnsureMypyConfigPhase().apply(doc))
-        changes.extend(EnsurePydanticMypyConfigPhase().apply(doc))
-        changes.extend(EnsureFormattingToolingPhase().apply(doc))
+        changes.extend(EnsurePytestConfigPhase(self._tool_config).apply(doc))
+        changes.extend(
+            EnsurePyreflyConfigPhase(self._tool_config).apply(doc, is_root=is_root)
+        )
+        changes.extend(EnsureMypyConfigPhase(self._tool_config).apply(doc))
+        changes.extend(EnsurePydanticMypyConfigPhase(self._tool_config).apply(doc))
+        changes.extend(EnsureFormattingToolingPhase(self._tool_config).apply(doc))
         changes.extend(EnsureNamespaceToolingPhase().apply(doc, path=path))
         changes.extend(
-            EnsureRuffConfigPhase().apply(doc, path=path, workspace_root=self.root),
+            EnsureRuffConfigPhase(self._tool_config).apply(
+                doc,
+                path=path,
+                workspace_root=self.root,
+            ),
         )
-        changes.extend(EnsurePyrightConfigPhase().apply(doc, is_root=is_root))
+        changes.extend(
+            EnsurePyrightConfigPhase(self._tool_config).apply(doc, is_root=is_root)
+        )
         rendered = doc.as_string()
         if not skip_comments:
             rendered, comment_changes = InjectCommentsPhase().apply(rendered)

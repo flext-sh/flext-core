@@ -16,30 +16,33 @@
 ## Entregáveis obrigatórios (curto prazo)
 
 1. `tests/unit/contracts/cache_contract.py`
-2. `tests/unit/contracts/generators_contract.py`
-3. `tests/unit/contracts/validation_contract.py`
-4. `docs/standards/testing-refactor-checklist.md`
+1. `tests/unit/contracts/generators_contract.py`
+1. `tests/unit/contracts/validation_contract.py`
+1. `docs/standards/testing-refactor-checklist.md`
 
 ## Plano de execução em 4 PRs (objetivo e incremental)
 
-| PR | Objetivo | Mudanças mínimas | Critério de pronto (DoD) |
-|---|---|---|---|
-| PR-1 | Consolidar cache tests | Criar `cache_contract.py` + migrar duplicações de `test_utilities.py` e `test_coverage_utilities.py` | `pytest -q tests/unit/test_utilities.py tests/unit/test_coverage_utilities.py` verde |
-| PR-2 | Consolidar generators tests | Criar `generators_contract.py` + unificar prefixo/tamanho/unicidade | mesmos testes verdes + sem duplicação de cenários em 2+ arquivos |
-| PR-3 | Consolidar validation tests | Criar `validation_contract.py` + migrar pipeline/type-check cases | testes unitários afetados verdes |
-| PR-4 | Governança de revisão | Criar checklist de PR e regra de adoção de contratos | checklist publicado + exemplos de uso em 1 PR |
+| PR   | Objetivo                    | Mudanças mínimas                                                                                     | Critério de pronto (DoD)                                                             |
+| ---- | --------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| PR-1 | Consolidar cache tests      | Criar `cache_contract.py` + migrar duplicações de `test_utilities.py` e `test_coverage_utilities.py` | `pytest -q tests/unit/test_utilities.py tests/unit/test_coverage_utilities.py` verde |
+| PR-2 | Consolidar generators tests | Criar `generators_contract.py` + unificar prefixo/tamanho/unicidade                                  | mesmos testes verdes + sem duplicação de cenários em 2+ arquivos                     |
+| PR-3 | Consolidar validation tests | Criar `validation_contract.py` + migrar pipeline/type-check cases                                    | testes unitários afetados verdes                                                     |
+| PR-4 | Governança de revisão       | Criar checklist de PR e regra de adoção de contratos                                                 | checklist publicado + exemplos de uso em 1 PR                                        |
 
 ## Regras de design (enxutas)
 
 ### DRY
+
 - Cada família de comportamento terá **1 fonte de verdade** de cenários (contrato).
 - Testes concretos só estendem casos locais quando houver necessidade real.
 
 ### SOLID
+
 - Contratos pequenos por domínio (cache/generators/validation).
 - Herança por MRO apenas para composição de invariantes, sem “mega classe base”.
 
 ### YAGNI
+
 - Não criar framework genérico de testes.
 - Só extrair contrato quando houver duplicação real em mais de um arquivo.
 

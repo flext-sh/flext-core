@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import tomllib
 from pathlib import Path
 from typing import override
@@ -49,29 +48,6 @@ def _as_container_list(value: t.ContainerValue | Item | None) -> list[t.Containe
         return _CONTAINER_LIST_ADAPTER.validate_python(normalized)
     except ValidationError:
         return []
-
-
-def _find_ruff_shared_path(project_dir: Path, workspace_root: Path) -> tuple[Path, str]:
-    """Return target ruff-shared file path and relative extend value."""
-    workspace_candidate = workspace_root / "ruff-shared.toml"
-    relative = os.path.relpath(workspace_candidate, start=project_dir)
-    return (workspace_candidate, Path(relative).as_posix())
-
-
-def ensure_ruff_shared_template(
-    project_dir: Path,
-    workspace_root: Path,
-) -> tuple[Path, bool]:
-    """Create managed ruff-shared.toml in workspace root when missing."""
-    target, _ = _find_ruff_shared_path(project_dir, workspace_root)
-    if target.exists():
-        return (target, False)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    _ = target.write_text(
-        c.Infra.Deps.RUFF_SHARED_TEMPLATE.rstrip() + "\n",
-        encoding=c.Infra.Encoding.DEFAULT,
-    )
-    return (target, True)
 
 
 def _dep_name(spec: str) -> str:
@@ -259,7 +235,6 @@ CONTAINER_LIST_ADAPTER = _CONTAINER_LIST_ADAPTER
 as_string_list = _as_string_list
 dep_name = _dep_name
 dedupe_specs = _dedupe_specs
-find_ruff_shared_path = _find_ruff_shared_path
 project_dev_groups = _project_dev_groups
 toml_get = _toml_get
 unwrap_item = _unwrap_item
@@ -268,7 +243,6 @@ _array = array
 _canonical_dev_dependencies = canonical_dev_dependencies
 _discover_first_party_namespaces = discover_first_party_namespaces
 _ensure_pyright_execution_envs = ensure_pyright_execution_envs
-_ensure_ruff_shared_template = ensure_ruff_shared_template
 _ensure_table = ensure_table
 _read_doc = read_doc
 _table_string_keys = table_string_keys
@@ -464,9 +438,7 @@ __all__ = [
     "dep_name",
     "discover_first_party_namespaces",
     "ensure_pyright_execution_envs",
-    "ensure_ruff_shared_template",
     "ensure_table",
-    "find_ruff_shared_path",
     "project_dev_groups",
     "read_doc",
     "table_string_keys",

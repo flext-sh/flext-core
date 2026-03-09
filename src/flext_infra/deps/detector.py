@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 import tomlkit
-from pydantic import Field, ValidationError
+from pydantic import Field
 from tomlkit.items import Table
 
 from flext_core import FlextLogger, r
@@ -22,16 +22,16 @@ from flext_infra import (
     t,
 )
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
 from flext_infra.toml_io import (
-    CONTAINER_LIST_ADAPTER,
     array,
     as_string_list,
     dedupe_specs,
     discover_first_party_namespaces,
     ensure_pyright_execution_envs,
     ensure_table,
-    find_ruff_shared_path,
     project_dev_groups,
+    table_string_keys,
     toml_get,
     unwrap_item,
 )
@@ -87,14 +87,16 @@ class ConsolidateGroupsPhase:
             optional = tomlkit.table()
             project[c.Infra.Toml.OPTIONAL_DEPENDENCIES] = optional
         existing = project_dev_groups(doc)
-        merged_dev = dedupe_specs([
-            *canonical_dev,
-            *existing.get(c.Infra.Toml.DEV, []),
-            *existing.get(c.Infra.Directories.DOCS, []),
-            *existing.get(c.Infra.Gates.SECURITY, []),
-            *existing.get(c.Infra.Toml.TEST, []),
-            *existing.get(c.Infra.Directories.TYPINGS, []),
-        ])
+        merged_dev = dedupe_specs(
+            [
+                *canonical_dev,
+                *existing.get(c.Infra.Toml.DEV, []),
+                *existing.get(c.Infra.Directories.DOCS, []),
+                *existing.get(c.Infra.Gates.SECURITY, []),
+                *existing.get(c.Infra.Toml.TEST, []),
+                *existing.get(c.Infra.Directories.TYPINGS, []),
+            ]
+        )
         current_dev = as_string_list(toml_get(optional, c.Infra.Toml.DEV))
         if current_dev != merged_dev:
             optional[c.Infra.Toml.DEV] = array(merged_dev)
@@ -162,6 +164,9 @@ class ConsolidateGroupsPhase:
 class EnsurePytestConfigPhase:
     """Ensure standard pytest configuration without removing project-specific entries."""
 
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
+
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
         tool = toml_get(doc, c.Infra.Toml.TOOL)
@@ -187,14 +192,14 @@ class EnsurePytestConfigPhase:
             )
             changes.append("tool.pytest.ini_options.python_files updated")
         current_addopts = set(as_string_list(toml_get(ini, c.Infra.Toml.ADDOPTS)))
-        needed_addopts = set(c.Infra.Deps.PYTEST_STANDARD_ADDOPTS)
+        needed_addopts = set(self._tool_config.tools.pytest.standard_addopts)
         if not needed_addopts.issubset(current_addopts):
             ini[c.Infra.Toml.ADDOPTS] = array(sorted(current_addopts | needed_addopts))
             changes.append("tool.pytest.ini_options.addopts updated")
         current_markers = as_string_list(toml_get(ini, c.Infra.Toml.MARKERS))
         current_names = {m.split(":")[0].strip() for m in current_markers}
         added: list[str] = []
-        for marker in c.Infra.Deps.PYTEST_STANDARD_MARKERS:
+        for marker in self._tool_config.tools.pytest.standard_markers:
             name = marker.split(":")[0].strip()
             if name not in current_names:
                 added.append(marker)
@@ -207,6 +212,9 @@ class EnsurePytestConfigPhase:
 
 class EnsureMypyConfigPhase:
     """Ensure standard mypy configuration with pydantic plugin across all projects."""
+
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
@@ -223,11 +231,15 @@ class EnsureMypyConfigPhase:
             changes.append("tool.mypy.python_version set to 3.13")
         current_plugins = as_string_list(toml_get(mypy, c.Infra.Toml.PLUGINS))
         needed_plugins = [
-            p for p in c.Infra.Deps.MYPY_PLUGINS if p not in current_plugins
+            plugin
+            for plugin in self._tool_config.tools.mypy.plugins
+            if plugin not in current_plugins
         ]
         if needed_plugins:
             mypy[c.Infra.Toml.PLUGINS] = array(
-                sorted(set(current_plugins) | set(c.Infra.Deps.MYPY_PLUGINS)),
+                sorted(
+                    set(current_plugins) | set(self._tool_config.tools.mypy.plugins)
+                ),
             )
             changes.append(f"tool.mypy.plugins added {', '.join(needed_plugins)}")
         current_disabled = as_string_list(
@@ -235,19 +247,20 @@ class EnsureMypyConfigPhase:
         )
         needed_disabled = [
             ec
-            for ec in c.Infra.Deps.MYPY_DISABLED_ERROR_CODES
+            for ec in self._tool_config.tools.mypy.disabled_error_codes
             if ec not in current_disabled
         ]
         if needed_disabled:
             mypy[c.Infra.Toml.DISABLE_ERROR_CODE] = array(
                 sorted(
-                    set(current_disabled) | set(c.Infra.Deps.MYPY_DISABLED_ERROR_CODES),
+                    set(current_disabled)
+                    | set(self._tool_config.tools.mypy.disabled_error_codes),
                 ),
             )
             changes.append(
                 f"tool.mypy.disable_error_code added {', '.join(needed_disabled)}",
             )
-        for key, value in c.Infra.Deps.MYPY_BOOLEAN_SETTINGS:
+        for key, value in self._tool_config.tools.mypy.boolean_settings.items():
             if unwrap_item(toml_get(mypy, key)) is not value:
                 mypy[key] = value
                 changes.append(f"tool.mypy.{key} set to {value}")
@@ -257,6 +270,9 @@ class EnsureMypyConfigPhase:
 class EnsurePydanticMypyConfigPhase:
     """Ensure standard pydantic-mypy configuration for strict model typing."""
 
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
+
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
         tool = toml_get(doc, c.Infra.Toml.TOOL)
@@ -264,7 +280,11 @@ class EnsurePydanticMypyConfigPhase:
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         pydantic_mypy = ensure_table(tool, "pydantic-mypy")
-        for key, value in c.Infra.Deps.PYDANTIC_MYPY_SETTINGS:
+        for key, value in {
+            "init_forbid_extra": self._tool_config.tools.pydantic_mypy.init_forbid_extra,
+            "init_typed": self._tool_config.tools.pydantic_mypy.init_typed,
+            "warn_required_dynamic_aliases": self._tool_config.tools.pydantic_mypy.warn_required_dynamic_aliases,
+        }.items():
             if unwrap_item(toml_get(pydantic_mypy, key)) is not value:
                 pydantic_mypy[key] = value
                 changes.append(f"tool.pydantic-mypy.{key} set to {value}")
@@ -273,6 +293,9 @@ class EnsurePydanticMypyConfigPhase:
 
 class EnsurePyrightConfigPhase:
     """Ensure standard Pyright configuration for strict type checking."""
+
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
 
     def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
         changes: list[str] = []
@@ -294,7 +317,7 @@ class EnsurePyrightConfigPhase:
                 changes.append("tool.pyright.typeCheckingMode set to strict")
             ensure_pyright_execution_envs(pyright, expected_envs, changes)
             return changes
-        for key, value in c.Infra.Deps.PYRIGHT_STRICT_SETTINGS:
+        for key, value in self._tool_config.tools.pyright.strict_settings.items():
             if unwrap_item(toml_get(pyright, key)) != value:
                 pyright[key] = value
                 changes.append(f"tool.pyright.{key} set to {value}")
@@ -303,7 +326,10 @@ class EnsurePyrightConfigPhase:
 
 
 class EnsureRuffConfigPhase:
-    """Ensure standard Ruff configuration with extend and known-first-party."""
+    """Ensure standard Ruff configuration inline with known-first-party overlay."""
+
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
 
     def apply(
         self,
@@ -312,23 +338,77 @@ class EnsureRuffConfigPhase:
         path: Path,
         workspace_root: Path,
     ) -> list[str]:
+        _ = workspace_root
         changes: list[str] = []
         tool = toml_get(doc, c.Infra.Toml.TOOL)
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         ruff = ensure_table(tool, c.Infra.Toml.RUFF)
-        _target_shared, expected_extend = find_ruff_shared_path(
-            path.parent,
-            workspace_root,
-        )
-        if unwrap_item(toml_get(ruff, c.Infra.Toml.EXTEND)) != expected_extend:
-            ruff[c.Infra.Toml.EXTEND] = expected_extend
-            changes.append(f"tool.ruff.extend set to {expected_extend}")
+        if c.Infra.Toml.EXTEND in ruff:
+            del ruff[c.Infra.Toml.EXTEND]
+            changes.append("tool.ruff.extend removed")
+
+        ruff_cfg = self._tool_config.tools.ruff
+        if as_string_list(toml_get(ruff, c.Infra.Toml.EXCLUDE)) != ruff_cfg.exclude:
+            ruff[c.Infra.Toml.EXCLUDE] = array(ruff_cfg.exclude)
+            changes.append("tool.ruff.exclude set")
+        for key, value in {
+            "fix": ruff_cfg.fix,
+            "line-length": ruff_cfg.line_length,
+            "preview": ruff_cfg.preview,
+            "respect-gitignore": ruff_cfg.respect_gitignore,
+            "show-fixes": ruff_cfg.show_fixes,
+            "target-version": ruff_cfg.target_version,
+        }.items():
+            if unwrap_item(toml_get(ruff, key)) != value:
+                ruff[key] = value
+                changes.append(f"tool.ruff.{key} set")
+        if as_string_list(toml_get(ruff, "src")) != ruff_cfg.src:
+            ruff["src"] = array(ruff_cfg.src)
+            changes.append("tool.ruff.src set")
+
+        ruff_format = ensure_table(ruff, "format")
+        for key, value in {
+            "docstring-code-format": ruff_cfg.format.docstring_code_format,
+            "indent-style": ruff_cfg.format.indent_style,
+            "line-ending": ruff_cfg.format.line_ending,
+            "quote-style": ruff_cfg.format.quote_style,
+        }.items():
+            if unwrap_item(toml_get(ruff_format, key)) != value:
+                ruff_format[key] = value
+                changes.append(f"tool.ruff.format.{key} set")
+
+        lint = ensure_table(ruff, c.Infra.Toml.LINT_SECTION)
+        if as_string_list(toml_get(lint, "select")) != ruff_cfg.lint.select:
+            lint["select"] = array(ruff_cfg.lint.select)
+            changes.append("tool.ruff.lint.select set")
+        if as_string_list(toml_get(lint, c.Infra.Toml.IGNORE)) != ruff_cfg.lint.ignore:
+            lint[c.Infra.Toml.IGNORE] = array(ruff_cfg.lint.ignore)
+            changes.append("tool.ruff.lint.ignore set")
+
+        isort = ensure_table(lint, c.Infra.Toml.ISORT)
+        for key, value in {
+            "combine-as-imports": ruff_cfg.lint.isort.combine_as_imports,
+            "force-single-line": ruff_cfg.lint.isort.force_single_line,
+            "split-on-trailing-comma": ruff_cfg.lint.isort.split_on_trailing_comma,
+        }.items():
+            if unwrap_item(toml_get(isort, key)) != value:
+                isort[key] = value
+                changes.append(f"tool.ruff.lint.isort.{key} set")
+
+        per_file_ignores = ensure_table(lint, "per-file-ignores")
+        for pattern in table_string_keys(per_file_ignores):
+            if pattern not in ruff_cfg.lint.per_file_ignores:
+                del per_file_ignores[pattern]
+                changes.append(f"tool.ruff.lint.per-file-ignores.{pattern} removed")
+        for pattern, rules in ruff_cfg.lint.per_file_ignores.items():
+            if as_string_list(toml_get(per_file_ignores, pattern)) != rules:
+                per_file_ignores[pattern] = array(rules)
+                changes.append(f"tool.ruff.lint.per-file-ignores.{pattern} set")
+
         detected_packages = discover_first_party_namespaces(path.parent)
         if detected_packages:
-            lint = ensure_table(ruff, c.Infra.Toml.LINT_SECTION)
-            isort = ensure_table(lint, c.Infra.Toml.ISORT)
             current_kfp = as_string_list(
                 toml_get(isort, c.Infra.Toml.KNOWN_FIRST_PARTY_HYPHEN),
             )
@@ -342,6 +422,9 @@ class EnsureRuffConfigPhase:
 
 class EnsurePyreflyConfigPhase:
     """Ensure standard Pyrefly configuration for max-strict typing."""
+
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
 
     def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
         changes: list[str] = []
@@ -365,11 +448,11 @@ class EnsurePyreflyConfigPhase:
             pyrefly[c.Infra.Toml.SEARCH_PATH] = array(expected_search)
             changes.append(f"tool.pyrefly.search-path set to {expected_search}")
         errors = ensure_table(pyrefly, "errors")
-        for error_rule in c.Infra.Deps.PYREFLY_STRICT_ERRORS:
+        for error_rule in self._tool_config.tools.pyrefly.strict_errors:
             if unwrap_item(toml_get(errors, error_rule)) is not True:
                 errors[error_rule] = True
                 changes.append(f"tool.pyrefly.errors.{error_rule} enabled")
-        for error_rule in c.Infra.Deps.PYREFLY_DISABLED_ERRORS:
+        for error_rule in self._tool_config.tools.pyrefly.disabled_errors:
             if unwrap_item(toml_get(errors, error_rule)) is not False:
                 errors[error_rule] = False
                 changes.append(f"tool.pyrefly.errors.{error_rule} disabled")
@@ -420,6 +503,9 @@ class EnsureNamespaceToolingPhase:
 class EnsureFormattingToolingPhase:
     """Ensure safe default config for TOML/YAML formatting tools."""
 
+    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+        self._tool_config = tool_config
+
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
         tool = toml_get(doc, c.Infra.Toml.TOOL)
@@ -427,20 +513,26 @@ class EnsureFormattingToolingPhase:
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         tomlsort = ensure_table(tool, "tomlsort")
-        for key, value in c.Infra.Deps.TOMLSORT_DEFAULTS:
+        for key, value in {
+            "all": self._tool_config.tools.tomlsort.all,
+            "in_place": self._tool_config.tools.tomlsort.in_place,
+            "sort_first": self._tool_config.tools.tomlsort.sort_first,
+        }.items():
             current = unwrap_item(toml_get(tomlsort, key))
             if current != value:
                 if isinstance(value, list):
-                    try:
-                        validated_items = CONTAINER_LIST_ADAPTER.validate_python(value)
-                        tomlsort[key] = array([str(item) for item in validated_items])
-                    except ValidationError:
-                        tomlsort[key] = array([])
+                    tomlsort[key] = array([str(item) for item in value])
                 else:
                     tomlsort[key] = value
                 changes.append(f"tool.tomlsort.{key} set")
         yamlfix = ensure_table(tool, "yamlfix")
-        for key, value in c.Infra.Deps.YAMLFIX_DEFAULTS:
+        for key, value in {
+            "line_length": self._tool_config.tools.yamlfix.line_length,
+            "preserve_quotes": self._tool_config.tools.yamlfix.preserve_quotes,
+            "whitelines": self._tool_config.tools.yamlfix.whitelines,
+            "section_whitelines": self._tool_config.tools.yamlfix.section_whitelines,
+            "explicit_start": self._tool_config.tools.yamlfix.explicit_start,
+        }.items():
             if unwrap_item(toml_get(yamlfix, key)) != value:
                 yamlfix[key] = value
                 changes.append(f"tool.yamlfix.{key} set to {value}")
