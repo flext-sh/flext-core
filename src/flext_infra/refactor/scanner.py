@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TypeAlias, override
+from typing import override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
@@ -13,11 +13,11 @@ from pydantic import TypeAdapter, ValidationError
 from flext_core import r
 from flext_infra import c, m, t, u
 
-RConfigMapping: TypeAlias = r[t.ConfigurationMapping]
-RListPath: TypeAlias = r[list[Path]]
-RPath: TypeAlias = r[Path]
-RListClassOccurrence: TypeAlias = r[list[m.Infra.Refactor.ClassOccurrence]]
-RDictPathGrep: TypeAlias = r[dict[Path, dict[str, int]]]
+type RConfigMapping = r[t.ConfigurationMapping]
+type RListPath = r[list[Path]]
+type RPath = r[Path]
+type RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]]
+type RDictPathGrep = r[dict[Path, dict[str, int]]]
 
 
 class TopLevelClassCollector(cst.CSTVisitor):

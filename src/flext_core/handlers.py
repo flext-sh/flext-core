@@ -20,6 +20,7 @@ from types import ModuleType
 from typing import ClassVar, override
 
 from flext_core import c, e, m, p, r, t, u, x
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerValue](x):
@@ -122,7 +123,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
         self._metrics: dict[str, t.ContainerValue] = {}
-        self._stack: list[m.ExecutionContext | m.ConfigMap] = []
+        self._stack: list[m.ExecutionContext | FlextModelsContainers.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless dispatcher integration."""
@@ -434,26 +435,28 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         """
         raise NotImplementedError
 
-    def pop_context(self) -> r[m.ConfigMap]:
+    def pop_context(self) -> r[FlextModelsContainers.ConfigMap]:
         """Pop execution context from the local handler stack."""
         if not self._stack:
-            return r[m.ConfigMap].ok(m.ConfigMap(root={}))
+            return r[FlextModelsContainers.ConfigMap].ok(
+                FlextModelsContainers.ConfigMap(root={})
+            )
         popped = self._stack.pop()
         if isinstance(popped, m.ExecutionContext):
-            context_dict: m.ConfigMap = m.ConfigMap(
+            context_dict = FlextModelsContainers.ConfigMap(
                 root={
                     "handler_name": popped.handler_name,
                     "handler_mode": popped.handler_mode,
                 }
             )
-            return r[m.ConfigMap].ok(context_dict)
-        return r[m.ConfigMap].ok(popped)
+            return r[FlextModelsContainers.ConfigMap].ok(context_dict)
+        return r[FlextModelsContainers.ConfigMap].ok(popped)
 
     def push_context(
         self, ctx: m.ExecutionContext | dict[str, t.ContainerValue]
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
-        if isinstance(ctx, m.ExecutionContext | m.ConfigMap):
+        if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
             return r[bool].ok(value=True)
         handler_name_raw = ctx.get("handler_name", "unknown")
@@ -732,9 +735,11 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
                     if not callable(fn_candidate):
                         return ""
                     result = fn_candidate(message)
-                    if isinstance(result, t.Scalar) or result is None:
+                    if result is None:
+                        return None
+                    if isinstance(result, str | int | float | bool):
                         return result
-                    return ""
+                    return str(result)
 
                 setattr(narrowed_func, c.Discovery.HANDLER_ATTR, config)
                 handlers.append((name, narrowed_func, config))

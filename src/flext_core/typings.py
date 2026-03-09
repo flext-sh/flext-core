@@ -63,25 +63,21 @@ class FlextTypes:
     type JsonValue = (
         Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
     )
-    JsonDict: TypeAlias = Mapping[str, JsonValue]
-    ConfigurationMapping: TypeAlias = Mapping[str, ContainerValue]
-    LazyExportType: TypeAlias = tuple[str, str]
-    AnnotationMap: TypeAlias = Mapping[str, LazyExportType]
-    RegisterableService: TypeAlias = (
+    type JsonDict = Mapping[str, JsonValue]
+    type ConfigurationMapping = Mapping[str, ContainerValue]
+    type LazyExportType = tuple[str, str]
+    type AnnotationMap = Mapping[str, LazyExportType]
+    type RegisterableService = (
         ContainerValue | BindableLogger | Callable[..., ContainerValue]
     )
-    FactoryCallable: TypeAlias = Callable[[], RegisterableService]
-    ResourceCallable: TypeAlias = Callable[[], ContainerValue]
-    MetadataValue: TypeAlias = (
-        Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
-    )
-    MetadataAttributeValue: TypeAlias = MetadataValue
-    HandlerCallable: TypeAlias = Callable[[ContainerValue], ContainerValue]
-    HandlerLike: TypeAlias = Callable[..., ContainerValue]
-    RegistrablePlugin: TypeAlias = (
-        Scalar | BaseModel | Callable[..., Scalar | BaseModel]
-    )
-    ConstantValue: TypeAlias = (
+    type FactoryCallable = Callable[[], RegisterableService]
+    type ResourceCallable = Callable[[], ContainerValue]
+    type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
+    type MetadataAttributeValue = MetadataValue
+    type HandlerCallable = Callable[[ContainerValue], ContainerValue]
+    type HandlerLike = Callable[..., ContainerValue]
+    type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
+    type ConstantValue = (
         Primitives
         | ConfigDict
         | SettingsConfigDict
@@ -93,18 +89,18 @@ class FlextTypes:
         | Pattern[str]
         | type
     )
-    FileContent: TypeAlias = str | bytes | BaseModel | Sequence[Sequence[str]]
-    SortableObjectType: TypeAlias = str | int | float
-    ConversionMode: TypeAlias = Literal["to_str", "to_str_list", "normalize", "join"]
-    TypeHintSpecifier: TypeAlias = type | str | Callable[[Scalar], Scalar]
-    TypeOriginSpecifier: TypeAlias = TypeHintSpecifier
-    GenericTypeArgument: TypeAlias = str | type[Scalar]
-    MessageTypeSpecifier: TypeAlias = str | type
-    IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
-    TYPE_CHECKING: TypeAlias = bool
-    Dict: TypeAlias = Mapping[str, ContainerValue]
+    type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
+    type SortableObjectType = str | int | float
+    type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
+    type TypeHintSpecifier = type | str | Callable[[Scalar], Scalar]
+    type TypeOriginSpecifier = TypeHintSpecifier
+    type GenericTypeArgument = str | type[Scalar]
+    type MessageTypeSpecifier = str | type
+    type IncEx = set[str] | Mapping[str, set[str] | bool]
+    type TYPE_CHECKING = bool
+    type Dict = Mapping[str, ContainerValue]
     # Return type for PEP 562 __getattr__ on packages; avoids Any/object.
-    ModuleExport: TypeAlias = (
+    type ModuleExport = (
         type | ModuleType | Callable[..., ContainerValue] | ContainerValue
     )
 

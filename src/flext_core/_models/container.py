@@ -118,11 +118,9 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                mapping_value = FlextModelsContainers.ConfigMap.model_validate(v).root
-                return mapping_value
+                return FlextModelsContainers.ConfigMap.model_validate(v).root
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                sequence_value = FlextModelsContainers.ObjectList.model_validate(v).root
-                return sequence_value
+                return FlextModelsContainers.ObjectList.model_validate(v).root
             if hasattr(v, "__dict__"):
                 return v
             if hasattr(v, "bind") and hasattr(v, "info"):

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from types import SimpleNamespace
 from typing import cast, override
 
@@ -126,7 +126,7 @@ def test_mixins_result_and_model_conversion_paths(
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
 
-    class _BadMap(t.ConfigurationMapping):
+    class _BadMap(Mapping[str, t.ContainerValue]):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(["k"])

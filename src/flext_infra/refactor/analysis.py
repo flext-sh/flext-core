@@ -9,7 +9,7 @@ from collections import Counter
 from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
-from typing import TypeAlias, cast, override
+from typing import cast, override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
@@ -20,7 +20,7 @@ from flext_infra.models import FlextInfraModels as m
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 from flext_infra.utilities import FlextInfraUtilities as u
 
-_ClassNestingMappingIndex: TypeAlias = dict[
+type _ClassNestingMappingIndex = dict[
     tuple[str, str], m.Infra.Refactor.ClassNestingMapping
 ]
 

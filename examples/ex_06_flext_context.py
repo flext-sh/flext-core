@@ -25,7 +25,7 @@ class Ex06FlextContext(Examples):
         self.check("create.instance", type(ctx).__name__)
         self.check("create.has.operation", ctx.has(c.Context.KEY_OPERATION_ID))
         self.check("create.has.user", ctx.has(c.Context.KEY_USER_ID))
-        self.check("set.success", (_ := ctx.set("k1", "v1")).is_success)
+        self.check("set.success", ctx.set("k1", "v1").is_success)
         seed = FlextContext.create()
         _ = seed.set("k2", 2)
         _ = seed.set("k3", True)

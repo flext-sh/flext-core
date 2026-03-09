@@ -28,6 +28,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core._models.containers import FlextModelsContainers
 
 type RegistrablePlugin = t.RegistrablePlugin
 type RegistryBindingKey = str | type[object]
@@ -369,16 +370,20 @@ class FlextRegistry(s[bool]):
             r[bool]: Success (True) if registered or failure with error details.
 
         """
-        validated_metadata: m.ConfigMap | None = None
+        validated_metadata: FlextModelsContainers.ConfigMap | None = None
         if metadata is not None:
-            raw_metadata: object
+            raw_metadata: t.ContainerValue
             if isinstance(metadata, m.Metadata):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata
-            validated_metadata = m.ConfigMap.model_validate(raw_metadata)
+            validated_metadata = FlextModelsContainers.ConfigMap.model_validate(
+                raw_metadata
+            )
         if validated_metadata is not None:
-            metadata_dict = m.ConfigMap.model_validate(validated_metadata)
+            metadata_dict = FlextModelsContainers.ConfigMap.model_validate(
+                validated_metadata
+            )
             metadata_keys_str: str = ",".join(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",

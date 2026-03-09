@@ -192,7 +192,7 @@ class FlextModelsService:
 
         service_name: str
         operations: list[FlextModelsService.BatchOperation] = Field(
-            default_factory=lambda: list[FlextModelsService.BatchOperation](),
+            default_factory=list,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             max_length=c.Performance.MAX_BATCH_OPERATIONS,
             description="Ordered batch operations to execute for the target service.",

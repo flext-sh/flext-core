@@ -22,7 +22,7 @@ class _ModelWithNoCallableDump:
     model_dump = "bad"
 
 
-class _MappingLike(t.ConfigurationMapping):
+class _MappingLike(Mapping[str, t.ContainerValue]):
     def __init__(self, data: dict[str, t.ContainerValue]) -> None:
         super().__init__()
         self._data = data
@@ -201,7 +201,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     )
     assert result_mapping == {"k": "v"}
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        FlextModelsContext.ContextExport.validate_dict_serializable(
+        _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),

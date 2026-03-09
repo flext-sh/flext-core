@@ -41,7 +41,6 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -237,10 +236,11 @@ class FlextUtilitiesCache:
         if isinstance(component, t.Primitives) or component is None:
             return component
         if isinstance(component, set):
-            set_component = cast("set[object]", component)
             normalized_items: list[t.ContainerValue] = [
-                FlextUtilitiesCache.normalize_component(cast("t.ContainerValue", item))
-                for item in set_component
+                FlextUtilitiesCache.normalize_component(item)
+                if FlextRuntime.is_general_value_type(item)
+                else str(item)
+                for item in component
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):

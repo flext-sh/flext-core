@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from typing import cast
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -133,7 +132,7 @@ class FlextInfraPrManager:
         if existing:
             return r[Mapping[str, t.Scalar]].ok({
                 c.Infra.ReportKeys.STATUS: "already-open",
-                "pr_url": cast("str", existing.get(c.Infra.ReportKeys.URL)),
+                "pr_url": existing.get(c.Infra.ReportKeys.URL, ""),
             })
         command = [
             c.Infra.Cli.GH,
@@ -316,11 +315,11 @@ class FlextInfraPrManager:
             info[c.Infra.ReportKeys.STATUS] = "no-open-pr"
         else:
             info[c.Infra.ReportKeys.STATUS] = c.Infra.Verbs.OPEN
-            info["pr_number"] = cast("t.Scalar", pr.get("number"))
-            info["pr_title"] = cast("t.Scalar", pr.get("title"))
-            info["pr_url"] = cast("t.Scalar", pr.get(c.Infra.ReportKeys.URL))
-            info["pr_state"] = cast("t.Scalar", pr.get("state"))
-            info["pr_draft"] = cast("t.Scalar", pr.get("isDraft"))
+            info["pr_number"] = pr.get("number", "")
+            info["pr_title"] = pr.get("title", "")
+            info["pr_url"] = pr.get(c.Infra.ReportKeys.URL, "")
+            info["pr_state"] = pr.get("state", "")
+            info["pr_draft"] = pr.get("isDraft", False)
         return r[Mapping[str, t.Scalar]].ok(info)
 
     def view(self, repo_root: Path, selector: str) -> r[str]:
@@ -436,7 +435,7 @@ def main() -> int:
     manager = FlextInfraPrManager()
     git = FlextInfraGitService()
     head_result = git.current_branch(repo_root)
-    head = cast("str", args.head or head_result.unwrap_or(c.Infra.Git.HEAD))
+    head = args.head or head_result.unwrap_or(c.Infra.Git.HEAD)
     base = args.base
     selector = _selector(args.number, head)
     if args.action == c.Infra.ReportKeys.STATUS:
