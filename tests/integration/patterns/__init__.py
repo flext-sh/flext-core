@@ -71,43 +71,148 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "AssertionBuilder": ("tests.integration.patterns.test_patterns_testing", "AssertionBuilder"),
-    "CreateUserCommand": ("tests.integration.patterns.test_patterns_commands", "CreateUserCommand"),
-    "CreateUserCommandHandler": ("tests.integration.patterns.test_patterns_commands", "CreateUserCommandHandler"),
-    "EXPECTED_BULK_SIZE": ("tests.integration.patterns.test_patterns_logging", "EXPECTED_BULK_SIZE"),
-    "FailingCommand": ("tests.integration.patterns.test_patterns_commands", "FailingCommand"),
-    "FailingCommandHandler": ("tests.integration.patterns.test_patterns_commands", "FailingCommandHandler"),
-    "FixtureBuilder": ("tests.integration.patterns.test_patterns_testing", "FixtureBuilder"),
-    "FlextCommandId": ("tests.integration.patterns.test_patterns_commands", "FlextCommandId"),
-    "FlextCommandType": ("tests.integration.patterns.test_patterns_commands", "FlextCommandType"),
-    "FlextTestBuilder": ("tests.integration.patterns.test_patterns_testing", "FlextTestBuilder"),
-    "GivenWhenThenBuilder": ("tests.integration.patterns.test_patterns_testing", "GivenWhenThenBuilder"),
-    "MockScenario": ("tests.integration.patterns.test_patterns_testing", "MockScenario"),
+    "AssertionBuilder": (
+        "tests.integration.patterns.test_patterns_testing",
+        "AssertionBuilder",
+    ),
+    "CreateUserCommand": (
+        "tests.integration.patterns.test_patterns_commands",
+        "CreateUserCommand",
+    ),
+    "CreateUserCommandHandler": (
+        "tests.integration.patterns.test_patterns_commands",
+        "CreateUserCommandHandler",
+    ),
+    "EXPECTED_BULK_SIZE": (
+        "tests.integration.patterns.test_patterns_logging",
+        "EXPECTED_BULK_SIZE",
+    ),
+    "FailingCommand": (
+        "tests.integration.patterns.test_patterns_commands",
+        "FailingCommand",
+    ),
+    "FailingCommandHandler": (
+        "tests.integration.patterns.test_patterns_commands",
+        "FailingCommandHandler",
+    ),
+    "FixtureBuilder": (
+        "tests.integration.patterns.test_patterns_testing",
+        "FixtureBuilder",
+    ),
+    "FlextCommandId": (
+        "tests.integration.patterns.test_patterns_commands",
+        "FlextCommandId",
+    ),
+    "FlextCommandType": (
+        "tests.integration.patterns.test_patterns_commands",
+        "FlextCommandType",
+    ),
+    "FlextTestBuilder": (
+        "tests.integration.patterns.test_patterns_testing",
+        "FlextTestBuilder",
+    ),
+    "GivenWhenThenBuilder": (
+        "tests.integration.patterns.test_patterns_testing",
+        "GivenWhenThenBuilder",
+    ),
+    "MockScenario": (
+        "tests.integration.patterns.test_patterns_testing",
+        "MockScenario",
+    ),
     "P": ("tests.integration.patterns.test_patterns_testing", "P"),
-    "ParameterizedTestBuilder": ("tests.integration.patterns.test_patterns_testing", "ParameterizedTestBuilder"),
+    "ParameterizedTestBuilder": (
+        "tests.integration.patterns.test_patterns_testing",
+        "ParameterizedTestBuilder",
+    ),
     "R": ("tests.integration.patterns.test_patterns_testing", "R"),
-    "SuiteBuilder": ("tests.integration.patterns.test_patterns_testing", "SuiteBuilder"),
-    "TestAdvancedPatterns": ("tests.integration.patterns.test_patterns_testing", "TestAdvancedPatterns"),
-    "TestComprehensiveIntegration": ("tests.integration.patterns.test_patterns_testing", "TestComprehensiveIntegration"),
-    "TestEnterprisePatterns": ("tests.integration.patterns.test_architectural_patterns", "TestEnterprisePatterns"),
-    "TestEventDrivenPatterns": ("tests.integration.patterns.test_architectural_patterns", "TestEventDrivenPatterns"),
-    "TestFlextCommand": ("tests.integration.patterns.test_patterns_commands", "TestFlextCommand"),
-    "TestFlextCommandHandler": ("tests.integration.patterns.test_patterns_commands", "TestFlextCommandHandler"),
-    "TestFlextCommandResults": ("tests.integration.patterns.test_patterns_commands", "TestFlextCommandResults"),
-    "TestFlextContext": ("tests.integration.patterns.test_patterns_logging", "TestFlextContext"),
-    "TestFlextLogLevel": ("tests.integration.patterns.test_patterns_logging", "TestFlextLogLevel"),
-    "TestFlextLogger": ("tests.integration.patterns.test_patterns_logging", "TestFlextLogger"),
-    "TestFlextLoggerIntegration": ("tests.integration.patterns.test_patterns_logging", "TestFlextLoggerIntegration"),
-    "TestFlextLoggerUsage": ("tests.integration.patterns.test_patterns_logging", "TestFlextLoggerUsage"),
-    "TestFunction": ("tests.integration.patterns.test_advanced_patterns", "TestFunction"),
-    "TestPerformanceAnalysis": ("tests.integration.patterns.test_patterns_testing", "TestPerformanceAnalysis"),
-    "TestPropertyBasedPatterns": ("tests.integration.patterns.test_patterns_testing", "TestPropertyBasedPatterns"),
-    "TestRealWorldScenarios": ("tests.integration.patterns.test_patterns_testing", "TestRealWorldScenarios"),
-    "UpdateUserCommand": ("tests.integration.patterns.test_patterns_commands", "UpdateUserCommand"),
-    "UpdateUserCommandHandler": ("tests.integration.patterns.test_patterns_commands", "UpdateUserCommandHandler"),
-    "arrange_act_assert": ("tests.integration.patterns.test_patterns_testing", "arrange_act_assert"),
-    "make_result_logger": ("tests.integration.patterns.test_patterns_logging", "make_result_logger"),
-    "mark_test_pattern": ("tests.integration.patterns.test_patterns_testing", "mark_test_pattern"),
+    "SuiteBuilder": (
+        "tests.integration.patterns.test_patterns_testing",
+        "SuiteBuilder",
+    ),
+    "TestAdvancedPatterns": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestAdvancedPatterns",
+    ),
+    "TestComprehensiveIntegration": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestComprehensiveIntegration",
+    ),
+    "TestEnterprisePatterns": (
+        "tests.integration.patterns.test_architectural_patterns",
+        "TestEnterprisePatterns",
+    ),
+    "TestEventDrivenPatterns": (
+        "tests.integration.patterns.test_architectural_patterns",
+        "TestEventDrivenPatterns",
+    ),
+    "TestFlextCommand": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestFlextCommand",
+    ),
+    "TestFlextCommandHandler": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestFlextCommandHandler",
+    ),
+    "TestFlextCommandResults": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestFlextCommandResults",
+    ),
+    "TestFlextContext": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestFlextContext",
+    ),
+    "TestFlextLogLevel": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestFlextLogLevel",
+    ),
+    "TestFlextLogger": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestFlextLogger",
+    ),
+    "TestFlextLoggerIntegration": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestFlextLoggerIntegration",
+    ),
+    "TestFlextLoggerUsage": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestFlextLoggerUsage",
+    ),
+    "TestFunction": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestFunction",
+    ),
+    "TestPerformanceAnalysis": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestPerformanceAnalysis",
+    ),
+    "TestPropertyBasedPatterns": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestPropertyBasedPatterns",
+    ),
+    "TestRealWorldScenarios": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestRealWorldScenarios",
+    ),
+    "UpdateUserCommand": (
+        "tests.integration.patterns.test_patterns_commands",
+        "UpdateUserCommand",
+    ),
+    "UpdateUserCommandHandler": (
+        "tests.integration.patterns.test_patterns_commands",
+        "UpdateUserCommandHandler",
+    ),
+    "arrange_act_assert": (
+        "tests.integration.patterns.test_patterns_testing",
+        "arrange_act_assert",
+    ),
+    "make_result_logger": (
+        "tests.integration.patterns.test_patterns_logging",
+        "make_result_logger",
+    ),
+    "mark_test_pattern": (
+        "tests.integration.patterns.test_patterns_testing",
+        "mark_test_pattern",
+    ),
     "pytestmark": ("tests.integration.patterns.test_patterns_testing", "pytestmark"),
 }
 

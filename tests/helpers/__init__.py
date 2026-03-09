@@ -55,12 +55,18 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FailingService": ("tests.helpers.factories", "FailingService"),
     "FailingServiceAuto": ("tests.helpers.factories", "FailingServiceAuto"),
-    "FailingServiceAutoFactory": ("tests.helpers.factories", "FailingServiceAutoFactory"),
+    "FailingServiceAutoFactory": (
+        "tests.helpers.factories",
+        "FailingServiceAutoFactory",
+    ),
     "FailingServiceFactory": ("tests.helpers.factories", "FailingServiceFactory"),
     "GenericModelFactory": ("tests.helpers.factories", "GenericModelFactory"),
     "GetUserService": ("tests.helpers.factories", "GetUserService"),
     "GetUserServiceAuto": ("tests.helpers.factories", "GetUserServiceAuto"),
-    "GetUserServiceAutoFactory": ("tests.helpers.factories", "GetUserServiceAutoFactory"),
+    "GetUserServiceAutoFactory": (
+        "tests.helpers.factories",
+        "GetUserServiceAutoFactory",
+    ),
     "GetUserServiceFactory": ("tests.helpers.factories", "GetUserServiceFactory"),
     "ParserScenario": ("tests.helpers.scenarios", "ParserScenario"),
     "ParserScenarios": ("tests.helpers.scenarios", "ParserScenarios"),
@@ -76,7 +82,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "UserFactory": ("tests.helpers.factories", "UserFactory"),
     "ValidatingService": ("tests.helpers.factories", "ValidatingService"),
     "ValidatingServiceAuto": ("tests.helpers.factories", "ValidatingServiceAuto"),
-    "ValidatingServiceAutoFactory": ("tests.helpers.factories", "ValidatingServiceAutoFactory"),
+    "ValidatingServiceAutoFactory": (
+        "tests.helpers.factories",
+        "ValidatingServiceAutoFactory",
+    ),
     "ValidatingServiceFactory": ("tests.helpers.factories", "ValidatingServiceFactory"),
     "ValidationScenario": ("tests.helpers.scenarios", "ValidationScenario"),
     "ValidationScenarios": ("tests.helpers.scenarios", "ValidationScenarios"),

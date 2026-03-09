@@ -266,7 +266,9 @@ class FlextInfraDocAuditor:
                 if in_fenced_code:
                     continue
                 clean_line = FlextInfraUtilitiesPatterns.INLINE_CODE_RE.sub("", line)
-                for raw in FlextInfraUtilitiesPatterns.MARKDOWN_LINK_URL_RE.findall(clean_line):
+                for raw in FlextInfraUtilitiesPatterns.MARKDOWN_LINK_URL_RE.findall(
+                    clean_line
+                ):
                     target = self.normalize_link(raw)
                     if not target or target.startswith("#") or self.is_external(target):
                         continue
