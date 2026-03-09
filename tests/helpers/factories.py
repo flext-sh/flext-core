@@ -11,10 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from itertools import count
-from typing import ClassVar, override
+from typing import Any, ClassVar, override
 
 from flext_core import r, s
-from tests import c, m, t
+from tests import c, m
 
 
 class GetUserService(s[m.Tests.User]):
@@ -495,7 +495,7 @@ class GenericModelFactory:
 
     @staticmethod
     def configuration_snapshot(
-        config: dict[str, t.ContainerValue] | None = None,
+        config: dict[str, Any] | None = None,
         source: str | None = None,
         environment: str | None = None,
     ) -> m.Configuration:
