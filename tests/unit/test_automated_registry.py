@@ -50,33 +50,33 @@ class TestAutomatedFlextRegistry:
     @pytest.mark.parametrize(
         "test_scenario",
         [
-            {
-                "description": "basic_functionality",
-                "input": {},
-                "expected_success": True,
-            },
-            {
-                "description": "edge_case_handling",
-                "input": {"edge": True},
-                "expected_success": True,
-            },
-            {
-                "description": "error_conditions",
-                "input": {"invalid": True},
-                "expected_success": False,
-            },
-            {
-                "description": "boundary_conditions",
-                "input": {"boundary": True},
-                "expected_success": True,
-            },
-            {
-                "description": "complex_scenarios",
-                "input": {"complex": True},
-                "expected_success": True,
-            },
+            m.Tests.AutomatedTestScenario(
+                description="basic_functionality",
+                input={},
+                expected_success=True,
+            ),
+            m.Tests.AutomatedTestScenario(
+                description="edge_case_handling",
+                input={"edge": True},
+                expected_success=True,
+            ),
+            m.Tests.AutomatedTestScenario(
+                description="error_conditions",
+                input={"invalid": True},
+                expected_success=False,
+            ),
+            m.Tests.AutomatedTestScenario(
+                description="boundary_conditions",
+                input={"boundary": True},
+                expected_success=True,
+            ),
+            m.Tests.AutomatedTestScenario(
+                description="complex_scenarios",
+                input={"complex": True},
+                expected_success=True,
+            ),
         ],
-        ids=lambda case: case["description"],
+        ids=lambda case: case.description,
     )
     def test_automated_registry_comprehensive_scenarios(
         self,
