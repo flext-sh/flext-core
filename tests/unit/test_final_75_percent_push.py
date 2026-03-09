@@ -14,33 +14,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextExceptions, FlextResult, p, u
 
 
-@dataclass(frozen=True, slots=True)
-class ResultOperationScenario:
+class ResultOperationScenario(BaseModel):
     """FlextResult operation test scenario."""
 
-    name: str
-    initial_value: int | None
-    operations: list[str]
-    expected_success: bool
-    expected_value: int | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Result operation scenario name")
+    initial_value: int | None = Field(description="Initial result value")
+    operations: list[str] = Field(description="Operation chain to apply")
+    expected_success: bool = Field(description="Expected success state")
+    expected_value: int | None = Field(
+        default=None, description="Expected resulting value"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ExceptionTypeScenario:
+class ExceptionTypeScenario(BaseModel):
     """Exception type test scenario."""
 
-    name: str
-    exception_type: type[FlextExceptions.BaseError]
-    message: str
-    expected_in_str: str
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Exception scenario name")
+    exception_type: type[FlextExceptions.BaseError] = Field(
+        description="Exception class under test",
+    )
+    message: str = Field(description="Exception message")
+    expected_in_str: str = Field(description="Expected string marker")
 
 
 class CoverageScenarios:

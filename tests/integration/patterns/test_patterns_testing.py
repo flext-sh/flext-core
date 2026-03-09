@@ -18,6 +18,7 @@ import gc
 import time
 from collections.abc import Callable, Container, Iterator, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
+from typing import ParamSpec, TypeVar
 
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
@@ -30,6 +31,9 @@ from ._models import (
     FixtureFixturesDict,
     FixtureSuiteDict,
 )
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def _to_general_mapping(
@@ -59,10 +63,10 @@ def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[[object], object]], Callable[[object], object]]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[[object], object]) -> Callable[[object], object]:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         setattr(func, "_test_pattern", pattern)
         return func
 

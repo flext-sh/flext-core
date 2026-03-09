@@ -20,11 +20,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import ConfigDict, Field
 
 from flext_core import m, p, r
 from flext_tests import tm, u
@@ -41,22 +41,24 @@ class ProtocolCategoryType(StrEnum):
     EXTENSIONS = "extensions"
 
 
-@dataclass(frozen=True, slots=True)
-class ProtocolDefinitionScenario:
+class ProtocolDefinitionScenario(m.Value):
     """Protocol definition test scenario."""
 
-    name: str
-    protocol_name: str
-    category: ProtocolCategoryType
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Protocol definition scenario name")
+    protocol_name: str = Field(description="Protocol attribute name")
+    category: ProtocolCategoryType = Field(description="Protocol category")
 
 
-@dataclass(frozen=True, slots=True)
-class ProtocolAvailabilityScenario:
+class ProtocolAvailabilityScenario(m.Value):
     """Protocol availability test scenario."""
 
-    name: str
-    category: ProtocolCategoryType
-    protocol_names: list[str]
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Protocol availability scenario name")
+    category: ProtocolCategoryType = Field(description="Protocol category")
+    protocol_names: list[str] = Field(description="Expected protocol names")
 
 
 class ProtocolScenarios:

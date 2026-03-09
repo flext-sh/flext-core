@@ -13,11 +13,13 @@ import re
 from typing import Final
 
 from flext_core import FlextConstants
-from flext_infra._constants import FlextInfraSharedConstants
 from flext_infra.basemk._constants import FlextInfraBasemkConstants
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.codegen._constants import FlextInfraCodegenConstants
-from flext_infra.core._constants import FlextInfraCoreConstants
+from flext_infra.core._constants import (
+    FlextInfraCoreConstants,
+    FlextInfraSharedInfraConstants,
+)
 from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.docs._constants import FlextInfraDocsConstants
 from flext_infra.github._constants import FlextInfraGithubConstants
@@ -39,7 +41,7 @@ class FlextInfraConstants(FlextConstants):
         >>> c.Infra.Codegen.EXCLUDED_PROJECTS
     """
 
-    class Infra(FlextInfraSharedConstants):
+    class Infra(FlextInfraSharedInfraConstants):
         """Infrastructure domain constants."""
 
         KNOWN_VERBS: Final[frozenset[str]] = frozenset({

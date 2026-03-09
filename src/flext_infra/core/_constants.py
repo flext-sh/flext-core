@@ -59,4 +59,58 @@ class FlextInfraCoreConstants:
     INTERNAL_PREFIXES: Final[tuple[str, ...]] = ("flext_", "flext-")
 
 
-__all__ = ["FlextInfraCoreConstants"]
+class FlextInfraSharedInfraConstants:
+    """Shared infrastructure constants consumed by flext_infra.constants."""
+
+    class Files:
+        PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
+        MAKEFILE_FILENAME: Final[str] = "Makefile"
+        BASE_MK: Final[str] = "base.mk"
+        GO_MOD: Final[str] = "go.mod"
+        GITMODULES: Final[str] = ".gitmodules"
+        GITIGNORE: Final[str] = ".gitignore"
+        INIT_PY: Final[str] = "__init__.py"
+
+    class Git:
+        DIR: Final[str] = ".git"
+        ORIGIN: Final[str] = "origin"
+        MAIN: Final[str] = "main"
+        HEAD: Final[str] = "HEAD"
+
+    class Packages:
+        CORE: Final[str] = "flext-core"
+        CORE_UNDERSCORE: Final[str] = "flext_core"
+        ROOT: Final[str] = "flext"
+
+    class Extensions:
+        PYTHON: Final[str] = ".py"
+        PYTHON_GLOB: Final[str] = "*.py"
+
+    class Directories:
+        TESTS: Final[str] = "tests"
+        EXAMPLES: Final[str] = "examples"
+        SCRIPTS: Final[str] = "scripts"
+        TYPINGS: Final[str] = "typings"
+        DOCS: Final[str] = "docs"
+        BUILD: Final[str] = "build"
+        DIST: Final[str] = "dist"
+        SITE: Final[str] = "site"
+
+    class Timeouts:
+        DEFAULT: Final[int] = 300
+        SHORT: Final[int] = 60
+        MEDIUM: Final[int] = 120
+        LONG: Final[int] = 600
+        CI: Final[int] = 900
+
+    class Paths:
+        WORKSPACE_MARKERS: Final[frozenset[str]] = frozenset({
+            ".git",
+            "Makefile",
+            "pyproject.toml",
+        })
+        VENV_BIN_REL: Final[str] = ".venv/bin"
+        DEFAULT_SRC_DIR: Final[str] = "src"
+
+
+__all__ = ["FlextInfraCoreConstants", "FlextInfraSharedInfraConstants"]

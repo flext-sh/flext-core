@@ -10,50 +10,80 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import ClassVar
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m, t
 
 
-@dataclass(frozen=True, slots=True)
-class ValidationScenario:
+class ValidationScenario(BaseModel):
     """Single scenario for validation testing."""
 
-    name: str
-    validator_type: str
-    input_value: t.ContainerValue
-    input_params: dict[str, object] | None = None
-    should_succeed: bool = True
-    expected_value: t.ContainerValue | None = None
-    expected_error_contains: str | None = None
-    description: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Unique scenario name")
+    validator_type: str = Field(description="Validator category under test")
+    input_value: t.ContainerValue = Field(description="Input value passed to validator")
+    input_params: t.ConfigurationMapping | None = Field(
+        default=None,
+        description="Optional validator parameters for scenario execution",
+    )
+    should_succeed: bool = Field(
+        default=True, description="Whether scenario expects validation success"
+    )
+    expected_value: t.ContainerValue | None = Field(
+        default=None,
+        description="Expected normalized value when validation succeeds",
+    )
+    expected_error_contains: str | None = Field(
+        default=None,
+        description="Expected error substring when validation fails",
+    )
+    description: str | None = Field(
+        default=None, description="Human-readable scenario description"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ParserScenario:
+class ParserScenario(BaseModel):
     """Single scenario for parser testing."""
 
-    name: str
-    parser_method: str
-    input_data: str
-    expected_output: t.ContainerValue | None = None
-    should_succeed: bool = True
-    error_contains: str | None = None
-    description: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Unique parser scenario name")
+    parser_method: str = Field(description="Parser method to execute")
+    input_data: str = Field(description="Raw parser input data")
+    expected_output: t.ContainerValue | None = Field(
+        default=None,
+        description="Expected parsed output for successful scenarios",
+    )
+    should_succeed: bool = Field(
+        default=True, description="Whether parser scenario expects success"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected parser error substring"
+    )
+    description: str | None = Field(
+        default=None, description="Human-readable scenario description"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ReliabilityScenario:
+class ReliabilityScenario(BaseModel):
     """Single scenario for reliability testing (circuit breaker, retry)."""
 
-    name: str
-    strategy: str
-    config: m.ConfigMap
-    simulate_failures: int
-    expected_state: str
-    should_succeed: bool = True
-    description: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Unique reliability scenario name")
+    strategy: str = Field(description="Reliability strategy under test")
+    config: m.ConfigMap = Field(description="Reliability configuration payload")
+    simulate_failures: int = Field(description="Number of failures to simulate")
+    expected_state: str = Field(description="Expected strategy terminal state")
+    should_succeed: bool = Field(
+        default=True, description="Whether scenario expects successful outcome"
+    )
+    description: str | None = Field(
+        default=None, description="Human-readable scenario description"
+    )
 
 
 class ValidationScenarios:
@@ -347,7 +377,7 @@ class ValidationScenarios:
             name="choice_invalid",
             validator_type="string",
             input_value="invalid",
-            input_params={"valid_choices": {"option1", "option2"}},
+            input_params={"valid_choices": ["option1", "option2"]},
             should_succeed=False,
             expected_error_contains="Must be one of",
             description="Invalid choice",
@@ -357,7 +387,7 @@ class ValidationScenarios:
             validator_type="string",
             input_value="OPTION1",
             input_params={
-                "valid_choices": {"option1", "option2"},
+                "valid_choices": ["option1", "option2"],
                 "case_sensitive": True,
             },
             should_succeed=False,
@@ -369,7 +399,7 @@ class ValidationScenarios:
             validator_type="string",
             input_value="option1",
             input_params={
-                "valid_choices": {"option1", "option2"},
+                "valid_choices": ["option1", "option2"],
                 "case_sensitive": False,
             },
             should_succeed=True,
