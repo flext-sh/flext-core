@@ -25,7 +25,7 @@ class FlextInfraUtilitiesYaml:
 
         from flext_infra import u
 
-        data = u.Infra.Yaml.safe_load_yaml(path)
+        data = u.Infra.safe_load_yaml(path)
     """
 
     @staticmethod

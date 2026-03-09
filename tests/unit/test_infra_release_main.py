@@ -308,7 +308,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
@@ -346,7 +346,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].fail(
@@ -374,7 +374,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
@@ -409,7 +409,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
@@ -445,7 +445,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
@@ -487,7 +487,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
@@ -528,7 +528,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(
@@ -569,7 +569,7 @@ class TestReleaseMainFlow:
         ):
             with patch("flext_infra.release.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.release.__main__.FlextInfraPathResolver",
+                    "flext_infra.release.__main__.FlextInfraUtilitiesPaths",
                 ) as mock_resolver:
                     mock_resolver_inst = mock_resolver.return_value
                     mock_resolver_inst.workspace_root.return_value = r[Path].ok(

@@ -35,7 +35,7 @@ class FlextInfraUtilitiesCodegen:
 
         from flext_infra import u
 
-        pkg = u.Infra.Codegen.infer_package(path)
+        pkg = u.Infra.infer_package(path)
     """
 
     _container_mapping_adapter: TypeAdapter[dict[str, t.ContainerValue]] = TypeAdapter(

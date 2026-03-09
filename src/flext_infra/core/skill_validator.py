@@ -27,12 +27,12 @@ from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
-    """Load YAML file safely; delegates to ``u.Infra.Yaml``."""
+    """Load YAML file safely; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.safe_load_yaml(path)
 
 
 def _normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:
-    """Validate and normalize a list[str] config field; delegates to ``u.Infra.Yaml``."""
+    """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
 
 

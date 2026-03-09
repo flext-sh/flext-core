@@ -41,15 +41,15 @@ class PostCheckGate:
         if not result.modified:
             return (True, [])
         file_path = result.file_path
-        post_checks = u.Infra.Refactor.string_list(
+        post_checks = u.Infra.string_list(
             expected.get(c.Infra.ReportKeys.POST_CHECKS),
         )
-        quality_gates = u.Infra.Refactor.string_list(expected.get("quality_gates"))
+        quality_gates = u.Infra.string_list(expected.get("quality_gates"))
         if self._check_enabled("imports_resolve", post_checks):
             errors.extend(self._validate_imports(file_path))
         source_symbol_raw = expected.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "")
         source_symbol = source_symbol_raw if isinstance(source_symbol_raw, str) else ""
-        expected_chain = u.Infra.Refactor.string_list(
+        expected_chain = u.Infra.string_list(
             expected.get("expected_base_chain"),
         )
         if (
@@ -106,7 +106,7 @@ class PostCheckGate:
     def _validate_types(self, file_path: Path) -> list[str]:
         """Check that the file compiles without syntax errors."""
         cmd = [sys.executable, "-m", "py_compile", str(file_path)]
-        result = u.Infra.Refactor.capture_output(cmd)
+        result = u.Infra.capture_output(cmd)
         if result.is_failure:
             return [f"lsp_diagnostics_clean_failed:{result.error or ''}"]
         return []
@@ -422,7 +422,7 @@ class FlextInfraRefactorCliSupport:
             )
             FlextInfraRefactorCliSupport.print_violation_summary(analysis)
             if args.analysis_output is not None:
-                _ = u.Infra.Io.write_json(
+                _ = u.Infra.write_json(
                     args.analysis_output,
                     analysis.model_dump(mode="json"),
                     ensure_ascii=True,

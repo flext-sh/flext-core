@@ -27,8 +27,8 @@ class FlextInfraUtilitiesToml:
 
         from flext_infra import u
 
-        result = u.Infra.Toml.as_toml_mapping(value)
-        doc = u.Infra.Toml.read(some_path)
+        result = u.Infra.as_toml_mapping(value)
+        doc = u.Infra.read(some_path)
     """
 
     logger = FlextLogger(__name__)

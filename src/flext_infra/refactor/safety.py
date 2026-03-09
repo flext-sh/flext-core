@@ -172,7 +172,7 @@ class FlextInfraRefactorSafetyManager:
         """Persist a checkpoint to disk as JSON."""
         payload = checkpoint.model_dump()
         payload["updated_at"] = u.generate_iso_timestamp()
-        out: RBool = u.Infra.Io.write_json(
+        out: RBool = u.Infra.write_json(
             self._checkpoint_path, payload, ensure_ascii=True
         )
         return out

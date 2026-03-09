@@ -13,58 +13,52 @@ from __future__ import annotations
 from itertools import count
 from typing import ClassVar, override
 
-from flext_core import FlextResult, FlextService, m, t
-
-from ..constants import TestsFlextConstants
-from ..models import TestsFlextModels
-
-User = TestsFlextModels.Tests.User
-ServiceTestType = TestsFlextModels.Tests.ServiceTestType
-ServiceTestCase = TestsFlextModels.Tests.ServiceTestCase
+from flext_core import r, s
+from tests import c, m, t
 
 
-class GetUserService(FlextService[User]):
+class GetUserService(s[m.Tests.User]):
     """Service to get a user by ID."""
 
     user_id: str
 
     @override
-    def execute(self) -> FlextResult[User]:
+    def execute(self) -> r[m.Tests.User]:
         """Get user by ID."""
-        return FlextResult.ok(
-            User(
+        return r.ok(
+            m.Tests.User(
                 user_id=self.user_id,
-                name=f"{TestsFlextConstants.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
-                email=f"user{self.user_id}{TestsFlextConstants.Services.DEFAULT_EMAIL_DOMAIN}",
+                name=f"{c.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
+                email=f"user{self.user_id}{c.Services.DEFAULT_EMAIL_DOMAIN}",
             ),
         )
 
 
-class ValidatingService(FlextService[str]):
+class ValidatingService(s[str]):
     """Service with validation."""
 
     value_input: str
-    min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
+    min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT
 
     @override
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
-            return FlextResult[str].fail(
+            return r[str].fail(
                 f"Value must be at least {self.min_length} characters",
             )
-        return FlextResult[str].ok(self.value_input.upper())
+        return r[str].ok(self.value_input.upper())
 
 
-class FailingService(FlextService[str]):
+class FailingService(s[str]):
     """Service that always fails."""
 
-    error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
+    error_message: str = c.Services.DEFAULT_ERROR_MESSAGE
 
     @override
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Always fails."""
-        return FlextResult[str].fail(self.error_message)
+        return r[str].fail(self.error_message)
 
 
 class GetUserServiceAuto(GetUserService):
@@ -86,7 +80,7 @@ class FailingServiceAuto(FailingService):
 
 
 class UserFactory:
-    """Factory for User entities using native Python patterns."""
+    """Factory for m.Tests.User entities using native Python patterns."""
 
     _counter: ClassVar[count[int]] = count(1)
     _names: ClassVar[list[str]] = [
@@ -113,13 +107,13 @@ class UserFactory:
         name: str | None = None,
         email: str | None = None,
         is_active: bool = True,
-    ) -> User:
-        """Build a User instance with optional overrides."""
+    ) -> m.Tests.User:
+        """Build a m.Tests.User instance with optional overrides."""
         n = next(cls._counter)
         actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
         actual_name = name if name is not None else cls._next_name()
         actual_email = email if email is not None else f"{actual_user_id}@example.com"
-        return User(
+        return m.Tests.User(
             user_id=actual_user_id,
             name=actual_name,
             email=actual_email,
@@ -127,8 +121,8 @@ class UserFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[User]:
-        """Build multiple User instances with auto-generated values."""
+    def build_batch(cls, size: int) -> list[m.Tests.User]:
+        """Build multiple m.Tests.User instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
     @classmethod
@@ -179,7 +173,7 @@ class ValidatingServiceFactory:
         cls,
         *,
         value_input: str | None = None,
-        min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
     ) -> ValidatingService:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
@@ -206,7 +200,7 @@ class FailingServiceFactory:
     def build(
         cls,
         *,
-        error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
+        error_message: str = c.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingService:
         """Build a FailingService instance."""
         return FailingService.model_construct(error_message=error_message)
@@ -258,7 +252,7 @@ class ValidatingServiceAutoFactory:
         cls,
         *,
         value_input: str | None = None,
-        min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
     ) -> ValidatingServiceAuto:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
@@ -285,7 +279,7 @@ class FailingServiceAutoFactory:
     def build(
         cls,
         *,
-        error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
+        error_message: str = c.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
         return FailingServiceAuto.model_construct(error_message=error_message)
@@ -297,19 +291,19 @@ class FailingServiceAutoFactory:
 
 
 class ServiceTestCaseFactory:
-    """Factory for ServiceTestCase."""
+    """Factory for m.Tests.ServiceTestCase."""
 
-    _service_types: ClassVar[list[ServiceTestType]] = [
-        ServiceTestType.GET_USER,
-        ServiceTestType.VALIDATE,
-        ServiceTestType.FAIL,
+    _service_types: ClassVar[list[m.Tests.ServiceTestType]] = [
+        m.Tests.ServiceTestType.GET_USER,
+        m.Tests.ServiceTestType.VALIDATE,
+        m.Tests.ServiceTestType.FAIL,
     ]
     _type_index: ClassVar[int] = 0
     _words: ClassVar[list[str]] = ["test", "sample", "example", "demo", "data"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
-    def _next_type(cls) -> ServiceTestType:
+    def _next_type(cls) -> m.Tests.ServiceTestType:
         """Get next service type from rotation."""
         service_type = cls._service_types[cls._type_index % len(cls._service_types)]
         cls._type_index += 1
@@ -326,14 +320,14 @@ class ServiceTestCaseFactory:
     def build(
         cls,
         *,
-        service_type: ServiceTestType | None = None,
+        service_type: m.Tests.ServiceTestType | None = None,
         input_value: str | None = None,
         expected_success: bool = True,
         expected_error: str | None = None,
-        extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        extra_param: int = c.TestValidation.MIN_LENGTH_DEFAULT,
         description: str | None = None,
-    ) -> ServiceTestCase:
-        """Build a ServiceTestCase instance."""
+    ) -> m.Tests.ServiceTestCase:
+        """Build a m.Tests.ServiceTestCase instance."""
         actual_type = service_type if service_type is not None else cls._next_type()
         actual_input = input_value if input_value is not None else cls._next_word()
         actual_description = (
@@ -341,7 +335,7 @@ class ServiceTestCaseFactory:
             if description is not None
             else f"Test case for {actual_type} with {actual_input}"
         )
-        return ServiceTestCase(
+        return m.Tests.ServiceTestCase(
             service_type=actual_type,
             input_value=actual_input,
             expected_success=expected_success,
@@ -351,8 +345,8 @@ class ServiceTestCaseFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[ServiceTestCase]:
-        """Build multiple ServiceTestCase instances with auto-generated values."""
+    def build_batch(cls, size: int) -> list[m.Tests.ServiceTestCase]:
+        """Build multiple m.Tests.ServiceTestCase instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
     @classmethod
@@ -367,33 +361,33 @@ class ServiceFactoryRegistry:
 
     _factories: ClassVar[
         dict[
-            ServiceTestType,
+            m.Tests.ServiceTestType,
             type[
                 GetUserServiceFactory | ValidatingServiceFactory | FailingServiceFactory
             ],
         ]
     ] = {
-        ServiceTestType.GET_USER: GetUserServiceFactory,
-        ServiceTestType.VALIDATE: ValidatingServiceFactory,
-        ServiceTestType.FAIL: FailingServiceFactory,
+        m.Tests.ServiceTestType.GET_USER: GetUserServiceFactory,
+        m.Tests.ServiceTestType.VALIDATE: ValidatingServiceFactory,
+        m.Tests.ServiceTestType.FAIL: FailingServiceFactory,
     }
 
     @classmethod
     def create_service(
         cls,
-        case: ServiceTestCase,
-    ) -> FlextService[User] | FlextService[str]:
+        case: m.Tests.ServiceTestCase,
+    ) -> s[m.Tests.User] | s[str]:
         """Create appropriate service based on case type using pattern matching."""
-        service: FlextService[User] | FlextService[str]
+        service: s[m.Tests.User] | s[str]
         match case.service_type:
-            case ServiceTestType.GET_USER:
+            case m.Tests.ServiceTestType.GET_USER:
                 service = GetUserServiceFactory.build(user_id=case.input_value)
-            case ServiceTestType.VALIDATE:
+            case m.Tests.ServiceTestType.VALIDATE:
                 service = ValidatingServiceFactory.build(
                     value_input=case.input_value,
                     min_length=case.extra_param,
                 )
-            case ServiceTestType.FAIL:
+            case m.Tests.ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
             case _:
                 msg = f"Unsupported service type: {case.service_type}"
@@ -405,11 +399,13 @@ class TestDataGenerators:
     """Advanced test data generators using comprehensions and patterns."""
 
     @staticmethod
-    def generate_user_success_cases(num_cases: int = 3) -> list[ServiceTestCase]:
+    def generate_user_success_cases(
+        num_cases: int = 3,
+    ) -> list[m.Tests.ServiceTestCase]:
         """Generate successful user service test cases."""
         return [
-            ServiceTestCase(
-                service_type=ServiceTestType.GET_USER,
+            m.Tests.ServiceTestCase(
+                service_type=m.Tests.ServiceTestType.GET_USER,
                 input_value=str(i * 100 + 1),
                 description=f"Valid user ID {i}",
             )
@@ -417,18 +413,20 @@ class TestDataGenerators:
         ]
 
     @staticmethod
-    def generate_validation_success_cases(num_cases: int = 2) -> list[ServiceTestCase]:
+    def generate_validation_success_cases(
+        num_cases: int = 2,
+    ) -> list[m.Tests.ServiceTestCase]:
         """Generate successful validation test cases."""
         return [
-            ServiceTestCase(
-                service_type=ServiceTestType.VALIDATE,
+            m.Tests.ServiceTestCase(
+                service_type=m.Tests.ServiceTestType.VALIDATE,
                 input_value=f"value_{i}",
                 description=f"Valid input {i}",
             )
             for i in range(1, num_cases + 1)
         ] + [
-            ServiceTestCase(
-                service_type=ServiceTestType.VALIDATE,
+            m.Tests.ServiceTestCase(
+                service_type=m.Tests.ServiceTestType.VALIDATE,
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
@@ -436,18 +434,18 @@ class TestDataGenerators:
         ]
 
     @staticmethod
-    def generate_validation_failure_cases() -> list[ServiceTestCase]:
+    def generate_validation_failure_cases() -> list[m.Tests.ServiceTestCase]:
         """Generate validation failure test cases."""
         return [
-            ServiceTestCase(
-                service_type=ServiceTestType.VALIDATE,
+            m.Tests.ServiceTestCase(
+                service_type=m.Tests.ServiceTestType.VALIDATE,
                 input_value="ab",
                 expected_success=False,
                 expected_error="must be at least 3 characters",
                 description="Too short input",
             ),
-            ServiceTestCase(
-                service_type=ServiceTestType.VALIDATE,
+            m.Tests.ServiceTestCase(
+                service_type=m.Tests.ServiceTestType.VALIDATE,
                 input_value="x",
                 expected_success=False,
                 expected_error="must be at least 5 characters",
@@ -460,18 +458,20 @@ class TestDataGenerators:
 class ServiceTestCases:
     """Unified factory for all test cases using advanced patterns."""
 
-    USER_SUCCESS: ClassVar[list[ServiceTestCase]] = (
+    USER_SUCCESS: ClassVar[list[m.Tests.ServiceTestCase]] = (
         TestDataGenerators.generate_user_success_cases()
     )
-    VALIDATE_SUCCESS: ClassVar[list[ServiceTestCase]] = (
+    VALIDATE_SUCCESS: ClassVar[list[m.Tests.ServiceTestCase]] = (
         TestDataGenerators.generate_validation_success_cases()
     )
-    VALIDATE_FAILURE: ClassVar[list[ServiceTestCase]] = (
+    VALIDATE_FAILURE: ClassVar[list[m.Tests.ServiceTestCase]] = (
         TestDataGenerators.generate_validation_failure_cases()
     )
 
     @staticmethod
-    def create_service(case: ServiceTestCase) -> FlextService[User] | FlextService[str]:
+    def create_service(
+        case: m.Tests.ServiceTestCase,
+    ) -> s[m.Tests.User] | s[str]:
         """Create appropriate service based on case type."""
         return ServiceFactoryRegistry.create_service(case)
 

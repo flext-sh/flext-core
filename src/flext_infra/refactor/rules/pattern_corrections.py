@@ -307,7 +307,7 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
             return (updated, dict_to_mapping_transformer.changes)
         if fix_action == "remove_redundant_casts":
             raw_types = self.config.get("redundant_type_targets", [])
-            removable_types = set(u.Infra.Refactor.string_list(raw_types))
+            removable_types = set(u.Infra.string_list(raw_types))
             cast_remover = RedundantCastRemover(removable_types=removable_types)
             updated = tree.visit(cast_remover)
             return (updated, cast_remover.changes)

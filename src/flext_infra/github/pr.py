@@ -19,7 +19,6 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraGitService,
     FlextInfraUtilitiesSubprocess,
     FlextInfraVersioningService,
     c,
@@ -40,12 +39,10 @@ class FlextInfraPrManager:
     def __init__(
         self,
         runner: p.CommandRunner | None = None,
-        git: FlextInfraGitService | None = None,
         versioning: FlextInfraVersioningService | None = None,
     ) -> None:
         """Initialize the PR manager."""
         self._runner: p.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._git = git or FlextInfraGitService(self._runner)
         self._versioning = versioning or FlextInfraVersioningService()
 
     def checks(
@@ -263,7 +260,7 @@ class FlextInfraPrManager:
         )
         if result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(result.error or "failed to list PRs")
-        payload_result = u.Infra.Io.parse(str(result.unwrap()))
+        payload_result = u.Infra.parse(str(result.unwrap()))
         if payload_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
                 payload_result.error or "invalid JSON",
@@ -433,8 +430,7 @@ def main() -> int:
     args = _parse_args()
     repo_root = args.repo_root.resolve()
     manager = FlextInfraPrManager()
-    git = FlextInfraGitService()
-    head_result = git.current_branch(repo_root)
+    head_result = u.Infra.git_current_branch(repo_root)
     head = args.head or head_result.unwrap_or(c.Infra.Git.HEAD)
     base = args.base
     selector = _selector(args.number, head)

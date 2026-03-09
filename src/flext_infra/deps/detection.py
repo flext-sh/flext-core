@@ -309,7 +309,7 @@ class FlextInfraDependencyDetectionService:
         issues: list[t.Infra.IssueMap] = []
         if out_file.exists():
             raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            loaded_result = u.Infra.Io.parse(raw) if raw.strip() else None
+            loaded_result = u.Infra.parse(raw) if raw.strip() else None
             loaded_payload: t.ContainerValue = (
                 loaded_result.value
                 if loaded_result is not None and loaded_result.is_success

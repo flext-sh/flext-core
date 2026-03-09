@@ -98,7 +98,7 @@ class FlextInfraDocValidator:
         required: list[str] = []
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
-            payload_result = u.Infra.Io.read_json(config)
+            payload_result = u.Infra.read_json(config)
             if payload_result.is_failure:
                 return (1, [])
             payload = payload_result.value
@@ -148,7 +148,7 @@ class FlextInfraDocValidator:
                 status = c.Infra.Status.FAIL
                 message = f"missing adr references in skills: {', '.join(missing)}"
         wrote_todo = self._maybe_write_todo(scope, apply_mode=apply_mode)
-        _ = u.Infra.Io.write_json(
+        _ = u.Infra.write_json(
             scope.report_dir / "validate-summary.json",
             {
                 c.Infra.ReportKeys.SUMMARY: {

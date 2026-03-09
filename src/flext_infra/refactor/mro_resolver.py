@@ -383,7 +383,7 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _project_roots(*, workspace_root: Path) -> list[Path]:
-        return u.Infra.Refactor.discover_project_roots(workspace_root=workspace_root)
+        return u.Infra.discover_project_roots(workspace_root=workspace_root)
 
     @staticmethod
     def _target_specs(*, target: str) -> tuple[m.Infra.Refactor.MROTargetSpec, ...]:
@@ -472,7 +472,7 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _module_path(*, file_path: Path, project_root: Path) -> str:
-        return u.Infra.Refactor.module_path(
+        return u.Infra.module_path(
             file_path=file_path,
             project_root=project_root,
         )
@@ -801,7 +801,7 @@ class FlextInfraRefactorMROImportRewriter:
 
     @staticmethod
     def _iter_workspace_python_files(*, workspace_root: Path) -> list[Path]:
-        return u.Infra.Refactor.iter_python_files(workspace_root=workspace_root)
+        return u.Infra.iter_python_files(workspace_root=workspace_root)
 
     @staticmethod
     def _import_insertion_index(*, module: ast.Module) -> int:

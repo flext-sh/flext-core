@@ -30,7 +30,7 @@ class FlextInfraUtilitiesRefactor:
 
         from flext_infra import u
 
-        name = u.Infra.Refactor.dotted_name(cst_expr)
+        name = u.Infra.dotted_name(cst_expr)
     """
 
     @staticmethod

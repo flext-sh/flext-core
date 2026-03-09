@@ -20,7 +20,7 @@ from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 def test_basemk_main_with_no_command() -> None:
     """Test main() with no command prints help and returns 1."""
     with patch("sys.argv", ["basemk"]):
-        with patch("flext_infra.output.output"):
+        with patch("flext_infra.basemk.__main__.output"):
             result = main(argv=[])
             assert result == 1
 
@@ -54,7 +54,7 @@ def test_basemk_main_with_project_name(tmp_path: Path) -> None:
 
 def test_basemk_main_with_invalid_command() -> None:
     """Test main() with invalid command raises SystemExit."""
-    with patch("flext_infra.output.output"):
+    with patch("flext_infra.basemk.__main__.output"):
         with pytest.raises(SystemExit):
             main(argv=["invalid"])
 

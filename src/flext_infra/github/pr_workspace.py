@@ -16,13 +16,13 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraGitService,
     FlextInfraProjectSelector,
     FlextInfraReportingService,
     FlextInfraUtilitiesSubprocess,
     c,
     m,
     p,
+    u,
 )
 
 
@@ -36,13 +36,11 @@ class FlextInfraPrWorkspaceManager:
     def __init__(
         self,
         runner: p.CommandRunner | None = None,
-        git: FlextInfraGitService | None = None,
         selector: FlextInfraProjectSelector | None = None,
         reporting: FlextInfraReportingService | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
         self._runner: p.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._git = git or FlextInfraGitService(self._runner)
         self._selector = selector or FlextInfraProjectSelector()
         self._reporting = reporting or FlextInfraReportingService()
 
@@ -115,25 +113,27 @@ class FlextInfraPrWorkspaceManager:
         """Checkout a branch with canonical git contract only."""
         if not branch:
             return r[bool].ok(True)
-        return self._git.checkout(repo_root, branch)
+        return u.Infra.git_checkout(repo_root, branch)
 
     def checkpoint(self, repo_root: Path, branch: str) -> r[bool]:
         """Commit and push pending changes without fallback strategies."""
-        changes_result = self._git.has_changes(repo_root)
+        changes_result = u.Infra.git_has_changes(repo_root)
         if changes_result.is_failure:
             return r[bool].fail(changes_result.error or "changes check failed")
         if not changes_result.value:
             return r[bool].ok(True)
-        add_result = self._git.add(repo_root)
+        add_result = u.Infra.git_add(repo_root)
         if add_result.is_failure:
             return r[bool].fail(add_result.error or "git add failed")
-        staged_result = self._git.diff_names(repo_root, cached=True)
+        staged_result = u.Infra.git_diff_names(repo_root, cached=True)
         if staged_result.is_success and (not staged_result.value.strip()):
             return r[bool].ok(True)
-        commit_result = self._git.commit(repo_root, "chore: checkpoint pending changes")
+        commit_result = u.Infra.git_commit(
+            repo_root, "chore: checkpoint pending changes"
+        )
         if commit_result.is_failure:
             return r[bool].fail(commit_result.error or "git commit failed")
-        return self._git.push(
+        return u.Infra.git_push(
             repo_root,
             remote=c.Infra.Git.ORIGIN if branch else "",
             branch=branch,
@@ -142,7 +142,7 @@ class FlextInfraPrWorkspaceManager:
 
     def has_changes(self, repo_root: Path) -> r[bool]:
         """Check if the repository has uncommitted changes."""
-        return self._git.has_changes(repo_root)
+        return u.Infra.git_has_changes(repo_root)
 
     def orchestrate(
         self,

@@ -31,7 +31,7 @@ class FlextInfraCodegenConstantsQualityGate:
     def run(self) -> dict[str, t.ContainerValue]:
         """Execute quality gate and return structured report payload."""
         before_payload, before_source, before_load_error = (
-            u.Infra.Codegen.quality_gate_load_before_payload(
+            u.Infra.quality_gate_load_before_payload(
                 workspace_root=self._workspace_root,
                 before_report=self._before_report,
                 baseline_file=self._baseline_file,
@@ -40,36 +40,36 @@ class FlextInfraCodegenConstantsQualityGate:
         census_reports = FlextInfraCodegenCensus(
             workspace_root=self._workspace_root,
         ).run()
-        duplicate_groups = u.Infra.Codegen.quality_gate_count_duplicate_constant_groups(
+        duplicate_groups = u.Infra.quality_gate_count_duplicate_constant_groups(
             self._workspace_root,
         )
-        modified_files = u.Infra.Codegen.quality_gate_modified_python_files(
+        modified_files = u.Infra.quality_gate_modified_python_files(
             self._workspace_root,
         )
-        pyrefly_check = u.Infra.Codegen.quality_gate_run_pyrefly_check(
-            self._workspace_root,
-            modified_files,
-        )
-        ruff_check = u.Infra.Codegen.quality_gate_run_ruff_check(
+        pyrefly_check = u.Infra.quality_gate_run_pyrefly_check(
             self._workspace_root,
             modified_files,
         )
-        import_scan = u.Infra.Codegen.quality_gate_scan_import_nodes(
+        ruff_check = u.Infra.quality_gate_run_ruff_check(
             self._workspace_root,
             modified_files,
         )
-        before_metrics = u.Infra.Codegen.quality_gate_before_metrics(before_payload)
-        after_metrics = u.Infra.Codegen.quality_gate_after_metrics(
+        import_scan = u.Infra.quality_gate_scan_import_nodes(
+            self._workspace_root,
+            modified_files,
+        )
+        before_metrics = u.Infra.quality_gate_before_metrics(before_payload)
+        after_metrics = u.Infra.quality_gate_after_metrics(
             census_reports=census_reports,
             duplicate_groups=duplicate_groups,
             import_scan=import_scan,
             modified_files=modified_files,
         )
-        improvement = u.Infra.Codegen.quality_gate_improvement(
+        improvement = u.Infra.quality_gate_improvement(
             before_metrics,
             after_metrics,
         )
-        checks = u.Infra.Codegen.quality_gate_build_checks(
+        checks = u.Infra.quality_gate_build_checks(
             after_metrics=after_metrics,
             improvement=improvement,
             pyrefly_check=pyrefly_check,
@@ -77,7 +77,7 @@ class FlextInfraCodegenConstantsQualityGate:
             before_available=before_payload is not None,
             before_load_error=before_load_error,
         )
-        verdict = u.Infra.Codegen.quality_gate_compute_verdict(checks, improvement)
+        verdict = u.Infra.quality_gate_compute_verdict(checks, improvement)
         report: dict[str, t.ContainerValue] = {
             "workspace": str(self._workspace_root),
             "generated_at": datetime.now(UTC).isoformat(),
@@ -91,9 +91,9 @@ class FlextInfraCodegenConstantsQualityGate:
             "before": before_metrics,
             "after": after_metrics,
             "improvement": improvement,
-            "projects": u.Infra.Codegen.quality_gate_project_findings(census_reports),
+            "projects": u.Infra.quality_gate_project_findings(census_reports),
         }
-        report["artifacts"] = u.Infra.Codegen.quality_gate_write_artifacts(
+        report["artifacts"] = u.Infra.quality_gate_write_artifacts(
             workspace_root=self._workspace_root,
             report=report,
             render_text=self.render_text(report),
@@ -106,10 +106,10 @@ class FlextInfraCodegenConstantsQualityGate:
     @classmethod
     def render_text(cls, report: dict[str, t.ContainerValue]) -> str:
         """Render compact human-readable summary."""
-        checks = u.Infra.Codegen.dict_list(report.get("checks"))
-        before = u.Infra.Codegen.dict_or_empty(report.get("before"))
-        after = u.Infra.Codegen.dict_or_empty(report.get("after"))
-        improvement = u.Infra.Codegen.dict_or_empty(report.get("improvement"))
+        checks = u.Infra.dict_list(report.get("checks"))
+        before = u.Infra.dict_or_empty(report.get("before"))
+        after = u.Infra.dict_or_empty(report.get("after"))
+        improvement = u.Infra.dict_or_empty(report.get("improvement"))
         lines: list[str] = [
             f"Workspace: {report.get('workspace', '')}",
             f"Verdict: {report.get('verdict', 'FAIL')}",

@@ -41,7 +41,8 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
         sleep_calls.append(seconds)
 
     monkeypatch.setattr(
-        "flext_core._utilities.reliability.time.sleep",
+        reliability_module.time,
+        "sleep",
         _record_sleep,
     )
 
