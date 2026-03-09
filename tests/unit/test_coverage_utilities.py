@@ -30,6 +30,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextExceptions, FlextResult, m, p, t, u
 
 from ..test_utils import assertion_helpers
+from .contracts.text_contract import TextUtilityContract
 
 
 class UtilityOperationType(StrEnum):
@@ -197,7 +198,7 @@ class UtilityScenarios:
         return (attempt_count, flaky_op)
 
 
-class Testu:
+class Testu(TextUtilityContract):
     """Unified test suite for u - ALL REAL FUNCTIONALITY."""
 
     @pytest.mark.parametrize(
@@ -284,11 +285,10 @@ class Testu:
         assert isinstance(short_id, str)
         assert len(short_id) == 8
 
-    def test_text_processor_clean(self) -> None:
-        """Test text cleaning - returns str directly."""
-        result = u.Text.clean_text("  hello   world  ")
-        assert isinstance(result, str)
-        assert result == "hello world"
+    @pytest.mark.parametrize(("raw", "expected"), TextUtilityContract.CLEAN_TEXT_CASES)
+    def test_text_processor_clean(self, raw: str, expected: str) -> None:
+        """Test text cleaning contract across reusable shared cases."""
+        self.assert_clean_text(raw, expected)
 
     def test_text_processor_truncate(self) -> None:
         """Test text truncation - returns FlextResult[str]."""
@@ -297,16 +297,26 @@ class Testu:
         assert len(result.value) <= 8
         assert result.value.endswith("...")
 
-    def test_text_processor_safe_string_success(self) -> None:
-        """Test safe string conversion - returns str directly."""
-        result = u.Text.safe_string("  hello  ")
-        assert isinstance(result, str)
-        assert result == "hello"
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        TextUtilityContract.SAFE_STRING_VALID_CASES,
+    )
+    def test_text_processor_safe_string_success(self, raw: str, expected: str) -> None:
+        """Test safe string contract for valid values."""
+        self.assert_safe_string_valid(raw, expected)
 
-    def test_text_processor_safe_string_failure(self) -> None:
-        """Test safe string conversion with empty - raises ValueError."""
-        with pytest.raises(ValueError):
-            u.Text.safe_string("")
+    @pytest.mark.parametrize(
+        ("raw", "error_message"),
+        TextUtilityContract.SAFE_STRING_INVALID_CASES,
+    )
+    def test_text_processor_safe_string_failure(
+        self,
+        raw: str | None,
+        error_message: str,
+    ) -> None:
+        """Test safe string contract for invalid values."""
+        with pytest.raises(ValueError, match=error_message):
+            u.Text.safe_string(raw)
 
     @pytest.mark.parametrize(
         ("input_data", "expected_type"),

@@ -28,8 +28,10 @@ import pytest
 from flext_core import FlextSettings, c, m, r, t
 from flext_tests import u
 
+from .contracts.text_contract import TextUtilityContract
 
-class UtilityScenarios:
+
+class UtilityScenarios(TextUtilityContract):
     """Centralized utility test scenarios using c (FlextConstants)."""
 
     TYPE_GUARD_CASES: ClassVar[dict[str, list[tuple[str, object, bool]]]] = {
@@ -69,8 +71,7 @@ class UtilityScenarios:
         (20, 20),
         (None, c.Utilities.SHORT_UUID_LENGTH),
     ]
-    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = [
-        ("  Test\n\r\tText  ", "Test Text"),
+    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = TextUtilityContract.CLEAN_TEXT_CASES + [
         ("a    b    c", "a b c"),
         ("  Test  Text  ", "Test Text"),
     ]
@@ -111,7 +112,7 @@ class UtilityScenarios:
     ]
 
 
-class Testu:
+class Testu(TextUtilityContract):
     """Unified test suite for u using flext_tests and c."""
 
     @pytest.mark.parametrize(
@@ -237,13 +238,20 @@ class Testu:
 
     def test_text_processor_safe_string_success(self) -> None:
         """Test safe string with valid input."""
-        result = u.Text.safe_string("valid")
-        assert isinstance(result, str) and result == "valid"
+        self.assert_safe_string_valid("valid", "valid")
 
     def test_text_processor_safe_string_empty(self) -> None:
         """Test safe string with empty raises ValueError."""
         with pytest.raises(ValueError):
             _ = u.Text.safe_string("")
+
+    @pytest.mark.parametrize(
+        ("text", "expected"),
+        UtilityScenarios.FORMAT_APP_ID_CASES,
+    )
+    def test_text_processor_format_app_id_contract(self, text: str, expected: str) -> None:
+        """Reuse shared contract for app-id formatting rules."""
+        self.assert_format_app_id(text, expected)
 
     @pytest.mark.parametrize(
         ("input_data", "expected_type"),
