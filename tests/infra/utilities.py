@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import shutil
+
 from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities
 
@@ -34,8 +36,6 @@ class FlextInfraTestUtilities(FlextTestsUtilities):
                     True if Docker is available, False otherwise.
 
                 """
-                import shutil
-
                 return shutil.which("docker") is not None
 
             @staticmethod

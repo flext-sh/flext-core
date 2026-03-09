@@ -1,7 +1,7 @@
 """Assertion helpers for FLEXT infra tests.
 
 Provides domain-specific assertion helpers that wrap flext_tests matchers (tm)
-with infra-specific context and validation.
+and utilities (u) with infra-specific context and validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,18 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
 
-from flext_core import r, t
-from flext_tests import tm
+from flext_core import r
+from flext_tests import t, tm, u
 
 
 class FlextInfraTestHelpers:
     """Assertion helpers for infra testing with tm integration.
 
-    Wraps flext_tests matchers (tm) with infra-specific validation context.
-    All helpers return unwrapped values or error messages for chaining.
+    Wraps flext_tests matchers (tm) and utilities (u) with infra-specific
+    validation context. All helpers return unwrapped values or error messages.
     """
 
     @staticmethod
@@ -39,9 +38,7 @@ class FlextInfraTestHelpers:
             AssertionError: If result is failure
 
         """
-        if not result.is_success:
-            raise AssertionError(f"Expected success, got failure: {result.error}")
-        return result.value
+        return tm.ok(result)
 
     @staticmethod
     def assert_fail[TResult](result: r[TResult], contains: str | None = None) -> str:
@@ -66,7 +63,7 @@ class FlextInfraTestHelpers:
 
     @staticmethod
     def assert_file_exists(path: Path, msg: str | None = None) -> Path:
-        """Assert file exists at path.
+        """Assert file exists at path using tm.that().
 
         Args:
             path: Path to check
@@ -79,17 +76,13 @@ class FlextInfraTestHelpers:
             AssertionError: If file does not exist
 
         """
-        if not path.exists():
-            error = msg or f"File does not exist: {path}"
-            raise AssertionError(error)
-        if not path.is_file():
-            error = msg or f"Path is not a file: {path}"
-            raise AssertionError(error)
+        tm.that(path.exists(), eq=True, msg=msg or f"File does not exist: {path}")
+        tm.that(path.is_file(), eq=True, msg=msg or f"Path is not a file: {path}")
         return path
 
     @staticmethod
     def assert_dir_exists(path: Path, msg: str | None = None) -> Path:
-        """Assert directory exists at path.
+        """Assert directory exists at path using tm.that().
 
         Args:
             path: Path to check
@@ -102,17 +95,13 @@ class FlextInfraTestHelpers:
             AssertionError: If directory does not exist
 
         """
-        if not path.exists():
-            error = msg or f"Directory does not exist: {path}"
-            raise AssertionError(error)
-        if not path.is_dir():
-            error = msg or f"Path is not a directory: {path}"
-            raise AssertionError(error)
+        tm.that(path.exists(), eq=True, msg=msg or f"Directory does not exist: {path}")
+        tm.that(path.is_dir(), eq=True, msg=msg or f"Path is not a directory: {path}")
         return path
 
     @staticmethod
     def assert_file_contains(path: Path, content: str, msg: str | None = None) -> Path:
-        """Assert file exists and contains substring.
+        """Assert file exists and contains substring using tm.that().
 
         Args:
             path: Path to file
@@ -127,17 +116,19 @@ class FlextInfraTestHelpers:
 
         """
         FlextInfraTestHelpers.assert_file_exists(path, msg)
-        file_content = path.read_text()
-        if content not in file_content:
-            error = msg or f"File {path} does not contain: {content}"
-            raise AssertionError(error)
+        file_content = path.read_text(encoding="utf-8")
+        tm.that(
+            file_content,
+            contains=content,
+            msg=msg or f"File {path} does not contain: {content}",
+        )
         return path
 
     @staticmethod
     def assert_toml_valid(
         path: Path, msg: str | None = None
     ) -> dict[str, t.ContainerValue]:
-        """Assert TOML file is valid and return parsed content.
+        """Assert TOML file is valid and return parsed content using u.parse_toml().
 
         Args:
             path: Path to TOML file
@@ -151,12 +142,8 @@ class FlextInfraTestHelpers:
 
         """
         FlextInfraTestHelpers.assert_file_exists(path, msg)
-        try:
-            with open(path, "rb") as f:
-                return tomllib.load(f)
-        except Exception as e:
-            error = msg or f"Invalid TOML in {path}: {e}"
-            raise AssertionError(error) from e
+        result = u.parse_toml(path)
+        return tm.ok(result, msg=msg or f"Invalid TOML in {path}")
 
     @staticmethod
     def assert_toml_has_section(
@@ -180,11 +167,52 @@ class FlextInfraTestHelpers:
         parts = section.split(".")
         current = content
         for part in parts:
-            if not isinstance(current, dict) or part not in current:
-                error = msg or f"TOML section '{section}' not found in {path}"
-                raise AssertionError(error)
+            tm.that(
+                isinstance(current, dict) and part in current,
+                eq=True,
+                msg=msg or f"TOML section '{section}' not found in {path}",
+            )
             current = current[part]
         return content
+
+    @staticmethod
+    def assert_valid_project_name(name: str, msg: str | None = None) -> str:
+        """Assert project name is valid using c.Infra.Tests.Projects patterns.
+
+        Args:
+            name: Project name to validate
+            msg: Optional custom error message
+
+        Returns:
+            The name (for chaining)
+
+        Raises:
+            AssertionError: If name is invalid
+
+        """
+        is_valid = name and name.replace("-", "").replace("_", "").isalnum()
+        tm.that(is_valid, eq=True, msg=msg or f"Invalid project name: {name}")
+        return name
+
+    @staticmethod
+    def assert_is_docker_available(msg: str | None = None) -> bool:
+        """Assert Docker is available using c.Infra.Tests.Docker constants.
+
+        Args:
+            msg: Optional custom error message
+
+        Returns:
+            True if Docker is available
+
+        Raises:
+            AssertionError: If Docker is not available
+
+        """
+        import shutil
+
+        is_available = shutil.which("docker") is not None
+        tm.that(is_available, eq=True, msg=msg or "Docker is not available")
+        return True
 
 
 # Canonical alias for infra test helpers

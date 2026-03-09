@@ -1,19 +1,28 @@
+"""Real git service for FLEXT infra tests.
+
+Uses flext_tests base classes (c, r, s) for type-safe git operations.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import Field
-
 from flext_core import r
 from flext_infra._utilities.git import FlextInfraUtilitiesGit
-from flext_tests.base import FlextTestsUtilityBase
+from flext_tests import s
 
 
-class RealGitService(FlextTestsUtilityBase[bool]):
-    git_utility: type[FlextInfraUtilitiesGit] = Field(
-        default=FlextInfraUtilitiesGit,
-        description="Injected git utility implementation.",
-    )
+class RealGitService(s[bool]):
+    """Real git service using flext_tests service base.
+
+    Uses c.Infra.Cli.GitCmd constants for git operations and
+    r (FlextResult) for railway-oriented error handling.
+    """
+
+    git_utility: type[FlextInfraUtilitiesGit] = FlextInfraUtilitiesGit
 
     def _as_success(self, result: r[bool], operation: str) -> r[bool]:
         if result.is_failure:
@@ -23,15 +32,19 @@ class RealGitService(FlextTestsUtilityBase[bool]):
         return r[bool].ok(True)
 
     def init_repo(self, path: Path) -> r[bool]:
+        """Initialize git repository."""
         path.mkdir(parents=True, exist_ok=True)
         return self._as_success(
-            self.git_utility.git_run_checked(["init"], cwd=path), "init"
+            self.git_utility.git_run_checked(["init"], cwd=path),
+            "init",
         )
 
     def add_all(self, path: Path) -> r[bool]:
+        """Stage all changes."""
         return self._as_success(self.git_utility.git_add(path), "add")
 
     def commit(self, path: Path, msg: str) -> r[bool]:
+        """Commit with configured user."""
         if not msg.strip():
             return r[bool].fail("commit message must not be empty")
 
@@ -52,6 +65,7 @@ class RealGitService(FlextTestsUtilityBase[bool]):
         return self._as_success(self.git_utility.git_commit(path, msg), "commit")
 
     def create_branch(self, path: Path, name: str) -> r[bool]:
+        """Create new branch."""
         if not name.strip():
             return r[bool].fail("branch name must not be empty")
         return self._as_success(

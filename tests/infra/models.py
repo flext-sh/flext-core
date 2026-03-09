@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_infra import FlextInfraModels
 from flext_tests import FlextTestsModels
 

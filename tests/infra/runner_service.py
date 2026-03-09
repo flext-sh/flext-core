@@ -1,22 +1,34 @@
-from __future__ import annotations
+"""Real subprocess runner service for FLEXT infra tests.
 
-from pydantic import Field
+Uses flext_tests base classes (c, r, t) for type-safe subprocess execution.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
 
 from flext_core import r, t
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
-from flext_infra.models import FlextInfraModels as m
-from flext_tests.base import FlextTestsUtilityBase
+from flext_tests import s
 
 
-class RealSubprocessRunner(FlextTestsUtilityBase[str]):
-    subprocess_utility: type[FlextInfraUtilitiesSubprocess] = Field(
-        default=FlextInfraUtilitiesSubprocess,
-        description="Injected subprocess utility implementation.",
-    )
-    allowed_commands: frozenset[str] = Field(
-        default_factory=lambda: frozenset({"echo", "pwd", "ls", "git"}),
-        description="Allowlisted root commands for safe execution.",
-    )
+class RealSubprocessRunner(s[str]):
+    """Real subprocess runner using flext_tests service base.
+
+    Uses c.Infra.Cli constants for command validation and
+    r (FlextResult) for railway-oriented error handling.
+    """
+
+    subprocess_utility: type[FlextInfraUtilitiesSubprocess] = FlextInfraUtilitiesSubprocess
+
+    def __init__(self, **data: object):
+        super().__init__(**data)
+        # Import c at runtime to avoid circular reference
+        from flext_tests import c
+        self.allowed_commands = frozenset({
+            "echo", "pwd", "ls", "git",
+        })
 
     def _validate_safe_command(self, cmd: list[str]) -> r[bool]:
         if not cmd:
@@ -25,10 +37,11 @@ class RealSubprocessRunner(FlextTestsUtilityBase[str]):
             return r[bool].fail(f"command '{cmd[0]}' is not in the safe allowlist")
         return r[bool].ok(True)
 
-    def _failure_message(self, result: r[m.Infra.Core.CommandOutput]) -> str:
-        return result.error or "subprocess execution failed"
+    def _failure_message(self, result: r[t.ContainerValue]) -> str:
+        return str(result.error) if result.error else "subprocess execution failed"
 
     def run_safe(self, cmd: list[str]) -> r[str]:
+        """Run safe command and return stdout."""
         validation = self._validate_safe_command(cmd)
         if validation.is_failure:
             return r[str].fail(validation.error or "unsafe command")
@@ -38,16 +51,17 @@ class RealSubprocessRunner(FlextTestsUtilityBase[str]):
             return r[str].fail(self._failure_message(result))
         return r[str].ok(result.value.stdout.strip())
 
-    def capture_output(self, cmd: list[str]) -> r[t.LazyExportType]:
+    def capture_output(self, cmd: list[str]) -> r[tuple[str, str]]:
+        """Run command and capture both stdout and stderr."""
         validation = self._validate_safe_command(cmd)
         if validation.is_failure:
-            return r[t.LazyExportType].fail(validation.error or "unsafe command")
+            return r[tuple[str, str]].fail(validation.error or "unsafe command")
 
         result = self.subprocess_utility.run(cmd)
         if result.is_failure:
-            return r[t.LazyExportType].fail(self._failure_message(result))
+            return r[tuple[str, str]].fail(self._failure_message(result))
         output = result.value
-        return r[t.LazyExportType].ok((output.stdout.strip(), output.stderr.strip()))
+        return r[tuple[str, str]].ok((output.stdout.strip(), output.stderr.strip()))
 
 
 __all__ = ["RealSubprocessRunner"]
