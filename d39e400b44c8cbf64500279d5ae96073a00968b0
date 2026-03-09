@@ -1,0 +1,27 @@
+src/flext_infra/_utilities/toml.py
+  3749a8bac945c0b1 18,202-206,222-261
+src/flext_infra/deps/path_sync.py
+  3749a8bac945c0b1 291,306
+src/flext_infra/docs/shared.py
+  3749a8bac945c0b1 24,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.9",
+  "base_commit_sha": "d39e400b44c8cbf64500279d5ae96073a00968b0",
+  "prompts": {
+    "3749a8bac945c0b1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32cab98baffeL563kgxc0CdLpy",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 34,
+      "accepted_lines": 73,
+      "overriden_lines": 0
+    }
+  }
+}
