@@ -1,0 +1,23 @@
+src/flext_infra/container.py
+  7a8702a10615611c 122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "d06d34422db263e2ddeab2d82a6d9fc214e34abc",
+  "prompts": {
+    "7a8702a10615611c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3304f0500ffeBJ0y3REuww4EtV",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
