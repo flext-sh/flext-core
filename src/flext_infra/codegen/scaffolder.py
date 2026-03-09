@@ -16,7 +16,6 @@ from flext_core import r, s
 from flext_infra import FlextInfraDiscoveryService, c, m, u
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
-from flext_infra import FlextInfraDiscoveryService
 
 __all__ = ["FlextInfraCodegenScaffolder"]
 

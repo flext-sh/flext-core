@@ -20,7 +20,6 @@ from flext_infra._utilities.toml import (
 from flext_infra._utilities.toml_parse import (
     FlextInfraUtilitiesTomlParse,
 )
-
 from flext_infra.deps.detector import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,

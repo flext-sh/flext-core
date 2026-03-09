@@ -27,7 +27,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import E, FlextConstants, P, R, ResultT, T, T_co, T_contra, U, t
+from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
 from flext_tests import tm
 
 
@@ -72,7 +72,7 @@ class TypeScenarios:
         TypeVarTestCase.model_validate({
             "name": "E",
             "category": TypeVarCategory.CORE,
-            "type_var": E,
+            "type_var": e,
         }),
         TypeVarTestCase.model_validate({
             "name": "R",
@@ -250,7 +250,7 @@ class TestFlextTypings:
 
     def test_all_exports_importable(self) -> None:
         """Test that all public exports can be imported and are valid."""
-        core_typevars = [T, U, E, R, ResultT, T_co, T_contra, P]
+        core_typevars = [T, U, e, R, ResultT, T_co, T_contra, P]
         for tv in core_typevars:
             tm.that(tv, none=False, msg="TypeVar must be importable and not None")
 

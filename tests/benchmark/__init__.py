@@ -1,3 +1,5 @@
+"""Benchmark tests for flext container performance and memory usage."""
+
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
@@ -19,9 +21,18 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "PerformanceBenchmark": ("tests.benchmark.test_container_performance", "PerformanceBenchmark"),
-    "TestContainerMemory": ("tests.benchmark.test_container_memory", "TestContainerMemory"),
-    "TestContainerPerformance": ("tests.benchmark.test_container_performance", "TestContainerPerformance"),
+    "PerformanceBenchmark": (
+        "tests.benchmark.test_container_performance",
+        "PerformanceBenchmark",
+    ),
+    "TestContainerMemory": (
+        "tests.benchmark.test_container_memory",
+        "TestContainerMemory",
+    ),
+    "TestContainerPerformance": (
+        "tests.benchmark.test_container_performance",
+        "TestContainerPerformance",
+    ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
 }
 

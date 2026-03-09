@@ -9,8 +9,8 @@ from unittest.mock import patch
 import flext_infra
 from flext_infra._utilities.output import (
     FlextInfraUtilitiesOutput,
-    _OutputBackend as FlextInfraOutput,
     _backend,
+    _OutputBackend as FlextInfraOutput,
 )
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 

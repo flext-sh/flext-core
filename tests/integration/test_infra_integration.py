@@ -19,15 +19,17 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
-from flext_infra.discovery import FlextInfraDiscoveryService
-from flext_infra.git import FlextInfraGitService
-from flext_infra.output import FlextInfraOutput, output
-from flext_infra.paths import FlextInfraUtilitiesPaths
-from flext_infra.subprocess import FlextInfraCommandRunner
-from flext_infra.workspace import (
+from flext_infra import (
+    FlextInfraBaseMkGenerator,
+    FlextInfraBaseMkTemplateEngine,
+    FlextInfraCommandRunner,
+    FlextInfraDiscoveryService,
+    FlextInfraGitService,
     FlextInfraOrchestratorService,
+    FlextInfraUtilitiesOutput,
+    FlextInfraUtilitiesPaths,
     FlextInfraWorkspaceDetector,
+    output,
 )
 
 pytestmark = [pytest.mark.integration]
@@ -116,10 +118,10 @@ class TestOutputSingletonConsistency:
 
         Validates:
         - output singleton is consistent
-        - output is a FlextInfraOutput instance
+        - output is a FlextInfraUtilitiesOutput instance
         - Singleton pattern is maintained
         """
-        assert isinstance(output, FlextInfraOutput)
+        assert isinstance(output, FlextInfraUtilitiesOutput)
         assert output is not None
 
     @pytest.mark.integration
@@ -304,8 +306,7 @@ class TestIntegrationWithRealCommandServices:
             cwd=repo_root,
         )
         assert commit_result.is_success
-        git_service = FlextInfraGitService(runner=runner)
-        branch_result = git_service.current_branch(repo_root)
+        branch_result = FlextInfraGitService.git_current_branch(repo_root)
         assert branch_result.is_success
         assert branch_result.value != ""
 

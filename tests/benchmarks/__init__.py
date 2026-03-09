@@ -1,3 +1,5 @@
+"""Benchmark tests for refactoring performance validation."""
+
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
@@ -14,7 +16,10 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestPerformanceBenchmarks": ("tests.benchmarks.test_refactor_nesting_performance", "TestPerformanceBenchmarks"),
+    "TestPerformanceBenchmarks": (
+        "tests.benchmarks.test_refactor_nesting_performance",
+        "TestPerformanceBenchmarks",
+    ),
 }
 
 __all__ = [

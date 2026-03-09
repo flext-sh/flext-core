@@ -17,39 +17,6 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-<<<<<<< HEAD
-    from flext_infra.__version__ import __version__, __version_info__
-    from flext_infra._utilities.discovery import (
-        FlextInfraUtilitiesDiscovery as FlextInfraDiscoveryService,
-    )
-    from flext_infra._utilities.git import (
-        FlextInfraUtilitiesGit as FlextInfraGitService,
-    )
-    from flext_infra._utilities.io import (
-        FlextInfraUtilitiesIo as FlextInfraUtilitiesIo,
-    )
-    from flext_infra._utilities.output import (
-        FlextInfraUtilitiesOutput as FlextInfraOutput,
-        output,
-    )
-    from flext_infra._utilities.paths import (
-        FlextInfraUtilitiesPaths as FlextInfraUtilitiesPaths,
-    )
-    from flext_infra._utilities.patterns import (
-        FlextInfraUtilitiesPatterns as FlextInfraUtilitiesPatterns,
-    )
-    from flext_infra._utilities.reporting import (
-        FlextInfraUtilitiesReporting as FlextInfraReportingService,
-    )
-    from flext_infra._utilities.selection import (
-        FlextInfraUtilitiesSelection as FlextInfraProjectSelector,
-    )
-    from flext_infra._utilities.subprocess import (
-        FlextInfraUtilitiesSubprocess as FlextInfraUtilitiesSubprocess,
-    )
-    from flext_infra._utilities.templates import (
-        FlextInfraUtilitiesTemplates as FlextInfraTemplateEngine,
-=======
     from flext_infra.__version__ import (
         __all__,
         __author__,
@@ -60,7 +27,6 @@ if TYPE_CHECKING:
         __url__,
         __version__,
         __version_info__,
->>>>>>> refs/remotes/origin/0.12.0-dev
     )
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
@@ -415,25 +381,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.core.inventory",
         "FlextInfraInventoryService",
     ),
-<<<<<<< HEAD
-    "FlextInfraJsonService": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
-    "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
-=======
->>>>>>> refs/remotes/origin/0.12.0-dev
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
     "FlextInfraNamespaceEnforcer": (
         "flext_infra.refactor.namespace_enforcer",
         "FlextInfraNamespaceEnforcer",
     ),
-<<<<<<< HEAD
-    "FlextInfraUtilitiesPaths": (
-        "flext_infra._utilities.paths",
-        "FlextInfraUtilitiesPaths",
-    ),
-    "FlextInfraPatterns": (
-        "flext_infra._utilities.patterns",
-        "FlextInfraUtilitiesPatterns",
-=======
     "FlextInfraNamespaceValidator": (
         "flext_infra.core.namespace_validator",
         "FlextInfraNamespaceValidator",
@@ -450,11 +402,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraProjectMigrator": (
         "flext_infra.workspace.migrator",
         "FlextInfraProjectMigrator",
->>>>>>> refs/remotes/origin/0.12.0-dev
-    ),
-    "FlextInfraUtilitiesPatterns": (
-        "flext_infra._utilities.patterns",
-        "FlextInfraUtilitiesPatterns",
     ),
     "FlextInfraProjectSelector": (
         "flext_infra._utilities.selection",
@@ -655,16 +602,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.core.scanner",
         "FlextInfraTextPatternScanner",
     ),
-<<<<<<< HEAD
-    "FlextInfraTomlService": ("flext_infra._utilities.toml", "FlextInfraUtilitiesToml"),
-    "FlextInfraUtilitiesToml": (
-        "flext_infra._utilities.toml",
-        "FlextInfraUtilitiesToml",
-=======
     "FlextInfraToolConfigDocument": (
         "flext_infra.deps.tool_config",
         "FlextInfraToolConfigDocument",
->>>>>>> refs/remotes/origin/0.12.0-dev
     ),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
@@ -966,14 +906,6 @@ __all__ = [
     "FlextInfraToolConfigDocument",
     "FlextInfraTypes",
     "FlextInfraUtilities",
-<<<<<<< HEAD
-    "FlextInfraUtilitiesIo",
-    "FlextInfraUtilitiesPatterns",
-    "FlextInfraUtilitiesPaths",
-    "FlextInfraUtilitiesSubprocess",
-    "FlextInfraUtilitiesToml",
-    "FlextInfraVersioningService",
-=======
     "FlextInfraUtilitiesDiscovery",
     "FlextInfraUtilitiesGit",
     "FlextInfraUtilitiesIo",
@@ -1018,7 +950,6 @@ __all__ = [
     "__license__",
     "__title__",
     "__url__",
->>>>>>> refs/remotes/origin/0.12.0-dev
     "__version__",
     "__version_info__",
     "array",
