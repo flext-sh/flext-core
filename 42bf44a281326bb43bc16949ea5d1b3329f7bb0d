@@ -1,0 +1,23 @@
+examples/00_single_import_demo.py
+  bf1a83de9af1fe98 28-29,33,36,38-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "42bf44a281326bb43bc16949ea5d1b3329f7bb0d",
+  "prompts": {
+    "bf1a83de9af1fe98": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32dddbd3fffefP9YNA1PZnHGVI",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 7,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
