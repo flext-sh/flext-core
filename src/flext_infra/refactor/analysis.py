@@ -9,7 +9,7 @@ from collections import Counter
 from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
-from typing import TypeAlias, override
+from typing import TypeAlias, cast, override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
@@ -512,7 +512,9 @@ class FlextInfraRefactorClassNestingAnalyzer:
             scan_result = scanner.scan(project_root)
             if scan_result.is_failure:
                 continue
-            report: Mapping[str, object] = scan_result.value
+            report: Mapping[str, object] = cast(
+                "Mapping[str, object]", scan_result.value
+            )
             raw_violations = report.get(c.Infra.ReportKeys.VIOLATIONS, [])
             if not isinstance(raw_violations, list):
                 continue

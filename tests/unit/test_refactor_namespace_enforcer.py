@@ -160,3 +160,62 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
     assert "class ServiceContract(Protocol):" in protocols_source
     assert "from __future__ import annotations" in protocols_source
     assert "from typing import Protocol" in protocols_source
+
+
+def test_namespace_enforcer_detects_cyclic_imports_in_tests_directory(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    test_pkg = project / "tests"
+    pkg.mkdir(parents=True)
+    test_pkg.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (test_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (test_pkg / "a.py").write_text(
+        "from __future__ import annotations\nfrom tests.b import value_b\nvalue_a = value_b\n",
+        encoding="utf-8",
+    )
+    _ = (test_pkg / "b.py").write_text(
+        "from __future__ import annotations\nfrom tests.a import value_a\nvalue_b = value_a\n",
+        encoding="utf-8",
+    )
+
+    report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=False,
+    )
+
+    assert report.total_cyclic_imports >= 1
+
+
+def test_namespace_enforcer_detects_missing_runtime_alias_outside_src(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    examples_dir = project / "examples"
+    pkg.mkdir(parents=True)
+    examples_dir.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    _ = (examples_dir / "constants.py").write_text(
+        "from __future__ import annotations\n\nclass DemoConstants:\n    pass\n",
+        encoding="utf-8",
+    )
+
+    report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=False,
+    )
+
+    assert report.total_runtime_alias_violations >= 1

@@ -3,7 +3,7 @@
 Tests exercise cross-module flows with real service instances, validating:
 - Container integration: service registration and retrieval
 - Workspace detection → orchestration flow
-- BaseMk generation flow with mocked subprocess
+- BaseMk generation flow with real validation
 - Output singleton consistency
 - Service FlextResult chaining
 - Path resolver → discovery flow
@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -27,8 +26,10 @@ from flext_infra.container import (
     get_flext_infra_service,
 )
 from flext_infra.discovery import FlextInfraDiscoveryService
+from flext_infra.git import FlextInfraGitService
 from flext_infra.output import FlextInfraOutput, output
 from flext_infra.paths import FlextInfraPathResolver
+from flext_infra.subprocess import FlextInfraCommandRunner
 from flext_infra.workspace import (
     FlextInfraOrchestratorService,
     FlextInfraWorkspaceDetector,
@@ -153,7 +154,7 @@ class TestWorkspaceDetectionOrchestrationFlow:
 
 
 class TestBaseMkGenerationFlow:
-    """Test BaseMk generation flow with mocked subprocess."""
+    """Test BaseMk generation flow with real command validation."""
 
     @pytest.mark.integration
     def test_basemk_template_engine_and_generator_flow(self, tmp_path: Path) -> None:
@@ -174,23 +175,14 @@ class TestBaseMkGenerationFlow:
         assert isinstance(generator, FlextInfraBaseMkGenerator)
 
     @pytest.mark.integration
-    @patch("flext_infra.subprocess.FlextInfraCommandRunner.run")
-    def test_basemk_generator_with_mocked_subprocess(
-        self,
-        mock_run: MagicMock,
-        tmp_path: Path,
-    ) -> None:
-        """Test BaseMk generator with mocked subprocess calls.
-
-        Validates:
-        - Generator can be created
-        - Subprocess calls are properly mocked
-        - No real subprocess execution occurs
-        """
-        mock_run.return_value = r[str].ok("mocked output")
+    def test_basemk_generator_generates_valid_content(self, tmp_path: Path) -> None:
+        """Test BaseMk generator validates rendered output using real make."""
+        _ = tmp_path
         generator = FlextInfraBaseMkGenerator()
-        assert generator is not None
-        assert isinstance(generator, FlextInfraBaseMkGenerator)
+        generated = generator.generate()
+        assert generated.is_success
+        assert isinstance(generated.value, str)
+        assert "check" in generated.value
 
 
 class TestOutputSingletonConsistency:
@@ -411,43 +403,48 @@ class TestCrossModuleIntegration:
         assert result.value is not None
 
 
-class TestIntegrationWithMocking:
-    """Test integration scenarios with mocking."""
+class TestIntegrationWithRealCommandServices:
+    """Test integration scenarios with real subprocess-backed services."""
 
     @pytest.mark.integration
-    @patch("flext_infra.git.FlextInfraGitService.current_branch")
-    def test_git_service_with_mocked_subprocess(
-        self,
-        mock_current_branch: MagicMock,
-    ) -> None:
-        """Test git service integration with mocked subprocess.
-
-        Validates:
-        - Git service can be mocked
-        - Mocking doesn't break container integration
-        """
-        mock_current_branch.return_value = r[str].ok("main")
-        container = get_flext_infra_container()
-        container.clear_all()
-        configure_flext_infra_dependencies()
-        git_result = get_flext_infra_service("git_service")
-        assert git_result.is_success
+    def test_git_service_current_branch_in_real_repo(self, tmp_path: Path) -> None:
+        """Test git service against a real initialized git repository."""
+        repo_root = tmp_path / "repo"
+        repo_root.mkdir()
+        runner = FlextInfraCommandRunner()
+        init_result = runner.run_checked(["git", "init"], cwd=repo_root)
+        assert init_result.is_success
+        email_result = runner.run_checked(
+            ["git", "config", "user.email", "infra@example.com"],
+            cwd=repo_root,
+        )
+        assert email_result.is_success
+        name_result = runner.run_checked(
+            ["git", "config", "user.name", "Infra Test"],
+            cwd=repo_root,
+        )
+        assert name_result.is_success
+        sample_file = repo_root / "README.md"
+        _ = sample_file.write_text("infra test\n", encoding="utf-8")
+        add_result = runner.run_checked(["git", "add", "README.md"], cwd=repo_root)
+        assert add_result.is_success
+        commit_result = runner.run_checked(
+            ["git", "commit", "-m", "initial"],
+            cwd=repo_root,
+        )
+        assert commit_result.is_success
+        git_service = FlextInfraGitService(runner=runner)
+        branch_result = git_service.current_branch(repo_root)
+        assert branch_result.is_success
+        assert branch_result.value != ""
 
     @pytest.mark.integration
-    @patch("flext_infra.subprocess.FlextInfraCommandRunner.run")
-    def test_command_runner_with_mocked_subprocess(self, mock_run: MagicMock) -> None:
-        """Test command runner with mocked subprocess.
-
-        Validates:
-        - Command runner can be mocked
-        - Mocking prevents real subprocess calls
-        """
-        mock_run.return_value = r[str].ok("mocked output")
-        container = get_flext_infra_container()
-        container.clear_all()
-        configure_flext_infra_dependencies()
-        runner_result = get_flext_infra_service("command_runner")
-        assert runner_result.is_success
+    def test_command_runner_capture_executes_real_command(self) -> None:
+        """Test command runner capture with a real subprocess command."""
+        runner = FlextInfraCommandRunner()
+        capture_result = runner.capture(["python3", "-c", "print('infra-ok')"])
+        assert capture_result.is_success
+        assert capture_result.value == "infra-ok"
 
 
 class TestExplicitReturnTypes:

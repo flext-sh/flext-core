@@ -13,28 +13,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from flext_infra.codegen.fixer import FlextInfraCodegenFixer
-
-
-def _derive_prefix_static(project_root: Path) -> str:
-    """Standalone reimplementation of _derive_prefix for testing.
-
-    The source calls ``FlextInfraNamespaceValidator._derive_prefix(project_path)``
-    as an unbound method, which fails because ``_derive_prefix`` is an instance
-    method. This helper provides the same logic as a plain function so we can
-    patch the call site.
-    """
-    src_dir = project_root / "src"
-    if not src_dir.is_dir():
-        return ""
-    for child in sorted(src_dir.iterdir()):
-        if child.is_dir() and (child / "__init__.py").exists():
-            return "".join(part.title() for part in child.name.split("_"))
-    return ""
 
 
 def _create_project(
@@ -67,18 +49,13 @@ def _to_pascal(snake: str) -> str:
     return "".join(part.title() for part in snake.split("_"))
 
 
-_PATCH_TARGET = "flext_infra.codegen.fixer.FlextInfraNamespaceValidator._derive_prefix"
-
-
 @pytest.fixture
 def fixer(tmp_path: Path) -> FlextInfraCodegenFixer:
     """Create a fixer instance rooted at tmp_path."""
     return FlextInfraCodegenFixer(tmp_path)
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_standalone_typevar_detected_as_fixable(
-    _mock_prefix: object,
     tmp_path: Path,
 ) -> None:
     """A standalone TypeVar not used by any class is detected as fixable."""
@@ -99,8 +76,7 @@ def test_standalone_typevar_detected_as_fixable(
     assert typevar_violations[0].rule == "NS-002"
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
-def test_in_context_typevar_not_flagged(_mock_prefix: object, tmp_path: Path) -> None:
+def test_in_context_typevar_not_flagged(tmp_path: Path) -> None:
     """A TypeVar used by a class in the same file is skipped (not fixable)."""
     project = _create_project(
         tmp_path,
@@ -116,9 +92,7 @@ def test_in_context_typevar_not_flagged(_mock_prefix: object, tmp_path: Path) ->
     assert len(typevar_fixed) == 0
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_standalone_final_detected_as_fixable(
-    _mock_prefix: object,
     tmp_path: Path,
 ) -> None:
     """A standalone Final constant is detected as fixable (NS-001)."""
@@ -139,9 +113,7 @@ def test_standalone_final_detected_as_fixable(
     assert "constants.py" in final_violations[0].message
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_standalone_typealias_detected_as_fixable(
-    _mock_prefix: object,
     tmp_path: Path,
 ) -> None:
     """A standalone TypeAlias is detected as fixable (NS-002)."""
@@ -162,8 +134,7 @@ def test_standalone_typealias_detected_as_fixable(
     assert "typings.py" in alias_violations[0].message
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
-def test_syntax_error_files_skipped(_mock_prefix: object, tmp_path: Path) -> None:
+def test_syntax_error_files_skipped(tmp_path: Path) -> None:
     """Files with syntax errors are silently skipped without crashing."""
     project = _create_project(
         tmp_path,
@@ -181,8 +152,7 @@ def test_syntax_error_files_skipped(_mock_prefix: object, tmp_path: Path) -> Non
     assert len(typevar_violations) == 1
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
-def test_flexcore_excluded_from_run(_mock_prefix: object, tmp_path: Path) -> None:
+def test_flexcore_excluded_from_run(tmp_path: Path) -> None:
     """The 'flexcore' project is excluded from workspace-wide auto-fix."""
     flexcore = tmp_path / "flexcore"
     flexcore.mkdir()
@@ -210,9 +180,7 @@ def test_flexcore_excluded_from_run(_mock_prefix: object, tmp_path: Path) -> Non
     assert "test-proj" in project_names
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_project_without_src_returns_empty(
-    _mock_prefix: object,
     tmp_path: Path,
 ) -> None:
     """A project without src/ directory returns empty violations."""
@@ -229,9 +197,7 @@ def test_project_without_src_returns_empty(
     assert result.files_modified == []
 
 
-@patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_files_modified_tracks_affected_files(
-    _mock_prefix: object,
     tmp_path: Path,
 ) -> None:
     """files_modified includes both source and target files."""

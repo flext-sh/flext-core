@@ -224,10 +224,10 @@ class DependencyAnalyzer:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok([])
         try:
             json_raw: str | bytes | bytearray = capture.value
-            envelopes: list[m.Infra.Refactor.AstGrepMatchEnvelope] = (
-                TypeAdapter(list[m.Infra.Refactor.AstGrepMatchEnvelope]).validate_json(
-                    json_raw,
-                )
+            envelopes: list[m.Infra.Refactor.AstGrepMatchEnvelope] = TypeAdapter(
+                list[m.Infra.Refactor.AstGrepMatchEnvelope]
+            ).validate_json(
+                json_raw,
             )
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok(envelopes)
         except ValidationError as exc:
@@ -694,37 +694,45 @@ class CyclicImportDetector:
         parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
     ) -> list[nem.NamespaceCyclicImportViolation]:
         """Scan a project for cyclic import dependencies."""
-        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
-        if not src_dir.is_dir():
+        scan_dirs = cls._scan_directories(project_root=project_root)
+        if len(scan_dirs) == 0:
             return []
         graph: dict[str, set[str]] = {}
         file_map: dict[str, str] = {}
-        package_roots = cls._discover_package_roots(src_dir=src_dir)
-        for py_file in sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
-            if "__pycache__" in py_file.parts:
-                continue
-            module_name = cls._file_to_module(file_path=py_file, src_dir=src_dir)
-            if not module_name:
-                continue
-            file_map[module_name] = str(py_file)
-            graph.setdefault(module_name, set())
-            parsed = load_python_module(
-                py_file,
-                stage="cyclic-import-scan",
-                parse_failures=parse_failures,
-            )
-            if parsed is None:
-                continue
-            tree = parsed.tree
-            for stmt in tree.body:
-                if isinstance(stmt, ast.ImportFrom) and stmt.module:
-                    imported = stmt.module
-                    root_pkg = imported.split(".")[0]
-                    if root_pkg in package_roots:
-                        graph[module_name].add(imported)
+        package_roots = cls._discover_package_roots(scan_dirs=scan_dirs)
+        for scan_dir in scan_dirs:
+            for py_file in sorted(scan_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
+                if "__pycache__" in py_file.parts:
+                    continue
+                base_module_name = cls._file_to_module(
+                    file_path=py_file, src_dir=scan_dir
+                )
+                module_name = cls._module_name_for_scan_dir(
+                    scan_dir=scan_dir,
+                    base_module_name=base_module_name,
+                )
+                if not module_name:
+                    continue
+                if module_name not in file_map:
+                    file_map[module_name] = str(py_file)
+                graph.setdefault(module_name, set())
+                parsed = load_python_module(
+                    py_file,
+                    stage="cyclic-import-scan",
+                    parse_failures=parse_failures,
+                )
+                if parsed is None:
+                    continue
+                tree = parsed.tree
+                for stmt in tree.body:
+                    if isinstance(stmt, ast.ImportFrom) and stmt.module:
+                        imported = stmt.module
+                        root_pkg = imported.split(".")[0]
+                        if root_pkg in package_roots:
+                            graph[module_name].add(imported)
         violations: list[nem.NamespaceCyclicImportViolation] = []
         try:
-            _ = TopologicalSorter(graph).static_order()
+            _ = list(TopologicalSorter(graph).static_order())
         except CycleError as exc:
             cycle_nodes = exc.args[1] if len(exc.args) > 1 else ()
             if cycle_nodes:
@@ -746,14 +754,35 @@ class CyclicImportDetector:
         return violations
 
     @staticmethod
-    def _discover_package_roots(*, src_dir: Path) -> set[str]:
+    def _scan_directories(*, project_root: Path) -> list[Path]:
+        return [
+            project_root / directory_name
+            for directory_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES
+            if (project_root / directory_name).is_dir()
+        ]
+
+    @staticmethod
+    def _discover_package_roots(*, scan_dirs: list[Path]) -> set[str]:
         roots: set[str] = set()
-        for entry in src_dir.iterdir():
-            if entry.name.startswith(".") or entry.name == "__pycache__":
-                continue
-            if entry.is_dir() and (entry / "__init__.py").is_file():
-                roots.add(entry.name)
+        for scan_dir in scan_dirs:
+            if (scan_dir / "__init__.py").is_file():
+                roots.add(scan_dir.name)
+            for entry in scan_dir.iterdir():
+                if entry.name.startswith(".") or entry.name == "__pycache__":
+                    continue
+                if entry.is_dir() and (entry / "__init__.py").is_file():
+                    roots.add(entry.name)
         return roots
+
+    @staticmethod
+    def _module_name_for_scan_dir(*, scan_dir: Path, base_module_name: str) -> str:
+        if not base_module_name:
+            return ""
+        if scan_dir.name == c.Infra.Paths.DEFAULT_SRC_DIR:
+            return base_module_name
+        if (scan_dir / "__init__.py").is_file():
+            return f"{scan_dir.name}.{base_module_name}"
+        return base_module_name
 
     @staticmethod
     def _file_to_module(*, file_path: Path, src_dir: Path) -> str:
@@ -782,8 +811,6 @@ class RuntimeAliasDetector:
         if file_path.name not in c.Infra.Refactor.NAMESPACE_FILE_TO_FAMILY:
             return []
         if file_path.name in c.Infra.Refactor.NAMESPACE_PROTECTED_FILES:
-            return []
-        if "src" not in file_path.parts:
             return []
         parsed = load_python_module(
             file_path,

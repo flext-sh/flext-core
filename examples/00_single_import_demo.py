@@ -23,20 +23,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence, Set as AbstractSet
-from dataclasses import dataclass
 from itertools import starmap
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContext, FlextLogger, c, e, m, r, u
 
 
-@dataclass(frozen=True)
-class UserProfile:
+class UserProfile(BaseModel):
     """Domain entity with centralized types and business logic - no None types."""
 
-    name: str
-    email: str
-    unique_id: str
-    status: c.Domain.Status
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="User's full name")
+    email: str = Field(description="User's email address")
+    unique_id: str = Field(description="Unique identifier for the user")
+    status: c.Domain.Status = Field(description="Current status of the user")
 
     def activate(self) -> r[None]:
         """Railway pattern for business operations - no None returns."""

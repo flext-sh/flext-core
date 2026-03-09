@@ -171,8 +171,6 @@ class NamespaceEnforcementRewriter:
             )
             if expected is None:
                 continue
-            if "src" not in file_path.parts:
-                continue
             alias_name, expected_suffix = expected
             parsed = load_python_module(file_path)
             if parsed is None:
