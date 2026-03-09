@@ -16,7 +16,12 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-from flext_infra import FlextInfraUtilitiesPaths, FlextInfraVersioningService, c, output
+from flext_infra import (
+    FlextInfraUtilitiesPaths,
+    FlextInfraUtilitiesVersioning,
+    c,
+    output,
+)
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 
@@ -41,7 +46,7 @@ def _parse_args() -> argparse.Namespace:
 
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     """Determine the target release version based on arguments."""
-    versioning = FlextInfraVersioningService()
+    versioning = FlextInfraUtilitiesVersioning()
     if args.version:
         requested = str(args.version)
         parse_result = versioning.parse_semver(requested)

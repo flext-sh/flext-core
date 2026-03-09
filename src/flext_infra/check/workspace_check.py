@@ -16,9 +16,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r, s
 from flext_infra import (
-    FlextInfraReportingService,
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
+    FlextInfraUtilitiesReporting,
     FlextInfraUtilitiesSubprocess,
     c,
     m,
@@ -38,7 +38,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         super().__init__()
         self._path_resolver = FlextInfraUtilitiesPaths()
         self._path_resolver = FlextInfraUtilitiesPaths()
-        self._reporting = FlextInfraReportingService()
+        self._reporting = FlextInfraUtilitiesReporting()
         self._json = FlextInfraUtilitiesIo()
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self._workspace_root = self._resolve_workspace_root(workspace_root)

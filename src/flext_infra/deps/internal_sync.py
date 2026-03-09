@@ -190,7 +190,7 @@ class FlextInfraInternalDependencySyncService:
         pyproject = project_root / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             return r[Mapping[str, Path]].ok({})
-        data_result = self.toml.read(pyproject)
+        data_result = u.Infra.read_plain(pyproject)
         if data_result.is_failure:
             return r[Mapping[str, Path]].fail(
                 data_result.error or f"failed to read {pyproject}",
@@ -284,7 +284,9 @@ class FlextInfraInternalDependencySyncService:
 
     def infer_owner_from_origin(self, project_root: Path) -> str | None:
         """Infer GitHub owner from remote origin URL."""
-        remote = u.Infra.git_run(["config", "--get", "remote.origin.url"], cwd=project_root)
+        remote = u.Infra.git_run(
+            ["config", "--get", "remote.origin.url"], cwd=project_root
+        )
         if remote.is_failure:
             return None
         return self.owner_from_remote_url(remote.value.strip())
@@ -330,7 +332,7 @@ class FlextInfraInternalDependencySyncService:
 
     def parse_repo_map(self, path: Path) -> r[Mapping[str, m.Infra.Github.RepoUrls]]:
         """Parse flext-repo-map TOML into repository URL entries."""
-        data_result = self.toml.read(path)
+        data_result = u.Infra.read_plain(path)
         if data_result.is_failure:
             return r[Mapping[str, m.Infra.Github.RepoUrls]].fail(
                 data_result.error or "failed to read repository map",

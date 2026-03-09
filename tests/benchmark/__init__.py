@@ -1,8 +1,8 @@
-"""Benchmark tests for flext container performance and memory usage."""
-
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
+"""Benchmark tests for flext container performance and memory usage."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from tests.benchmark.test_container_performance import (
         PerformanceBenchmark,
         TestContainerPerformance,
+    )
+    from tests.benchmark.test_refactor_nesting_performance import (
+        TestPerformanceBenchmarks,
     )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
@@ -33,6 +36,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.benchmark.test_container_performance",
         "TestContainerPerformance",
     ),
+    "TestPerformanceBenchmarks": (
+        "tests.benchmark.test_refactor_nesting_performance",
+        "TestPerformanceBenchmarks",
+    ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
 }
 
@@ -40,6 +47,7 @@ __all__ = [
     "PerformanceBenchmark",
     "TestContainerMemory",
     "TestContainerPerformance",
+    "TestPerformanceBenchmarks",
     "get_memory_usage",
 ]
 

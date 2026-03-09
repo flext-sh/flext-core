@@ -17,7 +17,7 @@ from typing import override
 
 from flext_core import FlextLogger, r, s
 from flext_infra import (
-    FlextInfraReportingService,
+    FlextInfraUtilitiesReporting,
     FlextInfraUtilitiesSubprocess,
     c,
     m,
@@ -41,7 +41,7 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
         """Initialize the orchestrator service."""
         super().__init__()
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
-        self._reporting: FlextInfraReportingService = FlextInfraReportingService()
+        self._reporting: FlextInfraUtilitiesReporting = FlextInfraUtilitiesReporting()
 
     @override
     def execute(self) -> r[list[m.Infra.Core.CommandOutput]]:

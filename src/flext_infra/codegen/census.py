@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraDiscoveryService, c, m, p
+from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
 
@@ -78,7 +78,7 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         workspace = (
             workspace_root if workspace_root is not None else self._workspace_root
         )
-        discovery = FlextInfraDiscoveryService()
+        discovery = FlextInfraUtilitiesDiscovery()
         projects_result = discovery.discover_projects(workspace)
         if not projects_result.is_success:
             return []

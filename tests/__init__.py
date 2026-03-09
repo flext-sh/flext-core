@@ -772,6 +772,7 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_infra_container import (
         TestInfraContainerFunctions,
+        TestInfraMroPattern,
         TestInfraServiceRetrieval,
     )
     from tests.unit.test_infra_core_basemk_validator import (
@@ -1059,6 +1060,7 @@ if TYPE_CHECKING:
         TestInfraOutputProgress,
         TestInfraOutputStatus,
         TestInfraOutputSummary,
+        TestMroFacadeMethods,
         TestShouldUseColor,
         TestShouldUseUnicode,
     )
@@ -2136,7 +2138,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ServiceTestCase": ("tests.test_documented_patterns", "ServiceTestCase"),
     "ServiceTestCaseFactory": ("tests.helpers.factories", "ServiceTestCaseFactory"),
     "ServiceTestCases": ("tests.helpers.factories", "ServiceTestCases"),
-    "ServiceTestType": ("tests.helpers.factories", "ServiceTestType"),
     "SimpleObj": ("tests.unit.test_utilities_mapper_coverage_100", "SimpleObj"),
     "SingletonWithoutGetGlobalForTest": (
         "tests.unit.test_utilities_configuration_coverage_100",
@@ -3273,6 +3274,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_infra_container",
         "TestInfraContainerFunctions",
     ),
+    "TestInfraMroPattern": ("tests.unit.test_infra_container", "TestInfraMroPattern"),
     "TestInfraOutputEdgeCases": (
         "tests.unit.test_infra_output",
         "TestInfraOutputEdgeCases",
@@ -3294,10 +3296,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestInfraOutputSummary": (
         "tests.unit.test_infra_output",
         "TestInfraOutputSummary",
-    ),
-    "TestInfraServiceRegistration": (
-        "tests.unit.test_infra_container",
-        "TestInfraServiceRegistration",
     ),
     "TestInfraServiceRetrieval": (
         "tests.unit.test_infra_container",
@@ -3480,7 +3478,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_infra_deps_detection",
         "TestModuleLevelWrappers",
     ),
-    "TestModuleSingleton": ("tests.unit.test_infra_output", "TestModuleSingleton"),
     "TestModuleToTypesPackage": (
         "tests.unit.test_infra_deps_detection",
         "TestModuleToTypesPackage",
@@ -3489,6 +3486,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_exception_carrying",
         "TestMonadicOperationsUnchanged",
     ),
+    "TestMroFacadeMethods": ("tests.unit.test_infra_output", "TestMroFacadeMethods"),
     "TestMypyEmptyLineSkipping": (
         "tests.unit.test_infra_check_extended",
         "TestMypyEmptyLineSkipping",
@@ -7564,6 +7562,7 @@ __all__ = [
     "TestInfoReturnsResultBool",
     "TestInfoWithContentMeta",
     "TestInfraContainerFunctions",
+    "TestInfraMroPattern",
     "TestInfraOutputEdgeCases",
     "TestInfraOutputHeader",
     "TestInfraOutputMessages",
@@ -7625,6 +7624,7 @@ __all__ = [
     "TestModuleLevelWrappers",
     "TestModuleToTypesPackage",
     "TestMonadicOperationsUnchanged",
+    "TestMroFacadeMethods",
     "TestMypyEmptyLineSkipping",
     "TestMypyEmptyLines",
     "TestMypyJSONParsing",

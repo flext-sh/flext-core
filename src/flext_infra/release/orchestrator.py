@@ -15,10 +15,10 @@ from typing import override
 
 from flext_core import FlextLogger, r, s
 from flext_infra import (
-    FlextInfraProjectSelector,
-    FlextInfraReportingService,
+    FlextInfraUtilitiesReporting,
+    FlextInfraUtilitiesSelection,
     FlextInfraUtilitiesSubprocess,
-    FlextInfraVersioningService,
+    FlextInfraUtilitiesVersioning,
     c,
     m,
     u,
@@ -58,7 +58,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         project_names: list[str],
     ) -> r[bool]:
         """Execute the build phase and write build-report.json."""
-        reporting = FlextInfraReportingService()
+        reporting = FlextInfraUtilitiesReporting()
         output_dir = (
             reporting.get_report_dir(
                 root,
@@ -126,7 +126,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         push: bool = False,
     ) -> r[bool]:
         """Execute publish phase: notes, changelog, tag, optional push."""
-        reporting = FlextInfraReportingService()
+        reporting = FlextInfraUtilitiesReporting()
         notes_dir = (
             reporting.get_report_dir(
                 root,
@@ -183,7 +183,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         dev_suffix: bool = False,
     ) -> r[bool]:
         """Execute versioning phase across workspace and selected projects."""
-        versioning = FlextInfraVersioningService()
+        versioning = FlextInfraUtilitiesVersioning()
         target = f"{version}-dev" if dev_suffix else version
         parse_result = versioning.parse_semver(version)
         if parse_result.is_failure:
@@ -269,7 +269,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     ) -> list[tuple[str, Path]]:
         """Resolve unique build targets from project names."""
         targets: list[tuple[str, Path]] = [(c.Infra.ReportKeys.ROOT, root)]
-        selector = FlextInfraProjectSelector()
+        selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             targets.extend((p.name, p.path) for p in projects_result.value)
@@ -290,7 +290,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         bump: str,
     ) -> r[bool]:
         """Bump to the next development version."""
-        versioning = FlextInfraVersioningService()
+        versioning = FlextInfraUtilitiesVersioning()
         bump_result = versioning.bump_version(version, bump)
         if bump_result.is_failure:
             return r[bool].fail(bump_result.error or "bump failed")
@@ -316,7 +316,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         result = u.Infra.git_checkout(root, branch, create=True)
         if result.is_failure:
             return result
-        selector = FlextInfraProjectSelector()
+        selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
@@ -383,7 +383,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         previous = previous_result.value if previous_result.is_success else ""
         changes_result = self._collect_changes(root, previous, tag)
         changes = changes_result.value if changes_result.is_success else ""
-        selector = FlextInfraProjectSelector()
+        selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(root, project_names)
         project_list: list[m.Infra.Workspace.ProjectInfo] = (
             projects_result.value if projects_result.is_success else []
@@ -398,7 +398,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
 
     def _previous_tag(self, root: Path, tag: str) -> r[str]:
         """Find the tag immediately preceding the given tag."""
-        return u.Infra.git_run(["describe", "--tags", "--abbrev=0", f"{tag}^"], cwd=root)
+        return u.Infra.git_run(
+            ["describe", "--tags", "--abbrev=0", f"{tag}^"], cwd=root
+        )
 
     def _push_release(self, root: Path, tag: str) -> r[bool]:
         """Push branch and tag to remote origin."""
@@ -419,7 +421,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     def _version_files(self, root: Path, project_names: list[str]) -> list[Path]:
         """Discover pyproject.toml files that need version updates."""
         files: list[Path] = [root / c.Infra.Files.PYPROJECT_FILENAME]
-        selector = FlextInfraProjectSelector()
+        selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:

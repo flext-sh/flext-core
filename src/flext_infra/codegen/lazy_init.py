@@ -147,6 +147,8 @@ class FlextInfraCodegenLazyInit(s[int]):
 
         # 1. Read ONLY docstring from existing __init__.py
         docstring = _read_existing_docstring(init_path)
+        if not docstring:
+            docstring = _default_docstring(pkg_dir.name)
 
         # 2. Build lazy map from sibling .py files
         lazy_map = _build_sibling_export_index(pkg_dir, current_pkg)
@@ -255,6 +257,12 @@ def _infer_package(path: Path) -> str:
 # ---------------------------------------------------------------------------
 # Source-file scanning (the core of auto-discovery)
 # ---------------------------------------------------------------------------
+
+
+def _default_docstring(dir_name: str) -> str:
+    """Generate a default module docstring from directory name."""
+    label = dir_name.replace("_", " ").replace("-", " ").strip()
+    return f'"""{label.capitalize()} package."""'
 
 
 def _read_existing_docstring(init_path: Path) -> str:

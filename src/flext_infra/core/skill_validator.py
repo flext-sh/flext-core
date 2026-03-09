@@ -157,7 +157,7 @@ class FlextInfraSkillValidator:
                         skill_name,
                     )
                     if baseline_path.exists():
-                        bl_data_result = self._json.read(baseline_path)
+                        bl_data_result = self._json.read_json(baseline_path)
                         if bl_data_result.is_success:
                             bl_data = bl_data_result.value
                             bl_counts_raw = bl_data.get("counts", {})

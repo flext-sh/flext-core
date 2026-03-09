@@ -102,7 +102,9 @@ class TestFlextInfraVersioningService:
         assert result.is_success
         assert result.value == "1.2.4"
 
-    def test_bump_version_from_zero(self, service: FlextInfraUtilitiesVersioning) -> None:
+    def test_bump_version_from_zero(
+        self, service: FlextInfraUtilitiesVersioning
+    ) -> None:
         """Test bumping from 0.0.0."""
         result = service.bump_version("0.0.0", "major")
         assert result.is_success

@@ -169,7 +169,7 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_reporting_service(self) -> None:
         """Test lazy loading of FlextInfraReportingService."""
-        service = flext_infra.FlextInfraReportingService
+        service = flext_infra.FlextInfraUtilitiesReporting
         assert service is not None
 
     def test_lazy_import_output(self) -> None:

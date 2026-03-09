@@ -16,8 +16,8 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraProjectSelector,
-    FlextInfraReportingService,
+    FlextInfraUtilitiesReporting,
+    FlextInfraUtilitiesSelection,
     FlextInfraUtilitiesSubprocess,
     c,
     m,
@@ -36,13 +36,13 @@ class FlextInfraPrWorkspaceManager:
     def __init__(
         self,
         runner: p.Infra.CommandRunner | None = None,
-        selector: FlextInfraProjectSelector | None = None,
-        reporting: FlextInfraReportingService | None = None,
+        selector: FlextInfraUtilitiesSelection | None = None,
+        reporting: FlextInfraUtilitiesReporting | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
         self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._selector = selector or FlextInfraProjectSelector()
-        self._reporting = reporting or FlextInfraReportingService()
+        self._selector = selector or FlextInfraUtilitiesSelection()
+        self._reporting = reporting or FlextInfraUtilitiesReporting()
 
     @staticmethod
     def _build_root_command(repo_root: Path, pr_args: Mapping[str, str]) -> list[str]:

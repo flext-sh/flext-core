@@ -15,8 +15,8 @@ from typing import TypeAlias
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraProjectSelector,
     FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesSelection,
     FlextInfraUtilitiesTemplates,
     c,
     m,
@@ -35,12 +35,12 @@ class FlextInfraWorkflowSyncer:
 
     def __init__(
         self,
-        selector: FlextInfraProjectSelector | None = None,
+        selector: FlextInfraUtilitiesSelection | None = None,
         json_io: FlextInfraUtilitiesIo | None = None,
         templates: FlextInfraUtilitiesTemplates | None = None,
     ) -> None:
         """Initialize the workflow syncer."""
-        self._selector = selector or FlextInfraProjectSelector()
+        self._selector = selector or FlextInfraUtilitiesSelection()
         self._json = json_io or FlextInfraUtilitiesIo()
         self._templates = templates or FlextInfraUtilitiesTemplates()
 

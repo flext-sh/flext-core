@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextLogger, r, s
-from flext_infra import FlextInfraDiscoveryService, c
+from flext_infra import FlextInfraUtilitiesDiscovery, c
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -107,7 +107,7 @@ class FlextInfraPythonVersionEnforcer(s[int]):
             list[Path]: List of project paths.
 
         """
-        discovery = FlextInfraDiscoveryService()
+        discovery = FlextInfraUtilitiesDiscovery()
         result = discovery.discover_projects(workspace_root)
         if result.is_failure:
             return []

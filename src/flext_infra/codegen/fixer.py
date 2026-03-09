@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraDiscoveryService, c, m
+from flext_infra import FlextInfraUtilitiesDiscovery, c, m
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
@@ -235,7 +235,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             List of AutoFixResult models, one per project.
 
         """
-        discovery = FlextInfraDiscoveryService()
+        discovery = FlextInfraUtilitiesDiscovery()
         projects_result = discovery.discover_projects(self._workspace_root)
         if not projects_result.is_success:
             return []
