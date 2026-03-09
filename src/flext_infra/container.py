@@ -12,17 +12,17 @@ from __future__ import annotations
 
 from flext_core import FlextContainer, r
 from flext_infra import t
+from flext_infra._utilities.output import output
+from flext_infra._utilities.subprocess import FlextInfraCommandRunner
 from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.git import FlextInfraGitService
 from flext_infra.json_io import FlextInfraJsonService
 from flext_infra.maintenance import FlextInfraPythonVersionEnforcer
-from flext_infra.output import output
 from flext_infra.paths import FlextInfraPathResolver
 from flext_infra.release import FlextInfraReleaseOrchestrator
 from flext_infra.reporting import FlextInfraReportingService
 from flext_infra.selection import FlextInfraProjectSelector
-from flext_infra.subprocess import FlextInfraCommandRunner
 from flext_infra.toml_io import FlextInfraTomlService
 from flext_infra.versioning import FlextInfraVersioningService
 from flext_infra.workspace import (

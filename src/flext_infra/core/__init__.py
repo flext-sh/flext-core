@@ -26,13 +26,34 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraBaseMkValidator": ("flext_infra.core.basemk_validator", "FlextInfraBaseMkValidator"),
-    "FlextInfraInventoryService": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
-    "FlextInfraNamespaceValidator": ("flext_infra.core.namespace_validator", "FlextInfraNamespaceValidator"),
-    "FlextInfraPytestDiagExtractor": ("flext_infra.core.pytest_diag", "FlextInfraPytestDiagExtractor"),
-    "FlextInfraSkillValidator": ("flext_infra.core.skill_validator", "FlextInfraSkillValidator"),
-    "FlextInfraStubSupplyChain": ("flext_infra.core.stub_chain", "FlextInfraStubSupplyChain"),
-    "FlextInfraTextPatternScanner": ("flext_infra.core.scanner", "FlextInfraTextPatternScanner"),
+    "FlextInfraBaseMkValidator": (
+        "flext_infra.core.basemk_validator",
+        "FlextInfraBaseMkValidator",
+    ),
+    "FlextInfraInventoryService": (
+        "flext_infra.core.inventory",
+        "FlextInfraInventoryService",
+    ),
+    "FlextInfraNamespaceValidator": (
+        "flext_infra.core.namespace_validator",
+        "FlextInfraNamespaceValidator",
+    ),
+    "FlextInfraPytestDiagExtractor": (
+        "flext_infra.core.pytest_diag",
+        "FlextInfraPytestDiagExtractor",
+    ),
+    "FlextInfraSkillValidator": (
+        "flext_infra.core.skill_validator",
+        "FlextInfraSkillValidator",
+    ),
+    "FlextInfraStubSupplyChain": (
+        "flext_infra.core.stub_chain",
+        "FlextInfraStubSupplyChain",
+    ),
+    "FlextInfraTextPatternScanner": (
+        "flext_infra.core.scanner",
+        "FlextInfraTextPatternScanner",
+    ),
     "main": ("flext_infra.core.__main__", "main"),
 }
 

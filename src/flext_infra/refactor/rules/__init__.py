@@ -35,15 +35,42 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraRefactorClassReconstructorRule": ("flext_infra.refactor.rules.class_reconstructor", "FlextInfraRefactorClassReconstructorRule"),
-    "FlextInfraRefactorEnsureFutureAnnotationsRule": ("flext_infra.refactor.rules.ensure_future_annotations", "FlextInfraRefactorEnsureFutureAnnotationsRule"),
-    "FlextInfraRefactorImportModernizerRule": ("flext_infra.refactor.rules.import_modernizer", "FlextInfraRefactorImportModernizerRule"),
-    "FlextInfraRefactorLegacyRemovalRule": ("flext_infra.refactor.rules.legacy_removal", "FlextInfraRefactorLegacyRemovalRule"),
-    "FlextInfraRefactorMROClassMigrationRule": ("flext_infra.refactor.rules.mro_class_migration", "FlextInfraRefactorMROClassMigrationRule"),
-    "FlextInfraRefactorMRORedundancyChecker": ("flext_infra.refactor.rules.mro_redundancy_checker", "FlextInfraRefactorMRORedundancyChecker"),
-    "FlextInfraRefactorPatternCorrectionsRule": ("flext_infra.refactor.rules.pattern_corrections", "FlextInfraRefactorPatternCorrectionsRule"),
-    "FlextInfraRefactorSignaturePropagationRule": ("flext_infra.refactor.rules.symbol_propagation", "FlextInfraRefactorSignaturePropagationRule"),
-    "FlextInfraRefactorSymbolPropagationRule": ("flext_infra.refactor.rules.symbol_propagation", "FlextInfraRefactorSymbolPropagationRule"),
+    "FlextInfraRefactorClassReconstructorRule": (
+        "flext_infra.refactor.rules.class_reconstructor",
+        "FlextInfraRefactorClassReconstructorRule",
+    ),
+    "FlextInfraRefactorEnsureFutureAnnotationsRule": (
+        "flext_infra.refactor.rules.ensure_future_annotations",
+        "FlextInfraRefactorEnsureFutureAnnotationsRule",
+    ),
+    "FlextInfraRefactorImportModernizerRule": (
+        "flext_infra.refactor.rules.import_modernizer",
+        "FlextInfraRefactorImportModernizerRule",
+    ),
+    "FlextInfraRefactorLegacyRemovalRule": (
+        "flext_infra.refactor.rules.legacy_removal",
+        "FlextInfraRefactorLegacyRemovalRule",
+    ),
+    "FlextInfraRefactorMROClassMigrationRule": (
+        "flext_infra.refactor.rules.mro_class_migration",
+        "FlextInfraRefactorMROClassMigrationRule",
+    ),
+    "FlextInfraRefactorMRORedundancyChecker": (
+        "flext_infra.refactor.rules.mro_redundancy_checker",
+        "FlextInfraRefactorMRORedundancyChecker",
+    ),
+    "FlextInfraRefactorPatternCorrectionsRule": (
+        "flext_infra.refactor.rules.pattern_corrections",
+        "FlextInfraRefactorPatternCorrectionsRule",
+    ),
+    "FlextInfraRefactorSignaturePropagationRule": (
+        "flext_infra.refactor.rules.symbol_propagation",
+        "FlextInfraRefactorSignaturePropagationRule",
+    ),
+    "FlextInfraRefactorSymbolPropagationRule": (
+        "flext_infra.refactor.rules.symbol_propagation",
+        "FlextInfraRefactorSymbolPropagationRule",
+    ),
 }
 
 __all__ = [

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from flext_core import FlextUtilities
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
+from flext_infra._utilities.output import FlextInfraUtilitiesOutput
 from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra._utilities.toml import FlextInfraUtilitiesToml
@@ -42,8 +43,11 @@ class FlextInfraUtilities(FlextUtilities):
     class Infra:
         """Infrastructure-domain utilities."""
 
+        class Output(FlextInfraUtilitiesOutput):
+            """Terminal output detection and formatting — real inheritance."""
+
         class Terminal(FlextInfraUtilitiesTerminal):
-            """Terminal capability detection — real inheritance."""
+            """Terminal capability detection — real inheritance (legacy)."""
 
         class Io(FlextInfraUtilitiesIo):
             """I/O convenience helpers — real inheritance."""

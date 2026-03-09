@@ -17,9 +17,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
+from flext_infra._utilities.subprocess import FlextInfraCommandRunner
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.subprocess import FlextInfraCommandRunner
 from flext_infra.typings import FlextInfraTypes as t
 
 

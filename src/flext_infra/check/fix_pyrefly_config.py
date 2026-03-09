@@ -23,7 +23,7 @@ from flext_infra import (
     c,
     t,
 )
-from flext_infra.output import output
+from flext_infra._utilities.output import output
 
 _logger = FlextLogger.create_module_logger(__name__)
 

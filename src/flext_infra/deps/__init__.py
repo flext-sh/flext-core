@@ -39,12 +39,30 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EXTRA_PATHS_ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
-    "FlextInfraDependencyDetectionModels": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
-    "FlextInfraDependencyDetectionService": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
-    "FlextInfraDependencyPathSync": ("flext_infra.deps.path_sync", "FlextInfraDependencyPathSync"),
-    "FlextInfraExtraPathsManager": ("flext_infra.deps.extra_paths", "FlextInfraExtraPathsManager"),
-    "FlextInfraInternalDependencySyncService": ("flext_infra.deps.internal_sync", "FlextInfraInternalDependencySyncService"),
-    "FlextInfraPyprojectModernizer": ("flext_infra.deps.modernizer", "FlextInfraPyprojectModernizer"),
+    "FlextInfraDependencyDetectionModels": (
+        "flext_infra.deps.detection",
+        "FlextInfraDependencyDetectionModels",
+    ),
+    "FlextInfraDependencyDetectionService": (
+        "flext_infra.deps.detection",
+        "FlextInfraDependencyDetectionService",
+    ),
+    "FlextInfraDependencyPathSync": (
+        "flext_infra.deps.path_sync",
+        "FlextInfraDependencyPathSync",
+    ),
+    "FlextInfraExtraPathsManager": (
+        "flext_infra.deps.extra_paths",
+        "FlextInfraExtraPathsManager",
+    ),
+    "FlextInfraInternalDependencySyncService": (
+        "flext_infra.deps.internal_sync",
+        "FlextInfraInternalDependencySyncService",
+    ),
+    "FlextInfraPyprojectModernizer": (
+        "flext_infra.deps.modernizer",
+        "FlextInfraPyprojectModernizer",
+    ),
     "detect_mode": ("flext_infra.deps.path_sync", "detect_mode"),
     "dm": ("flext_infra.deps.detection", "dm"),
     "extract_dep_name": ("flext_infra.deps.path_sync", "extract_dep_name"),

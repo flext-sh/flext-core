@@ -23,9 +23,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import t
 from flext_infra import c
+from flext_infra._utilities.subprocess import FlextInfraCommandRunner
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
-from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class FlextInfraUtilitiesCodegen:

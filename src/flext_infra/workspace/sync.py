@@ -18,8 +18,8 @@ from typing import override
 
 from flext_core import r, s
 from flext_infra import c, m
+from flext_infra._utilities.output import output
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
-from flext_infra.output import output
 
 
 class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
