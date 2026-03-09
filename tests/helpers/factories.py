@@ -16,6 +16,12 @@ from typing import ClassVar, override
 from flext_core import r, s
 from tests import c, m, t
 
+User = m.Tests.User
+"""Type alias for backward-compatible import: ``from .helpers.factories import User``."""
+
+ServiceTestCase = m.Tests.ServiceTestCase
+"""Type alias for backward-compatible import: ``from .helpers.factories import ServiceTestCase``."""
+
 
 class GetUserService(s[m.Tests.User]):
     """Service to get a user by ID."""

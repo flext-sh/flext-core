@@ -1,7 +1,7 @@
 """Tests for flext_infra output — terminal output utility.
 
-Tests the static FlextInfraUtilitiesOutput facade and its _OutputBackend,
-plus terminal detection helpers from FlextInfraUtilitiesTerminal.
+Tests the _OutputBackend directly with custom config.
+Uses u.Infra MRO for facade method verification.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,10 +13,8 @@ import io
 import re
 from unittest.mock import patch
 
-import flext_infra
-import flext_infra._utilities.output as output_module
+from flext_infra import u
 from flext_infra._utilities.output import (
-    FlextInfraUtilitiesOutput,
     _OutputBackend,
 )
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
@@ -121,15 +119,12 @@ class TestShouldUseUnicode:
 
 
 class TestInfraOutputStatus:
-    """Tests for output status formatting using _OutputBackend."""
+    """Tests for output status formatting using _OutputBackend directly."""
 
     def test_success_status_contains_ok(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status(
-                "check", "flext-core", result=True, elapsed=1.23
-            )
+        backend.status("check", "flext-core", result=True, elapsed=1.23)
         text = buf.getvalue()
         assert "[OK]" in text
         assert "check" in text
@@ -139,10 +134,7 @@ class TestInfraOutputStatus:
     def test_failure_status_contains_fail(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status(
-                "lint", "flext-api", result=False, elapsed=0.45
-            )
+        backend.status("lint", "flext-api", result=False, elapsed=0.45)
         text = buf.getvalue()
         assert "[FAIL]" in text
         assert "flext-api" in text
@@ -150,15 +142,13 @@ class TestInfraOutputStatus:
     def test_unicode_symbols(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=True, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status("test", "proj", result=True, elapsed=0.1)
+        backend.status("test", "proj", result=True, elapsed=0.1)
         assert "✓" in buf.getvalue()
 
     def test_color_codes_present_when_enabled(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_color=True, use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status("check", "proj", result=True, elapsed=0.5)
+        backend.status("check", "proj", result=True, elapsed=0.5)
         assert "\x1b[" in buf.getvalue()
 
 
@@ -168,10 +158,9 @@ class TestInfraOutputSummary:
     def test_summary_format(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.summary(
-                "check", total=33, success=30, failed=2, skipped=1, elapsed=12.34
-            )
+        backend.summary(
+            "check", total=33, success=30, failed=2, skipped=1, elapsed=12.34
+        )
         text = buf.getvalue()
         assert "check summary" in text
         assert "Total: 33" in text
@@ -183,10 +172,7 @@ class TestInfraOutputSummary:
     def test_summary_no_color_for_zero_counts(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_color=True, use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.summary(
-                "test", total=5, success=5, failed=0, skipped=0, elapsed=1.0
-            )
+        backend.summary("test", total=5, success=5, failed=0, skipped=0, elapsed=1.0)
         text = buf.getvalue()
         plain = _strip_ansi(text)
         assert "Failed: 0" in plain
@@ -199,15 +185,13 @@ class TestInfraOutputMessages:
     def test_error_message(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.error("something broke")
+        backend.error("something broke")
         assert "ERROR: something broke" in buf.getvalue()
 
     def test_error_with_detail(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.error("fail", detail="see logs")
+        backend.error("fail", detail="see logs")
         text = buf.getvalue()
         assert "ERROR: fail" in text
         assert "see logs" in text
@@ -215,15 +199,13 @@ class TestInfraOutputMessages:
     def test_warning_message(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.warning("deprecated feature")
+        backend.warning("deprecated feature")
         assert "WARN: deprecated feature" in buf.getvalue()
 
     def test_info_message(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.info("starting check")
+        backend.info("starting check")
         assert "INFO: starting check" in buf.getvalue()
 
 
@@ -233,8 +215,7 @@ class TestInfraOutputHeader:
     def test_header_ascii(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.header("Quality Gates")
+        backend.header("Quality Gates")
         text = buf.getvalue()
         assert "=" * 60 in text
         assert "Quality Gates" in text
@@ -242,8 +223,7 @@ class TestInfraOutputHeader:
     def test_header_unicode(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=True, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.header("Quality Gates")
+        backend.header("Quality Gates")
         assert "═" * 60 in buf.getvalue()
 
 
@@ -253,8 +233,7 @@ class TestInfraOutputProgress:
     def test_progress_format(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.progress(1, 33, "flext-core", "check")
+        backend.progress(1, 33, "flext-core", "check")
         text = buf.getvalue()
         assert "[01/33]" in text
         assert "flext-core" in text
@@ -263,15 +242,13 @@ class TestInfraOutputProgress:
     def test_progress_single_digit_total(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.progress(3, 5, "proj", "test")
+        backend.progress(3, 5, "proj", "test")
         assert "[3/5]" in buf.getvalue()
 
     def test_progress_large_total(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.progress(7, 100, "proj", "lint")
+        backend.progress(7, 100, "proj", "lint")
         assert "[007/100]" in buf.getvalue()
 
 
@@ -281,26 +258,29 @@ class TestInfraOutputNoColor:
     def test_no_ansi_codes_when_color_disabled(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.info("test")
-            FlextInfraUtilitiesOutput.warning("test")
-            FlextInfraUtilitiesOutput.error("test")
-            FlextInfraUtilitiesOutput.status("check", "proj", True, 0.1)
-            FlextInfraUtilitiesOutput.header("Title")
-            FlextInfraUtilitiesOutput.progress(1, 1, "proj", "test")
-            FlextInfraUtilitiesOutput.summary("check", 1, 1, 0, 0, 0.1)
+        backend.info("test")
+        backend.warning("test")
+        backend.error("test")
+        backend.status("check", "proj", True, 0.1)
+        backend.header("Title")
+        backend.progress(1, 1, "proj", "test")
+        backend.summary("check", 1, 1, 0, 0, 0.1)
         assert "\x1b[" not in buf.getvalue()
 
 
-class TestModuleSingleton:
-    """Tests for module-level output singleton."""
+class TestMroFacadeMethods:
+    """Tests for u.Infra MRO facade methods."""
 
-    def test_output_singleton_importable(self) -> None:
-        assert isinstance(flext_infra.output, FlextInfraUtilitiesOutput)
-
-    def test_output_writes_to_stderr_by_default(self) -> None:
-        # The module-level _backend has a stream attribute
-        assert output_module._backend.stream is not None
+    def test_output_methods_accessible_via_mro(self) -> None:
+        assert callable(u.Infra.info)
+        assert callable(u.Infra.error)
+        assert callable(u.Infra.warning)
+        assert callable(u.Infra.status)
+        assert callable(u.Infra.summary)
+        assert callable(u.Infra.header)
+        assert callable(u.Infra.progress)
+        assert callable(u.Infra.debug)
+        assert callable(u.Infra.gate_result)
 
 
 class TestInfraOutputEdgeCases:
@@ -309,26 +289,19 @@ class TestInfraOutputEdgeCases:
     def test_status_with_zero_elapsed(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status("check", "proj", result=True, elapsed=0.0)
+        backend.status("check", "proj", result=True, elapsed=0.0)
         assert "0.00s" in buf.getvalue()
 
     def test_status_with_large_elapsed(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status(
-                "check", "proj", result=True, elapsed=999.99
-            )
+        backend.status("check", "proj", result=True, elapsed=999.99)
         assert "999.99s" in buf.getvalue()
 
     def test_summary_with_all_zeros(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.summary(
-                "test", total=0, success=0, failed=0, skipped=0, elapsed=0.0
-            )
+        backend.summary("test", total=0, success=0, failed=0, skipped=0, elapsed=0.0)
         text = buf.getvalue()
         assert "Total: 0" in text
         assert "Success: 0" in text
@@ -336,15 +309,9 @@ class TestInfraOutputEdgeCases:
     def test_summary_with_large_numbers(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.summary(
-                "check",
-                total=1000,
-                success=950,
-                failed=40,
-                skipped=10,
-                elapsed=123.45,
-            )
+        backend.summary(
+            "check", total=1000, success=950, failed=40, skipped=10, elapsed=123.45
+        )
         text = buf.getvalue()
         assert "Total: 1000" in text
         assert "Success: 950" in text
@@ -353,9 +320,8 @@ class TestInfraOutputEdgeCases:
     def test_error_with_multiline_detail(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            detail = "line 1\nline 2\nline 3"
-            FlextInfraUtilitiesOutput.error("multi", detail=detail)
+        detail = "line 1\nline 2\nline 3"
+        backend.error("multi", detail=detail)
         text = buf.getvalue()
         assert "ERROR: multi" in text
         assert "line 1" in text
@@ -364,26 +330,23 @@ class TestInfraOutputEdgeCases:
     def test_header_with_long_title(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            long_title = "A" * 100
-            FlextInfraUtilitiesOutput.header(long_title)
+        long_title = "A" * 100
+        backend.header(long_title)
         text = buf.getvalue()
         assert long_title in text
 
     def test_progress_with_same_current_and_total(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.progress(5, 5, "proj", "test")
+        backend.progress(5, 5, "proj", "test")
         assert "[5/5]" in buf.getvalue()
 
     def test_multiple_messages_in_sequence(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.info("msg1")
-            FlextInfraUtilitiesOutput.warning("msg2")
-            FlextInfraUtilitiesOutput.error("msg3")
+        backend.info("msg1")
+        backend.warning("msg2")
+        backend.error("msg3")
         text = buf.getvalue()
         assert "INFO: msg1" in text
         assert "WARN: msg2" in text
@@ -392,18 +355,14 @@ class TestInfraOutputEdgeCases:
     def test_color_and_unicode_together(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_color=True, use_unicode=True, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.status("test", "proj", result=True, elapsed=0.1)
+        backend.status("test", "proj", result=True, elapsed=0.1)
         text = buf.getvalue()
         assert "✓" in text or "\x1b[" in text
 
     def test_gate_result_passed(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.gate_result(
-                "ruff", count=0, passed=True, elapsed=0.5
-            )
+        backend.gate_result("ruff", count=0, passed=True, elapsed=0.5)
         text = buf.getvalue()
         assert "[OK]" in text
         assert "ruff" in text
@@ -411,10 +370,7 @@ class TestInfraOutputEdgeCases:
     def test_gate_result_failed(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(use_unicode=False, stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.gate_result(
-                "mypy", count=3, passed=False, elapsed=1.2
-            )
+        backend.gate_result("mypy", count=3, passed=False, elapsed=1.2)
         text = buf.getvalue()
         assert "[FAIL]" in text
         assert "3 errors" in text
@@ -422,6 +378,5 @@ class TestInfraOutputEdgeCases:
     def test_debug_message(self) -> None:
         buf = io.StringIO()
         backend = _make_backend(stream=buf)
-        with patch.object(output_module, "_backend", backend):
-            FlextInfraUtilitiesOutput.debug("trace info")
+        backend.debug("trace info")
         assert "DEBUG: trace info" in buf.getvalue()
