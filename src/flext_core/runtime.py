@@ -534,14 +534,13 @@ class FlextRuntime:
         """
         try:
             origin = typing.get_origin(type_hint)
-            if origin is not None and hasattr(origin, "__mro__"):
+            if isinstance(origin, type):
                 if origin in {list, tuple}:
                     return True
-                return Sequence in origin.__mro__
+                return issubclass(origin, Sequence)
             if type_hint in {list, tuple, str}:
                 return True
-            hint_mro = getattr(type_hint, "__mro__", None)
-            if hint_mro is not None and Sequence in hint_mro:
+            if isinstance(type_hint, type) and issubclass(type_hint, Sequence):
                 return True
             type_name = getattr(type_hint, "__name__", None)
             return bool(
@@ -1758,7 +1757,7 @@ class FlextRuntime:
                 pass
         if (
             not isinstance(entity_b, type(entity_a))
-            and type(entity_a) not in type(entity_b).__mro__
+            and not issubclass(type(entity_b), type(entity_a))
         ):
             return False
         id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
@@ -1780,7 +1779,7 @@ class FlextRuntime:
             return obj_a == obj_b
         if (
             not isinstance(obj_b, type(obj_a))
-            and type(obj_a) not in type(obj_b).__mro__
+            and not issubclass(type(obj_b), type(obj_a))
         ):
             return False
         if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
