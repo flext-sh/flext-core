@@ -45,7 +45,7 @@ class PreCheckGate:
         current_file = entry.get(c.Infra.ReportKeys.CURRENT_FILE, "")
         if not symbol or not target_namespace or (not current_file):
             return (True, None)
-        module_family = u.Infra.Refactor.module_family_from_path(current_file)
+        module_family = u.Infra.module_family_from_path(current_file)
         if module_family == "other_private":
             return (True, None)
         policy = self._policy_by_family.get(module_family)
@@ -101,12 +101,12 @@ class PreCheckGate:
 
     def _load_policy(self) -> dict[str, m.Infra.Refactor.ClassNestingPolicy]:
         try:
-            loaded = u.Infra.Yaml.safe_load_yaml(self._policy_path)
+            loaded = u.Infra.safe_load_yaml(self._policy_path)
         except (OSError, TypeError):
             return {}
         if not self._schema_valid(dict(loaded.items())):
             return {}
-        policy_matrix = u.Infra.Refactor.mapping_list(loaded.get("policy_matrix"))
+        policy_matrix = u.Infra.mapping_list(loaded.get("policy_matrix"))
         by_family: dict[str, m.Infra.Refactor.ClassNestingPolicy] = {}
         for raw in policy_matrix:
             try:
@@ -117,13 +117,13 @@ class PreCheckGate:
         return by_family
 
     def _schema_valid(self, loaded: dict[str, t.ContainerValue]) -> bool:
-        schema_result = u.Infra.Io.read_json(self._schema_path)
+        schema_result = u.Infra.read_json(self._schema_path)
         if schema_result.is_failure:
             return False
         raw_schema: Mapping[str, t.ContainerValue] = schema_result.value
         schema: dict[str, t.ContainerValue] = dict(raw_schema.items())
-        top_required = u.Infra.Refactor.string_list(schema.get("required", []))
-        if not u.Infra.Refactor.has_required_fields(loaded, top_required):
+        top_required = u.Infra.string_list(schema.get("required", []))
+        if not u.Infra.has_required_fields(loaded, top_required):
             return False
         definitions_raw = schema.get("definitions", {})
         if not isinstance(definitions_raw, dict):
@@ -136,19 +136,19 @@ class PreCheckGate:
             return False
         policy_entry = policy_entry_raw
         class_rule = class_rule_raw
-        policy_entry_required = u.Infra.Refactor.string_list(
+        policy_entry_required = u.Infra.string_list(
             policy_entry.get("required", []),
         )
-        class_rule_required = u.Infra.Refactor.string_list(
+        class_rule_required = u.Infra.string_list(
             class_rule.get("required", []),
         )
-        policy_matrix = u.Infra.Refactor.mapping_list(loaded.get("policy_matrix"))
+        policy_matrix = u.Infra.mapping_list(loaded.get("policy_matrix"))
         for entry in policy_matrix:
-            if not u.Infra.Refactor.has_required_fields(entry, policy_entry_required):
+            if not u.Infra.has_required_fields(entry, policy_entry_required):
                 return False
-        rules = u.Infra.Refactor.mapping_list(loaded.get(c.Infra.ReportKeys.RULES))
+        rules = u.Infra.mapping_list(loaded.get(c.Infra.ReportKeys.RULES))
         for rule in rules:
-            if not u.Infra.Refactor.has_required_fields(rule, class_rule_required):
+            if not u.Infra.has_required_fields(rule, class_rule_required):
                 return False
         return True
 

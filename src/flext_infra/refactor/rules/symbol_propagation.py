@@ -29,7 +29,7 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
         target_modules_raw = self.config.get("target_modules", [])
         module_renames_raw = self.config.get("module_renames", {})
         symbol_renames_raw = self.config.get("import_symbol_renames", {})
-        target_modules = set(u.Infra.Refactor.string_list(target_modules_raw))
+        target_modules = set(u.Infra.string_list(target_modules_raw))
         module_renames: dict[str, str]
         try:
             module_renames = TypeAdapter(dict[str, str]).validate_python(

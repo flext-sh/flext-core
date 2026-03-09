@@ -49,7 +49,7 @@ class FlextInfraDocAuditor:
                 break
         if config_path is None:
             return (None, {})
-        payload_result = u.Infra.Io.read_json(config_path)
+        payload_result = u.Infra.read_json(config_path)
         if payload_result.is_failure:
             return (None, {})
         payload = payload_result.value
@@ -201,7 +201,7 @@ class FlextInfraDocAuditor:
             c.Infra.ReportKeys.SUMMARY: summary,
             "issues": issues_payload,
         }
-        _ = u.Infra.Io.write_json(
+        _ = u.Infra.write_json(
             scope.report_dir / "audit-summary.json",
             summary_payload,
         )

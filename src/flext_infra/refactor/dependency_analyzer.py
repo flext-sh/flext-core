@@ -215,7 +215,7 @@ class DependencyAnalyzer:
             "--json",
             str(src_path),
         ]
-        capture = u.Infra.Refactor.capture_output(cmd)
+        capture = u.Infra.capture_output(cmd)
         if capture.is_failure:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(
                 capture.error or "capture failed",

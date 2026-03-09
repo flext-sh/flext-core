@@ -137,7 +137,7 @@ def test_generate_special_paths_and_dynamic_subclass(
             _ = tz
             return fixed_ts
 
-    monkeypatch.setattr("flext_core._utilities.generators.datetime", _FixedDatetime)
+    monkeypatch.setattr(generators_module, "datetime", _FixedDatetime)
     custom = u.Generators.generate(
         kind="command",
         include_timestamp=True,

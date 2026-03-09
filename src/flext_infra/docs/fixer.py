@@ -148,7 +148,7 @@ class FlextInfraDocFixer:
             },
             "changes": changes_payload,
         }
-        _ = u.Infra.Io.write_json(scope.report_dir / "fix-summary.json", payload)
+        _ = u.Infra.write_json(scope.report_dir / "fix-summary.json", payload)
         lines = [
             "# Docs Fix Report",
             "",

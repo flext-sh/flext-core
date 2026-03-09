@@ -196,7 +196,7 @@ class FlextInfraRefactorLooseClassScanner:
             "--json",
             str(project_root / c.Infra.Paths.DEFAULT_SRC_DIR),
         ]
-        capture = u.Infra.Refactor.capture_output(cmd)
+        capture = u.Infra.capture_output(cmd)
         if capture.is_failure:
             out: RDictPathGrep = r[dict[Path, dict[str, int]]].fail(
                 capture.error or "ast-grep failed",

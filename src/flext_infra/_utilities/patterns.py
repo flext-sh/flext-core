@@ -23,7 +23,7 @@ class FlextInfraUtilitiesPatterns:
 
         from flext_infra import u
 
-        if u.Infra.Patterns.matches("MYPY_HINT_RE", text):
+        if u.Infra.matches("MYPY_HINT_RE", text):
             ...
     """
 

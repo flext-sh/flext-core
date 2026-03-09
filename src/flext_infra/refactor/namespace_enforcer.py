@@ -30,7 +30,7 @@ class FlextInfraNamespaceEnforcer:
         apply_changes: bool = False,
     ) -> nem.NamespaceWorkspaceEnforcementReport:
         """Run namespace enforcement across all projects in the workspace."""
-        project_roots = u.Infra.Refactor.discover_project_roots(
+        project_roots = u.Infra.discover_project_roots(
             workspace_root=self._workspace_root,
         )
         project_reports: list[nem.NamespaceProjectEnforcementReport] = []

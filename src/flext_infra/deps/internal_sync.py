@@ -12,7 +12,6 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraGitService,
     FlextInfraUtilitiesSubprocess,
     FlextInfraUtilitiesToml,
     c,
@@ -31,7 +30,7 @@ class FlextInfraInternalDependencySyncService:
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
         self.runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
-        self.git = FlextInfraGitService(self.runner)
+
         self.toml = FlextInfraUtilitiesToml()
 
     @staticmethod
@@ -259,7 +258,7 @@ class FlextInfraInternalDependencySyncService:
                         dep_path.unlink()
             except OSError as exc:
                 return r[bool].fail(f"cleanup failed for {dep_path.name}: {exc}")
-            cloned = self.git.run_checked([
+            cloned = u.Infra.run_checked([
                 "clone",
                 "--depth",
                 "1",
@@ -271,20 +270,20 @@ class FlextInfraInternalDependencySyncService:
             if cloned.is_failure:
                 return r[bool].fail(f"clone failed for {dep_path.name}: {cloned.error}")
             return r[bool].ok(True)
-        fetch = self.git.fetch(dep_path, c.Infra.Git.ORIGIN)
+        fetch = u.Infra.git_fetch(dep_path, c.Infra.Git.ORIGIN)
         if fetch.is_failure:
             return r[bool].fail(f"fetch failed for {dep_path.name}: {fetch.error}")
-        checkout = self.git.checkout(dep_path, safe_ref_name)
+        checkout = u.Infra.git_checkout(dep_path, safe_ref_name)
         if checkout.is_failure:
             return r[bool].fail(
                 f"checkout failed for {dep_path.name}: {checkout.error}",
             )
-        _ = self.git.pull(dep_path, remote=c.Infra.Git.ORIGIN, branch=safe_ref_name)
+        _ = u.Infra.git_pull(dep_path, remote=c.Infra.Git.ORIGIN, branch=safe_ref_name)
         return r[bool].ok(True)
 
     def infer_owner_from_origin(self, project_root: Path) -> str | None:
         """Infer GitHub owner from remote origin URL."""
-        remote = self.git.config_get(project_root, "remote.origin.url")
+        remote = u.Infra.git_config_get(project_root, "remote.origin.url")
         if remote.is_failure:
             return None
         return self.owner_from_remote_url(remote.value.strip())
@@ -297,7 +296,7 @@ class FlextInfraInternalDependencySyncService:
         env_workspace_root = self.workspace_root_from_env(project_root)
         if env_workspace_root is not None:
             return (True, env_workspace_root)
-        superproject = self.git.run(
+        superproject = u.Infra.git_run(
             ["rev-parse", "--show-superproject-working-tree"],
             cwd=project_root,
         )
@@ -359,12 +358,12 @@ class FlextInfraInternalDependencySyncService:
                 value = os.getenv(key)
                 if value:
                     return value
-        branch = self.git.current_branch(project_root)
+        branch = u.Infra.git_current_branch(project_root)
         if branch.is_success:
             current = branch.value.strip()
             if current and current != c.Infra.Git.HEAD:
                 return current
-        tag = self.git.run(["describe", "--tags", "--exact-match"], cwd=project_root)
+        tag = u.Infra.git_run(["describe", "--tags", "--exact-match"], cwd=project_root)
         if tag.is_success:
             return tag.value.strip()
         return c.Infra.Git.MAIN

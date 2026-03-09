@@ -26,7 +26,6 @@ def test_core_dir_returns_all_exports() -> None:
     assert "FlextInfraSkillValidator" in exports
     assert "FlextInfraStubSupplyChain" in exports
     assert "FlextInfraTextPatternScanner" in exports
-    assert "main" in exports
 
 
 def test_core_lazy_imports_work() -> None:

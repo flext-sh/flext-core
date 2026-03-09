@@ -32,10 +32,10 @@ class ImportDependencyCollector(cst.CSTVisitor):
     @override
     def visit_Import(self, node: cst.Import) -> None:
         for raw_alias in node.names:
-            imported = u.Infra.Refactor.dotted_name(raw_alias.name)
+            imported = u.Infra.dotted_name(raw_alias.name)
             if not imported:
                 continue
-            local_name = u.Infra.Refactor.asname_to_local(raw_alias.asname)
+            local_name = u.Infra.asname_to_local(raw_alias.asname)
             if local_name is None:
                 local_name = imported.split(".", maxsplit=1)[0]
             self.local_to_import[local_name] = imported
@@ -46,7 +46,7 @@ class ImportDependencyCollector(cst.CSTVisitor):
             return
         if node.module is None:
             return
-        module_name = u.Infra.Refactor.dotted_name(node.module)
+        module_name = u.Infra.dotted_name(node.module)
         if not module_name:
             return
         for raw_alias in node.names:
@@ -56,7 +56,7 @@ class ImportDependencyCollector(cst.CSTVisitor):
             if imported_name == "*":
                 continue
             local_name = imported_name
-            local_name_from_alias = u.Infra.Refactor.asname_to_local(raw_alias.asname)
+            local_name_from_alias = u.Infra.asname_to_local(raw_alias.asname)
             if local_name_from_alias is not None:
                 local_name = local_name_from_alias
             self.local_to_import[local_name] = f"{module_name}.{imported_name}"
@@ -604,7 +604,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
             Path(__file__).resolve().parent / c.Infra.Refactor.MAPPINGS_RELATIVE_PATH
         )
         try:
-            typed_doc = u.Infra.Yaml.safe_load_yaml(mapping_path)
+            typed_doc = u.Infra.safe_load_yaml(mapping_path)
         except (OSError, TypeError) as exc:
             return r[_ClassNestingMappingIndex].fail(str(exc))
         raw_nesting = typed_doc.get(c.Infra.ReportKeys.CLASS_NESTING)
@@ -781,7 +781,7 @@ class FlextInfraRefactorViolationAnalyzer:
                 dependencies.add(imported)
         decorator_dependencies: set[str] = set()
         for decorator in function.decorators:
-            decorator_root = u.Infra.Refactor.root_name(decorator.decorator)
+            decorator_root = u.Infra.root_name(decorator.decorator)
             if not decorator_root:
                 continue
             imported = local_to_import.get(decorator_root)

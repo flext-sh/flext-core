@@ -30,7 +30,7 @@ class FlextInfraUtilitiesIo:
 
         from flext_infra import u
 
-        result = u.Infra.Io.read_json(path)
+        result = u.Infra.read_json(path)
     """
 
     @staticmethod
