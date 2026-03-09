@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c
+from flext_infra.constants import FlextInfraConstants as c
 
 
 class FlextInfraUtilitiesPaths:

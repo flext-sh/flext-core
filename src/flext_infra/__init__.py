@@ -15,6 +15,12 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
+    from flext_infra._utilities.discovery import (
+        FlextInfraUtilitiesDiscovery as FlextInfraDiscoveryService,
+    )
+    from flext_infra._utilities.git import (
+        FlextInfraUtilitiesGit as FlextInfraGitService,
+    )
     from flext_infra._utilities.io import (
         FlextInfraUtilitiesIo as FlextInfraUtilitiesIo,
     )
@@ -25,8 +31,11 @@ if TYPE_CHECKING:
     from flext_infra._utilities.patterns import (
         FlextInfraUtilitiesPatterns as FlextInfraUtilitiesPatterns,
     )
-    from flext_infra._utilities.protocols import (
-        FlextInfraUtilitiesProtocols as p,
+    from flext_infra._utilities.reporting import (
+        FlextInfraUtilitiesReporting as FlextInfraReportingService,
+    )
+    from flext_infra._utilities.selection import (
+        FlextInfraUtilitiesSelection as FlextInfraProjectSelector,
     )
     from flext_infra._utilities.subprocess import (
         FlextInfraUtilitiesSubprocess as FlextInfraUtilitiesSubprocess,
@@ -36,6 +45,9 @@ if TYPE_CHECKING:
     )
     from flext_infra._utilities.toml import (
         FlextInfraUtilitiesToml as FlextInfraUtilitiesToml,
+    )
+    from flext_infra._utilities.versioning import (
+        FlextInfraUtilitiesVersioning as FlextInfraVersioningService,
     )
     from flext_infra.basemk import (
         FlextInfraBaseMkGenerator,
@@ -53,16 +65,12 @@ if TYPE_CHECKING:
     from flext_infra.core.scanner import FlextInfraTextPatternScanner
     from flext_infra.core.skill_validator import FlextInfraSkillValidator
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
-    from flext_infra.discovery import FlextInfraDiscoveryService
-    from flext_infra.git import FlextInfraGitService
     from flext_infra.maintenance import FlextInfraPythonVersionEnforcer
     from flext_infra.models import FlextInfraModels, FlextInfraModels as m
+    from flext_infra.protocols import FlextInfraProtocols, FlextInfraProtocols as p
     from flext_infra.release import FlextInfraReleaseOrchestrator
-    from flext_infra.reporting import FlextInfraReportingService
-    from flext_infra.selection import FlextInfraProjectSelector
     from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
     from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
-    from flext_infra.versioning import FlextInfraVersioningService
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -90,10 +98,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextInfraConstants": ("flext_infra.constants", "FlextInfraConstants"),
     "FlextInfraDiscoveryService": (
-        "flext_infra.discovery",
-        "FlextInfraDiscoveryService",
+        "flext_infra._utilities.discovery",
+        "FlextInfraUtilitiesDiscovery",
     ),
-    "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
+    "FlextInfraGitService": (
+        "flext_infra._utilities.git",
+        "FlextInfraUtilitiesGit",
+    ),
     "FlextInfraInventoryService": (
         "flext_infra.core.inventory",
         "FlextInfraInventoryService",
@@ -109,10 +120,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.patterns",
         "FlextInfraUtilitiesPatterns",
     ),
-    "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
+    "FlextInfraProjectSelector": (
+        "flext_infra._utilities.selection",
+        "FlextInfraUtilitiesSelection",
+    ),
     "FlextInfraProtocols": (
-        "flext_infra._utilities.protocols",
-        "FlextInfraUtilitiesProtocols",
+        "flext_infra.protocols",
+        "FlextInfraProtocols",
     ),
     "FlextInfraPytestDiagExtractor": (
         "flext_infra.core.pytest_diag",
@@ -127,8 +141,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraReleaseOrchestrator",
     ),
     "FlextInfraReportingService": (
-        "flext_infra.reporting",
-        "FlextInfraReportingService",
+        "flext_infra._utilities.reporting",
+        "FlextInfraUtilitiesReporting",
     ),
     "FlextInfraSkillValidator": (
         "flext_infra.core.skill_validator",
@@ -154,15 +168,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraUtilitiesSubprocess",
     ),
     "FlextInfraVersioningService": (
-        "flext_infra.versioning",
-        "FlextInfraVersioningService",
+        "flext_infra._utilities.versioning",
+        "FlextInfraUtilitiesVersioning",
     ),
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),
     "m": ("flext_infra.models", "FlextInfraModels"),
     "output": ("flext_infra._utilities.output", "output"),
-    "p": ("flext_infra._utilities.protocols", "FlextInfraUtilitiesProtocols"),
+    "p": ("flext_infra.protocols", "FlextInfraProtocols"),
     "t": ("flext_infra.typings", "FlextInfraTypes"),
     "u": ("flext_infra.utilities", "FlextInfraUtilities"),
 }
@@ -184,6 +198,7 @@ __all__ = [
     "FlextInfraOutput",
     "FlextInfraPatterns",
     "FlextInfraProjectSelector",
+    "FlextInfraProtocols",
     "FlextInfraPytestDiagExtractor",
     "FlextInfraPythonVersionEnforcer",
     "FlextInfraReleaseOrchestrator",

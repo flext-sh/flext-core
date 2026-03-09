@@ -16,7 +16,8 @@ from tomlkit.items import Array, Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, u
-from flext_infra import c, t
+from flext_infra.constants import FlextInfraConstants as c
+from flext_infra.typings import FlextInfraTypes as t
 
 
 class FlextInfraUtilitiesToml:
@@ -32,23 +33,26 @@ class FlextInfraUtilitiesToml:
 
     logger = FlextLogger(__name__)
 
-    # Lazy TypeAdapter initialization to avoid schema generation issues with inheritance
     _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.ContainerValue]] | None = None
     _CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.ContainerValue]] | None = None
 
+    @staticmethod
     def _get_container_dict_adapter() -> TypeAdapter[dict[str, t.ContainerValue]]:
         """Get or create TypeAdapter for dict[str, ContainerValue]."""
-        global _CONTAINER_DICT_ADAPTER  # noqa: PLW0603
-        if _CONTAINER_DICT_ADAPTER is None:
-            _CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.ContainerValue])
-        return _CONTAINER_DICT_ADAPTER
+        if FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER is None:
+            FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER = TypeAdapter(
+                dict[str, t.ContainerValue],
+            )
+        return FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER
 
+    @staticmethod
     def _get_container_list_adapter() -> TypeAdapter[list[t.ContainerValue]]:
         """Get or create TypeAdapter for list[ContainerValue]."""
-        global _CONTAINER_LIST_ADAPTER  # noqa: PLW0603
-        if _CONTAINER_LIST_ADAPTER is None:
-            _CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.ContainerValue])
-        return _CONTAINER_LIST_ADAPTER
+        if FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER is None:
+            FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER = TypeAdapter(
+                list[t.ContainerValue],
+            )
+        return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 
     @staticmethod
     def as_toml_mapping(value: t.ContainerValue) -> t.Infra.ContainerDict | None:
