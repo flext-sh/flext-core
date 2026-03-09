@@ -1,0 +1,23 @@
+src/flext_infra/toml_io.py
+  f296439d73141d96 96-101,106-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "e9cce09df3d610cb9bdaed8f17fabfaf4765bfdf",
+  "prompts": {
+    "f296439d73141d96": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32d1c5b7cffe4SvQN8kro63aaQ",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 2,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    }
+  }
+}
