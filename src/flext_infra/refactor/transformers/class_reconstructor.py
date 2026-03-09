@@ -150,17 +150,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             if patterns:
                 matched = False
                 for pattern in patterns:
-                    if isinstance(pattern, str):
-                        if re.match(pattern, method.name):
-                            matched = True
-                        continue
-                    regex = pattern.regex
-                    if regex and re.match(regex, method.name):
-                        matched = True
-                    pattern_decorators = pattern.decorators
-                    if pattern_decorators and decorators.intersection(
-                        pattern_decorators,
-                    ):
+                    if re.match(pattern, method.name):
                         matched = True
                 if not matched:
                     return False

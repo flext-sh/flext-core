@@ -13,8 +13,52 @@ from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u,
 from ._models import _SvcModel
 
 
+def _normalize_to_one(_v: t.ContainerValue) -> int:
+    """Staticmethod helper for monkeypatch; type known for pyright."""
+    return 1
+
+
+def _noop(*_a: object, **_k: object) -> None:
+    """Typed no-op for protocol stubs."""
+    return
+
+
+def _return_true(*_a: object, **_k: object) -> bool:
+    """Typed return-True for protocol stubs."""
+    return True
+
+
+def _return_true_no_args() -> bool:
+    """Typed callable for process/validate stubs."""
+    return True
+
+
+def _mock_register_fail(_name: str) -> r[bool]:
+    """Mock _register_in_container that returns failure."""
+    return cast(
+        "r[bool]",
+        cast("object", SimpleNamespace(is_failure=True, error=None)),
+    )
+
+
+def _validation_ok_true(v: t.ContainerValue) -> r[bool]:
+    """Validator that always returns ok(True)."""
+    return r[bool].ok(True)
+
+
+def _validation_ok_false(v: t.ContainerValue) -> r[bool]:
+    """Validator that always returns ok(False)."""
+    return r[bool].ok(False)
+
+
+def _validation_fail_no(v: t.ContainerValue) -> r[bool]:
+    """Validator that always returns fail('no')."""
+    return r[bool].fail("no")
+
+
 class _RuntimeContainer:
     def __init__(self) -> None:
+        super().__init__()
         self.configured: dict[str, t.ContainerValue] | None = None
         self.wired: dict[str, object] | None = None
 
@@ -30,6 +74,7 @@ class _RuntimeContainer:
 
 class _ContainerForLogger:
     def __init__(self, success: bool, logger: object | None = None) -> None:
+        super().__init__()
         self.success: bool = success
         self.logger: object | None = logger
         self.factories: dict[str, object] = {}
@@ -76,7 +121,7 @@ def test_mixins_result_and_model_conversion_paths(
     monkeypatch.setattr(
         FlextRuntime,
         "normalize_to_general_value",
-        staticmethod(lambda _v: 1),
+        staticmethod(_normalize_to_one),
     )
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
@@ -214,7 +259,8 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
             return cast("FlextLogger", cast("object", _LocalLogger()))
 
     service = _Service()
-    service._log_config_once(m.ConfigMap(root={"k": "v"}), message="cfg")
+    config = m.ConfigMap(root={"k": "v"})
+    service._log_config_once(config, message="cfg")
     service._with_operation_context(
         "run",
         params={"k": "v"},
@@ -224,15 +270,18 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
     service._clear_operation_context()
     monkeypatch.delattr(x.CQRS.MetricsTracker, "_metrics", raising=False)
     mt = x.CQRS.MetricsTracker()
-    assert mt.record_metric("k", 1).is_success
-    assert mt.get_metrics().is_success
+    result_record = mt.record_metric("k", 1)
+    assert result_record.is_success
+    result_metrics = mt.get_metrics()
+    assert result_metrics.is_success
     monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
     cs = x.CQRS.ContextStack()
     cs.push_context({"handler_name": "h", "handler_mode": "query"})
     cs.push_context({"x": "y"})
-    popped = cs.pop_context()
-    assert popped.is_success
-    assert cs.pop_context().is_success
+    result_pop = cs.pop_context()
+    assert result_pop.is_success
+    result_pop2 = cs.pop_context()
+    assert result_pop2.is_success
     assert cs.current_context() is None
     cs.push_context({"handler_name": "h2", "handler_mode": "command"})
     assert cs.current_context() is not None
@@ -240,12 +289,12 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 def test_mixins_validation_and_protocol_paths() -> None:
     validators: list[Callable[[t.ContainerValue], r[bool]]] = [
-        lambda _v: r[bool].ok(False),
+        _validation_ok_false,
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
     fail_validators: list[Callable[[t.ContainerValue], r[bool]]] = [
-        lambda _v: r[bool].fail("no"),
+        _validation_fail_no,
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)
     assert fail_result.is_failure
@@ -253,7 +302,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
         x.ProtocolValidation.is_handler(
             cast(
                 "t.ContainerValue",
-                cast("object", SimpleNamespace(handle=lambda *_a, **_k: None)),
+                cast("object", SimpleNamespace(handle=_noop)),
             ),
         )
         is False
@@ -265,9 +314,9 @@ def test_mixins_validation_and_protocol_paths() -> None:
         is False
     )
     cmd_bus = SimpleNamespace(
-        dispatch=lambda *_a, **_k: None,
-        publish=lambda *_a, **_k: None,
-        register_handler=lambda *_a, **_k: None,
+        dispatch=_noop,
+        publish=_noop,
+        register_handler=_noop,
     )
     assert x.ProtocolValidation.is_command_bus(cmd_bus) is True
     unknown = x.ProtocolValidation.validate_protocol_compliance(
@@ -278,9 +327,9 @@ def test_mixins_validation_and_protocol_paths() -> None:
         "Nope",
     )
     service_like = SimpleNamespace(
-        execute=lambda *_a, **_k: None,
-        get_service_info=lambda *_a, **_k: None,
-        is_valid=lambda *_a, **_k: True,
+        execute=_noop,
+        get_service_info=_noop,
+        is_valid=_return_true,
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
         cast(
@@ -314,8 +363,8 @@ def test_mixins_validation_and_protocol_paths() -> None:
                 "object",
                 SimpleNamespace(
                     model_dump=dict,
-                    process=lambda: True,
-                    validate=lambda: True,
+                    process=_return_true_no_args,
+                    validate=_return_true_no_args,
                 ),
             ),
         ),
@@ -327,9 +376,13 @@ def test_mixins_validation_and_protocol_paths() -> None:
 
 def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     runtime_container = _RuntimeContainer()
+
+    def _create_runtime_container() -> _RuntimeContainer:
+        return runtime_container
+
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
-        staticmethod(lambda: runtime_container),
+        staticmethod(_create_runtime_container),
     )
 
     class _WireService(x):
@@ -357,6 +410,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _RegContainer:
         def __init__(self) -> None:
+            super().__init__()
             self._services: dict[str, object] = {}
 
         def has_service(self, name: str) -> bool:
@@ -368,10 +422,13 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
             captured["value"] = value
             return self
 
+    def _container_getter(_self: object) -> _RegContainer:
+        return _RegContainer()
+
     monkeypatch.setattr(
         _ModelService,
         "container",
-        property(lambda _self: _RegContainer()),
+        property(_container_getter),
     )
     assert model_service._register_in_container("svc_model").is_success
     assert isinstance(captured["value"], _ModelMarker)
@@ -393,10 +450,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         warn_service,
         "_register_in_container",
-        lambda _name: cast(
-            "r[bool]",
-            cast("object", SimpleNamespace(is_failure=True, error=None)),
-        ),
+        _mock_register_fail,
     )
     warn_service._init_service("svc_warn")
     monkeypatch.delattr(x.CQRS.MetricsTracker, "_metrics", raising=False)
@@ -417,7 +471,10 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert stack.current_context() is None
     object.__setattr__(stack, "_stack", [{"k": "v"}])
     assert stack.current_context() is None
-    valid = x.Validation.validate_with_result("v", [lambda _v: r[bool].ok(True)])
+    valid = x.Validation.validate_with_result(
+        "v",
+        [_validation_ok_true],
+    )
     assert valid.is_success
     FlextMixins._logger_cache.clear()
 
@@ -426,9 +483,13 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
             super().__init__(False)
 
     factory_container = _FactoryContainer()
+
+    def _create_factory_container() -> _ContainerForLogger:
+        return factory_container
+
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
-        staticmethod(lambda: factory_container),
+        staticmethod(_create_factory_container),
     )
     _ = _LoggerService._get_or_create_logger()
     assert any((kind == "factory" for _name, kind in factory_container.register_calls))
@@ -443,10 +504,13 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
             msg = "boom"
             raise RuntimeError(msg)
 
+    def _create_broken_container() -> _BrokenContainer:
+        return _BrokenContainer()
+
     FlextMixins._logger_cache.clear()
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
-        staticmethod(lambda: _BrokenContainer()),
+        staticmethod(_create_broken_container),
     )
     fallback_logger = _LoggerService._get_or_create_logger()
     assert fallback_logger is not None

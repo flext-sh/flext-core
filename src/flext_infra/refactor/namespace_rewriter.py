@@ -11,7 +11,8 @@ from collections import defaultdict
 from io import StringIO
 from pathlib import Path
 
-from flext_infra import c, m
+from flext_infra import c
+from flext_infra.refactor import _models_namespace_enforcer as nem
 from flext_infra.refactor.dependency_analyzer import (
     FlextInfraRefactorDependencyAnalyzerFacade,
     load_python_module,
@@ -69,7 +70,7 @@ class NamespaceEnforcementRewriter:
         *,
         project_root: Path,
         project_name: str,
-        facade_statuses: list[m.Infra.Refactor.NamespaceEnforcementModels.FacadeStatus],
+        facade_statuses: list[nem.NamespaceFacadeStatus],
     ) -> None:
         """Create missing facade module files for the project."""
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
@@ -234,9 +235,7 @@ class NamespaceEnforcementRewriter:
         *,
         project_root: Path,
         py_files: list[Path],
-        violations: list[
-            m.Infra.Refactor.NamespaceEnforcementModels.ManualProtocolViolation
-        ],
+        violations: list[nem.NamespaceManualProtocolViolation],
     ) -> None:
         """Move manual protocol definitions to their canonical files."""
         grouped_names: dict[Path, set[str]] = defaultdict(set)
@@ -321,12 +320,8 @@ class NamespaceEnforcementRewriter:
         cls,
         *,
         project_root: Path,
-        violations: list[
-            m.Infra.Refactor.NamespaceEnforcementModels.ManualTypingAliasViolation
-        ],
-        parse_failures: list[
-            m.Infra.Refactor.NamespaceEnforcementModels.ParseFailureViolation
-        ],
+        violations: list[nem.NamespaceManualTypingAliasViolation],
+        parse_failures: list[nem.NamespaceParseFailureViolation],
     ) -> None:
         """Move manual typing aliases to their canonical files."""
         grouped_names: dict[Path, set[str]] = defaultdict(set)
@@ -347,9 +342,7 @@ class NamespaceEnforcementRewriter:
         project_root: Path,
         source_file: Path,
         alias_names: set[str],
-        parse_failures: list[
-            m.Infra.Refactor.NamespaceEnforcementModels.ParseFailureViolation
-        ],
+        parse_failures: list[nem.NamespaceParseFailureViolation],
     ) -> None:
         parsed = load_python_module(
             source_file,
@@ -448,12 +441,8 @@ class NamespaceEnforcementRewriter:
     @staticmethod
     def rewrite_compatibility_alias_violations(
         *,
-        violations: list[
-            m.Infra.Refactor.NamespaceEnforcementModels.CompatibilityAliasViolation
-        ],
-        parse_failures: list[
-            m.Infra.Refactor.NamespaceEnforcementModels.ParseFailureViolation
-        ],
+        violations: list[nem.NamespaceCompatibilityAliasViolation],
+        parse_failures: list[nem.NamespaceParseFailureViolation],
     ) -> None:
         """Rewrite compatibility alias violations in source files."""
         grouped: dict[Path, dict[str, str]] = defaultdict(dict)
@@ -605,12 +594,14 @@ class NamespaceEnforcementRewriter:
             return ".".join(parts)
 
         source_target_names: list[tuple[str, str, set[str]]] = []
-        for source_file, target_file, moved_names in protocol_moves:
+        for source_file, target_file, moved_name_seq in protocol_moves:
             source_module = _module_path(source_file)
             target_module = _module_path(target_file)
             if not source_module or not target_module or source_module == target_module:
                 continue
-            source_target_names.append((source_module, target_module, set(moved_names)))
+            source_target_names.append(
+                (source_module, target_module, set(moved_name_seq)),
+            )
         if len(source_target_names) == 0:
             return
         for py_file in py_files:

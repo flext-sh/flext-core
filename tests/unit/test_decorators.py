@@ -22,13 +22,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import dataclasses
 import time
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
     FlextContainer,
@@ -61,20 +60,34 @@ class DecoratorOperationType(StrEnum):
     COMBINED_WITH_RAILWAY = "combined_with_railway"
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class DecoratorTestCase:
+class DecoratorTestCase(BaseModel):
     """Decorator test case definition with parametrization data."""
 
-    name: str
-    operation: DecoratorOperationType
-    should_succeed: bool = True
-    error_type: type[Exception] | None = None
-    error_pattern: str | None = None
-    requires_container_setup: bool = False
-    with_exception_handling: bool = False
-    timeout_duration: float = 0.1
-    retry_attempts: int = 3
-    retry_delay: float = 0.001
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Decorator test case name")
+    operation: DecoratorOperationType = Field(
+        description="Decorator operation under test"
+    )
+    should_succeed: bool = Field(
+        default=True, description="Whether operation should succeed"
+    )
+    error_type: type[Exception] | None = Field(
+        default=None, description="Expected exception type"
+    )
+    error_pattern: str | None = Field(
+        default=None, description="Expected error message pattern"
+    )
+    requires_container_setup: bool = Field(
+        default=False, description="Whether container setup is required"
+    )
+    with_exception_handling: bool = Field(
+        default=False, description="Whether exception handling path is expected"
+    )
+    timeout_duration: float = Field(
+        default=0.1, description="Timeout duration in seconds"
+    )
+    retry_attempts: int = Field(default=3, description="Retry attempts count")
+    retry_delay: float = Field(default=0.001, description="Retry delay in seconds")
 
 
 class TestService:
@@ -115,141 +128,141 @@ class DecoratorScenarios:
 
     INJECT_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "inject_basic_dependency",
-            DecoratorOperationType.INJECT_BASIC,
-            True,
-            None,
-            None,
-            True,
+            name="inject_basic_dependency",
+            operation=DecoratorOperationType.INJECT_BASIC,
+            should_succeed=True,
+            error_type=None,
+            error_pattern=None,
+            requires_container_setup=True,
         ),
         DecoratorTestCase(
-            "inject_missing_dependency",
-            DecoratorOperationType.INJECT_MISSING,
-            True,
+            name="inject_missing_dependency",
+            operation=DecoratorOperationType.INJECT_MISSING,
+            should_succeed=True,
         ),
         DecoratorTestCase(
-            "inject_with_provided_kwarg",
-            DecoratorOperationType.INJECT_PROVIDED,
-            True,
-            None,
-            None,
-            True,
+            name="inject_with_provided_kwarg",
+            operation=DecoratorOperationType.INJECT_PROVIDED,
+            should_succeed=True,
+            error_type=None,
+            error_pattern=None,
+            requires_container_setup=True,
         ),
     ]
     LOG_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "log_operation_basic",
-            DecoratorOperationType.LOG_OPERATION_BASIC,
-            True,
+            name="log_operation_basic",
+            operation=DecoratorOperationType.LOG_OPERATION_BASIC,
+            should_succeed=True,
         ),
         DecoratorTestCase(
-            "log_operation_exception",
-            DecoratorOperationType.LOG_OPERATION_EXCEPTION,
-            False,
-            ValueError,
-            "Test error",
-            False,
-            True,
+            name="log_operation_exception",
+            operation=DecoratorOperationType.LOG_OPERATION_EXCEPTION,
+            should_succeed=False,
+            error_type=ValueError,
+            error_pattern="Test error",
+            requires_container_setup=False,
+            with_exception_handling=True,
         ),
     ]
     TRACK_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "track_performance_basic",
-            DecoratorOperationType.TRACK_PERFORMANCE_BASIC,
-            True,
+            name="track_performance_basic",
+            operation=DecoratorOperationType.TRACK_PERFORMANCE_BASIC,
+            should_succeed=True,
         ),
         DecoratorTestCase(
-            "track_performance_exception",
-            DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION,
-            False,
-            RuntimeError,
-            "Timed failure",
-            False,
-            True,
+            name="track_performance_exception",
+            operation=DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION,
+            should_succeed=False,
+            error_type=RuntimeError,
+            error_pattern="Timed failure",
+            requires_container_setup=False,
+            with_exception_handling=True,
         ),
     ]
     RAILWAY_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "railway_success",
-            DecoratorOperationType.RAILWAY_SUCCESS,
-            True,
+            name="railway_success",
+            operation=DecoratorOperationType.RAILWAY_SUCCESS,
+            should_succeed=True,
         ),
         DecoratorTestCase(
-            "railway_exception",
-            DecoratorOperationType.RAILWAY_EXCEPTION,
-            True,
+            name="railway_exception",
+            operation=DecoratorOperationType.RAILWAY_EXCEPTION,
+            should_succeed=True,
         ),
     ]
     RETRY_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "retry_success_first_attempt",
-            DecoratorOperationType.RETRY_SUCCESS_FIRST,
-            True,
-            None,
-            None,
-            False,
-            False,
-            0.1,
-            3,
-            0.001,
+            name="retry_success_first_attempt",
+            operation=DecoratorOperationType.RETRY_SUCCESS_FIRST,
+            should_succeed=True,
+            error_type=None,
+            error_pattern=None,
+            requires_container_setup=False,
+            with_exception_handling=False,
+            timeout_duration=0.1,
+            retry_attempts=3,
+            retry_delay=0.001,
         ),
         DecoratorTestCase(
-            "retry_success_after_failures",
-            DecoratorOperationType.RETRY_SUCCESS_AFTER_FAILURES,
-            True,
-            None,
-            None,
-            False,
-            False,
-            0.1,
-            3,
-            0.001,
+            name="retry_success_after_failures",
+            operation=DecoratorOperationType.RETRY_SUCCESS_AFTER_FAILURES,
+            should_succeed=True,
+            error_type=None,
+            error_pattern=None,
+            requires_container_setup=False,
+            with_exception_handling=False,
+            timeout_duration=0.1,
+            retry_attempts=3,
+            retry_delay=0.001,
         ),
         DecoratorTestCase(
-            "retry_exhausted",
-            DecoratorOperationType.RETRY_EXHAUSTED,
-            False,
-            ValueError,
-            "Always fails",
-            False,
-            True,
-            0.1,
-            2,
-            0.001,
+            name="retry_exhausted",
+            operation=DecoratorOperationType.RETRY_EXHAUSTED,
+            should_succeed=False,
+            error_type=ValueError,
+            error_pattern="Always fails",
+            requires_container_setup=False,
+            with_exception_handling=True,
+            timeout_duration=0.1,
+            retry_attempts=2,
+            retry_delay=0.001,
         ),
     ]
     TIMEOUT_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "timeout_success",
-            DecoratorOperationType.TIMEOUT_SUCCESS,
-            True,
-            None,
-            None,
-            False,
-            False,
-            1.0,
+            name="timeout_success",
+            operation=DecoratorOperationType.TIMEOUT_SUCCESS,
+            should_succeed=True,
+            error_type=None,
+            error_pattern=None,
+            requires_container_setup=False,
+            with_exception_handling=False,
+            timeout_duration=1.0,
         ),
         DecoratorTestCase(
-            "timeout_exceeded",
-            DecoratorOperationType.TIMEOUT_EXCEEDED,
-            False,
-            FlextExceptions.TimeoutError,
-            None,
-            False,
-            True,
-            0.005,
+            name="timeout_exceeded",
+            operation=DecoratorOperationType.TIMEOUT_EXCEEDED,
+            should_succeed=False,
+            error_type=FlextExceptions.TimeoutError,
+            error_pattern=None,
+            requires_container_setup=False,
+            with_exception_handling=True,
+            timeout_duration=0.005,
         ),
     ]
     COMBINED_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
         DecoratorTestCase(
-            "combined_basic",
-            DecoratorOperationType.COMBINED_BASIC,
-            True,
+            name="combined_basic",
+            operation=DecoratorOperationType.COMBINED_BASIC,
+            should_succeed=True,
         ),
         DecoratorTestCase(
-            "combined_with_railway",
-            DecoratorOperationType.COMBINED_WITH_RAILWAY,
-            True,
+            name="combined_with_railway",
+            operation=DecoratorOperationType.COMBINED_WITH_RAILWAY,
+            should_succeed=True,
         ),
     ]
 

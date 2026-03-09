@@ -31,7 +31,7 @@ class FlextInfraReleaseModels:
         version: str = Field(min_length=1, description="Release version")
         total: int = Field(ge=0, description="Total projects attempted")
         failures: int = Field(ge=0, description="Total projects with non-zero exit")
-        records: list[FlextInfraReleaseModels.BuildRecord] = Field(
+        records: list[BuildRecord] = Field(
             default_factory=list,
             description="Per-project build records",
         )

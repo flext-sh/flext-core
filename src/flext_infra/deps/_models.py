@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from flext_core import FlextModels
-from flext_infra import t
+from flext_infra.typings import t
 
 
 class FlextInfraDepsModels:
@@ -35,7 +35,7 @@ class FlextInfraDepsModels:
         changes: list[str] = Field(default_factory=list, description="Applied changes")
 
 
-class FlextInfraDependencyDetectionModels(FlextModels):
+class FlextInfraDependencyDetectionModels:
     """Models for dependency detection reports and analysis results."""
 
     class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):

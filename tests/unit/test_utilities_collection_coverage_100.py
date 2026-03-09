@@ -25,7 +25,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
-from tests.test_utils import assertion_helpers
+
+from ..test_utils import assertion_helpers
 
 
 class FixtureStatus(StrEnum):

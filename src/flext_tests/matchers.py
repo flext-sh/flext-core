@@ -106,13 +106,15 @@ def _as_guard_input(value: object) -> core_t.ContainerValue:
             mapping_value = _GUARD_PAYLOAD_DICT_ADAPTER.validate_python(value)
             return {key: _as_guard_input(item) for key, item in mapping_value.items()}
         except ValidationError:
-            return {}
+            empty_map: dict[str, core_t.ContainerValue] = {}
+            return empty_map
     if _is_non_string_sequence(value):
         try:
             sequence_value = _GUARD_PAYLOAD_LIST_ADAPTER.validate_python(value)
             return [_as_guard_input(seq_item) for seq_item in sequence_value]
         except ValidationError:
-            return []
+            empty_seq: list[core_t.ContainerValue] = []
+            return empty_seq
     return str(value)
 
 
@@ -480,7 +482,8 @@ class FlextTestsMatchers:
                         result_value
                     )
                 except ValidationError:
-                    extract_source = {}
+                    fallback_map: dict[str, core_t.ContainerValue] = {}
+                    extract_source = fallback_map
             else:
                 raise AssertionError(
                     params.msg
@@ -958,7 +961,7 @@ class FlextTestsMatchers:
             try:
                 seq_value = _TEST_PAYLOAD_LIST_ADAPTER.validate_python(subject_payload)
             except ValidationError:
-                seq_value = []
+                seq_value: list[t.Tests.ContainerValue] = []
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -1081,7 +1084,7 @@ class FlextTestsMatchers:
                     subject_payload
                 )
             except ValidationError:
-                mapping_value = {}
+                mapping_value: dict[str, t.Tests.ContainerValue] = {}
             if params.keys is not None:
                 key_set: set[object] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
@@ -1183,7 +1186,7 @@ class FlextTestsMatchers:
                             or f"Attribute {attr}: expected {expected_val!r}, got {actual_val!r}"
                         )
         if params.deep is not None:
-            if not isinstance(subject_payload, BaseModel | Mapping):
+            if not isinstance(subject_payload, (BaseModel, dict)):
                 raise AssertionError(
                     params.msg
                     or f"Deep matching requires dict or model, got {type(subject_payload).__name__}"

@@ -66,7 +66,7 @@ class ContextScenarios:
         ("special_chars", "key!@#$%^&*()"),
         ("long_key", "k" * 1000),
     ]
-    EDGE_CASE_VALUES: ClassVar[list[tuple[str, object]]] = [
+    EDGE_CASE_VALUES: ClassVar[list[tuple[str, tests_t.Tests.ContainerValue]]] = [
         ("long_value", "v" * 10000),
         (
             "complex_nested",
@@ -110,7 +110,7 @@ class TestFlextContext:
     @pytest.mark.parametrize(
         ("key", "value", "expected"),
         ContextScenarios.SET_GET_CASES,
-        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
+        ids=[name for name, _, _ in ContextScenarios.SET_GET_CASES],
     )
     def test_context_set_get_value(
         self,
@@ -305,7 +305,7 @@ class TestFlextContext:
     @pytest.mark.parametrize(
         ("scope", "value"),
         ContextScenarios.SCOPE_CASES,
-        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
+        ids=[name for name, _ in ContextScenarios.SCOPE_CASES],
     )
     def test_context_scoped_access(
         self,
@@ -349,7 +349,7 @@ class TestFlextContext:
     @pytest.mark.parametrize(
         ("key_name", "special_key"),
         ContextScenarios.EDGE_CASE_KEYS,
-        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
+        ids=[name for name, _ in ContextScenarios.EDGE_CASE_KEYS],
     )
     def test_context_edge_case_special_characters(
         self,
@@ -369,24 +369,17 @@ class TestFlextContext:
     @pytest.mark.parametrize(
         ("value_name", "special_value"),
         ContextScenarios.EDGE_CASE_VALUES,
-        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
+        ids=[name for name, _ in ContextScenarios.EDGE_CASE_VALUES],
     )
     def test_context_edge_case_special_values(
         self,
         test_context: FlextContext,
         value_name: str,
-        special_value: object,
+        special_value: tests_t.Tests.ContainerValue,
     ) -> None:
         """Test context with special values."""
         context = test_context
-        converted_value: t.ContainerValue = (
-            special_value
-            if isinstance(
-                special_value,
-                (str, int, float, bool, type(None), list, dict),
-            )
-            else str(special_value)
-        )
+        converted_value: t.ContainerValue = special_value
         context.set(f"{value_name}_key", converted_value).value
         result = context.get(f"{value_name}_key")
         _ = u.Tests.Result.assert_success(result)

@@ -59,26 +59,50 @@ class TypeScenarios:
     """Factory for type system test scenarios with centralized test data."""
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T", TypeVarCategory.CORE, T, True),
-        TypeVarTestCase("U", TypeVarCategory.CORE, U, True),
-        TypeVarTestCase("E", TypeVarCategory.CORE, E, True),
-        TypeVarTestCase("R", TypeVarCategory.CORE, R, True),
-        TypeVarTestCase("ResultT", TypeVarCategory.CORE, ResultT, True),
+        TypeVarTestCase(name="T", category=TypeVarCategory.CORE, type_var=T),
+        TypeVarTestCase(name="U", category=TypeVarCategory.CORE, type_var=U),
+        TypeVarTestCase(name="E", category=TypeVarCategory.CORE, type_var=E),
+        TypeVarTestCase(name="R", category=TypeVarCategory.CORE, type_var=R),
+        TypeVarTestCase(
+            name="ResultT",
+            category=TypeVarCategory.CORE,
+            type_var=ResultT,
+        ),
     ]
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_co", TypeVarCategory.COVARIANT, T_co, True),
+        TypeVarTestCase(name="T_co", category=TypeVarCategory.COVARIANT, type_var=T_co),
     ]
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True),
+        TypeVarTestCase(
+            name="T_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=T_contra,
+        ),
     ]
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase(
+            name="Command",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+        ),
+        TypeVarTestCase(
+            name="Query",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+        ),
+        TypeVarTestCase(
+            name="Event",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+        ),
+        TypeVarTestCase(
+            name="Message",
+            category=TypeVarCategory.CQRS,
+            type_var=t.ContainerValue,
+        ),
     ]
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("P", TypeVarCategory.PARAMSPEC, P, True),
+        TypeVarTestCase(name="P", category=TypeVarCategory.PARAMSPEC, type_var=P),
     ]
 
     @staticmethod

@@ -22,7 +22,8 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextExceptions, FlextResult, c, t
-from tests.test_utils import assertion_helpers
+
+from ..test_utils import assertion_helpers
 
 
 class ExceptionCreationScenario(BaseModel):
@@ -432,7 +433,7 @@ class TestExceptionFactory:
     @pytest.mark.parametrize(
         ("message", "kwargs", "expected_type"),
         ExceptionScenarios.FACTORY_CREATION,
-        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
+        ids=[message for message, _, _ in ExceptionScenarios.FACTORY_CREATION],
     )
     def test_create_error_auto_detection(
         self,

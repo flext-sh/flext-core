@@ -21,12 +21,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, FlextResult, m, p, t, u
 
@@ -47,15 +46,19 @@ class UtilityOperationType(StrEnum):
     TEXT_TRUNCATION = "text_truncation"
 
 
-@dataclass(frozen=True, slots=True)
-class UtilityTestCase:
+class UtilityTestCase(BaseModel):
     """Test case for utility operations."""
 
-    operation: UtilityOperationType
-    input_data: t.ContainerValue | None = None
-    expected_type: type | None = None
-    should_succeed: bool = True
-    description: str = ""
+    model_config = ConfigDict(frozen=True)
+    operation: UtilityOperationType = Field(description="Utility operation under test")
+    input_data: t.ContainerValue | None = Field(
+        default=None, description="Input data for operation"
+    )
+    expected_type: type | None = Field(default=None, description="Expected output type")
+    should_succeed: bool = Field(
+        default=True, description="Whether operation should succeed"
+    )
+    description: str = Field(default="", description="Scenario description")
 
 
 class UtilityScenarios:

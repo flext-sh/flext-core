@@ -5,11 +5,11 @@ from __future__ import annotations
 import time
 import warnings
 from collections.abc import Callable
-from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from pydantic import BaseModel, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
@@ -51,9 +51,8 @@ class _FakeLogger:
         return None
 
 
-@dataclass
-class _ObjWithLogger:
-    logger: object
+class _ObjWithLogger(BaseModel):
+    logger: object = Field(description="Logger instance holder")
 
 
 def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:

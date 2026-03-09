@@ -30,18 +30,20 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
         module_renames_raw = self.config.get("module_renames", {})
         symbol_renames_raw = self.config.get("import_symbol_renames", {})
         target_modules = set(u.Infra.Refactor.string_list(target_modules_raw))
+        module_renames: dict[str, str]
         try:
             module_renames = TypeAdapter(dict[str, str]).validate_python(
                 module_renames_raw,
             )
         except ValidationError:
-            module_renames: dict[str, str] = {}
+            module_renames = {}
+        symbol_renames: dict[str, str]
         try:
             symbol_renames = TypeAdapter(dict[str, str]).validate_python(
                 symbol_renames_raw,
             )
         except ValidationError:
-            symbol_renames: dict[str, str] = {}
+            symbol_renames = {}
         if not target_modules and (not module_renames) and (not symbol_renames):
             return (tree, [])
         transformer = FlextInfraRefactorSymbolPropagator(

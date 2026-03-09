@@ -17,11 +17,11 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextResult, FlextSettings
-from tests.test_utils import assertion_helpers
+
+from ..test_utils import assertion_helpers
 
 
 class ResultChainingScenario(BaseModel):
@@ -43,25 +43,25 @@ class CoverageScenarios:
 
     CHAINING_SCENARIOS: ClassVar[list[ResultChainingScenario]] = [
         ResultChainingScenario(
-            "map_chaining",
-            "hello",
-            ["upper", "append_excl"],
-            True,
-            "HELLO!",
+            name="map_chaining",
+            initial_value="hello",
+            operations=["upper", "append_excl"],
+            expected_success=True,
+            expected_value="HELLO!",
         ),
         ResultChainingScenario(
-            "flat_map_chaining",
-            "hi",
-            ["double", "double"],
-            True,
-            "hihihihi",
+            name="flat_map_chaining",
+            initial_value="hi",
+            operations=["double", "double"],
+            expected_success=True,
+            expected_value="hihihihi",
         ),
         ResultChainingScenario(
-            "error_propagation",
-            "input",
-            ["fail", "upper"],
-            False,
-            None,
+            name="error_propagation",
+            initial_value="input",
+            operations=["fail", "upper"],
+            expected_success=False,
+            expected_value=None,
         ),
     ]
 
@@ -121,7 +121,7 @@ class TestPhase2FinalCoveragePush:
         )
         assert config.app_name == "complete_test"
         assert config.max_retry_attempts == 5
-        assert config.timeout_seconds == pytest.approx(60.0)
+        assert config.timeout_seconds == 60.0
 
     def test_config_json_serialization(self) -> None:
         """Test config JSON serialization and deserialization."""

@@ -15,9 +15,9 @@ import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
 from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
-from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
+from ..test_utils import assertion_helpers
 
 
 class UserServiceEntity(BaseModel):
@@ -43,7 +43,7 @@ class UserQueryService(FlextService[bool]):
     - This pattern separates status from data retrieval
     """
 
-    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=dict)
+    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=lambda: {})
     _should_fail: bool = PrivateAttr(default=False)
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
 
@@ -118,7 +118,7 @@ class UserQueryService(FlextService[bool]):
 class NotificationService(FlextService[str]):
     """Real notification service using FlextService."""
 
-    _sent_notifications: list[str] = PrivateAttr(default_factory=list)
+    _sent_notifications: list[str] = PrivateAttr(default_factory=lambda: [])
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = PrivateAttr(default=False)
 

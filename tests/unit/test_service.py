@@ -128,25 +128,33 @@ class ServiceScenarios:
     """Centralized service test scenarios using FlextConstants."""
 
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
-        ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
         ServiceScenario(
-            "complex_valid",
-            ServiceScenarioType.COMPLEX_VALID,
-            True,
-            {"name": "test"},
+            name="basic_user_service",
+            scenario_type=ServiceScenarioType.BASIC_USER,
+            is_valid_expected=True,
         ),
         ServiceScenario(
-            "complex_invalid",
-            ServiceScenarioType.COMPLEX_INVALID,
-            False,
-            {"name": ""},
+            name="complex_valid",
+            scenario_type=ServiceScenarioType.COMPLEX_VALID,
+            is_valid_expected=True,
+            service_kwargs={"name": "test"},
         ),
-        ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
         ServiceScenario(
-            "exception_handling",
-            ServiceScenarioType.EXCEPTION,
-            False,
-            {"should_raise": True},
+            name="complex_invalid",
+            scenario_type=ServiceScenarioType.COMPLEX_INVALID,
+            is_valid_expected=False,
+            service_kwargs={"name": ""},
+        ),
+        ServiceScenario(
+            name="failing_service",
+            scenario_type=ServiceScenarioType.FAILING,
+            is_valid_expected=False,
+        ),
+        ServiceScenario(
+            name="exception_handling",
+            scenario_type=ServiceScenarioType.EXCEPTION,
+            is_valid_expected=False,
+            service_kwargs={"should_raise": True},
         ),
     ]
 
@@ -161,11 +169,11 @@ class ServiceScenarios:
             ServiceScenarioType.COMPLEX_INVALID,
         }:
             name_val = kwargs_raw.get("name", "test")
-            name = str(name_val) if name_val is not None else "test"
+            name = str(name_val)
             amount_val = kwargs_raw.get("amount", 0)
             amount = int(amount_val) if isinstance(amount_val, (int, float)) else 0
             enabled_val = kwargs_raw.get("enabled", True)
-            enabled = bool(enabled_val) if enabled_val is not None else True
+            enabled = bool(enabled_val)
             return ComplexService.model_construct(
                 name=name,
                 amount=amount,
@@ -175,9 +183,7 @@ class ServiceScenarios:
             return FailingService()
         if scenario.scenario_type == ServiceScenarioType.EXCEPTION:
             should_raise_val = kwargs_raw.get("should_raise", False)
-            should_raise = (
-                bool(should_raise_val) if should_raise_val is not None else False
-            )
+            should_raise = bool(should_raise_val)
             return ExceptionService.model_construct(should_raise=should_raise)
         error_msg = f"Unknown scenario type: {scenario.scenario_type}"
         raise ValueError(error_msg)

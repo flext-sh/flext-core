@@ -22,7 +22,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, FlextResult, c, h, m, t, x
 from flext_tests import FlextTestsUtilities, u
-from tests.test_utils import assertion_helpers
+
+from ..test_utils import assertion_helpers
 
 
 class ConcreteTestHandler(h[str, str]):

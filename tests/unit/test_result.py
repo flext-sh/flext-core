@@ -28,7 +28,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import c, m, p, r
 from flext_tests import t, u
-from tests.test_utils import assertion_helpers
+
+from ..test_utils import assertion_helpers
 
 
 class ResultOperationType(StrEnum):
@@ -64,70 +65,139 @@ class ResultScenario(BaseModel):
         description="Optional expected result payload",
     )
 
+    def __init__(
+        self,
+        name: str,
+        operation_type: ResultOperationType,
+        value: t.ContainerValue,
+        *,
+        is_success_expected: bool = True,
+        expected_result: t.ContainerValue | None = None,
+    ) -> None:
+        super().__init__(
+            name=name,
+            operation_type=operation_type,
+            value=value,
+            is_success_expected=is_success_expected,
+            expected_result=expected_result,
+        )
+
 
 class ResultScenarios:
     """Centralized result test scenarios using c."""
 
     STRING_SCENARIOS: ClassVar[list[ResultScenario]] = [
         ResultScenario(
-            "creation_success_string",
-            ResultOperationType.CREATION_SUCCESS,
-            "success",
+            name="creation_success_string",
+            operation_type=ResultOperationType.CREATION_SUCCESS,
+            value="success",
         ),
         ResultScenario(
-            "creation_failure_message",
-            ResultOperationType.CREATION_FAILURE,
-            "error message",
-            False,
+            name="creation_failure_message",
+            operation_type=ResultOperationType.CREATION_FAILURE,
+            value="error message",
+            is_success_expected=False,
         ),
-        ResultScenario("unwrap_or_success", ResultOperationType.UNWRAP_OR, "value"),
         ResultScenario(
-            "unwrap_or_failure",
-            ResultOperationType.UNWRAP_OR,
-            "error",
-            False,
+            name="unwrap_or_success",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="value",
         ),
-        ResultScenario("map_failure", ResultOperationType.MAP, "error", False),
         ResultScenario(
-            "flat_map_failure",
-            ResultOperationType.FLAT_MAP,
-            "error",
-            False,
+            name="unwrap_or_failure",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="error",
+            is_success_expected=False,
         ),
-        ResultScenario("alt_success", ResultOperationType.ALT, "success"),
-        ResultScenario("alt_failure", ResultOperationType.ALT, "original_error", False),
-        ResultScenario("lash_success", ResultOperationType.LASH, "success"),
-        ResultScenario("lash_failure", ResultOperationType.LASH, "error", False),
-        ResultScenario("or_operator_success", ResultOperationType.OR_OPERATOR, "value"),
         ResultScenario(
-            "or_operator_failure",
-            ResultOperationType.OR_OPERATOR,
-            "error",
-            False,
+            name="map_failure",
+            operation_type=ResultOperationType.MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="flat_map_failure",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="alt_success",
+            operation_type=ResultOperationType.ALT,
+            value="success",
+        ),
+        ResultScenario(
+            name="alt_failure",
+            operation_type=ResultOperationType.ALT,
+            value="original_error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="lash_success",
+            operation_type=ResultOperationType.LASH,
+            value="success",
+        ),
+        ResultScenario(
+            name="lash_failure",
+            operation_type=ResultOperationType.LASH,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="or_operator_success",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="value",
+        ),
+        ResultScenario(
+            name="or_operator_failure",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="error",
+            is_success_expected=False,
         ),
     ]
     INT_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario("unwrap_success", ResultOperationType.UNWRAP, 42),
-        ResultScenario("map_success", ResultOperationType.MAP, 5),
-        ResultScenario("flat_map_success", ResultOperationType.FLAT_MAP, 5),
-        ResultScenario("filter_passes", ResultOperationType.FILTER, 10),
-        ResultScenario("filter_fails", ResultOperationType.FILTER, 3, False),
         ResultScenario(
-            "railway_composition",
-            ResultOperationType.RAILWAY_COMPOSITION,
-            5,
+            name="unwrap_success",
+            operation_type=ResultOperationType.UNWRAP,
+            value=42,
+        ),
+        ResultScenario(
+            name="map_success",
+            operation_type=ResultOperationType.MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="flat_map_success",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="filter_passes",
+            operation_type=ResultOperationType.FILTER,
+            value=10,
+        ),
+        ResultScenario(
+            name="filter_fails",
+            operation_type=ResultOperationType.FILTER,
+            value=3,
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="railway_composition",
+            operation_type=ResultOperationType.RAILWAY_COMPOSITION,
+            value=5,
         ),
     ]
     BOOL_SCENARIOS: ClassVar[list[ResultScenario]] = [
         ResultScenario(
-            "bool_conversion_success",
-            ResultOperationType.BOOL_CONVERSION,
-            True,
+            name="bool_conversion_success",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=True,
         ),
         ResultScenario(
-            "bool_conversion_failure",
-            ResultOperationType.BOOL_CONVERSION,
-            False,
+            name="bool_conversion_failure",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=False,
         ),
     ]
 
@@ -508,15 +578,15 @@ class Testr:
             resource_created.append("created")
             return ["resource"]
 
-        def op(resource: list[str]) -> r[str]:
+        def op(resource: list[str]) -> r[t.ContainerValue]:
             resource.append("used")
-            return r[str].ok("success")
+            return r[t.ContainerValue].ok("success")
 
         def cleanup(resource: list[str]) -> None:
             resource_cleaned.append("cleaned")
             resource.clear()
 
-        result = r.with_resource(factory, op, cleanup)
+        result: r[t.ContainerValue] = r.with_resource(factory, op, cleanup)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
         assert len(resource_created) == 1
@@ -569,7 +639,7 @@ class Testr:
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data = {"key": "value"}
+        error_data: dict[str, t.ContainerValue] = {"key": "value"}
         result: r[str] = cast("r[str]", r.fail("error", error_data=error_data))
         assert result.error_data == m.ConfigMap(root=error_data)
         success = r[str].ok("test")
@@ -594,9 +664,8 @@ class Testr:
     def test_flow_through_empty(self) -> None:
         """Test flow_through with no functions."""
         result = r[int].ok(5)
-        final = result.flow_through()
-        assert final.is_success
-        assert final.value == 5
+        assert result.flow_through() is result
+        assert result.value == 5
 
     def test_ok_with_none_raises(self) -> None:
         """Test ok() raises ValueError for None value."""

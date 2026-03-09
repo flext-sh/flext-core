@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import operator
 
-import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import m, t, u
@@ -28,6 +27,57 @@ class SimpleObj(BaseModel):
 
     name: str = Field(description="Simple object name")
     value: int = Field(description="Simple object value")
+
+
+class _DoubleOp(BaseModel):
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, (int, float)):
+            return value * 2
+        return value
+
+
+class _GreaterThanTwoOp(BaseModel):
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, (int, float)):
+            return value > 2
+        return False
+
+
+class _TimesTenOp(BaseModel):
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, (int, float)):
+            return value * 10
+        return value
+
+
+class _PlusFiveOp(BaseModel):
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, (int, float)):
+            return value + 5
+        return value
+
+
+class _GroupLenOp(BaseModel):
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, str):
+            return len(value)
+        return 0
+
+
+class _GetKeyAOp(BaseModel):
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, dict):
+            inner = value.get("a")
+            return inner if inner is not None else 0
+        return 0
+
+
+_DOUBLE_OP = _DoubleOp()
+_GT_TWO_OP = _GreaterThanTwoOp()
+_TIMES_TEN_OP = _TimesTenOp()
+_PLUS_FIVE_OP = _PlusFiveOp()
+_GROUP_LEN_OP = _GroupLenOp()
+_GET_KEY_A_OP = _GetKeyAOp()
 
 
 class TestuMapperExtract:
@@ -138,10 +188,10 @@ class TestuMapperAccessors:
 
     def test_take_slice(self) -> None:
         """Test take slicing."""
-        items: list[int] = [1, 2, 3, 4, 5]
+        items: list[t.ContainerValue] = [1, 2, 3, 4, 5]
         assert u.Mapper.take(items, 2) == [1, 2]
         assert u.Mapper.take(items, 2, from_start=False) == [4, 5]
-        d = {"a": 1, "b": 2, "c": 3}
+        d: dict[str, t.ContainerValue] = {"a": 1, "b": 2, "c": 3}
         taken = u.Mapper.take(d, 2)
         assert len(taken) == 2
         assert "a" in taken and "b" in taken
@@ -165,7 +215,9 @@ class TestuMapperUtils:
     def test_as_conversion(self) -> None:
         """Test as_ type conversion."""
         assert u.Mapper.as_("123", int) == 123
-        assert u.Mapper.as_("12.3", float) == pytest.approx(12.3)
+        converted = u.Mapper.as_("12.3", float)
+        assert isinstance(converted, float)
+        assert abs(converted - 12.3) < 1e-9
         assert u.Mapper.as_("true", bool) is True
         assert u.Mapper.as_("invalid", int, default=0) == 0
 
@@ -217,7 +269,7 @@ class TestuMapperConversions:
 
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value."""
-        obj = SimpleObj("test", 1)
+        obj = SimpleObj(name="test", value=1)
         payload: dict[str, t.ContainerValue] = {"obj": obj}
         res = u.Mapper.convert_to_json_value(payload)
         assert isinstance(res, dict)
@@ -226,7 +278,7 @@ class TestuMapperConversions:
 
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
-        d: dict[str, t.ContainerValue] = {"a": SimpleObj("test", 1)}
+        d: dict[str, t.ContainerValue] = {"a": SimpleObj(name="test", value=1)}
         res = u.Mapper.convert_to_json_value(d)
         if isinstance(res, dict):
             assert isinstance(res["a"], str)
@@ -236,7 +288,9 @@ class TestuMapperConversions:
 
     def test_convert_list_to_json(self) -> None:
         """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
-        test_list: list[dict[str, t.ContainerValue]] = [{"a": SimpleObj("test", 1)}]
+        test_list: list[dict[str, t.ContainerValue]] = [
+            {"a": SimpleObj(name="test", value=1)}
+        ]
         res = u.Mapper.convert_to_json_value(test_list)
         if isinstance(res, list) and isinstance(res[0], dict):
             assert isinstance(res[0]["a"], str)
@@ -252,8 +306,8 @@ class TestuMapperBuild:
         """Test build pipeline."""
         ops: dict[str, t.ContainerValue] | None = {
             "ensure": "list",
-            "map": lambda x: x * 2,
-            "filter": lambda x: x > 2,
+            "map": _double,
+            "filter": _greater_than_two,
         }
         res = u.Mapper.build([1, 2, 3, 4], ops=ops)
         assert res == [6, 8]
@@ -261,11 +315,11 @@ class TestuMapperBuild:
     def test_build_all_ops(self) -> None:
         """Test all build operations."""
         input_data = [1, 2, 1, 3, 4]
-        ops = {
+        ops: dict[str, t.ContainerValue] = {
             "ensure": "list",
-            "filter": lambda x: x > 1,
-            "map": lambda x: x * 10,
-            "process": lambda x: x + 5,
+            "filter": _greater_than_two,
+            "map": _times_ten,
+            "process": _plus_five,
             "sort": True,
             "unique": True,
             "slice": (0, 2),
@@ -281,7 +335,7 @@ class TestuMapperBuild:
 
     def test_build_group(self) -> None:
         """Test build group - keys are converted to strings for ConfigurationDict."""
-        ops: dict[str, t.ContainerValue] | None = {"group": len}
+        ops: dict[str, t.ContainerValue] | None = {"group": _group_len}
         res = u.Mapper.build(["cat", "dog", "ant"], ops=ops)
         assert res == {"3": ["cat", "dog", "ant"]}
 
@@ -324,8 +378,8 @@ class TestuMapperAdvanced:
     def test_model_dump_extraction(self) -> None:
         """Test extraction via model_dump."""
 
-        class Dumpable:
-            a: int = 1
+        class Dumpable(BaseModel):
+            a: int = Field(default=1, description="Dumpable value")
 
         obj = Dumpable()
         assert u.Mapper.extract(obj, "a").value == 1
@@ -333,11 +387,11 @@ class TestuMapperAdvanced:
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
-        ops: dict[str, t.ContainerValue] | None = {"convert": int}
+        ops: dict[str, t.ContainerValue] | None = {"convert": "int"}
         res = u.Mapper.build("invalid", ops=ops)
         assert res == 0
         ops_default: dict[str, t.ContainerValue] | None = {
-            "convert": int,
+            "convert": "int",
             "convert_default": 10,
         }
         res = u.Mapper.build("invalid", ops=ops_default)
@@ -354,13 +408,13 @@ class TestuMapperAdvanced:
 
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
-        data = [{"a": 2}, {"a": 1}]
+        data: list[dict[str, t.ContainerValue]] = [{"a": 2}, {"a": 1}]
         ops_sort: dict[str, t.ContainerValue] | None = {"sort": "a"}
         res = u.Mapper.build(data, ops=ops_sort)
         assert isinstance(res, list) and len(res) > 0
         assert isinstance(res[0], dict) and res[0].get("a") == 1
         ops_getter: dict[str, t.ContainerValue] | None = {
-            "sort": operator.itemgetter("a"),
+            "sort": _get_key_a,
         }
         res = u.Mapper.build(data, ops=ops_getter)
         assert isinstance(res, list) and len(res) > 0

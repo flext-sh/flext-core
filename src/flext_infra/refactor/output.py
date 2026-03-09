@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from flext_infra import c, m
+from flext_infra import c
+from flext_infra.refactor import _models_namespace_enforcer as nem
 
 
 def render_namespace_enforcement_report(
-    report: m.Infra.Refactor.NamespaceEnforcementModels.WorkspaceEnforcementReport,
+    report: nem.NamespaceWorkspaceEnforcementReport,
 ) -> str:
     """Render a human-readable namespace enforcement report."""
     max_loose = c.Infra.Refactor.NAMESPACE_MAX_RENDERED_LOOSE_OBJECTS

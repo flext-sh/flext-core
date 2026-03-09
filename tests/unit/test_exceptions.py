@@ -459,7 +459,7 @@ class Teste:
             assert (
                 timeout_error.message == "Operation timeout"
                 and timeout_error.timeout_seconds is not None
-                and (timeout_error.timeout_seconds == pytest.approx(30.0))
+                and (abs(timeout_error.timeout_seconds - 30.0) < 1e-9)
             )
         elif scenario.exception_type == e.AuthenticationError:
             auth_error: e.AuthenticationError = e.AuthenticationError(

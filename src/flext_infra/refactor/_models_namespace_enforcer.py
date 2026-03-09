@@ -278,39 +278,37 @@ class NamespaceParseFailureViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
     project: str = Field(min_length=1)
     project_root: str = Field()
-    facade_statuses: list["NamespaceFacadeStatus"] = Field(
+    facade_statuses: list[NamespaceFacadeStatus] = Field(
         default_factory=_empty_facade_statuses,
     )
-    loose_objects: list["NamespaceLooseObjectViolation"] = Field(
+    loose_objects: list[NamespaceLooseObjectViolation] = Field(
         default_factory=_empty_loose_objects,
     )
-    import_violations: list["NamespaceImportAliasViolation"] = Field(
+    import_violations: list[NamespaceImportAliasViolation] = Field(
         default_factory=_empty_import_violations,
     )
-    internal_import_violations: list["NamespaceInternalImportViolation"] = Field(
+    internal_import_violations: list[NamespaceInternalImportViolation] = Field(
         default_factory=_empty_internal_import_violations,
     )
-    manual_protocol_violations: list["NamespaceManualProtocolViolation"] = Field(
+    manual_protocol_violations: list[NamespaceManualProtocolViolation] = Field(
         default_factory=_empty_manual_protocol_violations,
     )
-    cyclic_imports: list["NamespaceCyclicImportViolation"] = Field(
+    cyclic_imports: list[NamespaceCyclicImportViolation] = Field(
         default_factory=_empty_cyclic_imports,
     )
-    runtime_alias_violations: list["NamespaceRuntimeAliasViolation"] = Field(
+    runtime_alias_violations: list[NamespaceRuntimeAliasViolation] = Field(
         default_factory=_empty_runtime_alias_violations,
     )
-    future_violations: list["NamespaceFutureAnnotationsViolation"] = Field(
+    future_violations: list[NamespaceFutureAnnotationsViolation] = Field(
         default_factory=_empty_future_violations,
     )
-    manual_typing_violations: list["NamespaceManualTypingAliasViolation"] = Field(
+    manual_typing_violations: list[NamespaceManualTypingAliasViolation] = Field(
         default_factory=_empty_manual_typing_violations,
     )
-    compatibility_alias_violations: list["NamespaceCompatibilityAliasViolation"] = (
-        Field(
-            default_factory=_empty_compatibility_alias_violations,
-        )
+    compatibility_alias_violations: list[NamespaceCompatibilityAliasViolation] = Field(
+        default_factory=_empty_compatibility_alias_violations,
     )
-    parse_failures: list["NamespaceParseFailureViolation"] = Field(
+    parse_failures: list[NamespaceParseFailureViolation] = Field(
         default_factory=_empty_parse_failures,
     )
     files_scanned: int = Field(default=0, ge=0)
@@ -354,7 +352,7 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
 
 class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
     workspace: str = Field(min_length=1)
-    projects: list["NamespaceProjectEnforcementReport"] = Field(
+    projects: list[NamespaceProjectEnforcementReport] = Field(
         default_factory=_empty_project_reports,
     )
     total_facades_missing: int = Field(default=0, ge=0)
