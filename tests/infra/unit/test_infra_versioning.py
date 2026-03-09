@@ -1,6 +1,9 @@
 """Tests for FlextInfraVersioningService.
 
 Tests cover semantic version parsing, bumping, and branch tag extraction.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,290 +12,151 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
 from flext_infra import FlextInfraUtilitiesVersioning
+from flext_tests import tm
 
 
-class TestFlextInfraVersioningService:
-    """Test suite for FlextInfraVersioningService."""
+@pytest.fixture
+def service() -> FlextInfraUtilitiesVersioning:
+    """Create a versioning service instance."""
+    return FlextInfraUtilitiesVersioning()
 
-    @pytest.fixture
-    def service(self) -> FlextInfraUtilitiesVersioning:
-        """Create a versioning service instance."""
-        return FlextInfraUtilitiesVersioning()
 
-    def test_parse_semver_valid_version(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test parsing a valid semantic version."""
+class TestParseSemver:
+    """Tests for semantic version parsing."""
+
+    def test_valid_version(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.parse_semver("1.2.3"), eq=(1, 2, 3))
+
+    def test_with_dev_suffix(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.parse_semver("1.2.3-dev"), eq=(1, 2, 3))
+
+    def test_zero_version(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.parse_semver("0.0.0"), eq=(0, 0, 0))
+
+    def test_large_numbers(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.parse_semver("999.888.777"), eq=(999, 888, 777))
+
+    def test_invalid_format(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(service.parse_semver("1.2"), has="invalid semver")
+
+    def test_non_numeric(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(service.parse_semver("a.b.c"), has="invalid semver")
+
+    def test_extra_suffix(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(service.parse_semver("1.2.3-beta"), has="invalid semver")
+
+    def test_result_type(self, service: FlextInfraUtilitiesVersioning) -> None:
         result = service.parse_semver("1.2.3")
-        assert result.is_success
-        assert result.value == (1, 2, 3)
+        value = tm.ok(result, is_=tuple)
+        tm.that(len(value), eq=3)
 
-    def test_parse_semver_with_dev_suffix(
-        self,
-        service: FlextInfraUtilitiesVersioning,
+
+class TestBumpVersion:
+    """Tests for version bumping."""
+
+    def test_bump_major(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.bump_version("1.2.3", "major"), eq="2.0.0")
+
+    def test_bump_minor(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.bump_version("1.2.3", "minor"), eq="1.3.0")
+
+    def test_bump_patch(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.bump_version("1.2.3", "patch"), eq="1.2.4")
+
+    def test_bump_from_zero(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.bump_version("0.0.0", "major"), eq="1.0.0")
+
+    def test_invalid_bump_type(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(service.bump_version("1.2.3", "invalid"), has="invalid bump type")
+
+    def test_invalid_version(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(service.bump_version("not.a.version", "major"), has="invalid semver")
+
+    def test_result_type(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.bump_version("1.2.3", "major"), is_=str)
+
+
+class TestReleaseTagFromBranch:
+    """Tests for branch tag extraction."""
+
+    def test_release_pattern(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.release_tag_from_branch("release/1.2.3"), eq="v1.2.3")
+
+    def test_dev_pattern(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.release_tag_from_branch("1.2.3-dev"), eq="v1.2.3")
+
+    def test_invalid_pattern(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(
+            service.release_tag_from_branch("feature/my-feature"),
+            has="does not match release pattern",
+        )
+
+    def test_empty_string(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.fail(
+            service.release_tag_from_branch(""),
+            has="does not match release pattern",
+        )
+
+    def test_result_type(self, service: FlextInfraUtilitiesVersioning) -> None:
+        tm.ok(service.release_tag_from_branch("release/1.2.3"), is_=str)
+
+
+class TestWorkspaceVersion:
+    """Tests for workspace version reading and replacement."""
+
+    def test_current_version_success(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test parsing semantic version with -dev suffix."""
-        result = service.parse_semver("1.2.3-dev")
-        assert result.is_success
-        assert result.value == (1, 2, 3)
-
-    def test_parse_semver_zero_version(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test parsing version with zeros."""
-        result = service.parse_semver("0.0.0")
-        assert result.is_success
-        assert result.value == (0, 0, 0)
-
-    def test_parse_semver_large_numbers(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test parsing version with large numbers."""
-        result = service.parse_semver("999.888.777")
-        assert result.is_success
-        assert result.value == (999, 888, 777)
-
-    def test_parse_semver_invalid_format(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test parsing invalid version format."""
-        result = service.parse_semver("1.2")
-        assert result.is_failure
-        assert result.error and "invalid semver" in result.error
-
-    def test_parse_semver_non_numeric(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test parsing version with non-numeric parts."""
-        result = service.parse_semver("a.b.c")
-        assert result.is_failure
-        assert result.error and "invalid semver" in result.error
-
-    def test_parse_semver_extra_suffix(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test parsing version with invalid suffix."""
-        result = service.parse_semver("1.2.3-beta")
-        assert result.is_failure
-        assert result.error and "invalid semver" in result.error
-
-    def test_bump_version_major(self, service: FlextInfraUtilitiesVersioning) -> None:
-        """Test bumping major version."""
-        result = service.bump_version("1.2.3", "major")
-        assert result.is_success
-        assert result.value == "2.0.0"
-
-    def test_bump_version_minor(self, service: FlextInfraUtilitiesVersioning) -> None:
-        """Test bumping minor version."""
-        result = service.bump_version("1.2.3", "minor")
-        assert result.is_success
-        assert result.value == "1.3.0"
-
-    def test_bump_version_patch(self, service: FlextInfraUtilitiesVersioning) -> None:
-        """Test bumping patch version."""
-        result = service.bump_version("1.2.3", "patch")
-        assert result.is_success
-        assert result.value == "1.2.4"
-
-    def test_bump_version_from_zero(
-        self, service: FlextInfraUtilitiesVersioning
-    ) -> None:
-        """Test bumping from 0.0.0."""
-        result = service.bump_version("0.0.0", "major")
-        assert result.is_success
-        assert result.value == "1.0.0"
-
-    def test_bump_version_invalid_bump_type(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test bumping with invalid bump type."""
-        result = service.bump_version("1.2.3", "invalid")
-        assert result.is_failure
-        assert result.error and "invalid bump type" in result.error
-
-    def test_bump_version_invalid_version(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test bumping invalid version string."""
-        result = service.bump_version("not.a.version", "major")
-        assert result.is_failure
-        assert result.error and "invalid semver" in result.error
-
-    def test_release_tag_from_branch_release_pattern(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test extracting tag from release branch."""
-        result = service.release_tag_from_branch("release/1.2.3")
-        assert result.is_success
-        assert result.value == "v1.2.3"
-
-    def test_release_tag_from_branch_dev_pattern(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test extracting tag from dev branch."""
-        result = service.release_tag_from_branch("1.2.3-dev")
-        assert result.is_success
-        assert result.value == "v1.2.3"
-
-    def test_release_tag_from_branch_invalid_pattern(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test extracting tag from invalid branch name."""
-        result = service.release_tag_from_branch("feature/my-feature")
-        assert result.is_failure
-        assert result.error and "does not match release pattern" in result.error
-
-    def test_release_tag_from_branch_empty_string(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test extracting tag from empty branch name."""
-        result = service.release_tag_from_branch("")
-        assert result.is_failure
-        assert result.error and "does not match release pattern" in result.error
-
-    def test_parse_semver_result_type(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test that parse_semver returns properly typed FlextResult."""
-        result = service.parse_semver("1.2.3")
-        assert isinstance(result, type(r[tuple[int, int, int]].ok((0, 0, 0))))
-        assert result.is_success
-        assert isinstance(result.value, tuple)
-        assert len(result.value) == 3
-
-    def test_bump_version_result_type(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test that bump_version returns properly typed FlextResult."""
-        result = service.bump_version("1.2.3", "major")
-        assert isinstance(result, type(r[str].ok("")))
-        assert result.is_success
-        assert isinstance(result.value, str)
-
-    def test_release_tag_from_branch_result_type(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-    ) -> None:
-        """Test that release_tag_from_branch returns properly typed FlextResult."""
-        result = service.release_tag_from_branch("release/1.2.3")
-        assert isinstance(result, type(r[str].ok("")))
-        assert result.is_success
-        assert isinstance(result.value, str)
-
-    def test_current_workspace_version_success(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
-    ) -> None:
-        """Test reading current workspace version from pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\nversion = "1.2.3"\n', encoding="utf-8")
-        result = service.current_workspace_version(tmp_path)
-        assert result.is_success
-        assert result.value == "1.2.3"
+        tm.ok(service.current_workspace_version(tmp_path), eq="1.2.3")
 
-    def test_current_workspace_version_missing_file(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_current_version_missing_file(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test reading version when pyproject.toml is missing."""
-        result = service.current_workspace_version(tmp_path)
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert isinstance(result.error, str)
-        assert "file not found" in result.error or "read" in result.error
+        tm.fail(service.current_workspace_version(tmp_path))
 
-    def test_current_workspace_version_missing_project_table(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_current_version_missing_project_table(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test reading version when [project] table is missing."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[tool]\nname = "test"\n', encoding="utf-8")
-        result = service.current_workspace_version(tmp_path)
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert "version not found" in result.error
+        tm.fail(service.current_workspace_version(tmp_path), has="version not found")
 
-    def test_current_workspace_version_missing_version_field(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_current_version_missing_version_field(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test reading version when version field is missing."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\nname = "test"\n', encoding="utf-8")
-        result = service.current_workspace_version(tmp_path)
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert "version not found" in result.error
+        tm.fail(service.current_workspace_version(tmp_path), has="version not found")
 
-    def test_current_workspace_version_empty_version(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_current_version_empty_version(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test reading version when version field is empty."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\nversion = ""\n', encoding="utf-8")
-        result = service.current_workspace_version(tmp_path)
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert "version not found" in result.error
+        tm.fail(service.current_workspace_version(tmp_path), has="version not found")
 
-    def test_replace_project_version_success(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_replace_version_success(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test replacing version in project pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\nversion = "1.0.0"\n', encoding="utf-8")
-        result = service.replace_project_version(tmp_path, "2.0.0")
-        assert result.is_success
-        assert result.value is True
-        verify = service.current_workspace_version(tmp_path)
-        assert verify.is_success
-        assert verify.value == "2.0.0"
+        tm.ok(service.replace_project_version(tmp_path, "2.0.0"), eq=True)
+        tm.ok(service.current_workspace_version(tmp_path), eq="2.0.0")
 
-    def test_replace_project_version_missing_file(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_replace_version_missing_file(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test replacing version when pyproject.toml is missing."""
-        result = service.replace_project_version(tmp_path, "2.0.0")
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert "file not found" in result.error or "read" in result.error
+        tm.fail(service.replace_project_version(tmp_path, "2.0.0"))
 
-    def test_replace_project_version_missing_project_table(
-        self,
-        service: FlextInfraUtilitiesVersioning,
-        tmp_path: Path,
+    def test_replace_version_missing_project_table(
+        self, service: FlextInfraUtilitiesVersioning, tmp_path: Path
     ) -> None:
-        """Test replacing version when [project] table is missing."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[tool]\nname = "test"\n', encoding="utf-8")
-        result = service.replace_project_version(tmp_path, "2.0.0")
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert "missing [project] table" in result.error
+        tm.fail(
+            service.replace_project_version(tmp_path, "2.0.0"),
+            has="missing [project] table",
+        )

@@ -7,12 +7,14 @@ import tomlkit
 from flext_infra.deps.modernizer import EnsurePyrightConfigPhase, _unwrap_item
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 def _test_tool_config() -> FlextInfraToolConfigDocument:
     result = load_tool_config()
-    return tm.ok(result)
+    tm.that(result.is_failure, eq=False)
+    if result.is_failure:
+        raise ValueError("failed to load tool config")
+    return result.value
 
 
 class TestEnsurePyrightConfigPhase:
@@ -69,4 +71,3 @@ class TestEnsurePyrightConfigPhase:
             in changes,
             eq=True,
         )
-        tm.that(hasattr(h, "assert_ok"), eq=True)

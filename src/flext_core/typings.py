@@ -15,7 +15,13 @@ from enum import StrEnum
 from pathlib import Path
 from re import Pattern
 from types import ModuleType
-from typing import Annotated, Literal, ParamSpec, TypeAlias, TypeVar
+from typing import (
+    Annotated,
+    Literal,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+)
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -141,3 +147,12 @@ TK = TypeVar("TK")
 
 
 TV = TypeVar("TV")
+
+
+EnumT = TypeVar("EnumT", bound=StrEnum)
+
+
+type RegistryBindingKey = str | type[object]
+
+
+TValue = TypeVar("TValue")

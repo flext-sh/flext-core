@@ -16,8 +16,8 @@ from pydantic import BaseModel
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraReportingService,
     FlextInfraUtilitiesDiscovery,
+    FlextInfraUtilitiesReporting,
     c,
     m,
     t,
@@ -25,7 +25,7 @@ from flext_infra import (
 )
 
 _discovery = FlextInfraUtilitiesDiscovery()
-_reporting = FlextInfraReportingService()
+_reporting = FlextInfraUtilitiesReporting()
 
 
 class FlextInfraDocsShared:

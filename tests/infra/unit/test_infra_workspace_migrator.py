@@ -1,5 +1,7 @@
 """Tests for FlextWorkspaceMigrator to achieve full coverage.
 
+Uses real service instances with typed stubs and monkeypatch.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -7,13 +9,50 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
 from flext_core import r
 from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
+from flext_tests import tm
+
+
+class _StubDiscovery:
+    """Typed stub for discovery service."""
+
+    def __init__(self, projects: list[im.Infra.Workspace.ProjectInfo]) -> None:
+        self._projects = projects
+
+    def discover_projects(
+        self, workspace_root: Path
+    ) -> r[list[im.Infra.Workspace.ProjectInfo]]:
+        return r[list[im.Infra.Workspace.ProjectInfo]].ok(self._projects)
+
+
+class _StubDiscoveryFail:
+    """Typed stub for discovery service that fails."""
+
+    def __init__(self, error: str) -> None:
+        self._error = error
+
+    def discover_projects(
+        self, workspace_root: Path
+    ) -> r[list[im.Infra.Workspace.ProjectInfo]]:
+        return r[list[im.Infra.Workspace.ProjectInfo]].fail(self._error)
+
+
+class _StubGenerator:
+    """Typed stub for base.mk generator."""
+
+    def __init__(self, content: str = "", *, fail: str = "") -> None:
+        self._content = content
+        self._fail = fail
+
+    def generate(self, config: object = None) -> r[str]:
+        if self._fail:
+            return r[str].fail(self._fail)
+        return r[str].ok(self._content)
 
 
 def _write_project(project_root: Path) -> None:
@@ -38,19 +77,8 @@ def _build_migrator(
     base_mk: str,
 ) -> FlextInfraProjectMigrator:
     migrator = FlextInfraProjectMigrator()
-
-    def _discover_projects(
-        workspace_root: Path,
-    ) -> r[list[im.Infra.Workspace.ProjectInfo]]:
-        del workspace_root
-        return r[list[im.Infra.Workspace.ProjectInfo]].ok([project])
-
-    discovery_mock = Mock()
-    discovery_mock.discover_projects = _discover_projects
-    migrator._discovery = discovery_mock
-    generator_mock = Mock()
-    generator_mock.generate = lambda: r[str].ok(base_mk)
-    migrator._generator = generator_mock
+    migrator._discovery = _StubDiscovery([project])
+    migrator._generator = _StubGenerator(base_mk)
     return migrator
 
 

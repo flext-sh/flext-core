@@ -1,7 +1,6 @@
 """Tests for FlextInfraPythonVersionEnforcer.
 
-Tests Python version enforcement across workspace projects with mocked
-pyproject.toml operations and tmp_path fixtures.
+Tests Python version enforcement with real pyproject.toml and tmp_path.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,306 +8,181 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
-from flext_core import r
-from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
+from flext_tests import tm
+
+_MINOR: int = sys.version_info.minor
+_BAD: int = _MINOR + 1
 
 
-class TestFlextInfraPythonVersionEnforcer:
-    """Test suite for FlextInfraPythonVersionEnforcer."""
+def _ws(root: Path, *, minor: int = _MINOR) -> Path:
+    """Create workspace root with required markers."""
+    root.mkdir(exist_ok=True)
+    (root / ".git").mkdir(exist_ok=True)
+    (root / "Makefile").touch()
+    (root / "pyproject.toml").write_text(
+        f'requires-python = ">=3.{minor}"\n', encoding="utf-8"
+    )
+    return root
+
+
+def _proj(root: Path, name: str, *, minor: int = _MINOR) -> Path:
+    """Create a sub-project inside workspace."""
+    proj = root / name
+    proj.mkdir(exist_ok=True)
+    (proj / ".git").mkdir(exist_ok=True)
+    (proj / "Makefile").touch()
+    (proj / "src").mkdir(exist_ok=True)
+    (proj / "pyproject.toml").write_text(
+        f'requires-python = ">=3.{minor}"\n', encoding="utf-8"
+    )
+    return proj
+
+
+def _svc(ws: Path) -> FlextInfraPythonVersionEnforcer:
+    """Create enforcer bound to given workspace."""
+    e = FlextInfraPythonVersionEnforcer()
+    e._workspace_root_from_file = lambda _f: ws
+    return e
+
+
+class TestEnforcerExecute:
+    """Tests for execute() with real workspace structures."""
+
+    def test_check_only_success(self, tmp_path: Path) -> None:
+        tm.ok(_svc(_ws(tmp_path / "ws")).execute(check_only=True, verbose=False), eq=0)
+
+    def test_enforce_mode(self, tmp_path: Path) -> None:
+        tm.ok(_svc(_ws(tmp_path / "ws")).execute(check_only=False, verbose=False), eq=0)
+
+    def test_verbose_mode(self, tmp_path: Path) -> None:
+        svc = _svc(_ws(tmp_path / "ws"))
+        tm.ok(svc.execute(check_only=True, verbose=True))
+        tm.that(svc.verbose, eq=True)
+
+    def test_failure_on_workspace_mismatch(self, tmp_path: Path) -> None:
+        tm.fail(_svc(_ws(tmp_path / "ws", minor=_BAD)).execute(check_only=True))
+
+    def test_failure_on_project_mismatch(self, tmp_path: Path) -> None:
+        ws = _ws(tmp_path / "ws")
+        _proj(ws, "project-a", minor=_BAD)
+        tm.fail(_svc(ws).execute(check_only=True, verbose=False))
+
+    def test_empty_workspace(self, tmp_path: Path) -> None:
+        tm.ok(_svc(_ws(tmp_path / "ws")).execute(check_only=True))
+
+
+class TestReadRequiredMinor:
+    """Tests for _read_required_minor()."""
 
     @pytest.fixture
     def enforcer(self) -> FlextInfraPythonVersionEnforcer:
-        """Create enforcer instance."""
         return FlextInfraPythonVersionEnforcer()
 
+    def test_from_pyproject(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
+    ) -> None:
+        ws = _ws(tmp_path / "ws")
+        tm.that(enforcer._read_required_minor(ws), eq=_MINOR)
+
+    def test_fallback_to_13(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
+    ) -> None:
+        d = tmp_path / "empty"
+        d.mkdir()
+        tm.that(enforcer._read_required_minor(d), eq=13)
+
+    def test_malformed_pyproject(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
+    ) -> None:
+        d = tmp_path / "bad"
+        d.mkdir()
+        (d / "pyproject.toml").write_text("# No field\n", encoding="utf-8")
+        tm.that(enforcer._read_required_minor(d), eq=13)
+
+
+class TestWorkspaceRoot:
+    """Tests for _workspace_root_from_file()."""
+
     @pytest.fixture
-    def workspace_root(self, tmp_path: Path) -> Path:
-        """Create mock workspace root with required markers."""
-        root = tmp_path / "workspace"
-        root.mkdir()
-        (root / ".git").mkdir()
-        (root / "Makefile").touch()
-        (root / "pyproject.toml").write_text(
-            'requires-python = ">=3.13"\n',
-            encoding="utf-8",
-        )
-        return root
+    def enforcer(self) -> FlextInfraPythonVersionEnforcer:
+        return FlextInfraPythonVersionEnforcer()
 
-    def test_execute_check_only_success(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
+    def test_success(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
     ) -> None:
-        """Test execute with check_only=True returns success."""
-        with (
-            patch.object(enforcer, "_discover_projects", return_value=[workspace_root]),
-            patch("sys.version_info") as mock_version,
-        ):
-            mock_version.minor = 13
-            result = enforcer.execute(check_only=True, verbose=False)
-        assert result.is_success
-        assert result.value == 0
+        ws = _ws(tmp_path / "ws")
+        f = ws / "src" / "module.py"
+        f.parent.mkdir(parents=True)
+        f.touch()
+        resolved = enforcer._workspace_root_from_file(f)
+        tm.that(resolved.resolve(), eq=ws.resolve())
 
-    def test_execute_enforce_mode(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
+    def test_not_found(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
     ) -> None:
-        """Test execute in enforce mode (not check_only)."""
-        with (
-            patch.object(enforcer, "_discover_projects", return_value=[workspace_root]),
-            patch("sys.version_info") as mock_version,
-        ):
-            mock_version.minor = 13
-            result = enforcer.execute(check_only=False, verbose=False)
-        assert result.is_success
-        assert result.value == 0
-
-    def test_read_required_minor_from_pyproject(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
-    ) -> None:
-        """Test reading required Python minor version from pyproject.toml."""
-        minor = enforcer._read_required_minor(workspace_root)
-        assert minor == 13
-
-    def test_read_required_minor_fallback_to_13(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test fallback to minor version 13 when pyproject.toml missing."""
-        empty_dir = tmp_path / "empty"
-        empty_dir.mkdir()
-        minor = enforcer._read_required_minor(empty_dir)
-        assert minor == 13
-
-    def test_read_required_minor_malformed_pyproject(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test fallback when pyproject.toml is malformed."""
-        root = tmp_path / "malformed"
-        root.mkdir()
-        (root / "pyproject.toml").write_text(
-            "# No requires-python field\n",
-            encoding="utf-8",
-        )
-        minor = enforcer._read_required_minor(root)
-        assert minor == 13
-
-    def test_workspace_root_from_file_success(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
-    ) -> None:
-        """Test resolving workspace root from file path."""
-        test_file = workspace_root / "src" / "module.py"
-        test_file.parent.mkdir(parents=True)
-        test_file.touch()
-        resolved = enforcer._workspace_root_from_file(test_file)
-        assert resolved == workspace_root
-
-    def test_workspace_root_from_file_not_found(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test RuntimeError when workspace root cannot be found."""
-        orphan_file = tmp_path / "orphan.py"
-        orphan_file.touch()
+        f = tmp_path / "orphan.py"
+        f.touch()
         with pytest.raises(RuntimeError, match="workspace root not found"):
-            enforcer._workspace_root_from_file(orphan_file)
+            enforcer._workspace_root_from_file(f)
 
-    def test_discover_projects_empty(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
-    ) -> None:
-        """Test discovering projects when none exist."""
-        with (
-            patch.object(enforcer, "_discover_projects", return_value=[]),
-            patch("sys.version_info") as mock_version,
-        ):
-            mock_version.minor = 13
-            result = enforcer.execute(check_only=True)
-        assert result.is_success
 
-    def test_ensure_python_version_file_mismatch(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
+class TestEnsurePythonVersionFile:
+    """Tests for _ensure_python_version_file()."""
+
+    @pytest.fixture
+    def enforcer(self) -> FlextInfraPythonVersionEnforcer:
+        return FlextInfraPythonVersionEnforcer()
+
+    def test_mismatch_check_mode(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
     ) -> None:
-        """Test validation fails when local minor version mismatches."""
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text(
-            'requires-python = ">=3.12"\n',
-            encoding="utf-8",
+        p = tmp_path / "proj"
+        p.mkdir()
+        (p / "pyproject.toml").write_text(
+            f'requires-python = ">=3.{_BAD}"\n', encoding="utf-8"
         )
         enforcer.check_only = True
-        result = enforcer._ensure_python_version_file(project, required_minor=13)
-        assert result is False
+        tm.that(
+            enforcer._ensure_python_version_file(p, required_minor=_MINOR), eq=False
+        )
 
-    def test_ensure_python_version_file_match(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
+    def test_match(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
     ) -> None:
-        """Test validation succeeds when versions match."""
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text(
-            'requires-python = ">=3.13"\n',
-            encoding="utf-8",
+        p = tmp_path / "proj"
+        p.mkdir()
+        (p / "pyproject.toml").write_text(
+            f'requires-python = ">=3.{_MINOR}"\n', encoding="utf-8"
         )
         enforcer.check_only = True
         enforcer.verbose = False
-        with patch("sys.version_info") as mock_version:
-            mock_version.minor = 13
-            result = enforcer._ensure_python_version_file(project, required_minor=13)
-        assert result is True
+        tm.that(enforcer._ensure_python_version_file(p, required_minor=_MINOR), eq=True)
 
-    def test_execute_with_verbose_logging(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
+    def test_enforce_mode_mismatch(
+        self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path
     ) -> None:
-        """Test execute with verbose=True logs detailed output."""
-        with (
-            patch.object(enforcer, "_discover_projects", return_value=[workspace_root]),
-            patch("sys.version_info") as mock_version,
-        ):
-            mock_version.minor = 13
-            result = enforcer.execute(check_only=True, verbose=True)
-        assert result.is_success
-        assert result.is_success
-        assert enforcer.verbose is True
-
-    def test_ensure_python_version_file_runtime_mismatch(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test validation fails when runtime minor version mismatches."""
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text(
-            'requires-python = ">=3.13"\n',
-            encoding="utf-8",
+        p = tmp_path / "proj"
+        p.mkdir()
+        (p / "pyproject.toml").write_text(
+            f'requires-python = ">=3.{_BAD}"\n', encoding="utf-8"
         )
         enforcer.check_only = False
-        with patch("sys.version_info") as mock_version:
-            mock_version.minor = 12
-            result = enforcer._ensure_python_version_file(project, required_minor=13)
-        assert result is False
-
-    def test_ensure_python_version_file_verbose_logging(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test verbose logging when validation succeeds."""
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text(
-            'requires-python = ">=3.13"\n',
-            encoding="utf-8",
+        tm.that(
+            enforcer._ensure_python_version_file(p, required_minor=_MINOR), eq=False
         )
-        enforcer.check_only = True
-        enforcer.verbose = True
-        with patch("sys.version_info") as mock_version:
-            mock_version.minor = 13
-            result = enforcer._ensure_python_version_file(project, required_minor=13)
-        assert result is True
 
-    def test_execute_failure_on_workspace_root_mismatch(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test execute fails when workspace root has version mismatch."""
-        root = tmp_path / "workspace"
-        root.mkdir()
-        (root / ".git").mkdir()
-        (root / "Makefile").touch()
-        (root / "pyproject.toml").write_text(
-            'requires-python = ">=3.12"\n',
-            encoding="utf-8",
-        )
-        with patch.object(enforcer, "_workspace_root_from_file", return_value=root):
-            result = enforcer.execute(check_only=True, verbose=False)
-        assert result.is_failure
 
-    def test_execute_failure_on_project_mismatch(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
-    ) -> None:
-        """Test execute fails when a project has version mismatch."""
-        project = workspace_root / "project-a"
-        project.mkdir()
-        (project / "pyproject.toml").write_text(
-            'requires-python = ">=3.12"\n',
-            encoding="utf-8",
-        )
-        with (
-            patch.object(enforcer, "_discover_projects", return_value=[project]),
-            patch("sys.version_info") as mock_version,
-        ):
-            mock_version.minor = 13
-            result = enforcer.execute(check_only=True, verbose=False)
-        assert result.is_failure
+class TestDiscoverProjects:
+    """Tests for _discover_projects()."""
 
-    def test_discover_projects_failure_returns_empty_list(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        workspace_root: Path,
-    ) -> None:
-        """Test _discover_projects returns empty list when discovery fails (line 167).
-
-        When discovery.discover_projects returns a failure result,
-        _discover_projects should return an empty list.
-        """
-        with patch.object(
-            FlextInfraUtilitiesDiscovery,
-            "discover_projects",
-            return_value=r[list[object]].fail("discovery error"),
-        ):
-            result = enforcer._discover_projects(workspace_root)
-            assert result == []
-
-    def test_ensure_python_version_file_enforce_mode_logs_error(
-        self,
-        enforcer: FlextInfraPythonVersionEnforcer,
-        tmp_path: Path,
-    ) -> None:
-        """Test _ensure_python_version_file logs error in enforce mode (lines 196-202).
-
-        When check_only=False and version mismatch is found,
-        logger.error should be called with mismatch and manual update messages.
-        """
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text(
-            'requires-python = ">=3.12"\n',
-            encoding="utf-8",
-        )
-        enforcer.check_only = False
-        with patch("flext_infra.maintenance.python_version.logger") as mock_logger:
-            with patch("sys.version_info") as mock_version:
-                mock_version.minor = 13
-                result = enforcer._ensure_python_version_file(
-                    project,
-                    required_minor=13,
-                )
-                assert result is False
-                assert mock_logger.error.call_count >= 2
+    def test_empty_dir_returns_empty(self, tmp_path: Path) -> None:
+        d = tmp_path / "empty"
+        d.mkdir()
+        enforcer = FlextInfraPythonVersionEnforcer()
+        tm.that(enforcer._discover_projects(d), eq=[])

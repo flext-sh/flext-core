@@ -64,6 +64,10 @@ class _DepsStub:
         _ = limits_path
         return r[_TypingsStub].ok(_TypingsStub(self._to_add))
 
+    def load_dependency_limits(self, limits_path: Path) -> dict[str, dict[str, str]]:
+        del limits_path
+        return {}
+
     def run_pip_check(self, root: Path, venv_bin: Path) -> r[tuple[list[str], int]]:
         _ = root
         _ = venv_bin

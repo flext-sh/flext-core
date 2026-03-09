@@ -29,9 +29,9 @@ from flext_core import (
     u,
 )
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.typings import RegistryBindingKey
 
 type RegistrablePlugin = t.RegistrablePlugin
-type RegistryBindingKey = str | type[object]
 
 
 class FlextRegistry(s[bool]):

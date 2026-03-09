@@ -2,33 +2,38 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
-
-from flext_core import r
+from flext_infra import m
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
 
 
-class _StubRunner:
-    def __init__(self, result: object) -> None:
-        self._result = result
-        self.last_kwargs: dict[str, str | int | Path | dict[str, str]] = {}
+class _FakeResult:
+    def __init__(
+        self, success: bool, value: object = None, error: str | None = None
+    ) -> None:
+        self.is_success = success
+        self.is_failure = not success
+        self.value = value
+        self.error = error
 
-    def run_raw(
-        self, *args: object, **kwargs: str | int | Path | dict[str, str]
-    ) -> object:
+
+class _StubRunner:
+    def __init__(self, result: _FakeResult) -> None:
+        self._result = result
+
+    def run_raw(self, *args: object, **kwargs: object) -> _FakeResult:
         _ = args
-        self.last_kwargs = kwargs
+        _ = kwargs
         return self._result
 
 
 class _StubSelector:
-    def __init__(self, result: object) -> None:
+    def __init__(self, result: _FakeResult) -> None:
         self._result = result
 
-    def resolve_projects(self, workspace_root: Path, names: list[str]) -> object:
+    def resolve_projects(self, workspace_root: Path, names: list[str]) -> _FakeResult:
         _ = workspace_root
         _ = names
         return self._result
@@ -37,24 +42,23 @@ class _StubSelector:
 class TestDiscoverProjects:
     def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         service = FlextInfraDependencyDetectionService()
-        proj = SimpleNamespace(path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(
+            name="proj", path=tmp_path / "proj", stack="py"
+        )
         proj.path.mkdir()
         (proj.path / "pyproject.toml").write_text("")
         monkeypatch.setattr(
-            service,
-            "selector",
-            _StubSelector(r[list[SimpleNamespace]].ok([proj])),
+            service, "selector", _StubSelector(_FakeResult(True, [proj]))
         )
         result = service.discover_projects(tmp_path)
-        paths = tm.ok(result)
-        tm.that(len(paths), eq=1)
+        tm.that(result.is_success, eq=True)
+        if result.is_success:
+            tm.that(len(result.value), eq=1)
 
     def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         service = FlextInfraDependencyDetectionService()
         monkeypatch.setattr(
-            service,
-            "selector",
-            _StubSelector(r[list[Path]].fail("failed")),
+            service, "selector", _StubSelector(_FakeResult(False, error="failed"))
         )
         tm.fail(service.discover_projects(tmp_path))
 
@@ -62,15 +66,17 @@ class TestDiscoverProjects:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         service = FlextInfraDependencyDetectionService()
-        proj = SimpleNamespace(path=tmp_path / "no-pyproject")
+        proj = m.Infra.Workspace.ProjectInfo(
+            name="no-pyproject", path=tmp_path / "no-pyproject", stack="py"
+        )
         proj.path.mkdir()
         monkeypatch.setattr(
-            service,
-            "selector",
-            _StubSelector(r[list[SimpleNamespace]].ok([proj])),
+            service, "selector", _StubSelector(_FakeResult(True, [proj]))
         )
         result = service.discover_projects(tmp_path)
-        tm.that(tm.ok(result), eq=[])
+        tm.that(result.is_success, eq=True)
+        if result.is_success:
+            tm.that(result.value, eq=[])
 
 
 class TestRunDeptry:
@@ -87,15 +93,16 @@ class TestRunDeptry:
         out_file.write_text(
             json.dumps([{"error": {"code": "DEP001"}, "module": "foo"}])
         )
-        cmd_out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(
-            service, "runner", _StubRunner(r[type(cmd_out)].ok(cmd_out))
+        cmd_out = m.Infra.Core.CommandOutput(
+            exit_code=0, stdout="", stderr="", duration=0.0
         )
-        issues, exit_code = tm.ok(
-            service.run_deptry(project, venv_bin, json_output_path=out_file)
-        )
-        tm.that(exit_code, eq=0)
-        tm.that(len(issues), eq=1)
+        monkeypatch.setattr(service, "runner", _StubRunner(_FakeResult(True, cmd_out)))
+        result = service.run_deptry(project, venv_bin, json_output_path=out_file)
+        tm.that(result.is_success, eq=True)
+        if result.is_success:
+            issues, exit_code = result.value
+            tm.that(exit_code, eq=0)
+            tm.that(len(issues), eq=1)
 
     def test_no_config_file(self, tmp_path: Path) -> None:
         service = FlextInfraDependencyDetectionService()
@@ -103,7 +110,10 @@ class TestRunDeptry:
         venv_bin.mkdir(parents=True)
         project = tmp_path / "project"
         project.mkdir()
-        tm.that(tm.ok(service.run_deptry(project, venv_bin)), eq=([], 0))
+        result = service.run_deptry(project, venv_bin)
+        tm.that(result.is_success, eq=True)
+        if result.is_success:
+            tm.that(result.value, eq=([], 0))
 
     def test_runner_failure(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -115,11 +125,11 @@ class TestRunDeptry:
         project.mkdir()
         (project / "pyproject.toml").write_text("")
         monkeypatch.setattr(
-            service, "runner", _StubRunner(r[SimpleNamespace].fail("deptry crash"))
+            service, "runner", _StubRunner(_FakeResult(False, error="deptry crash"))
         )
         tm.fail(service.run_deptry(project, venv_bin))
 
-    def test_invalid_json_output(
+    def test_invalid_and_empty_json_output(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         service = FlextInfraDependencyDetectionService()
@@ -128,53 +138,19 @@ class TestRunDeptry:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
-        out_file = project / ".deptry-report.json"
-        out_file.write_text("not valid json")
-        cmd_out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(
-            service, "runner", _StubRunner(r[type(cmd_out)].ok(cmd_out))
+        cmd_out = m.Infra.Core.CommandOutput(
+            exit_code=0, stdout="", stderr="", duration=0.0
         )
-        tm.that(
-            tm.ok(service.run_deptry(project, venv_bin, json_output_path=out_file)),
-            eq=([], 0),
-        )
+        monkeypatch.setattr(service, "runner", _StubRunner(_FakeResult(True, cmd_out)))
+        for payload in ["not valid json", ""]:
+            out_file = project / ".deptry-report.json"
+            out_file.write_text(payload)
+            result = service.run_deptry(project, venv_bin, json_output_path=out_file)
+            tm.that(result.is_success, eq=True)
+            if result.is_success:
+                tm.that(result.value, eq=([], 0))
 
-    def test_empty_json_output(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        service = FlextInfraDependencyDetectionService()
-        venv_bin = tmp_path / "venv" / "bin"
-        venv_bin.mkdir(parents=True)
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text("")
-        out_file = project / ".deptry-report.json"
-        out_file.write_text("")
-        cmd_out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(
-            service, "runner", _StubRunner(r[type(cmd_out)].ok(cmd_out))
-        )
-        tm.that(
-            tm.ok(service.run_deptry(project, venv_bin, json_output_path=out_file)),
-            eq=([], 0),
-        )
-
-    def test_with_extend_exclude(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        service = FlextInfraDependencyDetectionService()
-        venv_bin = tmp_path / "venv" / "bin"
-        venv_bin.mkdir(parents=True)
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "pyproject.toml").write_text("")
-        cmd_out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(
-            service, "runner", _StubRunner(r[type(cmd_out)].ok(cmd_out))
-        )
-        tm.ok(service.run_deptry(project, venv_bin, extend_exclude=["tests", "docs"]))
-
-    def test_cleanup_temp_file(
+    def test_with_extend_exclude_and_cleanup(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         service = FlextInfraDependencyDetectionService()
@@ -185,9 +161,15 @@ class TestRunDeptry:
         (project / "pyproject.toml").write_text("")
         default_out = project / ".deptry-report.json"
         default_out.write_text("[]")
-        cmd_out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(
-            service, "runner", _StubRunner(r[type(cmd_out)].ok(cmd_out))
+        cmd_out = m.Infra.Core.CommandOutput(
+            exit_code=0, stdout="", stderr="", duration=0.0
         )
-        tm.ok(service.run_deptry(project, venv_bin))
+        monkeypatch.setattr(service, "runner", _StubRunner(_FakeResult(True, cmd_out)))
+        tm.that(
+            service.run_deptry(
+                project, venv_bin, extend_exclude=["tests", "docs"]
+            ).is_success,
+            eq=True,
+        )
+        tm.that(service.run_deptry(project, venv_bin).is_success, eq=True)
         tm.that(default_out.exists(), eq=False)

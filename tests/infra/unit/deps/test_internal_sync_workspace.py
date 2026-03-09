@@ -21,10 +21,10 @@ class TestWorkspaceRootFromEnv:
         project = tmp_path / "project"
         project.mkdir()
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", str(tmp_path))
-        tm.that(
-            FlextInfraInternalDependencySyncService().workspace_root_from_env(project),
-            eq=tmp_path,
+        result = FlextInfraInternalDependencySyncService().workspace_root_from_env(
+            project
         )
+        tm.that(str(result), eq=str(tmp_path))
 
     def test_env_set_nonexistent(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", "/nonexistent/path")
@@ -50,12 +50,10 @@ class TestWorkspaceRootFromParents:
         (tmp_path / ".gitmodules").touch()
         project = tmp_path / "sub" / "project"
         project.mkdir(parents=True)
-        tm.that(
-            FlextInfraInternalDependencySyncService.workspace_root_from_parents(
-                project
-            ),
-            eq=tmp_path,
+        result = FlextInfraInternalDependencySyncService.workspace_root_from_parents(
+            project
         )
+        tm.that(str(result), eq=str(tmp_path))
 
     def test_not_found(self, tmp_path: Path) -> None:
         project = tmp_path / "isolated"
@@ -67,12 +65,10 @@ class TestWorkspaceRootFromParents:
 
     def test_found_in_self(self, tmp_path: Path) -> None:
         (tmp_path / ".gitmodules").touch()
-        tm.that(
-            FlextInfraInternalDependencySyncService.workspace_root_from_parents(
-                tmp_path
-            ),
-            eq=tmp_path,
+        result = FlextInfraInternalDependencySyncService.workspace_root_from_parents(
+            tmp_path
         )
+        tm.that(str(result), eq=str(tmp_path))
 
 
 class TestIsWorkspaceMode:
@@ -93,7 +89,7 @@ class TestIsWorkspaceMode:
             project
         )
         tm.that(is_ws, eq=True)
-        tm.that(root, eq=tmp_path)
+        tm.that(str(root), eq=str(tmp_path))
 
     def test_git_superproject(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.setenv("FLEXT_STANDALONE", "")
@@ -105,7 +101,7 @@ class TestIsWorkspaceMode:
             tmp_path / "sub"
         )
         tm.that(is_ws, eq=True)
-        tm.that(root, eq=tmp_path)
+        tm.that(str(root), eq=str(tmp_path))
 
     def test_heuristic_gitmodules(self, tmp_path: Path, monkeypatch) -> None:
         (tmp_path / ".gitmodules").touch()
@@ -120,7 +116,7 @@ class TestIsWorkspaceMode:
             project
         )
         tm.that(is_ws, eq=True)
-        tm.that(root, eq=tmp_path)
+        tm.that(str(root), eq=str(tmp_path))
 
     def test_no_workspace(self, tmp_path: Path, monkeypatch) -> None:
         project = tmp_path / "isolated"

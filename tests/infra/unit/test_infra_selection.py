@@ -1,17 +1,19 @@
 """Tests for FlextInfraUtilitiesSelection.
 
 Tests cover project resolution, filtering, and error handling.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
-from flext_core import r
 from flext_infra import FlextInfraUtilitiesDiscovery, FlextInfraUtilitiesSelection, m
+from flext_tests import tm
 
 
 class TestFlextInfraUtilitiesSelection:
@@ -30,15 +32,7 @@ class TestFlextInfraUtilitiesSelection:
         return tmp_path
 
     @pytest.fixture
-    def discovery_service(self) -> type[FlextInfraUtilitiesDiscovery]:
-        """Provide discovery service class."""
-        return FlextInfraUtilitiesDiscovery
-
-    @pytest.fixture
-    def selector(
-        self,
-        discovery_service: type[FlextInfraUtilitiesDiscovery],
-    ) -> type[FlextInfraUtilitiesSelection]:
+    def selector(self) -> type[FlextInfraUtilitiesSelection]:
         """Provide project selector utilities class."""
         return FlextInfraUtilitiesSelection
 
@@ -48,14 +42,10 @@ class TestFlextInfraUtilitiesSelection:
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving all projects when names list is empty."""
-        result = selector.resolve_projects(
-            workspace_with_projects,
-            [],
-        )
-        assert result.is_success
-        projects = result.value
-        assert len(projects) == 3
-        assert [p.name for p in projects] == ["alpha", "beta", "gamma"]
+        result = selector.resolve_projects(workspace_with_projects, [])
+        projects = tm.ok(result)
+        tm.that(projects, length=3)
+        tm.that([p.name for p in projects], eq=["alpha", "beta", "gamma"])
 
     def test_resolve_projects_specific_names(
         self,
@@ -63,14 +53,10 @@ class TestFlextInfraUtilitiesSelection:
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving specific projects by name."""
-        result = selector.resolve_projects(
-            workspace_with_projects,
-            ["beta", "alpha"],
-        )
-        assert result.is_success
-        projects = result.value
-        assert len(projects) == 2
-        assert [p.name for p in projects] == ["alpha", "beta"]
+        result = selector.resolve_projects(workspace_with_projects, ["beta", "alpha"])
+        projects = tm.ok(result)
+        tm.that(projects, length=2)
+        tm.that([p.name for p in projects], eq=["alpha", "beta"])
 
     def test_resolve_projects_single_project(
         self,
@@ -78,14 +64,10 @@ class TestFlextInfraUtilitiesSelection:
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving a single project."""
-        result = selector.resolve_projects(
-            workspace_with_projects,
-            ["gamma"],
-        )
-        assert result.is_success
-        projects = result.value
-        assert len(projects) == 1
-        assert projects[0].name == "gamma"
+        result = selector.resolve_projects(workspace_with_projects, ["gamma"])
+        projects = tm.ok(result)
+        tm.that(projects, length=1)
+        tm.that(projects[0].name, eq="gamma")
 
     def test_resolve_projects_unknown_project(
         self,
@@ -93,13 +75,8 @@ class TestFlextInfraUtilitiesSelection:
         workspace_with_projects: Path,
     ) -> None:
         """Test resolving with unknown project name."""
-        result = selector.resolve_projects(
-            workspace_with_projects,
-            ["unknown"],
-        )
-        assert result.is_failure
-        assert result.error and "unknown projects" in result.error
-        assert result.error and "unknown" in result.error
+        result = selector.resolve_projects(workspace_with_projects, ["unknown"])
+        tm.fail(result, has="unknown projects")
 
     def test_resolve_projects_mixed_known_unknown(
         self,
@@ -108,31 +85,17 @@ class TestFlextInfraUtilitiesSelection:
     ) -> None:
         """Test resolving with mix of known and unknown projects."""
         result = selector.resolve_projects(
-            workspace_with_projects,
-            ["alpha", "unknown", "beta"],
+            workspace_with_projects, ["alpha", "unknown", "beta"]
         )
-        assert result.is_failure
-        assert result.error and "unknown projects" in result.error
-        assert result.error and "unknown" in result.error
+        tm.fail(result, has="unknown projects")
 
     def test_resolve_projects_discovery_failure(
         self,
         selector: type[FlextInfraUtilitiesSelection],
-        workspace_with_projects: Path,
     ) -> None:
-        """Test handling discovery service failure."""
-        with patch(
-            "flext_infra._utilities.selection.FlextInfraUtilitiesDiscovery.discover_projects",
-            return_value=r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                "discovery failed"
-            ),
-        ):
-            result = selector.resolve_projects(
-                workspace_with_projects,
-                ["alpha"],
-            )
-            assert result.is_failure
-            assert result.error and "discovery failed" in result.error
+        """Test handling discovery failure with non-existent path."""
+        result = selector.resolve_projects(Path("/nonexistent/path"), ["alpha"])
+        tm.fail(result)
 
     def test_resolve_projects_sorted_output(
         self,
@@ -141,29 +104,21 @@ class TestFlextInfraUtilitiesSelection:
     ) -> None:
         """Test that resolved projects are sorted by name."""
         result = selector.resolve_projects(
-            workspace_with_projects,
-            ["gamma", "alpha", "beta"],
+            workspace_with_projects, ["gamma", "alpha", "beta"]
         )
-        assert result.is_success
-        projects = result.value
-        assert [p.name for p in projects] == ["alpha", "beta", "gamma"]
+        projects = tm.ok(result)
+        tm.that([p.name for p in projects], eq=["alpha", "beta", "gamma"])
 
     def test_resolve_projects_result_type(
         self,
         selector: type[FlextInfraUtilitiesSelection],
         workspace_with_projects: Path,
     ) -> None:
-        """Test that result is properly typed FlextResult."""
-        result = selector.resolve_projects(
-            workspace_with_projects,
-            [],
-        )
-        assert isinstance(result, type(r[list[m.Infra.Workspace.ProjectInfo]].ok([])))
-        assert result.is_success
-        assert isinstance(result.value, list)
-        projects: list[m.Infra.Workspace.ProjectInfo] = result.value
+        """Test that result contains properly typed ProjectInfo items."""
+        result = selector.resolve_projects(workspace_with_projects, [])
+        projects = tm.ok(result, is_=list)
         for p in projects:
-            assert isinstance(p, m.Infra.Workspace.ProjectInfo)
+            tm.that(isinstance(p, m.Infra.Workspace.ProjectInfo), eq=True)
 
     def test_selector_with_default_discovery(
         self,
@@ -171,12 +126,9 @@ class TestFlextInfraUtilitiesSelection:
         workspace_with_projects: Path,
     ) -> None:
         """Test selector uses default discovery service implicitly."""
-        result = selector.resolve_projects(
-            workspace_with_projects,
-            [],
-        )
-        assert result.is_success
-        assert len(result.value) == 3
+        result = selector.resolve_projects(workspace_with_projects, [])
+        projects = tm.ok(result)
+        tm.that(projects, length=3)
 
     def test_selector_resolve_projects_empty_list(
         self,
@@ -185,5 +137,5 @@ class TestFlextInfraUtilitiesSelection:
     ) -> None:
         """Test resolve_projects returns empty list when no projects match."""
         result = selector.resolve_projects(tmp_path, [])
-        assert result.is_success
-        assert result.value == []
+        projects = tm.ok(result)
+        tm.that(projects, eq=[])

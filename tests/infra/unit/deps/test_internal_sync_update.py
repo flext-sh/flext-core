@@ -40,7 +40,7 @@ class TestEnsureSymlink:
         target = tmp_path / "target"
         target.symlink_to(other.resolve(), target_is_directory=True)
         tm.ok(FlextInfraInternalDependencySyncService.ensure_symlink(target, source))
-        tm.that(target.resolve(), eq=source.resolve())
+        tm.that(str(target.resolve()), eq=str(source.resolve()))
 
 
 class TestEnsureSymlinkEdgeCases:

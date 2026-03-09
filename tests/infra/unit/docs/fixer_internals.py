@@ -15,14 +15,12 @@ from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_tests import tm
 
 
+@pytest.fixture
+def fixer() -> FlextInfraDocFixer:
+    return FlextInfraDocFixer()
+
+
 class TestFixerProcessFile:
-    """Tests for _process_file."""
-
-    @pytest.fixture
-    def fixer(self) -> FlextInfraDocFixer:
-        """Create fixer instance."""
-        return FlextInfraDocFixer()
-
     def test_process_file_with_markdown_links(
         self, fixer: FlextInfraDocFixer, tmp_path: Path
     ) -> None:

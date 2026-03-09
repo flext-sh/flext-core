@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""Helper coverage tests for deps modernizer."""
+
 import tomlkit
 
 from flext_infra.deps.modernizer import (
@@ -16,6 +18,8 @@ from flext_tests import tm
 
 
 class TestDepName:
+    """Tests dependency name normalization."""
+
     def test_dep_name_variants(self) -> None:
         tm.that(_dep_name("requests"), eq="requests")
         tm.that(_dep_name("requests>=2.0"), eq="requests")
@@ -30,6 +34,8 @@ class TestDepName:
 
 
 class TestDedupeSpecs:
+    """Tests dependency spec deduplication."""
+
     def test_dedupe_specs_paths(self) -> None:
         tm.that(_dedupe_specs(["requests>=2.0", "django>=3.0"]), length=2)
         deduped = _dedupe_specs(["requests>=2.0", "requests>=2.1", "django>=3.0"])
@@ -42,6 +48,8 @@ class TestDedupeSpecs:
 
 
 class TestUnwrapItem:
+    """Tests tomlkit item unwrapping."""
+
     def test_unwrap_item_variants(self) -> None:
         tm.that(_unwrap_item("test"), eq="test")
         tm.that(_unwrap_item(None), eq=None)
@@ -53,6 +61,8 @@ class TestUnwrapItem:
 
 
 class TestAsStringList:
+    """Tests conversion to string list."""
+
     def test_as_string_list_variants(self) -> None:
         tm.that(_as_string_list(["a", "b", "c"]), eq=["a", "b", "c"])
         tm.that(_as_string_list(None), eq=[])
@@ -68,6 +78,8 @@ class TestAsStringList:
 
 
 class TestArray:
+    """Tests array creation helper."""
+
     def test_array_builds_items(self) -> None:
         tm.that(len(_array(["a", "b", "c"])), eq=3)
         tm.that(len(_array([])), eq=0)
@@ -75,6 +87,8 @@ class TestArray:
 
 
 class TestEnsureTable:
+    """Tests table creation helper."""
+
     def test_ensure_table_paths(self) -> None:
         parent = tomlkit.table()
         _ = _ensure_table(parent, "new_key")
@@ -87,6 +101,8 @@ class TestEnsureTable:
 
 
 class TestProjectDevGroups:
+    """Tests extraction of project dev groups."""
+
     def test_project_dev_groups(self) -> None:
         doc = tomlkit.document()
         doc["project"] = {
@@ -116,6 +132,8 @@ class TestProjectDevGroups:
 
 
 class TestCanonicalDevDependencies:
+    """Tests canonical dev dependency aggregation."""
+
     def test_canonical_dev_dependencies(self) -> None:
         doc = tomlkit.document()
         doc["project"] = {

@@ -7,11 +7,14 @@ import tomlkit
 from flext_infra.deps.modernizer import EnsurePyreflyConfigPhase
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 def _test_tool_config() -> FlextInfraToolConfigDocument:
-    return tm.ok(load_tool_config())
+    result = load_tool_config()
+    tm.that(result.is_failure, eq=False)
+    if result.is_failure:
+        raise ValueError("failed to load tool config")
+    return result.value
 
 
 class TestEnsurePyreflyConfigPhase:
@@ -45,7 +48,7 @@ def test_ensure_pyrefly_config_phase_apply_python_version() -> None:
     tool["pyrefly"] = tomlkit.table()
     changes = EnsurePyreflyConfigPhase(_test_tool_config()).apply(doc, is_root=True)
     tm.that(any("python-version set to 3.13" in c for c in changes), eq=True)
-    pyrefly = doc["tool"]["pyrefly"]
+    pyrefly = tool["pyrefly"]
     tm.that(isinstance(pyrefly, MutableMapping), eq=True)
     if isinstance(pyrefly, MutableMapping):
         tm.that(pyrefly["python-version"], eq="3.13")
@@ -63,7 +66,7 @@ def test_ensure_pyrefly_config_phase_apply_ignore_errors() -> None:
     tm.that(
         any("ignore-errors-in-generated-code enabled" in c for c in changes), eq=True
     )
-    pyrefly = doc["tool"]["pyrefly"]
+    pyrefly = tool["pyrefly"]
     tm.that(isinstance(pyrefly, MutableMapping), eq=True)
     if isinstance(pyrefly, MutableMapping):
         tm.that(pyrefly["ignore-errors-in-generated-code"], eq=True)
@@ -91,4 +94,3 @@ def test_ensure_pyrefly_config_phase_apply_errors() -> None:
     tool["pyrefly"] = tomlkit.table()
     changes = EnsurePyreflyConfigPhase(_test_tool_config()).apply(doc, is_root=True)
     tm.that(any("errors" in c for c in changes), eq=True)
-    tm.that(hasattr(h, "assert_ok"), eq=True)

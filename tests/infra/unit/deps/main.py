@@ -1,8 +1,5 @@
 """Tests for flext_infra.deps.__main__ — dispatch, structlog, argv, imports.
 
-Uses monkeypatch for isolation instead of unittest.mock.
-Uses flext_tests matchers (tm) for consistent assertions.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -22,24 +19,24 @@ _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
 def _fake_module(return_value: object = 0) -> ModuleType:
-    """Create a fake module with a main() that returns the given value."""
     mod = ModuleType("fake_subcommand")
     mod.main = lambda: return_value  # type: ignore[attr-defined]
     return mod
 
 
-def _patch_dispatch(
-    mp: pytest.MonkeyPatch,
-    argv: list[str],
-    ret: object = 0,
-) -> None:
-    """Patch sys.argv, structlog, and import_module for dispatch tests."""
+def _stub_import(mod: ModuleType) -> object:
+    def _import(name: str) -> ModuleType:  # noqa: ARG001
+        return mod
+
+    return _import
+
+
+def _patch_dispatch(mp: pytest.MonkeyPatch, argv: list[str], ret: object = 0) -> None:
     mp.setattr(sys, "argv", argv)
     mp.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
-    fake = _fake_module(ret)
     mp.setattr(
         "flext_infra.deps.__main__.importlib.import_module",
-        lambda name: fake,  # noqa: ARG005
+        _stub_import(_fake_module(ret)),
     )
 
 
@@ -48,11 +45,8 @@ class TestMainSubcommandDispatch:
 
     @pytest.mark.parametrize("name", list(_SUBCOMMANDS.keys()))
     def test_dispatch_each_subcommand(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        name: str,
+        self, monkeypatch: pytest.MonkeyPatch, name: str
     ) -> None:
-        """Test main dispatches each known subcommand and returns 0."""
         _patch_dispatch(monkeypatch, ["prog", name])
         tm.that(main(), eq=0)
 
@@ -123,10 +117,7 @@ class TestMainSysArgvModification:
         main()
         tm.that("detect" in sys.argv[0], eq=True)
 
-    def test_passes_remaining_args(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    def test_passes_remaining_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main passes remaining arguments to subcommand."""
         _patch_dispatch(monkeypatch, ["prog", "detect", "-q", "--no-fail"])
         main()
@@ -153,7 +144,7 @@ class TestMainStructlogConfiguration:
         )
         monkeypatch.setattr(
             "flext_infra.deps.__main__.importlib.import_module",
-            lambda name: _fake_module(0),  # noqa: ARG005
+            _stub_import(_fake_module(0)),
         )
         main()
         tm.that(len(called), eq=1)
@@ -205,7 +196,7 @@ class TestMainExceptionHandling:
         error_mod.main = raise_error  # type: ignore[attr-defined]
         monkeypatch.setattr(
             "flext_infra.deps.__main__.importlib.import_module",
-            lambda name: error_mod,  # noqa: ARG005
+            _stub_import(error_mod),
         )
         with pytest.raises(RuntimeError, match="Test error"):
             main()

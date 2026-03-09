@@ -25,53 +25,65 @@ def _set_toml_sequence(
 
 class TestCollectInternalDepsEdgeCases:
     def test_collect_internal_deps_variants(self, tmp_path: Path) -> None:
-        service = FlextInfraInternalDependencySyncService()
         (tmp_path / "pyproject.toml").write_text("x")
-        _set_toml_sequence(
-            service,
-            [
-                r[dict[str, object]].ok({
-                    "tool": {
-                        "poetry": {
-                            "dependencies": {"flext-core": {"path": "../flext-core"}}
-                        }
-                    },
-                    "project": {},
-                }),
-                r[dict[str, object]].ok({
-                    "tool": {},
-                    "project": {"dependencies": ["flext-core @ file:../flext-core"]},
-                }),
-                r[dict[str, object]].ok({
-                    "tool": {
-                        "poetry": {
-                            "dependencies": {
-                                "external-lib": {"path": "some/nested/path"}
-                            }
-                        }
-                    },
-                    "project": {},
-                }),
-                r[dict[str, object]].ok({
-                    "tool": {"poetry": {"dependencies": {"flext-core": {"path": 123}}}},
-                    "project": {},
-                }),
-                r[dict[str, object]].ok({
-                    "tool": {},
-                    "project": {"dependencies": ["flext-core @"]},
-                }),
-                r[dict[str, object]].ok({
-                    "tool": {},
-                    "project": {"dependencies": ["flext-core @ file:///external/path"]},
-                }),
-            ],
+
+        def _collect(value: object):
+            service = FlextInfraInternalDependencySyncService()
+            _set_toml_sequence(service, [value])
+            result = service.collect_internal_deps(tmp_path)
+            tm.ok(result)
+            return result
+
+        one_result = _collect(
+            r[dict[str, object]].ok({
+                "tool": {
+                    "poetry": {
+                        "dependencies": {"flext-core": {"path": "../flext-core"}}
+                    }
+                },
+                "project": {},
+            })
         )
-        one = tm.ok(service.collect_internal_deps(tmp_path))
-        two = tm.ok(service.collect_internal_deps(tmp_path))
-        three = tm.ok(service.collect_internal_deps(tmp_path))
-        four = tm.ok(service.collect_internal_deps(tmp_path))
-        five = tm.ok(service.collect_internal_deps(tmp_path))
-        six = tm.ok(service.collect_internal_deps(tmp_path))
+        two_result = _collect(
+            r[dict[str, object]].ok({
+                "tool": {},
+                "project": {"dependencies": ["flext-core @ file:../flext-core"]},
+            })
+        )
+        three_result = _collect(
+            r[dict[str, object]].ok({
+                "tool": {
+                    "poetry": {
+                        "dependencies": {"external-lib": {"path": "some/nested/path"}}
+                    }
+                },
+                "project": {},
+            })
+        )
+        four_result = _collect(
+            r[dict[str, object]].ok({
+                "tool": {"poetry": {"dependencies": {"flext-core": {"path": 123}}}},
+                "project": {},
+            })
+        )
+        five_result = _collect(
+            r[dict[str, object]].ok({
+                "tool": {},
+                "project": {"dependencies": ["flext-core @"]},
+            })
+        )
+        six_result = _collect(
+            r[dict[str, object]].ok({
+                "tool": {},
+                "project": {"dependencies": ["flext-core @ file:///external/path"]},
+            })
+        )
+        one = one_result.value
+        two = two_result.value
+        three = three_result.value
+        four = four_result.value
+        five = five_result.value
+        six = six_result.value
         tm.that("flext-core" in one, eq=True)
         tm.that("flext-core" in two, eq=True)
         tm.that("external-lib" in three, eq=False)

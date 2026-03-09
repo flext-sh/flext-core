@@ -1,5 +1,7 @@
 """Tests for FlextInfraSyncService.
 
+Uses real service instances with monkeypatch for controlled failures.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -10,344 +12,248 @@ import fcntl
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
 from flext_infra.workspace.sync import FlextInfraSyncService, main
+from flext_tests import tm
+
+
+def _stub_generator_ok(content: str) -> object:
+    """Create a generator stub returning ok(content)."""
+
+    class _Gen:
+        @staticmethod
+        def generate() -> r[str]:
+            return r[str].ok(content)
+
+    return _Gen()
+
+
+def _stub_generator_fail(error: str) -> object:
+    """Create a generator stub returning fail(error)."""
+
+    class _Gen:
+        @staticmethod
+        def generate() -> r[str]:
+            return r[str].fail(error)
+
+    return _Gen()
 
 
 @pytest.fixture
 def sync_service(tmp_path: Path) -> FlextInfraSyncService:
-    """Create a sync service instance with temp workspace."""
     return FlextInfraSyncService(canonical_root=tmp_path)
 
 
-def test_sync_service_generates_base_mk(
-    sync_service: FlextInfraSyncService,
-    tmp_path: Path,
-) -> None:
-    """Test that sync service generates base.mk content."""
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_success
+class TestSyncServiceBasic:
+    def test_generates_base_mk(
+        self, sync_service: FlextInfraSyncService, tmp_path: Path
+    ) -> None:
+        tm.ok(sync_service.sync(project_root=tmp_path))
+
+    def test_detects_changes_via_sha256(
+        self, sync_service: FlextInfraSyncService, tmp_path: Path
+    ) -> None:
+        (tmp_path / "base.mk").write_text("# Old content\n", encoding="utf-8")
+        tm.ok(sync_service.sync(project_root=tmp_path))
+
+    def test_skips_write_when_unchanged(
+        self, sync_service: FlextInfraSyncService, tmp_path: Path
+    ) -> None:
+        (tmp_path / "base.mk").write_text("# Same content\n", encoding="utf-8")
+        tm.ok(sync_service.sync(project_root=tmp_path))
+
+    def test_creates_base_mk_if_missing(
+        self, sync_service: FlextInfraSyncService, tmp_path: Path
+    ) -> None:
+        tm.ok(sync_service.sync(project_root=tmp_path))
+        tm.that((tmp_path / "base.mk").exists(), eq=True)
+
+    def test_execute_returns_failure(self) -> None:
+        tm.fail(FlextInfraSyncService().execute())
+
+    def test_validates_gitignore_entries(
+        self, sync_service: FlextInfraSyncService, tmp_path: Path
+    ) -> None:
+        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+        tm.ok(sync_service.sync(project_root=tmp_path))
+
+    def test_project_root_required(self) -> None:
+        tm.fail(
+            FlextInfraSyncService().sync(project_root=None),
+            has="project_root is required",
+        )
+
+    def test_project_root_not_exists(self) -> None:
+        tm.fail(
+            FlextInfraSyncService().sync(project_root=Path("/nonexistent/path")),
+            has="does not exist",
+        )
 
 
-def test_sync_service_detects_changes_via_sha256(
-    sync_service: FlextInfraSyncService,
-    tmp_path: Path,
-) -> None:
-    """Test that sync service detects changes using SHA256 hash."""
-    base_mk_path = tmp_path / "base.mk"
-    base_mk_path.write_text("# Old content\n", encoding="utf-8")
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_success
+class TestSyncServiceFailures:
+    def test_lock_acquisition_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _flock(fd: int, operation: int) -> None:
+            raise OSError("Lock failed")
+
+        monkeypatch.setattr(fcntl, "flock", _flock)
+        tm.fail(
+            FlextInfraSyncService().sync(project_root=tmp_path),
+            has="lock acquisition failed",
+        )
+
+    def test_basemk_generation_failure(self, tmp_path: Path) -> None:
+        svc = FlextInfraSyncService()
+        svc._generator = _stub_generator_fail("Generation failed")
+        tm.fail(svc.sync(project_root=tmp_path), has="Generation failed")
+
+    def test_gitignore_update_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _open(*_a: object, **_kw: object) -> None:
+            raise OSError("Write failed")
+
+        monkeypatch.setattr(Path, "open", _open)
+        result = FlextInfraSyncService().sync(project_root=tmp_path)
+        tm.fail(result)
+
+    def test_gitignore_sync_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        svc = FlextInfraSyncService()
+
+        def _ensure(*_a: object, **_kw: object) -> r[bool]:
+            return r[bool].fail(".gitignore sync failed")
+
+        monkeypatch.setattr(svc, "_ensure_gitignore_entries", _ensure)
+        tm.fail(svc.sync(project_root=tmp_path), has=".gitignore sync failed")
 
 
-def test_sync_service_skips_write_when_content_unchanged(
-    sync_service: FlextInfraSyncService,
-    tmp_path: Path,
-) -> None:
-    """Test that sync service skips write when content is unchanged."""
-    content = "# Same content\n"
-    base_mk_path = tmp_path / "base.mk"
-    base_mk_path.write_text(content, encoding="utf-8")
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_success
+class TestSyncServiceAtomicWrite:
+    def test_success(self, tmp_path: Path) -> None:
+        target = tmp_path / "test.txt"
+        tm.ok(FlextInfraSyncService._atomic_write(target, "test content"), eq=True)
+        tm.that(target.read_text(encoding="utf-8"), eq="test content")
+
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _temp(*_a: object, **_kw: object) -> None:
+            raise OSError("Temp file failed")
+
+        monkeypatch.setattr(tempfile, "NamedTemporaryFile", _temp)
+        tm.fail(
+            FlextInfraSyncService._atomic_write(tmp_path / "test.txt", "content"),
+            has="atomic write failed",
+        )
 
 
-def test_sync_service_creates_base_mk_if_missing(
-    sync_service: FlextInfraSyncService,
-    tmp_path: Path,
-) -> None:
-    """Test that sync service creates base.mk if it doesn't exist."""
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_success
-    assert (tmp_path / "base.mk").exists()
+class TestSyncServiceHashing:
+    def test_sha256_content(self) -> None:
+        h1 = FlextInfraSyncService._sha256_content("test content")
+        h2 = FlextInfraSyncService._sha256_content("test content")
+        tm.that(h1, eq=h2)
+        tm.that(h1, len=64)
+
+    def test_sha256_file(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.txt"
+        f.write_text("test content", encoding="utf-8")
+        h1 = FlextInfraSyncService._sha256_file(f)
+        h2 = FlextInfraSyncService._sha256_file(f)
+        tm.that(h1, eq=h2)
+        tm.that(h1, len=64)
 
 
-def test_sync_service_execute_returns_failure() -> None:
-    """Test that execute() method returns failure as expected."""
-    sync_service = FlextInfraSyncService()
-    result = sync_service.execute()
-    assert result.is_failure
+class TestSyncServiceCanonical:
+    def test_canonical_root_copy(self, tmp_path: Path) -> None:
+        canonical = tmp_path / "canonical"
+        canonical.mkdir()
+        (canonical / "base.mk").write_text("# Canonical content\n", encoding="utf-8")
+        project = tmp_path / "project"
+        project.mkdir()
+        svc = FlextInfraSyncService(canonical_root=canonical)
+        tm.ok(svc.sync(project_root=project))
+        tm.that(
+            (project / "base.mk").read_text(encoding="utf-8"),
+            eq="# Canonical content\n",
+        )
+
+    def test_sync_basemk_from_canonical(self, tmp_path: Path) -> None:
+        canonical = tmp_path / "canonical"
+        canonical.mkdir()
+        (canonical / "base.mk").write_text("# Canonical\n", encoding="utf-8")
+        project = tmp_path / "project"
+        project.mkdir()
+        svc = FlextInfraSyncService()
+        tm.ok(svc._sync_basemk(project, None, canonical_root=canonical), eq=True)
+        tm.that((project / "base.mk").read_text(encoding="utf-8"), eq="# Canonical\n")
+
+    def test_sync_basemk_no_change_needed(self, tmp_path: Path) -> None:
+        svc = FlextInfraSyncService()
+        content = "# Same content\n"
+        (tmp_path / "base.mk").write_text(content, encoding="utf-8")
+        svc._generator = _stub_generator_ok(content)
+        tm.ok(svc._sync_basemk(tmp_path, None), eq=False)
+
+    def test_sync_basemk_generation_failure(self, tmp_path: Path) -> None:
+        svc = FlextInfraSyncService()
+        svc._generator = _stub_generator_fail("Generation failed")
+        tm.fail(svc._sync_basemk(tmp_path, None), has="Generation failed")
+
+    def test_sync_basemk_with_canonical_root(self, tmp_path: Path) -> None:
+        canonical_root = tmp_path / "canonical"
+        canonical_root.mkdir(parents=True, exist_ok=True)
+        (canonical_root / "base.mk").write_text("# Canonical base.mk\n")
+        svc = FlextInfraSyncService()
+        result = svc._sync_basemk(tmp_path, None, canonical_root=canonical_root)
+        tm.that(result.is_success or result.is_failure, eq=True)
 
 
-def test_sync_service_validates_gitignore_entries(
-    sync_service: FlextInfraSyncService,
-    tmp_path: Path,
-) -> None:
-    """Test that sync service validates required .gitignore entries."""
-    gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text("*.pyc\n", encoding="utf-8")
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_success
+class TestSyncServiceGitignore:
+    def test_missing_entries(self, tmp_path: Path) -> None:
+        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+        svc = FlextInfraSyncService()
+        tm.ok(svc._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"]), eq=True)
+        content = (tmp_path / ".gitignore").read_text(encoding="utf-8")
+        tm.that(content, has=".reports/")
+        tm.that(content, has=".venv/")
+
+    def test_all_present(self, tmp_path: Path) -> None:
+        (tmp_path / ".gitignore").write_text(
+            ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
+        )
+        svc = FlextInfraSyncService()
+        tm.ok(
+            svc._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"]), eq=False
+        )
+
+    def test_write_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+
+        def _open(*_a: object, **_kw: object) -> None:
+            raise OSError("Write failed")
+
+        monkeypatch.setattr(Path, "open", _open)
+        svc = FlextInfraSyncService()
+        tm.fail(
+            svc._ensure_gitignore_entries(tmp_path, [".reports/"]),
+            has=".gitignore update failed",
+        )
 
 
-def test_sync_service_project_root_required() -> None:
-    """Test that sync fails when project_root is None."""
-    sync_service = FlextInfraSyncService()
-    result = sync_service.sync(project_root=None)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert isinstance(result.error, str)
-    assert "project_root is required" in result.error
+class TestSyncServiceCli:
+    def test_main_success(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["sync", "--project-root", str(tmp_path)])
+        tm.that(main(), eq=0)
 
-
-def test_sync_service_project_root_not_exists() -> None:
-    """Test that sync fails when project_root doesn't exist."""
-    sync_service = FlextInfraSyncService()
-    result = sync_service.sync(project_root=Path("/nonexistent/path"))
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert "does not exist" in result.error
-
-
-def test_sync_service_lock_acquisition_failure(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test that sync handles lock acquisition failures gracefully."""
-
-    def mock_flock(fd: int, operation: int) -> None:
-        msg = "Lock failed"
-        raise OSError(msg)
-
-    monkeypatch.setattr(fcntl, "flock", mock_flock)
-    sync_service = FlextInfraSyncService()
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert "lock acquisition failed" in result.error
-
-
-def test_sync_service_basemk_generation_failure(tmp_path: Path) -> None:
-    """Test that sync handles base.mk generation failures."""
-    sync_service = FlextInfraSyncService()
-    sync_service._generator = Mock()
-    mock_result = Mock()
-    mock_result.is_failure = True
-    mock_result.error = "Generation failed"
-    sync_service._generator.generate.return_value = mock_result
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert "Generation failed" in result.error
-
-
-def test_sync_service_gitignore_update_failure(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test that sync handles .gitignore update failures."""
-    sync_service = FlextInfraSyncService()
-
-    def mock_open(*args: object, **kwargs: object) -> None:
-        msg = "Write failed"
-        raise OSError(msg)
-
-    monkeypatch.setattr(Path, "open", mock_open)
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_failure
-
-
-def test_sync_service_atomic_write_success(tmp_path: Path) -> None:
-    """Test atomic write creates file successfully."""
-    target = tmp_path / "test.txt"
-    result = FlextInfraSyncService._atomic_write(target, "test content")
-    assert result.is_success
-    assert result.value is True
-    assert target.read_text(encoding="utf-8") == "test content"
-
-
-def test_sync_service_atomic_write_failure(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test atomic write handles failures gracefully."""
-
-    def mock_named_temp(*args: object, **kwargs: object) -> None:
-        msg = "Temp file failed"
-        raise OSError(msg)
-
-    monkeypatch.setattr(tempfile, "NamedTemporaryFile", mock_named_temp)
-    target = tmp_path / "test.txt"
-    result = FlextInfraSyncService._atomic_write(target, "test content")
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert "atomic write failed" in result.error
-
-
-def test_sync_service_sha256_content() -> None:
-    """Test SHA256 content hashing."""
-    content = "test content"
-    hash1 = FlextInfraSyncService._sha256_content(content)
-    hash2 = FlextInfraSyncService._sha256_content(content)
-    assert hash1 == hash2
-    assert len(hash1) == 64
-
-
-def test_sync_service_sha256_file(tmp_path: Path) -> None:
-    """Test SHA256 file hashing."""
-    test_file = tmp_path / "test.txt"
-    test_file.write_text("test content", encoding="utf-8")
-    hash1 = FlextInfraSyncService._sha256_file(test_file)
-    hash2 = FlextInfraSyncService._sha256_file(test_file)
-    assert hash1 == hash2
-    assert len(hash1) == 64
-
-
-def test_sync_service_canonical_root_copy(tmp_path: Path) -> None:
-    """Test that sync copies from canonical root when available."""
-    canonical = tmp_path / "canonical"
-    canonical.mkdir()
-    canonical_basemk = canonical / "base.mk"
-    canonical_basemk.write_text("# Canonical content\n", encoding="utf-8")
-    project = tmp_path / "project"
-    project.mkdir()
-    sync_service = FlextInfraSyncService(canonical_root=canonical)
-    result = sync_service.sync(project_root=project)
-    assert result.is_success
-    assert (project / "base.mk").read_text(encoding="utf-8") == "# Canonical content\n"
-
-
-def test_sync_service_main_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test main() CLI entry point."""
-    monkeypatch.setattr(sys, "argv", ["sync", "--project-root", str(tmp_path)])
-    exit_code = main()
-    assert exit_code == 0
-
-
-def test_sync_service_ensure_gitignore_entries_missing_entries(tmp_path: Path) -> None:
-    """Test that sync service adds missing .gitignore entries."""
-    sync_service = FlextInfraSyncService()
-    gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text("*.pyc\n", encoding="utf-8")
-    result = sync_service._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"])
-    assert result.is_success
-    assert result.value is True
-    content = gitignore_path.read_text(encoding="utf-8")
-    assert ".reports/" in content
-    assert ".venv/" in content
-
-
-def test_sync_service_ensure_gitignore_entries_all_present(tmp_path: Path) -> None:
-    """Test that sync service skips when all entries are present."""
-    sync_service = FlextInfraSyncService()
-    gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text(".reports/\n.venv/\n__pycache__/\n", encoding="utf-8")
-    result = sync_service._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"])
-    assert result.is_success
-    assert result.value is False
-
-
-def test_sync_service_ensure_gitignore_entries_write_failure(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test that sync handles .gitignore write failures."""
-    sync_service = FlextInfraSyncService()
-    gitignore_path = tmp_path / ".gitignore"
-    gitignore_path.write_text("*.pyc\n", encoding="utf-8")
-
-    def mock_open(*args: object, **kwargs: object) -> None:
-        msg = "Write failed"
-        raise OSError(msg)
-
-    monkeypatch.setattr(Path, "open", mock_open)
-    result = sync_service._ensure_gitignore_entries(tmp_path, [".reports/"])
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert ".gitignore update failed" in result.error
-
-
-def test_sync_service_sync_basemk_from_canonical(tmp_path: Path) -> None:
-    """Test that sync copies base.mk from canonical root."""
-    canonical = tmp_path / "canonical"
-    canonical.mkdir()
-    canonical_basemk = canonical / "base.mk"
-    canonical_basemk.write_text("# Canonical\n", encoding="utf-8")
-    project = tmp_path / "project"
-    project.mkdir()
-    sync_service = FlextInfraSyncService()
-    result = sync_service._sync_basemk(project, None, canonical_root=canonical)
-    assert result.is_success
-    assert result.value is True
-    assert (project / "base.mk").read_text(encoding="utf-8") == "# Canonical\n"
-
-
-def test_sync_service_sync_basemk_no_change_needed(tmp_path: Path) -> None:
-    """Test that sync skips when base.mk content is unchanged."""
-    sync_service = FlextInfraSyncService()
-    content = "# Same content\n"
-    (tmp_path / "base.mk").write_text(content, encoding="utf-8")
-    sync_service._generator = Mock()
-    mock_gen = Mock()
-    mock_gen.is_failure = False
-    mock_gen.is_success = True
-    mock_gen.value = content
-    sync_service._generator.generate.return_value = mock_gen
-    result = sync_service._sync_basemk(tmp_path, None)
-    assert result.is_success
-    assert result.value is False
-
-
-def test_sync_service_sync_basemk_generation_failure(tmp_path: Path) -> None:
-    """Test that sync handles base.mk generation failures."""
-    sync_service = FlextInfraSyncService()
-    sync_service._generator = Mock()
-    mock_result = Mock()
-    mock_result.is_failure = True
-    mock_result.error = "Generation failed"
-    sync_service._generator.generate.return_value = mock_result
-    result = sync_service._sync_basemk(tmp_path, None)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert "Generation failed" in result.error
-
-
-def test_sync_service_gitignore_sync_failure(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test sync handles .gitignore sync failures gracefully."""
-    sync_service = FlextInfraSyncService()
-
-    def mock_ensure_gitignore(*args: object, **kwargs: object) -> object:
-        return r[bool].fail(".gitignore sync failed")
-
-    monkeypatch.setattr(
-        sync_service,
-        "_ensure_gitignore_entries",
-        mock_ensure_gitignore,
-    )
-    result = sync_service.sync(project_root=tmp_path)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert ".gitignore sync failed" in result.error
-
-
-def test_sync_service_sync_basemk_with_canonical_root(tmp_path: Path) -> None:
-    """Test _sync_basemk uses canonical root when provided."""
-    sync_service = FlextInfraSyncService()
-    canonical_root = tmp_path / "canonical"
-    canonical_root.mkdir(parents=True, exist_ok=True)
-    canonical_basemk = canonical_root / "base.mk"
-    canonical_basemk.write_text("# Canonical base.mk\n")
-    result = sync_service._sync_basemk(tmp_path, None, canonical_root=canonical_root)
-    assert result.is_success or result.is_failure
-
-
-def test_main_returns_zero_on_success(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-    """Test main() returns 0 when sync succeeds (line 274)."""
-    monkeypatch.setattr("sys.argv", ["sync", "--project-root", str(tmp_path)])
-    exit_code = main()
-    assert exit_code == 0
-
-
-def test_main_returns_one_on_failure(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-    """Test main() returns 1 when sync fails (lines 275-276)."""
-    monkeypatch.setattr("sys.argv", ["sync", "--project-root", "/nonexistent/path"])
-    exit_code = main()
-    assert exit_code == 1
+    def test_main_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("sys.argv", ["sync", "--project-root", "/nonexistent/path"])
+        tm.that(main(), eq=1)

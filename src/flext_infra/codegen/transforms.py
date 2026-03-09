@@ -73,44 +73,56 @@ class FlextInfraCodegenTransforms:
 
     @staticmethod
     def find_standalone_finals(tree: ast.Module) -> list[ast.AnnAssign]:
-        """Find Final assignments not used by classes in same file."""
+        """Find module-level Final-annotated assignments.
+
+        Returns all top-level ``X: Final = ...`` and ``X: Final[T] = ...``
+        statements.  The caller decides whether to move them based on
+        additional guards (private prefix, circular-import risk, etc.).
+        """
         matches: list[ast.AnnAssign] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.AnnAssign):
                 continue
             annotation = stmt.annotation
             if isinstance(annotation, ast.Name) and annotation.id == "Final":
-                if not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree):
-                    matches.append(stmt)
+                matches.append(stmt)
                 continue
             if (
                 isinstance(annotation, ast.Subscript)
                 and isinstance(annotation.value, ast.Name)
-                and (annotation.value.id == "Final")
-                and (not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree))
+                and annotation.value.id == "Final"
             ):
                 matches.append(stmt)
         return matches
 
     @staticmethod
     def find_standalone_typealiases(tree: ast.Module) -> list[ast.stmt]:
-        """Find TypeAlias declarations not used by classes in same file."""
+        """Find module-level TypeAlias declarations (old-style and PEP 695).
+
+        Detects both ``X: TypeAlias = ...`` (ast.AnnAssign) and
+        ``type X = ...`` (ast.TypeAlias, PEP 695 / Python 3.12+).
+        """
         matches: list[ast.stmt] = []
         for stmt in tree.body:
-            if not isinstance(stmt, ast.AnnAssign):
+            # Old-style: X: TypeAlias = ...
+            if isinstance(stmt, ast.AnnAssign):
+                annotation = stmt.annotation
+                if isinstance(annotation, ast.Name) and annotation.id == "TypeAlias":
+                    matches.append(stmt)
                 continue
-            annotation = stmt.annotation
-            if (
-                isinstance(annotation, ast.Name)
-                and annotation.id == "TypeAlias"
-                and (not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree))
-            ):
+            # PEP 695: type X = ...
+            if isinstance(stmt, ast.TypeAlias):
                 matches.append(stmt)
         return matches
 
     @staticmethod
     def find_standalone_typevars(tree: ast.Module) -> list[ast.Assign]:
-        """Find TypeVar assignments not used by classes in same file."""
+        """Find module-level TypeVar/ParamSpec/TypeVarTuple assignments.
+
+        Detects ``X = TypeVar(...)``, ``P = ParamSpec(...)``, and
+        ``Ts = TypeVarTuple(...)`` at module level.
+        """
+        typevar_names = {"TypeVar", "ParamSpec", "TypeVarTuple"}
         matches: list[ast.Assign] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.Assign):
@@ -118,13 +130,8 @@ class FlextInfraCodegenTransforms:
             if not isinstance(stmt.value, ast.Call):
                 continue
             func = stmt.value.func
-            is_typevar = False
-            if (isinstance(func, ast.Name) and func.id == "TypeVar") or (
-                isinstance(func, ast.Attribute) and func.attr == "TypeVar"
-            ):
-                is_typevar = True
-            if is_typevar and (
-                not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree)
+            if (isinstance(func, ast.Name) and func.id in typevar_names) or (
+                isinstance(func, ast.Attribute) and func.attr in typevar_names
             ):
                 matches.append(stmt)
         return matches
@@ -141,13 +148,18 @@ class FlextInfraCodegenTransforms:
 
     @staticmethod
     def get_node_name(node: ast.stmt) -> str:
-        """Extract assignment target name from a statement."""
+        """Extract assignment target name from a statement.
+
+        Handles ast.Assign, ast.AnnAssign, and ast.TypeAlias (PEP 695).
+        """
         if isinstance(node, ast.Assign) and node.targets:
             target = node.targets[0]
             if isinstance(target, ast.Name):
                 return target.id
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
             return node.target.id
+        if isinstance(node, ast.TypeAlias):
+            return node.name.id
         return ""
 
     @staticmethod
@@ -160,12 +172,29 @@ class FlextInfraCodegenTransforms:
         return frozenset(names)
 
     @staticmethod
+    def get_type_param_names(node: ast.stmt) -> frozenset[str]:
+        """Extract locally-scoped type parameter names from a PEP 695 type alias.
+
+        ``type X[T, *Ts, **P] = ...`` defines T, Ts, P as local type params.
+        These names are part of the node itself and must NOT be treated as
+        external dependencies when checking resolvability.
+        """
+        if not isinstance(node, ast.TypeAlias):
+            return frozenset()
+        names: set[str] = set()
+        for tp in node.type_params:
+            if isinstance(tp, (ast.TypeVar, ast.TypeVarTuple, ast.ParamSpec)):
+                names.add(tp.name)
+        return frozenset(names)
+
+    @staticmethod
     def is_used_in_context(node: ast.stmt, tree: ast.Module) -> bool:
-        """Check if TypeVar/TypeAlias name is referenced anywhere in the module.
+        """Check if a definition's name is referenced elsewhere in the module.
 
         Checks all statements (class headers, function signatures, annotations,
-        body code) — not just class bases. A name that appears anywhere beyond
-        its own definition line is considered "in context" and should not be moved.
+        body code). Handles ast.Assign, ast.AnnAssign, and ast.TypeAlias
+        (PEP 695). A name that appears anywhere beyond its own definition is
+        considered "in context".
         """
         name: str | None = None
         if isinstance(node, ast.Assign):
@@ -175,6 +204,8 @@ class FlextInfraCodegenTransforms:
                     break
         elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
             name = node.target.id
+        elif isinstance(node, ast.TypeAlias):
+            name = node.name.id
         if name is None:
             return False
         for stmt in tree.body:
@@ -187,7 +218,10 @@ class FlextInfraCodegenTransforms:
 
     @staticmethod
     def name_exists_in_module(name: str, tree: ast.Module) -> bool:
-        """Check if a top-level name is already defined in a module."""
+        """Check if a top-level name is already defined in a module.
+
+        Handles ast.Assign, ast.AnnAssign, and ast.TypeAlias (PEP 695).
+        """
         for stmt in tree.body:
             if isinstance(stmt, ast.Assign):
                 for target in stmt.targets:
@@ -198,6 +232,8 @@ class FlextInfraCodegenTransforms:
                 and isinstance(stmt.target, ast.Name)
                 and (stmt.target.id == name)
             ):
+                return True
+            if isinstance(stmt, ast.TypeAlias) and stmt.name.id == name:
                 return True
         return False
 

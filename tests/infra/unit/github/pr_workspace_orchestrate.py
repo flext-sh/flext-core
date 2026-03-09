@@ -122,8 +122,6 @@ class TestOrchestrate:
 
 
 class TestStaticMethods:
-    """Test static utility methods."""
-
     def test_repo_display_name_root(self, tmp_path: Path) -> None:
         """Test display name for root repository."""
         display_name = getattr(FlextInfraPrWorkspaceManager, "_repo_display_name")
@@ -177,11 +175,6 @@ class TestStaticMethods:
         cmd = build_subproject_command(tmp_path, {})
         tm.that("make" in cmd, eq=True)
         tm.that(not [c for c in cmd if c.startswith("PR_HEAD=")], eq=True)
-
-
-# ---------------------------------------------------------------------------
-# Internal stubs for orchestrate tests (selector with project list)
-# ---------------------------------------------------------------------------
 
 
 class _StubSelectorWithProjects:

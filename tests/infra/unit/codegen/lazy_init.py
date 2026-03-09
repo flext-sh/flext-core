@@ -39,7 +39,7 @@ class TestFlextInfraCodegenLazyInit:
     def test_init_accepts_workspace_root(self, tmp_path: Path) -> None:
         """Test generator initialization with workspace root."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        tm.that(generator, is_not=None)
+        tm.that(generator, none=False)
 
     def test_run_with_empty_workspace_returns_zero(self, tmp_path: Path) -> None:
         """Test run() on empty workspace returns 0 (no errors)."""
@@ -302,28 +302,28 @@ class TestScanAstPublicDefs:
         tree = ast.parse("class PublicClass:\n    pass\n")
         index: dict[str, tuple[str, str]] = {}
         _scan_ast_public_defs(tree, "mod", index)
-        assert "PublicClass" in index
+        tm.that(index, contains="PublicClass")
 
     def test_skips_private(self) -> None:
         """Test scanning skips private names."""
         tree = ast.parse("class _PrivateClass:\n    pass\n")
         index: dict[str, tuple[str, str]] = {}
         _scan_ast_public_defs(tree, "mod", index)
-        assert "_PrivateClass" not in index
+        tm.that(index, excludes="_PrivateClass")
 
     def test_finds_functions(self) -> None:
         """Test scanning finds public functions."""
         tree = ast.parse("def public_func():\n    pass\n")
         index: dict[str, tuple[str, str]] = {}
         _scan_ast_public_defs(tree, "mod", index)
-        assert "public_func" in index
+        tm.that(index, contains="public_func")
 
     def test_finds_assignments(self) -> None:
         """Test scanning finds public assignments."""
         tree = ast.parse("MY_CONST = 42\n")
         index: dict[str, tuple[str, str]] = {}
         _scan_ast_public_defs(tree, "mod", index)
-        assert "MY_CONST" in index
+        tm.that(index, contains="MY_CONST")
 
 
 class TestExtractInlineConstants:
@@ -334,16 +334,16 @@ class TestExtractInlineConstants:
         code = '__version__ = "1.0.0"\n__author__ = "Test"\n__license__ = "MIT"'
         tree = ast.parse(code)
         constants = _extract_inline_constants(tree)
-        assert len(constants) == 3
-        assert constants["__version__"] == "1.0.0"
+        tm.that(len(constants), eq=3)
+        tm.that(constants["__version__"], eq="1.0.0")
 
     def test_ignores_non_string_values(self) -> None:
         """Test ignores non-string constant values."""
         code = '__version__ = "1.0.0"\n__count__ = 42\n__enabled__ = True'
         tree = ast.parse(code)
         constants = _extract_inline_constants(tree)
-        assert "__version__" in constants
-        assert "__count__" not in constants
+        tm.that(constants, contains="__version__")
+        tm.that(constants, excludes="__count__")
 
 
 class TestShouldBubbleUp:
@@ -351,29 +351,29 @@ class TestShouldBubbleUp:
 
     def test_public_class_name(self) -> None:
         """Test that public class names bubble up."""
-        assert _should_bubble_up("FlextInfraModels") is True
+        tm.that(_should_bubble_up("FlextInfraModels"), eq=True)
 
     def test_private_name_filtered(self) -> None:
         """Test that private names are filtered."""
-        assert _should_bubble_up("_internal") is False
+        tm.that(_should_bubble_up("_internal"), eq=False)
 
     def test_main_filtered(self) -> None:
         """Test that 'main' entry point is filtered."""
-        assert _should_bubble_up("main") is False
+        tm.that(_should_bubble_up("main"), eq=False)
 
     def test_all_caps_filtered(self) -> None:
         """Test that ALL_CAPS constants are filtered."""
-        assert _should_bubble_up("BLUE") is False
-        assert _should_bubble_up("SYM_ARROW") is False
+        tm.that(_should_bubble_up("BLUE"), eq=False)
+        tm.that(_should_bubble_up("SYM_ARROW"), eq=False)
 
     def test_singleton_name_passes(self) -> None:
         """Test that lowercase singleton names pass."""
-        assert _should_bubble_up("output") is True
+        tm.that(_should_bubble_up("output"), eq=True)
 
     def test_single_letter_alias_passes(self) -> None:
         """Test that single-letter aliases pass."""
-        assert _should_bubble_up("c") is True
-        assert _should_bubble_up("e") is True
+        tm.that(_should_bubble_up("c"), eq=True)
+        tm.that(_should_bubble_up("e"), eq=True)
 
 
 class TestMergeChildExports:
@@ -390,8 +390,8 @@ class TestMergeChildExports:
             },
         }
         _merge_child_exports(tmp_path, lazy_map, dir_exports)
-        assert "SubService" in lazy_map
-        assert lazy_map["SubService"] == ("pkg.sub.service", "SubService")
+        tm.that(lazy_map, contains="SubService")
+        tm.that(lazy_map["SubService"], eq=("pkg.sub.service", "SubService"))
 
     def test_sibling_exports_take_precedence(self, tmp_path: Path) -> None:
         """Test that existing sibling exports are NOT overwritten."""
@@ -407,7 +407,7 @@ class TestMergeChildExports:
         }
         _merge_child_exports(tmp_path, lazy_map, dir_exports)
         # Sibling wins
-        assert lazy_map["Model"] == ("pkg.models", "Model")
+        tm.that(lazy_map["Model"], eq=("pkg.models", "Model"))
 
     def test_filters_all_caps(self, tmp_path: Path) -> None:
         """Test that ALL_CAPS constants don't bubble up."""
@@ -421,8 +421,8 @@ class TestMergeChildExports:
             },
         }
         _merge_child_exports(tmp_path, lazy_map, dir_exports)
-        assert "BLUE" not in lazy_map
-        assert "Service" in lazy_map
+        tm.that(lazy_map, excludes="BLUE")
+        tm.that(lazy_map, contains="Service")
 
 
 class TestExtractVersionExports:
@@ -432,8 +432,8 @@ class TestExtractVersionExports:
         """Test extracting __version__ as inline constant."""
         (tmp_path / "__version__.py").write_text('__version__ = "1.0.0"\n')
         inline, _ = _extract_version_exports(tmp_path, "test_pkg")
-        assert "__version__" in inline
-        assert inline["__version__"] == "1.0.0"
+        tm.that(inline, contains="__version__")
+        tm.that(inline["__version__"], eq="1.0.0")
 
     def test_extracts_non_string_as_lazy(self, tmp_path: Path) -> None:
         """Test extracting __version_info__ as lazy import."""
@@ -441,18 +441,18 @@ class TestExtractVersionExports:
             '__version__ = "1.0.0"\n__version_info__ = (1, 0, 0)\n',
         )
         inline, lazy = _extract_version_exports(tmp_path, "test_pkg")
-        assert "__version__" in inline
-        assert "__version_info__" in lazy
-        assert lazy["__version_info__"] == (
-            "test_pkg.__version__",
-            "__version_info__",
+        tm.that(inline, contains="__version__")
+        tm.that(lazy, contains="__version_info__")
+        tm.that(
+            lazy["__version_info__"],
+            eq=("test_pkg.__version__", "__version_info__"),
         )
 
     def test_no_version_file(self, tmp_path: Path) -> None:
         """Test returns empty when __version__.py doesn't exist."""
         inline, lazy = _extract_version_exports(tmp_path, "test_pkg")
-        assert inline == {}
-        assert lazy == {}
+        tm.that(inline, eq={})
+        tm.that(lazy, eq={})
 
 
 class TestResolveAliases:
@@ -464,8 +464,8 @@ class TestResolveAliases:
             "FlextConstants": ("pkg.constants", "FlextConstants"),
         }
         _resolve_aliases(lazy_map)
-        assert "c" in lazy_map
-        assert lazy_map["c"] == ("pkg.constants", "FlextConstants")
+        tm.that(lazy_map, contains="c")
+        tm.that(lazy_map["c"], eq=("pkg.constants", "FlextConstants"))
 
     def test_does_not_overwrite_existing(self) -> None:
         """Test that existing alias is not overwritten."""
@@ -475,7 +475,7 @@ class TestResolveAliases:
         }
         _resolve_aliases(lazy_map)
         # Should keep existing mapping
-        assert lazy_map["c"] == ("pkg.custom", "CustomConst")
+        tm.that(lazy_map["c"], eq=("pkg.custom", "CustomConst"))
 
     def test_resolves_multiple_aliases(self) -> None:
         """Test resolving multiple aliases at once."""
@@ -485,9 +485,9 @@ class TestResolveAliases:
             "FlextTypes": ("pkg.typings", "FlextTypes"),
         }
         _resolve_aliases(lazy_map)
-        assert "c" in lazy_map
-        assert "m" in lazy_map
-        assert "t" in lazy_map
+        tm.that(lazy_map, contains="c")
+        tm.that(lazy_map, contains="m")
+        tm.that(lazy_map, contains="t")
 
 
 class TestGenerateTypeChecking:
@@ -497,21 +497,21 @@ class TestGenerateTypeChecking:
         """Test with no imports."""
         groups: dict[str, list[tuple[str, str]]] = {}
         lines = _generate_type_checking(groups)
-        assert "if TYPE_CHECKING:" in lines
-        assert any("pass" in line for line in lines)
+        tm.that(lines, contains="if TYPE_CHECKING:")
+        tm.that(any("pass" in line for line in lines), eq=True)
 
     def test_with_single_module(self) -> None:
         """Test with single module."""
         groups = {"module": [("Test", "Test")]}
         lines = _generate_type_checking(groups)
-        assert "from module import" in " ".join(lines)
+        tm.that(" ".join(lines), contains="from module import")
 
     def test_with_aliased_imports(self) -> None:
         """Test with aliased imports."""
         groups = {"module": [("c", "FlextConstants"), ("m", "FlextModels")]}
         lines = _generate_type_checking(groups)
         joined = " ".join(lines)
-        assert "as" in joined
+        tm.that(joined, contains="as")
 
     def test_with_long_import_line(self) -> None:
         """Test wraps long import lines."""
@@ -522,7 +522,7 @@ class TestGenerateTypeChecking:
             ("VeryLongClassName3", "VeryLongClassName3"),
         ]
         lines = _generate_type_checking(groups)
-        assert any("module" in line for line in lines)
+        tm.that(any("module" in line for line in lines), eq=True)
 
     def test_with_multiple_modules_spacing(self) -> None:
         """Test blank lines between different top-level package groups."""
@@ -530,7 +530,7 @@ class TestGenerateTypeChecking:
         groups["alpha_pkg.module"] = [("Test1", "Test1")]
         groups["beta_pkg.module"] = [("Test2", "Test2")]
         lines = _generate_type_checking(groups)
-        assert "" in lines
+        tm.that(lines, contains="")
 
 
 class TestGenerateFile:
@@ -542,7 +542,7 @@ class TestGenerateFile:
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
         content = _generate_file("", exports, filtered, inline_constants, "flext_core")
-        assert "flext_core._utilities.lazy" in content
+        tm.that(content, contains="flext_core._utilities.lazy")
 
     def test_with_other_package(self) -> None:
         """Test uses correct lazy import for non-core packages."""
@@ -550,7 +550,7 @@ class TestGenerateFile:
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
         content = _generate_file("", exports, filtered, inline_constants, "other_pkg")
-        assert "from flext_core.lazy import" in content
+        tm.that(content, contains="from flext_core.lazy import")
 
     def test_with_inline_constants(self) -> None:
         """Test includes inline constants."""
@@ -558,7 +558,7 @@ class TestGenerateFile:
         filtered = {"Test": ("module", "Test")}
         inline_constants = {"__version__": "1.0.0"}
         content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
-        assert '__version__ = "1.0.0"' in content
+        tm.that(content, contains='__version__ = "1.0.0"')
 
     def test_with_docstring(self) -> None:
         """Test preserves docstring."""
@@ -573,7 +573,7 @@ class TestGenerateFile:
             inline_constants,
             "test_pkg",
         )
-        assert docstring in content
+        tm.that(content, contains=docstring)
 
     def test_has_autogen_header(self) -> None:
         """Test generated file starts with autogen header."""
@@ -581,7 +581,7 @@ class TestGenerateFile:
         filtered = {"Test": ("module", "Test")}
         inline_constants: dict[str, str] = {}
         content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
-        assert "AUTO-GENERATED" in content
+        tm.that(content, contains="AUTO-GENERATED")
 
     def test_has_all_list(self) -> None:
         """Test generated file has __all__ list."""
@@ -589,9 +589,9 @@ class TestGenerateFile:
         filtered = {"Alpha": ("mod", "Alpha"), "Beta": ("mod", "Beta")}
         inline_constants: dict[str, str] = {}
         content = _generate_file("", exports, filtered, inline_constants, "test_pkg")
-        assert "__all__" in content
-        assert '"Alpha"' in content
-        assert '"Beta"' in content
+        tm.that(content, contains="__all__")
+        tm.that(content, contains='"Alpha"')
+        tm.that(content, contains='"Beta"')
 
 
 class TestRunRuffFix:
@@ -626,10 +626,10 @@ class TestProcessDirectory:
             check_only=False,
             dir_exports=dir_exports,
         )
-        assert result == 0
-        assert "TestModel" in exports
+        tm.that(result, eq=0)
+        tm.that(exports, contains="TestModel")
         init_content = (src_dir / "__init__.py").read_text()
-        assert "TestModel" in init_content
+        tm.that(init_content, contains="TestModel")
 
     def test_check_only_does_not_write(self, tmp_path: Path) -> None:
         """Test _process_directory in check_only mode doesn't write files."""
@@ -645,10 +645,10 @@ class TestProcessDirectory:
             check_only=True,
             dir_exports=dir_exports,
         )
-        assert result == 0
-        assert "TestModel" in exports
+        tm.that(result, eq=0)
+        tm.that(exports, contains="TestModel")
         # __init__.py should NOT have been created
-        assert not (src_dir / "__init__.py").exists()
+        tm.that((src_dir / "__init__.py").exists(), eq=False)
 
     def test_skips_directory_without_package(self, tmp_path: Path) -> None:
         """Test _process_directory skips dirs that can't infer package."""
@@ -662,8 +662,8 @@ class TestProcessDirectory:
             check_only=False,
             dir_exports=dir_exports,
         )
-        assert result is None
-        assert exports == {}
+        tm.that(result, eq=None)
+        tm.that(exports, eq={})
 
     def test_includes_child_exports(self, tmp_path: Path) -> None:
         """Test _process_directory includes child subdirectory exports."""
@@ -684,9 +684,9 @@ class TestProcessDirectory:
             check_only=False,
             dir_exports=dir_exports,
         )
-        assert result == 0
-        assert "ParentModel" in exports
-        assert "ChildService" in exports
+        tm.that(result, eq=0)
+        tm.that(exports, contains="ParentModel")
+        tm.that(exports, contains="ChildService")
 
     def test_handles_version_file(self, tmp_path: Path) -> None:
         """Test _process_directory handles __version__.py correctly."""
@@ -705,7 +705,7 @@ class TestProcessDirectory:
             check_only=False,
             dir_exports=dir_exports,
         )
-        assert result == 0
+        tm.that(result, eq=0)
         content = (src_dir / "__init__.py").read_text()
-        assert '__version__ = "1.0.0"' in content
-        assert "__version_info__" in content
+        tm.that(content, contains='__version__ = "1.0.0"')
+        tm.that(content, contains="__version_info__")

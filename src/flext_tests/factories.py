@@ -21,14 +21,13 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Never, TypeVar, override
+from typing import Never, override
 
 from pydantic import BaseModel
 
 from flext_core import r
+from flext_core.typings import TValue
 from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
-
-TValue = TypeVar("TValue")
 
 
 def _to_payload_value(value: t.ContainerValue) -> t.Tests.ContainerValue:

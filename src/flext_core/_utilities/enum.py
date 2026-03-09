@@ -11,13 +11,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import Annotated, ClassVar, Literal, TypeGuard, TypeIs, TypeVar, overload
+from typing import Annotated, ClassVar, Literal, TypeGuard, TypeIs, overload
 
 from pydantic import Field, TypeAdapter, ValidationError
 
 from flext_core import r, t
-
-EnumT = TypeVar("EnumT", bound=StrEnum)
+from flext_core.typings import EnumT
 
 
 class FlextUtilitiesEnum:

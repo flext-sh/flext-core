@@ -49,7 +49,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         """
         names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
         node_name = FlextInfraCodegenTransforms.get_node_name(node)
-        names_used = frozenset(n for n in names_used if n != node_name)
+        type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
+        names_used = frozenset(
+            n for n in names_used if n != node_name and n not in type_params
+        )
         if not names_used:
             return True
         available: set[str] = set(dir(_builtins_module))
@@ -83,7 +86,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         """
         names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
         node_name = FlextInfraCodegenTransforms.get_node_name(node)
-        names_used = frozenset(n for n in names_used if n != node_name)
+        type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
+        names_used = frozenset(
+            n for n in names_used if n != node_name and n not in type_params
+        )
         if not names_used:
             return
         source_imports: dict[str, ast.stmt] = {}
@@ -150,7 +156,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         """
         names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
         node_name = FlextInfraCodegenTransforms.get_node_name(node)
-        names_used = frozenset(n for n in names_used if n != node_name)
+        type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
+        names_used = frozenset(
+            n for n in names_used if n != node_name and n not in type_params
+        )
         if not names_used:
             return False
         target_available: set[str] = set(dir(_builtins_module))
@@ -231,7 +240,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         for node in nodes:
             names = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
             node_name = FlextInfraCodegenTransforms.get_node_name(node)
-            all_names.update(n for n in names if n != node_name)
+            type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
+            all_names.update(
+                n for n in names if n != node_name and n not in type_params
+            )
         if not all_names:
             return []
         import_texts: list[str] = []
@@ -478,17 +490,6 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                     ),
                 )
                 continue
-            if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
-                violations_skipped.append(
-                    m.Infra.Codegen.CensusViolation(
-                        module=str(source_file),
-                        rule="NS-001",
-                        line=node.lineno,
-                        message=f"Final constant '{target_name}' used in-context — skipped",
-                        fixable=False,
-                    ),
-                )
-                continue
             nodes_to_move.append(node)
         if not nodes_to_move:
             return
@@ -592,28 +593,9 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                     ),
                 )
                 continue
-            if FlextInfraCodegenTransforms.is_used_in_context(tv_node, tree):
-                violations_skipped.append(
-                    m.Infra.Codegen.CensusViolation(
-                        module=str(source_file),
-                        rule="NS-002",
-                        line=tv_node.lineno,
-                        message=f"TypeVar '{target_name}' used in-context — skipped",
-                        fixable=False,
-                    ),
-                )
-                continue
             nodes_to_move.append(tv_node)
         for alias_node in typealiases:
-            target_name = ""
-            if isinstance(alias_node, (ast.AnnAssign, ast.Assign)):
-                target = (
-                    alias_node.target
-                    if isinstance(alias_node, ast.AnnAssign)
-                    else alias_node.targets[0]
-                )
-                if isinstance(target, ast.Name):
-                    target_name = target.id
+            target_name = FlextInfraCodegenTransforms.get_node_name(alias_node)
             if target_name.startswith("_"):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
@@ -621,17 +603,6 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                         rule="NS-002",
                         line=alias_node.lineno,
                         message=f"TypeAlias '{target_name}' is private — skipped",
-                        fixable=False,
-                    ),
-                )
-                continue
-            if FlextInfraCodegenTransforms.is_used_in_context(alias_node, tree):
-                violations_skipped.append(
-                    m.Infra.Codegen.CensusViolation(
-                        module=str(source_file),
-                        rule="NS-002",
-                        line=alias_node.lineno,
-                        message=f"TypeAlias '{target_name}' used in-context — skipped",
                         fixable=False,
                     ),
                 )

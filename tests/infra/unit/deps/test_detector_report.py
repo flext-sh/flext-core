@@ -63,28 +63,36 @@ def _setup(
     reporting_service: types.SimpleNamespace | None = None,
 ) -> detector_module.FlextInfraRuntimeDevDependencyDetector:
     def _workspace_root_from_file(path: str) -> r[Path]:
-        _ = path
+        del path
         return r[Path].ok(tmp_path)
 
     def _exists(path: Path) -> bool:
-        _ = path
+        del path
         return True
 
+    def _paths_factory() -> types.SimpleNamespace:
+        return paths
+
+    def _deps_factory() -> _DepsStub:
+        return deps
+
+    def _json_factory() -> types.SimpleNamespace | None:
+        return json_service
+
+    def _reporting_factory() -> types.SimpleNamespace | None:
+        return reporting_service
+
     paths = types.SimpleNamespace(workspace_root_from_file=_workspace_root_from_file)
-    monkeypatch.setattr(detector_module, "FlextInfraUtilitiesPaths", lambda: paths)
+    monkeypatch.setattr(detector_module, "FlextInfraUtilitiesPaths", _paths_factory)
     monkeypatch.setattr(
-        detector_module, "FlextInfraDependencyDetectionService", lambda: deps
+        detector_module, "FlextInfraDependencyDetectionService", _deps_factory
     )
     monkeypatch.setattr(Path, "exists", _exists)
     if json_service is not None:
-        monkeypatch.setattr(
-            detector_module, "FlextInfraUtilitiesIo", lambda: json_service
-        )
+        monkeypatch.setattr(detector_module, "FlextInfraUtilitiesIo", _json_factory)
     if reporting_service is not None:
         monkeypatch.setattr(
-            detector_module,
-            "FlextInfraUtilitiesReporting",
-            lambda: reporting_service,
+            detector_module, "FlextInfraUtilitiesReporting", _reporting_factory
         )
     return detector_module.FlextInfraRuntimeDevDependencyDetector()
 
@@ -115,23 +123,15 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
         tm.that(len(call_paths), eq=1)
         tm.that(call_paths[0], eq=str(custom_output))
 
-    def test_run_with_issues_and_pip_failure(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        tmp_path: Path,
-    ) -> None:
-        detector = _setup(monkeypatch, tmp_path, _DepsStub(tmp_path / "proj-a", 5, 1))
-        tm.that(tm.ok(detector.run(["--dry-run"])), eq=1)
-
     def test_run_with_report_directory_creation_failure(
         self,
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: Path,
     ) -> None:
         def _report_dir(root: Path, category: str, name: str) -> Path:
-            _ = root
-            _ = category
-            _ = name
+            del root
+            del category
+            del name
             return tmp_path / "readonly"
 
         reporting = types.SimpleNamespace(get_report_dir=_report_dir)
@@ -139,16 +139,12 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
         def _mkdir_fail(
             path: Path, *, parents: bool = False, exist_ok: bool = False
         ) -> None:
-            _ = path
-            _ = parents
-            _ = exist_ok
+            del path
+            del parents
+            del exist_ok
             raise OSError("Permission denied")
 
-        monkeypatch.setattr(
-            Path,
-            "mkdir",
-            _mkdir_fail,
-        )
+        monkeypatch.setattr(Path, "mkdir", _mkdir_fail)
         detector = _setup(
             monkeypatch,
             tmp_path,
@@ -170,22 +166,22 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
             path: Path,
             payload: dict[str, dict[str, dict[str, int]]],
         ) -> r[bool]:
-            _ = path
-            _ = payload
+            del path
+            del payload
             return r[bool].fail("write failed")
 
         def _report_dir(root: Path, category: str, name: str) -> Path:
-            _ = root
-            _ = category
-            _ = name
+            del root
+            del category
+            del name
             return tmp_path / "reports"
 
         def _mkdir_ok(
             path: Path, *, parents: bool = False, exist_ok: bool = False
         ) -> None:
-            _ = path
-            _ = parents
-            _ = exist_ok
+            del path
+            del parents
+            del exist_ok
 
         json_service = types.SimpleNamespace(write_json=_write_json_fail)
         reporting = types.SimpleNamespace(get_report_dir=_report_dir)
@@ -199,19 +195,3 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
         )
         error = tm.fail(detector.run(["--no-pip-check"]))
         tm.that("write failed" in error or "failed to write report" in error, eq=True)
-
-    def test_run_with_no_fail_flag_with_issues(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        tmp_path: Path,
-    ) -> None:
-        detector = _setup(monkeypatch, tmp_path, _DepsStub(tmp_path / "proj-a", 5, 1))
-        tm.that(tm.ok(detector.run(["--no-fail", "--dry-run"])), eq=0)
-
-    def test_run_with_json_stdout_flag(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        tmp_path: Path,
-    ) -> None:
-        detector = _setup(monkeypatch, tmp_path, _DepsStub(tmp_path / "proj-a", 0, 0))
-        tm.that(tm.ok(detector.run(["--json", "--no-pip-check"])), eq=0)

@@ -9,7 +9,6 @@ import tomlkit
 import flext_infra.deps.modernizer as modernizer_module
 from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
 from flext_tests import tm
-from tests.infra import h
 
 
 class TestModernizerEdgeCases:
@@ -25,7 +24,7 @@ class TestModernizerEdgeCases:
             skip_comments=False,
             skip_check=True,
         )
-        tm.that(isinstance(modernizer.run(args), int), eq=True)
+        tm.that(modernizer.run(args) in {0, 1, 2}, eq=True)
 
     def test_modernizer_with_invalid_toml(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
@@ -39,7 +38,7 @@ class TestModernizerEdgeCases:
             skip_comments=False,
             skip_check=True,
         )
-        tm.that(isinstance(modernizer.run(args), int), eq=True)
+        tm.that(modernizer.run(args) in {0, 1, 2}, eq=True)
 
     def test_modernizer_with_missing_pyproject(self, tmp_path: Path) -> None:
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
@@ -51,7 +50,7 @@ class TestModernizerEdgeCases:
             skip_comments=False,
             skip_check=True,
         )
-        tm.that(isinstance(modernizer.run(args), int), eq=True)
+        tm.that(modernizer.run(args) in {0, 1, 2}, eq=True)
 
 
 class TestModernizerUncoveredLines:
@@ -83,9 +82,19 @@ class TestModernizerUncoveredLines:
             skip_comments=False,
             skip_check=True,
         )
-        monkeypatch.setattr(modernizer, "find_pyproject_files", lambda: [pyproject])
-        monkeypatch.setattr(modernizer_module, "_read_doc", lambda _path: doc)
-        monkeypatch.setattr(modernizer, "process_file", lambda *_args, **_kwargs: [])
+
+        def _find_files() -> list[Path]:
+            return [pyproject]
+
+        def _read_doc(_path: Path) -> tomlkit.TOMLDocument:
+            return doc
+
+        def _process_file(*_args: object, **_kwargs: object) -> list[str]:
+            return []
+
+        monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
+        monkeypatch.setattr(modernizer_module, "_read_doc", _read_doc)
+        monkeypatch.setattr(modernizer, "process_file", _process_file)
         tm.that(modernizer.run(args), eq=0)
 
 
@@ -118,4 +127,3 @@ def test_flext_infra_pyproject_modernizer_find_pyproject_files(tmp_path: Path) -
     files = FlextInfraPyprojectModernizer(tmp_path).find_pyproject_files()
     tm.that(files, length=2)
     tm.that(all("project" in str(path) for path in files), eq=True)
-    tm.that(hasattr(h, "assert_ok"), eq=True)

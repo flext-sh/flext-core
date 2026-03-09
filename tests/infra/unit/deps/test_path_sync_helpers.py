@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from flext_core import r
 from flext_infra.deps.path_sync import (
     _extract_requirement_name,
     _target_path,
     extract_dep_name,
 )
 from flext_tests import tm
-from tests.infra import h
+from tests.infra.helpers import h
 
 
 class TestExtractDepName:
@@ -35,7 +36,7 @@ class TestExtractDepName:
         tm.that(extract_dep_name("/../flext-core"), eq="flext-core")
 
     def test_extract_dep_name_with_empty_string(self) -> None:
-        tm.that(extract_dep_name("") is not None, eq=True)
+        tm.that(extract_dep_name(""), eq="")
 
 
 class TestTargetPath:
@@ -123,4 +124,4 @@ def test_target_path_standalone() -> None:
 
 
 def test_helpers_alias_is_reachable_helpers() -> None:
-    tm.that(hasattr(h, "assert_fail"), eq=True)
+    tm.that(h.assert_fail(r[bool].fail("x"), contains="x"), contains="x")

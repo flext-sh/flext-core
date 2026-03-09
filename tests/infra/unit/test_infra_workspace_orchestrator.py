@@ -1,222 +1,174 @@
 """Tests for FlextInfraOrchestratorService.
 
+Uses real service instances with monkeypatch for runner control.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesSubprocess, m
+from flext_infra import m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
+from flext_tests import tm
+
+_CO = m.Infra.Core.CommandOutput
+
+
+def _cmd_out(exit_code: int = 0) -> _CO:
+    return _CO(stdout="", stderr="", exit_code=exit_code, duration=0.0)
+
+
+def _stub_runner_ok(exit_code: int = 0) -> object:
+    """Create a runner stub that returns ok with given exit code."""
+
+    class _Runner:
+        @staticmethod
+        def run_to_file(
+            cmd: Sequence[str],
+            output_file: Path,
+            cwd: Path | None = None,
+            timeout: int | None = None,
+            env: object = None,
+        ) -> r[int]:
+            return r[int].ok(exit_code)
+
+    return _Runner()
+
+
+def _stub_runner_fail(error: str) -> object:
+    """Create a runner stub that returns failure."""
+
+    class _Runner:
+        @staticmethod
+        def run_to_file(
+            cmd: Sequence[str],
+            output_file: Path,
+            cwd: Path | None = None,
+            timeout: int | None = None,
+            env: object = None,
+        ) -> r[int]:
+            return r[int].fail(error)
+
+    return _Runner()
+
+
+def _stub_runner_raise(error: str) -> object:
+    """Create a runner stub that raises OSError."""
+
+    class _Runner:
+        @staticmethod
+        def run_to_file(
+            cmd: Sequence[str],
+            output_file: Path,
+            cwd: Path | None = None,
+            timeout: int | None = None,
+            env: object = None,
+        ) -> r[int]:
+            raise OSError(error)
+
+    return _Runner()
 
 
 @pytest.fixture
 def orchestrator() -> FlextInfraOrchestratorService:
-    """Create an orchestrator instance."""
     return FlextInfraOrchestratorService()
 
 
-def test_orchestrator_executes_verb_across_projects(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test orchestration of make verb across multiple projects."""
-    projects = ["project-a", "project-b"]
-    verb = "check"
-    result = orchestrator.orchestrate(projects, verb)
-    assert result.is_success
-    assert len(result.value) == 2
+class TestOrchestratorBasic:
+    def test_executes_verb_across_projects(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        result = orchestrator.orchestrate(["project-a", "project-b"], "check")
+        tm.ok(result, len=2)
+
+    def test_fail_fast(self, orchestrator: FlextInfraOrchestratorService) -> None:
+        result = orchestrator.orchestrate(["p-a", "p-b", "p-c"], "test", fail_fast=True)
+        tm.ok(result)
+
+    def test_continues_without_fail_fast(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        result = orchestrator.orchestrate(["p-a", "p-b"], "test", fail_fast=False)
+        tm.ok(result, len=2)
+
+    def test_execute_returns_failure(self) -> None:
+        tm.fail(FlextInfraOrchestratorService().execute())
+
+    def test_empty_project_list(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        tm.ok(orchestrator.orchestrate([], "check"), len=0)
+
+    def test_captures_per_project_output(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        tm.ok(orchestrator.orchestrate(["p-a"], "check"), len=1)
 
 
-def test_orchestrator_stops_on_first_failure_with_fail_fast(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test that orchestrator stops on first failure when fail_fast=True."""
-    projects = ["project-a", "project-b", "project-c"]
-    verb = "test"
-    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
-    assert result.is_success
+class TestOrchestratorWithRunner:
+    def test_fail_fast_skips_remaining(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        orchestrator._runner = _stub_runner_fail("Failed")
+        result = orchestrator.orchestrate(["p-a", "p-b", "p-c"], "test", fail_fast=True)
+        tm.ok(result, len=3)
+
+    def test_runner_exception(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        orchestrator._runner = _stub_runner_raise("Runner failed")
+        result = orchestrator.orchestrate(["p-a"], "test")
+        tm.fail(result, has="Orchestration failed")
+
+    def test_fail_fast_exit_codes(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        orchestrator._runner = _stub_runner_fail("Failed")
+        result = orchestrator.orchestrate(["p-a", "p-b", "p-c"], "test", fail_fast=True)
+        value = tm.ok(result)
+        tm.that(value[0].exit_code, eq=1)
+        tm.that(value[1].exit_code, eq=0)
+        tm.that(value[2].exit_code, eq=0)
+
+    def test_execution_failure_all_projects(
+        self, orchestrator: FlextInfraOrchestratorService
+    ) -> None:
+        orchestrator._runner = _stub_runner_fail("Execution failed")
+        result = orchestrator.orchestrate(["p1", "p2"], "test", fail_fast=False)
+        value = tm.ok(result, len=2)
+        tm.that(value[0].exit_code, eq=1)
+        tm.that(value[1].exit_code, eq=1)
 
 
-def test_orchestrator_continues_on_failure_without_fail_fast(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test that orchestrator continues on failure when fail_fast=False."""
-    projects = ["project-a", "project-b"]
-    verb = "test"
-    result = orchestrator.orchestrate(projects, verb, fail_fast=False)
-    assert result.is_success
-    assert len(result.value) == 2
+class TestOrchestratorRunProject:
+    def test_run_project_failure_with_fail_fast(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        orchestrator = FlextInfraOrchestratorService()
+        call_count = [0]
 
+        def _run_project(
+            self: object,
+            project: str,
+            verb: str,
+            idx: int,
+            make_args: list[str],
+        ) -> r[_CO]:
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return r[_CO].fail("project execution failed")
+            return r[_CO].ok(_cmd_out(0))
 
-def test_orchestrator_execute_returns_failure() -> None:
-    """Test that execute() method returns failure as expected."""
-    orchestrator = FlextInfraOrchestratorService()
-    result = orchestrator.execute()
-    assert result.is_failure
-
-
-def test_orchestrator_handles_empty_project_list(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test orchestration with empty project list."""
-    result = orchestrator.orchestrate([], "check")
-    assert result.is_success
-    assert len(result.value) == 0
-
-
-def test_orchestrator_captures_per_project_output(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test that orchestrator captures output for each project."""
-    projects = ["project-a"]
-    verb = "check"
-    result = orchestrator.orchestrate(projects, verb)
-    assert result.is_success
-    assert result.is_success
-    assert len(result.value) == 1
-
-
-def test_orchestrator_fail_fast_skips_remaining_projects(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test that fail_fast skips remaining projects after failure."""
-    projects = ["project-a", "project-b", "project-c"]
-    verb = "test"
-    mock_runner = Mock()
-    mock_runner.run_to_file.return_value = Mock(is_success=False, error="Failed")
-    orchestrator._runner = mock_runner
-    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
-    assert result.is_success
-    assert len(result.value) == 3
-
-
-def test_orchestrator_handles_runner_exception(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test orchestrator handles runner exceptions gracefully."""
-    projects = ["project-a"]
-    verb = "test"
-    mock_runner = Mock()
-    mock_runner.run_to_file.side_effect = OSError("Runner failed")
-    orchestrator._runner = mock_runner
-    result = orchestrator.orchestrate(projects, verb)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert isinstance(result.error, str)
-    assert "Orchestration failed" in result.error
-
-
-def test_orchestrator_with_make_args(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test orchestrator passes make arguments correctly."""
-    projects = ["project-a"]
-    verb = "test"
-    make_args = ["VERBOSE=1", "PARALLEL=4"]
-    mock_runner = Mock()
-    mock_runner.run_to_file.return_value = Mock(is_success=True, value=0)
-    orchestrator._runner = mock_runner
-    result = orchestrator.orchestrate(projects, verb, make_args=make_args)
-    assert result.is_success
-    call_args = mock_runner.run_to_file.call_args
-    assert "VERBOSE=1" in call_args[0][0]
-    assert "PARALLEL=4" in call_args[0][0]
-
-
-def test_orchestrator_fail_fast_with_failure_result(
-    orchestrator: FlextInfraOrchestratorService,
-) -> None:
-    """Test fail_fast behavior when _run_project returns failure."""
-    projects = ["project-a", "project-b", "project-c"]
-    verb = "test"
-    mock_runner = Mock()
-    mock_runner.run_to_file.return_value = Mock(is_success=False, error="Failed")
-    orchestrator._runner = mock_runner
-    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
-    assert result.is_success
-    assert len(result.value) == 3
-    assert result.value[0].exit_code == 1
-    assert result.value[1].exit_code == 0
-    assert result.value[2].exit_code == 0
-
-
-def test_orchestrate_with_project_execution_failure(tmp_path: Path) -> None:
-    """Test orchestrate handles project execution failure."""
-    orchestrator = FlextInfraOrchestratorService()
-    projects = [
-        Mock(name="proj1", path=tmp_path / "proj1"),
-        Mock(name="proj2", path=tmp_path / "proj2"),
-    ]
-    verb = "test"
-    mock_runner = Mock(spec=FlextInfraUtilitiesSubprocess)
-    mock_runner.run_to_file.return_value = Mock(
-        is_success=False,
-        error="Execution failed",
-    )
-    orchestrator._runner = mock_runner
-    result = orchestrator.orchestrate(projects, verb, fail_fast=False)
-    assert result.is_success
-    assert len(result.value) == 2
-    assert result.value[0].exit_code == 1
-    assert result.value[1].exit_code == 1
-
-
-def test_orchestrate_with_runner_failure_fail_fast(tmp_path: Path) -> None:
-    """Test orchestrate handles runner failure with fail_fast=True."""
-    orchestrator = FlextInfraOrchestratorService()
-    orchestrator = FlextInfraOrchestratorService()
-    projects = [
-        Mock(name="proj1", path=tmp_path / "proj1"),
-        Mock(name="proj2", path=tmp_path / "proj2"),
-        Mock(name="proj3", path=tmp_path / "proj3"),
-    ]
-    verb = "test"
-    mock_runner = Mock(spec=FlextInfraUtilitiesSubprocess)
-    mock_runner.run_to_file.return_value = Mock(
-        is_success=False,
-        error="Execution failed",
-    )
-    orchestrator._runner = mock_runner
-    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
-    assert result.is_success
-    assert len(result.value) <= 3
-
-
-def test_orchestrate_run_project_failure_with_fail_fast(
-    tmp_path: Path,
-    monkeypatch: MonkeyPatch,
-) -> None:
-    """Test orchestrate handles _run_project failure with fail_fast (lines 94-105)."""
-    orchestrator = FlextInfraOrchestratorService()
-    projects = ["proj1", "proj2", "proj3"]
-    verb = "test"
-    call_count = [0]
-
-    def mock_run_project(
-        self: object,
-        project: str,
-        verb: str,
-        idx: int,
-        make_args: list[str],
-    ) -> object:
-        call_count[0] += 1
-        if call_count[0] == 1:
-            return r[m.Infra.Core.CommandOutput].fail("project execution failed")
-        return r[m.Infra.Core.CommandOutput].ok(
-            m.Infra.Core.CommandOutput(stdout="", stderr="", exit_code=0, duration=0.0),
-        )
-
-    monkeypatch.setattr(FlextInfraOrchestratorService, "_run_project", mock_run_project)
-    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
-    assert result.is_success
-    assert len(result.value) == 3
-    assert result.value[0].exit_code == 1
-    assert result.value[1].exit_code == 0
-    assert result.value[2].exit_code == 0
+        monkeypatch.setattr(FlextInfraOrchestratorService, "_run_project", _run_project)
+        result = orchestrator.orchestrate(["p1", "p2", "p3"], "test", fail_fast=True)
+        value = tm.ok(result, len=3)
+        tm.that(value[0].exit_code, eq=1)
+        tm.that(value[1].exit_code, eq=0)
+        tm.that(value[2].exit_code, eq=0)

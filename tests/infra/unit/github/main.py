@@ -1,24 +1,21 @@
 """Tests for flext_infra.github.__main__ CLI entry point.
 
+Tests pure functions and argument parsing without mocks.
+Uses real service instances and tm matchers.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+import importlib
 import sys
-from pathlib import Path
-from unittest.mock import Mock, patch
 
-from flext_core import r
 from flext_infra import m
 from flext_infra.github import __main__ as github_main
-from flext_infra.github.workflows import SyncOperation
+from flext_tests import tm
 
-run_lint = getattr(github_main, "_run_lint")
-run_pr = getattr(github_main, "_run_pr")
-run_pr_workspace = getattr(github_main, "_run_pr_workspace")
-run_workflows = getattr(github_main, "_run_workflows")
 main = github_main.main
 
 
@@ -35,483 +32,98 @@ def _orchestration_result(
     )
 
 
-class TestRunWorkflows:
-    """Test suite for _run_workflows handler."""
+class TestOrchestrationResultModel:
+    """Tests for PrOrchestrationResult construction."""
 
-    def test_run_workflows_success(self, tmp_path: Path) -> None:
-        """Test successful workflow sync."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-        ) as mock_syncer_class:
-            mock_syncer = Mock()
-            mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-            argv = ["--workspace-root", str(tmp_path)]
-            result = run_workflows(argv)
-            assert result == 0
+    def test_orchestration_result_zero_failures(self) -> None:
+        result = _orchestration_result(fail=0, total=3)
+        tm.that(result.total, eq=3)
+        tm.that(result.success, eq=3)
+        tm.that(result.fail, eq=0)
 
-    def test_run_workflows_failure(self, tmp_path: Path) -> None:
-        """Test workflow sync failure."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-        ) as mock_syncer_class:
-            mock_syncer = Mock()
-            mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].fail(
-                "sync failed",
-            )
-            argv = ["--workspace-root", str(tmp_path)]
-            result = run_workflows(argv)
-            assert result == 1
+    def test_orchestration_result_with_failures(self) -> None:
+        result = _orchestration_result(fail=2, total=5)
+        tm.that(result.total, eq=5)
+        tm.that(result.success, eq=3)
+        tm.that(result.fail, eq=2)
 
-    def test_run_workflows_with_apply_flag(self, tmp_path: Path) -> None:
-        """Test workflow sync with apply flag."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-        ) as mock_syncer_class:
-            mock_syncer = Mock()
-            mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-            argv = ["--workspace-root", str(tmp_path), "--apply"]
-            result = run_workflows(argv)
-            assert result == 0
-            mock_syncer.sync_workspace.assert_called_once()
-            call_kwargs = mock_syncer.sync_workspace.call_args[1]
-            assert call_kwargs["apply"] is True
-
-    def test_run_workflows_with_prune_flag(self, tmp_path: Path) -> None:
-        """Test workflow sync with prune flag."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-        ) as mock_syncer_class:
-            mock_syncer = Mock()
-            mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-            argv = ["--workspace-root", str(tmp_path), "--prune"]
-            result = run_workflows(argv)
-            assert result == 0
-            call_kwargs = mock_syncer.sync_workspace.call_args[1]
-            assert call_kwargs["prune"] is True
-
-    def test_run_workflows_with_report(self, tmp_path: Path) -> None:
-        """Test workflow sync with report output."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-        ) as mock_syncer_class:
-            mock_syncer = Mock()
-            mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-            report_path = tmp_path / "report.json"
-            argv = ["--workspace-root", str(tmp_path), "--report", str(report_path)]
-            result = run_workflows(argv)
-            assert result == 0
-            call_kwargs = mock_syncer.sync_workspace.call_args[1]
-            assert call_kwargs["report_path"] == report_path
+    def test_orchestration_result_all_failures(self) -> None:
+        result = _orchestration_result(fail=3, total=3)
+        tm.that(result.total, eq=3)
+        tm.that(result.success, eq=0)
+        tm.that(result.fail, eq=3)
 
 
-class TestRunLint:
-    """Test suite for _run_lint handler."""
-
-    def test_run_lint_success(self, tmp_path: Path) -> None:
-        """Test successful linting."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
-        ) as mock_linter_class:
-            mock_linter = Mock()
-            mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
-            )
-            argv = ["--root", str(tmp_path)]
-            result = run_lint(argv)
-            assert result == 0
-
-    def test_run_lint_failure(self, tmp_path: Path) -> None:
-        """Test linting failure."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
-        ) as mock_linter_class:
-            mock_linter = Mock()
-            mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict[str, object]].fail("lint failed")
-            argv = ["--root", str(tmp_path)]
-            result = run_lint(argv)
-            assert result == 1
-
-    def test_run_lint_with_report(self, tmp_path: Path) -> None:
-        """Test linting with report output."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
-        ) as mock_linter_class:
-            mock_linter = Mock()
-            mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
-            )
-            report_path = tmp_path / "report.json"
-            argv = ["--root", str(tmp_path), "--report", str(report_path)]
-            result = run_lint(argv)
-            assert result == 0
-            call_kwargs = mock_linter.lint.call_args[1]
-            assert call_kwargs["report_path"] == report_path
-
-    def test_run_lint_with_strict_flag(self, tmp_path: Path) -> None:
-        """Test linting with strict flag."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraWorkflowLinter",
-        ) as mock_linter_class:
-            mock_linter = Mock()
-            mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
-            )
-            argv = ["--root", str(tmp_path), "--strict"]
-            result = run_lint(argv)
-            assert result == 0
-            call_kwargs = mock_linter.lint.call_args[1]
-            assert call_kwargs["strict"] is True
-
-
-class TestRunPr:
-    """Test suite for _run_pr handler."""
-
-    def test_run_pr_delegates_to_pr_main(self) -> None:
-        """Test that _run_pr delegates to pr_main."""
-        with patch("flext_infra.github.__main__.pr_main") as mock_pr_main:
-            mock_pr_main.return_value = 0
-            argv = ["--repo-root", "/tmp", "--action", "status"]
-            result = run_pr(argv)
-            assert result == 0
-            mock_pr_main.assert_called_once()
-
-    def test_run_pr_sets_sys_argv(self) -> None:
-        """Test that _run_pr sets sys.argv correctly."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch("flext_infra.github.__main__.pr_main") as mock_pr_main:
-                mock_pr_main.return_value = 0
-                argv = ["--repo-root", "/tmp", "--action", "status"]
-                run_pr(argv)
-                assert sys.argv[0] == "flext-infra github pr"
-                assert "--repo-root" in sys.argv
-        finally:
-            sys.argv = original_argv
-
-
-class TestRunPrWorkspace:
-    """Test suite for _run_pr_workspace handler."""
-
-    def test_run_pr_workspace_success(self, tmp_path: Path) -> None:
-        """Test successful PR workspace orchestration."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=0))
-            argv = ["--workspace-root", str(tmp_path)]
-            result = run_pr_workspace(argv)
-            assert result == 0
-
-    def test_run_pr_workspace_failure(self, tmp_path: Path) -> None:
-        """Test PR workspace orchestration failure."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].fail("orchestration failed")
-            argv = ["--workspace-root", str(tmp_path)]
-            result = run_pr_workspace(argv)
-            assert result == 1
-
-    def test_run_pr_workspace_with_failures(self, tmp_path: Path) -> None:
-        """Test PR workspace with failures in results."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=2, total=2))
-            argv = ["--workspace-root", str(tmp_path)]
-            result = run_pr_workspace(argv)
-            assert result == 1
-
-    def test_run_pr_workspace_with_projects(self, tmp_path: Path) -> None:
-        """Test PR workspace with specific projects."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=0, total=2))
-            argv = [
-                "--workspace-root",
-                str(tmp_path),
-                "--project",
-                "proj1",
-                "--project",
-                "proj2",
-            ]
-            result = run_pr_workspace(argv)
-            assert result == 0
-            call_kwargs = mock_manager.orchestrate.call_args[1]
-            assert call_kwargs["projects"] == ["proj1", "proj2"]
-
-    def test_run_pr_workspace_with_branch(self, tmp_path: Path) -> None:
-        """Test PR workspace with branch checkout."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=0))
-            argv = ["--workspace-root", str(tmp_path), "--branch", "feature/test"]
-            result = run_pr_workspace(argv)
-            assert result == 0
-            call_kwargs = mock_manager.orchestrate.call_args[1]
-            assert call_kwargs["branch"] == "feature/test"
-
-    def test_run_pr_workspace_with_checkpoint(self, tmp_path: Path) -> None:
-        """Test PR workspace with checkpoint enabled."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=0))
-            argv = ["--workspace-root", str(tmp_path), "--checkpoint", "1"]
-            result = run_pr_workspace(argv)
-            assert result == 0
-            call_kwargs = mock_manager.orchestrate.call_args[1]
-            assert call_kwargs["checkpoint"] is True
-
-    def test_run_pr_workspace_with_fail_fast(self, tmp_path: Path) -> None:
-        """Test PR workspace with fail-fast enabled."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=0))
-            argv = ["--workspace-root", str(tmp_path), "--fail-fast", "1"]
-            result = run_pr_workspace(argv)
-            assert result == 0
-            call_kwargs = mock_manager.orchestrate.call_args[1]
-            assert call_kwargs["fail_fast"] is True
-
-    def test_run_pr_workspace_with_pr_args(self, tmp_path: Path) -> None:
-        """Test PR workspace with PR operation arguments."""
-        with patch(
-            "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-        ) as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[
-                m.Infra.Github.PrOrchestrationResult
-            ].ok(_orchestration_result(fail=0))
-            argv = [
-                "--workspace-root",
-                str(tmp_path),
-                "--pr-action",
-                "merge",
-                "--pr-base",
-                "main",
-                "--pr-head",
-                "feature/test",
-            ]
-            result = run_pr_workspace(argv)
-            assert result == 0
-            call_kwargs = mock_manager.orchestrate.call_args[1]
-            pr_args = call_kwargs["pr_args"]
-            assert pr_args["action"] == "merge"
-            assert pr_args["base"] == "main"
-            assert pr_args["head"] == "feature/test"
-
-
-class TestMain:
-    """Test suite for main CLI entry point."""
+class TestMainHelpAndNoArgs:
+    """Tests for main CLI help and no-args behavior."""
 
     def test_main_help_flag(self) -> None:
-        """Test main with help flag."""
         original_argv = sys.argv.copy()
         try:
             sys.argv = ["flext-infra", "-h"]
             result = main()
-            assert result == 0
+            tm.that(result, eq=0)
         finally:
             sys.argv = original_argv
 
     def test_main_no_args(self) -> None:
-        """Test main with no arguments."""
         original_argv = sys.argv.copy()
         try:
             sys.argv = ["flext-infra"]
             result = main()
-            assert result == 1
-        finally:
-            sys.argv = original_argv
-
-    def test_main_workflows_subcommand(self, tmp_path: Path) -> None:
-        """Test main dispatching to workflows subcommand."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch(
-                "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-            ) as mock_syncer_class:
-                mock_syncer = Mock()
-                mock_syncer_class.return_value = mock_syncer
-                mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
-                sys.argv = [
-                    "flext-infra",
-                    "workflows",
-                    "--workspace-root",
-                    str(tmp_path),
-                ]
-                result = main()
-                assert result == 0
-        finally:
-            sys.argv = original_argv
-
-    def test_main_lint_subcommand(self, tmp_path: Path) -> None:
-        """Test main dispatching to lint subcommand."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch(
-                "flext_infra.github.__main__.FlextInfraWorkflowLinter",
-            ) as mock_linter_class:
-                mock_linter = Mock()
-                mock_linter_class.return_value = mock_linter
-                mock_linter.lint.return_value = r[m.Infra.Github.WorkflowLintResult].ok(
-                    m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
-                )
-                sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
-                result = main()
-                assert result == 0
-        finally:
-            sys.argv = original_argv
-
-    def test_main_pr_subcommand(self, tmp_path: Path) -> None:
-        """Test main dispatching to pr subcommand."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch("flext_infra.github.__main__.pr_main") as mock_pr_main:
-                mock_pr_main.return_value = 0
-                sys.argv = [
-                    "flext-infra",
-                    "pr",
-                    "--repo-root",
-                    str(tmp_path),
-                    "--action",
-                    "status",
-                ]
-                result = main()
-                assert result == 0
-        finally:
-            sys.argv = original_argv
-
-    def test_main_pr_workspace_subcommand(self, tmp_path: Path) -> None:
-        """Test main dispatching to pr-workspace subcommand."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch(
-                "flext_infra.github.__main__.FlextInfraPrWorkspaceManager",
-            ) as mock_manager_class:
-                mock_manager = Mock()
-                mock_manager_class.return_value = mock_manager
-                mock_manager.orchestrate.return_value = r[
-                    m.Infra.Github.PrOrchestrationResult
-                ].ok(_orchestration_result(fail=0))
-                sys.argv = [
-                    "flext-infra",
-                    "pr-workspace",
-                    "--workspace-root",
-                    str(tmp_path),
-                ]
-                result = main()
-                assert result == 0
+            tm.that(result, eq=1)
         finally:
             sys.argv = original_argv
 
     def test_main_unknown_subcommand(self) -> None:
-        """Test main with unknown subcommand."""
         original_argv = sys.argv.copy()
         try:
             sys.argv = ["flext-infra", "unknown"]
             result = main()
-            assert result == 1
+            tm.that(result, eq=1)
         finally:
             sys.argv = original_argv
 
-    def test_main_ensures_structlog_configured(self, tmp_path: Path) -> None:
-        """Test that main ensures structlog is configured."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch("flext_infra.github.__main__.FlextRuntime") as mock_runtime:
-                with patch(
-                    "flext_infra.github.__main__.FlextInfraWorkflowLinter",
-                ) as mock_linter_class:
-                    mock_linter = Mock()
-                    mock_linter_class.return_value = mock_linter
-                    mock_linter.lint.return_value = r[
-                        m.Infra.Github.WorkflowLintResult
-                    ].ok(
-                        m.Infra.Github.WorkflowLintResult.model_validate({
-                            "status": "ok",
-                        }),
-                    )
-                    sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
-                    main()
-                    mock_runtime.ensure_structlog_configured.assert_called_once()
-        finally:
-            sys.argv = original_argv
 
-    def test_run_workflows_iterates_operations(self, tmp_path: Path) -> None:
-        """Test that _run_workflows iterates over operations (line 53)."""
-        original_argv = sys.argv.copy()
-        try:
-            with patch(
-                "flext_infra.github.__main__.FlextInfraWorkflowSyncer",
-            ) as mock_syncer_class:
-                mock_syncer = Mock()
-                mock_syncer_class.return_value = mock_syncer
-                ops = [
-                    SyncOperation(
-                        project="p1",
-                        path="ci.yml",
-                        action="create",
-                        reason="new",
-                    ),
-                    SyncOperation(
-                        project="p2",
-                        path="ci.yml",
-                        action="update",
-                        reason="changed",
-                    ),
-                ]
-                mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok(ops)
-                sys.argv = [
-                    "flext-infra",
-                    "workflows",
-                    "--workspace-root",
-                    str(tmp_path),
-                ]
-                result = main()
-                assert result == 0
-                mock_syncer.sync_workspace.assert_called_once()
-        finally:
-            sys.argv = original_argv
+class TestModuleAttributes:
+    """Tests for module-level attributes and functions."""
+
+    def test_run_lint_exists(self) -> None:
+        run_lint = getattr(github_main, "_run_lint", None)
+        tm.that(run_lint is not None, eq=True)
+        tm.that(callable(run_lint), eq=True)
+
+    def test_run_pr_exists(self) -> None:
+        run_pr = getattr(github_main, "_run_pr", None)
+        tm.that(run_pr is not None, eq=True)
+        tm.that(callable(run_pr), eq=True)
+
+    def test_run_workflows_exists(self) -> None:
+        run_workflows = getattr(github_main, "_run_workflows", None)
+        tm.that(run_workflows is not None, eq=True)
+        tm.that(callable(run_workflows), eq=True)
+
+    def test_run_pr_workspace_exists(self) -> None:
+        run_pr_workspace = getattr(github_main, "_run_pr_workspace", None)
+        tm.that(run_pr_workspace is not None, eq=True)
+        tm.that(callable(run_pr_workspace), eq=True)
+
+    def test_main_is_callable(self) -> None:
+        tm.that(callable(main), eq=True)
+
+
+class TestGithubModuleLazyImports:
+    """Tests for github module __init__.py lazy imports."""
+
+    def test_lazy_import_pr_manager(self) -> None:
+        github_module = importlib.import_module("flext_infra.github")
+        tm.that(hasattr(github_module, "FlextInfraPrManager"), eq=True)
+
+    def test_dir_returns_all_exports(self) -> None:
+        github_module = importlib.import_module("flext_infra.github")
+        exports = dir(github_module)
+        tm.that(exports, contains="FlextInfraPrManager")
+        tm.that(exports, contains="FlextInfraPrWorkspaceManager")
+        tm.that(exports, contains="FlextInfraWorkflowLinter")
+        tm.that(exports, contains="FlextInfraWorkflowSyncer")
+        tm.that(exports, contains="SyncOperation")

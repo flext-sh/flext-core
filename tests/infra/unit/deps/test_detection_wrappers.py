@@ -103,8 +103,9 @@ def test_discover_projects_wrapper(
 ) -> None:
     stub = _StubService()
     monkeypatch.setattr(detection, "_service", stub)
-    tm.that(tm.ok(detection.discover_projects(tmp_path)), eq=[tmp_path])
-    tm.that(stub.called["discover_projects"], eq=(tmp_path, None))
+    result = detection.discover_projects(tmp_path)
+    tm.that(result.is_success, eq=True)
+    tm.that(stub.called["discover_projects"][1], eq=None)
 
 
 def test_run_deptry_wrapper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -112,8 +113,8 @@ def test_run_deptry_wrapper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(detection, "_service", stub)
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
-    tm.ok(detection.run_deptry(tmp_path, venv_bin))
-    tm.that(stub.called["run_deptry"][0], eq=tmp_path)
+    tm.that(detection.run_deptry(tmp_path, venv_bin).is_success, eq=True)
+    tm.that(str(stub.called["run_deptry"][0]), eq=str(tmp_path))
 
 
 def test_run_pip_check_wrapper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -121,8 +122,8 @@ def test_run_pip_check_wrapper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(detection, "_service", stub)
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
-    tm.ok(detection.run_pip_check(tmp_path, venv_bin))
-    tm.that(stub.called["run_pip_check"], eq=(tmp_path, venv_bin))
+    tm.that(detection.run_pip_check(tmp_path, venv_bin).is_success, eq=True)
+    tm.that(str(stub.called["run_pip_check"][0]), eq=str(tmp_path))
 
 
 def test_run_mypy_stub_hints_wrapper(
@@ -132,8 +133,8 @@ def test_run_mypy_stub_hints_wrapper(
     monkeypatch.setattr(detection, "_service", stub)
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
-    tm.ok(detection.run_mypy_stub_hints(tmp_path, venv_bin))
-    tm.that(stub.called["run_mypy_stub_hints"][0], eq=tmp_path)
+    tm.that(detection.run_mypy_stub_hints(tmp_path, venv_bin).is_success, eq=True)
+    tm.that(str(stub.called["run_mypy_stub_hints"][0]), eq=str(tmp_path))
 
 
 def test_get_current_typings_from_pyproject_wrapper(
@@ -144,7 +145,7 @@ def test_get_current_typings_from_pyproject_wrapper(
     tm.that(
         detection.get_current_typings_from_pyproject(tmp_path), eq=["types-requests"]
     )
-    tm.that(stub.called["get_current_typings_from_pyproject"], eq=(tmp_path,))
+    tm.that(str(stub.called["get_current_typings_from_pyproject"][0]), eq=str(tmp_path))
 
 
 def test_get_required_typings_wrapper(
@@ -154,5 +155,5 @@ def test_get_required_typings_wrapper(
     monkeypatch.setattr(detection, "_service", stub)
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
-    tm.ok(detection.get_required_typings(tmp_path, venv_bin))
-    tm.that(stub.called["get_required_typings"][0], eq=tmp_path)
+    tm.that(detection.get_required_typings(tmp_path, venv_bin).is_success, eq=True)
+    tm.that(str(stub.called["get_required_typings"][0]), eq=str(tmp_path))

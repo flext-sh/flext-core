@@ -7,7 +7,7 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.deps.path_sync import _rewrite_pep621
 from flext_tests import tm
-from tests.infra import h
+from tests.infra.helpers import h
 
 
 class TestRewritePep621:
@@ -116,10 +116,9 @@ class TestRewritePep621:
 
 def test_rewrite_pep621_non_string_item() -> None:
     doc = tomlkit.document()
-    doc["project"] = tomlkit.table()
-    project = doc["project"]
-    tm.that(isinstance(project, MutableMapping), eq=True)
+    project = tomlkit.table()
     project["dependencies"] = [123]
+    doc["project"] = project
     changes = _rewrite_pep621(
         doc,
         is_root=False,
@@ -142,10 +141,9 @@ def test_rewrite_pep621_no_project_table() -> None:
 
 def test_rewrite_pep621_invalid_path_dep_regex() -> None:
     doc = tomlkit.document()
-    doc["project"] = tomlkit.table()
-    project = doc["project"]
-    tm.that(isinstance(project, MutableMapping), eq=True)
+    project = tomlkit.table()
     project["dependencies"] = ["  flext-core @ file://.flext-deps/flext-core"]
+    doc["project"] = project
     changes = _rewrite_pep621(
         doc,
         is_root=True,
@@ -156,4 +154,4 @@ def test_rewrite_pep621_invalid_path_dep_regex() -> None:
 
 
 def test_helpers_alias_is_reachable_pep621() -> None:
-    tm.that(hasattr(h, "assert_file_exists"), eq=True)
+    tm.that(callable(h.assert_file_exists), eq=True)

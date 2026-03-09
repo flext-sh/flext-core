@@ -143,38 +143,22 @@ class TestSkillValidatorAstGrepCount:
 
     def test_empty_or_missing_rule_file(self, tmp_path: Path) -> None:
         """Empty/nonexistent rule file returns 0."""
-        validator = FlextInfraSkillValidator()
+        v = FlextInfraSkillValidator()
         skill = tmp_path / "skill"
         skill.mkdir()
-        tm.that(
-            validator._run_ast_grep_count(
-                {"id": "t", "type": "ast-grep", "file": ""},
-                skill,
-                tmp_path,
-                [],
-                [],
-            ),
-            eq=0,
-        )
-        tm.that(
-            validator._run_ast_grep_count(
-                {"id": "t", "type": "ast-grep", "file": "nonexistent.yml"},
-                skill,
-                tmp_path,
-                [],
-                [],
-            ),
-            eq=0,
-        )
+        empty = {"id": "t", "type": "ast-grep", "file": ""}
+        missing = {"id": "t", "type": "ast-grep", "file": "nonexistent.yml"}
+        tm.that(v._run_ast_grep_count(empty, skill, tmp_path, [], []), eq=0)
+        tm.that(v._run_ast_grep_count(missing, skill, tmp_path, [], []), eq=0)
 
     def test_with_include_globs(self, tmp_path: Path) -> None:
         """Include globs are passed to runner."""
-        validator = FlextInfraSkillValidator()
+        v = FlextInfraSkillValidator()
         skill = tmp_path / "skill"
         skill.mkdir()
         rule_file = skill / "rule.yaml"
         rule_file.write_text("id: test\nlanguage: python\nrule: {pattern: 'test'}")
-        count = validator._run_ast_grep_count(
+        count = v._run_ast_grep_count(
             {"file": str(rule_file)},
             skill,
             tmp_path,
@@ -182,31 +166,16 @@ class TestSkillValidatorAstGrepCount:
             [],
         )
         tm.that(isinstance(count, int), eq=True)
-        tm.that(count >= 0, eq=True)
 
     def test_custom_count_empty_or_missing(self, tmp_path: Path) -> None:
         """Empty/nonexistent custom script returns 0."""
-        validator = FlextInfraSkillValidator()
+        v = FlextInfraSkillValidator()
         skill = tmp_path / "skill"
         skill.mkdir()
-        tm.that(
-            validator._run_custom_count(
-                {"id": "t", "type": "custom", "script": ""},
-                skill,
-                tmp_path,
-                "baseline",
-            ),
-            eq=0,
-        )
-        tm.that(
-            validator._run_custom_count(
-                {"id": "t", "type": "custom", "script": "nonexistent.py"},
-                skill,
-                tmp_path,
-                "baseline",
-            ),
-            eq=0,
-        )
+        empty = {"id": "t", "type": "custom", "script": ""}
+        missing = {"id": "t", "type": "custom", "script": "nonexistent.py"}
+        tm.that(v._run_custom_count(empty, skill, tmp_path, "baseline"), eq=0)
+        tm.that(v._run_custom_count(missing, skill, tmp_path, "baseline"), eq=0)
 
 
 __all__: list[str] = []

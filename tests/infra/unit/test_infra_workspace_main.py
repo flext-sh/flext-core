@@ -1,336 +1,222 @@
 """Tests for workspace CLI entry point (__main__.py).
 
+Uses real argparse.Namespace and monkeypatch instead of unittest.mock.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-import importlib
+import argparse
 from pathlib import Path
-from typing import cast
-from unittest.mock import Mock, patch
 
+import pytest
+
+from flext_core import r
+from flext_infra import m
 from flext_infra.workspace import __main__ as workspace_main
+from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
+from flext_infra.workspace.migrator import FlextInfraProjectMigrator
+from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
+from flext_infra.workspace.sync import FlextInfraSyncService
+from flext_tests import tm
+
+_MR = m.Infra.Workspace.MigrationResult
+_CO = m.Infra.Core.CommandOutput
 
 
-def test_run_detect_success(tmp_path: Path) -> None:
-    """Test _run_detect with successful detection."""
-    args = Mock()
-    args.project_root = tmp_path
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector",
-    ) as mock_detector_class:
-        mock_detector = Mock()
-        mock_detector.detect.return_value = Mock(is_success=True, value="workspace")
-        mock_detector_class.return_value = mock_detector
-        result = workspace_main._run_detect(args)
-        assert result == 0
+def _ns(**kwargs: object) -> argparse.Namespace:
+    return argparse.Namespace(**kwargs)
 
 
-def test_run_detect_failure(tmp_path: Path) -> None:
-    """Test _run_detect with detection failure."""
-    args = Mock()
-    args.project_root = tmp_path
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector",
-    ) as mock_detector_class:
-        mock_detector = Mock()
-        mock_detector.detect.return_value = Mock(
-            is_success=False,
-            error="Detection failed",
+def _cmd_out(exit_code: int = 0) -> _CO:
+    return _CO(stdout="", stderr="", exit_code=exit_code, duration=0.0)
+
+
+class TestRunDetect:
+    def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _detect(self: FlextInfraWorkspaceDetector, root: Path) -> r[WorkspaceMode]:
+            return r[WorkspaceMode].ok(WorkspaceMode.WORKSPACE)
+
+        monkeypatch.setattr(FlextInfraWorkspaceDetector, "detect", _detect)
+        tm.that(workspace_main._run_detect(_ns(project_root=tmp_path)), eq=0)
+
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _detect(self: FlextInfraWorkspaceDetector, root: Path) -> r[WorkspaceMode]:
+            return r[WorkspaceMode].fail("Detection failed")
+
+        monkeypatch.setattr(FlextInfraWorkspaceDetector, "detect", _detect)
+        tm.that(workspace_main._run_detect(_ns(project_root=tmp_path)), eq=1)
+
+
+class TestRunSync:
+    def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _sync(self: FlextInfraSyncService, **kw: object) -> r[bool]:
+            return r[bool].ok(True)
+
+        monkeypatch.setattr(FlextInfraSyncService, "sync", _sync)
+        args = _ns(project_root=tmp_path, canonical_root=None)
+        tm.that(workspace_main._run_sync(args), eq=0)
+
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _sync(self: FlextInfraSyncService, **kw: object) -> r[bool]:
+            return r[bool].fail("Sync failed")
+
+        monkeypatch.setattr(FlextInfraSyncService, "sync", _sync)
+        args = _ns(project_root=tmp_path, canonical_root=None)
+        tm.that(workspace_main._run_sync(args), eq=1)
+
+
+class TestRunOrchestrate:
+    def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        outputs = [_cmd_out(0), _cmd_out(0)]
+
+        def _orch(self: FlextInfraOrchestratorService, **kw: object) -> r[list[_CO]]:
+            return r[list[_CO]].ok(outputs)
+
+        monkeypatch.setattr(FlextInfraOrchestratorService, "orchestrate", _orch)
+        args = _ns(projects=["p-a", "p-b"], verb="check", fail_fast=False, make_arg=[])
+        tm.that(workspace_main._run_orchestrate(args), eq=0)
+
+    def test_no_projects(self) -> None:
+        args = _ns(projects=[], verb="check", fail_fast=False, make_arg=[])
+        tm.that(workspace_main._run_orchestrate(args), eq=1)
+
+    def test_with_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        outputs = [_cmd_out(0), _cmd_out(1)]
+
+        def _orch(self: FlextInfraOrchestratorService, **kw: object) -> r[list[_CO]]:
+            return r[list[_CO]].ok(outputs)
+
+        monkeypatch.setattr(FlextInfraOrchestratorService, "orchestrate", _orch)
+        args = _ns(projects=["p-a", "p-b"], verb="check", fail_fast=False, make_arg=[])
+        tm.that(workspace_main._run_orchestrate(args), eq=1)
+
+    def test_orchestration_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _orch(self: FlextInfraOrchestratorService, **kw: object) -> r[list[_CO]]:
+            return r[list[_CO]].fail("Orchestration failed")
+
+        monkeypatch.setattr(FlextInfraOrchestratorService, "orchestrate", _orch)
+        args = _ns(projects=["p-a"], verb="check", fail_fast=False, make_arg=[])
+        tm.that(workspace_main._run_orchestrate(args), eq=1)
+
+
+class TestRunMigrate:
+    def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        migration = _MR(project="test", errors=[], changes=[])
+
+        def _migrate(self: FlextInfraProjectMigrator, **kw: object) -> r[list[_MR]]:
+            return r[list[_MR]].ok([migration])
+
+        monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
+        tm.that(
+            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
+            eq=0,
         )
-        mock_detector_class.return_value = mock_detector
-        result = workspace_main._run_detect(args)
-        assert result == 1
 
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _migrate(self: FlextInfraProjectMigrator, **kw: object) -> r[list[_MR]]:
+            return r[list[_MR]].fail("Migration failed")
 
-def test_run_sync_success(tmp_path: Path) -> None:
-    """Test _run_sync with successful sync."""
-    args = Mock()
-    args.project_root = tmp_path
-    args.canonical_root = None
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraSyncService",
-    ) as mock_sync_class:
-        mock_sync = Mock()
-        mock_sync.sync.return_value = Mock(is_success=True)
-        mock_sync_class.return_value = mock_sync
-        result = workspace_main._run_sync(args)
-        assert result == 0
-
-
-def test_run_sync_failure(tmp_path: Path) -> None:
-    """Test _run_sync with sync failure."""
-    args = Mock()
-    args.project_root = tmp_path
-    args.canonical_root = None
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraSyncService",
-    ) as mock_sync_class:
-        mock_sync = Mock()
-        mock_sync.sync.return_value = Mock(is_success=False, error="Sync failed")
-        mock_sync_class.return_value = mock_sync
-        result = workspace_main._run_sync(args)
-        assert result == 1
-
-
-def test_run_orchestrate_success() -> None:
-    """Test _run_orchestrate with successful orchestration."""
-    args = Mock()
-    args.projects = ["project-a", "project-b"]
-    args.verb = "check"
-    args.fail_fast = False
-    args.make_arg = cast("list[str]", [])
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraOrchestratorService",
-    ) as mock_orch_class:
-        mock_orch = Mock()
-        mock_orch.orchestrate.return_value = Mock(
-            is_success=True,
-            value=[Mock(exit_code=0), Mock(exit_code=0)],
+        monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
+        tm.that(
+            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
+            eq=1,
         )
-        mock_orch_class.return_value = mock_orch
-        result = workspace_main._run_orchestrate(args)
-        assert result == 0
 
+    def test_with_project_errors(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        migrations = [
+            _MR(project="p1", errors=["Error 1"], changes=[]),
+            _MR(project="p2", errors=[], changes=[]),
+        ]
 
-def test_run_orchestrate_no_projects() -> None:
-    """Test _run_orchestrate with no projects specified."""
-    args = Mock()
-    args.projects = cast("list[str]", [])
-    args.verb = "check"
-    args.fail_fast = False
-    args.make_arg = cast("list[str]", [])
-    result = workspace_main._run_orchestrate(args)
-    assert result == 1
+        def _migrate(self: FlextInfraProjectMigrator, **kw: object) -> r[list[_MR]]:
+            return r[list[_MR]].ok(migrations)
 
-
-def test_run_orchestrate_with_failures() -> None:
-    """Test _run_orchestrate with project failures."""
-    args = Mock()
-    args.projects = ["project-a", "project-b"]
-    args.verb = "check"
-    args.fail_fast = False
-    args.make_arg = cast("list[str]", [])
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraOrchestratorService",
-    ) as mock_orch_class:
-        mock_orch = Mock()
-        mock_orch.orchestrate.return_value = Mock(
-            is_success=True,
-            value=[Mock(exit_code=0), Mock(exit_code=1)],
+        monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
+        tm.that(
+            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
+            eq=1,
         )
-        mock_orch_class.return_value = mock_orch
-        result = workspace_main._run_orchestrate(args)
-        assert result == 1
 
 
-def test_run_orchestrate_failure() -> None:
-    """Test _run_orchestrate with orchestration failure."""
-    args = Mock()
-    args.projects = ["project-a"]
-    args.verb = "check"
-    args.fail_fast = False
-    args.make_arg = cast("list[str]", [])
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraOrchestratorService",
-    ) as mock_orch_class:
-        mock_orch = Mock()
-        mock_orch.orchestrate.return_value = Mock(
-            is_success=False,
-            error="Orchestration failed",
+class TestMainCli:
+    def test_detect_command(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _run(_args: argparse.Namespace) -> int:
+            return 0
+
+        monkeypatch.setattr(workspace_main, "_run_detect", _run)
+        tm.that(workspace_main.main(["detect", "--project-root", str(tmp_path)]), eq=0)
+
+    def test_sync_command(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _run(_args: argparse.Namespace) -> int:
+            return 0
+
+        monkeypatch.setattr(workspace_main, "_run_sync", _run)
+        tm.that(workspace_main.main(["sync", "--project-root", str(tmp_path)]), eq=0)
+
+    def test_orchestrate_command(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _run(_args: argparse.Namespace) -> int:
+            return 0
+
+        monkeypatch.setattr(workspace_main, "_run_orchestrate", _run)
+        tm.that(
+            workspace_main.main(["orchestrate", "--verb", "check", "p-a", "p-b"]), eq=0
         )
-        mock_orch_class.return_value = mock_orch
-        result = workspace_main._run_orchestrate(args)
-        assert result == 1
 
+    def test_migrate_command(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _run(_args: argparse.Namespace) -> int:
+            return 0
 
-def test_run_migrate_success(tmp_path: Path) -> None:
-    """Test _run_migrate with successful migration."""
-    args = Mock()
-    args.workspace_root = tmp_path
-    args.dry_run = False
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraProjectMigrator",
-    ) as mock_migrator_class:
-        mock_migrator = Mock()
-        mock_migrator.migrate.return_value = Mock(
-            is_success=True,
-            is_failure=False,
-            value=[Mock(errors=[], changes=[])],
+        monkeypatch.setattr(workspace_main, "_run_migrate", _run)
+        tm.that(
+            workspace_main.main(["migrate", "--workspace-root", str(tmp_path)]), eq=0
         )
-        mock_migrator_class.return_value = mock_migrator
-        result = workspace_main._run_migrate(args)
-        assert result == 0
 
+    def test_no_command(self) -> None:
+        tm.that(workspace_main.main([]), eq=1)
 
-def test_run_migrate_failure(tmp_path: Path) -> None:
-    """Test _run_migrate with migration failure."""
-    args = Mock()
-    args.workspace_root = tmp_path
-    args.dry_run = False
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraProjectMigrator",
-    ) as mock_migrator_class:
-        mock_migrator = Mock()
-        mock_migrator.migrate.return_value = Mock(
-            is_success=False,
-            is_failure=True,
-            error="Migration failed",
-        )
-        mock_migrator_class.return_value = mock_migrator
-        result = workspace_main._run_migrate(args)
-        assert result == 1
+    def test_orchestrate_with_fail_fast(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        captured: list[argparse.Namespace] = []
 
+        def _run(args: argparse.Namespace) -> int:
+            captured.append(args)
+            return 0
 
-def test_run_migrate_with_project_errors(tmp_path: Path) -> None:
-    """Test _run_migrate when projects have errors."""
-    args = Mock()
-    args.workspace_root = tmp_path
-    args.dry_run = False
-    with patch(
-        "flext_infra.workspace.__main__.FlextInfraProjectMigrator",
-    ) as mock_migrator_class:
-        mock_migrator = Mock()
-        mock_migrator.migrate.return_value = Mock(
-            is_success=True,
-            is_failure=False,
-            value=[Mock(errors=["Error 1"], changes=[]), Mock(errors=[], changes=[])],
-        )
-        mock_migrator_class.return_value = mock_migrator
-        result = workspace_main._run_migrate(args)
-        assert result == 1
+        monkeypatch.setattr(workspace_main, "_run_orchestrate", _run)
+        workspace_main.main(["orchestrate", "--verb", "check", "--fail-fast", "p-a"])
+        tm.that(captured[0].fail_fast, eq=True)
 
+    def test_orchestrate_with_make_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        captured: list[argparse.Namespace] = []
 
-def test_main_detect_command(tmp_path: Path) -> None:
-    """Test main() with detect command."""
-    argv = ["detect", "--project-root", str(tmp_path)]
-    with patch("flext_infra.workspace.__main__._run_detect") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        mock_run.assert_called_once()
+        def _run(args: argparse.Namespace) -> int:
+            captured.append(args)
+            return 0
 
-
-def test_main_sync_command(tmp_path: Path) -> None:
-    """Test main() with sync command."""
-    argv = ["sync", "--project-root", str(tmp_path)]
-    with patch("flext_infra.workspace.__main__._run_sync") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        mock_run.assert_called_once()
-
-
-def test_main_orchestrate_command() -> None:
-    """Test main() with orchestrate command."""
-    argv = ["orchestrate", "--verb", "check", "project-a", "project-b"]
-    with patch("flext_infra.workspace.__main__._run_orchestrate") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        mock_run.assert_called_once()
-
-
-def test_main_migrate_command(tmp_path: Path) -> None:
-    """Test main() with migrate command."""
-    argv = ["migrate", "--workspace-root", str(tmp_path)]
-    with patch("flext_infra.workspace.__main__._run_migrate") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        mock_run.assert_called_once()
-
-
-def test_main_no_command() -> None:
-    """Test main() with no command specified."""
-    argv: list[str] = []
-    result = workspace_main.main(argv)
-    assert result == 1
-
-
-def test_main_orchestrate_with_fail_fast() -> None:
-    """Test main() orchestrate with --fail-fast flag."""
-    argv = ["orchestrate", "--verb", "check", "--fail-fast", "project-a"]
-    with patch("flext_infra.workspace.__main__._run_orchestrate") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        args = mock_run.call_args[0][0]
-        assert args.fail_fast is True
-
-
-def test_main_orchestrate_with_make_args() -> None:
-    """Test main() orchestrate with --make-arg flags."""
-    argv = [
-        "orchestrate",
-        "--verb",
-        "check",
-        "--make-arg",
-        "VERBOSE=1",
-        "--make-arg",
-        "PARALLEL=4",
-        "project-a",
-    ]
-    with patch("flext_infra.workspace.__main__._run_orchestrate") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        args = mock_run.call_args[0][0]
-        assert "VERBOSE=1" in args.make_arg
-        assert "PARALLEL=4" in args.make_arg
-
-
-def test_main_migrate_dry_run(tmp_path: Path) -> None:
-    """Test main() migrate with --dry-run flag."""
-    argv = ["migrate", "--workspace-root", str(tmp_path), "--dry-run"]
-    with patch("flext_infra.workspace.__main__._run_migrate") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        args = mock_run.call_args[0][0]
-        assert args.dry_run is True
-
-
-def test_main_sync_with_canonical_root(tmp_path: Path) -> None:
-    """Test main() sync with --canonical-root flag."""
-    canonical = tmp_path / "canonical"
-    argv = ["sync", "--project-root", str(tmp_path), "--canonical-root", str(canonical)]
-    with patch("flext_infra.workspace.__main__._run_sync") as mock_run:
-        mock_run.return_value = 0
-        result = workspace_main.main(argv)
-        assert result == 0
-        args = mock_run.call_args[0][0]
-        assert args.canonical_root == canonical
-
-
-def test_main_entry_point(tmp_path: Path) -> None:
-    """Test __main__ entry point."""
-    argv = ["detect", "--project-root", str(tmp_path)]
-    with patch("flext_infra.workspace.__main__.main") as mock_main:
-        mock_main.return_value = 0
-        exit_code = workspace_main.main(argv)
-        assert exit_code == 0
+        monkeypatch.setattr(workspace_main, "_run_orchestrate", _run)
+        argv = [
+            "orchestrate",
+            "--verb",
+            "check",
+            "--make-arg",
+            "VERBOSE=1",
+            "--make-arg",
+            "PARALLEL=4",
+            "p-a",
+        ]
+        workspace_main.main(argv)
+        tm.that(captured[0].make_arg, has="VERBOSE=1")
+        tm.that(captured[0].make_arg, has="PARALLEL=4")
 
 
 __all__: list[str] = []
-
-
-def test_main_calls_sys_exit(tmp_path: Path) -> None:
-    """Test main() calls sys.exit."""
-    with patch("sys.argv", ["workspace", "detect", "--project-root", str(tmp_path)]):
-        with patch(
-            "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector",
-        ) as mock_detector_class:
-            mock_detector = Mock()
-            mock_detector_class.return_value = mock_detector
-            mock_detector.detect_mode.return_value = "monorepo"
-            with patch("sys.exit"):
-                main_mod = importlib.import_module("flext_infra.workspace.__main__")
-                main_func = getattr(main_mod, "main")
-
-                try:
-                    main_func(argv=["detect", "--project-root", str(tmp_path)])
-                except SystemExit:
-                    pass

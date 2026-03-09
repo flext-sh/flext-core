@@ -19,7 +19,6 @@ from flext_tests import tm
 
 
 def _audit_args(**overrides: object) -> argparse.Namespace:
-    """Build audit CLI args namespace."""
     defaults = {
         "root": ".",
         "project": None,
@@ -33,7 +32,6 @@ def _audit_args(**overrides: object) -> argparse.Namespace:
 
 
 def _fix_args(**overrides: object) -> argparse.Namespace:
-    """Build fix CLI args namespace."""
     defaults = {
         "root": ".",
         "project": None,
@@ -46,12 +44,7 @@ def _fix_args(**overrides: object) -> argparse.Namespace:
 
 
 class TestRunAudit:
-    """Tests for _run_audit handler."""
-
-    def test_run_audit_success_no_failures(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Test _run_audit returns 0 when audit passes."""
+    def test_success_no_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
         report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope="root",

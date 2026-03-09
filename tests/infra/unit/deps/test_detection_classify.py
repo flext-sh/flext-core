@@ -97,7 +97,3 @@ class TestDetectionUncoveredLines:
         tm.that(
             service.module_to_types_package("custom_module", limits), eq="types-custom"
         )
-
-
-def test_path_smoke() -> None:
-    tm.that(isinstance(Path(), Path), eq=True)
