@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_tests import c, m, t
+from flext_tests import m, t
 
 
 class SubprocessScenario(m.Value):
@@ -132,19 +132,14 @@ class DependencyScenarios:
         DependencyScenario(
             name="deps_single",
             pyproject_content=(
-                '[tool.poetry.dependencies]\n'
-                'python = "^3.13"\n'
-                'requests = "^2.31.0"'
+                '[tool.poetry.dependencies]\npython = "^3.13"\nrequests = "^2.31.0"'
             ),
             expected_deps=["requests"],
             should_succeed=True,
         ),
         DependencyScenario(
             name="deps_empty",
-            pyproject_content=(
-                '[tool.poetry.dependencies]\n'
-                'python = "^3.13"'
-            ),
+            pyproject_content=('[tool.poetry.dependencies]\npython = "^3.13"'),
             expected_deps=[],
             should_succeed=True,
         ),

@@ -135,3 +135,9 @@ __all__ = [
     "T_contra",
     "U",
 ]
+
+
+TK = TypeVar("TK")
+
+
+TV = TypeVar("TV")

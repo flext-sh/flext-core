@@ -20,14 +20,18 @@ class RealSubprocessRunner(s[str]):
     r (FlextResult) for railway-oriented error handling.
     """
 
-    subprocess_utility: type[FlextInfraUtilitiesSubprocess] = FlextInfraUtilitiesSubprocess
+    subprocess_utility: type[FlextInfraUtilitiesSubprocess] = (
+        FlextInfraUtilitiesSubprocess
+    )
 
-    def __init__(self, **data: object):
+    def __init__(self, **data: object) -> None:
         super().__init__(**data)
         # Import c at runtime to avoid circular reference
-        from flext_tests import c
         self.allowed_commands = frozenset({
-            "echo", "pwd", "ls", "git",
+            "echo",
+            "pwd",
+            "ls",
+            "git",
         })
 
     def _validate_safe_command(self, cmd: list[str]) -> r[bool]:

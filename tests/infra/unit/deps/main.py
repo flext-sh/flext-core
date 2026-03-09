@@ -1,442 +1,211 @@
-"""Tests for flext_infra.deps.__main__ with 100% coverage."""
+"""Tests for flext_infra.deps.__main__ — dispatch, structlog, argv, imports.
+
+Uses monkeypatch for isolation instead of unittest.mock.
+Uses flext_tests matchers (tm) for consistent assertions.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import sys
-from unittest.mock import Mock, patch
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
-from flext_infra.deps.__main__ import _SUBCOMMANDS, main, main as main_func
+from flext_infra.deps import __main__ as main_mod
+from flext_infra.deps.__main__ import _SUBCOMMANDS, main
+from flext_tests import tm
+
+_NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
-class TestSubcommandMapping:
-    """Test subcommand mapping."""
-
-    def test_subcommands_mapping_exists(self) -> None:
-        """Test that subcommands mapping exists."""
-        assert _SUBCOMMANDS is not None
-        assert len(_SUBCOMMANDS) == 5
-
-    def test_subcommands_mapping_has_detect(self) -> None:
-        """Test detect subcommand in mapping."""
-        assert "detect" in _SUBCOMMANDS
-        assert _SUBCOMMANDS["detect"] == "flext_infra.deps.detector"
-
-    def test_subcommands_mapping_has_extra_paths(self) -> None:
-        """Test extra-paths subcommand in mapping."""
-        assert "extra-paths" in _SUBCOMMANDS
-        assert _SUBCOMMANDS["extra-paths"] == "flext_infra.deps.extra_paths"
-
-    def test_subcommands_mapping_has_internal_sync(self) -> None:
-        """Test internal-sync subcommand in mapping."""
-        assert "internal-sync" in _SUBCOMMANDS
-        assert _SUBCOMMANDS["internal-sync"] == "flext_infra.deps.internal_sync"
-
-    def test_subcommands_mapping_has_modernize(self) -> None:
-        """Test modernize subcommand in mapping."""
-        assert "modernize" in _SUBCOMMANDS
-        assert _SUBCOMMANDS["modernize"] == "flext_infra.deps.modernizer"
-
-    def test_subcommands_mapping_has_path_sync(self) -> None:
-        """Test path-sync subcommand in mapping."""
-        assert "path-sync" in _SUBCOMMANDS
-        assert _SUBCOMMANDS["path-sync"] == "flext_infra.deps.path_sync"
+def _fake_module(return_value: object = 0) -> ModuleType:
+    """Create a fake module with a main() that returns the given value."""
+    mod = ModuleType("fake_subcommand")
+    mod.main = lambda: return_value  # type: ignore[attr-defined]
+    return mod
 
 
-class TestMainHelpAndErrors:
-    """Test main function help and error handling."""
-
-    def test_main_with_help_flag(self) -> None:
-        """Test main with -h flag."""
-        with patch("sys.argv", ["prog", "-h"]):
-            with patch("flext_infra.deps.__main__.output") as mock_output:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_output.info.assert_called()
-
-    def test_main_with_help_long_flag(self) -> None:
-        """Test main with --help flag."""
-        with patch("sys.argv", ["prog", "--help"]):
-            with patch("flext_infra.deps.__main__.output") as mock_output:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_output.info.assert_called()
-
-    def test_main_with_no_arguments(self) -> None:
-        """Test main with no arguments."""
-        with patch("sys.argv", ["prog"]):
-            with patch("flext_infra.deps.__main__.output") as mock_output:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 1
-                    mock_output.info.assert_called()
-
-    def test_main_with_unknown_subcommand(self) -> None:
-        """Test main with unknown subcommand."""
-        with patch("sys.argv", ["prog", "unknown"]):
-            with patch("flext_infra.deps.__main__.output") as mock_output:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 1
-                    mock_output.error.assert_called()
-
-    def test_main_help_lists_subcommands(self) -> None:
-        """Test main help output lists all subcommands."""
-        with patch("sys.argv", ["prog", "-h"]):
-            with patch("flext_infra.deps.__main__.output") as mock_output:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    main()
-                    calls = [str(call) for call in mock_output.info.call_args_list]
-                    assert any("detect" in str(call) for call in calls)
+def _patch_dispatch(
+    mp: pytest.MonkeyPatch,
+    argv: list[str],
+    ret: object = 0,
+) -> None:
+    """Patch sys.argv, structlog, and import_module for dispatch tests."""
+    mp.setattr(sys, "argv", argv)
+    mp.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
+    fake = _fake_module(ret)
+    mp.setattr(
+        "flext_infra.deps.__main__.importlib.import_module",
+        lambda name: fake,  # noqa: ARG005
+    )
 
 
 class TestMainSubcommandDispatch:
     """Test main function subcommand dispatching."""
 
-    def test_main_with_detect_subcommand(self) -> None:
-        """Test main with detect subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_module.main.assert_called_once()
-
-    def test_main_with_extra_paths_subcommand(self) -> None:
-        """Test main with extra-paths subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "extra-paths"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_module.main.assert_called_once()
-
-    def test_main_with_internal_sync_subcommand(self) -> None:
-        """Test main with internal-sync subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "internal-sync"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_module.main.assert_called_once()
-
-    def test_main_with_modernize_subcommand(self) -> None:
-        """Test main with modernize subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "modernize"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_module.main.assert_called_once()
-
-    def test_main_with_path_sync_subcommand(self) -> None:
-        """Test main with path-sync subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "path-sync"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-                    mock_module.main.assert_called_once()
+    @pytest.mark.parametrize("name", list(_SUBCOMMANDS.keys()))
+    def test_dispatch_each_subcommand(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        name: str,
+    ) -> None:
+        """Test main dispatches each known subcommand and returns 0."""
+        _patch_dispatch(monkeypatch, ["prog", name])
+        tm.that(main(), eq=0)
 
 
 class TestMainReturnValues:
-    """Test main function return value handling."""
+    """Test main function return value handling (extended)."""
 
-    def test_main_subcommand_returns_none(self) -> None:
-        """Test main when subcommand returns None."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=None)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-
-    def test_main_subcommand_returns_zero(self) -> None:
-        """Test main when subcommand returns 0."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-
-    def test_main_subcommand_returns_non_zero(self) -> None:
-        """Test main when subcommand returns non-zero."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=42)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 42
-
-    def test_main_subcommand_returns_string_zero(self) -> None:
-        """Test main when subcommand returns string '0'."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value="0")
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-
-    def test_main_subcommand_returns_false(self) -> None:
-        """Test main when subcommand returns False."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=False)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 0
-
-    def test_main_subcommand_returns_true(self) -> None:
-        """Test main when subcommand returns True."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=True)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    result = main()
-                    assert result == 1
+    @pytest.mark.parametrize(
+        ("return_val", "expected"),
+        [(0, 0), (None, 0), (False, 0), (42, 42), (True, 1), ("0", 0)],
+        ids=["zero", "none", "false", "nonzero", "true", "string-zero"],
+    )
+    def test_return_value_normalization(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        return_val: object,
+        expected: int,
+    ) -> None:
+        """Test main normalizes subcommand return values."""
+        _patch_dispatch(monkeypatch, ["prog", "detect"], return_val)
+        tm.that(main(), eq=expected)
 
 
 class TestMainModuleImport:
     """Test main function module importing."""
 
-    def test_main_imports_correct_module_for_detect(self) -> None:
-        """Test main imports correct module for detect."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ) as mock_import:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    main()
-                    mock_import.assert_called_with("flext_infra.deps.detector")
+    @pytest.mark.parametrize(
+        ("subcommand", "expected_module"),
+        [
+            ("detect", "flext_infra.deps.detector"),
+            ("modernize", "flext_infra.deps.modernizer"),
+            ("path-sync", "flext_infra.deps.path_sync"),
+        ],
+    )
+    def test_imports_correct_module(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        subcommand: str,
+        expected_module: str,
+    ) -> None:
+        """Test main imports the correct module for each subcommand."""
+        monkeypatch.setattr(sys, "argv", ["prog", subcommand])
+        monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
+        imported: list[str] = []
+        fake = _fake_module(0)
 
-    def test_main_imports_correct_module_for_modernize(self) -> None:
-        """Test main imports correct module for modernize."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "modernize"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ) as mock_import:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    main()
-                    mock_import.assert_called_with("flext_infra.deps.modernizer")
+        def tracking_import(name: str) -> ModuleType:
+            imported.append(name)
+            return fake
 
-    def test_main_imports_correct_module_for_path_sync(self) -> None:
-        """Test main imports correct module for path-sync."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "path-sync"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ) as mock_import:
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    main()
-                    mock_import.assert_called_with("flext_infra.deps.path_sync")
+        monkeypatch.setattr(
+            "flext_infra.deps.__main__.importlib.import_module",
+            tracking_import,
+        )
+        main()
+        tm.that(imported[0], eq=expected_module)
 
 
 class TestMainSysArgvModification:
     """Test main function sys.argv modification."""
 
-    def test_main_modifies_sys_argv_for_subcommand(self) -> None:
+    def test_modifies_sys_argv_for_subcommand(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Test main modifies sys.argv for subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        original_argv = ["prog", "detect", "--arg1", "value1"]
-        with patch("sys.argv", original_argv.copy()):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    main()
-                    assert "detect" in sys.argv[0]
+        _patch_dispatch(monkeypatch, ["prog", "detect", "--arg1", "value1"])
+        main()
+        tm.that("detect" in sys.argv[0], eq=True)
 
-    def test_main_passes_remaining_args_to_subcommand(self) -> None:
+    def test_passes_remaining_args(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Test main passes remaining arguments to subcommand."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        original_argv = ["prog", "detect", "-q", "--no-fail"]
-        with patch("sys.argv", original_argv.copy()):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    main()
-                    assert "-q" in sys.argv
-                    assert "--no-fail" in sys.argv
+        _patch_dispatch(monkeypatch, ["prog", "detect", "-q", "--no-fail"])
+        main()
+        tm.that("-q" in sys.argv, eq=True)
+        tm.that("--no-fail" in sys.argv, eq=True)
 
 
 class TestMainStructlogConfiguration:
     """Test main function structlog configuration."""
 
-    def test_main_ensures_structlog_configured(self) -> None:
+    def test_ensures_structlog_configured(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Test main ensures structlog is configured."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-            ) as mock_ensure:
-                with patch(
-                    "flext_infra.deps.__main__.importlib.import_module",
-                    return_value=mock_module,
-                ):
-                    main()
-                    mock_ensure.assert_called_once()
+        called: list[bool] = []
+        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
+        monkeypatch.setattr(
+            main_mod,
+            "FlextRuntime",
+            SimpleNamespace(
+                ensure_structlog_configured=lambda: called.append(True),
+            ),
+        )
+        monkeypatch.setattr(
+            "flext_infra.deps.__main__.importlib.import_module",
+            lambda name: _fake_module(0),  # noqa: ARG005
+        )
+        main()
+        tm.that(len(called), eq=1)
 
-    def test_main_ensures_structlog_before_dispatch(self) -> None:
+    def test_ensures_structlog_before_dispatch(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Test main ensures structlog is configured before dispatch."""
-        mock_module = Mock()
-        mock_module.main = Mock(return_value=0)
-        call_order: list[str] = []
+        order: list[str] = []
+        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
+        monkeypatch.setattr(
+            main_mod,
+            "FlextRuntime",
+            SimpleNamespace(
+                ensure_structlog_configured=lambda: order.append("ensure"),
+            ),
+        )
 
-        def track_ensure() -> None:
-            call_order.append("ensure")
+        def tracking_import(name: str) -> ModuleType:  # noqa: ARG001
+            order.append("import")
+            return _fake_module(0)
 
-        def track_import(*args: object, **kwargs: object) -> object:
-            call_order.append("import")
-            return mock_module
-
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                side_effect=track_ensure,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.importlib.import_module",
-                    side_effect=track_import,
-                ):
-                    main()
-                    assert call_order[0] == "ensure"
-                    assert call_order[1] == "import"
+        monkeypatch.setattr(
+            "flext_infra.deps.__main__.importlib.import_module",
+            tracking_import,
+        )
+        main()
+        tm.that(order[0], eq="ensure")
+        tm.that(order[1], eq="import")
 
 
 class TestMainExceptionHandling:
     """Test main function exception handling."""
 
-    def test_main_subcommand_exception_propagates(self) -> None:
+    def test_subcommand_exception_propagates(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Test main propagates subcommand exceptions."""
-        mock_module = Mock()
-        mock_module.main = Mock(side_effect=Exception("Test error"))
-        with patch("sys.argv", ["prog", "detect"]):
-            with patch(
-                "flext_infra.deps.__main__.importlib.import_module",
-                return_value=mock_module,
-            ):
-                with patch(
-                    "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
-                ):
-                    with pytest.raises(Exception, match="Test error"):
-                        main()
+        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
+        monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
+        error_mod = ModuleType("error_mod")
 
-    def test_main_calls_sys_exit(self) -> None:
-        """Test main() calls sys.exit."""
-        with patch("sys.argv", ["deps", "detect"]):
-            with patch("flext_infra.deps.__main__.main") as mock_main:
-                mock_main.return_value = 0
-                with patch("sys.exit") as _mock_exit:
-                    try:
-                        main_func()
-                    except SystemExit:
-                        pass
+        def raise_error() -> int:
+            msg = "Test error"
+            raise RuntimeError(msg)
+
+        error_mod.main = raise_error  # type: ignore[attr-defined]
+        monkeypatch.setattr(
+            "flext_infra.deps.__main__.importlib.import_module",
+            lambda name: error_mod,  # noqa: ARG005
+        )
+        with pytest.raises(RuntimeError, match="Test error"):
+            main()

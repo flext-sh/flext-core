@@ -10,7 +10,6 @@ from flext_infra.deps.detection import (
     dm,
 )
 from flext_tests import tm
-from tests.infra import h
 
 
 class TestFlextInfraDependencyDetectionModels:
@@ -98,7 +97,3 @@ class TestToInfraValue:
         result = _to_infra_value({"key": None})
         tm.that(isinstance(result, Mapping), eq=True)
         tm.that(result, eq={"key": None})
-
-
-def test_helpers_alias_available() -> None:
-    tm.that(h.__name__, eq="FlextInfraTestHelpers")

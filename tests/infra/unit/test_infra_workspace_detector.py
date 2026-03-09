@@ -1,5 +1,7 @@
 """Tests for FlextInfraWorkspaceDetector.
 
+Uses real detector instances with monkeypatch for git_run control.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -7,12 +9,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from flext_core import r
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
+from flext_tests import tm
 
 
 @pytest.fixture
@@ -21,189 +23,151 @@ def detector() -> FlextInfraWorkspaceDetector:
     return FlextInfraWorkspaceDetector()
 
 
-def test_detector_detects_workspace_mode_with_parent_git(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection with parent .git directory present."""
+def _setup_project_with_git(tmp_path: Path) -> Path:
+    """Create project dir with parent .git."""
     project_root = tmp_path / "project"
     project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    result = detector.detect(project_root)
-    assert result.is_success
+    (tmp_path / ".git").mkdir()
+    return project_root
 
 
-def test_detector_detects_standalone_mode_without_parent_git(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection of standalone mode when parent repo is not 'flext'."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    result = detector.detect(project_root)
-    assert result.is_success
+class TestDetectorBasicDetection:
+    """Tests for basic workspace detection scenarios."""
 
-
-def test_detector_returns_standalone_when_no_parent_git(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection returns standalone when no parent .git exists."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    result = detector.detect(project_root)
-    assert result.is_success
-    assert result.value == WorkspaceMode.STANDALONE
-
-
-def test_detector_handles_git_command_errors(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection handles git command errors gracefully."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    result = detector.detect(project_root)
-    assert result.is_success
-
-
-def test_detector_extracts_repo_name_from_https_url() -> None:
-    """Test extraction of repo name from HTTPS URL."""
-    url = "https://github.com/flext-sh/flext.git"
-    name = FlextInfraWorkspaceDetector._repo_name_from_url(url)
-    assert name == "flext"
-
-
-def test_detector_extracts_repo_name_from_ssh_url() -> None:
-    """Test extraction of repo name from SSH URL."""
-    url = "git@github.com:flext-sh/flext.git"
-    name = FlextInfraWorkspaceDetector._repo_name_from_url(url)
-    assert name == "flext"
-
-
-def test_detector_extracts_repo_name_without_git_suffix() -> None:
-    """Test extraction of repo name without .git suffix."""
-    url = "https://github.com/flext-sh/flext"
-    name = FlextInfraWorkspaceDetector._repo_name_from_url(url)
-    assert name == "flext"
-
-
-def test_detector_execute_returns_failure() -> None:
-    """Test that execute() method returns failure as expected."""
-    detector = FlextInfraWorkspaceDetector()
-    result = detector.execute()
-    assert result.is_failure
-
-
-def test_detector_handles_empty_origin_url(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection when git origin URL is empty."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    with patch(
-        "flext_infra.workspace.detector.u.Infra.git_run",
-        return_value=r[str].ok(""),
-    ):
+    def test_detects_with_parent_git(
+        self, detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
         result = detector.detect(project_root)
-    assert result.is_success
-    assert result.value == WorkspaceMode.STANDALONE
+        tm.ok(result)
 
-
-def test_detector_handles_git_command_failure(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection when git command returns failure."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    with patch(
-        "flext_infra.workspace.detector.u.Infra.git_run",
-        return_value=r[str].fail("git config failed"),
-    ):
+    def test_standalone_without_parent_git(
+        self, detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    ) -> None:
+        project_root = tmp_path / "project"
+        project_root.mkdir()
         result = detector.detect(project_root)
-    assert result.is_success
-    assert result.value == WorkspaceMode.STANDALONE
+        tm.ok(result, eq=WorkspaceMode.STANDALONE)
 
-
-def test_detector_detects_workspace_mode_with_flext_repo(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection of workspace mode when parent repo is 'flext'."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    with patch(
-        "flext_infra.workspace.detector.u.Infra.git_run",
-        return_value=r[str].ok("https://github.com/flext-sh/flext.git"),
-    ):
+    def test_handles_git_command_errors(
+        self, detector: FlextInfraWorkspaceDetector, tmp_path: Path
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
         result = detector.detect(project_root)
-    assert result.is_success
-    assert result.value == WorkspaceMode.WORKSPACE
+        tm.ok(result)
+
+    def test_execute_returns_failure(self) -> None:
+        result = FlextInfraWorkspaceDetector().execute()
+        tm.fail(result)
 
 
-def test_detector_detects_standalone_with_non_flext_repo(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection of standalone mode when parent repo is not 'flext'."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    with patch(
-        "flext_infra.workspace.detector.u.Infra.git_run",
-        return_value=r[str].ok("https://github.com/other-org/other-repo.git"),
-    ):
+class TestDetectorRepoNameExtraction:
+    """Tests for URL-based repo name extraction."""
+
+    def test_https_url(self) -> None:
+        name = FlextInfraWorkspaceDetector._repo_name_from_url(
+            "https://github.com/flext-sh/flext.git"
+        )
+        tm.that(name, eq="flext")
+
+    def test_ssh_url(self) -> None:
+        name = FlextInfraWorkspaceDetector._repo_name_from_url(
+            "git@github.com:flext-sh/flext.git"
+        )
+        tm.that(name, eq="flext")
+
+    def test_without_git_suffix(self) -> None:
+        name = FlextInfraWorkspaceDetector._repo_name_from_url(
+            "https://github.com/flext-sh/flext"
+        )
+        tm.that(name, eq="flext")
+
+
+class TestDetectorGitRunScenarios:
+    """Tests for detection with controlled git_run responses."""
+
+    def test_empty_origin_url(
+        self,
+        detector: FlextInfraWorkspaceDetector,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
+        monkeypatch.setattr(
+            "flext_infra.workspace.detector.u.Infra.git_run",
+            lambda *_a, **_kw: r[str].ok(""),
+        )
         result = detector.detect(project_root)
-    assert result.is_success
-    assert result.value == WorkspaceMode.STANDALONE
+        tm.ok(result, eq=WorkspaceMode.STANDALONE)
 
-
-def test_detector_handles_runner_failure(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection when git service returns failure."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    with patch(
-        "flext_infra.workspace.detector.u.Infra.git_run",
-        return_value=r[str].fail("no remote"),
-    ):
+    def test_git_command_failure(
+        self,
+        detector: FlextInfraWorkspaceDetector,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
+        monkeypatch.setattr(
+            "flext_infra.workspace.detector.u.Infra.git_run",
+            lambda *_a, **_kw: r[str].fail("git config failed"),
+        )
         result = detector.detect(project_root)
-    assert result.is_success
-    assert result.value == WorkspaceMode.STANDALONE
+        tm.ok(result, eq=WorkspaceMode.STANDALONE)
 
-
-def test_detector_handles_exception_during_detection(
-    detector: FlextInfraWorkspaceDetector,
-    tmp_path: Path,
-) -> None:
-    """Test detection handles exceptions gracefully."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    parent_git = tmp_path / ".git"
-    parent_git.mkdir()
-    with patch(
-        "flext_infra.workspace.detector.u.Infra.git_run",
-        side_effect=RuntimeError("Command failed"),
-    ):
+    def test_flext_repo_detected(
+        self,
+        detector: FlextInfraWorkspaceDetector,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
+        monkeypatch.setattr(
+            "flext_infra.workspace.detector.u.Infra.git_run",
+            lambda *_a, **_kw: r[str].ok("https://github.com/flext-sh/flext.git"),
+        )
         result = detector.detect(project_root)
-    assert result.is_failure
-    assert isinstance(result.error, str)
-    assert "Detection failed" in result.error
+        tm.ok(result, eq=WorkspaceMode.WORKSPACE)
+
+    def test_non_flext_repo(
+        self,
+        detector: FlextInfraWorkspaceDetector,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
+        monkeypatch.setattr(
+            "flext_infra.workspace.detector.u.Infra.git_run",
+            lambda *_a, **_kw: r[str].ok("https://github.com/other-org/other-repo.git"),
+        )
+        result = detector.detect(project_root)
+        tm.ok(result, eq=WorkspaceMode.STANDALONE)
+
+    def test_runner_failure(
+        self,
+        detector: FlextInfraWorkspaceDetector,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
+        monkeypatch.setattr(
+            "flext_infra.workspace.detector.u.Infra.git_run",
+            lambda *_a, **_kw: r[str].fail("no remote"),
+        )
+        result = detector.detect(project_root)
+        tm.ok(result, eq=WorkspaceMode.STANDALONE)
+
+    def test_exception_during_detection(
+        self,
+        detector: FlextInfraWorkspaceDetector,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project_root = _setup_project_with_git(tmp_path)
+
+        def _raise(*_a: object, **_kw: object) -> r[str]:
+            msg = "Command failed"
+            raise RuntimeError(msg)
+
+        monkeypatch.setattr("flext_infra.workspace.detector.u.Infra.git_run", _raise)
+        result = detector.detect(project_root)
+        tm.fail(result, has="Detection failed")

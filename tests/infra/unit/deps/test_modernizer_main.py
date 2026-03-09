@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 import tomlkit
 
 import flext_infra.deps.modernizer as modernizer_module

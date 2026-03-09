@@ -7,7 +7,7 @@ import tomlkit
 from flext_infra.deps.modernizer import EnsurePyrightConfigPhase, _unwrap_item
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
-from tests.infra import h
+from tests.infra.helpers import h
 
 
 def _test_tool_config() -> FlextInfraToolConfigDocument:

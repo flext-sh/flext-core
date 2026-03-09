@@ -30,6 +30,7 @@ from flext_infra.codegen.lazy_init import (
     _scan_ast_public_defs,
     _should_bubble_up,
 )
+from flext_tests import tm
 
 
 class TestFlextInfraCodegenLazyInit:
@@ -38,38 +39,38 @@ class TestFlextInfraCodegenLazyInit:
     def test_init_accepts_workspace_root(self, tmp_path: Path) -> None:
         """Test generator initialization with workspace root."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        assert generator is not None
+        tm.that(generator, is_not=None)
 
     def test_run_with_empty_workspace_returns_zero(self, tmp_path: Path) -> None:
         """Test run() on empty workspace returns 0 (no errors)."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
-        assert result == 0
+        tm.that(result, eq=0)
 
     def test_run_with_check_only_flag(self, tmp_path: Path) -> None:
         """Test run() respects check_only flag without modifying files."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        assert result == 0
+        tm.that(result, eq=0)
 
     def test_generator_is_flext_service(self, tmp_path: Path) -> None:
         """Test that FlextInfraCodegenLazyInit is a FlextService."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        assert isinstance(generator, FlextService)
+        tm.that(generator, is_type=FlextService)
 
     def test_run_returns_integer_exit_code(self, tmp_path: Path) -> None:
         """Test that run() returns an integer exit code."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
-        assert isinstance(result, int)
-        assert result >= 0
+        tm.that(result, is_type=int)
+        tm.that(result, gte=0)
 
     def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:
         """Test execute() method returns FlextResult[int]."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.execute()
-        assert result.is_success
-        assert isinstance(result.value, int)
+        tm.ok(result)
+        tm.that(result.value, is_type=int)
 
     def test_generate_from_sibling_files(self, tmp_path: Path) -> None:
         """Test that generator discovers exports from sibling .py files."""
@@ -81,12 +82,12 @@ class TestFlextInfraCodegenLazyInit:
         )
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
-        assert result == 0
+        tm.that(result, eq=0)
         init_file = src_dir / "__init__.py"
-        assert init_file.exists()
+        tm.that(init_file.exists(), eq=True)
         content = init_file.read_text()
-        assert "TestModel" in content
-        assert "test_pkg.models" in content
+        tm.that(content, contains="TestModel")
+        tm.that(content, contains="test_pkg.models")
 
     def test_generate_bottom_up(self, tmp_path: Path) -> None:
         """Test that subdirectory exports bubble up to parent."""
@@ -103,17 +104,17 @@ class TestFlextInfraCodegenLazyInit:
         )
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
-        assert result == 0
+        tm.that(result, eq=0)
         # Child __init__.py should have SubService
         child_init = sub_dir / "__init__.py"
-        assert child_init.exists()
-        assert "SubService" in child_init.read_text()
+        tm.that(child_init.exists(), eq=True)
+        tm.that(child_init.read_text(), contains="SubService")
         # Parent __init__.py should have both
         parent_init = src_dir / "__init__.py"
-        assert parent_init.exists()
+        tm.that(parent_init.exists(), eq=True)
         parent_content = parent_init.read_text()
-        assert "PkgModel" in parent_content
-        assert "SubService" in parent_content
+        tm.that(parent_content, contains="PkgModel")
+        tm.that(parent_content, contains="SubService")
 
     def test_generate_preserves_existing_docstring(self, tmp_path: Path) -> None:
         """Test that existing docstring is preserved in regenerated file."""
@@ -130,7 +131,7 @@ class TestFlextInfraCodegenLazyInit:
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         generator.run(check_only=False)
         content = (src_dir / "__init__.py").read_text()
-        assert "My custom package docstring" in content
+        tm.that(content, contains="My custom package docstring")
 
 
 class TestInferPackage:
@@ -139,22 +140,22 @@ class TestInferPackage:
     def test_src_path(self) -> None:
         """Test inference from src/ path."""
         path = Path("/workspace/src/test_pkg/__init__.py")
-        assert _infer_package(path) == "test_pkg"
+        tm.that(_infer_package(path), eq="test_pkg")
 
     def test_deeply_nested_src_path(self) -> None:
         """Test inference from deeply nested src/ path."""
         path = Path("/workspace/src/a/b/c/d/__init__.py")
-        assert _infer_package(path) == "a.b.c.d"
+        tm.that(_infer_package(path), eq="a.b.c.d")
 
     def test_tests_path(self) -> None:
         """Test inference from tests/ path."""
         path = Path("/workspace/tests/unit/__init__.py")
-        assert _infer_package(path) == "tests.unit"
+        tm.that(_infer_package(path), eq="tests.unit")
 
     def test_without_src_directory(self) -> None:
         """Test when path doesn't contain /src/."""
         path = Path("/workspace/lib/test/__init__.py")
-        assert _infer_package(path) == ""
+        tm.that(_infer_package(path), eq="")
 
 
 class TestReadExistingDocstring:
@@ -165,34 +166,34 @@ class TestReadExistingDocstring:
         init_file = tmp_path / "__init__.py"
         init_file.write_text('"""Package docstring."""\nx = 1\n')
         result = _read_existing_docstring(init_file)
-        assert "Package docstring" in result
+        tm.that(result, contains="Package docstring")
 
     def test_without_docstring(self, tmp_path: Path) -> None:
         """Test returns empty when no docstring exists."""
         init_file = tmp_path / "__init__.py"
         init_file.write_text("x = 1\ny = 2\n")
         result = _read_existing_docstring(init_file)
-        assert result == ""
+        tm.that(result, eq="")
 
     def test_nonexistent_file(self, tmp_path: Path) -> None:
         """Test returns empty when file doesn't exist."""
         init_file = tmp_path / "__init__.py"
         result = _read_existing_docstring(init_file)
-        assert result == ""
+        tm.that(result, eq="")
 
     def test_with_syntax_error(self, tmp_path: Path) -> None:
         """Test returns empty on syntax error."""
         init_file = tmp_path / "__init__.py"
         init_file.write_text("invalid syntax ][")
         result = _read_existing_docstring(init_file)
-        assert result == ""
+        tm.that(result, eq="")
 
     def test_with_single_quotes(self, tmp_path: Path) -> None:
         """Test preserves single-quote docstring style."""
         init_file = tmp_path / "__init__.py"
         init_file.write_text("'''Module docstring.'''\nx = 1\n")
         result = _read_existing_docstring(init_file)
-        assert "Module docstring" in result
+        tm.that(result, contains="Module docstring")
 
 
 class TestBuildSiblingExportIndex:
@@ -204,9 +205,9 @@ class TestBuildSiblingExportIndex:
             '"""Models."""\n\n__all__ = ["Foo", "Bar"]\n\nclass Foo: pass\nclass Bar: pass\n',
         )
         index = _build_sibling_export_index(tmp_path, "test_pkg")
-        assert "Foo" in index
-        assert "Bar" in index
-        assert index["Foo"] == ("test_pkg.models", "Foo")
+        tm.that(index, contains="Foo")
+        tm.that(index, contains="Bar")
+        tm.that(index["Foo"], eq=("test_pkg.models", "Foo"))
 
     def test_without_all_falls_back_to_ast(self, tmp_path: Path) -> None:
         """Test scanning sibling files without __all__ uses AST."""
@@ -214,8 +215,8 @@ class TestBuildSiblingExportIndex:
             "class PublicService:\n    pass\n\ndef public_func():\n    pass\n",
         )
         index = _build_sibling_export_index(tmp_path, "test_pkg")
-        assert "PublicService" in index
-        assert "public_func" in index
+        tm.that(index, contains="PublicService")
+        tm.that(index, contains="public_func")
 
     def test_skips_init_and_main(self, tmp_path: Path) -> None:
         """Test that __init__.py and __main__.py are skipped."""
@@ -225,17 +226,17 @@ class TestBuildSiblingExportIndex:
             '__all__ = ["Model"]\nclass Model: pass\n',
         )
         index = _build_sibling_export_index(tmp_path, "test_pkg")
-        assert "Init" not in index
-        assert "main" not in index
-        assert "Model" in index
+        tm.that(index, excludes="Init")
+        tm.that(index, excludes="main")
+        tm.that(index, contains="Model")
 
     def test_skips_private_files(self, tmp_path: Path) -> None:
         """Test that _private.py files are skipped."""
         (tmp_path / "_internal.py").write_text("class Internal: pass\n")
         (tmp_path / "public.py").write_text("class Public: pass\n")
         index = _build_sibling_export_index(tmp_path, "test_pkg")
-        assert "Internal" not in index
-        assert "Public" in index
+        tm.that(index, excludes="Internal")
+        tm.that(index, contains="Public")
 
     def test_skips_version_file(self, tmp_path: Path) -> None:
         """Test that __version__.py is skipped (handled separately)."""
@@ -244,8 +245,8 @@ class TestBuildSiblingExportIndex:
             '__all__ = ["Model"]\nclass Model: pass\n',
         )
         index = _build_sibling_export_index(tmp_path, "test_pkg")
-        assert "__version__" not in index
-        assert "Model" in index
+        tm.that(index, excludes="__version__")
+        tm.that(index, contains="Model")
 
     def test_handles_syntax_error_gracefully(self, tmp_path: Path) -> None:
         """Test that syntax errors in sibling files are skipped."""
@@ -254,7 +255,7 @@ class TestBuildSiblingExportIndex:
             '__all__ = ["Good"]\nclass Good: pass\n',
         )
         index = _build_sibling_export_index(tmp_path, "test_pkg")
-        assert "Good" in index
+        tm.that(index, contains="Good")
 
 
 class TestExtractExports:
@@ -265,32 +266,32 @@ class TestExtractExports:
         code = '__all__ = ["Foo", "Bar"]'
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
-        assert has_all is True
-        assert exports == ["Foo", "Bar"]
+        tm.that(has_all, eq=True)
+        tm.that(exports, eq=["Foo", "Bar"])
 
     def test_with_tuple_all(self) -> None:
         """Test __all__ as tuple."""
         code = '__all__ = ("Foo", "Bar")'
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
-        assert has_all is True
-        assert exports == ["Foo", "Bar"]
+        tm.that(has_all, eq=True)
+        tm.that(exports, eq=["Foo", "Bar"])
 
     def test_with_non_string_elements(self) -> None:
         """Test ignores non-string elements."""
         code = '__all__ = ["Foo", 123, "Bar"]'
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
-        assert has_all is True
-        assert exports == ["Foo", "Bar"]
+        tm.that(has_all, eq=True)
+        tm.that(exports, eq=["Foo", "Bar"])
 
     def test_without_all(self) -> None:
         """Test when __all__ is missing."""
         code = "x = 1"
         tree = ast.parse(code)
         has_all, exports = _extract_exports(tree)
-        assert has_all is False
-        assert exports == []
+        tm.that(has_all, eq=False)
+        tm.that(exports, eq=[])
 
 
 class TestScanAstPublicDefs:

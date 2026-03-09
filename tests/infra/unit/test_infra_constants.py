@@ -144,9 +144,15 @@ class TestFlextInfraConstantsExcludedNamespace:
         tm.that(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, contains=".flext-deps")
 
     def test_excluded_dirs_are_frozensets(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS, frozenset), eq=True)
-        tm.that(isinstance(infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS, frozenset), eq=True)
-        tm.that(isinstance(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, frozenset), eq=True)
+        tm.that(
+            isinstance(infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS, frozenset), eq=True
+        )
+        tm.that(
+            isinstance(infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS, frozenset), eq=True
+        )
+        tm.that(
+            isinstance(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, frozenset), eq=True
+        )
 
 
 class TestFlextInfraConstantsCheckNamespace:
@@ -209,7 +215,6 @@ class TestFlextInfraConstantsAlias:
     """Tests for module-level alias."""
 
     def test_c_alias_is_flext_infra_constants(self) -> None:
-        from flext_infra.constants import FlextInfraConstants
 
         tm.that(isinstance(infra_c, type), eq=True)
 

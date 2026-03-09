@@ -6,6 +6,7 @@ import pytest
 import tomlkit
 
 from flext_core import r, t
+from flext_infra.deps import extra_paths
 from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.deps.extra_paths import (
     FlextInfraExtraPathsManager,
@@ -13,13 +14,14 @@ from flext_infra.deps.extra_paths import (
     sync_one,
 )
 from flext_tests import tm
+
 from ...helpers import h
 
 
 class TestFlextInfraExtraPathsManager:
     def test_manager_initialization(self) -> None:
         manager = FlextInfraExtraPathsManager()
-        tm.that(isinstance(manager, FlextInfraExtraPathsManager), eq=True)
+        tm.that(manager.__class__.__name__, eq="FlextInfraExtraPathsManager")
 
     def test_manager_has_required_services(self) -> None:
         manager = FlextInfraExtraPathsManager()
@@ -151,8 +153,7 @@ class TestSyncOne:
             return r[bool].fail("write error")
 
         monkeypatch.setattr(
-            "flext_infra.deps.extra_paths.FlextInfraUtilitiesToml.write_document",
-            _broken_write,
+            extra_paths.FlextInfraUtilitiesToml, "write_document", _broken_write
         )
         tm.fail(sync_one(pyproject, is_root=True), has="write error")
 

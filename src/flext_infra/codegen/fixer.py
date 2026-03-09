@@ -3,6 +3,10 @@
 AST-based auto-fixer that moves standalone Final constants to constants.py
 and standalone TypeVar/TypeAlias definitions to typings.py.
 
+Uses text-based line operations for file writes (format-preserving),
+following the pattern from refactor/analysis.py rewrite_source/insert_import.
+AST is used only for detection and dependency analysis (business logic).
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -11,6 +15,8 @@ from __future__ import annotations
 
 import ast
 import builtins as _builtins_module
+import operator
+from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
@@ -29,6 +35,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         """Initialize codegen fixer with workspace root."""
         super().__init__()
         self._workspace_root = workspace_root
+
+    # ------------------------------------------------------------------
+    # AST analysis helpers (no file I/O, tree mutation for analysis only)
+    # ------------------------------------------------------------------
 
     @classmethod
     def _all_deps_resolvable(cls, node: ast.stmt, target_tree: ast.Module) -> bool:
@@ -66,7 +76,11 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         source_tree: ast.Module,
         target_tree: ast.Module,
     ) -> None:
-        """Copy imports needed by node from source_tree to target_tree."""
+        """Copy imports needed by node from source_tree to target_tree.
+
+        Mutates target_tree for analysis accumulation only — the tree is
+        never written to disk via ast.unparse.
+        """
         names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
         node_name = FlextInfraCodegenTransforms.get_node_name(node)
         names_used = frozenset(n for n in names_used if n != node_name)
@@ -142,8 +156,9 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         target_available: set[str] = set(dir(_builtins_module))
         for stmt in target_tree.body:
             if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    target_available.add((alias.asname or alias.name).split(".")[0])
+                target_available.update(
+                    (alias.asname or alias.name).split(".")[0] for alias in stmt.names
+                )
             elif isinstance(stmt, ast.ImportFrom):
                 for alias in stmt.names:
                     imported = alias.asname or alias.name
@@ -170,6 +185,154 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                         return True
         return False
 
+    # ------------------------------------------------------------------
+    # Text-based write helpers (format-preserving, no ast.unparse)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _insert_import_text(source: str, import_stmt: str) -> str:
+        """Insert an import statement into source text after existing imports.
+
+        Follows the pattern from refactor/analysis.py insert_import().
+        """
+        if import_stmt in source:
+            return source
+        lines = source.splitlines()
+        insert_idx = 0
+        for idx, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith("from __future__ import"):
+                insert_idx = idx + 1
+                continue
+            if stripped.startswith(("import ", "from ")):
+                insert_idx = idx + 1
+                continue
+            if not stripped and insert_idx > 0:
+                continue
+            if insert_idx > 0:
+                break
+        lines.insert(insert_idx, import_stmt)
+        return "\n".join(lines) + ("\n" if source.endswith("\n") else "")
+
+    @classmethod
+    def _collect_import_texts_for_nodes(
+        cls,
+        nodes: Sequence[ast.stmt],
+        source_lines: list[str],
+        source_tree: ast.Module,
+        target_text: str,
+    ) -> list[str]:
+        """Collect import text lines from source needed by moved nodes.
+
+        Returns import statement strings that should be added to the target
+        file. Skips imports already present in the target text.
+        """
+        all_names: set[str] = set()
+        for node in nodes:
+            names = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
+            node_name = FlextInfraCodegenTransforms.get_node_name(node)
+            all_names.update(n for n in names if n != node_name)
+        if not all_names:
+            return []
+        import_texts: list[str] = []
+        seen: set[str] = set()
+        for stmt in source_tree.body:
+            if not isinstance(stmt, (ast.Import, ast.ImportFrom)):
+                continue
+            provided: set[str] = set()
+            if isinstance(stmt, ast.Import):
+                provided.update(
+                    (alias.asname or alias.name).split(".")[0] for alias in stmt.names
+                )
+            else:
+                for alias in stmt.names:
+                    imported = alias.asname or alias.name
+                    if imported != "*":
+                        provided.add(imported)
+            if not (provided & all_names):
+                continue
+            start = stmt.lineno
+            end = stmt.end_lineno or start
+            text = "\n".join(source_lines[start - 1 : end]).strip()
+            if text not in seen and text not in target_text:
+                seen.add(text)
+                import_texts.append(text)
+        return import_texts
+
+    @classmethod
+    def _write_changes(
+        cls,
+        *,
+        source_path: Path,
+        target_path: Path,
+        nodes_moved: Sequence[ast.stmt],
+        moved_names: list[str],
+        source_tree: ast.Module,
+        pkg_name: str,
+        target_module: str,
+    ) -> None:
+        """Apply moves via text operations (format-preserving, no ast.unparse).
+
+        Follows the pattern from refactor/analysis.py rewrite_source().
+        Steps: extract definitions by line range, remove from source,
+        add re-export import to source, add imports+definitions to target,
+        normalize both files with ruff.
+        """
+        encoding = c.Infra.Encoding.DEFAULT
+        source_text = source_path.read_text(encoding=encoding)
+        source_lines = source_text.splitlines()
+        target_text = target_path.read_text(encoding=encoding)
+
+        # 1. Extract node definitions by line range
+        extracted: list[str] = []
+        ranges: list[tuple[int, int]] = []
+        for node in nodes_moved:
+            start = node.lineno
+            end = node.end_lineno or node.lineno
+            block = "\n".join(source_lines[start - 1 : end])
+            extracted.append(block)
+            ranges.append((start, end))
+
+        # 2. Collect required imports for target
+        import_texts = cls._collect_import_texts_for_nodes(
+            nodes_moved,
+            source_lines,
+            source_tree,
+            target_text,
+        )
+
+        # 3. Remove nodes from source (reverse order preserves line numbers)
+        for start, end in sorted(ranges, key=operator.itemgetter(0), reverse=True):
+            del source_lines[start - 1 : end]
+
+        # 4. Add re-export import to source
+        source_result = "\n".join(source_lines)
+        re_export = f"from {pkg_name}.{target_module} import " + ", ".join(
+            sorted(moved_names)
+        )
+        source_result = cls._insert_import_text(source_result, re_export)
+        if source_text.endswith("\n") and not source_result.endswith("\n"):
+            source_result += "\n"
+
+        # 5. Add imports + definitions to target
+        target_result = target_text
+        for imp in import_texts:
+            target_result = cls._insert_import_text(target_result, imp)
+        for block in extracted:
+            target_result = target_result.rstrip() + "\n\n\n" + block + "\n"
+
+        # 6. Write files
+        source_path.write_text(source_result, encoding=encoding)
+        target_path.write_text(target_result, encoding=encoding)
+
+        # 7. Normalize with ruff
+        FlextInfraCodegenTransforms.run_ruff_fix(source_path)
+        FlextInfraCodegenTransforms.run_ruff_fix(target_path)
+
+    # ------------------------------------------------------------------
+    # File system helpers
+    # ------------------------------------------------------------------
+
     @staticmethod
     def _find_package_dir(project_root: Path) -> Path | None:
         """Find the first Python package under src/."""
@@ -181,28 +344,9 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 return child
         return None
 
-    @staticmethod
-    def _is_name_referenced_in_file(
-        name: str,
-        definition_node: ast.stmt,
-        tree: ast.Module,
-    ) -> bool:
-        """Check if a name is referenced anywhere in the file besides its definition."""
-        for stmt in tree.body:
-            if stmt is definition_node:
-                continue
-            for node in ast.walk(stmt):
-                if isinstance(node, ast.Name) and node.id == name:
-                    return True
-        return False
-
-    @staticmethod
-    def _write_tree(path: Path, tree: ast.Module) -> None:
-        """Write an AST module back to disk and run ruff fix."""
-        _ = ast.fix_missing_locations(tree)
-        source = ast.unparse(tree)
-        _ = path.write_text(source, encoding=c.Infra.Encoding.DEFAULT)
-        FlextInfraCodegenTransforms.run_ruff_fix(path)
+    # ------------------------------------------------------------------
+    # Entry points
+    # ------------------------------------------------------------------
 
     @override
     def execute(self) -> r[list[m.Infra.Codegen.AutoFixResult]]:
@@ -212,12 +356,8 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
     def fix_project(self, project_path: Path) -> m.Infra.Codegen.AutoFixResult:
         """Auto-fix namespace violations in a single project.
 
-        Args:
-            project_path: Path to the project root directory.
-
-        Returns:
-            AutoFixResult with lists of fixed and skipped violations.
-
+        Each rule parses the source file fresh so that line numbers stay
+        accurate after a preceding rule modifies the file on disk.
         """
         prefix = FlextInfraNamespaceValidator.derive_prefix(project_path)
         if not prefix:
@@ -253,12 +393,8 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 continue
             if py_file.name in {"constants.py", "typings.py"}:
                 continue
-            tree = FlextInfraCodegenTransforms.parse_module(py_file)
-            if tree is None:
-                continue
             self._fix_rule1(
                 source_file=py_file,
-                tree=tree,
                 pkg_dir=pkg_dir,
                 violations_fixed=violations_fixed,
                 violations_skipped=violations_skipped,
@@ -266,7 +402,6 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             )
             self._fix_rule2(
                 source_file=py_file,
-                tree=tree,
                 pkg_dir=pkg_dir,
                 violations_fixed=violations_fixed,
                 violations_skipped=violations_skipped,
@@ -301,17 +436,23 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             results.append(result)
         return results
 
+    # ------------------------------------------------------------------
+    # Rule implementations (parse fresh, text-based writes)
+    # ------------------------------------------------------------------
+
     def _fix_rule1(
         self,
         *,
         source_file: Path,
-        tree: ast.Module,
         pkg_dir: Path,
         violations_fixed: list[m.Infra.Codegen.CensusViolation],
         violations_skipped: list[m.Infra.Codegen.CensusViolation],
         files_modified: set[str],
     ) -> None:
         """Fix Rule 1 — move loose Final constants to constants.py."""
+        tree = FlextInfraCodegenTransforms.parse_module(source_file)
+        if tree is None:
+            return
         finals = FlextInfraCodegenTransforms.find_standalone_finals(tree)
         if not finals:
             return
@@ -327,30 +468,33 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             if isinstance(node.target, ast.Name):
                 target_name = node.target.id
             if target_name.startswith("_"):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-001",
-                    line=node.lineno,
-                    message=f"Final constant '{target_name}' is private — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-001",
+                        line=node.lineno,
+                        message=f"Final constant '{target_name}' is private — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-001",
-                    line=node.lineno,
-                    message=f"Final constant '{target_name}' used in-context — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-001",
+                        line=node.lineno,
+                        message=f"Final constant '{target_name}' used in-context — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             nodes_to_move.append(node)
         if not nodes_to_move:
             return
         pkg_name = pkg_dir.name
         actually_moved: list[ast.AnnAssign] = []
+        moved_names: list[str] = []
         for node in nodes_to_move:
             target_name = ""
             if isinstance(node.target, ast.Name):
@@ -358,64 +502,72 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             if FlextInfraCodegenTransforms.name_exists_in_module(
                 target_name, target_tree
             ):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-001",
-                    line=node.lineno,
-                    message=f"Final constant '{target_name}' already in constants.py — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-001",
+                        line=node.lineno,
+                        message=f"Final constant '{target_name}' already in constants.py — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             self._copy_required_imports(node, tree, target_tree)
             if not self._all_deps_resolvable(node, target_tree):
-                violation = m.Infra.Codegen.CensusViolation(
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-001",
+                        line=node.lineno,
+                        message=f"Final constant '{target_name}' has unresolvable deps — skipped",
+                        fixable=False,
+                    ),
+                )
+                continue
+            # Insert into target_tree for analysis accumulation
+            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
+            target_tree.body.insert(insert_idx, node)
+            violations_fixed.append(
+                m.Infra.Codegen.CensusViolation(
                     module=str(source_file),
                     rule="NS-001",
                     line=node.lineno,
-                    message=f"Final constant '{target_name}' has unresolvable deps — skipped",
-                    fixable=False,
-                )
-                violations_skipped.append(violation)
-                continue
-            if node in tree.body:
-                tree.body.remove(node)
-            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
-            target_tree.body.insert(insert_idx, node)
-            FlextInfraCodegenTransforms.add_import_to_tree(
-                tree,
-                pkg_name,
-                "constants",
-                target_name,
+                    message=f"Loose Final constant '{target_name}' moved to constants.py",
+                    fixable=True,
+                ),
             )
-            violation = m.Infra.Codegen.CensusViolation(
-                module=str(source_file),
-                rule="NS-001",
-                line=node.lineno,
-                message=f"Loose Final constant '{target_name}' moved to constants.py",
-                fixable=True,
+            actually_moved.append(node)
+            moved_names.append(target_name)
+        if actually_moved:
+            self._write_changes(
+                source_path=source_file,
+                target_path=target_path,
+                nodes_moved=actually_moved,
+                moved_names=moved_names,
+                source_tree=tree,
+                pkg_name=pkg_name,
+                target_module="constants",
             )
-            violations_fixed.append(violation)
             files_modified.add(str(source_file))
             files_modified.add(str(target_path))
-            actually_moved.append(node)
-        if actually_moved:
-            self._write_tree(source_file, tree)
-            self._write_tree(target_path, target_tree)
 
     def _fix_rule2(
         self,
         *,
         source_file: Path,
-        tree: ast.Module,
         pkg_dir: Path,
         violations_fixed: list[m.Infra.Codegen.CensusViolation],
         violations_skipped: list[m.Infra.Codegen.CensusViolation],
         files_modified: set[str],
     ) -> None:
         """Fix Rule 2 — move loose TypeVars/TypeAliases to typings.py."""
+        tree = FlextInfraCodegenTransforms.parse_module(source_file)
+        if tree is None:
+            return
         typevars = FlextInfraCodegenTransforms.find_standalone_typevars(tree)
         typealiases = FlextInfraCodegenTransforms.find_standalone_typealiases(tree)
+        if not typevars and not typealiases:
+            return
         target_path = pkg_dir / "typings.py"
         if not target_path.exists():
             return
@@ -430,24 +582,26 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 if isinstance(target, ast.Name):
                     target_name = target.id
             if target_name.startswith("_"):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=tv_node.lineno,
-                    message=f"TypeVar '{target_name}' is private — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=tv_node.lineno,
+                        message=f"TypeVar '{target_name}' is private — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             if FlextInfraCodegenTransforms.is_used_in_context(tv_node, tree):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=tv_node.lineno,
-                    message=f"TypeVar '{target_name}' used in-context — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=tv_node.lineno,
+                        message=f"TypeVar '{target_name}' used in-context — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             nodes_to_move.append(tv_node)
         for alias_node in typealiases:
@@ -461,30 +615,33 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 if isinstance(target, ast.Name):
                     target_name = target.id
             if target_name.startswith("_"):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=alias_node.lineno,
-                    message=f"TypeAlias '{target_name}' is private — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=alias_node.lineno,
+                        message=f"TypeAlias '{target_name}' is private — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             if FlextInfraCodegenTransforms.is_used_in_context(alias_node, tree):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=alias_node.lineno,
-                    message=f"TypeAlias '{target_name}' used in-context — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=alias_node.lineno,
+                        message=f"TypeAlias '{target_name}' used in-context — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             nodes_to_move.append(alias_node)
         if not nodes_to_move:
             return
         pkg_name = pkg_dir.name
         actually_moved: list[ast.stmt] = []
+        moved_names: list[str] = []
         for move_node in nodes_to_move:
             target_name = FlextInfraCodegenTransforms.get_node_name(move_node)
             if not target_name:
@@ -492,62 +649,66 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             if FlextInfraCodegenTransforms.name_exists_in_module(
                 target_name, target_tree
             ):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=move_node.lineno,
-                    message=f"'{target_name}' already in typings.py — skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=move_node.lineno,
+                        message=f"'{target_name}' already in typings.py — skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             if self._needs_first_party_import(move_node, tree, target_tree):
-                violation = m.Infra.Codegen.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=move_node.lineno,
-                    message=f"'{target_name}' needs first-party import — circular risk, skipped",
-                    fixable=False,
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=move_node.lineno,
+                        message=f"'{target_name}' needs first-party import — circular risk, skipped",
+                        fixable=False,
+                    ),
                 )
-                violations_skipped.append(violation)
                 continue
             self._copy_required_imports(move_node, tree, target_tree)
             if not self._all_deps_resolvable(move_node, target_tree):
-                violation = m.Infra.Codegen.CensusViolation(
+                violations_skipped.append(
+                    m.Infra.Codegen.CensusViolation(
+                        module=str(source_file),
+                        rule="NS-002",
+                        line=move_node.lineno,
+                        message=f"'{target_name}' has unresolvable deps — skipped",
+                        fixable=False,
+                    ),
+                )
+                continue
+            # Insert into target_tree for analysis accumulation
+            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
+            target_tree.body.insert(insert_idx, move_node)
+            kind = "TypeVar" if isinstance(move_node, ast.Assign) else "TypeAlias"
+            violations_fixed.append(
+                m.Infra.Codegen.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
                     line=move_node.lineno,
-                    message=f"'{target_name}' has unresolvable deps — skipped",
-                    fixable=False,
-                )
-                violations_skipped.append(violation)
-                continue
-            if move_node in tree.body:
-                tree.body.remove(move_node)
-            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
-            target_tree.body.insert(insert_idx, move_node)
-            FlextInfraCodegenTransforms.add_import_to_tree(
-                tree,
-                pkg_name,
-                c.Infra.Directories.TYPINGS,
-                target_name,
+                    message=f"{kind} '{target_name}' moved to typings.py",
+                    fixable=True,
+                ),
             )
-            rule = "NS-002"
-            kind = "TypeVar" if isinstance(move_node, ast.Assign) else "TypeAlias"
-            violation = m.Infra.Codegen.CensusViolation(
-                module=str(source_file),
-                rule=rule,
-                line=move_node.lineno,
-                message=f"{kind} '{target_name}' moved to typings.py",
-                fixable=True,
+            actually_moved.append(move_node)
+            moved_names.append(target_name)
+        if actually_moved:
+            self._write_changes(
+                source_path=source_file,
+                target_path=target_path,
+                nodes_moved=actually_moved,
+                moved_names=moved_names,
+                source_tree=tree,
+                pkg_name=pkg_name,
+                target_module=c.Infra.Directories.TYPINGS,
             )
-            violations_fixed.append(violation)
             files_modified.add(str(source_file))
             files_modified.add(str(target_path))
-            actually_moved.append(move_node)
-        if actually_moved:
-            self._write_tree(source_file, tree)
-            self._write_tree(target_path, target_tree)
 
 
 __all__ = ["FlextInfraCodegenFixer"]

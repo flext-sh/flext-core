@@ -126,7 +126,9 @@ class StubSelector:
     """Stub for FlextInfraUtilitiesSelection."""
 
     def __init__(self, resolve_returns: object | None = None) -> None:
-        self._resolve_returns = resolve_returns or r[list[object]].ok([])
+        self._resolve_returns = (
+            resolve_returns if resolve_returns is not None else r[list[object]].ok([])
+        )
 
     def resolve_projects(self, *args: object, **kwargs: object) -> object:
         return self._resolve_returns
@@ -138,7 +140,7 @@ class StubReporting:
     def __init__(self, report_dir: Path | None = None) -> None:
         self._report_dir = report_dir or Path("/tmp/reports")
 
-    def get_report_dir(self) -> Path:
+    def get_report_dir(self, *_args: object, **_kwargs: object) -> Path:
         return self._report_dir
 
 

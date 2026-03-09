@@ -16,6 +16,7 @@ import pytest
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.constants import c
 from flext_infra.models import FlextInfraModels
+from flext_tests import tm
 
 
 @pytest.fixture
@@ -76,12 +77,14 @@ class TestParseViolationValid:
         expected_msg: str,
     ) -> None:
         result = FlextInfraCodegenCensus._parse_violation(violation_str)
-        assert result is not None
-        assert isinstance(result, FlextInfraModels.Infra.Codegen.CensusViolation)
-        assert result.rule == expected_rule
-        assert result.module == expected_module
-        assert result.line == expected_line
-        assert result.message == expected_msg
+        tm.that(result is not None, eq=True)
+        tm.that(
+            isinstance(result, FlextInfraModels.Infra.Codegen.CensusViolation), eq=True
+        )
+        tm.that(result.rule, eq=expected_rule)
+        tm.that(result.module, eq=expected_module)
+        tm.that(result.line, eq=expected_line)
+        tm.that(result.message, eq=expected_msg)
 
 
 class TestParseViolationInvalid:
@@ -109,8 +112,9 @@ class TestParseViolationInvalid:
         ],
     )
     def test_returns_none(self, violation_str: str) -> None:
-        result = FlextInfraCodegenCensus._parse_violation(violation_str)
-        assert result is None
+        tm.that(
+            FlextInfraCodegenCensus._parse_violation(violation_str) is None, eq=True
+        )
 
 
 class TestFixabilityClassification:
@@ -120,120 +124,100 @@ class TestFixabilityClassification:
         result = FlextInfraCodegenCensus._parse_violation(
             "[NS-000-001] src/file.py:1 — Structure violation",
         )
-        assert result is not None
-        assert result.fixable is False
+        tm.that(result is not None, eq=True)
+        tm.that(result.fixable, eq=False)
 
     def test_ns001_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
             "[NS-001-001] src/file.py:1 — Constant violation",
         )
-        assert result is not None
-        assert result.fixable is True
+        tm.that(result is not None, eq=True)
+        tm.that(result.fixable, eq=True)
 
     def test_ns002_fixable(self) -> None:
         result = FlextInfraCodegenCensus._parse_violation(
             "[NS-002-001] src/file.py:1 — TypeVar violation",
         )
-        assert result is not None
-        assert result.fixable is True
+        tm.that(result is not None, eq=True)
+        tm.that(result.fixable, eq=True)
 
     def test_ns000_multiple_sub_rules_not_fixable(self) -> None:
         """Different sub-rule numbers under NS-000 are still not fixable."""
         for sub in ("001", "002", "099"):
             result = FlextInfraCodegenCensus._parse_violation(
-                f"[NS-000-{sub}] src/x.py:1 — msg",
+                f"[NS-000-{sub}] src/x.py:1 — msg"
             )
-            assert result is not None
-            assert result.fixable is False
+            tm.that(result is not None, eq=True)
+            tm.that(result.fixable, eq=False)
 
 
 class TestExcludedProjects:
     """Census skips the 'flexcore' project."""
 
     def test_flexcore_in_excluded_set(self) -> None:
-        assert "flexcore" in c.Infra.Codegen.EXCLUDED_PROJECTS
+        tm.that("flexcore" in c.Infra.Codegen.EXCLUDED_PROJECTS, eq=True)
 
     def test_excluded_set_is_frozenset(self) -> None:
-        assert isinstance(c.Infra.Codegen.EXCLUDED_PROJECTS, frozenset)
+        tm.that(isinstance(c.Infra.Codegen.EXCLUDED_PROJECTS, frozenset), eq=True)
 
 
 class TestViolationPattern:
     """Compiled regex captures named groups correctly."""
 
     def test_named_groups_present(self) -> None:
-        expected_groups = {"rule", "module", "line", "message"}
         match = c.Infra.Codegen.VIOLATION_PATTERN.match(
-            "[NS-001-001] src/file.py:10 — msg",
+            "[NS-001-001] src/file.py:10 — msg"
         )
-        assert match is not None
-        assert set(match.groupdict().keys()) == expected_groups
+        tm.that(match is not None, eq=True)
+        tm.that(set(match.groupdict().keys()), eq={"rule", "module", "line", "message"})
+
+
+_CV = FlextInfraModels.Infra.Codegen.CensusViolation
+_CR = FlextInfraModels.Infra.Codegen.CensusReport
 
 
 class TestCensusViolationModel:
     """CensusViolation model validates parsed data correctly."""
 
     def test_model_fields(self) -> None:
-        violation = FlextInfraModels.Infra.Codegen.CensusViolation(
+        v = _CV(
             module="src/file.py",
             rule="NS-001",
             line=10,
             message="Test message",
             fixable=True,
         )
-        assert violation.module == "src/file.py"
-        assert violation.rule == "NS-001"
-        assert violation.line == 10
-        assert violation.message == "Test message"
-        assert violation.fixable is True
+        tm.that(v.module, eq="src/file.py")
+        tm.that(v.rule, eq="NS-001")
+        tm.that(v.line, eq=10)
+        tm.that(v.message, eq="Test message")
+        tm.that(v.fixable, eq=True)
 
 
 class TestCensusReportModel:
     """CensusReport aggregates violations correctly."""
 
     def test_empty_report(self) -> None:
-        report = FlextInfraModels.Infra.Codegen.CensusReport(
-            project="test-project",
-            violations=[],
-            total=0,
-            fixable=0,
-        )
-        assert report.project == "test-project"
-        assert report.total == 0
-        assert report.fixable == 0
-        assert report.violations == []
+        report = _CR(project="test-project", violations=[], total=0, fixable=0)
+        tm.that(report.project, eq="test-project")
+        tm.that(report.total, eq=0)
+        tm.that(report.fixable, eq=0)
+        tm.that(report.violations, eq=[])
 
     def test_report_with_mixed_violations(self) -> None:
         violations = [
-            FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/a.py",
-                rule="NS-000",
-                line=1,
-                message="m1",
-                fixable=False,
-            ),
-            FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/b.py",
-                rule="NS-001",
-                line=2,
-                message="m2",
-                fixable=True,
-            ),
-            FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/c.py",
-                rule="NS-002",
-                line=3,
-                message="m3",
-                fixable=True,
-            ),
+            _CV(module="src/a.py", rule="NS-000", line=1, message="m1", fixable=False),
+            _CV(module="src/b.py", rule="NS-001", line=2, message="m2", fixable=True),
+            _CV(module="src/c.py", rule="NS-002", line=3, message="m3", fixable=True),
         ]
-        report = FlextInfraModels.Infra.Codegen.CensusReport(
+        report = _CR(
             project="test-project",
             violations=violations,
             total=len(violations),
             fixable=sum(1 for v in violations if v.fixable),
         )
-        assert report.total == 3
-        assert report.fixable == 2
+        tm.that(report.total, eq=3)
+        tm.that(report.fixable, eq=2)
 
 
 __all__: list[str] = []

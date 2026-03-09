@@ -1,4 +1,4 @@
-"""Tests for FlextInfraPrWorkspaceManager.
+"""Tests for FlextInfraPrWorkspaceManager — core methods.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -7,419 +7,194 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import Mock, patch
+
+import pytest
 
 from flext_core import r
+from flext_infra.github import pr_workspace as pw_mod
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
+from flext_tests import tm
+from tests.infra.unit.github._stubs import StubProjectInfo, StubReporting, StubRunner
 
 
 class TestFlextInfraPrWorkspaceManager:
-    """Test suite for FlextInfraPrWorkspaceManager."""
-
-    def test_has_changes_true(self, tmp_path: Path) -> None:
+    def test_has_changes_true(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test detecting uncommitted changes in repository."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        monkeypatch.setattr(
+            pw_mod.u.Infra, "git_has_changes", lambda _root: r[bool].ok(True)
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_has_changes.return_value = r[bool].ok(True)
-            result = manager.has_changes(tmp_path)
-            assert result.is_success
-            assert result.value is True
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.has_changes(tmp_path)
+        tm.ok(result, eq=True)
 
-    def test_has_changes_false(self, tmp_path: Path) -> None:
+    def test_has_changes_false(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test when repository has no uncommitted changes."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        monkeypatch.setattr(
+            pw_mod.u.Infra, "git_has_changes", lambda _root: r[bool].ok(False)
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_has_changes.return_value = r[bool].ok(False)
-            result = manager.has_changes(tmp_path)
-            assert result.is_success
-            assert result.value is False
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.has_changes(tmp_path)
+        tm.ok(result, eq=False)
 
-    def test_has_changes_command_failure(self, tmp_path: Path) -> None:
+    def test_has_changes_command_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test handling of git status command failure."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        monkeypatch.setattr(
+            pw_mod.u.Infra,
+            "git_has_changes",
+            lambda _root: r[bool].fail("not a git repository"),
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_has_changes.return_value = r[bool].fail(
-                "not a git repository"
-            )
-            result = manager.has_changes(tmp_path)
-            assert result.is_failure
-            assert result.error
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.has_changes(tmp_path)
+        tm.fail(result)
 
-    def test_checkout_branch_success(self, tmp_path: Path) -> None:
+    def test_checkout_branch_success(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test successful branch checkout."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
-        )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_checkout.return_value = r[bool].ok(True)
-            result = manager.checkout_branch(tmp_path, "feature/test")
-            assert result.is_success
-            mock_u.Infra.git_checkout.assert_called_once_with(tmp_path, "feature/test")
+        calls: list[tuple[Path, str]] = []
 
-    def test_checkout_branch_empty(self, tmp_path: Path) -> None:
+        def _checkout(root: Path, branch: str) -> r[bool]:
+            calls.append((root, branch))
+            return r[bool].ok(True)
+
+        monkeypatch.setattr(pw_mod.u.Infra, "git_checkout", _checkout)
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.checkout_branch(tmp_path, "feature/test")
+        tm.ok(result)
+        tm.that(len(calls), eq=1)
+        tm.that(str(calls[0][0]), eq=str(tmp_path))
+        tm.that(calls[0][1], eq="feature/test")
+
+    def test_checkout_branch_empty(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test checkout with empty branch is a no-op."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        calls: list[tuple[Path, str]] = []
+        monkeypatch.setattr(
+            pw_mod.u.Infra,
+            "git_checkout",
+            lambda root, branch: (calls.append((root, branch)), r[bool].ok(True))[1],
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            result = manager.checkout_branch(tmp_path, "")
-            assert result.is_success
-            assert result.value is True
-            mock_u.Infra.git_checkout.assert_not_called()
-
-    def test_checkout_branch_already_on(self, tmp_path: Path) -> None:
-        """Test checkout when already on the branch."""
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_checkout.return_value = r[bool].ok(True)
-            result = manager.checkout_branch(tmp_path, "feature")
-            assert result.is_success
-            assert result.value is True
+        result = manager.checkout_branch(tmp_path, "")
+        tm.ok(result, eq=True)
+        tm.that(len(calls), eq=0)
 
-    def test_checkout_branch_failure(self, tmp_path: Path) -> None:
+    def test_checkout_branch_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test checkout failure propagation."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        monkeypatch.setattr(
+            pw_mod.u.Infra,
+            "git_checkout",
+            lambda _root, _branch: r[bool].fail("checkout failed"),
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_checkout.return_value = r[bool].fail("checkout failed")
-            result = manager.checkout_branch(tmp_path, "feature")
-            assert result.is_failure
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.checkout_branch(tmp_path, "feature")
+        tm.fail(result)
 
     def test_default_initialization(self) -> None:
         """Test manager initializes with default dependencies."""
         manager = FlextInfraPrWorkspaceManager()
-        assert getattr(manager, "_runner", None) is not None
-        assert getattr(manager, "_selector", None) is not None
-        assert getattr(manager, "_reporting", None) is not None
+        tm.that(getattr(manager, "_runner", None), none=False)
+        tm.that(getattr(manager, "_selector", None), none=False)
+        tm.that(getattr(manager, "_reporting", None), none=False)
 
 
 class TestCheckpoint:
-    """Test checkpoint method."""
-
-    def test_no_changes(self, tmp_path: Path) -> None:
+    def test_no_changes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test checkpoint exits when repository has no changes."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        git_add_calls: list[Path] = []
+        monkeypatch.setattr(
+            pw_mod.u.Infra, "git_has_changes", lambda _root: r[bool].ok(False)
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_has_changes.return_value = r[bool].ok(False)
-            result = manager.checkpoint(tmp_path, "feature")
-            assert result.is_success
-            assert result.value is True
-            mock_u.Infra.git_add.assert_not_called()
+        monkeypatch.setattr(
+            pw_mod.u.Infra,
+            "git_add",
+            lambda root, *_paths: (git_add_calls.append(root), r[bool].ok(True))[1],
+        )
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.checkpoint(tmp_path, "feature")
+        tm.ok(result, eq=True)
+        tm.that(len(git_add_calls), eq=0)
 
-    def test_checkpoint_failure(self, tmp_path: Path) -> None:
+    def test_checkpoint_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test checkpoint failure propagation."""
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=Mock(),
-            reporting=Mock(),
+        monkeypatch.setattr(
+            pw_mod.u.Infra,
+            "git_has_changes",
+            lambda _root: r[bool].fail("git error"),
         )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_has_changes.return_value = r[bool].fail("git error")
-            result = manager.checkpoint(tmp_path, "feature")
-            assert result.is_failure
+        manager = FlextInfraPrWorkspaceManager(
+            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+        )
+        result = manager.checkpoint(tmp_path, "feature")
+        tm.fail(result)
 
 
 class TestRunPr:
-    """Test run_pr method."""
-
     def test_root_repo(self, tmp_path: Path) -> None:
         """Test run_pr for root repository."""
-        mock_runner = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(0)
+        runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
+        reporting = StubReporting(report_dir=tmp_path / "reports")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=Mock(),
-            reporting=mock_reporting,
+            runner=runner, selector=StubProjectInfo(), reporting=reporting
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
-        assert result.is_success
-        assert result.value.status == "OK"
+        value = tm.ok(result)
+        tm.that(value.status, eq="OK")
 
     def test_subproject(self, tmp_path: Path) -> None:
         """Test run_pr for subproject."""
-        mock_runner = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(0)
+        runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
+        reporting = StubReporting(report_dir=tmp_path / "reports")
         sub = tmp_path / "sub"
         sub.mkdir()
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=Mock(),
-            reporting=mock_reporting,
+            runner=runner, selector=StubProjectInfo(), reporting=reporting
         )
         result = manager.run_pr(sub, tmp_path, {"action": "status"})
-        assert result.is_success
+        tm.ok(result)
 
     def test_command_failure(self, tmp_path: Path) -> None:
         """Test run_pr command failure."""
-        mock_runner = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].fail("command error")
+        runner = StubRunner(run_to_file_returns=[r[int].fail("command error")])
+        reporting = StubReporting(report_dir=tmp_path / "reports")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=Mock(),
-            reporting=mock_reporting,
+            runner=runner, selector=StubProjectInfo(), reporting=reporting
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
-        assert result.is_failure
+        tm.fail(result)
 
     def test_nonzero_exit(self, tmp_path: Path) -> None:
         """Test run_pr with non-zero exit code."""
-        mock_runner = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(1)
+        runner = StubRunner(run_to_file_returns=[r[int].ok(1)])
+        reporting = StubReporting(report_dir=tmp_path / "reports")
         manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=Mock(),
-            reporting=mock_reporting,
+            runner=runner, selector=StubProjectInfo(), reporting=reporting
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
-        assert result.is_success
-        assert result.value.exit_code == 1
-
-
-class TestOrchestrate:
-    """Test orchestrate method."""
-
-    def test_all_success(self, tmp_path: Path) -> None:
-        """Test orchestrate with all projects succeeding."""
-        mock_runner = Mock()
-        mock_selector = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(0)
-        proj = Mock()
-        proj.path = tmp_path / "proj"
-        proj.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=mock_selector,
-            reporting=mock_reporting,
-        )
-        result = manager.orchestrate(
-            tmp_path,
-            include_root=False,
-            checkpoint=False,
-            branch="",
-        )
-        assert result.is_success
-        assert result.value.fail == 0
-
-    def test_project_resolution_failure(self, tmp_path: Path) -> None:
-        """Test orchestrate when project resolution fails."""
-        mock_selector = Mock()
-        mock_selector.resolve_projects.return_value = r[list[Mock]].fail("no projects")
-        manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(),
-            selector=mock_selector,
-            reporting=Mock(),
-        )
-        result = manager.orchestrate(tmp_path)
-        assert result.is_failure
-
-    def test_fail_fast(self, tmp_path: Path) -> None:
-        """Test orchestrate with fail_fast stopping on first failure."""
-        mock_runner = Mock()
-        mock_selector = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(1)
-        proj1 = Mock()
-        proj1.path = tmp_path / "p1"
-        proj1.path.mkdir()
-        proj2 = Mock()
-        proj2.path = tmp_path / "p2"
-        proj2.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj1, proj2])
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=mock_selector,
-            reporting=mock_reporting,
-        )
-        result = manager.orchestrate(
-            tmp_path,
-            include_root=False,
-            fail_fast=True,
-            checkpoint=False,
-            branch="",
-        )
-        assert result.is_success
-        assert result.value.fail >= 1
-
-    def test_include_root(self, tmp_path: Path) -> None:
-        """Test orchestrate includes root repository."""
-        mock_runner = Mock()
-        mock_selector = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(0)
-        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([])
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=mock_selector,
-            reporting=mock_reporting,
-        )
-        result = manager.orchestrate(
-            tmp_path,
-            include_root=True,
-            checkpoint=False,
-            branch="",
-        )
-        assert result.is_success
-        assert result.value.total == 1
-
-    def test_orchestrate_with_checkpoint(self, tmp_path: Path) -> None:
-        """Test orchestrate with checkpoint enabled runs checkpoint flow."""
-        mock_runner = Mock()
-        mock_selector = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].ok(0)
-        proj = Mock()
-        proj.path = tmp_path / "proj"
-        proj.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=mock_selector,
-            reporting=mock_reporting,
-        )
-        with patch("flext_infra.github.pr_workspace.u") as mock_u:
-            mock_u.Infra.git_has_changes.return_value = r[bool].ok(False)
-            mock_u.Infra.git_checkout.return_value = r[bool].ok(True)
-            result = manager.orchestrate(
-                tmp_path,
-                include_root=False,
-                checkpoint=True,
-                branch="test-branch",
-            )
-            assert result.is_success
-            mock_u.Infra.git_has_changes.assert_called()
-
-    def test_orchestrate_failure_handling(self, tmp_path: Path) -> None:
-        """Test orchestrate failure handling with fail_fast."""
-        mock_runner = Mock()
-        mock_selector = Mock()
-        mock_reporting = Mock()
-        mock_reporting.get_report_dir.return_value = tmp_path / "reports"
-        mock_runner.run_to_file.return_value = r[int].fail("command error")
-        proj = Mock()
-        proj.path = tmp_path / "proj"
-        proj.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
-        manager = FlextInfraPrWorkspaceManager(
-            runner=mock_runner,
-            selector=mock_selector,
-            reporting=mock_reporting,
-        )
-        result = manager.orchestrate(
-            tmp_path,
-            include_root=False,
-            fail_fast=True,
-            checkpoint=False,
-            branch="",
-        )
-        assert result.is_success
-        assert result.value.fail == 1
-
-
-class TestStaticMethods:
-    """Test static utility methods."""
-
-    def test_repo_display_name_root(self, tmp_path: Path) -> None:
-        """Test display name for root repository."""
-        display_name = getattr(FlextInfraPrWorkspaceManager, "_repo_display_name")
-        result = display_name(tmp_path, tmp_path)
-        assert result == tmp_path.name
-
-    def test_repo_display_name_subproject(self, tmp_path: Path) -> None:
-        """Test display name for subproject."""
-        sub = tmp_path / "my-project"
-        sub.mkdir()
-        display_name = getattr(FlextInfraPrWorkspaceManager, "_repo_display_name")
-        result = display_name(sub, tmp_path)
-        assert result == "my-project"
-
-    def test_build_root_command(self, tmp_path: Path) -> None:
-        """Test root command building."""
-        build_root_command = getattr(
-            FlextInfraPrWorkspaceManager,
-            "_build_root_command",
-        )
-        cmd = build_root_command(
-            tmp_path,
-            {"action": "create", "head": "feature", "title": "Test"},
-        )
-        assert "python" in cmd
-        assert "--action" in cmd
-        assert "create" in cmd
-        assert "--head" in cmd
-        assert "feature" in cmd
-        assert "--title" in cmd
-        assert "Test" in cmd
-
-    def test_build_subproject_command(self, tmp_path: Path) -> None:
-        """Test subproject command building."""
-        build_subproject_command = getattr(
-            FlextInfraPrWorkspaceManager,
-            "_build_subproject_command",
-        )
-        cmd = build_subproject_command(tmp_path, {"action": "status", "head": "feat"})
-        assert "make" in cmd
-        assert "-C" in cmd
-        assert "pr" in cmd
-        assert "PR_ACTION=status" in cmd
-        assert "PR_HEAD=feat" in cmd
-
-    def test_build_root_command_defaults(self, tmp_path: Path) -> None:
-        """Test root command with default values."""
-        build_root_command = getattr(
-            FlextInfraPrWorkspaceManager,
-            "_build_root_command",
-        )
-        cmd = build_root_command(tmp_path, {})
-        assert "--action" in cmd
-        assert "status" in cmd
-
-    def test_build_subproject_command_no_optional(self, tmp_path: Path) -> None:
-        """Test subproject command without optional keys."""
-        build_subproject_command = getattr(
-            FlextInfraPrWorkspaceManager,
-            "_build_subproject_command",
-        )
-        cmd = build_subproject_command(tmp_path, {})
-        assert "make" in cmd
-        assert not [c for c in cmd if c.startswith("PR_HEAD=")]
+        value = tm.ok(result)
+        tm.that(value.exit_code, eq=1)

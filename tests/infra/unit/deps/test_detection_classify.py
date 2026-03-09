@@ -5,7 +5,6 @@ from pathlib import Path
 from flext_infra import t as it
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
-from tests.infra import h
 
 
 class TestClassifyIssues:
@@ -100,6 +99,5 @@ class TestDetectionUncoveredLines:
         )
 
 
-def test_helpers_alias_is_reachable() -> None:
-    tm.that(h.__name__, eq="FlextInfraTestHelpers")
+def test_path_smoke() -> None:
     tm.that(isinstance(Path(), Path), eq=True)

@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from flext_core import r
@@ -208,8 +209,6 @@ class FlextInfraTestHelpers:
             AssertionError: If Docker is not available
 
         """
-        import shutil
-
         is_available = shutil.which("docker") is not None
         tm.that(is_available, eq=True, msg=msg or "Docker is not available")
         return True

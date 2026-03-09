@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from flext_infra.deps.detector import ddm
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 class TestFlextInfraDependencyDetectorModels:
@@ -22,7 +21,3 @@ class TestFlextInfraDependencyDetectorModels:
         tm.that(report.projects, eq={})
         tm.that(report.pip_check, eq=None)
         tm.that(report.dependency_limits, eq=None)
-
-
-def test_helpers_alias_available() -> None:
-    tm.that(h.__name__, eq="FlextInfraTestHelpers")

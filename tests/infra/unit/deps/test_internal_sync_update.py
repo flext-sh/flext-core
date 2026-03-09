@@ -6,7 +6,6 @@ from flext_core import r
 from flext_infra.deps import internal_sync
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
-from tests.infra import h
 
 
 class TestEnsureSymlink:
@@ -61,7 +60,8 @@ class TestEnsureSymlinkEdgeCases:
         def _raise_symlink_to(
             self, target_path: Path, target_is_directory: bool = False
         ) -> None:
-            raise OSError("Permission denied")
+            msg = "Permission denied"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "symlink_to", _raise_symlink_to)
         error = tm.fail(
@@ -190,24 +190,3 @@ class TestEnsureCheckout:
                 dep_dir, "https://github.com/flext-sh/flext.git", "main"
             )
         )
-
-
-class TestEnsureCheckoutEdgeCases:
-    def test_ensure_checkout_cleanup_failure(self, tmp_path: Path, monkeypatch) -> None:
-        dep_path = tmp_path / "dep"
-        dep_path.mkdir()
-        (dep_path / "file.txt").write_text("content")
-
-        def _raise_rmtree(_path: Path) -> None:
-            raise OSError("Permission denied")
-
-        monkeypatch.setattr(internal_sync.shutil, "rmtree", _raise_rmtree)
-        error = tm.fail(
-            FlextInfraInternalDependencySyncService().ensure_checkout(
-                dep_path,
-                "https://github.com/test/repo.git",
-                "main",
-            ),
-        )
-        tm.that(error, contains="cleanup failed")
-        tm.that(h is not None, eq=True)

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 class TestFlextInfraRuntimeDevDependencyDetectorInit:
@@ -78,7 +77,3 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
         )
         args = parser.parse_args([])
         tm.that(FlextInfraRuntimeDevDependencyDetector._project_filter(args), eq=None)
-
-
-def test_helpers_alias_available() -> None:
-    tm.that(h.__name__, eq="FlextInfraTestHelpers")

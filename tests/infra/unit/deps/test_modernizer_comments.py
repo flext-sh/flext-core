@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from flext_infra.deps.modernizer import InjectCommentsPhase
 from flext_tests import tm
-from tests.infra import h
+
+from ...helpers import h
 
 
 class TestInjectCommentsPhase:

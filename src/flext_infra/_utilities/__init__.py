@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
     from flext_infra._utilities.output import (
         FlextInfraUtilitiesOutput,
+        _OutputBackend,
         output,
     )
     from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
@@ -104,6 +105,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.yaml",
         "FlextInfraUtilitiesYaml",
     ),
+    "_OutputBackend": ("flext_infra._utilities.output", "_OutputBackend"),
     "array": ("flext_infra._utilities.toml", "array"),
     "as_container_list": ("flext_infra._utilities.toml", "as_container_list"),
     "as_string_list": ("flext_infra._utilities.toml", "as_string_list"),
@@ -136,6 +138,7 @@ __all__ = [
     "FlextInfraUtilitiesTomlParse",
     "FlextInfraUtilitiesVersioning",
     "FlextInfraUtilitiesYaml",
+    "_OutputBackend",
     "array",
     "as_container_list",
     "as_string_list",

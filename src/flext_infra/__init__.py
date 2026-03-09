@@ -568,10 +568,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.analysis",
         "FlextInfraRefactorViolationAnalyzer",
     ),
-    "FlextInfraReportingService": (
-        "flext_infra._utilities.reporting",
-        "FlextInfraUtilitiesReporting",
-    ),
     "FlextInfraReleaseOrchestrator": (
         "flext_infra.release.orchestrator",
         "FlextInfraReleaseOrchestrator",
@@ -652,10 +648,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraUtilitiesYaml": (
         "flext_infra._utilities.yaml",
         "FlextInfraUtilitiesYaml",
-    ),
-    "FlextInfraVersioningService": (
-        "flext_infra._utilities.versioning",
-        "FlextInfraUtilitiesVersioning",
     ),
     "FlextInfraWorkflowLinter": (
         "flext_infra.github.linter",

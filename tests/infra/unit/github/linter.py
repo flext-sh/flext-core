@@ -6,88 +6,97 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch
+
+import pytest
 
 from flext_core import r
+from flext_infra import m
 from flext_infra.github.linter import FlextInfraWorkflowLinter
+from flext_tests import tm
+from tests.infra.unit.github._stubs import StubCommandOutput, StubJsonIo, StubRunner
+
+
+def _ok_output(
+    *, exit_code: int = 0, stdout: str = "", stderr: str = ""
+) -> r[m.Infra.Core.CommandOutput]:
+    return r[m.Infra.Core.CommandOutput].ok(
+        StubCommandOutput(exit_code=exit_code, stdout=stdout, stderr=stderr),
+    )
 
 
 class TestFlextInfraWorkflowLinter:
     """Test suite for FlextInfraWorkflowLinter."""
 
-    def test_lint_success_with_actionlint_installed(self, tmp_path: Path) -> None:
+    def test_lint_success_with_actionlint_installed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test successful linting when actionlint is available."""
-        mock_runner = Mock()
-        mock_json = Mock()
-        mock_json.write_json.return_value = r[bool].ok(True)
-        mock_output = Mock()
-        mock_output.exit_code = 0
-        mock_output.stdout = "All workflows valid"
-        mock_output.stderr = ""
-        mock_runner.run.return_value = r[Mock].ok(mock_output)
-        with patch("shutil.which", return_value="/usr/bin/actionlint"):
-            linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
-            result = linter.lint(tmp_path)
-        assert result.is_success
-        assert result.value.status == "ok"
-        assert result.value.exit_code == 0
+        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/actionlint")
+        runner = StubRunner(run_returns=[_ok_output(stdout="All workflows valid")])
+        json_io = StubJsonIo()
+        linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
+        result = linter.lint(tmp_path)
+        value = tm.ok(result)
+        tm.that(value.status, eq="ok")
+        tm.that(value.exit_code, eq=0)
 
-    def test_lint_skipped_when_actionlint_not_installed(self, tmp_path: Path) -> None:
+    def test_lint_skipped_when_actionlint_not_installed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test linting skipped when actionlint is not available."""
-        mock_runner = Mock()
-        mock_json = Mock()
-        with patch("shutil.which", return_value=None):
-            linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
-            result = linter.lint(tmp_path)
-        assert result.is_success
-        assert result.value.status == "skipped"
-        assert (
-            isinstance(result.value.reason, str)
-            and "actionlint not installed" in result.value.reason
-        )
+        monkeypatch.setattr(shutil, "which", lambda _cmd: None)
+        runner = StubRunner()
+        json_io = StubJsonIo()
+        linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
+        result = linter.lint(tmp_path)
+        value = tm.ok(result)
+        tm.that(value.status, eq="skipped")
+        tm.that(isinstance(value.reason, str), eq=True)
+        tm.that(value.reason, contains="actionlint not installed")
 
-    def test_lint_with_report_path(self, tmp_path: Path) -> None:
+    def test_lint_with_report_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test linting with JSON report output."""
-        mock_runner = Mock()
-        mock_json = Mock()
-        mock_output = Mock()
-        mock_output.exit_code = 0
-        mock_output.stdout = "Valid"
-        mock_output.stderr = ""
-        mock_runner.run.return_value = r[Mock].ok(mock_output)
+        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/actionlint")
+        runner = StubRunner(run_returns=[_ok_output(stdout="Valid")])
+        json_io = StubJsonIo()
         report_path = tmp_path / "report.json"
-        with patch("shutil.which", return_value="/usr/bin/actionlint"):
-            linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
-            result = linter.lint(tmp_path, report_path=report_path)
-        assert result.is_success
-        mock_json.write_json.assert_called_once()
+        linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
+        result = linter.lint(tmp_path, report_path=report_path)
+        tm.ok(result)
+        tm.that(len(json_io.write_json_calls), eq=1)
 
-    def test_lint_strict_mode_fails_on_issues(self, tmp_path: Path) -> None:
+    def test_lint_strict_mode_fails_on_issues(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test strict mode returns failure when actionlint finds issues."""
-        mock_runner = Mock()
-        mock_json = Mock()
-        mock_runner.run.return_value = r[Mock].fail("workflow has errors")
-        with patch("shutil.which", return_value="/usr/bin/actionlint"):
-            linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
-            result = linter.lint(tmp_path, strict=True)
-        assert result.is_failure
-        assert result.error
+        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/actionlint")
+        runner = StubRunner(
+            run_returns=[r[m.Infra.Core.CommandOutput].fail("workflow has errors")],
+        )
+        json_io = StubJsonIo()
+        linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
+        result = linter.lint(tmp_path, strict=True)
+        tm.fail(result)
 
     def test_lint_default_runner_initialization(self) -> None:
         """Test linter initializes with default runner and json service."""
         linter = FlextInfraWorkflowLinter()
-        assert getattr(linter, "_runner", None) is not None
-        assert getattr(linter, "_json", None) is not None
+        tm.that(getattr(linter, "_runner", None) is not None, eq=True)
+        tm.that(getattr(linter, "_json", None) is not None, eq=True)
 
-    def test_lint_skipped_with_report(self, tmp_path: Path) -> None:
+    def test_lint_skipped_with_report(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test linting skipped with report output."""
-        mock_runner = Mock()
-        mock_json = Mock()
-        mock_json.write_json.return_value = r[bool].ok(True)
+        monkeypatch.setattr(shutil, "which", lambda _cmd: None)
+        runner = StubRunner()
+        json_io = StubJsonIo()
         report_path = tmp_path / "report.json"
-        with patch("shutil.which", return_value=None):
-            linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
-            result = linter.lint(tmp_path, report_path=report_path)
-        assert result.is_success
-        mock_json.write_json.assert_called_once()
+        linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
+        result = linter.lint(tmp_path, report_path=report_path)
+        tm.ok(result)
+        tm.that(len(json_io.write_json_calls), eq=1)

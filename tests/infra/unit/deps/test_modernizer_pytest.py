@@ -7,7 +7,7 @@ import tomlkit
 from flext_infra.deps.modernizer import EnsurePytestConfigPhase
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
-from tests.infra import h
+from tests.infra.helpers import h
 
 
 def _test_tool_config() -> FlextInfraToolConfigDocument:
@@ -68,7 +68,7 @@ def test_ensure_pytest_config_phase_apply_minversion() -> None:
         tm.that(ini_options["minversion"], eq="8.0")
 
 
-def test_ensure_pytest_config_phase_apply_python_classes_and_markers() -> None:
+def test_ensure_pytest_config_phase_apply_python_classes() -> None:
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
     tool = doc["tool"]
@@ -83,5 +83,21 @@ def test_ensure_pytest_config_phase_apply_python_classes_and_markers() -> None:
     pytest_section["ini_options"] = tomlkit.table()
     changes = EnsurePytestConfigPhase(_test_tool_config()).apply(doc)
     tm.that(any("python_classes updated" in c for c in changes), eq=True)
+
+
+def test_ensure_pytest_config_phase_apply_markers() -> None:
+    doc = tomlkit.document()
+    doc["tool"] = tomlkit.table()
+    tool = doc["tool"]
+    tm.that(isinstance(tool, MutableMapping), eq=True)
+    if not isinstance(tool, MutableMapping):
+        return
+    tool["pytest"] = tomlkit.table()
+    pytest_section = tool["pytest"]
+    tm.that(isinstance(pytest_section, MutableMapping), eq=True)
+    if not isinstance(pytest_section, MutableMapping):
+        return
+    pytest_section["ini_options"] = tomlkit.table()
+    changes = EnsurePytestConfigPhase(_test_tool_config()).apply(doc)
     tm.that(any("markers" in c for c in changes), eq=True)
     tm.that(hasattr(h, "assert_ok"), eq=True)

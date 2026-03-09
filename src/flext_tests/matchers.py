@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard, TypeVar
+from typing import TypeGuard
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
@@ -66,8 +66,6 @@ from flext_core import r, t as core_t
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_tests import c, m, t, u
 
-TK = TypeVar("TK")
-TV = TypeVar("TV")
 _TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.ContainerValue])
 _TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.ContainerValue])
 _GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, core_t.ContainerValue])
