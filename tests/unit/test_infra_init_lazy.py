@@ -139,7 +139,7 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_discovery_service(self) -> None:
         """Test lazy loading of FlextInfraDiscoveryService."""
-        service = flext_infra.FlextInfraDiscoveryService
+        service = flext_infra.FlextInfraUtilitiesDiscovery
         assert service is not None
 
     def test_lazy_import_git_service(self) -> None:
@@ -159,7 +159,7 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_versioning_service(self) -> None:
         """Test lazy loading of FlextInfraVersioningService."""
-        service = flext_infra.FlextInfraVersioningService
+        service = flext_infra.FlextInfraUtilitiesVersioning
         assert service is not None
 
     def test_lazy_import_path_resolver(self) -> None:

@@ -431,7 +431,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             0,
         ))
         mock_json = Mock()
-        mock_json.write.return_value = r[str].ok("written")
+        mock_json.write_json.return_value = r[bool].ok(True)
         custom_output = tmp_path / "custom_report.json"
         with patch(
             "flext_infra.deps.detector.FlextInfraUtilitiesPaths",
@@ -453,8 +453,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                             "--no-pip-check",
                         ])
                         assert result.is_success
-                        mock_json.write.assert_called_once()
-                        call_args = mock_json.write.call_args
+                        mock_json.write_json.assert_called_once()
+                        call_args = mock_json.write_json.call_args
                         assert call_args[0][0] == custom_output
 
     def test_run_with_issues_and_pip_failure(self, tmp_path: Path) -> None:
@@ -686,7 +686,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             0,
         ))
         mock_json = Mock()
-        mock_json.write.return_value = r[str].fail("write failed")
+        mock_json.write_json.return_value = r[bool].fail("write failed")
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "reports"
         with patch(

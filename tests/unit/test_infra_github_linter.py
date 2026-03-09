@@ -20,6 +20,7 @@ class TestFlextInfraWorkflowLinter:
         """Test successful linting when actionlint is available."""
         mock_runner = Mock()
         mock_json = Mock()
+        mock_json.write_json.return_value = r[bool].ok(True)
         mock_output = Mock()
         mock_output.exit_code = 0
         mock_output.stdout = "All workflows valid"
@@ -60,7 +61,7 @@ class TestFlextInfraWorkflowLinter:
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path, report_path=report_path)
         assert result.is_success
-        mock_json.write.assert_called_once()
+        mock_json.write_json.assert_called_once()
 
     def test_lint_strict_mode_fails_on_issues(self, tmp_path: Path) -> None:
         """Test strict mode returns failure when actionlint finds issues."""
@@ -83,9 +84,10 @@ class TestFlextInfraWorkflowLinter:
         """Test linting skipped with report output."""
         mock_runner = Mock()
         mock_json = Mock()
+        mock_json.write_json.return_value = r[bool].ok(True)
         report_path = tmp_path / "report.json"
         with patch("shutil.which", return_value=None):
             linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
             result = linter.lint(tmp_path, report_path=report_path)
         assert result.is_success
-        mock_json.write.assert_called_once()
+        mock_json.write_json.assert_called_once()

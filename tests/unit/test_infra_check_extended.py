@@ -1798,7 +1798,7 @@ class TestJsonWriteFailure:
         proj_dir.mkdir()
         (proj_dir / "pyproject.toml").write_text("[tool.poetry]\n")
         with patch.object(checker, "_json") as mock_json:
-            mock_json.write.return_value = r[Path].fail("write error")
+            mock_json.write_json.return_value = r[bool].fail("write error")
             with patch.object(checker, "_run_ruff_lint") as mock_lint:
                 mock_lint.return_value = _GateExecution(
                     result=m.Infra.Check.GateResult(

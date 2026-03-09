@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-import flext_infra.basemk
+import flext_infra.basemk as basemk_module
 from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
 
 
@@ -17,7 +17,7 @@ class TestFlextInfraBaseMk:
     def test_getattr_raises_attribute_error_for_unknown_symbol(self) -> None:
         """Test __getattr__ raises AttributeError for unknown attributes."""
         with pytest.raises(AttributeError):
-            _ = flext_infra.basemk.nonexistent_symbol_xyz
+            _ = basemk_module.nonexistent_symbol_xyz
 
     def test_lazy_import_template_engine(self) -> None:
         """Test lazy import of FlextInfraBaseMkTemplateEngine."""
@@ -29,6 +29,6 @@ class TestFlextInfraBaseMk:
 
     def test_dir_returns_all_exports(self) -> None:
         """Test dir() returns all exported symbols."""
-        exports = dir(flext_infra.basemk)
+        exports = dir(basemk_module)
         assert "FlextInfraBaseMkTemplateEngine" in exports
         assert "FlextInfraBaseMkGenerator" in exports

@@ -240,7 +240,7 @@ def main() -> int:
     internal_names: set[str] = set()
     root_pyproject = ROOT / c.Infra.Files.PYPROJECT_FILENAME
     if root_pyproject.exists():
-        root_data_result = toml_service.read(root_pyproject)
+        root_data_result = toml_service.read_document(root_pyproject)
         if root_data_result.is_success:
             root_data = root_data_result.unwrap()
             root_project = root_data.get(c.Infra.Toml.PROJECT, None)
@@ -288,7 +288,7 @@ def main() -> int:
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
-        data_result = toml_service.read(pyproject)
+        data_result = toml_service.read_document(pyproject)
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
@@ -303,7 +303,7 @@ def main() -> int:
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
-        data_result = toml_service.read(pyproject)
+        data_result = toml_service.read_document(pyproject)
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()

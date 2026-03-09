@@ -447,7 +447,7 @@ class TestRewriteDepPaths:
         pyproject.write_text(
             '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n',
         )
-        with patch("flext_infra.FlextInfraTomlService.write_document") as mock_write:
+        with patch("flext_infra.FlextInfraUtilitiesToml.write_document") as mock_write:
             mock_write.return_value = r[bool].fail("write failed")
             result = rewrite_dep_paths(
                 pyproject,
@@ -528,7 +528,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].fail(
                     "discovery failed",
                 ),
@@ -566,7 +566,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -598,7 +598,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
             patch("sys.argv", ["prog"]),
@@ -617,7 +617,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -647,7 +647,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
             patch("sys.argv", ["prog"]),
@@ -666,7 +666,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -702,7 +702,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
             ),
             patch("sys.argv", ["prog"]),
@@ -719,7 +719,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -746,7 +746,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -773,7 +773,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -800,7 +800,7 @@ class TestMain:
         with (
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
-                "flext_infra.FlextInfraDiscoveryService.discover_projects",
+                "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
                 return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([
                     m.Infra.Workspace.ProjectInfo(
                         path=project_dir,
@@ -1099,8 +1099,10 @@ def test_main_project_obj_not_dict_first_loop(tmp_path: Path) -> None:
             return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([project_info]),
         ):
             with patch(
-                "flext_infra.deps.path_sync.FlextInfraTomlService.read",
-                return_value=r[dict[str, object]].ok({"project": "not-a-dict"}),
+                "flext_infra.deps.path_sync.FlextInfraUtilitiesToml.read_document",
+                return_value=r[TOMLDocument].ok(
+                    tomlkit.parse('[project]\nvalue = "not-a-dict"\n')
+                ),
             ):
                 with patch("flext_infra.deps.path_sync.output"):
                     result = main()
@@ -1122,8 +1124,10 @@ def test_main_project_obj_not_dict_second_loop(tmp_path: Path) -> None:
             return_value=r[list[m.Infra.Workspace.ProjectInfo]].ok([project_info]),
         ):
             with patch(
-                "flext_infra.deps.path_sync.FlextInfraTomlService.read",
-                return_value=r[dict[str, object]].ok({"project": "not-a-dict"}),
+                "flext_infra.deps.path_sync.FlextInfraUtilitiesToml.read_document",
+                return_value=r[TOMLDocument].ok(
+                    tomlkit.parse('[project]\nvalue = "not-a-dict"\n')
+                ),
             ):
                 with patch("flext_infra.deps.path_sync.output"):
                     result = main()

@@ -11,16 +11,16 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
-from flext_infra import FlextInfraDiscoveryService, m
+from flext_infra import FlextInfraUtilitiesDiscovery, m
 
 
 class TestFlextInfraDiscoveryService:
     """Test suite for FlextInfraDiscoveryService."""
 
     @pytest.fixture
-    def service(self) -> FlextInfraDiscoveryService:
+    def service(self) -> FlextInfraUtilitiesDiscovery:
         """Create a discovery service instance."""
-        return FlextInfraDiscoveryService()
+        return FlextInfraUtilitiesDiscovery()
 
     @pytest.fixture
     def workspace_with_projects(self, tmp_path: Path) -> Path:
@@ -49,7 +49,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_discover_projects_happy_path(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         workspace_with_projects: Path,
     ) -> None:
         """Test discovering projects in a valid workspace."""
@@ -65,7 +65,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_discover_projects_empty_workspace(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         tmp_path: Path,
     ) -> None:
         """Test discovering projects in an empty workspace."""
@@ -75,7 +75,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_discover_projects_nonexistent_path(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
     ) -> None:
         """Test discovering projects with nonexistent path."""
         nonexistent = Path("/nonexistent/path/to/workspace")
@@ -87,7 +87,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_find_all_pyproject_files_happy_path(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         tmp_path: Path,
     ) -> None:
         """Test finding all pyproject.toml files."""
@@ -105,7 +105,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_find_all_pyproject_files_with_skip_dirs(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         tmp_path: Path,
     ) -> None:
         """Test finding pyproject files with directory exclusion."""
@@ -124,7 +124,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_find_all_pyproject_files_with_project_paths(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         tmp_path: Path,
     ) -> None:
         """Test finding pyproject files for specific projects."""
@@ -142,7 +142,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_discover_projects_result_type(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         workspace_with_projects: Path,
     ) -> None:
         """Test that result is properly typed FlextResult."""
@@ -155,7 +155,7 @@ class TestFlextInfraDiscoveryService:
 
     def test_discover_projects_empty_workspace_v2(
         self,
-        service: FlextInfraDiscoveryService,
+        service: FlextInfraUtilitiesDiscovery,
         tmp_path: Path,
     ) -> None:
         """Test discover_projects returns empty list for empty workspace."""
@@ -169,7 +169,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
 
     def test_discover_projects_skips_non_git_projects(self, tmp_path: Path) -> None:
         """Test discover_projects skips non-git directories (line 75)."""
-        service = FlextInfraDiscoveryService()
+        service = FlextInfraUtilitiesDiscovery()
         workspace_root = tmp_path
         non_git_dir = workspace_root / "non_git_project"
         non_git_dir.mkdir()
@@ -181,7 +181,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
 
     def test_find_all_pyproject_files_with_nonexistent_path(self) -> None:
         """Test find_all_pyproject_files with nonexistent path (lines 138-139)."""
-        service = FlextInfraDiscoveryService()
+        service = FlextInfraUtilitiesDiscovery()
         nonexistent = Path("/nonexistent/path/to/workspace")
         result = service.find_all_pyproject_files(nonexistent)
         assert result.is_success
@@ -192,7 +192,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         tmp_path: Path,
     ) -> None:
         """Test find_all_pyproject_files handles permission errors (lines 156-157)."""
-        service = FlextInfraDiscoveryService()
+        service = FlextInfraUtilitiesDiscovery()
         (tmp_path / "pyproject.toml").touch()
         result = service.find_all_pyproject_files(tmp_path)
         assert result.is_success
@@ -203,7 +203,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         tmp_path: Path,
     ) -> None:
         """Test discover_projects skips dirs with Makefile but no pyproject/go.mod (line 75)."""
-        service = FlextInfraDiscoveryService()
+        service = FlextInfraUtilitiesDiscovery()
         workspace_root = tmp_path
         proj = workspace_root / "incomplete_project"
         proj.mkdir()
@@ -219,7 +219,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         monkeypatch: MonkeyPatch,
     ) -> None:
         """Test find_all_pyproject_files handles OSError from rglob (lines 138-139)."""
-        service = FlextInfraDiscoveryService()
+        service = FlextInfraUtilitiesDiscovery()
 
         def mock_rglob(self: Path, pattern: str) -> None:
             msg = "permission denied"
@@ -246,7 +246,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
             raise OSError(msg)
 
         monkeypatch.setattr(Path, "read_text", mock_read_text)
-        result = FlextInfraDiscoveryService._submodule_names(workspace_root)
+        result = FlextInfraUtilitiesDiscovery._submodule_names(workspace_root)
         assert result == set()
 
     def test_submodule_names_with_valid_gitmodules(self, tmp_path: Path) -> None:
@@ -257,5 +257,5 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
             '[submodule "sub1"]\n    path = submodule-one\n[submodule "sub2"]\n    path = submodule-two\n',
             encoding="utf-8",
         )
-        result = FlextInfraDiscoveryService._submodule_names(workspace_root)
+        result = FlextInfraUtilitiesDiscovery._submodule_names(workspace_root)
         assert result == {"submodule-one", "submodule-two"}

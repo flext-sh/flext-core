@@ -301,7 +301,7 @@ class TestSyncOne:
         doc["tool"] = {"pyright": {"extraPaths": ["old"]}}
         pyproject.write_text(doc.as_string())
         with patch(
-            "flext_infra.deps.extra_paths.FlextInfraTomlService",
+            "flext_infra.deps.extra_paths.FlextInfraUtilitiesToml",
         ) as mock_toml_class:
             mock_toml = Mock()
             mock_toml.read_document.return_value = r[object].ok(doc)

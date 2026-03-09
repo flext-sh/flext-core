@@ -15,9 +15,8 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from tomlkit.items import Array, Item, Table
 from tomlkit.toml_document import TOMLDocument
 
-from flext_core import FlextLogger, u
-from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.typings import FlextInfraTypes as t
+from flext_core import FlextLogger, r, u
+from flext_infra import c, t
 
 
 class FlextInfraUtilitiesToml:
@@ -200,7 +199,11 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def read(path: Path) -> TOMLDocument | None:
-        """Read and parse TOML document from file."""
+        """Read and parse TOML document from file.
+
+        Returns None when the file does not exist or is invalid TOML.
+        Prefer ``read_document`` for FlextResult-wrapped semantics.
+        """
         if not path.exists():
             return None
         try:
@@ -216,8 +219,48 @@ class FlextInfraUtilitiesToml:
             )
             return None
 
+    @staticmethod
+    def read_document(path: Path) -> r[TOMLDocument]:
+        """Read and parse a TOML document, returning FlextResult.
 
-# Module-level aliases for backward compatibility and direct import
+        Args:
+            path: Path to the TOML file.
+
+        Returns:
+            r[TOMLDocument] with parsed document on success,
+            or failure with descriptive error.
+
+        """
+        doc = FlextInfraUtilitiesToml.read(path)
+        if doc is None:
+            return r[TOMLDocument].fail(f"failed to read TOML: {path}")
+        return r[TOMLDocument].ok(doc)
+
+    @staticmethod
+    def write_document(path: Path, doc: TOMLDocument) -> r[bool]:
+        """Write a TOML document to file.
+
+        Creates parent directories as needed.
+
+        Args:
+            path: Destination file path.
+            doc: TOML document to serialize.
+
+        Returns:
+            r[bool] with True on success.
+
+        """
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _ = path.write_text(
+                tomlkit.dumps(doc),
+                encoding=c.Infra.Encoding.DEFAULT,
+            )
+        except OSError as exc:
+            return r[bool].fail(f"TOML write error: {exc}")
+        return r[bool].ok(True)
+
+
 unwrap_item = FlextInfraUtilitiesToml.unwrap_item
 as_string_list = FlextInfraUtilitiesToml.as_string_list
 array = FlextInfraUtilitiesToml.array

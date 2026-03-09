@@ -1,4 +1,4 @@
-"""Tests for FlextInfraTomlService.
+"""Tests for FlextInfraUtilitiesToml.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,328 +8,184 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from unittest.mock import patch
 
 import tomlkit
 from tomlkit.items import Table
 
-from flext_core import t
 from flext_infra import FlextInfraUtilitiesToml
 
 
 class TestFlextInfraTomlService:
-    """Test suite for FlextInfraTomlService."""
+    """Test suite for FlextInfraUtilitiesToml."""
 
     def test_read_existing_file(self, tmp_path: Path) -> None:
-        """Test reading an existing TOML file."""
+        """read() returns TOMLDocument for valid file."""
         toml_file = tmp_path / "test.toml"
         toml_file.write_text(
-            '[section]\nkey = "value"\nnumber = 42\n',
-            encoding="utf-8",
+            '[section]\nkey = "value"\nnumber = 42\n', encoding="utf-8"
         )
+
         service = FlextInfraUtilitiesToml()
-        result = service.read(toml_file)
-        assert result.is_success
-        value = result.value
-        assert isinstance(value, Mapping)
-        section = value["section"]
+        doc = service.read(toml_file)
+
+        assert doc is not None
+        section = doc["section"]
         assert isinstance(section, Mapping)
         assert section["key"] == "value"
         assert section["number"] == 42
 
     def test_read_nonexistent_file(self, tmp_path: Path) -> None:
-        """Test reading a nonexistent file returns empty dict."""
+        """read() returns None when file does not exist."""
         toml_file = tmp_path / "missing.toml"
         service = FlextInfraUtilitiesToml()
-        result = service.read(toml_file)
-        assert result.is_success
-        assert result.value == {}
+
+        assert service.read(toml_file) is None
 
     def test_read_invalid_toml(self, tmp_path: Path) -> None:
-        """Test reading invalid TOML returns failure."""
+        """read() returns None for invalid TOML."""
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("[invalid\nkey = value", encoding="utf-8")
         service = FlextInfraUtilitiesToml()
-        result = service.read(toml_file)
-        assert result.is_failure
-        assert isinstance(result.error, str)
-        assert isinstance(result.error, str)
-        assert "TOML read error" in result.error
+
+        assert service.read(toml_file) is None
 
     def test_read_document_existing_file(self, tmp_path: Path) -> None:
-        """Test reading TOML as document preserves formatting."""
+        """read_document() returns successful FlextResult for valid file."""
         toml_file = tmp_path / "test.toml"
-        content = '[section]\nkey = "value"  # comment\n'
-        toml_file.write_text(content, encoding="utf-8")
+        toml_file.write_text('[section]\nkey = "value"  # comment\n', encoding="utf-8")
         service = FlextInfraUtilitiesToml()
+
         result = service.read_document(toml_file)
+
         assert result.is_success
         doc = result.value
-        assert isinstance(doc, tomlkit.TOMLDocument)
         section = doc["section"]
         assert isinstance(section, Mapping)
         assert section["key"] == "value"
 
     def test_read_document_nonexistent_file(self, tmp_path: Path) -> None:
-        """Test reading nonexistent file as document returns failure."""
+        """read_document() returns failure for missing file."""
         toml_file = tmp_path / "missing.toml"
         service = FlextInfraUtilitiesToml()
+
         result = service.read_document(toml_file)
+
         assert result.is_failure
         assert isinstance(result.error, str)
-        assert "file not found" in result.error
+        assert "failed to read TOML" in result.error
 
     def test_read_document_invalid_toml(self, tmp_path: Path) -> None:
-        """Test reading invalid TOML as document returns failure."""
+        """read_document() returns failure for invalid TOML."""
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("[invalid\nkey = value", encoding="utf-8")
         service = FlextInfraUtilitiesToml()
+
         result = service.read_document(toml_file)
+
         assert result.is_failure
 
-    def test_write_dict_payload(self, tmp_path: Path) -> None:
-        """Test writing a dict payload to TOML file."""
-        toml_file = tmp_path / "output.toml"
-        service = FlextInfraUtilitiesToml()
-        payload: dict[str, t.ContainerValue] = {
-            "section": {"key": "value", "number": 42},
-        }
-        result = service.write(toml_file, payload)
-        assert result.is_success
-        assert toml_file.exists()
-        content = toml_file.read_text(encoding="utf-8")
-        assert "[section]" in content
-        assert "key" in content
-
-    def test_write_creates_parent_directories(self, tmp_path: Path) -> None:
-        """Test write creates parent directories."""
-        toml_file = tmp_path / "nested" / "deep" / "file.toml"
-        service = FlextInfraUtilitiesToml()
-        payload: dict[str, t.ContainerValue] = {"key": "value"}
-        result = service.write(toml_file, payload)
-        assert result.is_success
-        assert toml_file.exists()
-
     def test_write_document(self, tmp_path: Path) -> None:
-        """Test writing a tomlkit document."""
+        """write_document() writes TOMLDocument and returns success."""
         toml_file = tmp_path / "doc.toml"
         service = FlextInfraUtilitiesToml()
         doc = tomlkit.document()
         doc["section"] = {"key": "value"}
-        result = service.write(toml_file, doc)
+
+        result = service.write_document(toml_file, doc)
+
+        assert result.is_success
+        assert toml_file.exists()
+
+    def test_write_creates_parent_directories(self, tmp_path: Path) -> None:
+        """write_document() creates parent directories as needed."""
+        toml_file = tmp_path / "nested" / "deep" / "file.toml"
+        service = FlextInfraUtilitiesToml()
+        doc = tomlkit.document()
+        doc["key"] = "value"
+
+        result = service.write_document(toml_file, doc)
+
         assert result.is_success
         assert toml_file.exists()
 
     def test_write_preserves_formatting(self, tmp_path: Path) -> None:
-        """Test write preserves formatting when using document."""
+        """write_document() preserves tomlkit formatting/comments."""
         toml_file = tmp_path / "formatted.toml"
         service = FlextInfraUtilitiesToml()
         doc = tomlkit.document()
         doc.add(tomlkit.comment("Configuration file"))
         doc["section"] = {"key": "value"}
-        result = service.write(toml_file, doc)
+
+        result = service.write_document(toml_file, doc)
+
         assert result.is_success
         content = toml_file.read_text(encoding="utf-8")
         assert "Configuration file" in content
 
     def test_write_permission_error(self, tmp_path: Path) -> None:
-        """Test write failure on permission error."""
+        """write_document() returns failure when write raises OSError."""
         toml_file = tmp_path / "readonly.toml"
-        toml_file.write_text("[section]\n", encoding="utf-8")
-        toml_file.chmod(292)
         service = FlextInfraUtilitiesToml()
-        try:
-            result = service.write(toml_file, {"key": "value"})
-            assert result.is_failure
-        finally:
-            toml_file.chmod(420)
+        doc = tomlkit.document()
+        doc["key"] = "value"
+
+        with patch("pathlib.Path.write_text", side_effect=OSError("permission denied")):
+            result = service.write_document(toml_file, doc)
+
+        assert result.is_failure
+        assert isinstance(result.error, str)
+        assert "TOML write error" in result.error
 
     def test_update_section(self, tmp_path: Path) -> None:
-        """Test updating a section in TOML file."""
+        """read_document()/write_document() round-trip updates content."""
         toml_file = tmp_path / "update.toml"
         toml_file.write_text('[section]\nkey = "old"\n', encoding="utf-8")
         service = FlextInfraUtilitiesToml()
+
         read_result = service.read_document(toml_file)
         assert read_result.is_success
         doc = read_result.value
-        assert isinstance(doc, tomlkit.TOMLDocument)
         section = doc["section"]
         assert isinstance(section, MutableMapping)
         section["key"] = "new"
-        write_result = service.write(toml_file, doc)
+
+        write_result = service.write_document(toml_file, doc)
         assert write_result.is_success
-        verify_result = service.read(toml_file)
-        assert verify_result.is_success
-        verify_value = verify_result.value
-        assert isinstance(verify_value, Mapping)
-        verify_section = verify_value["section"]
+
+        verify_doc = service.read(toml_file)
+        assert verify_doc is not None
+        verify_section = verify_doc["section"]
         assert isinstance(verify_section, Mapping)
         assert verify_section["key"] == "new"
 
-    def test_value_differs_with_lists(self) -> None:
-        """Test value_differs compares lists as strings."""
-        current = [1, 2, 3]
-        expected = [1, 2, 3]
-        assert not FlextInfraUtilitiesToml.value_differs(current, expected)
-        expected_diff = [1, 2, 4]
-        assert FlextInfraUtilitiesToml.value_differs(current, expected_diff)
+    def test_array_creates_multiline(self) -> None:
+        """array() creates a multiline TOML array."""
+        arr = FlextInfraUtilitiesToml.array(["a", "b", "c"])
 
-    def test_value_differs_with_scalars(self) -> None:
-        """Test value_differs with scalar values."""
-        assert not FlextInfraUtilitiesToml.value_differs("same", "same")
-        assert FlextInfraUtilitiesToml.value_differs("a", "b")
-        assert not FlextInfraUtilitiesToml.value_differs(42, 42)
-        assert FlextInfraUtilitiesToml.value_differs(42, 43)
+        assert list(arr) == ["a", "b", "c"]
 
-    def test_build_table_with_nested_mapping(self, tmp_path: Path) -> None:
-        """Test build_table creates nested tomlkit tables."""
-        service = FlextInfraUtilitiesToml()
-        data: dict[str, t.ContainerValue] = {
-            "section": {"key": "value", "nested": {"deep": "value"}},
-            "simple": "scalar",
-        }
-        table = service.build_table(data)
+    def test_ensure_table_reuses_existing(self) -> None:
+        """ensure_table() returns existing table instance when present."""
+        parent = tomlkit.table()
+        existing = tomlkit.table()
+        existing["key"] = "value"
+        parent["section"] = existing
+
+        table = FlextInfraUtilitiesToml.ensure_table(parent, "section")
+
         assert isinstance(table, Table)
-        section = table["section"]
-        assert isinstance(section, Mapping)
-        assert section["key"] == "value"
-        assert table["simple"] == "scalar"
+        assert table["key"] == "value"
 
-    def test_sync_mapping_adds_new_keys(self, tmp_path: Path) -> None:
-        """Test sync_mapping adds missing keys to target."""
-        service = FlextInfraUtilitiesToml()
-        target: dict[str, t.ContainerValue] = {}
-        canonical: dict[str, t.ContainerValue] = {"new_key": "new_value"}
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        service.sync_mapping(
-            target,
-            canonical,
-            prune_extras=False,
-            prefix="",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        assert target["new_key"] == "new_value"
-        assert "new_key" in added
+    def test_as_toml_mapping_and_get_helpers(self) -> None:
+        """as_toml_mapping() and get() normalize container values."""
+        mapping = {"key": "value"}
+        assert FlextInfraUtilitiesToml.as_toml_mapping(mapping) == mapping
+        assert FlextInfraUtilitiesToml.as_toml_mapping("bad") is None
 
-    def test_sync_mapping_updates_changed_values(self, tmp_path: Path) -> None:
-        """Test sync_mapping updates changed values."""
-        service = FlextInfraUtilitiesToml()
-        target: dict[str, t.ContainerValue] = {"key": "old_value"}
-        canonical: dict[str, t.ContainerValue] = {"key": "new_value"}
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        service.sync_mapping(
-            target,
-            canonical,
-            prune_extras=False,
-            prefix="",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        assert target["key"] == "new_value"
-        assert "key" in updated
-
-    def test_sync_mapping_prunes_extras(self, tmp_path: Path) -> None:
-        """Test sync_mapping removes extra keys when prune_extras=True."""
-        service = FlextInfraUtilitiesToml()
-        target: dict[str, t.ContainerValue] = {"keep": "value", "remove": "extra"}
-        canonical: dict[str, t.ContainerValue] = {"keep": "value"}
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        service.sync_mapping(
-            target,
-            canonical,
-            prune_extras=True,
-            prefix="",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        assert "remove" not in target
-        assert "remove" in removed
-
-    def test_sync_mapping_nested_with_prefix(self, tmp_path: Path) -> None:
-        """Test sync_mapping with nested mappings and prefix."""
-        service = FlextInfraUtilitiesToml()
-        target: dict[str, t.ContainerValue] = {"section": {"key": "old"}}
-        canonical: dict[str, t.ContainerValue] = {"section": {"key": "new"}}
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        service.sync_mapping(
-            target,
-            canonical,
-            prune_extras=False,
-            prefix="config",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        section = target["section"]
-        assert isinstance(section, Mapping)
-        assert section["key"] == "new"
-        assert "config.section.key" in updated
-
-    def test_sync_mapping_skips_prune_when_false(self, tmp_path: Path) -> None:
-        """Test sync_mapping skips pruning when prune_extras=False."""
-        service = FlextInfraUtilitiesToml()
-        target: dict[str, t.ContainerValue] = {"keep": "value", "extra": "stays"}
-        canonical: dict[str, t.ContainerValue] = {"keep": "value"}
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        service.sync_mapping(
-            target,
-            canonical,
-            prune_extras=False,
-            prefix="",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        assert "extra" in target
-        assert len(removed) == 0
-
-    def test_execute_returns_success(self) -> None:
-        """Test execute() returns FlextResult[bool] with True."""
-        service = FlextInfraUtilitiesToml()
-        result = service.execute()
-        assert result.is_success
-        assert result.value is True
-
-    def test_build_table_with_nested_mapping_dict(self) -> None:
-        """Test build_table handles nested mappings."""
-        service = FlextInfraUtilitiesToml()
-        nested: dict[str, t.ContainerValue] = {"key": {"nested": "value"}}
-        result = service.build_table(nested)
-        assert result is not None
-
-    def test_sync_mapping_replaces_scalar_with_mapping(self) -> None:
-        """Test sync_mapping replaces scalar with mapping (lines 192-194).
-
-        When canonical has a nested mapping but target has a scalar value,
-        the scalar should be replaced with a new table.
-        """
-        service = FlextInfraUtilitiesToml()
-        target: dict[str, t.ContainerValue] = {"section": "scalar_value"}
-        canonical: dict[str, t.ContainerValue] = {"section": {"nested": "value"}}
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        service.sync_mapping(
-            target,
-            canonical,
-            prune_extras=False,
-            prefix="",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        assert isinstance(target["section"], dict)
-        assert "section" in added
+        doc = tomlkit.document()
+        doc["a"] = 1
+        doc["b"] = [1, 2]
+        assert FlextInfraUtilitiesToml.get(doc, "a") == 1
+        assert FlextInfraUtilitiesToml.get(doc, "b") == [1, 2]
+        assert FlextInfraUtilitiesToml.get(doc, 123) is None

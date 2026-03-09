@@ -18,14 +18,13 @@ from flext_core import r
 from flext_infra import (
     FlextInfraDiscoveryService,
     FlextInfraReportingService,
-    FlextInfraUtilitiesIo,
     c,
     m,
     t,
+    u,
 )
 
 _discovery = FlextInfraDiscoveryService()
-_json_svc = FlextInfraUtilitiesIo()
 _reporting = FlextInfraReportingService()
 
 
@@ -113,7 +112,7 @@ class FlextInfraDocsShared:
     @staticmethod
     def write_json(path: Path, payload: BaseModel | t.ConfigurationMapping) -> r[bool]:
         """Write JSON payload to path."""
-        return _json_svc.write(path, payload)
+        return u.Infra.write_json(path, payload)
 
     @staticmethod
     def write_markdown(path: Path, lines: list[str]) -> r[bool]:

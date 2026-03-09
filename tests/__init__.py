@@ -1139,7 +1139,7 @@ if TYPE_CHECKING:
         TestFlextInfraReleaseOrchestratorPhaseVersion,
     )
     from tests.unit.test_infra_reporting import TestFlextInfraReportingService
-    from tests.unit.test_infra_selection import TestFlextInfraProjectSelector
+    from tests.unit.test_infra_selection import TestFlextInfraUtilitiesSelection
     from tests.unit.test_infra_subprocess import TestFlextInfraCommandRunner
     from tests.unit.test_infra_templates import (
         TestTemplateEngineConstants,
@@ -2888,9 +2888,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_infra_github_pr_workspace",
         "TestFlextInfraPrWorkspaceManager",
     ),
-    "TestFlextInfraProjectSelector": (
+    "TestFlextInfraUtilitiesSelection": (
         "tests.unit.test_infra_selection",
-        "TestFlextInfraProjectSelector",
+        "TestFlextInfraUtilitiesSelection",
     ),
     "TestFlextInfraProtocolsImport": (
         "tests.unit.test_infra_protocols",
@@ -7458,7 +7458,7 @@ __all__ = [
     "TestFlextInfraPatternsTooling",
     "TestFlextInfraPrManager",
     "TestFlextInfraPrWorkspaceManager",
-    "TestFlextInfraProjectSelector",
+    "TestFlextInfraUtilitiesSelection",
     "TestFlextInfraProtocolsImport",
     "TestFlextInfraPyprojectModernizer",
     "TestFlextInfraPytestDiagExtractor",

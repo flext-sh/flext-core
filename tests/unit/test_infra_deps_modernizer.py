@@ -30,6 +30,14 @@ from flext_infra.deps.modernizer import (
     _workspace_root,
     main,
 )
+from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
+
+
+def _test_tool_config() -> FlextInfraToolConfigDocument:
+    result = load_tool_config()
+    if result.is_failure:
+        raise AssertionError(result.error or "failed to load tool config")
+    return result.value
 
 
 class TestDepName:
@@ -449,7 +457,7 @@ class TestEnsurePytestConfigPhase:
         """Test setting pytest minversion."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePytestConfigPhase()
+        phase = EnsurePytestConfigPhase(_test_tool_config())
         changes = phase.apply(doc)
         assert any("minversion" in c for c in changes)
 
@@ -457,7 +465,7 @@ class TestEnsurePytestConfigPhase:
         """Test setting python_classes."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePytestConfigPhase()
+        phase = EnsurePytestConfigPhase(_test_tool_config())
         changes = phase.apply(doc)
         assert any("python_classes" in c for c in changes)
 
@@ -465,7 +473,7 @@ class TestEnsurePytestConfigPhase:
         """Test setting python_files."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePytestConfigPhase()
+        phase = EnsurePytestConfigPhase(_test_tool_config())
         changes = phase.apply(doc)
         assert any("python_files" in c for c in changes)
 
@@ -473,7 +481,7 @@ class TestEnsurePytestConfigPhase:
         """Test setting addopts."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePytestConfigPhase()
+        phase = EnsurePytestConfigPhase(_test_tool_config())
         changes = phase.apply(doc)
         assert any("addopts" in c for c in changes)
 
@@ -481,7 +489,7 @@ class TestEnsurePytestConfigPhase:
         """Test adding pytest markers."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePytestConfigPhase()
+        phase = EnsurePytestConfigPhase(_test_tool_config())
         changes = phase.apply(doc)
         assert any("markers" in c for c in changes)
 
@@ -493,7 +501,7 @@ class TestEnsurePytestConfigPhase:
                 "ini_options": {"minversion": "8.0", "python_classes": ["Test*"]},
             },
         }
-        phase = EnsurePytestConfigPhase()
+        phase = EnsurePytestConfigPhase(_test_tool_config())
         _ = phase.apply(doc)
         tool = doc["tool"]
         assert isinstance(tool, MutableMapping)
@@ -511,7 +519,7 @@ class TestEnsurePyreflyConfigPhase:
         """Test setting Python version."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=True)
         assert any("python-version" in c for c in changes)
 
@@ -519,7 +527,7 @@ class TestEnsurePyreflyConfigPhase:
         """Test enabling ignore-errors-in-generated-code."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=True)
         assert any("ignore-errors-in-generated-code" in c for c in changes)
 
@@ -527,7 +535,7 @@ class TestEnsurePyreflyConfigPhase:
         """Test setting search-path."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=True)
         assert any("search-path" in c for c in changes)
 
@@ -535,7 +543,7 @@ class TestEnsurePyreflyConfigPhase:
         """Test enabling strict error rules."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=True)
         assert any("errors" in c for c in changes)
 
@@ -543,7 +551,7 @@ class TestEnsurePyreflyConfigPhase:
         """Test setting project-excludes."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=True)
         assert any("project-excludes" in c for c in changes)
 
@@ -551,7 +559,7 @@ class TestEnsurePyreflyConfigPhase:
         """Test non-root project configuration."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=False)
         assert len(changes) > 0
 
@@ -943,7 +951,7 @@ def test_ensure_pyrefly_config_phase_apply_python_version(tmp_path: Path) -> Non
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-    phase = EnsurePyreflyConfigPhase()
+    phase = EnsurePyreflyConfigPhase(_test_tool_config())
     changes = phase.apply(doc, is_root=True)
     assert any("python-version set to 3.13" in change for change in changes)
     tool = doc["tool"]
@@ -960,7 +968,7 @@ def test_ensure_pyrefly_config_phase_apply_ignore_errors(tmp_path: Path) -> None
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-    phase = EnsurePyreflyConfigPhase()
+    phase = EnsurePyreflyConfigPhase(_test_tool_config())
     changes = phase.apply(doc, is_root=True)
     assert any(
         "ignore-errors-in-generated-code enabled" in change for change in changes
@@ -979,7 +987,7 @@ def test_ensure_pyrefly_config_phase_apply_search_path(tmp_path: Path) -> None:
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-    phase = EnsurePyreflyConfigPhase()
+    phase = EnsurePyreflyConfigPhase(_test_tool_config())
     changes = phase.apply(doc, is_root=True)
     assert "search-path set to" in " ".join(changes)
 
@@ -991,7 +999,7 @@ def test_ensure_pyrefly_config_phase_apply_errors(tmp_path: Path) -> None:
     tool = doc["tool"]
     assert isinstance(tool, MutableMapping)
     tool["pyrefly"] = tomlkit.table()
-    phase = EnsurePyreflyConfigPhase()
+    phase = EnsurePyreflyConfigPhase(_test_tool_config())
     changes = phase.apply(doc, is_root=True)
     assert any("errors" in change for change in changes)
 
@@ -1050,7 +1058,7 @@ def test_ensure_pytest_config_phase_apply_minversion(tmp_path: Path) -> None:
     pytest_section = tool["pytest"]
     assert isinstance(pytest_section, MutableMapping)
     pytest_section["ini_options"] = tomlkit.table()
-    phase = EnsurePytestConfigPhase()
+    phase = EnsurePytestConfigPhase(_test_tool_config())
     changes = phase.apply(doc)
     assert any("minversion set to 8.0" in change for change in changes)
     tool = doc["tool"]
@@ -1072,7 +1080,7 @@ def test_ensure_pytest_config_phase_apply_python_classes(tmp_path: Path) -> None
     pytest_section = tool["pytest"]
     assert isinstance(pytest_section, MutableMapping)
     pytest_section["ini_options"] = tomlkit.table()
-    phase = EnsurePytestConfigPhase()
+    phase = EnsurePytestConfigPhase(_test_tool_config())
     changes = phase.apply(doc)
     assert any("python_classes updated" in change for change in changes)
 
@@ -1087,7 +1095,7 @@ def test_ensure_pytest_config_phase_apply_markers(tmp_path: Path) -> None:
     pytest_section = tool["pytest"]
     assert isinstance(pytest_section, MutableMapping)
     pytest_section["ini_options"] = tomlkit.table()
-    phase = EnsurePytestConfigPhase()
+    phase = EnsurePytestConfigPhase(_test_tool_config())
     changes = phase.apply(doc)
     assert any("markers" in change for change in changes)
 
@@ -1154,7 +1162,7 @@ class TestModernizerUncoveredLines:
         """Test EnsurePyreflyConfigPhase.apply with is_root=False (lines 340-341)."""
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()
-        phase = EnsurePyreflyConfigPhase()
+        phase = EnsurePyreflyConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=False)
         assert len(changes) > 0
 
@@ -1247,7 +1255,7 @@ class TestEnsurePyrightConfigPhase:
     def test_apply_root_sets_execution_environments(self) -> None:
         """Root pyright config should enforce tests reportPrivateUsage=none."""
         doc = tomlkit.document()
-        phase = EnsurePyrightConfigPhase()
+        phase = EnsurePyrightConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=True)
         tool = _unwrap_item(doc["tool"])
         assert isinstance(tool, MutableMapping)
@@ -1267,7 +1275,7 @@ class TestEnsurePyrightConfigPhase:
     def test_apply_subproject_sets_execution_environments(self) -> None:
         """Subproject pyright config should enforce tests reportPrivateUsage=none."""
         doc = tomlkit.document()
-        phase = EnsurePyrightConfigPhase()
+        phase = EnsurePyrightConfigPhase(_test_tool_config())
         changes = phase.apply(doc, is_root=False)
         tool = _unwrap_item(doc["tool"])
         assert isinstance(tool, MutableMapping)

@@ -521,10 +521,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _create_branches creates workspace branch."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.checkout.return_value = r[bool].ok(True)
+            "flext_infra.release.orchestrator.u.Infra.git_checkout",
+            return_value=r[bool].ok(True),
+        ):
             result = orchestrator._create_branches(workspace_root, "1.0.0", [])
             assert result.is_success
 
@@ -635,10 +634,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag returns previous tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.previous_tag.return_value = r[str].ok("v0.9.0")
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].ok("v0.9.0"),
+        ):
             result = orchestrator._previous_tag(workspace_root, "v1.0.0")
             assert result.is_success
             assert result.value == "v0.9.0"
@@ -647,10 +645,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag returns empty when no previous tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.previous_tag.return_value = r[str].ok("")
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].ok(""),
+        ):
             result = orchestrator._previous_tag(workspace_root, "v1.0.0")
             assert result.is_success
             assert result.value == ""
@@ -659,10 +656,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag handles git failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.previous_tag.return_value = r[str].fail("git error")
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].fail("git error"),
+        ):
             result = orchestrator._previous_tag(workspace_root, "v1.0.0")
             assert result.is_failure
 
@@ -670,10 +666,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _collect_changes collects commits between tags."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git_inst = mock_git_cls.return_value
-            mock_git_inst.log.return_value = r[str].ok("- abc1234 fix: bug (author)")
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].ok("- abc1234 fix: bug (author)"),
+        ):
             result = orchestrator._collect_changes(workspace_root, "v0.9.0", "v1.0.0")
             assert result.is_success
 
@@ -681,10 +676,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _collect_changes handles git failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git_inst = mock_git_cls.return_value
-            mock_git_inst.log.return_value = r[str].fail("git error")
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].fail("git error"),
+        ):
             result = orchestrator._collect_changes(workspace_root, "", "HEAD")
             assert result.is_failure
 
@@ -738,19 +732,24 @@ class TestFlextInfraReleaseOrchestrator:
     def test_create_tag_creates_new_tag(self, workspace_root: Path) -> None:
         """Test _create_tag creates annotated git tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
-        with patch("flext_infra.release.orchestrator.u") as mock_git:
-            mock_git_inst = mock_git.return_value
-            mock_git_inst.tag_exists.return_value = r[bool].ok(False)
-            mock_git_inst.create_tag.return_value = r[bool].ok(True)
-            result = orchestrator._create_tag(workspace_root, "v1.0.0")
-            assert result.is_success
+        with patch(
+            "flext_infra.release.orchestrator.u.Infra.git_tag_exists",
+            return_value=r[bool].ok(False),
+        ):
+            with patch(
+                "flext_infra.release.orchestrator.u.Infra.git_create_tag",
+                return_value=r[bool].ok(True),
+            ):
+                result = orchestrator._create_tag(workspace_root, "v1.0.0")
+                assert result.is_success
 
     def test_create_tag_skips_existing(self, workspace_root: Path) -> None:
         """Test _create_tag skips if tag already exists."""
         orchestrator = FlextInfraReleaseOrchestrator()
-        with patch("flext_infra.release.orchestrator.u") as mock_git:
-            mock_git_inst = mock_git.return_value
-            mock_git_inst.tag_exists.return_value = r[bool].ok(True)
+        with patch(
+            "flext_infra.release.orchestrator.u.Infra.git_tag_exists",
+            return_value=r[bool].ok(True),
+        ):
             result = orchestrator._create_tag(workspace_root, "v1.0.0")
             assert result.is_success
 
@@ -758,22 +757,20 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _push_release pushes branch and tag."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.push_release.return_value = r[bool].ok(True)
+            "flext_infra.release.orchestrator.u.Infra.git_run_checked",
+            return_value=r[bool].ok(True),
+        ) as mock_push_release:
             result = orchestrator._push_release(workspace_root, "v1.0.0")
             assert result.is_success
-            mock_git.push_release.assert_called_once()
+            mock_push_release.assert_called_once()
 
     def test_push_release_branch_failure(self, workspace_root: Path) -> None:
         """Test _push_release handles branch push failure."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.push_release.return_value = r[bool].fail("push failed")
+            "flext_infra.release.orchestrator.u.Infra.git_run_checked",
+            return_value=r[bool].fail("push failed"),
+        ):
             result = orchestrator._push_release(workspace_root, "v1.0.0")
             assert result.is_failure
 
@@ -973,10 +970,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _create_branches handles git failure (line 401)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.checkout.return_value = r[bool].fail("git failed")
+            "flext_infra.release.orchestrator.u.Infra.git_checkout",
+            return_value=r[bool].fail("git failed"),
+        ):
             result = orchestrator._create_branches(workspace_root, "1.0.0", [])
             assert result.is_failure
 
@@ -984,14 +980,13 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _create_branches handles project branch failure (lines 407-412)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
+            "flext_infra.release.orchestrator.u.Infra.git_checkout",
+        ) as mock_git_checkout:
             with patch(
                 "flext_infra.release.orchestrator.FlextInfraProjectSelector",
             ) as mock_selector_cls:
-                mock_git = mock_git_cls.return_value
                 mock_selector = mock_selector_cls.return_value
-                mock_git.checkout.side_effect = [
+                mock_git_checkout.side_effect = [
                     r[bool].ok(True),
                     r[bool].fail("project branch failed"),
                 ]
@@ -1045,10 +1040,9 @@ class TestFlextInfraReleaseOrchestrator:
         """Test _previous_tag finds previous tag (line 545)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         with patch(
-            "flext_infra.release.orchestrator.u",
-        ) as mock_git_cls:
-            mock_git = mock_git_cls.return_value
-            mock_git.previous_tag.return_value = r[str].ok("v0.9.0")
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].ok("v0.9.0"),
+        ):
             result = orchestrator._previous_tag(workspace_root, "v1.0.0")
             assert result.is_success
             assert result.value == "v0.9.0"
@@ -1230,11 +1224,12 @@ class TestFlextInfraReleaseOrchestratorChangeCollection:
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
         (workspace_root / ".git").mkdir()
-        with patch("flext_infra.release.orchestrator.u") as mock_git:
-            mock_git_instance = mock_git.return_value
-            mock_git_instance.log.return_value = r[str].ok(
+        with patch(
+            "flext_infra.release.orchestrator.u.Infra.git_run",
+            return_value=r[str].ok(
                 "- abc1234 Fix bug (Alice)\n- def5678 Add feature (Bob)\n",
-            )
+            ),
+        ):
             result = orchestrator._collect_changes(workspace_root, "v0.9.0", "v1.0.0")
             assert result.is_success
             assert "Fix bug" in result.value
