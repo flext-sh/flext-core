@@ -1,0 +1,25 @@
+src/flext_infra/toml_io.py
+  f296439d73141d96 110
+src/flext_infra/deps/detector.py
+  f296439d73141d96 428-430
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.9",
+  "base_commit_sha": "94376b9a1c8146d78d5a7d41ddd1a8cd3c9b042d",
+  "prompts": {
+    "f296439d73141d96": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32d1c5b7cffe4SvQN8kro63aaQ",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 11,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
