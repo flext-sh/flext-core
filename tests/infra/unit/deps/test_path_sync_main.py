@@ -9,7 +9,6 @@ from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
-from tests.infra import h
 
 
 def _project(path: Path, name: str = "flext-core") -> m.Infra.Workspace.ProjectInfo:
@@ -115,7 +114,7 @@ class TestMain:
         monkeypatch.setattr(
             path_sync_module,
             "rewrite_dep_paths",
-            lambda **_kwargs: r[list[str]].fail("rewrite failed"),
+            lambda *args, **kwargs: r[list[str]].fail("rewrite failed"),
         )
         monkeypatch.setattr(sys, "argv", ["prog"])
         tm.that(path_sync_module.main(), eq=1)
@@ -140,7 +139,7 @@ class TestMain:
         )
         calls = {"n": 0}
 
-        def rewrite_stub(**_kwargs: object) -> r[list[str]]:
+        def rewrite_stub(*args: object, **kwargs: object) -> r[list[str]]:
             calls["n"] += 1
             if calls["n"] == 1:
                 return r[list[str]].ok([])

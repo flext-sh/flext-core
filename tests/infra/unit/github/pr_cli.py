@@ -16,7 +16,6 @@ import pytest
 from flext_core import r
 from flext_infra.github import pr as pr_module
 from flext_infra.github.pr import _parse_args, _selector, main
-
 from tests.infra.unit.github._stubs import StubPrManager, StubUtilities
 
 

@@ -62,12 +62,12 @@ def _patch_main_deps(
             if error_calls is not None:
                 error_calls.append(msg)
 
-    _mod = "flext_infra.release.__main__"
-    monkeypatch.setattr(f"{_mod}.FlextRuntime", _Rt)
-    monkeypatch.setattr(f"{_mod}.FlextInfraUtilitiesPaths", _Ps)
-    monkeypatch.setattr(f"{_mod}.FlextInfraUtilitiesVersioning", _Vs)
-    monkeypatch.setattr(f"{_mod}.FlextInfraReleaseOrchestrator", _Or)
-    monkeypatch.setattr(f"{_mod}.output", _Out)
+    mod = "flext_infra.release.__main__"
+    monkeypatch.setattr(f"{mod}.FlextRuntime", _Rt)
+    monkeypatch.setattr(f"{mod}.FlextInfraUtilitiesPaths", _Ps)
+    monkeypatch.setattr(f"{mod}.FlextInfraUtilitiesVersioning", _Vs)
+    monkeypatch.setattr(f"{mod}.FlextInfraReleaseOrchestrator", _Or)
+    monkeypatch.setattr(f"{mod}.output", _Out)
 
 
 def _argv(tmp_path: Path, *extra: str) -> list[str]:

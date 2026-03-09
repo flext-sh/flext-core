@@ -1,3 +1,5 @@
+"""Main modernizer flow tests."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +16,8 @@ from flext_tests import tm
 
 
 class TestFlextInfraPyprojectModernizer:
+    """Tests modernizer class behavior."""
+
     def test_modernizer_initialization(self) -> None:
         modernizer = FlextInfraPyprojectModernizer()
         tm.that(str(modernizer.root) != "", eq=True)
@@ -77,6 +81,8 @@ class TestFlextInfraPyprojectModernizer:
 
 
 class TestModernizerRunAndMain:
+    """Tests run and CLI entrypoint behavior."""
+
     def test_run_with_audit_mode(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:

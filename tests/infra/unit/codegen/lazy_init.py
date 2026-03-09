@@ -56,13 +56,13 @@ class TestFlextInfraCodegenLazyInit:
     def test_generator_is_flext_service(self, tmp_path: Path) -> None:
         """Test that FlextInfraCodegenLazyInit is a FlextService."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
-        tm.that(generator, is_type=FlextService)
+        tm.that(generator, is_=FlextService)
 
     def test_run_returns_integer_exit_code(self, tmp_path: Path) -> None:
         """Test that run() returns an integer exit code."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
-        tm.that(result, is_type=int)
+        tm.that(result, is_=int)
         tm.that(result, gte=0)
 
     def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:

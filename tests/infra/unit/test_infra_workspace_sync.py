@@ -25,7 +25,7 @@ def _stub_generator_ok(content: str) -> object:
 
     class _Gen:
         @staticmethod
-        def generate() -> r[str]:
+        def generate(*args: object, **kwargs: object) -> r[str]:
             return r[str].ok(content)
 
     return _Gen()
@@ -36,7 +36,7 @@ def _stub_generator_fail(error: str) -> object:
 
     class _Gen:
         @staticmethod
-        def generate() -> r[str]:
+        def generate(*args: object, **kwargs: object) -> r[str]:
             return r[str].fail(error)
 
     return _Gen()
@@ -98,7 +98,8 @@ class TestSyncServiceFailures:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         def _flock(fd: int, operation: int) -> None:
-            raise OSError("Lock failed")
+            msg = "Lock failed"
+            raise OSError(msg)
 
         monkeypatch.setattr(fcntl, "flock", _flock)
         tm.fail(
@@ -115,7 +116,8 @@ class TestSyncServiceFailures:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         def _open(*_a: object, **_kw: object) -> None:
-            raise OSError("Write failed")
+            msg = "Write failed"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "open", _open)
         result = FlextInfraSyncService().sync(project_root=tmp_path)
@@ -141,7 +143,8 @@ class TestSyncServiceAtomicWrite:
 
     def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         def _temp(*_a: object, **_kw: object) -> None:
-            raise OSError("Temp file failed")
+            msg = "Temp file failed"
+            raise OSError(msg)
 
         monkeypatch.setattr(tempfile, "NamedTemporaryFile", _temp)
         tm.fail(
@@ -235,7 +238,8 @@ class TestSyncServiceGitignore:
         (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
 
         def _open(*_a: object, **_kw: object) -> None:
-            raise OSError("Write failed")
+            msg = "Write failed"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "open", _open)
         svc = FlextInfraSyncService()

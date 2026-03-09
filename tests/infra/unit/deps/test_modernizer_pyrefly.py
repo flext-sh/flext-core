@@ -1,3 +1,5 @@
+"""Pyrefly phase tests for deps modernizer."""
+
 from __future__ import annotations
 
 from collections.abc import MutableMapping
@@ -13,11 +15,14 @@ def _test_tool_config() -> FlextInfraToolConfigDocument:
     result = load_tool_config()
     tm.that(result.is_failure, eq=False)
     if result.is_failure:
-        raise ValueError("failed to load tool config")
+        msg = "failed to load tool config"
+        raise ValueError(msg)
     return result.value
 
 
 class TestEnsurePyreflyConfigPhase:
+    """Tests pyrefly config phase behavior."""
+
     def test_ensure_pyrefly_config_sets_fields_root(self) -> None:
         doc = tomlkit.document()
         doc["tool"] = tomlkit.table()

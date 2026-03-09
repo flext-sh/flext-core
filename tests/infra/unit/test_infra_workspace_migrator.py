@@ -9,13 +9,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 
 from flext_core import r
 from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
-from flext_tests import tm
 
 
 class _StubDiscovery:
@@ -49,7 +49,7 @@ class _StubGenerator:
         self._content = content
         self._fail = fail
 
-    def generate(self, config: object = None) -> r[str]:
+    def generate(self, *args: object, **kwargs: object) -> r[str]:
         if self._fail:
             return r[str].fail(self._fail)
         return r[str].ok(self._content)

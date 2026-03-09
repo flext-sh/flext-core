@@ -6,7 +6,6 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra.github.pr import FlextInfraPrManager
-
 from tests.infra.unit.github._stubs import StubRunner, StubVersioning
 
 
@@ -131,8 +130,6 @@ class TestMerge:
 
 
 class TestClose:
-    """Test close method."""
-
     def test_close_success(self, tmp_path: Path) -> None:
         runner = StubRunner(run_checked_returns=[r[bool].ok(True)])
         result = _mgr(runner=runner).close(tmp_path, "42")
@@ -145,8 +142,6 @@ class TestClose:
 
 
 class TestTriggerRelease:
-    """Test _trigger_release_if_needed method."""
-
     def _release_setup(self, tmp_path: Path) -> None:
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: R")

@@ -1,3 +1,5 @@
+"""Extra edge-case tests for modernizer."""
+
 from __future__ import annotations
 
 import argparse
@@ -12,6 +14,8 @@ from flext_tests import tm
 
 
 class TestModernizerEdgeCases:
+    """Tests edge-case run behavior."""
+
     def test_modernizer_with_empty_pyproject(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("")
@@ -54,6 +58,8 @@ class TestModernizerEdgeCases:
 
 
 class TestModernizerUncoveredLines:
+    """Tests specific uncovered branches."""
+
     def test_run_with_missing_root_pyproject(self, tmp_path: Path) -> None:
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
         args = argparse.Namespace(
@@ -124,6 +130,7 @@ def test_flext_infra_pyproject_modernizer_find_pyproject_files(tmp_path: Path) -
     )
     (tmp_path / ".venv").mkdir()
     (tmp_path / ".venv" / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+
     files = FlextInfraPyprojectModernizer(tmp_path).find_pyproject_files()
-    tm.that(files, length=2)
+    tm.that(len(files), eq=2)
     tm.that(all("project" in str(path) for path in files), eq=True)

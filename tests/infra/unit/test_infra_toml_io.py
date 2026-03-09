@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import stat
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
@@ -103,7 +102,7 @@ class TestFlextInfraTomlDocument:
         readonly_dir = tmp_path / "readonly"
         readonly_dir.mkdir()
         toml_file = readonly_dir / "test.toml"
-        os.chmod(readonly_dir, stat.S_IRUSR | stat.S_IXUSR)
+        Path(readonly_dir).chmod(stat.S_IRUSR | stat.S_IXUSR)
         try:
             service = FlextInfraUtilitiesToml()
             doc = tomlkit.document()
@@ -111,7 +110,7 @@ class TestFlextInfraTomlDocument:
             result = service.write_document(toml_file, doc)
             tm.fail(result, has="TOML write error")
         finally:
-            os.chmod(readonly_dir, stat.S_IRWXU)
+            Path(readonly_dir).chmod(stat.S_IRWXU)
 
     def test_update_section(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "update.toml"

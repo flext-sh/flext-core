@@ -1,3 +1,5 @@
+"""Consolidation phase tests for deps modernizer."""
+
 from __future__ import annotations
 
 import tomlkit
@@ -7,6 +9,8 @@ from flext_tests import tm
 
 
 class TestConsolidateGroupsPhase:
+    """Tests consolidate groups phase behavior."""
+
     def test_consolidate_groups_creates_dev_group(self) -> None:
         doc = tomlkit.document()
         project = tomlkit.table()

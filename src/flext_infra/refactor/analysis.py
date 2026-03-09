@@ -459,24 +459,7 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
 
     @staticmethod
     def insert_import(source: str, import_stmt: str) -> str:
-        if import_stmt in source:
-            return source
-        lines = source.splitlines()
-        insert_idx = 0
-        for idx, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped.startswith("from __future__ import"):
-                insert_idx = idx + 1
-                continue
-            if stripped.startswith(("import ", "from ")):
-                insert_idx = idx + 1
-                continue
-            if not stripped and insert_idx > 0:
-                continue
-            if insert_idx > 0:
-                break
-        lines.insert(insert_idx, import_stmt)
-        return "\n".join(lines) + ("\n" if source.endswith("\n") else "")
+        return u.Infra.insert_import_statement(source, import_stmt)
 
 
 class FlextInfraRefactorClassNestingAnalyzer:

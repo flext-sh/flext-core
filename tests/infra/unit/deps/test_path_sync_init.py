@@ -9,7 +9,6 @@ from flext_infra.deps.path_sync import (
     rewrite_dep_paths,
 )
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 class TestFlextInfraDependencyPathSync:
@@ -44,10 +43,6 @@ def test_detect_mode_with_path_object() -> None:
     tm.that(detect_mode(Path("/tmp")) in {"workspace", "standalone"}, eq=True)
 
 
-def test_helpers_alias_is_reachable() -> None:
-    tm.that(True, eq=True)
-
-
 class TestPathSyncEdgeCases:
     def test_detect_mode_with_nonexistent_path(self, tmp_path: Path) -> None:
         tm.that(detect_mode(tmp_path) in {"workspace", "standalone"}, eq=True)
@@ -58,11 +53,11 @@ class TestPathSyncEdgeCases:
     def test_rewrite_dep_paths_with_no_deps(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[tool.poetry.dependencies]\npython = "^3.13"')
-        h.assert_ok(
+        tm.ok(
             rewrite_dep_paths(
                 pyproject,
                 mode="poetry",
                 internal_names=set(),
                 dry_run=True,
-            ),
+            )
         )

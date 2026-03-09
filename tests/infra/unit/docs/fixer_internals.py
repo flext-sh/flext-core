@@ -22,9 +22,10 @@ def fixer() -> FlextInfraDocFixer:
 
 class TestFixerProcessFile:
     def test_process_file_with_markdown_links(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
     ) -> None:
-        """Test _process_file detects and fixes markdown links."""
         md_file = tmp_path / "test.md"
         md_file.write_text("# Test\n\n[Link](missing.md)\n")
         item = fixer._process_file(md_file, apply=False)
@@ -71,17 +72,11 @@ class TestFixerProcessFile:
 
 
 class TestFixerMaybeFixLink:
-    """Tests for _maybe_fix_link."""
-
-    @pytest.fixture
-    def fixer(self) -> FlextInfraDocFixer:
-        """Create fixer instance."""
-        return FlextInfraDocFixer()
-
-    def test_maybe_fix_link_external_urls(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    def test_external_urls(
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
     ) -> None:
-        """Test _maybe_fix_link returns None for external URLs."""
         md_file = tmp_path / "test.md"
         tm.that(fixer._maybe_fix_link(md_file, "http://example.com"), eq=None)
         tm.that(fixer._maybe_fix_link(md_file, "https://example.com"), eq=None)

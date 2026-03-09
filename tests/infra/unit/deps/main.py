@@ -25,7 +25,7 @@ def _fake_module(return_value: object = 0) -> ModuleType:
 
 
 def _stub_import(mod: ModuleType) -> object:
-    def _import(name: str) -> ModuleType:  # noqa: ARG001
+    def _import(name: str) -> ModuleType:
         return mod
 
     return _import
@@ -164,7 +164,7 @@ class TestMainStructlogConfiguration:
             ),
         )
 
-        def tracking_import(name: str) -> ModuleType:  # noqa: ARG001
+        def tracking_import(name: str) -> ModuleType:
             order.append("import")
             return _fake_module(0)
 

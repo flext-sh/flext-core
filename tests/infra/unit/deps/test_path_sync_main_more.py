@@ -2,18 +2,14 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
-import tomlkit
-from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_infra.deps.path_sync import _workspace_root
 from flext_tests import tm
-from tests.infra import h
 
 
 def _project(path: Path, name: str = "flext-core") -> m.Infra.Workspace.ProjectInfo:
@@ -88,7 +84,7 @@ def test_main_project_non_string_name(
 
 def test_main_discovery_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesDiscovery.discover_projects",
+        "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
         lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].fail(
             "discovery failed"
         ),
@@ -100,7 +96,7 @@ def test_main_discovery_failure(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_main_no_changes_needed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesDiscovery.discover_projects",
+        "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
         lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
     )
     monkeypatch.setattr(
@@ -124,7 +120,7 @@ def test_main_with_changes_and_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     recorder = _OutputRecorder()
     monkeypatch.setattr(sys, "argv", ["sync-paths", "--dry-run"])
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesDiscovery.discover_projects",
+        "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
         lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
     )
     monkeypatch.setattr(
@@ -141,7 +137,7 @@ def test_main_with_changes_no_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     recorder = _OutputRecorder()
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesDiscovery.discover_projects",
+        "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
         lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([]),
     )
     monkeypatch.setattr(

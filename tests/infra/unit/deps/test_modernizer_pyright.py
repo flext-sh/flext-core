@@ -1,3 +1,5 @@
+"""Pyright phase tests for deps modernizer."""
+
 from __future__ import annotations
 
 from collections.abc import MutableMapping
@@ -13,11 +15,14 @@ def _test_tool_config() -> FlextInfraToolConfigDocument:
     result = load_tool_config()
     tm.that(result.is_failure, eq=False)
     if result.is_failure:
-        raise ValueError("failed to load tool config")
+        msg = "failed to load tool config"
+        raise ValueError(msg)
     return result.value
 
 
 class TestEnsurePyrightConfigPhase:
+    """Tests pyright config phase behavior."""
+
     def test_apply_root_sets_execution_environments(self) -> None:
         doc = tomlkit.document()
         changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(doc, is_root=True)

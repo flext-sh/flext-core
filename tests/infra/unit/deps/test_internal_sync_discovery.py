@@ -6,7 +6,6 @@ from pathlib import Path
 from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
-from tests.infra import h
 
 
 def _set_toml_stub(

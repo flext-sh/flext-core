@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import FlextInfraUtilitiesDiscovery, FlextInfraUtilitiesSelection, m
+from flext_infra import FlextInfraUtilitiesSelection, m
 from flext_tests import tm
 
 

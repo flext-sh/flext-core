@@ -142,7 +142,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
             del path
             del parents
             del exist_ok
-            raise OSError("Permission denied")
+            msg = "Permission denied"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "mkdir", _mkdir_fail)
         detector = _setup(

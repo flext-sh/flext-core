@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.deps.path_sync import _rewrite_pep621
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 class TestRewritePep621:

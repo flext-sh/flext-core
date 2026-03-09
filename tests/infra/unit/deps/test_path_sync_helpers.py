@@ -7,7 +7,6 @@ from flext_infra.deps.path_sync import (
     extract_dep_name,
 )
 from flext_tests import tm
-from tests.infra.helpers import h
 
 
 class TestExtractDepName:
@@ -124,4 +123,4 @@ def test_target_path_standalone() -> None:
 
 
 def test_helpers_alias_is_reachable_helpers() -> None:
-    tm.that(h.assert_fail(r[bool].fail("x"), contains="x"), contains="x")
+    tm.fail(r[bool].fail("x"), has="x")

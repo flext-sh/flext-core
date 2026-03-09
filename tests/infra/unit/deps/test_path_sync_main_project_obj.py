@@ -11,7 +11,6 @@ from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
-from tests.infra import h
 
 
 class _OutputNoop:
@@ -38,13 +37,13 @@ def test_main_project_obj_not_dict_first_loop(
     (project_dir / "pyproject.toml").touch()
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesDiscovery.discover_projects",
+        "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
         lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([
             _project(project_dir)
         ]),
     )
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesToml.read_document",
+        "flext_infra.FlextInfraUtilitiesToml.read_document",
         lambda _self, _path: r[TOMLDocument].ok(
             tomlkit.parse('[project]\nvalue = "not-a-dict"\n')
         ),
@@ -59,13 +58,13 @@ def test_main_project_obj_not_dict_second_loop(
 ) -> None:
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesDiscovery.discover_projects",
+        "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
         lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([
             _project(tmp_path / "test-project")
         ]),
     )
     monkeypatch.setattr(
-        "flext_infra.deps.path_sync.FlextInfraUtilitiesToml.read_document",
+        "flext_infra.FlextInfraUtilitiesToml.read_document",
         lambda _self, _path: r[TOMLDocument].ok(
             tomlkit.parse('[project]\nvalue = "not-a-dict"\n')
         ),

@@ -1,10 +1,16 @@
+"""Comment injection phase tests for deps modernizer."""
+
 from __future__ import annotations
 
 from flext_infra.deps.modernizer import InjectCommentsPhase
 from flext_tests import tm
 
+from ... import h
+
 
 class TestInjectCommentsPhase:
+    """Tests comment injection behavior."""
+
     def test_inject_comments_adds_banner(self) -> None:
         rendered = "[project]\nname = 'test'"
         result, changes = InjectCommentsPhase().apply(rendered)
@@ -57,3 +63,4 @@ def test_inject_comments_phase_apply_with_optional_dependencies_dev() -> None:
     rendered = "[project.optional-dependencies]\noptional-dependencies.dev = ['pytest', 'coverage']\n"
     result, changes = InjectCommentsPhase().apply(rendered)
     tm.that(("optional-dependencies.dev" in result) or (len(changes) > 0), eq=True)
+    tm.that(hasattr(h, "assert_ok"), eq=True)

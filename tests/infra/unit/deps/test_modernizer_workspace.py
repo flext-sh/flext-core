@@ -1,3 +1,5 @@
+"""Workspace/parser helper tests for deps modernizer."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,6 +11,8 @@ from flext_tests import tm
 
 
 class TestReadDoc:
+    """Tests TOML document reading helper."""
+
     def test_read_doc_valid_file(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "test.toml"
         toml_file.write_text('key = "value"\n')
@@ -36,6 +40,8 @@ class TestReadDoc:
 
 
 class TestWorkspaceRoot:
+    """Tests workspace root detection helper."""
+
     def test_workspace_root_with_gitmodules(self, tmp_path: Path) -> None:
         (tmp_path / ".gitmodules").touch()
         (tmp_path / "pyproject.toml").touch()
@@ -55,6 +61,8 @@ class TestWorkspaceRoot:
 
 
 class TestParser:
+    """Tests CLI parser helper."""
+
     def test_parser_args(self) -> None:
         parser = _parser()
         tm.that(parser.parse_args(["--audit"]).audit, eq=True)

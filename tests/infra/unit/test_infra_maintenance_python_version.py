@@ -121,7 +121,7 @@ class TestWorkspaceRoot:
         f.parent.mkdir(parents=True)
         f.touch()
         resolved = enforcer._workspace_root_from_file(f)
-        tm.that(resolved.resolve(), eq=ws.resolve())
+        tm.that(str(resolved.resolve()), eq=str(ws.resolve()))
 
     def test_not_found(
         self, enforcer: FlextInfraPythonVersionEnforcer, tmp_path: Path

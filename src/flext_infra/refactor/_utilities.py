@@ -392,5 +392,65 @@ class FlextInfraUtilitiesRefactor:
             raise ValueError(msg)
         return loaded_dict
 
+    @staticmethod
+    def _is_docstring_statement(stmt: cst.CSTNode) -> bool:
+        if not isinstance(stmt, cst.SimpleStatementLine):
+            return False
+        if len(stmt.body) != 1:
+            return False
+        expr = stmt.body[0]
+        return isinstance(expr, cst.Expr) and isinstance(
+            expr.value,
+            (cst.SimpleString, cst.ConcatenatedString),
+        )
+
+    @staticmethod
+    def _is_import_statement(stmt: cst.CSTNode) -> bool:
+        if not isinstance(stmt, cst.SimpleStatementLine):
+            return False
+        return any(isinstance(s, (cst.Import, cst.ImportFrom)) for s in stmt.body)
+
+    @staticmethod
+    def _is_future_import_statement(stmt: cst.CSTNode) -> bool:
+        if not isinstance(stmt, cst.SimpleStatementLine):
+            return False
+        for small in stmt.body:
+            if not isinstance(small, cst.ImportFrom):
+                continue
+            module = small.module
+            if isinstance(module, cst.Name) and module.value == "__future__":
+                return True
+        return False
+
+    @staticmethod
+    def insert_import_statement(source: str, import_stmt: str) -> str:
+        normalized_import = import_stmt.strip()
+        if not normalized_import:
+            return source
+        try:
+            module = cst.parse_module(source)
+            parsed_stmt = cst.parse_statement(f"{normalized_import}\n")
+        except cst.ParserSyntaxError:
+            return source
+        if not isinstance(parsed_stmt, cst.SimpleStatementLine):
+            return source
+        for stmt in module.body:
+            if not isinstance(stmt, cst.SimpleStatementLine):
+                continue
+            if cst.Module(body=[stmt]).code.strip() == normalized_import:
+                return source
+        insert_idx = 0
+        for idx, stmt in enumerate(module.body):
+            if (
+                FlextInfraUtilitiesRefactor._is_docstring_statement(stmt)
+                or FlextInfraUtilitiesRefactor._is_future_import_statement(stmt)
+                or FlextInfraUtilitiesRefactor._is_import_statement(stmt)
+            ):
+                insert_idx = idx + 1
+                continue
+            break
+        new_body = [*module.body[:insert_idx], parsed_stmt, *module.body[insert_idx:]]
+        return module.with_changes(body=new_body).code
+
 
 __all__ = ["FlextInfraUtilitiesRefactor"]

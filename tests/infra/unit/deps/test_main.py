@@ -7,6 +7,7 @@ import sys
 
 import pytest
 
+from flext_infra.deps import __main__ as deps_main
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main
 from flext_tests import tm
 
@@ -96,7 +97,8 @@ class TestMainReturnValues:
                 return return_val
 
         monkeypatch.setattr(
-            "flext_infra.deps.__main__.importlib.import_module",
+            deps_main.importlib,
+            "import_module",
             lambda _: FakeModule(),
         )
         result = main()

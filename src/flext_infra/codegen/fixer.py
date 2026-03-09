@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m
+from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
@@ -200,28 +200,8 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
 
     @staticmethod
     def _insert_import_text(source: str, import_stmt: str) -> str:
-        """Insert an import statement into source text after existing imports.
-
-        Follows the pattern from refactor/analysis.py insert_import().
-        """
-        if import_stmt in source:
-            return source
-        lines = source.splitlines()
-        insert_idx = 0
-        for idx, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped.startswith("from __future__ import"):
-                insert_idx = idx + 1
-                continue
-            if stripped.startswith(("import ", "from ")):
-                insert_idx = idx + 1
-                continue
-            if not stripped and insert_idx > 0:
-                continue
-            if insert_idx > 0:
-                break
-        lines.insert(insert_idx, import_stmt)
-        return "\n".join(lines) + ("\n" if source.endswith("\n") else "")
+        """Insert an import statement after module docstring/imports."""
+        return u.Infra.insert_import_statement(source, import_stmt)
 
     @classmethod
     def _collect_import_texts_for_nodes(
