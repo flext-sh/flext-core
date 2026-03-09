@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
@@ -30,6 +31,9 @@ class FlextInfraUtilitiesPaths(BaseModel):
     def workspace_root(path: str | Path = ".") -> r[Path]:
         """Resolve and return the absolute path to the workspace root.
 
+        Checks ``FLEXT_WORKSPACE_ROOT`` env var first, then falls back to
+        resolving *path*.
+
         Args:
             path: A starting path, defaults to the current directory.
 
@@ -38,6 +42,11 @@ class FlextInfraUtilitiesPaths(BaseModel):
 
         """
         try:
+            env_root = os.getenv("FLEXT_WORKSPACE_ROOT")
+            if env_root:
+                candidate = Path(env_root).expanduser().resolve()
+                if candidate.is_dir():
+                    return r[Path].ok(candidate)
             resolved = Path(path).resolve()
             return r[Path].ok(resolved)
         except (OSError, RuntimeError, TypeError) as exc:
