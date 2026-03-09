@@ -13,7 +13,7 @@ from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r, s
-from flext_infra import FlextInfraDiscoveryService, c, m, p, t
+from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p, t
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 _OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
@@ -30,7 +30,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
     ) -> None:
         """Initialize migrator with optional custom discovery and generator services."""
         super().__init__()
-        self._discovery: p.Infra.Discovery = discovery or FlextInfraDiscoveryService()
+        self._discovery: p.Infra.Discovery = discovery or FlextInfraUtilitiesDiscovery()
         self._generator = generator or FlextInfraBaseMkGenerator()
 
     @staticmethod

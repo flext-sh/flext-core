@@ -70,7 +70,9 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
             if not git_marker.exists():
                 output.info("Running in standalone mode (no parent workspace detected)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
-            result = u.Infra.git_run(["config", "--get", "remote.origin.url"], cwd=parent)
+            result = u.Infra.git_run(
+                ["config", "--get", "remote.origin.url"], cwd=parent
+            )
             if result.is_failure:
                 output.info("Running in standalone mode (unable to detect workspace)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)

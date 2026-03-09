@@ -16,17 +16,17 @@ from pydantic import BaseModel
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraDiscoveryService,
-    FlextInfraReportingService,
+    FlextInfraUtilitiesDiscovery,
     FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesReporting,
     c,
     m,
     t,
 )
 
-_discovery = FlextInfraDiscoveryService()
+_discovery = FlextInfraUtilitiesDiscovery()
 _json_svc = FlextInfraUtilitiesIo()
-_reporting = FlextInfraReportingService()
+_reporting = FlextInfraUtilitiesReporting()
 
 
 class FlextInfraDocsShared:
@@ -113,7 +113,7 @@ class FlextInfraDocsShared:
     @staticmethod
     def write_json(path: Path, payload: BaseModel | t.ConfigurationMapping) -> r[bool]:
         """Write JSON payload to path."""
-        return _json_svc.write(path, payload)
+        return _json_svc.write_json(path, payload)
 
     @staticmethod
     def write_markdown(path: Path, lines: list[str]) -> r[bool]:

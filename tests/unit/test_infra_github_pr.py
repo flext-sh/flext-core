@@ -100,7 +100,7 @@ class TestFlextInfraPrManager:
         """Test open_pr_for_head with non-dict first element."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].ok(json.dumps(["not-a-dict"]))
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.open_pr_for_head(tmp_path, "head")
         assert result.is_success
         assert result.value == {}
@@ -120,7 +120,7 @@ class TestStatus:
             "isDraft": False,
         }
         mock_runner.capture.return_value = r[str].ok(json.dumps([pr_data]))
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.status(tmp_path, "main", "feature")
         assert result.is_success
         assert result.value["status"] == "open"
@@ -130,7 +130,7 @@ class TestStatus:
         """Test status with no open PR."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].ok("[]")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.status(tmp_path, "main", "feature")
         assert result.is_success
         assert result.value["status"] == "no-open-pr"
@@ -139,7 +139,7 @@ class TestStatus:
         """Test status when list fails."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].fail("gh error")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.status(tmp_path, "main", "feature")
         assert result.is_failure
 
@@ -154,7 +154,7 @@ class TestCreate:
             r[str].ok("[]"),
             r[str].ok("https://github.com/o/r/pull/99"),
         ]
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.create(tmp_path, "main", "feature", "title", "body")
         assert result.is_success
         assert result.value["status"] == "created"
@@ -164,7 +164,7 @@ class TestCreate:
         mock_runner = Mock()
         pr_data = {"url": "https://github.com/o/r/pull/10"}
         mock_runner.capture.return_value = r[str].ok(json.dumps([pr_data]))
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.create(tmp_path, "main", "feature", "title", "body")
         assert result.is_success
         assert result.value["status"] == "already-open"
@@ -176,7 +176,7 @@ class TestCreate:
             r[str].ok("[]"),
             r[str].fail("create failed"),
         ]
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.create(tmp_path, "main", "feature", "title", "body")
         assert result.is_failure
 
@@ -187,7 +187,7 @@ class TestCreate:
             r[str].ok("[]"),
             r[str].ok("https://github.com/o/r/pull/100"),
         ]
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.create(
             tmp_path,
             "main",
@@ -204,7 +204,7 @@ class TestCreate:
         """Test create when checking existing PR fails."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].fail("gh error")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.create(tmp_path, "main", "feature", "title", "body")
         assert result.is_failure
 
@@ -216,7 +216,7 @@ class TestView:
         """Test viewing a PR successfully."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].ok("PR details")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.view(tmp_path, "42")
         assert result.is_success
 
@@ -224,7 +224,7 @@ class TestView:
         """Test view failure."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].fail("not found")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.view(tmp_path, "999")
         assert result.is_failure
 
@@ -236,7 +236,7 @@ class TestChecks:
         """Test checks passing."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].ok(True)
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.checks(tmp_path, "42")
         assert result.is_success
         assert result.value["status"] == "checks-passed"
@@ -245,7 +245,7 @@ class TestChecks:
         """Test checks fail in non-strict mode."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].fail("checks failed")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.checks(tmp_path, "42")
         assert result.is_success
         assert result.value["status"] == "checks-nonblocking"
@@ -254,7 +254,7 @@ class TestChecks:
         """Test checks fail in strict mode."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].fail("checks failed")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.checks(tmp_path, "42", strict=True)
         assert result.is_failure
 
@@ -266,7 +266,7 @@ class TestMerge:
         """Test successful merge."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].ok(True)
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.merge(tmp_path, "42", "feature", release_on_merge=False)
         assert result.is_success
         assert result.value["status"] == "merged"
@@ -275,7 +275,7 @@ class TestMerge:
         """Test merge failure."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].fail("merge conflict")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.merge(tmp_path, "42", "feature")
         assert result.is_failure
 
@@ -287,7 +287,7 @@ class TestMerge:
             r[bool].ok(True),
             r[bool].ok(True),
         ]
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.merge(tmp_path, "42", "feature", release_on_merge=False)
         assert result.is_success
 
@@ -295,7 +295,7 @@ class TestMerge:
         """Test merge when selector=head and no open PR."""
         mock_runner = Mock()
         mock_runner.capture.return_value = r[str].ok("[]")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.merge(tmp_path, "feature", "feature")
         assert result.is_success
         assert result.value["status"] == "no-open-pr"
@@ -320,7 +320,7 @@ class TestMerge:
         """Test merge with auto and delete-branch flags."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].ok(True)
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.merge(
             tmp_path,
             "42",
@@ -338,7 +338,7 @@ class TestMerge:
         """Test merge with rebase method."""
         mock_runner = Mock()
         mock_runner.run.return_value = r[bool].ok(True)
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.merge(
             tmp_path,
             "42",
@@ -358,7 +358,7 @@ class TestClose:
         """Test closing a PR successfully."""
         mock_runner = Mock()
         mock_runner.run_checked.return_value = r[bool].ok(True)
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.close(tmp_path, "42")
         assert result.is_success
 
@@ -366,7 +366,7 @@ class TestClose:
         """Test close failure."""
         mock_runner = Mock()
         mock_runner.run_checked.return_value = r[bool].fail("close failed")
-        manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=mock_runner, versioning=Mock())
         result = manager.close(tmp_path, "42")
         assert result.is_failure
 
@@ -376,7 +376,7 @@ class TestTriggerRelease:
 
     def test_no_release_workflow(self, tmp_path: Path) -> None:
         """Test when no release.yml exists."""
-        manager = FlextInfraPrManager(runner=Mock(), git=Mock(), versioning=Mock())
+        manager = FlextInfraPrManager(runner=Mock(), versioning=Mock())
         result = manager._trigger_release_if_needed(tmp_path, "feature")
         assert result.is_success
         assert result.value["status"] == "no-release-workflow"

@@ -17,7 +17,7 @@ from tomlkit import items
 
 from flext_core import FlextLogger, r, s
 from flext_infra import (
-    FlextInfraDiscoveryService,
+    FlextInfraUtilitiesDiscovery,
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
     c,
@@ -35,7 +35,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         """Initialize pyrefly config fixer."""
         super().__init__()
         self._path_resolver = FlextInfraUtilitiesPaths()
-        self._discovery = FlextInfraDiscoveryService()
+        self._discovery = FlextInfraUtilitiesDiscovery()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
 
     @staticmethod

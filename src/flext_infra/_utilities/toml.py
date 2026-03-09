@@ -15,7 +15,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from tomlkit.items import Array, Item, Table
 from tomlkit.toml_document import TOMLDocument
 
-from flext_core import FlextLogger, u
+from flext_core import FlextLogger, r, u
 from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.typings import FlextInfraTypes as t
 
@@ -215,6 +215,27 @@ class FlextInfraUtilitiesToml:
                 error_type=type(exc).__name__,
             )
             return None
+
+    @staticmethod
+    def read_document(path: Path) -> r[TOMLDocument]:
+        """Read and parse TOML document, returning FlextResult wrapper."""
+        doc = FlextInfraUtilitiesToml.read(path)
+        if doc is None:
+            return r[TOMLDocument].fail(f"failed to read TOML: {path}")
+        return r[TOMLDocument].ok(doc)
+
+    @staticmethod
+    def write_document(path: Path, doc: TOMLDocument) -> r[bool]:
+        """Write a TOMLDocument back to file with FlextResult wrapper."""
+        try:
+            content: str = tomlkit.dumps(doc)  # pyright: ignore[reportUnknownMemberType]
+            path.write_text(
+                content,
+                encoding=c.Infra.Encoding.DEFAULT,
+            )
+            return r[bool].ok(True)
+        except OSError as exc:
+            return r[bool].fail(f"failed to write TOML: {exc}")
 
 
 # Module-level aliases for backward compatibility and direct import

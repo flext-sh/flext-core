@@ -31,11 +31,7 @@ if TYPE_CHECKING:
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
-    from flext_infra._utilities.output import (
-        FlextInfraUtilitiesOutput,
-        FlextInfraUtilitiesOutput as FlextInfraOutput,
-        output,
-    )
+    from flext_infra._utilities.output import FlextInfraUtilitiesOutput, output
     from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
     from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
     from flext_infra._utilities.reporting import FlextInfraUtilitiesReporting
@@ -366,17 +362,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps.detector",
         "FlextInfraDependencyDetectorModels",
     ),
-    "FlextInfraDiscoveryService": (
-        "flext_infra._utilities.discovery",
-        "FlextInfraUtilitiesDiscovery",
-    ),
     "FlextInfraDocAuditor": ("flext_infra.docs.auditor", "FlextInfraDocAuditor"),
     "FlextInfraDocBuilder": ("flext_infra.docs.builder", "FlextInfraDocBuilder"),
     "FlextInfraDocFixer": ("flext_infra.docs.fixer", "FlextInfraDocFixer"),
     "FlextInfraDocGenerator": ("flext_infra.docs.generator", "FlextInfraDocGenerator"),
     "FlextInfraDocValidator": ("flext_infra.docs.validator", "FlextInfraDocValidator"),
     "FlextInfraDocsShared": ("flext_infra.docs.shared", "FlextInfraDocsShared"),
-    "FlextInfraGitService": ("flext_infra._utilities.git", "FlextInfraUtilitiesGit"),
     "FlextInfraInternalDependencySyncService": (
         "flext_infra.deps.internal_sync",
         "FlextInfraInternalDependencySyncService",
@@ -406,10 +397,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraProjectMigrator": (
         "flext_infra.workspace.migrator",
         "FlextInfraProjectMigrator",
-    ),
-    "FlextInfraProjectSelector": (
-        "flext_infra._utilities.selection",
-        "FlextInfraUtilitiesSelection",
     ),
     "FlextInfraProtocols": ("flext_infra.protocols", "FlextInfraProtocols"),
     "FlextInfraPyprojectModernizer": (
@@ -581,13 +568,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.analysis",
         "FlextInfraRefactorViolationAnalyzer",
     ),
-    "FlextInfraReleaseOrchestrator": (
-        "flext_infra.release.orchestrator",
-        "FlextInfraReleaseOrchestrator",
-    ),
     "FlextInfraReportingService": (
         "flext_infra._utilities.reporting",
         "FlextInfraUtilitiesReporting",
+    ),
+    "FlextInfraReleaseOrchestrator": (
+        "flext_infra.release.orchestrator",
+        "FlextInfraReleaseOrchestrator",
     ),
     "FlextInfraRuntimeDevDependencyDetector": (
         "flext_infra.deps.detector",
@@ -612,14 +599,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
-    "FlextInfraUtilitiesSubprocess": (
-        "flext_infra._utilities.subprocess",
-        "FlextInfraUtilitiesSubprocess",
-    ),
-    "FlextInfraOutput": (
-        "flext_infra._utilities.output",
-        "FlextInfraUtilitiesOutput",
-    ),
     "FlextInfraUtilitiesDiscovery": (
         "flext_infra._utilities.discovery",
         "FlextInfraUtilitiesDiscovery",
@@ -646,6 +625,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.selection",
         "FlextInfraUtilitiesSelection",
     ),
+    "FlextInfraUtilitiesSubprocess": (
+        "flext_infra._utilities.subprocess",
+        "FlextInfraUtilitiesSubprocess",
+    ),
     "FlextInfraUtilitiesTemplates": (
         "flext_infra._utilities.templates",
         "FlextInfraUtilitiesTemplates",
@@ -666,13 +649,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.versioning",
         "FlextInfraUtilitiesVersioning",
     ),
-    "FlextInfraVersioningService": (
-        "flext_infra._utilities.versioning",
-        "FlextInfraUtilitiesVersioning",
-    ),
     "FlextInfraUtilitiesYaml": (
         "flext_infra._utilities.yaml",
         "FlextInfraUtilitiesYaml",
+    ),
+    "FlextInfraVersioningService": (
+        "flext_infra._utilities.versioning",
+        "FlextInfraUtilitiesVersioning",
     ),
     "FlextInfraWorkflowLinter": (
         "flext_infra.github.linter",
@@ -854,7 +837,6 @@ __all__ = [
     "FlextInfraNamespaceEnforcer",
     "FlextInfraNamespaceValidator",
     "FlextInfraOrchestratorService",
-    "FlextInfraOutput",
     "FlextInfraPrManager",
     "FlextInfraPrWorkspaceManager",
     "FlextInfraProjectMigrator",

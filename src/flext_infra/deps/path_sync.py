@@ -13,7 +13,7 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraDiscoveryService,
+    FlextInfraUtilitiesDiscovery,
     FlextInfraUtilitiesToml,
     c,
     output,
@@ -240,10 +240,10 @@ def main() -> int:
     internal_names: set[str] = set()
     root_pyproject = ROOT / c.Infra.Files.PYPROJECT_FILENAME
     if root_pyproject.exists():
-        root_data_result = toml_service.read(root_pyproject)
+        root_data_result = toml_service.read_document(root_pyproject)
         if root_data_result.is_success:
             root_data = root_data_result.unwrap()
-            root_project = root_data.get(c.Infra.Toml.PROJECT, None)
+            root_project: object | None = root_data.get(c.Infra.Toml.PROJECT, None)  # pyright: ignore[reportUnknownMemberType]
             if isinstance(root_project, Mapping):
                 root_project_map = _OBJECT_DICT_ADAPTER.validate_python(root_project)
                 root_name = _mapping_str_value(root_project_map, c.Infra.Toml.NAME)
@@ -271,7 +271,7 @@ def main() -> int:
             for change in changes:
                 output.info(change)
             total_changes += len(changes)
-    discover_result = FlextInfraDiscoveryService().discover_projects(ROOT)
+    discover_result = FlextInfraUtilitiesDiscovery().discover_projects(ROOT)
     if discover_result.is_failure:
         logger.error(
             "sync_dep_paths_discovery_failed",
@@ -288,11 +288,11 @@ def main() -> int:
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
-        data_result = toml_service.read(pyproject)
+        data_result = toml_service.read_document(pyproject)
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
-        project_obj = project_data.get(c.Infra.Toml.PROJECT, None)
+        project_obj: object | None = project_data.get(c.Infra.Toml.PROJECT, None)  # pyright: ignore[reportUnknownMemberType]
         if not isinstance(project_obj, Mapping):
             continue
         project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)
@@ -303,11 +303,11 @@ def main() -> int:
         pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             continue
-        data_result = toml_service.read(pyproject)
+        data_result = toml_service.read_document(pyproject)
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
-        project_obj = project_data.get(c.Infra.Toml.PROJECT, None)
+        project_obj: object | None = project_data.get(c.Infra.Toml.PROJECT, None)  # pyright: ignore[reportUnknownMemberType]
         if not isinstance(project_obj, Mapping):
             continue
         project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)

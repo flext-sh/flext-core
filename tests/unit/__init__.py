@@ -558,7 +558,7 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_infra_container import (
         TestInfraContainerFunctions,
-        TestInfraServiceRegistration,
+        TestInfraMroPattern,
         TestInfraServiceRetrieval,
     )
     from tests.unit.test_infra_core_basemk_validator import (
@@ -848,7 +848,7 @@ if TYPE_CHECKING:
         TestInfraOutputProgress,
         TestInfraOutputStatus,
         TestInfraOutputSummary,
-        TestModuleSingleton,
+        TestMroFacadeMethods,
         TestShouldUseColor,
         TestShouldUseUnicode,
     )
@@ -2814,6 +2814,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_infra_container",
         "TestInfraContainerFunctions",
     ),
+    "TestInfraMroPattern": ("tests.unit.test_infra_container", "TestInfraMroPattern"),
     "TestInfraOutputEdgeCases": (
         "tests.unit.test_infra_output",
         "TestInfraOutputEdgeCases",
@@ -2835,10 +2836,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestInfraOutputSummary": (
         "tests.unit.test_infra_output",
         "TestInfraOutputSummary",
-    ),
-    "TestInfraServiceRegistration": (
-        "tests.unit.test_infra_container",
-        "TestInfraServiceRegistration",
     ),
     "TestInfraServiceRetrieval": (
         "tests.unit.test_infra_container",
@@ -2993,7 +2990,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_infra_deps_detection",
         "TestModuleLevelWrappers",
     ),
-    "TestModuleSingleton": ("tests.unit.test_infra_output", "TestModuleSingleton"),
     "TestModuleToTypesPackage": (
         "tests.unit.test_infra_deps_detection",
         "TestModuleToTypesPackage",
@@ -3002,6 +2998,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_exception_carrying",
         "TestMonadicOperationsUnchanged",
     ),
+    "TestMroFacadeMethods": ("tests.unit.test_infra_output", "TestMroFacadeMethods"),
     "TestMypyEmptyLineSkipping": (
         "tests.unit.test_infra_check_extended",
         "TestMypyEmptyLineSkipping",
@@ -6818,6 +6815,7 @@ __all__ = [
     "TestInfoReturnsResultBool",
     "TestInfoWithContentMeta",
     "TestInfraContainerFunctions",
+    "TestInfraMroPattern",
     "TestInfraOutputEdgeCases",
     "TestInfraOutputHeader",
     "TestInfraOutputMessages",
@@ -6825,7 +6823,6 @@ __all__ = [
     "TestInfraOutputProgress",
     "TestInfraOutputStatus",
     "TestInfraOutputSummary",
-    "TestInfraServiceRegistration",
     "TestInfraServiceRetrieval",
     "TestInjectCommentsPhase",
     "TestInstanceCreation",
@@ -6871,9 +6868,9 @@ __all__ = [
     "TestModernizerEdgeCases",
     "TestModernizerUncoveredLines",
     "TestModuleLevelWrappers",
-    "TestModuleSingleton",
     "TestModuleToTypesPackage",
     "TestMonadicOperationsUnchanged",
+    "TestMroFacadeMethods",
     "TestMypyEmptyLineSkipping",
     "TestMypyEmptyLines",
     "TestMypyJSONParsing",

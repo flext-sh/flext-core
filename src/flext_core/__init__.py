@@ -97,7 +97,6 @@ if TYPE_CHECKING:
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
-        E,
         FlextTypes,
         FlextTypes as t,
         MessageT_contra,
@@ -206,7 +205,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextUtilitiesReliability",
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
-    "E": ("flext_core.typings", "E"),
     "HandleProtocol": ("flext_core.dispatcher", "HandleProtocol"),
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "P": ("flext_core.typings", "P"),
@@ -250,7 +248,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 __all__ = [
     "CircuitBreakerManager",
     "DispatchMessageProtocol",
-    "E",
     "ExecuteProtocol",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",

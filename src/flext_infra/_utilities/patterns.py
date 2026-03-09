@@ -81,9 +81,10 @@ class FlextInfraUtilitiesPatterns:
             True
 
         """
-        pattern = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
-        if pattern is None or not isinstance(pattern, re.Pattern):
+        pattern_obj = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
+        if pattern_obj is None or not isinstance(pattern_obj, re.Pattern):
             return False
+        pattern: re.Pattern[str] = pattern_obj
         return pattern.search(text) is not None
 
 

@@ -12,9 +12,9 @@ from tomlkit.items import Table
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraReportingService,
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
+    FlextInfraUtilitiesReporting,
     FlextInfraUtilitiesSubprocess,
     c,
     m,
@@ -617,7 +617,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         """Initialize the detector with path resolver, reporting, JSON, deps, and runner services."""
         super().__init__()
         self._paths = FlextInfraUtilitiesPaths()
-        self._reporting = FlextInfraReportingService()
+        self._reporting = FlextInfraUtilitiesReporting()
         self._json = FlextInfraUtilitiesIo()
         self._deps = FlextInfraDependencyDetectionService()
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()

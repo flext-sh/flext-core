@@ -9,20 +9,20 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import FlextInfraReportingService
+from flext_infra import FlextInfraUtilitiesReporting
 
 
 class TestFlextInfraReportingService:
     """Test suite for FlextInfraReportingService."""
 
     @pytest.fixture
-    def service(self) -> FlextInfraReportingService:
+    def service(self) -> FlextInfraUtilitiesReporting:
         """Create a reporting service instance."""
-        return FlextInfraReportingService()
+        return FlextInfraUtilitiesReporting()
 
     def test_get_report_dir_project_scope(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test getting project-level report directory."""
@@ -34,7 +34,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_dir_workspace_scope(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test getting workspace-level report directory."""
@@ -46,7 +46,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_dir_with_string_root(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test getting report directory with string root path."""
@@ -56,7 +56,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_path_project_scope(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test getting project-level report file path."""
@@ -68,7 +68,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_path_workspace_scope(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test getting workspace-level report file path."""
@@ -86,7 +86,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_path_with_string_root(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test getting report file path with string root."""
@@ -101,7 +101,7 @@ class TestFlextInfraReportingService:
 
     def test_ensure_report_dir_creates_directory(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test ensuring report directory creates it if missing."""
@@ -113,7 +113,7 @@ class TestFlextInfraReportingService:
 
     def test_ensure_report_dir_idempotent(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test ensuring report directory is idempotent."""
@@ -125,7 +125,7 @@ class TestFlextInfraReportingService:
 
     def test_ensure_report_dir_workspace_scope(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test ensuring workspace-level report directory."""
@@ -137,7 +137,7 @@ class TestFlextInfraReportingService:
 
     def test_ensure_report_dir_permission_error(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test handling permission errors when creating directory."""
@@ -152,7 +152,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_dir_returns_path(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test that get_report_dir returns Path type."""
@@ -162,7 +162,7 @@ class TestFlextInfraReportingService:
 
     def test_get_report_path_returns_path(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test that get_report_path returns Path type."""
@@ -172,7 +172,7 @@ class TestFlextInfraReportingService:
 
     def test_create_latest_symlink_success(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test creating a latest symlink."""
@@ -188,7 +188,7 @@ class TestFlextInfraReportingService:
 
     def test_create_latest_symlink_update_existing(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test updating an existing latest symlink."""
@@ -206,7 +206,7 @@ class TestFlextInfraReportingService:
 
     def test_create_latest_symlink_oserror(
         self,
-        service: FlextInfraReportingService,
+        service: FlextInfraUtilitiesReporting,
         tmp_path: Path,
     ) -> None:
         """Test handling OSError when creating symlink."""

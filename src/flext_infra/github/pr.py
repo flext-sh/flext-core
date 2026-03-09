@@ -20,7 +20,7 @@ from pydantic import TypeAdapter, ValidationError
 from flext_core import r
 from flext_infra import (
     FlextInfraUtilitiesSubprocess,
-    FlextInfraVersioningService,
+    FlextInfraUtilitiesVersioning,
     c,
     output,
     p,
@@ -39,11 +39,11 @@ class FlextInfraPrManager:
     def __init__(
         self,
         runner: p.Infra.CommandRunner | None = None,
-        versioning: FlextInfraVersioningService | None = None,
+        versioning: FlextInfraUtilitiesVersioning | None = None,
     ) -> None:
         """Initialize the PR manager."""
         self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._versioning = versioning or FlextInfraVersioningService()
+        self._versioning = versioning or FlextInfraUtilitiesVersioning()
 
     def checks(
         self,

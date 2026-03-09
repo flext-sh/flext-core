@@ -15,9 +15,7 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import r
-from flext_infra._utilities.discovery import (
-    FlextInfraUtilitiesDiscovery as FlextInfraDiscoveryService,
-)
+from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 
 
@@ -281,7 +279,7 @@ class TestFlextInfraPythonVersionEnforcer:
         _discover_projects should return an empty list.
         """
         with patch.object(
-            FlextInfraDiscoveryService,
+            FlextInfraUtilitiesDiscovery,
             "discover_projects",
             return_value=r[list[object]].fail("discovery error"),
         ):
