@@ -1,0 +1,25 @@
+src/flext_infra/__init__.py
+  5f25f747f5742ebe 301-302,421,701,749-750,755-760,763,807
+src/flext_infra/codegen/lazy_init.py
+  5f25f747f5742ebe 301-302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.9",
+  "base_commit_sha": "52148cc1588f838b0ff7999fe0e15cbf53ab0f16",
+  "prompts": {
+    "5f25f747f5742ebe": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32cd6166cffewRfECBpgVNUcNc",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 14,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
