@@ -1,0 +1,25 @@
+tests/unit/test_automated_loggings.py
+  7a8702a10615611c 33-57,59
+src/flext_infra/container.py
+  7a8702a10615611c 122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "a6cf83545b9ae0eb979829681e0d08cd25bd0130",
+  "prompts": {
+    "7a8702a10615611c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3304f0500ffeBJ0y3REuww4EtV",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 27,
+      "accepted_lines": 27,
+      "overriden_lines": 0
+    }
+  }
+}
