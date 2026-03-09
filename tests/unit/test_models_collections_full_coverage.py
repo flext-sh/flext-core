@@ -90,7 +90,6 @@ def test_config_hash_from_mapping_and_non_hashable() -> None:
     loaded = _Config.from_mapping(m.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
     with pytest.raises(TypeError, match="_Config objects are not hashable") as exc_info:
-        hash_val = hash(loaded)
-        assert False, f"expected to raise, got hash value {hash_val!r}"
+        hash(loaded)
     assert exc_info.value is not None
     assert "not hashable" in str(exc_info.value)

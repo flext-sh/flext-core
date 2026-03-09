@@ -37,7 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     lazy_parser = subparsers.add_parser(
-        "lazy-init", help="Generate/refresh PEP 562 lazy-import __init__.py files",
+        "lazy-init",
+        help="Generate/refresh PEP 562 lazy-import __init__.py files",
     )
     _ = lazy_parser.add_argument(
         "--check",
@@ -51,7 +52,8 @@ def main(argv: list[str] | None = None) -> int:
         help="Workspace root directory (default: cwd)",
     )
     census_parser = subparsers.add_parser(
-        "census", help="Count namespace violations across workspace projects",
+        "census",
+        help="Count namespace violations across workspace projects",
     )
     _ = census_parser.add_argument(
         "--workspace",
@@ -67,7 +69,8 @@ def main(argv: list[str] | None = None) -> int:
         help="Output format (default: text)",
     )
     scaffold_parser = subparsers.add_parser(
-        "scaffold", help="Generate missing base modules in src/ and tests/",
+        "scaffold",
+        help="Generate missing base modules in src/ and tests/",
     )
     _ = scaffold_parser.add_argument(
         "--workspace",
@@ -81,7 +84,8 @@ def main(argv: list[str] | None = None) -> int:
         help="Report what would be created without writing files",
     )
     fix_parser = subparsers.add_parser(
-        "auto-fix", help="Auto-fix namespace violations (move Finals/TypeVars)",
+        "auto-fix",
+        help="Auto-fix namespace violations (move Finals/TypeVars)",
     )
     _ = fix_parser.add_argument(
         "--workspace",
@@ -105,7 +109,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Workspace root directory (default: cwd)",
     )
     _ = pipeline_parser.add_argument(
-        "--dry-run", action="store_true", help="Report changes without modifying files",
+        "--dry-run",
+        action="store_true",
+        help="Report changes without modifying files",
     )
     _ = pipeline_parser.add_argument(
         "--format",
@@ -176,7 +182,7 @@ def _handle_census(args: argparse.Namespace) -> int:
     census = FlextInfraCodegenCensus(workspace_root=args.workspace.resolve())
     reports = census.run()
     if args.output_format == "json":
-        {
+        _ = {
             c.Infra.ReportKeys.PROJECTS: [rpt.model_dump() for rpt in reports],
             "total_violations": sum(rpt.total for rpt in reports),
             "total_fixable": sum(rpt.fixable for rpt in reports),
@@ -244,7 +250,7 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
     generator.run(check_only=args.dry_run, scan_tests=True)
     reports_after = census.run()
     if args.output_format == "json":
-        {
+        _ = {
             "census_before": {
                 "total_violations": sum(r.total for r in reports_before),
                 "total_fixable": sum(r.fixable for r in reports_before),

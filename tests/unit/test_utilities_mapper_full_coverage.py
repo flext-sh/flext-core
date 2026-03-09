@@ -13,9 +13,6 @@ from pydantic import BaseModel, Field
 
 from flext_core import m, p, r, t, u
 
-Cache = u.Cache
-Mapper = u.Mapper
-
 
 class _PortModel(BaseModel):
     """Model with port/nested for mapper take/extract tests."""
@@ -26,21 +23,25 @@ class _PortModel(BaseModel):
 
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
     """Call Mapper.at with arbitrary object for error-path testing."""
-    fn: Callable[..., object] = getattr(Mapper, "at")
+    fn: Callable[[object, int | str], object] = getattr(u.Mapper, "at")
     return fn(items, index, default=default)
 
 
 def _extract_field_obj(item: object, field_name: str) -> object:
     """Call _extract_field_value with arbitrary object for testing."""
-    fn: Callable[[object, str], object] = getattr(Mapper, "_extract_field_value")
+    fn: Callable[[object, str], object] = getattr(u.Mapper, "_extract_field_value")
     return fn(item, field_name)
 
 
 def _build_flags_obj(
-    active_flags: object, flag_mapping: Mapping[str, str],
+    active_flags: object,
+    flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
-    fn: Callable[..., r[Mapping[str, bool]]] = getattr(Mapper, "build_flags_dict")
+    fn: Callable[[object, Mapping[str, str]], r[Mapping[str, bool]]] = getattr(
+        u.Mapper,
+        "build_flags_dict",
+    )
     return fn(active_flags, flag_mapping)
 
 
@@ -135,18 +136,18 @@ class BadMapping(t.ConfigurationMapping):
 
 
 @pytest.fixture
-def mapper() -> type[Mapper]:
-    return Mapper
+def mapper() -> type[u.Mapper]:
+    return u.Mapper
 
 
-def test_type_guards_and_narrowing_failures(mapper: type[Mapper]) -> None:
+def test_type_guards_and_narrowing_failures(mapper: type[u.Mapper]) -> None:
     with pytest.raises(TypeError, match="Cannot narrow"):
         mapper._narrow_to_configuration_dict(10)
     with pytest.raises(TypeError, match="Cannot narrow"):
         mapper._narrow_to_sequence("not-sequence")
 
 
-def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> None:
+def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u.Mapper]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
         cast("t.ContainerValue", {1: "x", "b": object()}),
     )
@@ -165,7 +166,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> 
         mapper._narrow_to_configuration_mapping(3)
 
 
-def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
+def test_general_value_helpers_and_logger(mapper: type[u.Mapper]) -> None:
 
     class Stable:
         @override
@@ -182,10 +183,10 @@ def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
     assert mapper._get_str_from_dict({"k": None}, "k", default="d") == "d"
     callable_result = mapper._get_callable_from_dict({"x": 1}, "x")
     assert callable_result.is_failure
-    assert Mapper().logger is not None
+    assert u.Mapper().logger is not None
 
 
-def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
+def test_invert_and_json_conversion_branches(mapper: type[u.Mapper]) -> None:
     assert mapper.invert_dict({"a": "x", "b": "x"}, handle_collisions="first") == {
         "x": "a",
     }
@@ -207,7 +208,7 @@ def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
     assert list_json[0]["a"] == 1
 
 
-def test_ensure_and_extract_array_index_helpers(mapper: type[Mapper]) -> None:
+def test_ensure_and_extract_array_index_helpers(mapper: type[u.Mapper]) -> None:
     assert mapper.ensure(123) == ["123"]
     value, error = mapper._extract_handle_array_index("x", "0")
     assert value is None
@@ -220,7 +221,7 @@ def test_ensure_and_extract_array_index_helpers(mapper: type[Mapper]) -> None:
     assert "Invalid index" in str(error)
 
 
-def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
+def test_extract_error_paths_and_prop_accessor(mapper: type[u.Mapper]) -> None:
     res_none_intermediate = mapper.extract({"a": None}, "a.b")
     assert res_none_intermediate.is_failure
     assert "default is None" in str(res_none_intermediate.error)
@@ -243,7 +244,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
         field: NotGeneral = NotGeneral()
 
     res_non_general = mapper.extract(
-        cast("m.ConfigMap | BaseModel", cast("object", Container())), "field",
+        cast("m.ConfigMap | BaseModel", cast("object", Container())),
+        "field",
     )
     assert res_non_general.is_success
     assert res_non_general.value == "converted"
@@ -253,7 +255,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
             self.model_dump = lambda: (_ for _ in ()).throw(ValueError("boom"))
 
     res_exception = mapper.extract(
-        cast("m.ConfigMap | BaseModel", cast("object", ExplodingModelDump())), "a",
+        cast("m.ConfigMap | BaseModel", cast("object", ExplodingModelDump())),
+        "a",
     )
     assert res_exception.is_failure
     assert "not found" in str(res_exception.error).lower()
@@ -261,7 +264,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     assert (
         accessor(
             cast(
-                "m.ConfigMap | BaseModel", cast("object", AttrObject(name="x", value=1)),
+                "m.ConfigMap | BaseModel",
+                cast("object", AttrObject(name="x", value=1)),
             ),
         )
         == "x"
@@ -274,7 +278,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     )
 
 
-def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
+def test_at_take_and_as_branches(mapper: type[u.Mapper]) -> None:
     assert mapper.at({"a": 1}, 0, default=5).value == 5
     assert cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value == 7
     model = _PortModel(port=8081)
@@ -289,7 +293,7 @@ def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
     assert mapper.as_("off", bool) is False
 
 
-def test_extract_field_value_and_ensure_variants(mapper: type[Mapper]) -> None:
+def test_extract_field_value_and_ensure_variants(mapper: type[u.Mapper]) -> None:
     assert _extract_field_obj(AttrObject(name="a", value=2), "value") == 2
     assert _extract_field_obj(AttrObject(), "missing") is None
     assert mapper._build_apply_ensure(5, {"ensure": "str"}) == "5"
@@ -299,26 +303,32 @@ def test_extract_field_value_and_ensure_variants(mapper: type[Mapper]) -> None:
     assert mapper._build_apply_ensure(5, {"ensure": "unknown"}) == 5
 
 
-def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
+def test_filter_map_normalize_convert_helpers(mapper: type[u.Mapper]) -> None:
     plus_one = cast("Callable[[t.ContainerValue], t.ContainerValue]", _plus_one)
     times_two = cast("Callable[[t.ContainerValue], t.ContainerValue]", _times_two)
     assert mapper._build_apply_filter(1, {"filter": 1}, 0) == 1
     assert mapper._build_apply_filter(
-        {"a": 1, "b": 0}, cast("Mapping[str, t.ContainerValue]", {"filter": bool}), 0,
+        {"a": 1, "b": 0},
+        cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
+        0,
     ) == {"a": 1}
     assert (
         mapper._build_apply_filter(
-            0, cast("Mapping[str, t.ContainerValue]", {"filter": bool}), "d",
+            0,
+            cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
+            "d",
         )
         == "d"
     )
     assert mapper._build_apply_map(1, {"map": 1}) == 1
     assert mapper._build_apply_map(
-        {"a": 1}, cast("Mapping[str, t.ContainerValue]", {"map": plus_one}),
+        {"a": 1},
+        cast("Mapping[str, t.ContainerValue]", {"map": plus_one}),
     ) == {"a": 2}
     assert (
         mapper._build_apply_map(
-            2, cast("Mapping[str, t.ContainerValue]", {"map": times_two}),
+            2,
+            cast("Mapping[str, t.ContainerValue]", {"map": times_two}),
         )
         == 4
     )
@@ -344,7 +354,7 @@ def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
     ],
 )
 def test_convert_default_fallback_matrix(
-    mapper: type[Mapper],
+    mapper: type[u.Mapper],
     value: t.ContainerValue,
     convert_spec: Callable[[object], object] | type,
     expected: t.ContainerValue,
@@ -353,15 +363,17 @@ def test_convert_default_fallback_matrix(
     assert mapper._build_apply_convert(value, operations) == expected
 
 
-def test_convert_sequence_branch_returns_tuple(mapper: type[Mapper]) -> None:
+def test_convert_sequence_branch_returns_tuple(mapper: type[u.Mapper]) -> None:
     converted = mapper._build_apply_convert(
-        ("bad",), cast("Mapping[str, t.ContainerValue]", {"convert": int}),
+        ("bad",),
+        cast("Mapping[str, t.ContainerValue]", {"convert": int}),
     )
     assert converted == (0,)
 
 
 def test_transform_option_extract_and_step_helpers(
-    mapper: type[Mapper], monkeypatch: pytest.MonkeyPatch,
+    mapper: type[u.Mapper],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     opts = {
         "map_keys": {1: "one", "a": "b"},
@@ -376,7 +388,11 @@ def test_transform_option_extract_and_step_helpers(
         cast("Mapping[str, t.ContainerValue]", opts),
     )
     assert extracted[3] == {"1": "one", "a": "b"}
-    monkeypatch.setattr(Cache, "normalize_component", staticmethod(_normalize_not_dict))
+    monkeypatch.setattr(
+        u.Cache,
+        "normalize_component",
+        staticmethod(_normalize_not_dict),
+    )
     assert mapper._apply_normalize({"a": 1}, normalize=True) == {"a": 1}
     assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"A": 1}
     assert mapper._apply_filter_keys({"a": 1, "b": 2}, filter_keys={"b"}) == {"b": 2}
@@ -387,7 +403,8 @@ def test_transform_option_extract_and_step_helpers(
 
 
 def test_build_apply_transform_and_process_error_paths(
-    mapper: type[Mapper], monkeypatch: pytest.MonkeyPatch,
+    mapper: type[u.Mapper],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     assert mapper._build_apply_transform({"a": 1}, {"transform": 1}, {}, "stop") == {
         "a": 1,
@@ -408,7 +425,9 @@ def test_build_apply_transform_and_process_error_paths(
 
     msg = "explode transform"
     monkeypatch.setattr(
-        mapper, "_apply_transform_steps", staticmethod(explode_transform_steps),
+        mapper,
+        "_apply_transform_steps",
+        staticmethod(explode_transform_steps),
     )
     assert mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "stop") == {
         "a": 1,
@@ -420,22 +439,25 @@ def test_build_apply_transform_and_process_error_paths(
     process_map_ops = cast("Mapping[str, t.ContainerValue]", {"process": _plus_one})
     assert mapper._build_apply_process({"a": 1}, process_map_ops, 0, "stop") == {"a": 2}
     process_fail_ops = cast(
-        "Mapping[str, t.ContainerValue]", {"process": _raise_value_error},
+        "Mapping[str, t.ContainerValue]",
+        {"process": _raise_value_error},
     )
     assert mapper._build_apply_process(1, process_fail_ops, 7, "stop") == 7
     assert mapper._build_apply_process(1, process_fail_ops, 7, "skip") == 1
 
 
-def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
+def test_group_sort_unique_slice_chunk_branches(mapper: type[u.Mapper]) -> None:
     assert mapper._build_apply_group(1, {"group": "k"}) == 1
     grouped = mapper._build_apply_group(
-        [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}], {"group": "kind"},
+        [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}],
+        {"group": "kind"},
     )
     assert grouped == {"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]}
     assert mapper._build_apply_group([1, 2], {"group": 5}) == [1, 2]
     assert mapper._build_apply_sort(1, {"sort": True}) == 1
     sorted_with_scalar = mapper._build_apply_sort(
-        [{"name": "b"}, 3, {"name": "a"}], {"sort": "name"},
+        [{"name": "b"}, 3, {"name": "a"}],
+        {"sort": "name"},
     )
     assert isinstance(sorted_with_scalar, list)
     bad_sort_ops = cast("Mapping[str, t.ContainerValue]", {"sort": _raise_value_error})
@@ -452,7 +474,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
     assert mapper.build([1, 2], ops=None) == [1, 2]
 
 
-def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
+def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
     assert (
         mapper.field(cast("p.AccessibleData", object()), "missing", required=True)
         is None
@@ -466,7 +488,7 @@ def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
     assert fields == {"name": "n", "missing": ""}
 
 
-def test_construct_transform_and_deep_eq_branches(mapper: type[Mapper]) -> None:
+def test_construct_transform_and_deep_eq_branches(mapper: type[u.Mapper]) -> None:
     constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
     assert constructed_none["x"] == 9
     source: dict[str, t.ContainerValue] = {"name": "alice", "n": 3}
@@ -500,10 +522,14 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[Mapper]) -> None:
             return ""
 
     assert mapper.construct(
-        {"x": ExplodeOnGet()}, m.ConfigMap(root={"x": 1}), on_error="stop",
+        {"x": ExplodeOnGet()},
+        m.ConfigMap(root={"x": 1}),
+        on_error="stop",
     ) == {"x": ""}
     assert mapper.construct(
-        {"x": ExplodeOnGet()}, m.ConfigMap(root={"x": 1}), on_error="skip",
+        {"x": ExplodeOnGet()},
+        m.ConfigMap(root={"x": 1}),
+        on_error="skip",
     ) == {"x": ""}
     assert mapper.transform({"a": 1}, map_keys={"a": "A"}).is_success
     bad_result = mapper.transform(BadMapping())
@@ -523,7 +549,8 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[Mapper]) -> None:
 
 @pytest.mark.parametrize("merge_strategy", ["merge", "secondary_only", "primary_only"])
 def test_process_context_data_and_related_convenience(
-    mapper: type[Mapper], merge_strategy: str,
+    mapper: type[u.Mapper],
+    merge_strategy: str,
 ) -> None:
     primary: dict[str, t.ContainerValue] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
@@ -544,13 +571,15 @@ def test_process_context_data_and_related_convenience(
     assert normalized["field"] == "x"
 
 
-def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
+def test_small_mapper_convenience_methods(mapper: type[u.Mapper]) -> None:
     assert mapper.omit({"a": 1, "b": 2}, "a") == {"b": 2}
     assert mapper.pluck([{"a": 1}, {}], "a", default=0) == [1, 0]
     keyed = mapper.key_by(["aa", "b"], len)
     assert keyed == {2: "aa", 1: "b"}
     fields_from_mapping = mapper.fields(
-        {"name": "alice", "age": 1}, "name", {"email": {"default": "x@x"}, "age": 0},
+        {"name": "alice", "age": 1},
+        "name",
+        {"email": {"default": "x@x"}, "age": 0},
     )
     assert fields_from_mapping["name"] == "alice"
     assert fields_from_mapping["email"] == "x@x"
@@ -597,9 +626,11 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     assert not_found_callable.is_failure
 
 
-def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
+def test_map_flags_collect_and_invert_branches(mapper: type[u.Mapper]) -> None:
     mapped = mapper.map_dict_keys(
-        {"old": 1, "x": 2}, {"old": "new"}, keep_unmapped=True,
+        {"old": 1, "x": 2},
+        {"old": "new"},
+        keep_unmapped=True,
     )
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
@@ -641,7 +672,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     }
 
 
-def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
+def test_conversion_and_extract_success_branches(mapper: type[u.Mapper]) -> None:
 
     class Plain:
         @override
@@ -671,12 +702,14 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
         a: int = 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())), "a",
+        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
+        "a",
     )
     assert found is True
     assert value == 1
     value, found = mapper._extract_get_value(
-        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())), "missing",
+        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
+        "missing",
     )
     assert found is False
     assert value is None
@@ -701,7 +734,7 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
     assert idx_default.value == "x"
 
 
-def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) -> None:
+def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u.Mapper]) -> None:
     assert mapper.at({"a": 1}, "a").value == 1
     assert mapper.at([9, 8], 0).value == 9
     assert mapper.at([9, 8], 5, default=7).value == 7
@@ -731,15 +764,18 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 
 
-def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> None:
+def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -> None:
     assert mapper._build_apply_ensure([1], {"ensure": "list"}) == [1]
     assert mapper._build_apply_ensure(1, {"ensure": "str_list"}) == ["1"]
     assert mapper._build_apply_ensure({"a": 1}, {"ensure": "dict"}) == {"a": 1}
     assert mapper._build_apply_filter(
-        [1, 2, 0], cast("Mapping[str, t.ContainerValue]", {"filter": bool}), 0,
+        [1, 2, 0],
+        cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
+        0,
     ) == [1, 2]
     assert mapper._build_apply_map(
-        [1, 2], cast("Mapping[str, t.ContainerValue]", {"map": _plus_one}),
+        [1, 2],
+        cast("Mapping[str, t.ContainerValue]", {"map": _plus_one}),
     ) == [2, 3]
     assert mapper._apply_map_keys({"a": 1}, map_keys={"b": "B"}) == {"a": 1}
     assert mapper._apply_strip_none({"a": None, "b": 1}, strip_none=True) == {"b": 1}
@@ -747,13 +783,15 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     process_list_ops = cast("Mapping[str, t.ContainerValue]", {"process": _plus_one})
     assert mapper._build_apply_process([1, 2], process_list_ops, 0, "stop") == [2, 3]
     grouped_call = mapper._build_apply_group(
-        ["aa", "b"], cast("Mapping[str, t.ContainerValue]", {"group": len}),
+        ["aa", "b"],
+        cast("Mapping[str, t.ContainerValue]", {"group": len}),
     )
     assert grouped_call == {"2": ["aa"], "1": ["b"]}
     grouped_skip = mapper._build_apply_group([{"kind": None}, 1], {"group": "kind"})
     assert grouped_skip == {"": [{"kind": None}]}
     sorted_ok = mapper._build_apply_sort(
-        [3, 1, 2], cast("Mapping[str, t.ContainerValue]", {"sort": int}),
+        [3, 1, 2],
+        cast("Mapping[str, t.ContainerValue]", {"sort": int}),
     )
     assert sorted_ok == [1, 2, 3]
     assert mapper._build_apply_sort([3, 1], {"sort": True}) == [1, 3]
@@ -767,7 +805,8 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     assert mapper.construct({"x": {"value": 1}}, m.ConfigMap(root={"x": 0})) == {"x": 1}
     assert mapper.construct({"x": "a"}, m.ConfigMap(root={"a": 2})) == {"x": 2}
     assert mapper.construct(
-        {"x": {"field": "a", "ops": "noop"}}, m.ConfigMap(root={"a": 2}),
+        {"x": {"field": "a", "ops": "noop"}},
+        m.ConfigMap(root={"a": 2}),
     ) == {"x": 2}
     assert mapper.deep_eq({"a": None}, {"a": None}) is True
     assert mapper.deep_eq({"a": {"x": 1}}, {"a": {"x": 1}}) is True
@@ -784,19 +823,22 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     context = mapper.process_context_data(
         primary_data=cast("t.ContainerValue", cast("object", DictLikeOnly())),
         secondary_data=cast(
-            "t.ContainerValue", cast("object", DictLikeOnlySecondary()),
+            "t.ContainerValue",
+            cast("object", DictLikeOnlySecondary()),
         ),
         merge_strategy="merge",
     )
     assert context == {}
     fields_obj = mapper.fields(
-        cast("t.ContainerValue", object()), {"x": {"default": 1}},
+        cast("t.ContainerValue", object()),
+        {"x": {"default": 1}},
     )
     assert fields_obj == {"x": 1}
 
 
 def test_remaining_uncovered_branches(
-    mapper: type[Mapper], monkeypatch: pytest.MonkeyPatch,
+    mapper: type[u.Mapper],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     model = _PortModel(port=9000, nested={"k": "v"})
     base_model_extract = mapper.extract(model, "nested.k")

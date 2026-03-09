@@ -97,36 +97,34 @@ def test_context_data_normalize_and_json_checks() -> None:
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:
-    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata") as exc_info:
-        got = FlextModelsContext.ContextData.validate_dict_serializable(
+    with pytest.raises(
+        TypeError, match="Value must be a dictionary or Metadata"
+    ) as exc_info:
+        FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
             )
         )
-        raise AssertionError(f"expected to raise, got {got!r}")got!r}")
     assert exc_info.value is not None
-    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata") as exc_info2:
-        got2 = FlextModelsContext.ContextData.validate_dict_serializable(
+    with pytest.raises(
+        TypeError, match="Value must be a dictionary or Metadata"
+    ) as exc_info2:
+        FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             )
         )
-        assert False, f"expected to raise, got {got2!r}"
     assert exc_info2.value is not None
     metadata_input = FlextModelFoundation.Metadata(attributes={"a": 1})
-    result = FlextModelsContext.ContextData.validate_dict_serializable(
-        metadata_input
-    )
+    result = FlextModelsContext.ContextData.validate_dict_serializable(metadata_input)
     assert result == {"a": 1}
 
     class _GoodModel(BaseModel):
         b: int = 2
 
-    result_b = FlextModelsContext.ContextData.validate_dict_serializable(
-        _GoodModel()
-    )
+    result_b = FlextModelsContext.ContextData.validate_dict_serializable(_GoodModel())
     assert result_b == {"b": 2}
 
 
@@ -164,18 +162,16 @@ def test_context_export_serializable_and_validators() -> None:
     )
     assert check_result is None
     with pytest.raises(TypeError):
-        got = FlextModelsContext.ContextData.check_json_serializable(
+        FlextModelsContext.ContextData.check_json_serializable(
             cast("t.ContainerValue", {"x": object()})
         )
-        assert False, f"expected to raise, got {got!r}"
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        got = FlextModelsContext.ContextExport.validate_dict_serializable(
+        FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             )
         )
-        assert False, f"expected to raise, got {got!r}"
     result = FlextModelsContext.ContextExport.validate_dict_serializable(None)
     assert result == {}
 
@@ -205,13 +201,12 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     )
     assert result_mapping == {"k": "v"}
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        got = FlextModelsContext.ContextExport.validate_dict_serializable(
+        FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
             )
         )
-        assert False, f"expected to raise, got {got!r}"
     metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})
     result_meta = FlextModelsContext.ContextExport.validate_dict_serializable(
         metadata_input
@@ -239,8 +234,7 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     stats_model = _normalize_statistics_before(StatsModel())
     assert stats_model == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        got = _normalize_statistics_before(cast("t.ContainerValue", "x"))
-        assert False, f"expected to raise, got {got!r}"
+        _normalize_statistics_before(cast("t.ContainerValue", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     assert exported.total_data_items == 1
     assert exported.has_statistics is True
@@ -258,8 +252,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope = _normalize_to_mapping(ScopeModel())
     assert result_scope == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        got = _normalize_to_mapping(cast("t.ContainerValue", 123))
-        assert False, f"expected to raise, got {got!r}"
+        _normalize_to_mapping(cast("t.ContainerValue", 123))
     result_none2 = _normalize_to_mapping(None)
     assert result_none2 == {}
     result_dict2 = _normalize_to_mapping({"a": 1})
@@ -267,8 +260,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope2 = _normalize_to_mapping(ScopeModel())
     assert result_scope2 == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        got2 = _normalize_to_mapping(cast("t.ContainerValue", 123))
-        assert False, f"expected to raise, got {got2!r}"
+        _normalize_to_mapping(cast("t.ContainerValue", 123))
 
 
 def test_statistics_and_custom_fields_validators() -> None:
@@ -283,8 +275,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none1 = _normalize_to_mapping(None)
     assert result_none1 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        got = _normalize_to_mapping(cast("t.ContainerValue", "bad"))
-        assert False, f"expected to raise, got {got!r}"
+        _normalize_to_mapping(cast("t.ContainerValue", "bad"))
     result_x2 = _normalize_to_mapping({"x": 1})
     assert result_x2 == {"x": 1}
     result_payload2 = _normalize_to_mapping(Payload())
@@ -292,8 +283,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none2 = _normalize_to_mapping(None)
     assert result_none2 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        got2 = _normalize_to_mapping(cast("t.ContainerValue", "bad"))
-        assert False, f"expected to raise, got {got2!r}"
+        _normalize_to_mapping(cast("t.ContainerValue", "bad"))
 
 
 def test_context_data_metadata_normalizer_removed() -> None:

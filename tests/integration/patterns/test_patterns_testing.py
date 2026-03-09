@@ -31,12 +31,10 @@ from ._models import (
     FixtureSuiteDict,
 )
 
-type MockScenarioData = dict[str, t.ContainerValue]
-
 
 def _to_general_mapping(
     value: t.ContainerValue | None,
-) -> dict[str, FlextTypes.Container]:
+) -> dict[str, t.ContainerValue]:
     if not isinstance(value, dict):
         return {}
     return {
@@ -61,10 +59,10 @@ def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
+) -> Callable[[Callable[[object], object]], Callable[[object], object]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
+    def decorator(func: Callable[[object], object]) -> Callable[[object], object]:
         setattr(func, "_test_pattern", pattern)
         return func
 
@@ -77,7 +75,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: MockScenarioData) -> None:
+    def __init__(self, name: str, data: dict[str, t.ContainerValue]) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -87,7 +85,8 @@ class MockScenario:
         self.then = _to_general_mapping(mapper.get(data, "then", default={}))
         self.tags = _to_string_list(mapper.get(data, "tags", default=[]))
         self.priority = _to_string(
-            mapper.get(data, "priority", default="normal"), default="normal",
+            mapper.get(data, "priority", default="normal"),
+            default="normal",
         )
 
 
@@ -105,21 +104,27 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(
-        self, _description: str, **kwargs: FlextTypes.Container,
+        self,
+        _description: str,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
         return self
 
     def when(
-        self, _description: str, **kwargs: FlextTypes.Container,
+        self,
+        _description: str,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
         return self
 
     def then(
-        self, _description: str, **kwargs: FlextTypes.Container,
+        self,
+        _description: str,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -137,7 +142,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: MockScenarioData = {
+        data: dict[str, t.ContainerValue] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -153,7 +158,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: FixtureDataDict = {}
+        self._data: FixtureDataDict = FixtureDataDict({})
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -203,10 +208,12 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
-        self, email: str | None = None, input_value: str | None = None,
+        self,
+        email: str | None = None,
+        input_value: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        case: FixtureCaseDict = {}
+        case: FixtureCaseDict = FixtureCaseDict({})
         if email is not None:
             case["email"] = email
         if input_value is not None:
@@ -215,14 +222,16 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self, cases: list[FixtureCaseDict],
+        self,
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
         return self
 
     def add_failure_cases(
-        self, cases: list[FixtureCaseDict],
+        self,
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
@@ -321,12 +330,12 @@ class SuiteBuilder:
 
     def build(self) -> FixtureSuiteDict:
         """Build the test suite configuration."""
-        result: FixtureSuiteDict = {
+        result = FixtureSuiteDict({
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
             "setup_data": self._setup_data,
-        }
+        })
         return result
 
 
@@ -336,7 +345,7 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: FixtureFixturesDict = {}
+        self._fixtures: FixtureFixturesDict = FixtureFixturesDict({})
         self._setups: list[object] = []
         self._teardowns: list[object] = []
 
@@ -352,7 +361,7 @@ class FixtureBuilder:
 
     def build(self) -> FixtureFixturesDict:
         """Build the test fixtures configuration."""
-        return self._fixtures.copy()
+        return self._fixtures.model_copy(deep=True)
 
     def add_setup(self, func: object) -> FixtureBuilder:
         """Add a setup function to the fixtures."""
@@ -729,9 +738,11 @@ class TestRealWorldScenarios:
                 }
 
             AssertionBuilder(result).is_not_none().satisfies(
-                check_status_success, "should be successful",
+                check_status_success,
+                "should be successful",
             ).satisfies(check_correlation_id, "should have correlation ID").satisfies(
-                check_valid_method, "should have valid HTTP method",
+                check_valid_method,
+                "should have valid HTTP method",
             ).assert_all()
 
     @given(
@@ -745,7 +756,8 @@ class TestRealWorldScenarios:
     )
     @settings()
     def test_configuration_validation_comprehensive(
-        self, config: dict[str, FlextTypes.Container],
+        self,
+        config: dict[str, FlextTypes.Container],
     ) -> None:
         """Comprehensive configuration validation testing."""
         required_fields = ["database_url", "debug", "timeout_seconds"]
@@ -758,7 +770,8 @@ class TestRealWorldScenarios:
         scenario = (
             GivenWhenThenBuilder("configuration_validation")
             .given(
-                "a configuration object", config_environment=str(config["environment"]),
+                "a configuration object",
+                config_environment=str(config["environment"]),
             )
             .when("configuration is validated", action="validate")
             .then("all required fields are present", validated=True)

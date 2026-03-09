@@ -49,7 +49,8 @@ class TestFlextContext:
         if context["operation"] != "login":
             msg = f"Expected {'login'}, got {context['operation']}"
             raise AssertionError(msg)
-        assert context["duration_ms"] == pytest.approx(150.5)
+        expected_duration_ms: float = 150.5
+        assert context["duration_ms"] == pytest.approx(expected_duration_ms)
 
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
@@ -86,11 +87,14 @@ class TestFlextContext:
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
         }
-        if context["duration_ms"] != pytest.approx(250.0):
+        expected_duration_ms_ctx: float = 250.0
+        if context["duration_ms"] != pytest.approx(expected_duration_ms_ctx):
             msg = f"Expected {250.0}, got {context['duration_ms']}"
             raise AssertionError(msg)
-        assert context["memory_mb"] == pytest.approx(128.5)
-        if context["cpu_percent"] != pytest.approx(75.2):
+        expected_memory_mb: float = 128.5
+        assert context["memory_mb"] == pytest.approx(expected_memory_mb)
+        expected_cpu_percent: float = 75.2
+        if context["cpu_percent"] != pytest.approx(expected_cpu_percent):
             msg = f"Expected {75.2}, got {context['cpu_percent']}"
             raise AssertionError(msg)
 
@@ -179,7 +183,10 @@ class TestFlextLogger:
         assert hasattr(base_logger, "info")
         assert hasattr(base_logger, "error")
         assert hasattr(base_logger, "debug")
-        base_logger.info("Base logger test message")
+        result = base_logger.info("Base logger test message")
+        assertion_helpers.assert_flext_result_success(
+            result, "Base logger should log successfully",
+        )
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level.
@@ -194,7 +201,10 @@ class TestFlextLogger:
         assert hasattr(base_logger, "info")
         assert hasattr(base_logger, "error")
         assert hasattr(base_logger, "debug")
-        base_logger.info("Level logger test message")
+        result = base_logger.info("Level logger test message")
+        assertion_helpers.assert_flext_result_success(
+            result, "Level logger should log successfully",
+        )
 
     def test_bind_context(self) -> None:
         """Test binding context to logger.
@@ -211,9 +221,10 @@ class TestFlextLogger:
         assert hasattr(bound_logger, "error")
         assert hasattr(bound_logger, "debug")
         result = bound_logger.info("Test message with bound context")
-        assertion_helpers.assert_flext_result_success(
+        success = assertion_helpers.assert_flext_result_success(
             result, "Bound logger should work for logging",
         )
+        assert success is True
 
     def test_backward_compatibility_function(self) -> None:
         """Test backward compatibility function.
@@ -229,9 +240,10 @@ class TestFlextLogger:
         assert hasattr(logger, "error")
         assert hasattr(logger, "debug")
         result = logger.info("Compatibility test message")
-        assertion_helpers.assert_flext_result_success(
+        success = assertion_helpers.assert_flext_result_success(
             result, "Logger should work with standard patterns",
         )
+        assert success is True
 
     def test_module_level_function(self) -> None:
         """Test module-level backward compatibility function.
@@ -247,9 +259,10 @@ class TestFlextLogger:
         assert hasattr(logger, "error")
         assert hasattr(logger, "debug")
         result = logger.info("Module-level logger test message")
-        assertion_helpers.assert_flext_result_success(
+        success = assertion_helpers.assert_flext_result_success(
             result, "Module-level logger should work",
         )
+        assert success is True
 
 
 class TestFlextLoggerUsage:
@@ -335,9 +348,10 @@ class TestFlextLoggerUsage:
             bound_logger.info("Batch process completed"),
         ]
         for i, result in enumerate(results):
-            assertion_helpers.assert_flext_result_success(
+            success = assertion_helpers.assert_flext_result_success(
                 result, f"Log entry {i + 1} should succeed",
             )
+            assert success is True
 
     @pytest.mark.performance
     def test_performance_logging(self) -> None:
@@ -354,9 +368,10 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "error")
         assert hasattr(perf_logger, "debug")
         result = perf_logger.info("Performance test message")
-        assertion_helpers.assert_flext_result_success(
+        success = assertion_helpers.assert_flext_result_success(
             result, "Performance logging should succeed",
         )
+        assert success is True
         result2 = perf_logger.debug("Performance debug message")
         assert result2.is_success, "Performance debug logging should succeed"
 
@@ -436,9 +451,10 @@ class TestFlextLoggerIntegration:
                 operation="test_operation",
                 user_id="user-123",
             )
-            assertion_helpers.assert_flext_result_success(
+            success = assertion_helpers.assert_flext_result_success(
                 result, "Exception logging should succeed",
             )
+            assert success is True
 
     @pytest.mark.performance
     def test_performance_logging_integration(self) -> None:
@@ -466,4 +482,7 @@ class TestFlextLoggerIntegration:
             duration_ms=duration_ms,
             success=True,
         )
-        assertion_helpers.assert_flext_result_success(result, "Logging should succeed")
+        success = assertion_helpers.assert_flext_result_success(
+            result, "Logging should succeed",
+        )
+        assert success is True

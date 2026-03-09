@@ -16,10 +16,6 @@ from flext_core import r
 from flext_infra import m
 from flext_infra.docs.auditor import FlextInfraDocAuditor, main
 
-AuditIssue = m.Infra.Docs.AuditIssue
-AuditReport = m.Infra.Docs.DocsPhaseReport
-FlextInfraDocScope = m.Infra.Docs.FlextInfraDocScope
-
 
 class TestFlextInfraDocAuditor:
     """Tests for FlextInfraDocAuditor service."""
@@ -30,23 +26,29 @@ class TestFlextInfraDocAuditor:
         return FlextInfraDocAuditor()
 
     @pytest.fixture
-    def sample_scope(self, tmp_path: Path) -> FlextInfraDocScope:
+    def sample_scope(self, tmp_path: Path) -> m.Infra.Docs.FlextInfraDocScope:
         """Create sample documentation scope."""
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
-        return FlextInfraDocScope(
-            name="test-project", path=tmp_path, report_dir=report_dir,
+        return m.Infra.Docs.FlextInfraDocScope(
+            name="test-project",
+            path=tmp_path,
+            report_dir=report_dir,
         )
 
     def test_audit_returns_flext_result(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test that audit returns FlextResult[list[AuditReport]]."""
         result = auditor.audit(tmp_path)
         assert result.is_success or result.is_failure
 
     def test_audit_with_valid_scope_returns_success(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with valid scope returns success."""
         result = auditor.audit(tmp_path)
@@ -54,7 +56,9 @@ class TestFlextInfraDocAuditor:
         assert isinstance(result.value, list)
 
     def test_audit_report_structure(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test AuditReport has required fields."""
         result = auditor.audit(tmp_path)
@@ -66,7 +70,7 @@ class TestFlextInfraDocAuditor:
 
     def test_audit_issue_structure(self) -> None:
         """Test AuditIssue model structure."""
-        issue = AuditIssue(
+        issue = m.Infra.Docs.AuditIssue(
             file="README.md",
             issue_type="broken_link",
             severity="high",
@@ -77,42 +81,54 @@ class TestFlextInfraDocAuditor:
         assert issue.severity == "high"
 
     def test_audit_with_project_filter(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with single project filter."""
         result = auditor.audit(tmp_path, project="test-project")
         assert result.is_success or result.is_failure
 
     def test_audit_with_projects_filter(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with multiple projects filter."""
         result = auditor.audit(tmp_path, projects="proj1,proj2")
         assert result.is_success or result.is_failure
 
     def test_audit_with_check_links(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with links check."""
         result = auditor.audit(tmp_path, check="links")
         assert result.is_success or result.is_failure
 
     def test_audit_with_check_forbidden_terms(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with forbidden-terms check."""
         result = auditor.audit(tmp_path, check="forbidden-terms")
         assert result.is_success or result.is_failure
 
     def test_audit_with_strict_mode(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with strict mode enabled."""
         result = auditor.audit(tmp_path, strict=True)
         assert result.is_success or result.is_failure
 
     def test_audit_with_custom_output_dir(
-        self, auditor: FlextInfraDocAuditor, tmp_path: Path,
+        self,
+        auditor: FlextInfraDocAuditor,
+        tmp_path: Path,
     ) -> None:
         """Test audit with custom output directory."""
         output_dir = str(tmp_path / "custom_output")
@@ -121,11 +137,11 @@ class TestFlextInfraDocAuditor:
 
     def test_audit_report_frozen(self) -> None:
         """Test AuditReport is frozen (immutable)."""
-        assert AuditReport.model_config.get("frozen") is True
+        assert m.Infra.Docs.DocsPhaseReport.model_config.get("frozen") is True
 
     def test_audit_issue_frozen(self) -> None:
         """Test AuditIssue is frozen (immutable)."""
-        assert AuditIssue.model_config.get("frozen") is True
+        assert m.Infra.Docs.AuditIssue.model_config.get("frozen") is True
 
     def test_normalize_link_with_fragment(self) -> None:
         """Test _normalize_link strips fragment identifier."""
@@ -157,14 +173,16 @@ class TestFlextInfraDocAuditor:
     def test_should_skip_target_http_url(self) -> None:
         """Test _should_skip_target returns False for http URLs."""
         result = FlextInfraDocAuditor.should_skip_target(
-            "[link](http://example.com)", "http://example.com",
+            "[link](http://example.com)",
+            "http://example.com",
         )
         assert result is False
 
     def test_should_skip_target_https_url(self) -> None:
         """Test _should_skip_target returns False for https URLs."""
         result = FlextInfraDocAuditor.should_skip_target(
-            "[link](https://example.com)", "https://example.com",
+            "[link](https://example.com)",
+            "https://example.com",
         )
         assert result is False
 
@@ -230,15 +248,19 @@ class TestFlextInfraDocAuditor:
 
     def test_to_markdown_empty_issues(self) -> None:
         """Test _to_markdown with no issues."""
-        scope = FlextInfraDocScope(name="test", path=Path(), report_dir=Path())
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test", path=Path(), report_dir=Path()
+        )
         result = FlextInfraDocAuditor.to_markdown(scope, [])
         assert isinstance(result, list)
         assert "# Docs Audit Report" in result
 
     def test_to_markdown_with_issues(self) -> None:
         """Test _to_markdown with issues."""
-        scope = FlextInfraDocScope(name="test", path=Path(), report_dir=Path())
-        issue = AuditIssue(
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test", path=Path(), report_dir=Path()
+        )
+        issue = m.Infra.Docs.AuditIssue(
             file="README.md",
             issue_type="broken_link",
             severity="high",
@@ -285,8 +307,10 @@ class TestFlextInfraDocAuditor:
     def test_broken_link_issues_empty_scope(self, tmp_path: Path) -> None:
         """Test _broken_link_issues with no markdown files."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -298,8 +322,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](test.md)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -311,8 +337,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](https://example.com)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -324,8 +352,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](#section)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -337,8 +367,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("```\n[link](nonexistent.md)\n```")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -346,8 +378,10 @@ class TestFlextInfraDocAuditor:
     def test_forbidden_term_issues_empty_scope(self, tmp_path: Path) -> None:
         """Test _forbidden_term_issues with no markdown files."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
@@ -359,8 +393,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("# Test")
-        scope = FlextInfraDocScope(
-            name="root", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="root",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
@@ -372,8 +408,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("# Test")
-        scope = FlextInfraDocScope(
-            name="flext-core", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="flext-core",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
@@ -381,8 +419,10 @@ class TestFlextInfraDocAuditor:
     def test_audit_scope_with_links_check(self, tmp_path: Path) -> None:
         """Test _audit_scope runs links check."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = auditor.audit_scope(
             scope,
@@ -391,14 +431,16 @@ class TestFlextInfraDocAuditor:
             max_issues_default=None,
             max_issues_by_scope={},
         )
-        assert isinstance(report, AuditReport)
+        assert isinstance(report, m.Infra.Docs.DocsPhaseReport)
         assert "links" in report.checks
 
     def test_audit_scope_with_forbidden_terms_check(self, tmp_path: Path) -> None:
         """Test _audit_scope runs forbidden-terms check."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = auditor.audit_scope(
             scope,
@@ -407,14 +449,16 @@ class TestFlextInfraDocAuditor:
             max_issues_default=None,
             max_issues_by_scope={},
         )
-        assert isinstance(report, AuditReport)
+        assert isinstance(report, m.Infra.Docs.DocsPhaseReport)
         assert "forbidden-terms" in report.checks
 
     def test_audit_scope_strict_mode_passes(self, tmp_path: Path) -> None:
         """Test _audit_scope passes in strict mode with no issues."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = auditor.audit_scope(
             scope,
@@ -428,8 +472,10 @@ class TestFlextInfraDocAuditor:
     def test_audit_scope_non_strict_mode_always_passes(self, tmp_path: Path) -> None:
         """Test _audit_scope passes in non-strict mode."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = auditor.audit_scope(
             scope,
@@ -443,8 +489,10 @@ class TestFlextInfraDocAuditor:
     def test_audit_scope_with_budget_limit(self, tmp_path: Path) -> None:
         """Test _audit_scope respects issue budget."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = auditor.audit_scope(
             scope,
@@ -453,13 +501,15 @@ class TestFlextInfraDocAuditor:
             max_issues_default=0,
             max_issues_by_scope={},
         )
-        assert isinstance(report, AuditReport)
+        assert isinstance(report, m.Infra.Docs.DocsPhaseReport)
 
     def test_audit_scope_with_scope_specific_budget(self, tmp_path: Path) -> None:
         """Test _audit_scope uses scope-specific budget."""
         auditor = FlextInfraDocAuditor()
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = auditor.audit_scope(
             scope,
@@ -468,10 +518,11 @@ class TestFlextInfraDocAuditor:
             max_issues_default=10,
             max_issues_by_scope={"test": 5},
         )
-        assert isinstance(report, AuditReport)
+        assert isinstance(report, m.Infra.Docs.DocsPhaseReport)
 
     def test_forbidden_term_issues_root_scope_non_docs_file(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test _forbidden_term_issues skips non-docs files in root scope (line 235).
 
@@ -480,8 +531,10 @@ class TestFlextInfraDocAuditor:
         auditor = FlextInfraDocAuditor()
         md_file = tmp_path / "README.md"
         md_file.write_text("# Test")
-        scope = FlextInfraDocScope(
-            name="root", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="root",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
@@ -494,8 +547,10 @@ class TestFlextInfraDocAuditor:
         auditor = FlextInfraDocAuditor()
         md_file = tmp_path / "test.md"
         md_file.write_text("# Test")
-        scope = FlextInfraDocScope(
-            name="other-project", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="other-project",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.forbidden_term_issues(scope)
         assert isinstance(issues, list)
@@ -510,8 +565,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](https://example.com)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -526,8 +583,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](#section)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -559,7 +618,9 @@ class TestFlextInfraDocAuditor:
         When audit returns failure, main should return 1.
         """
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
-            mock_audit.return_value = r[list[AuditReport]].fail("audit error")
+            mock_audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].fail(
+                "audit error"
+            )
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
                 result = main()
                 assert result == 1
@@ -569,7 +630,7 @@ class TestFlextInfraDocAuditor:
 
         When any report has passed=False, main should return 1.
         """
-        failed_report = AuditReport(
+        failed_report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope="test",
             items=[],
@@ -578,7 +639,9 @@ class TestFlextInfraDocAuditor:
             passed=False,
         )
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
-            mock_audit.return_value = r[list[AuditReport]].ok([failed_report])
+            mock_audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                failed_report
+            ])
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
                 result = main()
                 assert result == 1
@@ -588,7 +651,7 @@ class TestFlextInfraDocAuditor:
 
         When all reports have passed=True, main should return 0.
         """
-        passed_report = AuditReport(
+        passed_report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope="test",
             items=[],
@@ -597,7 +660,9 @@ class TestFlextInfraDocAuditor:
             passed=True,
         )
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
-            mock_audit.return_value = r[list[AuditReport]].ok([passed_report])
+            mock_audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                passed_report
+            ])
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
                 result = main()
                 assert result == 0
@@ -607,7 +672,7 @@ class TestFlextInfraDocAuditor:
 
         Test that main() properly parses all CLI arguments.
         """
-        passed_report = AuditReport(
+        passed_report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope="test",
             items=[],
@@ -616,7 +681,9 @@ class TestFlextInfraDocAuditor:
             passed=True,
         )
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
-            mock_audit.return_value = r[list[AuditReport]].ok([passed_report])
+            mock_audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                passed_report
+            ])
             with patch(
                 "sys.argv",
                 [
@@ -653,7 +720,8 @@ class TestFlextInfraDocAuditor:
             assert "scope build error" in result.error
 
     def test_broken_link_issues_with_should_skip_target_true(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test _broken_link_issues skips targets when _should_skip_target returns True (line 213).
 
@@ -664,8 +732,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[a, b]")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -680,8 +750,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](missing.md)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert len(issues) > 0
@@ -710,7 +782,7 @@ class TestFlextInfraDocAuditor:
 
         When the module is run as __main__, it should raise SystemExit.
         """
-        passed_report = AuditReport(
+        passed_report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope="test",
             items=[],
@@ -719,13 +791,16 @@ class TestFlextInfraDocAuditor:
             passed=True,
         )
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
-            mock_audit.return_value = r[list[AuditReport]].ok([passed_report])
+            mock_audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                passed_report
+            ])
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
                 result = main()
                 assert result == 0
 
     def test_broken_link_issues_skips_when_should_skip_target_true(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test _broken_link_issues skips link when _should_skip_target returns True (line 213).
 
@@ -737,8 +812,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[some text]")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)
@@ -748,7 +825,7 @@ class TestFlextInfraDocAuditor:
 
         This tests that the if __name__ == '__main__' block works correctly.
         """
-        passed_report = AuditReport(
+        passed_report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
             scope="test",
             items=[],
@@ -757,7 +834,9 @@ class TestFlextInfraDocAuditor:
             passed=True,
         )
         with patch("flext_infra.docs.auditor.FlextInfraDocAuditor.audit") as mock_audit:
-            mock_audit.return_value = r[list[AuditReport]].ok([passed_report])
+            mock_audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                passed_report
+            ])
             with patch("sys.argv", ["auditor", "--root", str(tmp_path)]):
                 result = main()
                 assert result == 0
@@ -773,8 +852,10 @@ class TestFlextInfraDocAuditor:
         docs_dir.mkdir(parents=True, exist_ok=True)
         md_file = docs_dir / "test.md"
         md_file.write_text("[link](some text)")
-        scope = FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports",
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         issues = auditor.broken_link_issues(scope)
         assert isinstance(issues, list)

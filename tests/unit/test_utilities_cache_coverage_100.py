@@ -26,8 +26,8 @@ from pydantic import BaseModel
 
 from flext_core import t, u
 from flext_tests import tm
-from tests.test_utils import assertion_helpers
 
+from ..test_utils import assertion_helpers
 from ._models import CacheTestModel, NestedModel
 
 
@@ -73,7 +73,8 @@ class CacheScenarios:
         NormalizeComponentScenario(
             name="nested_pydantic_model",
             component=NestedModel(
-                inner=CacheTestModel(name="inner", value=10), count=5,
+                inner=CacheTestModel(name="inner", value=10),
+                count=5,
             ),
             expected_type=dict,
         ),
@@ -84,7 +85,10 @@ class CacheScenarios:
             expected_value="hello",
         ),
         NormalizeComponentScenario(
-            name="int_primitive", component=42, expected_type=int, expected_value=42,
+            name="int_primitive",
+            component=42,
+            expected_type=int,
+            expected_value=42,
         ),
         NormalizeComponentScenario(
             name="float_primitive",
@@ -121,28 +125,42 @@ class CacheScenarios:
             expected_value=(),
         ),
         NormalizeComponentScenario(
-            name="list_of_ints", component=[1, 2, 3], expected_type=list,
+            name="list_of_ints",
+            component=[1, 2, 3],
+            expected_type=list,
         ),
         NormalizeComponentScenario(
-            name="tuple_of_strings", component=("a", "b", "c"), expected_type=list,
+            name="tuple_of_strings",
+            component=("a", "b", "c"),
+            expected_type=list,
         ),
         NormalizeComponentScenario(
-            name="simple_dict", component={"key": "value"}, expected_type=dict,
+            name="simple_dict",
+            component={"key": "value"},
+            expected_type=dict,
         ),
         NormalizeComponentScenario(
-            name="nested_dict", component={"a": {"b": {"c": 123}}}, expected_type=dict,
+            name="nested_dict",
+            component={"a": {"b": {"c": 123}}},
+            expected_type=dict,
         ),
         NormalizeComponentScenario(
-            name="custom_object", component=str(object()), expected_type=str,
+            name="custom_object",
+            component=str(object()),
+            expected_type=str,
         ),
     ]
     SORT_KEY: ClassVar[list[SortKeyScenario]] = [
         SortKeyScenario(name="string_key", key="hello", expected_tuple=(0, "hello")),
         SortKeyScenario(
-            name="string_uppercase", key="HELLO", expected_tuple=(0, "hello"),
+            name="string_uppercase",
+            key="HELLO",
+            expected_tuple=(0, "hello"),
         ),
         SortKeyScenario(
-            name="string_mixed_case", key="HeLlO", expected_tuple=(0, "hello"),
+            name="string_mixed_case",
+            key="HeLlO",
+            expected_tuple=(0, "hello"),
         ),
         SortKeyScenario(name="int_key", key=42, expected_tuple=(1, "42")),
         SortKeyScenario(name="float_key", key=math.pi, expected_tuple=(1, "")),
@@ -154,7 +172,9 @@ class CacheScenarios:
             expected_tuple=(0, str(object()).lower()),
         ),
         SortKeyScenario(
-            name="list_key", key=str([1, 2]), expected_tuple=(0, str([1, 2]).lower()),
+            name="list_key",
+            key=str([1, 2]),
+            expected_tuple=(0, str([1, 2]).lower()),
         ),
         SortKeyScenario(
             name="dict_key",
@@ -181,7 +201,9 @@ class TestuCacheNormalizeComponent:
     """Test FlextUtilitiesCache.normalize_component."""
 
     @pytest.mark.parametrize(
-        "scenario", CacheScenarios.NORMALIZE_COMPONENT, ids=lambda s: s.name,
+        "scenario",
+        CacheScenarios.NORMALIZE_COMPONENT,
+        ids=lambda s: s.name,
     )
     def test_normalize_component(self, scenario: NormalizeComponentScenario) -> None:
         """Test normalize_component with various scenarios."""
@@ -195,7 +217,7 @@ class TestuCacheNormalizeComponent:
         model = CacheTestModel(name="test", value=42)
         result = u.Cache.normalize_component(model)
         assert isinstance(result, dict)
-        result_dict = cast("dict[str, t.ContainerValue]", result)
+        result_dict: dict[str, t.ContainerValue] = result
         assert result_dict["name"] == "test"
         assert result_dict["value"] == 42
 
@@ -204,9 +226,9 @@ class TestuCacheNormalizeComponent:
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
         result = u.Cache.normalize_component(model)
         assert isinstance(result, dict)
-        result_dict = cast("dict[str, t.ContainerValue]", result)
+        result_dict: dict[str, t.ContainerValue] = result
         assert isinstance(result_dict["inner"], dict)
-        inner_dict = cast("dict[str, t.ContainerValue]", result_dict["inner"])
+        inner_dict: dict[str, t.ContainerValue] = result_dict["inner"]
         assert inner_dict["name"] == "inner"
         assert inner_dict["value"] == 10
         assert result_dict["count"] == 5
@@ -221,7 +243,9 @@ class TestuCacheNormalizeComponent:
         result_tuple = result
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
         tm.that(
-            set(result_tuple), eq={1, 2, 3}, msg="Result tuple must contain {1, 2, 3}",
+            set(result_tuple),
+            eq={1, 2, 3},
+            msg="Result tuple must contain {1, 2, 3}",
         )
 
     def test_normalize_set_with_nested_values(self) -> None:
@@ -230,7 +254,9 @@ class TestuCacheNormalizeComponent:
         result = u.Cache.normalize_component(
             cast("t.ContainerValue | BaseModel", component),
         )
-        tm.that(result, is_=(tuple, list), none=False, msg="Result must be tuple or list")
+        tm.that(
+            result, is_=(tuple, list), none=False, msg="Result must be tuple or list"
+        )
         result_tuple = cast("tuple[t.ContainerValue, ...]", result)
         tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
         result_set = set(result_tuple)
@@ -248,7 +274,8 @@ class TestuCacheNormalizeComponent:
             [1, 2, 3],
         ]
         component: Sequence[t.ContainerValue] = cast(
-            "Sequence[t.ContainerValue]", component_raw,
+            "Sequence[t.ContainerValue]",
+            component_raw,
         )
         result = u.Cache.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")
@@ -313,7 +340,7 @@ class TestuCacheSortDictKeys:
         data = {"c": 3, "a": 1, "b": 2}
         result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict = cast("dict[str, t.ContainerValue]", result)
+        result_dict: dict[str, t.ContainerValue] = result
         assert list(result_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_with_none_values(self) -> None:
@@ -321,7 +348,7 @@ class TestuCacheSortDictKeys:
         data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
         result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict = cast("dict[str, t.ContainerValue]", result)
+        result_dict: dict[str, t.ContainerValue] = result
         assert result_dict["key1"] == "value"
         assert result_dict["key2"] == {}
         assert result_dict["key3"] == 42
@@ -331,7 +358,7 @@ class TestuCacheSortDictKeys:
         data = {"z": {"c": 3, "a": 1, "b": 2}, "a": {"x": 10, "y": 20}}
         result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict = cast("dict[str, t.ContainerValue]", result)
+        result_dict: dict[str, t.ContainerValue] = result
         assert list(result_dict.keys()) == ["a", "z"]
         nested = result_dict["z"]
         assert isinstance(nested, dict)
@@ -518,7 +545,7 @@ class TestuCacheClearObjectCache:
         """Test clear_object_cache with Pydantic model."""
 
         class ModelWithCache:
-            model_config = {"extra": "allow"}
+            model_config: ClassVar[dict[str, str]] = {"extra": "allow"}
             name: str
             _cache: dict[str, str] = {}  # noqa: RUF012  # Test double; cleared by clear_object_cache
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import libcst as cst
@@ -72,20 +72,28 @@ class FlextInfraRefactorEngine:
     def build_impact_map(
         results: list[m.Infra.Refactor.Result],
     ) -> list[dict[str, str]]:
+        """Build a normalized impact-map payload from refactor results."""
         return FlextInfraRefactorCliSupport.build_impact_map(results)
 
     @staticmethod
     def write_impact_map(
-        results: list[m.Infra.Refactor.Result], output_path: Path,
+        results: list[m.Infra.Refactor.Result],
+        output_path: Path,
     ) -> bool:
+        """Write the impact-map payload to the target output path."""
         return FlextInfraRefactorCliSupport.write_impact_map(results, output_path)
 
-    @staticmethod
-    def main() -> None:
-        sys.exit(FlextInfraRefactorCliSupport.run_cli(FlextInfraRefactorEngine))
+    @classmethod
+    def main(cls) -> None:
+        """Run the refactor CLI entrypoint and exit with status code."""
+        runner: Callable[[type], int] = FlextInfraRefactorCliSupport.run_cli
+        sys.exit(runner(cls))
 
     def collect_project_files(
-        self, project_path: Path, *, pattern: str = c.Infra.Extensions.PYTHON_GLOB,
+        self,
+        project_path: Path,
+        *,
+        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
         """Collect project files that match current engine scope filters."""
         scan_dirs = self.rule_loader.extract_project_scan_dirs(self.config)
@@ -120,7 +128,10 @@ class FlextInfraRefactorEngine:
         return files
 
     def collect_workspace_files(
-        self, workspace_root: Path, *, pattern: str = c.Infra.Extensions.PYTHON_GLOB,
+        self,
+        workspace_root: Path,
+        *,
+        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
         """Collect all candidate files under workspace projects."""
         root = workspace_root.resolve()
@@ -172,7 +183,10 @@ class FlextInfraRefactorEngine:
         return r[list[FlextInfraRefactorRule]].ok(loaded_rules)
 
     def refactor_file(
-        self, file_path: Path, *, dry_run: bool = False,
+        self,
+        file_path: Path,
+        *,
+        dry_run: bool = False,
     ) -> m.Infra.Refactor.Result:
         """Refactor one file with currently loaded rules."""
         try:
@@ -230,7 +244,10 @@ class FlextInfraRefactorEngine:
             )
 
     def refactor_files(
-        self, file_paths: list[Path], *, dry_run: bool = False,
+        self,
+        file_paths: list[Path],
+        *,
+        dry_run: bool = False,
     ) -> list[m.Infra.Refactor.Result]:
         """Refactor many files and collect individual results."""
         results: list[m.Infra.Refactor.Result] = []
@@ -372,7 +389,10 @@ class FlextInfraRefactorEngine:
                 break
             output.header(f"Project: {project}")
             project_results = self.refactor_project(
-                project, dry_run=dry_run, pattern=pattern, apply_safety=False,
+                project,
+                dry_run=dry_run,
+                pattern=pattern,
+                apply_safety=False,
             )
             results.extend(project_results)
             if apply_safety and (not dry_run):
@@ -411,13 +431,15 @@ class FlextInfraRefactorEngine:
         return results
 
     def set_rule_filters(self, filters: list[str]) -> None:
+        """Set active rule filters using normalized lowercase rule ids."""
         self.rule_filters = [item.lower() for item in filters]
 
     def _build_file_rules(self) -> list[ClassNestingRefactorRule]:
         return [ClassNestingRefactorRule()]
 
     def _build_rule(
-        self, rule_def: Mapping[str, t.ContainerValue],
+        self,
+        rule_def: Mapping[str, t.ContainerValue],
     ) -> FlextInfraRefactorRule | None:
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
         fix_action = (

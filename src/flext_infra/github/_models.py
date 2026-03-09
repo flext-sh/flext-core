@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels
 
@@ -53,12 +53,13 @@ class FlextInfraGithubModels:
     class SyncOperation(FlextModels.ArbitraryTypesModel):
         """Describe one workflow synchronization operation."""
 
-        model_config = {"frozen": True, "extra": "forbid"}
+        model_config = ConfigDict(frozen=True, extra="forbid")
 
         project: str = Field(..., description="Project name.")
         path: str = Field(..., description="File path relative to project root.")
         action: str = Field(
-            ..., description="Sync action (create, update, noop, prune).",
+            ...,
+            description="Sync action (create, update, noop, prune).",
         )
         reason: str = Field(..., description="Reason for the action.")
 

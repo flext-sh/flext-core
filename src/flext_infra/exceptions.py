@@ -12,7 +12,11 @@ from flext_core import FlextExceptions
 
 
 class FlextInfraExceptions(FlextExceptions):
+    """FLEXT infrastructure exception hierarchy."""
+
     class Infra:
+        """Infrastructure-specific exceptions."""
+
         pass
 
 

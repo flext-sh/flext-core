@@ -1,3 +1,5 @@
+"""FLEXT infrastructure refactor output rendering."""
+
 from __future__ import annotations
 
 from flext_infra import c, m
@@ -6,6 +8,7 @@ from flext_infra import c, m
 def render_namespace_enforcement_report(
     report: m.Infra.Refactor.NamespaceEnforcementModels.WorkspaceEnforcementReport,
 ) -> str:
+    """Render a human-readable namespace enforcement report."""
     max_loose = c.Infra.Refactor.NAMESPACE_MAX_RENDERED_LOOSE_OBJECTS
     max_imports = c.Infra.Refactor.NAMESPACE_MAX_RENDERED_IMPORT_VIOLATIONS
     lines: list[str] = [

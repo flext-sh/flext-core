@@ -8,10 +8,11 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from pydantic import TypeAdapter
+from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, c, output
+from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, c, output, t
 
 logger = FlextLogger.create_module_logger(__name__)
 _STRING_LIST_ADAPTER = TypeAdapter(list[str])
@@ -81,16 +82,33 @@ def _extract_requirement_name(entry: str) -> str | None:
     return match.group("name")
 
 
+def _table_get(
+    container: TOMLDocument | Table,
+    key: str,
+) -> Item | t.ContainerValue | None:
+    if key not in container:
+        return None
+    return container[key]
+
+
 def _rewrite_pep621(
-    doc: TOMLDocument, *, is_root: bool, mode: str, internal_names: set[str],
+    doc: TOMLDocument,
+    *,
+    is_root: bool,
+    mode: str,
+    internal_names: set[str],
 ) -> list[str]:
-    project_raw = doc.get(c.Infra.Toml.PROJECT, None)
-    if not isinstance(project_raw, Mapping):
+    project_raw = _table_get(doc, c.Infra.Toml.PROJECT)
+    if not isinstance(project_raw, Table):
         return []
-    deps_raw = project_raw.get(c.Infra.Toml.DEPENDENCIES, None)
+    project_section: Table = project_raw
+    deps_raw = _table_get(project_section, c.Infra.Toml.DEPENDENCIES)
     if not isinstance(deps_raw, list):
         return []
-    deps_filtered = [x for x in deps_raw if isinstance(x, str)]
+    deps_values: list[t.ContainerValue] = deps_raw
+    deps_filtered: list[str] = [
+        entry for entry in deps_values if isinstance(entry, str)
+    ]
     deps = _STRING_LIST_ADAPTER.validate_python(deps_filtered)
     changes: list[str] = []
     updated_deps: list[str] = []
@@ -119,35 +137,38 @@ def _rewrite_pep621(
         else:
             updated_deps.append(item)
     if changes:
-        project_raw[c.Infra.Toml.DEPENDENCIES] = updated_deps
+        project_section[c.Infra.Toml.DEPENDENCIES] = updated_deps
     return changes
 
 
 def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
-    tool_raw = doc.get(c.Infra.Toml.TOOL, None)
-    if not isinstance(tool_raw, Mapping):
+    tool_raw = _table_get(doc, c.Infra.Toml.TOOL)
+    if not isinstance(tool_raw, Table):
         return []
-    poetry_raw = tool_raw.get(c.Infra.Toml.POETRY, None)
-    if not isinstance(poetry_raw, Mapping):
+    tool_section: Table = tool_raw
+    poetry_raw = _table_get(tool_section, c.Infra.Toml.POETRY)
+    if not isinstance(poetry_raw, Table):
         return []
-    deps_raw = poetry_raw.get(c.Infra.Toml.DEPENDENCIES, None)
-    if not isinstance(deps_raw, Mapping):
+    poetry_section: Table = poetry_raw
+    deps_raw = _table_get(poetry_section, c.Infra.Toml.DEPENDENCIES)
+    if not isinstance(deps_raw, Table):
         return []
-    deps = deps_raw
+    deps: Table = deps_raw
     changes: list[str] = []
     for dep_key_raw in deps:
         dep_key = dep_key_raw
         value = deps[dep_key_raw]
-        if not isinstance(value, Mapping) or c.Infra.Toml.PATH not in value:
+        if not isinstance(value, Table) or c.Infra.Toml.PATH not in value:
             continue
-        raw_path = value[c.Infra.Toml.PATH]
+        value_map: Table = value
+        raw_path = value_map[c.Infra.Toml.PATH]
         if not isinstance(raw_path, str) or not raw_path.strip():
             continue
         dep_name = extract_dep_name(raw_path)
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
         if raw_path != new_path:
             changes.append(f"  Poetry: {dep_key}.path = {raw_path!r} -> {new_path!r}")
-            value[c.Infra.Toml.PATH] = new_path
+            value_map[c.Infra.Toml.PATH] = new_path
     return changes
 
 
@@ -166,7 +187,10 @@ def rewrite_dep_paths(
         return r[list[str]].fail(doc_result.error or "failed to read TOML document")
     doc = doc_result.unwrap()
     changes = _rewrite_pep621(
-        doc, is_root=is_root, mode=mode, internal_names=internal_names,
+        doc,
+        is_root=is_root,
+        mode=mode,
+        internal_names=internal_names,
     )
     changes += _rewrite_poetry(doc, is_root=is_root, mode=mode)
     if changes and (not dry_run):
@@ -188,7 +212,9 @@ def main() -> int:
         help="Target mode (default: auto-detect)",
     )
     _ = parser.add_argument(
-        "--dry-run", action="store_true", help="Print changes without writing",
+        "--dry-run",
+        action="store_true",
+        help="Print changes without writing",
     )
     _ = parser.add_argument(
         "--project",

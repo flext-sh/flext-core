@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from typing import Self
 
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels
+
+
+def _empty_model_list() -> list[BaseModel]:
+    return []
 
 
 class NamespaceFacadeStatus(FlextModels.ArbitraryTypesModel):
@@ -18,7 +22,13 @@ class NamespaceFacadeStatus(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(
-        cls, *, family: str, exists: bool, class_name: str, file: str, symbol_count: int,
+        cls,
+        *,
+        family: str,
+        exists: bool,
+        class_name: str,
+        file: str,
+        symbol_count: int,
     ) -> Self:
         return cls.model_validate({
             "family": family,
@@ -40,7 +50,13 @@ class NamespaceLooseObjectViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(
-        cls, *, file: str, line: int, name: str, kind: str, suggestion: str,
+        cls,
+        *,
+        file: str,
+        line: int,
+        name: str,
+        kind: str,
+        suggestion: str,
     ) -> Self:
         return cls.model_validate({
             "file": file,
@@ -61,7 +77,12 @@ class NamespaceImportAliasViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(
-        cls, *, file: str, line: int, current_import: str, suggested_import: str,
+        cls,
+        *,
+        file: str,
+        line: int,
+        current_import: str,
+        suggested_import: str,
     ) -> Self:
         return cls.model_validate({
             "file": file,
@@ -127,7 +148,13 @@ class NamespaceRuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(
-        cls, *, file: str, kind: str, alias: str, detail: str, line: int = 0,
+        cls,
+        *,
+        file: str,
+        kind: str,
+        alias: str,
+        detail: str,
+        line: int = 0,
     ) -> Self:
         return cls.model_validate({
             "file": file,
@@ -205,29 +232,31 @@ class NamespaceParseFailureViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
     project: str = Field(min_length=1)
     project_root: str = Field()
-    facade_statuses: list[NamespaceFacadeStatus] = Field(default_factory=list)
-    loose_objects: list[NamespaceLooseObjectViolation] = Field(default_factory=list)
-    import_violations: list[NamespaceImportAliasViolation] = Field(default_factory=list)
-    internal_import_violations: list[NamespaceInternalImportViolation] = Field(
-        default_factory=list,
+    facade_statuses: list[BaseModel] = Field(default_factory=_empty_model_list)
+    loose_objects: list[BaseModel] = Field(default_factory=_empty_model_list)
+    import_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
     )
-    manual_protocol_violations: list[NamespaceManualProtocolViolation] = Field(
-        default_factory=list,
+    internal_import_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
     )
-    cyclic_imports: list[NamespaceCyclicImportViolation] = Field(default_factory=list)
-    runtime_alias_violations: list[NamespaceRuntimeAliasViolation] = Field(
-        default_factory=list,
+    manual_protocol_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
     )
-    future_violations: list[NamespaceFutureAnnotationsViolation] = Field(
-        default_factory=list,
+    cyclic_imports: list[BaseModel] = Field(default_factory=_empty_model_list)
+    runtime_alias_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
     )
-    manual_typing_violations: list[NamespaceManualTypingAliasViolation] = Field(
-        default_factory=list,
+    future_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
     )
-    compatibility_alias_violations: list[NamespaceCompatibilityAliasViolation] = Field(
-        default_factory=list,
+    manual_typing_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
     )
-    parse_failures: list[NamespaceParseFailureViolation] = Field(default_factory=list)
+    compatibility_alias_violations: list[BaseModel] = Field(
+        default_factory=_empty_model_list,
+    )
+    parse_failures: list[BaseModel] = Field(default_factory=_empty_model_list)
     files_scanned: int = Field(default=0, ge=0)
 
     @classmethod
@@ -269,7 +298,7 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
 
 class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
     workspace: str = Field(min_length=1)
-    projects: list[NamespaceProjectEnforcementReport] = Field(default_factory=list)
+    projects: list[BaseModel] = Field(default_factory=_empty_model_list)
     total_facades_missing: int = Field(default=0, ge=0)
     total_loose_objects: int = Field(default=0, ge=0)
     total_import_violations: int = Field(default=0, ge=0)

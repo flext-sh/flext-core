@@ -63,22 +63,10 @@ class TestAutomatedFlextResult:
         """Comprehensive test scenarios for result functionality."""
         try:
             instance = fixture_factory.create_test_result_instance()
-            result = self._execute_result_operation(instance, test_scenario["input"])
-            if test_scenario["expected_success"]:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextResult operation failed: {test_scenario['description']}",
-                )
-            else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextResult operation should fail: {test_scenario['description']}",
-                )
+            result = self._execute_result_operation(instance, test_scenario.input)
+            if test_scenario.expected_success: $$$
         except Exception as e:
-            if not test_scenario["expected_success"]:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in result test: {e}")
+            if not test_scenario.expected_success: $$$
 
     def test_automated_result_type_safety(self) -> None:
         """Test type safety compliance for result."""

@@ -7,6 +7,10 @@ from pydantic import AliasPath, ConfigDict, Field
 from flext_core import FlextModels
 
 
+def _empty_str_list() -> list[str]:
+    return []
+
+
 class FlextInfraRefactorAstGrepModels:
     """Mixin containing ast-grep and migration model contracts."""
 
@@ -57,7 +61,8 @@ class FlextInfraRefactorAstGrepModels:
         file: str = Field(min_length=1, description="Absolute file path")
         module: str = Field(min_length=1, description="Import module path")
         constants_class: str = Field(
-            default="", description="First constants class name",
+            default="",
+            description="First constants class name",
         )
         facade_alias: str = Field(default="c", description="Facade alias letter")
         candidates: tuple[FlextInfraRefactorAstGrepModels.MROSymbolCandidate, ...] = (
@@ -152,7 +157,8 @@ class FlextInfraRefactorAstGrepModels:
 
             category: str | None = Field(default=None, description="Method category")
             visibility: str | None = Field(
-                default=None, description="Visibility filter",
+                default=None,
+                description="Visibility filter",
             )
             exclude_decorators: list[str] = Field(
                 default_factory=list,
@@ -162,8 +168,8 @@ class FlextInfraRefactorAstGrepModels:
                 default_factory=list,
                 description="Decorators to match",
             )
-            patterns: list[str | PatternRule] = Field(
-                default_factory=list,
+            patterns: list[str] = Field(
+                default_factory=_empty_str_list,
                 description="Pattern rules",
             )
             order: list[str] = Field(
@@ -176,22 +182,28 @@ class FlextInfraRefactorAstGrepModels:
 
             id: str = Field(default="signature-migration", description="Migration ID")
             enabled: bool = Field(
-                default=True, description="Whether migration is active",
+                default=True,
+                description="Whether migration is active",
             )
             target_qualified_names: list[str] = Field(
-                default_factory=list, description="Qualified names to match",
+                default_factory=list,
+                description="Qualified names to match",
             )
             target_simple_names: list[str] = Field(
-                default_factory=list, description="Simple names to match",
+                default_factory=list,
+                description="Simple names to match",
             )
             keyword_renames: dict[str, str] = Field(
-                default_factory=dict, description="Keyword rename mapping",
+                default_factory=dict,
+                description="Keyword rename mapping",
             )
             remove_keywords: list[str] = Field(
-                default_factory=list, description="Keywords to remove",
+                default_factory=list,
+                description="Keywords to remove",
             )
             add_keywords: dict[str, str] = Field(
-                default_factory=dict, description="Keywords to add",
+                default_factory=dict,
+                description="Keywords to add",
             )
 
         class ImportModernizerRuleConfig(FlextModels.FrozenStrictModel):
@@ -199,7 +211,8 @@ class FlextInfraRefactorAstGrepModels:
 
             module: str = Field(default="", description="Module path to modernize")
             symbol_mapping: dict[str, str] = Field(
-                default_factory=dict, description="Symbol-to-alias mapping",
+                default_factory=dict,
+                description="Symbol-to-alias mapping",
             )
 
 

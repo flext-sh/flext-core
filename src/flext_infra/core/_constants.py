@@ -48,13 +48,13 @@ class FlextInfraCoreConstants:
     BASELINE_DEFAULT: Final[str] = ".claude/skills/{skill}/baseline.json"
     CACHE_TTL_SECONDS: Final[int] = 300
     MISSING_IMPORT_RE: Final[re.Pattern[str]] = re.compile(
-        "Cannot find module `([^`]+)` \\[missing-import\\]",
+        r"Cannot find module `([^`]+)` \[missing-import\]",
     )
     MYPY_HINT_RE: Final[re.Pattern[str]] = re.compile(
-        "note:\\s+(?:hint|note):\\s+.*?`(types-\\S+)`",
+        r"note:\s+(?:hint|note):\s+.*?`(types-\S+)`",
     )
     MYPY_STUB_RE: Final[re.Pattern[str]] = re.compile(
-        "Library stubs not installed for ['\\\"](\\S+?)['\\\"]",
+        r"Library stubs not installed for ['\"](\S+?)['\"]",
     )
     INTERNAL_PREFIXES: Final[tuple[str, ...]] = ("flext_", "flext-")
 

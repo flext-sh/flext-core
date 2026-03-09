@@ -21,8 +21,6 @@ from flext_infra.docs.__main__ import (
     main,
 )
 
-AuditReport = m.Infra.Docs.DocsPhaseReport
-
 
 class TestRunAudit:
     """Tests for _run_audit handler."""
@@ -41,7 +39,7 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            report = AuditReport(
+            report = m.Infra.Docs.DocsPhaseReport(
                 phase="audit",
                 scope="root",
                 items=[],
@@ -49,7 +47,9 @@ class TestRunAudit:
                 strict=True,
                 passed=True,
             )
-            mock_auditor.audit.return_value = r[list[AuditReport]].ok([report])
+            mock_auditor.audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                report
+            ])
             result = _run_audit(args)
             assert result == 0
             mock_auditor.audit.assert_called_once()
@@ -68,7 +68,7 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            report = AuditReport(
+            report = m.Infra.Docs.DocsPhaseReport(
                 phase="audit",
                 scope="root",
                 items=[],
@@ -76,7 +76,9 @@ class TestRunAudit:
                 strict=True,
                 passed=False,
             )
-            mock_auditor.audit.return_value = r[list[AuditReport]].ok([report])
+            mock_auditor.audit.return_value = r[list[m.Infra.Docs.DocsPhaseReport]].ok([
+                report
+            ])
             result = _run_audit(args)
             assert result == 1
 
@@ -94,7 +96,9 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            mock_auditor.audit.return_value = r[list[AuditReport]].fail("audit error")
+            mock_auditor.audit.return_value = r[
+                list[m.Infra.Docs.DocsPhaseReport]
+            ].fail("audit error")
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_audit(args)
             assert result == 1
@@ -113,7 +117,9 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+            mock_auditor.audit.return_value = r[
+                list[m.Infra.Docs.DocsPhaseReport]
+            ].ok([])
             _run_audit(args)
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["project"] == "test-project"
@@ -132,7 +138,9 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+            mock_auditor.audit.return_value = r[
+                list[m.Infra.Docs.DocsPhaseReport]
+            ].ok([])
             _run_audit(args)
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["projects"] == "proj1,proj2"
@@ -151,7 +159,9 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+            mock_auditor.audit.return_value = r[
+                list[m.Infra.Docs.DocsPhaseReport]
+            ].ok([])
             _run_audit(args)
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["check"] == "links"
@@ -170,7 +180,9 @@ class TestRunAudit:
         ) as mock_auditor_class:
             mock_auditor = Mock()
             mock_auditor_class.return_value = mock_auditor
-            mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+            mock_auditor.audit.return_value = r[
+                list[m.Infra.Docs.DocsPhaseReport]
+            ].ok([])
             _run_audit(args)
             call_kwargs = mock_auditor.audit.call_args[1]
             assert call_kwargs["strict"] is False
@@ -434,7 +446,9 @@ class TestMain:
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
-                mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+                mock_auditor.audit.return_value = r[
+                    list[m.Infra.Docs.DocsPhaseReport]
+                ].ok([])
                 result = main()
                 assert result == 0
 
@@ -542,7 +556,9 @@ class TestMain:
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
-                mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+                mock_auditor.audit.return_value = r[
+                    list[m.Infra.Docs.DocsPhaseReport]
+                ].ok([])
                 main()
                 call_args = mock_auditor.audit.call_args[1]
                 assert str(call_args["root"]).endswith("custom/path")
@@ -555,7 +571,9 @@ class TestMain:
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
-                mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+                mock_auditor.audit.return_value = r[
+                    list[m.Infra.Docs.DocsPhaseReport]
+                ].ok([])
                 main()
                 call_kwargs = mock_auditor.audit.call_args[1]
                 assert call_kwargs["project"] == "test-proj"
@@ -568,7 +586,9 @@ class TestMain:
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
-                mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+                mock_auditor.audit.return_value = r[
+                    list[m.Infra.Docs.DocsPhaseReport]
+                ].ok([])
                 main()
                 call_kwargs = mock_auditor.audit.call_args[1]
                 assert call_kwargs["strict"] is False
@@ -620,7 +640,9 @@ class TestMain:
             ) as mock_auditor_class:
                 mock_auditor = Mock()
                 mock_auditor_class.return_value = mock_auditor
-                mock_auditor.audit.return_value = r[list[AuditReport]].ok([])
+                mock_auditor.audit.return_value = r[
+                    list[m.Infra.Docs.DocsPhaseReport]
+                ].ok([])
                 main()
                 call_kwargs = mock_auditor.audit.call_args[1]
                 assert call_kwargs["check"] == "links"

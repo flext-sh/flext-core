@@ -21,12 +21,6 @@ from tests.test_utils import assertion_helpers
 class TestFactoriesHelpers:
     """Shared aliases and helpers for factory tests."""
 
-    User = m.Tests.Factory.User
-    Config = m.Tests.Factory.Config
-    Service = m.Tests.Factory.Service
-    Entity = m.Tests.Factory.Entity
-    Value = m.Tests.Factory.Value
-
     @staticmethod
     def extract_model(
         result: _BaseModel
@@ -95,7 +89,9 @@ class TestUser:
     def test_user_creation_default(self) -> None:
         """Test User model creation with defaults."""
         user = m.Tests.Factory.User(
-            id="test-123", name="Test User", email="test@example.com",
+            id="test-123",
+            name="Test User",
+            email="test@example.com",
         )
         assert user.id == "test-123"
         assert user.name == "Test User"
@@ -105,7 +101,10 @@ class TestUser:
     def test_user_creation_with_active(self) -> None:
         """Test User model creation with active flag."""
         user = m.Tests.Factory.User(
-            id="test-123", name="Test User", email="test@example.com", active=False,
+            id="test-123",
+            name="Test User",
+            email="test@example.com",
+            active=False,
         )
         assert user.active is False
 
@@ -115,7 +114,7 @@ class TestConfig:
 
     def test_config_creation_default(self) -> None:
         """Test Config model creation with defaults."""
-        config = TestFactoriesHelpers.Config()
+        config = m.Tests.Factory.Config()
         assert config.service_type == "api"
         assert config.environment == "test"
         assert config.debug is True
@@ -125,8 +124,11 @@ class TestConfig:
 
     def test_config_creation_custom(self) -> None:
         """Test Config model creation with custom values."""
-        config = TestFactoriesHelpers.Config(
-            service_type="database", environment="production", debug=False, timeout=60,
+        config = m.Tests.Factory.Config(
+            service_type="database",
+            environment="production",
+            debug=False,
+            timeout=60,
         )
         assert config.service_type == "database"
         assert config.environment == "production"
@@ -148,7 +150,10 @@ class TestService:
     def test_service_creation_complete(self) -> None:
         """Test Service model creation with all fields."""
         service = m.Tests.Factory.Service(
-            id="test-123", type="database", name="Database Service", status="inactive",
+            id="test-123",
+            type="database",
+            name="Database Service",
+            status="inactive",
         )
         assert service.id == "test-123"
         assert service.type == "database"
@@ -172,7 +177,10 @@ class TestFlextTestsFactoriesModernAPI:
     def test_model_user_custom(self) -> None:
         """Test tt.model('user') with custom parameters."""
         user_result = tt.model(
-            "user", model_id="custom-123", name="Custom User", email="custom@test.com",
+            "user",
+            model_id="custom-123",
+            name="Custom User",
+            email="custom@test.com",
         )
         user = TestFactoriesHelpers.extract_model(user_result)
         assert isinstance(user, m.Tests.Factory.User)
@@ -192,7 +200,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('config') with default parameters."""
         config_result = tt.model("config")
         config = TestFactoriesHelpers.extract_model(config_result)
-        assert isinstance(config, TestFactoriesHelpers.Config)
+        assert isinstance(config, m.Tests.Factory.Config)
         assert config.service_type == "api"
         assert config.environment == "test"
         assert config.debug is True
@@ -207,7 +215,7 @@ class TestFlextTestsFactoriesModernAPI:
             timeout=60,
         )
         config = TestFactoriesHelpers.extract_model(config_result)
-        assert isinstance(config, TestFactoriesHelpers.Config)
+        assert isinstance(config, m.Tests.Factory.Config)
         assert config.service_type == "database"
         assert config.environment == "production"
         assert config.debug is False
@@ -217,7 +225,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('config') with overrides."""
         config_result = tt.model("config", log_level="INFO", max_retries=5)
         config = TestFactoriesHelpers.extract_model(config_result)
-        assert isinstance(config, TestFactoriesHelpers.Config)
+        assert isinstance(config, m.Tests.Factory.Config)
         assert config.log_level == "INFO"
         assert config.max_retries == 5
 
@@ -479,7 +487,7 @@ class TestsFlextTestsFactoriesModel:
     def test_model_config(self) -> None:
         """Test config model creation."""
         config = tt.model("config", environment="production")
-        assert isinstance(config, TestFactoriesHelpers.Config)
+        assert isinstance(config, m.Tests.Factory.Config)
         assert config.environment == "production"
 
     def test_model_service(self) -> None:
@@ -492,7 +500,7 @@ class TestsFlextTestsFactoriesModel:
     def test_model_entity(self) -> None:
         """Test entity model creation."""
         entity = tt.model("entity", name="Test Entity", value=42)
-        assert isinstance(entity, TestFactoriesHelpers.Entity)
+        assert isinstance(entity, m.Tests.Factory.Entity)
         assert entity.name == "Test Entity"
 
     def test_model_value_object(self) -> None:
@@ -654,7 +662,8 @@ class TestsFlextTestsFactoriesRes:
             "ok",
             value=5,
             transform=cast(
-                "t.Tests.TestResultValue", cast("object", lambda x: cast("int", x) * 2),
+                "t.Tests.TestResultValue",
+                cast("object", lambda x: cast("int", x) * 2),
             ),
         )
         result = cast(
@@ -693,7 +702,8 @@ class TestsFlextTestsFactoriesList:
         doubled_raw = tt.list(
             [1, 2, 3],
             transform=cast(
-                "t.Tests.TestResultValue", cast("object", lambda x: cast("int", x) * 2),
+                "t.Tests.TestResultValue",
+                cast("object", lambda x: cast("int", x) * 2),
             ),
         )
         doubled = cast(
@@ -712,7 +722,8 @@ class TestsFlextTestsFactoriesList:
             ),
         )
         evens = cast(
-            "list[int]", cast("object", TestFactoriesHelpers.as_payload_list(evens_raw)),
+            "list[int]",
+            cast("object", TestFactoriesHelpers.as_payload_list(evens_raw)),
         )
         assert evens == [2, 4]
 
@@ -720,7 +731,8 @@ class TestsFlextTestsFactoriesList:
         """Test list creation with uniqueness."""
         items_raw = tt.list([1, 2, 2, 3, 3, 3], unique=True)
         items = cast(
-            "list[int]", cast("object", TestFactoriesHelpers.as_payload_list(items_raw)),
+            "list[int]",
+            cast("object", TestFactoriesHelpers.as_payload_list(items_raw)),
         )
         assert len(items) == 3
         assert set(items) == {1, 2, 3}
@@ -770,14 +782,17 @@ class TestsFlextTestsFactoriesDict:
 
         def value_factory(key: str) -> m.Tests.Factory.User:
             return m.Tests.Factory.User(
-                id=key, name=f"User {key}", email=f"{key}@test.com",
+                id=key,
+                name=f"User {key}",
+                email=f"{key}@test.com",
             )
 
         users_raw = tt.dict_factory(
             "user",
             count=2,
             value_factory=cast(
-                "t.Tests.TestResultValue", cast("object", value_factory),
+                "t.Tests.TestResultValue",
+                cast("object", value_factory),
             ),
         )
         users = cast(

@@ -64,22 +64,10 @@ class TestAutomatedFlextContext:
         """Comprehensive test scenarios for context functionality."""
         try:
             instance = fixture_factory.create_test_context_instance()
-            result = self._execute_context_operation(instance, test_scenario["input"])
-            if test_scenario["expected_success"]:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextContext operation failed: {test_scenario['description']}",
-                )
-            else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextContext operation should fail: {test_scenario['description']}",
-                )
+            result = self._execute_context_operation(instance, test_scenario.input)
+            if test_scenario.expected_success: $$$
         except Exception as e:
-            if not test_scenario["expected_success"]:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in context test: {e}")
+            if not test_scenario.expected_success: $$$
 
     def test_automated_context_type_safety(self) -> None:
         """Test type safety compliance for context."""

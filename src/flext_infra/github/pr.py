@@ -50,7 +50,11 @@ class FlextInfraPrManager:
         self._versioning = versioning or FlextInfraVersioningService()
 
     def checks(
-        self, repo_root: Path, selector: str, *, strict: bool = False,
+        self,
+        repo_root: Path,
+        selector: str,
+        *,
+        strict: bool = False,
     ) -> r[Mapping[str, t.Scalar]]:
         """Run PR checks.
 
@@ -118,13 +122,14 @@ class FlextInfraPrManager:
 
         """
         existing_result: r[Mapping[str, t.Scalar]] = self.open_pr_for_head(
-            repo_root, head,
+            repo_root,
+            head,
         )
         if existing_result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(
                 existing_result.error or "failed to check existing PRs",
             )
-        existing = cast("Mapping[str, t.Scalar]", existing_result.unwrap())
+        existing = existing_result.unwrap()
         if existing:
             return r[Mapping[str, t.Scalar]].ok({
                 c.Infra.ReportKeys.STATUS: "already-open",
@@ -150,7 +155,7 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].fail(result.error or "PR creation failed")
         return r[Mapping[str, t.Scalar]].ok({
             c.Infra.ReportKeys.STATUS: "created",
-            "pr_url": cast("str", result.unwrap()),
+            "pr_url": result.unwrap(),
         })
 
     def merge(
@@ -272,14 +277,18 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].ok({})
         try:
             typed_first = TypeAdapter(dict[str, t.Scalar]).validate_python(
-                first, strict=False,
+                first,
+                strict=False,
             )
         except ValidationError:
             return r[Mapping[str, t.Scalar]].ok({})
         return r[Mapping[str, t.Scalar]].ok(typed_first)
 
     def status(
-        self, repo_root: Path, base: str, head: str,
+        self,
+        repo_root: Path,
+        base: str,
+        head: str,
     ) -> r[Mapping[str, t.Scalar]]:
         """Get PR status for the given head branch.
 
@@ -331,7 +340,9 @@ class FlextInfraPrManager:
         )
 
     def _trigger_release_if_needed(
-        self, repo_root: Path, head: str,
+        self,
+        repo_root: Path,
+        head: str,
     ) -> r[Mapping[str, str]]:
         """Trigger release workflow if repo supports it.
 
@@ -438,7 +449,12 @@ def main() -> int:
         title = args.title or f"chore: sync {head}"
         body = args.body or "Automated PR managed by flext_infra.github.pr"
         result = manager.create(
-            repo_root, base, head, title, body, draft=args.draft == 1,
+            repo_root,
+            base,
+            head,
+            title,
+            body,
+            draft=args.draft == 1,
         )
         if result.is_success:
             return 0

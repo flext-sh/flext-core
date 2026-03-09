@@ -38,10 +38,11 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
             content = gitmodules.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError:
             return set()
-        return set(re.findall("^\\s*path\\s*=\\s*(.+?)\\s*$", content, re.MULTILINE))
+        return set(re.findall(r"^\s*path\s*=\s*(.+?)\s*$", content, re.MULTILINE))
 
     def discover_projects(
-        self, workspace_root: Path,
+        self,
+        workspace_root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         """Discover all subprojects in the workspace.
 

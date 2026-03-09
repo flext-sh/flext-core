@@ -38,8 +38,7 @@ def test_metadata_attributes_accepts_basemodel_mapping() -> None:
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping") as exc_info:
-        got = m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
-        assert False, f"expected to raise, got {got!r}"
+        m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
     assert exc_info.value is not None
     assert "must dump to mapping" in str(exc_info.value)
 
@@ -53,8 +52,7 @@ def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like") as exc_info:
-        got = m.Metadata.model_validate({"attributes": 123})
-        assert False, f"expected to raise, got {got!r}"
+        m.Metadata.model_validate({"attributes": 123})
     assert exc_info.value is not None
     assert "attributes must be dict-like" in str(exc_info.value)
 
@@ -71,10 +69,10 @@ def test_frozen_value_model_equality_and_hash() -> None:
 
 def test_identifiable_unique_id_empty_rejected() -> None:
     with pytest.raises(
-        ValidationError, match="String should have at least 1 character",
+        ValidationError,
+        match="String should have at least 1 character",
     ) as exc_info:
-        got = _Identifiable(unique_id="   ")
-        assert False, f"expected to raise, got {got!r}"
+        _Identifiable(unique_id="   ")
     assert exc_info.value is not None
     assert "at least 1 character" in str(exc_info.value)
 

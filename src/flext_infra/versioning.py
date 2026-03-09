@@ -40,7 +40,7 @@ class FlextInfraVersioningService(s[str]):
                 continue
             if not in_project_section or not line.startswith(c.Infra.Toml.VERSION):
                 continue
-            match = re.match("^version\\s*=\\s*[\"\\']([^\"\\']+)[\"\\']\\s*$", line)
+            match = re.match(r"^version\s*=\s*[\"']([^\"']+)[\"']\s*$", line)
             if match:
                 return match.group(1)
         return None

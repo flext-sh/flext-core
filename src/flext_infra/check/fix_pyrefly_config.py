@@ -29,7 +29,10 @@ _logger = FlextLogger.create_module_logger(__name__)
 
 
 class FlextInfraConfigFixer(s[list[str]]):
+    """Fix pyrefly configuration across workspace projects."""
+
     def __init__(self, workspace_root: Path | None = None) -> None:
+        """Initialize pyrefly config fixer."""
         super().__init__()
         self._path_resolver = FlextInfraPathResolver()
         self._discovery = FlextInfraDiscoveryService()
@@ -54,13 +57,17 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].fail("Use run() directly")
 
     def find_pyproject_files(
-        self, project_paths: list[Path] | None = None,
+        self,
+        project_paths: list[Path] | None = None,
     ) -> r[list[Path]]:
+        """Find pyproject.toml files for selected projects."""
         return self._discovery.find_all_pyproject_files(
-            self._workspace_root, project_paths=project_paths,
+            self._workspace_root,
+            project_paths=project_paths,
         )
 
     def process_file(self, path: Path, *, dry_run: bool = False) -> r[list[str]]:
+        """Process one pyproject.toml file and apply fixes."""
         try:
             text = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             doc = tomlkit.parse(text)
@@ -104,8 +111,13 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].ok(all_fixes)
 
     def run(
-        self, projects: Sequence[str], *, dry_run: bool = False, verbose: bool = False,
+        self,
+        projects: Sequence[str],
+        *,
+        dry_run: bool = False,
+        verbose: bool = False,
     ) -> r[list[str]]:
+        """Run pyrefly configuration fixes for selected projects."""
         project_paths = [self._resolve_project_path(project) for project in projects]
         files_result = self.find_pyproject_files(project_paths or None)
         if files_result.is_failure:
@@ -139,7 +151,8 @@ class FlextInfraConfigFixer(s[list[str]]):
         return r[list[str]].ok(messages)
 
     def _ensure_project_excludes_tk(
-        self, pyrefly: MutableMapping[str, t.ContainerValue],
+        self,
+        pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
@@ -158,7 +171,9 @@ class FlextInfraConfigFixer(s[list[str]]):
         return fixes
 
     def _fix_search_paths_tk(
-        self, pyrefly: MutableMapping[str, t.ContainerValue], project_dir: Path,
+        self,
+        pyrefly: MutableMapping[str, t.ContainerValue],
+        project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
         search_path = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
@@ -201,7 +216,8 @@ class FlextInfraConfigFixer(s[list[str]]):
         return fixes
 
     def _remove_ignore_sub_config_tk(
-        self, pyrefly: MutableMapping[str, t.ContainerValue],
+        self,
+        pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
@@ -232,6 +248,7 @@ class FlextInfraConfigFixer(s[list[str]]):
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the pyrefly configuration fixer CLI."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument("projects", nargs="*")
     _ = parser.add_argument("--dry-run", action="store_true")
@@ -239,7 +256,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     fixer = FlextInfraConfigFixer()
     result = fixer.run(
-        projects=args.projects, dry_run=args.dry_run, verbose=args.verbose,
+        projects=args.projects,
+        dry_run=args.dry_run,
+        verbose=args.verbose,
     )
     if result.is_failure:
         output.error(result.error or "pyrefly config fix failed")

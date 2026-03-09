@@ -30,6 +30,28 @@ class FlextInfraCodegenTransforms:
         return f"from flext_core import {base_class}"
 
     @staticmethod
+    def add_import_to_tree(
+        tree: ast.Module, pkg_name: str, module_name: str, name: str
+    ) -> None:
+        """Add a from-import to the tree when it is missing."""
+        full_module = f"{pkg_name}.{module_name}"
+        for stmt in tree.body:
+            if isinstance(stmt, ast.ImportFrom) and stmt.module == full_module:
+                for alias in stmt.names:
+                    if alias.name == name:
+                        return
+                stmt.names.append(ast.alias(name=name))
+                return
+        new_import = ast.ImportFrom(
+            module=full_module,
+            names=[ast.alias(name=name)],
+            level=0,
+        )
+        _ = ast.fix_missing_locations(new_import)
+        insert_idx = FlextInfraCodegenTransforms.find_insert_position(tree)
+        tree.body.insert(insert_idx, new_import)
+
+    @staticmethod
     def extract_public_classes(tree: ast.Module, prefix: str) -> list[str]:
         """Extract class names that match the provided public prefix."""
         return [
@@ -37,6 +59,17 @@ class FlextInfraCodegenTransforms:
             for stmt in tree.body
             if isinstance(stmt, ast.ClassDef) and stmt.name.startswith(prefix)
         ]
+
+    @staticmethod
+    def find_insert_position(tree: ast.Module) -> int:
+        """Find insertion point after module docstring/imports."""
+        last_import_idx = 0
+        for i, stmt in enumerate(tree.body):
+            if isinstance(stmt, (ast.Import, ast.ImportFrom)) or (
+                isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant)
+            ):
+                last_import_idx = i + 1
+        return last_import_idx
 
     @staticmethod
     def find_standalone_finals(tree: ast.Module) -> list[ast.AnnAssign]:
@@ -98,11 +131,33 @@ class FlextInfraCodegenTransforms:
 
     @staticmethod
     def generate_module_skeleton(
-        class_name: str, base_class: str, docstring: str,
+        class_name: str,
+        base_class: str,
+        docstring: str,
     ) -> str:
         """Generate a minimal base module file with correct imports."""
         import_line = FlextInfraCodegenTransforms._resolve_base_class_import(base_class)
         return f'"""Module skeleton for {class_name}.\n\n{docstring}\n\nCopyright (c) 2025 FLEXT Team. All rights reserved.\nSPDX-License-Identifier: MIT\n"""\n\nfrom __future__ import annotations\n\n{import_line}\n\n\nclass {class_name}({base_class}):\n    """{docstring}"""\n'
+
+    @staticmethod
+    def get_node_name(node: ast.stmt) -> str:
+        """Extract assignment target name from a statement."""
+        if isinstance(node, ast.Assign) and node.targets:
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                return target.id
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            return node.target.id
+        return ""
+
+    @staticmethod
+    def get_top_level_names_in_node(node: ast.stmt) -> frozenset[str]:
+        """Collect all Name references used in a node."""
+        names: set[str] = set()
+        for child in ast.walk(node):
+            if isinstance(child, ast.Name):
+                names.add(child.id)
+        return frozenset(names)
 
     @staticmethod
     def is_used_in_context(node: ast.stmt, tree: ast.Module) -> bool:
@@ -137,6 +192,22 @@ class FlextInfraCodegenTransforms:
                 for kw_node in ast.walk(keywords_module):
                     if isinstance(kw_node, ast.Name) and kw_node.id == name:
                         return True
+        return False
+
+    @staticmethod
+    def name_exists_in_module(name: str, tree: ast.Module) -> bool:
+        """Check if a top-level name is already defined in a module."""
+        for stmt in tree.body:
+            if isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name) and target.id == name:
+                        return True
+            if (
+                isinstance(stmt, ast.AnnAssign)
+                and isinstance(stmt.target, ast.Name)
+                and (stmt.target.id == name)
+            ):
+                return True
         return False
 
     @staticmethod

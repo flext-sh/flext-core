@@ -29,17 +29,18 @@ class FlextInfraPatterns:
     "Match mypy missing stub messages, capturing the library name."
     INTERNAL_PREFIXES: tuple[str, ...] = ("flext_",)
     "Prefixes identifying internal FLEXT packages."
-    MARKDOWN_LINK_RE: re.Pattern[str] = re.compile("\\[([^\\]]+)\\]\\(([^)]+)\\)")
+    MARKDOWN_LINK_RE: re.Pattern[str] = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
     "Match markdown links capturing text (group 1) and URL (group 2)."
-    MARKDOWN_LINK_URL_RE: re.Pattern[str] = re.compile("\\[[^\\]]+\\]\\(([^)]+)\\)")
+    MARKDOWN_LINK_URL_RE: re.Pattern[str] = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
     "Match markdown links capturing only the URL (group 1)."
-    HEADING_RE: re.Pattern[str] = re.compile("^#{1,6}\\s+(.+?)\\s*$", re.MULTILINE)
+    HEADING_RE: re.Pattern[str] = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
     "Match any markdown heading (h1-h6), capturing the text."
     HEADING_H2_H3_RE: re.Pattern[str] = re.compile(
-        "^(##|###)\\s+(.+?)\\s*$", re.MULTILINE,
+        r"^(##|###)\s+(.+?)\s*$",
+        re.MULTILINE,
     )
     "Match h2/h3 headings, capturing level (group 1) and text (group 2)."
-    ANCHOR_LINK_RE: re.Pattern[str] = re.compile("\\[([^\\]]+)\\]\\(#([^)]+)\\)")
+    ANCHOR_LINK_RE: re.Pattern[str] = re.compile(r"\[([^\]]+)\]\(#([^)]+)\)")
     "Match internal anchor links, capturing text and anchor."
     INLINE_CODE_RE: re.Pattern[str] = re.compile(r"`[^`]*`")
     "Match inline code spans for stripping before analysis."

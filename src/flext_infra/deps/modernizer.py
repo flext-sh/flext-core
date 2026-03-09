@@ -72,11 +72,13 @@ class FlextInfraPyprojectModernizer:
     """Modernize all workspace pyproject.toml files."""
 
     def __init__(self, root: Path | None = None) -> None:
+        """Initialize pyproject modernizer."""
         super().__init__()
         self.root = root or ROOT
         self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     def find_pyproject_files(self) -> list[Path]:
+        """Find all workspace pyproject.toml files."""
         files: list[Path] = []
         for path in self.root.rglob(c.Infra.Files.PYPROJECT_FILENAME):
             if any(part in c.Infra.Deps.SKIP_DIRS for part in path.parts):
@@ -92,12 +94,14 @@ class FlextInfraPyprojectModernizer:
         dry_run: bool,
         skip_comments: bool,
     ) -> list[str]:
+        """Process one pyproject.toml file and collect changes."""
         doc = _read_doc(path)
         if doc is None:
             return ["invalid TOML"]
         is_root = path.parent.resolve() == self.root.resolve()
         shared_path, shared_written = _ensure_ruff_shared_template(
-            path.parent, self.root,
+            path.parent,
+            self.root,
         )
         changes: list[str] = []
         if shared_written:
@@ -141,6 +145,7 @@ class FlextInfraPyprojectModernizer:
         return changes
 
     def run(self, args: argparse.Namespace) -> int:
+        """Run pyproject modernization for the workspace."""
         dry_run = bool(args.dry_run or args.audit)
         files = self.find_pyproject_files()
         root_doc = _read_doc(self.root / c.Infra.Files.PYPROJECT_FILENAME)
@@ -176,7 +181,8 @@ class FlextInfraPyprojectModernizer:
         for path in files:
             project_dir = path.parent
             result = self._runner.run_raw(
-                [c.Infra.Cli.POETRY, c.Infra.Cli.PoetryCmd.CHECK], cwd=project_dir,
+                [c.Infra.Cli.POETRY, c.Infra.Cli.PoetryCmd.CHECK],
+                cwd=project_dir,
             )
             if result.is_failure:
                 has_warning = True
@@ -196,6 +202,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """Run the pyproject modernizer CLI."""
     parser = _parser()
     args = parser.parse_args()
     return FlextInfraPyprojectModernizer().run(args)

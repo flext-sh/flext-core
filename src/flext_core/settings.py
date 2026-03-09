@@ -16,11 +16,17 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar, Self
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    computed_field,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
@@ -170,6 +176,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         default=c.Exceptions.FAILURE_LEVEL_DEFAULT,
         description="Exception failure level",
     )
+    _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
     def __new__(cls, **_kwargs: t.Scalar | None) -> Self:
         """Create singleton instance.
@@ -192,12 +199,11 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.ContainerValue) -> None:
+    def __init__(self, **kwargs: t.Scalar | None) -> None:
         """Initialize config with data.
 
-        Note: BaseSettings handles initialization from environment variables,
-        .env files, and other sources automatically. Kwargs can be passed for
-        testing and explicit configuration (used by model_validate).
+        Kwargs are applied as field overrides after base env/config loading
+        to avoid type conflicts with BaseSettings internal parameters.
         """
         if hasattr(self, "_di_provider"):
             if kwargs:
@@ -205,8 +211,12 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                     if key in self.__class__.model_fields:
                         setattr(self, key, value)
             return
-        super().__init__(**kwargs)
-        self._di_provider: t.Scalar | None = None
+        super().__init__()
+        if kwargs:
+            model_fields = self.__class__.model_fields
+            for key, value in kwargs.items():
+                if key in model_fields:
+                    setattr(self, key, value)
 
     @computed_field
     @property
@@ -320,13 +330,22 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise ValueError(msg)
         return self
 
-    @dataclass(slots=True, frozen=True)
-    class AutoConfig:
+    class AutoConfig(BaseModel):
         """Auto-configuration model for dynamic config creation."""
 
-        config_class: type[BaseSettings]
-        env_prefix: str = c.Platform.ENV_PREFIX
-        env_file: str | None = None
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        config_class: type[BaseSettings] = Field(
+            description="Settings class to instantiate",
+        )
+        env_prefix: str = Field(
+            default=c.Platform.ENV_PREFIX,
+            description="Environment variable prefix for settings resolution",
+        )
+        env_file: str | None = Field(
+            default=None,
+            description="Path to .env file for environment variable loading",
+        )
 
         def create_config(self) -> BaseSettings:
             """Create configuration instance."""
@@ -339,6 +358,9 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Resolve namespace-style attribute access to registered settings."""
+        pydantic_private = object.__getattribute__(self, "__pydantic_private__")
+        if pydantic_private is not None and name in pydantic_private:
+            return pydantic_private[name]
         namespace = name.lower()
         if namespace in {"core", "root", "settings"}:
             return FlextSettings.get_instance()

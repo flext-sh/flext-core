@@ -9,15 +9,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, t
+from flext_infra._utilities.io import FlextInfraUtilitiesIo
+from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
+from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra.typings import FlextInfraTypes as t
 
 
 class FlextInfraUtilitiesRefactor:
@@ -252,6 +255,142 @@ class FlextInfraUtilitiesRefactor:
             return [item for item in value if isinstance(item, dict)]
         msg = "expected list[dict[str, ContainerValue]] value"
         raise ValueError(msg)
+
+    @staticmethod
+    def has_required_fields(
+        entry: t.ContainerValue,
+        required_fields: list[str],
+    ) -> bool:
+        if not isinstance(entry, dict):
+            return False
+        return all(key in entry for key in required_fields)
+
+    @staticmethod
+    def normalize_module_path(path_value: Path) -> str:
+        normalized = path_value.as_posix().replace("\\", "/")
+        path = Path(normalized)
+        parts = path.parts
+        if c.Infra.Paths.DEFAULT_SRC_DIR in parts:
+            src_index = parts.index(c.Infra.Paths.DEFAULT_SRC_DIR)
+            suffix = parts[src_index + 1 :]
+            if suffix:
+                return Path(*suffix).as_posix()
+        return path.as_posix().lstrip("./")
+
+    @staticmethod
+    def project_scope_tokens(path_value: Path) -> set[str]:
+        normalized = path_value.as_posix().replace("\\", "/")
+        parts = Path(normalized).parts
+        if not parts:
+            return set()
+        tokens: set[str] = set()
+        if c.Infra.Paths.DEFAULT_SRC_DIR in parts:
+            src_index = parts.index(c.Infra.Paths.DEFAULT_SRC_DIR)
+            if src_index > 0:
+                tokens.add(parts[src_index - 1])
+            if src_index + 1 < len(parts):
+                tokens.add(parts[src_index + 1])
+        return tokens
+
+    @staticmethod
+    def rewrite_scope(entry: t.Infra.StrMap) -> str:
+        raw_scope = entry.get(c.Infra.ReportKeys.REWRITE_SCOPE, c.Infra.ReportKeys.FILE)
+        scope = raw_scope.strip().lower()
+        if scope in {
+            c.Infra.ReportKeys.FILE,
+            c.Infra.Toml.PROJECT,
+            c.Infra.ReportKeys.WORKSPACE,
+        }:
+            return scope
+        msg = f"unsupported rewrite_scope: {raw_scope}"
+        raise ValueError(msg)
+
+    @staticmethod
+    def scope_applies_to_file(
+        entry: t.Infra.StrMap,
+        current_file: Path,
+        candidate_file: Path,
+    ) -> bool:
+        rewrite_scope = FlextInfraUtilitiesRefactor.rewrite_scope(entry)
+        if rewrite_scope == c.Infra.ReportKeys.WORKSPACE:
+            return True
+        current_module = FlextInfraUtilitiesRefactor.normalize_module_path(current_file)
+        candidate_module = FlextInfraUtilitiesRefactor.normalize_module_path(
+            candidate_file
+        )
+        if rewrite_scope == c.Infra.ReportKeys.FILE:
+            return current_module == candidate_module
+        current_tokens = FlextInfraUtilitiesRefactor.project_scope_tokens(current_file)
+        candidate_tokens = FlextInfraUtilitiesRefactor.project_scope_tokens(
+            candidate_file
+        )
+        if current_tokens and candidate_tokens:
+            return bool(current_tokens & candidate_tokens)
+        return current_module == candidate_module
+
+    @staticmethod
+    def policy_document_schema_valid(
+        loaded: dict[str, t.ContainerValue],
+        schema_path: Path,
+    ) -> bool:
+        schema_result = FlextInfraUtilitiesIo.read_json(schema_path)
+        if schema_result.is_failure:
+            return False
+        raw_schema: Mapping[str, t.ContainerValue] = schema_result.value
+        schema: dict[str, t.ContainerValue] = dict(raw_schema.items())
+        top_required = FlextInfraUtilitiesRefactor.string_list(
+            schema.get("required", [])
+        )
+        if not FlextInfraUtilitiesRefactor.has_required_fields(loaded, top_required):
+            return False
+        definitions_raw = schema.get("definitions", {})
+        if not isinstance(definitions_raw, dict):
+            return False
+        policy_entry_raw = definitions_raw.get("policyEntry", {})
+        class_rule_raw = definitions_raw.get("classRule", {})
+        if not isinstance(policy_entry_raw, dict):
+            return False
+        if not isinstance(class_rule_raw, dict):
+            return False
+        policy_entry_required = FlextInfraUtilitiesRefactor.string_list(
+            policy_entry_raw.get("required", []),
+        )
+        class_rule_required = FlextInfraUtilitiesRefactor.string_list(
+            class_rule_raw.get("required", []),
+        )
+        for entry in FlextInfraUtilitiesRefactor.mapping_list(
+            loaded.get("policy_matrix")
+        ):
+            if not FlextInfraUtilitiesRefactor.has_required_fields(
+                entry,
+                policy_entry_required,
+            ):
+                return False
+        for rule in FlextInfraUtilitiesRefactor.mapping_list(
+            loaded.get(c.Infra.ReportKeys.RULES),
+        ):
+            if not FlextInfraUtilitiesRefactor.has_required_fields(
+                rule, class_rule_required
+            ):
+                return False
+        return True
+
+    @staticmethod
+    def load_validated_policy_document(policy_path: Path) -> t.Infra.ContainerDict:
+        try:
+            loaded = FlextInfraUtilitiesYaml.safe_load_yaml(policy_path)
+        except (OSError, TypeError) as exc:
+            msg = f"failed to read policy document: {policy_path}"
+            raise ValueError(msg) from exc
+        loaded_dict = dict(loaded.items())
+        schema_path = policy_path.with_name("class-policy-v2.schema.json")
+        if not FlextInfraUtilitiesRefactor.policy_document_schema_valid(
+            loaded_dict,
+            schema_path,
+        ):
+            msg = "policy document failed schema validation"
+            raise ValueError(msg)
+        return loaded_dict
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]

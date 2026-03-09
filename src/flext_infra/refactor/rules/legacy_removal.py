@@ -76,7 +76,9 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Apply configured legacy-removal transforms to module tree."""
         changes: list[str] = []
@@ -99,12 +101,13 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
 
     @staticmethod
     def _normalize_string_items(value: t.ContainerValue) -> list[str]:
-        if not isinstance(value, list | tuple | set):
+        if not isinstance(value, (list, tuple, set)):
             return []
         return [item for item in value if isinstance(item, str)]
 
     def _expected_forwarding_params(
-        self, func: cst.FunctionDef,
+        self,
+        func: cst.FunctionDef,
     ) -> tuple[list[str], list[str], str | None, str | None]:
         posonly_names = [param.name.value for param in func.params.posonly_params]
         positional_names = [param.name.value for param in func.params.params]
@@ -124,7 +127,8 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         )
 
     def _extract_passthrough_call(
-        self, func: cst.FunctionDef,
+        self,
+        func: cst.FunctionDef,
     ) -> tuple[str, list[cst.Arg]] | None:
         if not isinstance(func.body, cst.IndentedBlock):
             return None
@@ -172,7 +176,8 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         return target_name
 
     def _parse_forwarded_arguments(
-        self, call_args: list[cst.Arg],
+        self,
+        call_args: list[cst.Arg],
     ) -> tuple[list[str], dict[str, str], str | None, str | None] | None:
         positional_forwarded: list[str] = []
         keyword_forwarded: dict[str, str] = {}
@@ -218,7 +223,8 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
             self._normalize_string_items(allow_target_suffixes_raw),
         )
         transformer = FlextInfraRefactorAliasRemover(
-            allow_aliases=allow_aliases, allow_target_suffixes=allow_target_suffixes,
+            allow_aliases=allow_aliases,
+            allow_target_suffixes=allow_target_suffixes,
         )
         new_tree = tree.visit(transformer)
         return (new_tree, transformer.changes)

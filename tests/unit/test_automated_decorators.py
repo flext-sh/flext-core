@@ -65,20 +65,20 @@ class TestAutomatedFlextDecorators:
         try:
             instance = fixture_factory.create_test_decorators_instance()
             result = self._execute_decorators_operation(
-                instance, test_scenario["input"],
+                instance, test_scenario.input,
             )
-            if test_scenario["expected_success"]:
+            if test_scenario.expected_success:
                 _ = assertion_helpers.assert_flext_result_success(
                     result,
-                    f"FlextDecorators operation failed: {test_scenario['description']}",
+                    f"FlextDecorators operation failed: {test_scenario.description}",
                 )
             else:
                 _ = assertion_helpers.assert_flext_result_failure(
                     result,
-                    f"FlextDecorators operation should fail: {test_scenario['description']}",
+                    f"FlextDecorators operation should fail: {test_scenario.description}",
                 )
         except Exception as e:
-            if not test_scenario["expected_success"]:
+            if not test_scenario.expected_success:
                 pass
             else:
                 pytest.fail(f"Unexpected error in decorators test: {e}")

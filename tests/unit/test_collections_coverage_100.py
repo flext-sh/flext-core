@@ -23,13 +23,8 @@ from pydantic import Field
 
 from flext_core import FlextRuntime, m, t
 
-Statistics = m.CollectionsStatistics
-Config = m.CollectionsConfig
-Results = m.CollectionsResults
-Options = m.CollectionsOptions
 
-
-class _TestConfig(Config):
+class _TestConfig(m.CollectionsConfig):
     """Module-level test config for pydantic mypy plugin compatibility."""
 
     timeout: int = 30
@@ -77,7 +72,9 @@ class TestFlextModelsCollectionsCategories:
         assert categories.get("nonexistent") == []
 
     @pytest.mark.parametrize(
-        "scenario", CollectionsScenarios.CATEGORY_OPERATIONS, ids=_scenario_id,
+        "scenario",
+        CollectionsScenarios.CATEGORY_OPERATIONS,
+        ids=_scenario_id,
     )
     def test_categories_operations(self, scenario: CategoryOperationScenario) -> None:
         """Test category operations with various scenarios."""
@@ -181,7 +178,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
 
-        class TestStats(Statistics):
+        class TestStats(m.CollectionsStatistics):
             count: int = 0
 
         assert TestStats.aggregate([]) == {}
@@ -189,7 +186,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
 
-        class TestStats(Statistics):
+        class TestStats(m.CollectionsStatistics):
             count: int = 0
 
         stats1 = TestStats(count=10)
@@ -201,7 +198,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
 
-        class TestStats(Statistics):
+        class TestStats(m.CollectionsStatistics):
             items: list[str] = Field(default_factory=list)
 
         stats1 = TestStats(items=["a", "b"])
@@ -213,7 +210,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
 
-        class TestStats(Statistics):
+        class TestStats(m.CollectionsStatistics):
             count: int = 0
             items: list[str] = Field(default_factory=list)
             name: str = ""
@@ -229,7 +226,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
 
-        class TestStats(Statistics):
+        class TestStats(m.CollectionsStatistics):
             count: int | None = None
             name: str | None = None
 
@@ -306,7 +303,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
 
-        class TestResult(Results):
+        class TestResult(m.CollectionsResults):
             processed: int = 0
 
         assert TestResult.aggregate([]) == {}
@@ -314,7 +311,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
 
-        class TestResult(Results):
+        class TestResult(m.CollectionsResults):
             processed: int = 0
 
         result1 = TestResult(processed=10)
@@ -327,7 +324,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
 
-        class TestResult(Results):
+        class TestResult(m.CollectionsResults):
             errors: list[str] = Field(default_factory=list)
 
         result1 = TestResult(errors=["error1"])
@@ -340,7 +337,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_dicts(self) -> None:
         """Test aggregate with dict values."""
 
-        class TestResult(Results):
+        class TestResult(m.CollectionsResults):
             metadata: dict[str, str] = Field(default_factory=dict)
 
         result1 = TestResult(metadata={"key1": "value1"})
@@ -353,7 +350,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
 
-        class TestResult(Results):
+        class TestResult(m.CollectionsResults):
             processed: int = 0
             errors: list[str] = Field(default_factory=list)
             status: str = ""
@@ -370,7 +367,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
 
-        class TestResult(Results):
+        class TestResult(m.CollectionsResults):
             processed: int | None = None
             status: str | None = None
 
@@ -389,7 +386,7 @@ class TestFlextModelsCollectionsOptions:
     def test_options_merge(self) -> None:
         """Test merge method."""
 
-        class TestOptions(Options):
+        class TestOptions(m.CollectionsOptions):
             verbose: bool = False
             color: bool = True
 
@@ -402,7 +399,7 @@ class TestFlextModelsCollectionsOptions:
     def test_options_merge_all_fields(self) -> None:
         """Test merge with all fields."""
 
-        class TestOptions(Options):
+        class TestOptions(m.CollectionsOptions):
             verbose: bool = False
             color: bool = True
 

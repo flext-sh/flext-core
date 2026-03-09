@@ -28,6 +28,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
     _workspace_root: Path
 
     def __init__(self, workspace_root: Path) -> None:
+        """Initialize codegen fixer with workspace root."""
         super().__init__()
         self._workspace_root = workspace_root
 
@@ -38,8 +39,8 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         Called AFTER _copy_required_imports to verify the copy succeeded.
         A name is available if it's imported or defined in the target module.
         """
-        names_used = cls._get_top_level_names_in_node(node)
-        node_name = cls._get_node_name(node)
+        names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
+        node_name = FlextInfraCodegenTransforms.get_node_name(node)
         names_used = frozenset(n for n in names_used if n != node_name)
         if not names_used:
             return True
@@ -55,18 +56,21 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                     if imported_name != "*":
                         available.add(imported_name)
             else:
-                name = cls._get_node_name(stmt)
+                name = FlextInfraCodegenTransforms.get_node_name(stmt)
                 if name:
                     available.add(name)
         return all(n in available for n in names_used)
 
     @classmethod
     def _copy_required_imports(
-        cls, node: ast.stmt, source_tree: ast.Module, target_tree: ast.Module,
+        cls,
+        node: ast.stmt,
+        source_tree: ast.Module,
+        target_tree: ast.Module,
     ) -> None:
         """Copy imports needed by node from source_tree to target_tree."""
-        names_used = cls._get_top_level_names_in_node(node)
-        node_name = cls._get_node_name(node)
+        names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
+        node_name = FlextInfraCodegenTransforms.get_node_name(node)
         names_used = frozenset(n for n in names_used if n != node_name)
         if not names_used:
             return
@@ -118,40 +122,6 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             target_tree.body.insert(last_import_idx + i, imp)
 
     @staticmethod
-    def _add_import_to_tree(
-        tree: ast.Module, pkg_name: str, module_name: str, name: str,
-    ) -> None:
-        """Add a from-import to the tree if not already present."""
-        full_module = f"{pkg_name}.{module_name}"
-        for stmt in tree.body:
-            if isinstance(stmt, ast.ImportFrom) and stmt.module == full_module:
-                for alias in stmt.names:
-                    if alias.name == name:
-                        return
-                stmt.names.append(ast.alias(name=name))
-                return
-        new_import = ast.ImportFrom(
-            module=full_module, names=[ast.alias(name=name)], level=0,
-        )
-        _ = ast.fix_missing_locations(new_import)
-        last_import_idx = 0
-        for i, stmt in enumerate(tree.body):
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
-                last_import_idx = i + 1
-        tree.body.insert(last_import_idx, new_import)
-
-    @staticmethod
-    def _find_insert_position(tree: ast.Module) -> int:
-        """Find the position after the last import statement in the module."""
-        last_import_idx = 0
-        for i, stmt in enumerate(tree.body):
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)) or (
-                isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant)
-            ):
-                last_import_idx = i + 1
-        return last_import_idx
-
-    @staticmethod
     def _find_package_dir(project_root: Path) -> Path | None:
         """Find the first Python package under src/."""
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
@@ -163,28 +133,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         return None
 
     @staticmethod
-    def _get_node_name(node: ast.stmt) -> str:
-        """Extract the name from an assignment node."""
-        if isinstance(node, ast.Assign) and node.targets:
-            target = node.targets[0]
-            if isinstance(target, ast.Name):
-                return target.id
-        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            return node.target.id
-        return ""
-
-    @staticmethod
-    def _get_top_level_names_in_node(node: ast.stmt) -> frozenset[str]:
-        """Collect all Name references used in a node."""
-        names: set[str] = set()
-        for child in ast.walk(node):
-            if isinstance(child, ast.Name):
-                names.add(child.id)
-        return frozenset(names)
-
-    @staticmethod
     def _is_name_referenced_in_file(
-        name: str, definition_node: ast.stmt, tree: ast.Module,
+        name: str,
+        definition_node: ast.stmt,
+        tree: ast.Module,
     ) -> bool:
         """Check if a name is referenced anywhere in the file besides its definition."""
         for stmt in tree.body:
@@ -193,22 +145,6 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             for node in ast.walk(stmt):
                 if isinstance(node, ast.Name) and node.id == name:
                     return True
-        return False
-
-    @staticmethod
-    def _name_exists_in_module(name: str, tree: ast.Module) -> bool:
-        """Check if a name is already defined in the module."""
-        for stmt in tree.body:
-            if isinstance(stmt, ast.Assign):
-                for target in stmt.targets:
-                    if isinstance(target, ast.Name) and target.id == name:
-                        return True
-            if (
-                isinstance(stmt, ast.AnnAssign)
-                and isinstance(stmt.target, ast.Name)
-                and (stmt.target.id == name)
-            ):
-                return True
         return False
 
     @staticmethod
@@ -370,7 +306,9 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             target_name = ""
             if isinstance(node.target, ast.Name):
                 target_name = node.target.id
-            if self._name_exists_in_module(target_name, target_tree):
+            if FlextInfraCodegenTransforms.name_exists_in_module(
+                target_name, target_tree
+            ):
                 violation = m.Infra.Codegen.CensusViolation(
                     module=str(source_file),
                     rule="NS-001",
@@ -393,10 +331,13 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 continue
             if node in tree.body:
                 tree.body.remove(node)
-            insert_idx = self._find_insert_position(target_tree)
+            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
             target_tree.body.insert(insert_idx, node)
-            self._add_import_to_tree(
-                tree=tree, pkg_name=pkg_name, module_name="constants", name=target_name,
+            FlextInfraCodegenTransforms.add_import_to_tree(
+                tree,
+                pkg_name,
+                "constants",
+                target_name,
             )
             violation = m.Infra.Codegen.CensusViolation(
                 module=str(source_file),
@@ -496,10 +437,12 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         pkg_name = pkg_dir.name
         actually_moved: list[ast.stmt] = []
         for move_node in nodes_to_move:
-            target_name = self._get_node_name(move_node)
+            target_name = FlextInfraCodegenTransforms.get_node_name(move_node)
             if not target_name:
                 continue
-            if self._name_exists_in_module(target_name, target_tree):
+            if FlextInfraCodegenTransforms.name_exists_in_module(
+                target_name, target_tree
+            ):
                 violation = m.Infra.Codegen.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
@@ -522,13 +465,13 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 continue
             if move_node in tree.body:
                 tree.body.remove(move_node)
-            insert_idx = self._find_insert_position(target_tree)
+            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
             target_tree.body.insert(insert_idx, move_node)
-            self._add_import_to_tree(
-                tree=tree,
-                pkg_name=pkg_name,
-                module_name=c.Infra.Directories.TYPINGS,
-                name=target_name,
+            FlextInfraCodegenTransforms.add_import_to_tree(
+                tree,
+                pkg_name,
+                c.Infra.Directories.TYPINGS,
+                target_name,
             )
             rule = "NS-002"
             kind = "TypeVar" if isinstance(move_node, ast.Assign) else "TypeAlias"

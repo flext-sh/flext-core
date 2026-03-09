@@ -50,7 +50,9 @@ class TypeGuardsScenarios:
     IS_STRING_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
         TypeGuardScenario(name="non_empty_string", value="hello", expected_result=True),
         TypeGuardScenario(
-            name="non_empty_with_spaces", value="  hello  ", expected_result=True,
+            name="non_empty_with_spaces",
+            value="  hello  ",
+            expected_result=True,
         ),
         TypeGuardScenario(name="empty_string", value="", expected_result=False),
         TypeGuardScenario(name="whitespace_only", value="   ", expected_result=False),
@@ -63,19 +65,27 @@ class TypeGuardsScenarios:
         TypeGuardScenario(name="none_value", value=None, expected_result=False),
         TypeGuardScenario(name="list_value", value=[1, 2, 3], expected_result=False),
         TypeGuardScenario(
-            name="dict_value", value={"key": "value"}, expected_result=False,
+            name="dict_value",
+            value={"key": "value"},
+            expected_result=False,
         ),
     ]
     IS_DICT_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
         TypeGuardScenario(
-            name="non_empty_dict", value={"key": "value"}, expected_result=True,
+            name="non_empty_dict",
+            value={"key": "value"},
+            expected_result=True,
         ),
         TypeGuardScenario(
-            name="non_empty_dict_multiple", value={"a": 1, "b": 2}, expected_result=True,
+            name="non_empty_dict_multiple",
+            value={"a": 1, "b": 2},
+            expected_result=True,
         ),
         TypeGuardScenario(name="empty_dict", value={}, expected_result=False),
         TypeGuardScenario(
-            name="string_value", value="not_a_dict", expected_result=False,
+            name="string_value",
+            value="not_a_dict",
+            expected_result=False,
         ),
         TypeGuardScenario(name="list_value", value=[1, 2, 3], expected_result=False),
         TypeGuardScenario(name="int_value", value=123, expected_result=False),
@@ -84,16 +94,22 @@ class TypeGuardsScenarios:
     IS_LIST_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
         TypeGuardScenario(name="non_empty_list", value=[1, 2, 3], expected_result=True),
         TypeGuardScenario(
-            name="non_empty_list_strings", value=["a", "b"], expected_result=True,
+            name="non_empty_list_strings",
+            value=["a", "b"],
+            expected_result=True,
         ),
         TypeGuardScenario(name="non_empty_tuple", value=(1, 2), expected_result=True),
         TypeGuardScenario(name="empty_list", value=[], expected_result=False),
         TypeGuardScenario(name="empty_tuple", value=(), expected_result=False),
         TypeGuardScenario(
-            name="string_value", value="not_a_list", expected_result=False,
+            name="string_value",
+            value="not_a_list",
+            expected_result=False,
         ),
         TypeGuardScenario(
-            name="dict_value", value={"key": "value"}, expected_result=False,
+            name="dict_value",
+            value={"key": "value"},
+            expected_result=False,
         ),
         TypeGuardScenario(name="int_value", value=123, expected_result=False),
         TypeGuardScenario(name="none_value", value=None, expected_result=False),
@@ -122,7 +138,9 @@ class TypeGuardsScenarios:
             expected_type=str,
         ),
         NormalizeScenario(
-            name="dict_with_list_value", value={"key": [1, 2, 3]}, expected_type=str,
+            name="dict_with_list_value",
+            value={"key": [1, 2, 3]},
+            expected_type=str,
         ),
         NormalizeScenario(
             name="dict_with_non_string_key",
@@ -136,7 +154,9 @@ class TypeGuardsScenarios:
             expected_value=["1", "2", "3"],
         ),
         NormalizeScenario(
-            name="list_with_primitives", value=["a", 1, True, None], expected_type=list,
+            name="list_with_primitives",
+            value=["a", 1, True, None],
+            expected_type=list,
         ),
         NormalizeScenario(
             name="list_with_nested_list",
@@ -177,7 +197,9 @@ class TestuTypeGuardsIsStringNonEmpty:
     """Test FlextUtilitiesGuards.is_string_non_empty."""
 
     @pytest.mark.parametrize(
-        "scenario", TypeGuardsScenarios.IS_STRING_NON_EMPTY, ids=lambda s: s.name,
+        "scenario",
+        TypeGuardsScenarios.IS_STRING_NON_EMPTY,
+        ids=lambda s: s.name,
     )
     def test_is_string_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_string_non_empty with various scenarios."""
@@ -189,7 +211,9 @@ class TestuTypeGuardsIsDictNonEmpty:
     """Test FlextUtilitiesGuards.is_dict_non_empty."""
 
     @pytest.mark.parametrize(
-        "scenario", TypeGuardsScenarios.IS_DICT_NON_EMPTY, ids=lambda s: s.name,
+        "scenario",
+        TypeGuardsScenarios.IS_DICT_NON_EMPTY,
+        ids=lambda s: s.name,
     )
     def test_is_dict_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_dict_non_empty with various scenarios."""
@@ -201,7 +225,9 @@ class TestuTypeGuardsIsListNonEmpty:
     """Test FlextUtilitiesGuards.is_list_non_empty."""
 
     @pytest.mark.parametrize(
-        "scenario", TypeGuardsScenarios.IS_LIST_NON_EMPTY, ids=lambda s: s.name,
+        "scenario",
+        TypeGuardsScenarios.IS_LIST_NON_EMPTY,
+        ids=lambda s: s.name,
     )
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_list_non_empty with various scenarios."""
@@ -264,7 +290,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert result_list[0] == "string"
         assert result_list[1] == "42"
         assert result_list[2] == "True"
-        assert result_list[3] in (None, "")
+        assert result_list[3] in {None, ""}
         assert isinstance(result_list[4], str)
         assert isinstance(result_list[5], str)
         assert isinstance(result_list[6], str)

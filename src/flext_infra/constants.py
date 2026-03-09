@@ -13,6 +13,7 @@ import re
 from typing import Final
 
 from flext_core import FlextConstants
+from flext_infra._constants import FlextInfraSharedConstants
 from flext_infra.basemk._constants import FlextInfraBasemkConstants
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.codegen._constants import FlextInfraCodegenConstants
@@ -38,7 +39,7 @@ class FlextInfraConstants(FlextConstants):
         >>> c.Infra.Codegen.EXCLUDED_PROJECTS
     """
 
-    class Infra:
+    class Infra(FlextInfraSharedConstants):
         """Infrastructure domain constants."""
 
         KNOWN_VERBS: Final[frozenset[str]] = frozenset({
@@ -54,85 +55,6 @@ class FlextInfraConstants(FlextConstants):
         })
         MIN_ARGV: Final[int] = 2
         "Minimum argv length for CLI dispatch."
-
-        class Files:
-            """File-related constants."""
-
-            PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
-            "Standard filename for Python project configuration."
-            MAKEFILE_FILENAME: Final[str] = "Makefile"
-            "Standard filename for Makefile project markers."
-            BASE_MK: Final[str] = "base.mk"
-            "Canonical base.mk filename."
-            GO_MOD: Final[str] = "go.mod"
-            "Go module manifest filename."
-            GITMODULES: Final[str] = ".gitmodules"
-            "Git submodule manifest filename."
-            GITIGNORE: Final[str] = ".gitignore"
-            "Git ignore configuration filename."
-            INIT_PY: Final[str] = "__init__.py"
-            "Python package initializer filename."
-
-        class Git:
-            """Git-related constants."""
-
-            DIR: Final[str] = ".git"
-            "Git repository marker directory."
-            ORIGIN: Final[str] = "origin"
-            "Default remote name."
-            MAIN: Final[str] = "main"
-            "Default branch name."
-            HEAD: Final[str] = "HEAD"
-            "Git HEAD reference."
-
-        class Packages:
-            """Package naming constants used across infra modules."""
-
-            CORE: Final[str] = "flext-core"
-            CORE_UNDERSCORE: Final[str] = "flext_core"
-            ROOT: Final[str] = "flext"
-
-        class Extensions:
-            """File extension constants."""
-
-            PYTHON: Final[str] = ".py"
-            "Python source file extension."
-            PYTHON_GLOB: Final[str] = "*.py"
-            "Glob pattern to match Python source files."
-
-        class Directories:
-            """Common directory name constants."""
-
-            TESTS: Final[str] = "tests"
-            "Standard test directory name."
-            EXAMPLES: Final[str] = "examples"
-            "Standard examples directory name."
-            SCRIPTS: Final[str] = "scripts"
-            "Standard scripts directory name."
-            TYPINGS: Final[str] = "typings"
-            "Stub typings directory or poetry group name."
-            DOCS: Final[str] = "docs"
-            "Documentation directory name."
-            BUILD: Final[str] = "build"
-            "Build output directory name."
-            DIST: Final[str] = "dist"
-            "Distribution output directory name."
-            SITE: Final[str] = "site"
-            "Documentation site output directory."
-
-        class Timeouts:
-            """Standard timeout values in seconds."""
-
-            DEFAULT: Final[int] = 300
-            "Default timeout for CI/command operations."
-            SHORT: Final[int] = 60
-            "Short timeout for quick operations."
-            MEDIUM: Final[int] = 120
-            "Medium timeout for moderate operations."
-            LONG: Final[int] = 600
-            "Long timeout for heavy operations (pyright, etc.)."
-            CI: Final[int] = 900
-            "Extended timeout for CI operations (go vet, etc.)."
 
         class Toml:
             """TOML section/key names for pyproject.toml parsing."""
@@ -534,31 +456,17 @@ class FlextInfraConstants(FlextConstants):
         class Workspace(FlextInfraWorkspaceConstants):
             """Workspace constants via MRO."""
 
-        class Paths:
-            """Path resolution constants for workspace navigation."""
-
-            WORKSPACE_MARKERS: Final[frozenset[str]] = frozenset({
-                ".git",
-                "Makefile",
-                "pyproject.toml",
-            })
-            "Filesystem markers used to detect workspace root directories."
-            VENV_BIN_REL: Final[str] = ".venv/bin"
-            "Relative path to the virtualenv bin directory from workspace root."
-            DEFAULT_SRC_DIR: Final[str] = "src"
-            "Default source directory for Python projects."
-
         class Versioning:
             """Semantic versioning constants for version management."""
 
             PROJECT_SECTION: Final[str] = "[project]"
             "TOML section header for project metadata."
             SEMVER_RE: Final[re.Pattern[str]] = re.compile(
-                "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-dev)?$",
+                r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$",
             )
             "Regex pattern for parsing semantic version strings."
             DEV_BRANCH_RE: Final[re.Pattern[str]] = re.compile(
-                "^(\\d+\\.\\d+\\.\\d+)-dev$",
+                r"^(\d+\.\d+\.\d+)-dev$",
             )
             "Regex pattern for matching development branch names."
             VALID_BUMP_TYPES: Final[frozenset[str]] = frozenset({

@@ -1,3 +1,5 @@
+"""FLEXT infrastructure check services."""
+
 from __future__ import annotations
 
 from flext_infra import m

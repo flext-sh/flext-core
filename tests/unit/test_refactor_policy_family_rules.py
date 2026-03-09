@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra.refactor.rules.class_nesting import PreCheckGate
+from flext_infra.refactor.rules.class_reconstructor import PreCheckGate
 
 
 def _policy_path() -> Path:

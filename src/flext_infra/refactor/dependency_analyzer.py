@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import sys
-from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 from typing import ClassVar, override
@@ -250,7 +249,7 @@ def load_python_module(
         m.Infra.Refactor.NamespaceEnforcementModels.ParseFailureViolation
     ]
     | None = None,
-) -> ParsedPythonModule | None:
+) -> m.Infra.Refactor.ParsedPythonModule | None:
     """Load and parse a Python source file, recording failures if provided."""
     try:
         source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -289,13 +288,7 @@ def load_python_module(
                 ),
             )
         return None
-    return ParsedPythonModule(source=source, tree=tree)
-
-
-@dataclass(frozen=True, slots=True)
-class ParsedPythonModule:
-    source: str
-    tree: ast.Module
+    return m.Infra.Refactor.ParsedPythonModule(source=source, tree=tree)
 
 
 class NamespaceFacadeScanner:

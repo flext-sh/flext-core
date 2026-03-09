@@ -63,19 +63,19 @@ class TestAutomatedFlextRuntime:
         """Comprehensive test scenarios for runtime functionality."""
         try:
             instance = fixture_factory.create_test_runtime_instance()
-            result = self._execute_runtime_operation(instance, test_scenario["input"])
-            if test_scenario["expected_success"]:
+            result = self._execute_runtime_operation(instance, test_scenario.input)
+            if test_scenario.expected_success:
                 _ = assertion_helpers.assert_flext_result_success(
                     result,
-                    f"FlextRuntime operation failed: {test_scenario['description']}",
+                    f"FlextRuntime operation failed: {test_scenario.description}",
                 )
             else:
                 _ = assertion_helpers.assert_flext_result_failure(
                     result,
-                    f"FlextRuntime operation should fail: {test_scenario['description']}",
+                    f"FlextRuntime operation should fail: {test_scenario.description}",
                 )
         except Exception as e:
-            if not test_scenario["expected_success"]:
+            if not test_scenario.expected_success:
                 pass
             else:
                 pytest.fail(f"Unexpected error in runtime test: {e}")

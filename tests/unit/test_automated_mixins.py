@@ -64,19 +64,19 @@ class TestAutomatedFlextMixins:
         """Comprehensive test scenarios for mixins functionality."""
         try:
             instance = fixture_factory.create_test_mixins_instance()
-            result = self._execute_mixins_operation(instance, test_scenario["input"])
-            if test_scenario["expected_success"]:
+            result = self._execute_mixins_operation(instance, test_scenario.input)
+            if test_scenario.expected_success:
                 _ = assertion_helpers.assert_flext_result_success(
                     result,
-                    f"FlextMixins operation failed: {test_scenario['description']}",
+                    f"FlextMixins operation failed: {test_scenario.description}",
                 )
             else:
                 _ = assertion_helpers.assert_flext_result_failure(
                     result,
-                    f"FlextMixins operation should fail: {test_scenario['description']}",
+                    f"FlextMixins operation should fail: {test_scenario.description}",
                 )
         except Exception as e:
-            if not test_scenario["expected_success"]:
+            if not test_scenario.expected_success:
                 pass
             else:
                 pytest.fail(f"Unexpected error in mixins test: {e}")

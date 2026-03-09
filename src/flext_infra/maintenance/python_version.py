@@ -183,7 +183,7 @@ class FlextInfraPythonVersionEnforcer(s[int]):
         if not pyproject.is_file():
             return 13
         content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        match = re.search('requires-python\\s*=\\s*"[>!=]*(\\d+)\\.(\\d+)', content)
+        match = re.search(r'requires-python\s*=\s*"[>!=]*(\d+)\.(\d+)', content)
         if match is None:
             return 13
         return int(match.group(2))

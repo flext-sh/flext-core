@@ -34,6 +34,7 @@ class FlextInfraCodegenLazyInit(s[int]):
     """
 
     def __init__(self, workspace_root: Path) -> None:
+        """Initialize lazy init generator with workspace root."""
         super().__init__()
         self._root: Path = workspace_root
 
@@ -124,7 +125,11 @@ class FlextInfraCodegenLazyInit(s[int]):
             n_mapped = len(filtered) + len(inline_constants)
             return len(exports_set) - n_mapped
         generated = _generate_file(
-            docstring_source, exports, filtered, inline_constants, current_pkg,
+            docstring_source,
+            exports,
+            filtered,
+            inline_constants,
+            current_pkg,
         )
         u.write_file(path, generated, encoding=c.Infra.Encoding.DEFAULT)
         _run_ruff_fix(path)
