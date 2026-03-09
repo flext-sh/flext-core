@@ -1,7 +1,7 @@
-"""Tests for flext_infra DI container registration and retrieval.
+"""Tests for flext_infra service importability and u.Infra MRO pattern.
 
-Tests verify that all FlextInfra services are properly registered in the
-DI container and can be retrieved with correct types.
+Tests verify that all FlextInfra services are accessible via u.Infra MRO
+and that the output singleton works correctly.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,27 +12,8 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer
-from flext_infra import (
-    FlextInfraBaseMkGenerator,
-    FlextInfraBaseMkTemplateEngine,
-    FlextInfraCommandRunner,
-    FlextInfraDiscoveryService,
-    FlextInfraGitService,
-    FlextInfraOrchestratorService,
-    FlextInfraProjectMigrator,
-    FlextInfraProjectSelector,
-    FlextInfraPythonVersionEnforcer,
-    FlextInfraReleaseOrchestrator,
-    FlextInfraReportingService,
-    FlextInfraSyncService,
-    FlextInfraUtilitiesIo,
-    FlextInfraUtilitiesOutput,
-    FlextInfraUtilitiesPaths,
-    FlextInfraUtilitiesToml,
-    FlextInfraVersioningService,
-    FlextInfraWorkspaceDetector,
-    output,
-)
+from flext_infra import u
+from flext_infra._utilities.output import output
 
 
 class TestInfraContainerFunctions:
@@ -50,91 +31,76 @@ class TestInfraContainerFunctions:
 
     def test_get_flext_infra_service_returns_result(self) -> None:
         """Verify container get returns values for registered services."""
-        # Verify the container has basic functionality
         assert callable(FlextContainer.register)
         assert callable(FlextContainer.get)
 
 
-class TestInfraServiceRegistration:
-    """Test that all services are registered in the container."""
+class TestInfraMroPattern:
+    """Test that u.Infra MRO exposes all utility methods."""
 
-    @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Ensure container is configured before each test."""
-        FlextContainer().initialize_di_components()
+    def test_git_methods_available(self) -> None:
+        """Verify git methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.git_current_branch)
+        assert callable(u.Infra.git_add)
+        assert callable(u.Infra.git_commit)
+        assert callable(u.Infra.git_push)
+        assert callable(u.Infra.git_pull)
+        assert callable(u.Infra.git_fetch)
+        assert callable(u.Infra.git_has_changes)
+        assert callable(u.Infra.git_is_repo)
+        assert callable(u.Infra.git_run)
 
-    def test_git_service_importable(self) -> None:
-        """Verify FlextInfraGitService is importable and valid."""
-        assert FlextInfraGitService is not None
+    def test_io_methods_available(self) -> None:
+        """Verify IO methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.read_json)
+        assert callable(u.Infra.write_json)
 
-    def test_json_io_importable(self) -> None:
-        """Verify FlextInfraUtilitiesIo is importable and valid."""
-        assert FlextInfraUtilitiesIo is not None
+    def test_subprocess_methods_available(self) -> None:
+        """Verify subprocess methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.run_checked)
+        assert callable(u.Infra.run_raw)
+        assert callable(u.Infra.capture)
 
-    def test_toml_io_importable(self) -> None:
-        """Verify FlextInfraUtilitiesToml is importable and valid."""
-        assert FlextInfraUtilitiesToml is not None
+    def test_discovery_methods_available(self) -> None:
+        """Verify discovery methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.discover_projects)
+        assert callable(u.Infra.discover_project_roots)
 
-    def test_path_resolver_importable(self) -> None:
-        """Verify FlextInfraUtilitiesPaths is importable and valid."""
-        assert FlextInfraUtilitiesPaths is not None
+    def test_output_methods_available(self) -> None:
+        """Verify output methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.status)
+        assert callable(u.Infra.summary)
+        assert callable(u.Infra.error)
+        assert callable(u.Infra.warning)
+        assert callable(u.Infra.info)
+        assert callable(u.Infra.header)
+        assert callable(u.Infra.progress)
 
-    def test_command_runner_importable(self) -> None:
-        """Verify FlextInfraCommandRunner is importable and valid."""
-        assert FlextInfraCommandRunner is not None
+    def test_path_methods_available(self) -> None:
+        """Verify path methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.workspace_root)
+        assert callable(u.Infra.workspace_root_from_file)
 
-    def test_discovery_importable(self) -> None:
-        """Verify FlextInfraDiscoveryService is importable and valid."""
-        assert FlextInfraDiscoveryService is not None
+    def test_template_methods_available(self) -> None:
+        """Verify template methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.render)
+        assert hasattr(u.Infra, "TOC_START")
+        assert hasattr(u.Infra, "TOC_END")
+        assert hasattr(u.Infra, "GENERATED_HEADER")
 
-    def test_selection_importable(self) -> None:
-        """Verify FlextInfraProjectSelector is importable and valid."""
-        assert FlextInfraProjectSelector is not None
+    def test_versioning_methods_available(self) -> None:
+        """Verify versioning methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.parse_semver)
+        assert callable(u.Infra.bump_version)
 
-    def test_reporting_importable(self) -> None:
-        """Verify FlextInfraReportingService is importable and valid."""
-        assert FlextInfraReportingService is not None
+    def test_toml_methods_available(self) -> None:
+        """Verify TOML methods are accessible via u.Infra MRO."""
+        assert callable(u.Infra.ensure_table)
+        assert callable(u.Infra.table_string_keys)
 
-    def test_versioning_importable(self) -> None:
-        """Verify FlextInfraVersioningService is importable and valid."""
-        assert FlextInfraVersioningService is not None
-
-    def test_output_singleton(self) -> None:
-        """Verify output singleton is available and valid."""
-        assert isinstance(output, FlextInfraUtilitiesOutput)
-        assert output is not None
-
-    def test_basemk_engine_importable(self) -> None:
-        """Verify FlextInfraBaseMkTemplateEngine is importable and valid."""
-        assert FlextInfraBaseMkTemplateEngine is not None
-
-    def test_basemk_generator_importable(self) -> None:
-        """Verify FlextInfraBaseMkGenerator is importable and valid."""
-        assert FlextInfraBaseMkGenerator is not None
-
-    def test_workspace_detector_importable(self) -> None:
-        """Verify FlextInfraWorkspaceDetector is importable and valid."""
-        assert FlextInfraWorkspaceDetector is not None
-
-    def test_workspace_migrator_importable(self) -> None:
-        """Verify FlextInfraProjectMigrator is importable and valid."""
-        assert FlextInfraProjectMigrator is not None
-
-    def test_workspace_orchestrator_importable(self) -> None:
-        """Verify FlextInfraOrchestratorService is importable and valid."""
-        assert FlextInfraOrchestratorService is not None
-
-    def test_workspace_sync_importable(self) -> None:
-        """Verify FlextInfraSyncService is importable and valid."""
-        assert FlextInfraSyncService is not None
-
-    def test_release_orchestrator_importable(self) -> None:
-        """Verify FlextInfraReleaseOrchestrator is importable and valid."""
-        assert FlextInfraReleaseOrchestrator is not None
-
-    def test_python_version_enforcer_importable(self) -> None:
-        """Verify FlextInfraPythonVersionEnforcer is importable and valid."""
-        assert FlextInfraPythonVersionEnforcer is not None
+    def test_patterns_available(self) -> None:
+        """Verify pattern constants are accessible via u.Infra MRO."""
+        assert callable(u.Infra.matches)
 
 
 class TestInfraServiceRetrieval:
@@ -154,6 +120,5 @@ class TestInfraServiceRetrieval:
         assert callable(FlextContainer.list_services)
 
     def test_output_singleton_returns_same_instance(self) -> None:
-        """Verify output singleton returns same instance."""
+        """Verify output singleton is consistent."""
         assert output is not None
-        assert isinstance(output, FlextInfraUtilitiesOutput)

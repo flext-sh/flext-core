@@ -18,7 +18,6 @@ import flext_infra._utilities.output as output_module
 from flext_infra._utilities.output import (
     FlextInfraUtilitiesOutput,
     _OutputBackend,
-    output,
 )
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 

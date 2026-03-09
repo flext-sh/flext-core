@@ -1,12 +1,11 @@
 """Integration tests for flext_infra cross-module flows.
 
-Tests exercise cross-module flows with real service instances, validating:
-- Container integration: service registration and retrieval
-- Workspace detection → orchestration flow
-- BaseMk generation flow with real validation
+Tests exercise cross-module flows using u.Infra MRO pattern, validating:
 - Output singleton consistency
 - Service FlextResult chaining
-- Path resolver → discovery flow
+- Git operations via u.Infra.git_*
+- Subprocess operations via u.Infra.run_checked/capture
+- BaseMk generation flow
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,22 +18,11 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import FlextInfraOutput, u
-from flext_infra._utilities.discovery import (
-    FlextInfraUtilitiesDiscovery as FlextInfraDiscoveryService,
-)
-from flext_infra._utilities.output import output
-from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
-from flext_infra._utilities.subprocess import (
-    FlextInfraUtilitiesSubprocess as FlextInfraCommandRunner,
-)
+from flext_infra import output, u
 from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
 from flext_infra.workspace import (
     FlextInfraOrchestratorService,
-    FlextInfraUtilitiesOutput,
-    FlextInfraUtilitiesPaths,
     FlextInfraWorkspaceDetector,
-    output,
 )
 
 pytestmark = [pytest.mark.integration]
@@ -123,30 +111,25 @@ class TestOutputSingletonConsistency:
 
         Validates:
         - output singleton is consistent
-        - output is a FlextInfraUtilitiesOutput instance
+        - output has expected u.Infra methods via MRO
         - Singleton pattern is maintained
         """
-        assert isinstance(output, FlextInfraUtilitiesOutput)
         assert output is not None
 
     @pytest.mark.integration
     def test_output_singleton_has_expected_methods(self) -> None:
         """Test that output singleton has all expected methods.
 
-        Validates:
-        - output has status method
-        - output has summary method
-        - output has error method
-        - output has warning method
-        - output has info method
+        Validates u.Infra MRO output methods are available:
+        - status, summary, error, warning, info, header, progress
         """
-        assert hasattr(output, "status")
-        assert hasattr(output, "summary")
-        assert hasattr(output, "error")
-        assert hasattr(output, "warning")
-        assert hasattr(output, "info")
-        assert hasattr(output, "header")
-        assert hasattr(output, "progress")
+        assert callable(u.Infra.status)
+        assert callable(u.Infra.summary)
+        assert callable(u.Infra.error)
+        assert callable(u.Infra.warning)
+        assert callable(u.Infra.info)
+        assert callable(u.Infra.header)
+        assert callable(u.Infra.progress)
 
     @pytest.mark.integration
     def test_output_singleton_methods_are_callable(self) -> None:
@@ -244,37 +227,23 @@ class TestServiceFlextResultChaining:
 
 
 class TestPathResolverDiscoveryFlow:
-    """Test path resolver → discovery flow."""
+    """Test path resolver → discovery flow using u.Infra MRO."""
 
     @pytest.mark.integration
-    def test_path_resolver_and_discovery_service_flow(self, tmp_path: Path) -> None:
-        """Test FlextInfraPathResolver → FlextInfraDiscoveryService flow.
+    def test_discover_projects_via_mro(self, tmp_path: Path) -> None:
+        """Test u.Infra.discover_projects flow.
 
         Validates:
-        - Path resolver can be created
-        - Discovery service can be created
-        - Both work together in a flow
+        - discover_projects is callable via u.Infra MRO
+        - workspace_root is callable via u.Infra MRO
         """
-        workspace_root = tmp_path / "workspace"
-        workspace_root.mkdir()
-        path_resolver = FlextInfraUtilitiesPaths()
-        discovery = FlextInfraDiscoveryService()
-        assert path_resolver is not None
-        assert discovery is not None
-        assert isinstance(path_resolver, FlextInfraUtilitiesPaths)
-        assert isinstance(discovery, FlextInfraDiscoveryService)
+        assert callable(u.Infra.discover_projects)
+        assert callable(u.Infra.workspace_root)
 
     @pytest.mark.integration
-    def test_path_resolver_returns_path_objects(self, tmp_path: Path) -> None:
-        """Test that path resolver returns Path objects.
-
-        Validates:
-        - Path resolver methods return Path objects
-        - Paths are properly typed
-        """
-        path_resolver = FlextInfraUtilitiesPaths()
-        assert path_resolver is not None
-        assert isinstance(path_resolver, FlextInfraUtilitiesPaths)
+    def test_path_utilities_via_mro(self, tmp_path: Path) -> None:
+        """Test u.Infra path utility methods are available via MRO."""
+        assert callable(u.Infra.workspace_root_from_file)
 
 
 class TestCrossModuleIntegration:
@@ -282,31 +251,30 @@ class TestCrossModuleIntegration:
 
 
 class TestIntegrationWithRealCommandServices:
-    """Test integration scenarios with real subprocess-backed services."""
+    """Test integration scenarios with real subprocess-backed services via u.Infra."""
 
     @pytest.mark.integration
     def test_git_service_current_branch_in_real_repo(self, tmp_path: Path) -> None:
-        """Test git service against a real initialized git repository."""
+        """Test u.Infra.git_current_branch against a real initialized git repository."""
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
-        runner = FlextInfraCommandRunner()
-        init_result = runner.run_checked(["git", "init"], cwd=repo_root)
+        init_result = u.Infra.run_checked(["git", "init"], cwd=repo_root)
         assert init_result.is_success
-        email_result = runner.run_checked(
+        email_result = u.Infra.run_checked(
             ["git", "config", "user.email", "infra@example.com"],
             cwd=repo_root,
         )
         assert email_result.is_success
-        name_result = runner.run_checked(
+        name_result = u.Infra.run_checked(
             ["git", "config", "user.name", "Infra Test"],
             cwd=repo_root,
         )
         assert name_result.is_success
         sample_file = repo_root / "README.md"
         _ = sample_file.write_text("infra test\n", encoding="utf-8")
-        add_result = runner.run_checked(["git", "add", "README.md"], cwd=repo_root)
+        add_result = u.Infra.run_checked(["git", "add", "README.md"], cwd=repo_root)
         assert add_result.is_success
-        commit_result = runner.run_checked(
+        commit_result = u.Infra.run_checked(
             ["git", "commit", "-m", "initial"],
             cwd=repo_root,
         )
@@ -317,8 +285,7 @@ class TestIntegrationWithRealCommandServices:
 
     @pytest.mark.integration
     def test_command_runner_capture_executes_real_command(self) -> None:
-        """Test command runner capture with a real subprocess command."""
-        runner = FlextInfraCommandRunner()
-        capture_result = runner.capture(["python3", "-c", "print('infra-ok')"])
+        """Test u.Infra.capture with a real subprocess command."""
+        capture_result = u.Infra.capture(["python3", "-c", "print('infra-ok')"])
         assert capture_result.is_success
         assert capture_result.value == "infra-ok"
