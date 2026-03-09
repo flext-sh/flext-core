@@ -107,6 +107,7 @@ result = FlextResult[float].fail(
 
 # Error codes from FlextConstants for consistency
 from flext_core import FlextConstants
+
 result = FlextResult[dict].fail(
     "Configuration missing required field",
     error_code=FlextConstants.Errors.CONFIG_ERROR,
@@ -139,9 +140,9 @@ if result.failed:
 
 # Access error details
 if result.is_failure:
-    message = result.error          # str
-    code = result.error_code        # str | None
-    data = result.error_data        # dict[str, object]
+    message = result.error  # str
+    code = result.error_code  # str | None
+    data = result.error_data  # dict[str, object]
 ```
 
 ### Accessing Success Values
@@ -165,7 +166,9 @@ if result.is_success:
 
 # All three throw ValidationError on failure:
 failed_result = FlextResult[str].fail("Error")
-value = failed_result.value  # Raises ValidationError: "Attempted to access value on failed result"
+value = (
+    failed_result.value
+)  # Raises ValidationError: "Attempted to access value on failed result"
 ```
 
 **Source**: `src/flext_core/result.py:283-292`
@@ -181,11 +184,13 @@ The power of ROP is **composability**. Chain operations without exception handli
 ```python
 from flext_core import FlextResult
 
+
 def validate_email(email: str) -> FlextResult[str]:
     """Validate email format."""
     if "@" not in email:
         return FlextResult[str].fail("Invalid email: missing @")
     return FlextResult[str].ok(email)
+
 
 def check_domain(email: str) -> FlextResult[str]:
     """Check if domain exists."""
@@ -194,17 +199,20 @@ def check_domain(email: str) -> FlextResult[str]:
         return FlextResult[str].fail("Domain not allowed", error_code="DOMAIN_ERROR")
     return FlextResult[str].ok(email)
 
+
 def send_verification(email: str) -> FlextResult[str]:
     """Send verification email."""
     # Pretend to send email
     return FlextResult[str].ok(f"Verification sent to {email}")
 
+
 # Railway composition - stops at first failure
 result = (
-    FlextResult[str].ok("user@example.com")
-    .flat_map(validate_email)      # If success, validate
-    .flat_map(check_domain)         # If success, check domain
-    .flat_map(send_verification)    # If success, send email
+    FlextResult[str]
+    .ok("user@example.com")
+    .flat_map(validate_email)  # If success, validate
+    .flat_map(check_domain)  # If success, check domain
+    .flat_map(send_verification)  # If success, send email
 )
 
 if result.is_success:
@@ -235,10 +243,11 @@ assert transformed.value == 5
 
 # Chain multiple transformations
 final = (
-    FlextResult[str].ok("  spaces  ")
-    .map(str.strip)              # Remove whitespace
-    .map(str.upper)              # Convert to uppercase
-    .map(len)                    # Get length
+    FlextResult[str]
+    .ok("  spaces  ")
+    .map(str.strip)  # Remove whitespace
+    .map(str.upper)  # Convert to uppercase
+    .map(len)  # Get length
 )
 assert final.value == 6
 
@@ -255,20 +264,20 @@ assert result.is_failure
 ```python
 from flext_core import FlextResult
 
+
 def is_adult(age: int) -> bool:
     return age >= 18
 
+
 # Success case
 result = (
-    FlextResult[int].ok(25)
-    .filter(is_adult)  # Predicate passes
+    FlextResult[int].ok(25).filter(is_adult)  # Predicate passes
 )
 assert result.is_success and result.value == 25
 
 # Failure case
 result = (
-    FlextResult[int].ok(16)
-    .filter(is_adult)  # Predicate fails
+    FlextResult[int].ok(16).filter(is_adult)  # Predicate fails
 )
 assert result.is_failure
 
@@ -276,11 +285,7 @@ assert result.is_failure
 from flext_core import FlextResult
 
 result = (
-    FlextResult[int].ok(16)
-    .filter(
-        is_adult,
-        failure_message="User must be 18 or older"
-    )
+    FlextResult[int].ok(16).filter(is_adult, failure_message="User must be 18 or older")
 )
 assert result.is_failure
 assert "18 or older" in result.error
@@ -293,19 +298,21 @@ assert "18 or older" in result.error
 ```python
 from flext_core import FlextResult
 
+
 def fetch_user(user_id: str) -> FlextResult[dict]:
     """Simulate database fetch that might fail."""
     if user_id == "missing":
         return FlextResult[dict].fail("User not found", error_code="NOT_FOUND")
     return FlextResult[dict].ok({"id": user_id, "name": "Alice"})
 
+
 # Recover with fallback data
-result = (
-    fetch_user("missing")
-    .recover(lambda error: {"id": "guest", "name": "Guest User"})
+result = fetch_user("missing").recover(
+    lambda error: {"id": "guest", "name": "Guest User"}
 )
 assert result.is_success
 assert result.value["name"] == "Guest User"  # Fallback used
+
 
 # Recover with conditional logic
 def get_default_user_for_error(error: str) -> dict:
@@ -313,6 +320,7 @@ def get_default_user_for_error(error: str) -> dict:
         return {"id": "guest", "name": "Guest"}
     else:
         return {"id": "error", "name": "Error"}
+
 
 result = fetch_user("missing").recover(get_default_user_for_error)
 assert result.value["id"] == "guest"
@@ -327,23 +335,23 @@ assert result.value["id"] == "guest"
 ```python
 from flext_core import FlextResult
 
+
 def parse_config(config: str) -> FlextResult[dict]:
     """Parse configuration that might fail."""
     if not config.startswith("{"):
         return FlextResult[dict].fail("Invalid JSON format")
     return FlextResult[dict].ok({"parsed": True})
 
+
 # Transform error message
-result = (
-    parse_config("invalid")
-    .map_error(lambda e: f"Configuration error: {e}")
-)
+result = parse_config("invalid").map_error(lambda e: f"Configuration error: {e}")
 assert result.is_failure
 assert "Configuration error" in result.error
 
 # Chain map_error
 result = (
-    FlextResult[str].fail("Original error")
+    FlextResult[str]
+    .fail("Original error")
     .map_error(lambda e: e.upper())
     .map_error(lambda e: f"[ERROR] {e}")
 )
@@ -360,9 +368,11 @@ assert result.error == "[ERROR] ORIGINAL ERROR"
 from flext_core import FlextResult
 import json
 
+
 def parse_json_unsafe(text: str) -> dict:
     """Parse JSON - might raise JSONDecodeError."""
     return json.loads(text)
+
 
 # Safe wrapper
 result = FlextResult.safe_call(parse_json_unsafe, '{"valid": "json"}')
@@ -370,13 +380,15 @@ assert result.is_success
 assert result.value["valid"] == "json"
 
 # With invalid input
-result = FlextResult.safe_call(parse_json_unsafe, 'invalid json')
+result = FlextResult.safe_call(parse_json_unsafe, "invalid json")
 assert result.is_failure
 assert "Expecting" in result.error  # JSONDecodeError message
+
 
 # With arguments
 def divide(a: int, b: int) -> float:
     return a / b
+
 
 result = FlextResult.safe_call(divide, 10, 0)
 assert result.is_failure  # Catches ZeroDivisionError
@@ -395,6 +407,7 @@ assert result.value == 5.0
 ```python
 from flext_core import FlextResult
 
+
 def risky_operation() -> FlextResult[str]:
     """Perform risky operation, converting exceptions to failures."""
     try:
@@ -404,6 +417,7 @@ def risky_operation() -> FlextResult[str]:
     except ValueError as e:
         # Convert exception to failure
         return FlextResult[str].from_exception(e, error_code="PARSE_ERROR")
+
 
 result = risky_operation()
 assert result.is_failure
@@ -427,20 +441,25 @@ except json.JSONDecodeError as e:
 ```python
 from flext_core import FlextResult
 
+
 def fetch_primary() -> FlextResult[dict]:
     return FlextResult[dict].fail("Primary unavailable")
 
+
 def fetch_backup() -> FlextResult[dict]:
     return FlextResult[dict].ok({"source": "backup", "data": "value"})
+
 
 # Try primary, fallback to backup
 result = fetch_primary().or_else(lambda _: fetch_backup())
 assert result.is_success
 assert result.value["source"] == "backup"
 
+
 # Success case (or_else is skipped)
 def fetch_primary_success() -> FlextResult[dict]:
     return FlextResult[dict].ok({"source": "primary"})
+
 
 result = fetch_primary_success().or_else(lambda _: fetch_backup())
 assert result.value["source"] == "primary"  # Primary used
@@ -449,7 +468,7 @@ assert result.value["source"] == "primary"  # Primary used
 result = (
     fetch_primary()
     .or_else(lambda _: fetch_primary())  # Still fails
-    .or_else(lambda _: fetch_backup())   # This succeeds
+    .or_else(lambda _: fetch_backup())  # This succeeds
 )
 assert result.is_success
 ```
@@ -464,10 +483,12 @@ assert result.is_success
 from flext_core import FlextResult
 from pydantic import BaseModel, Field
 
+
 class UserRegistration(BaseModel):
-    email: str = Field(pattern=r'^[^@]+@[^@]+\.[^@]+$')
+    email: str = Field(pattern=r"^[^@]+@[^@]+\.[^@]+$")
     password: str = Field(min_length=8)
     username: str = Field(min_length=3, max_length=20)
+
 
 def validate_registration(data: dict) -> FlextResult[UserRegistration]:
     """Validate user registration with FlextResult."""
@@ -481,6 +502,7 @@ def validate_registration(data: dict) -> FlextResult[UserRegistration]:
             error_data={"provided": data},
         )
 
+
 def check_username_available(user: UserRegistration) -> FlextResult[UserRegistration]:
     """Check if username is available."""
     # Pretend to check database
@@ -491,6 +513,7 @@ def check_username_available(user: UserRegistration) -> FlextResult[UserRegistra
         )
     return FlextResult[UserRegistration].ok(user)
 
+
 def create_user(user: UserRegistration) -> FlextResult[dict]:
     """Create user in database."""
     return FlextResult[dict].ok({
@@ -499,9 +522,11 @@ def create_user(user: UserRegistration) -> FlextResult[dict]:
         "email": user.email,
     })
 
+
 # Use the railway
 result = (
-    FlextResult.ok({"email": "user@example.com", "password": "secure123", "username": "john"})
+    FlextResult
+    .ok({"email": "user@example.com", "password": "secure123", "username": "john"})
     .flat_map(validate_registration)
     .flat_map(check_username_available)
     .flat_map(create_user)
@@ -521,6 +546,7 @@ else:
 from flext_core import FlextResult
 from typing import Any
 
+
 def fetch_primary_data(key: str) -> FlextResult[dict]:
     """Try fetching from primary API."""
     # Simulate API call that might fail
@@ -531,12 +557,14 @@ def fetch_primary_data(key: str) -> FlextResult[dict]:
         )
     return FlextResult[dict].ok({"source": "primary", "value": key})
 
+
 def fetch_backup_data(key: str) -> FlextResult[dict]:
     """Fallback to backup API."""
     return FlextResult[dict].ok({
         "source": "backup",
         "value": f"{key}_backup",
     })
+
 
 def fetch_data_with_fallback(key: str) -> FlextResult[dict]:
     """Fetch data with fallback to backup API."""
@@ -548,6 +576,7 @@ def fetch_data_with_fallback(key: str) -> FlextResult[dict]:
 
     # If primary fails, try backup
     return fetch_backup_data(key)
+
 
 # Usage
 result = fetch_data_with_fallback("config")
@@ -563,6 +592,7 @@ print(result.value)  # {"source": "backup", "value": "missing_backup"}
 from flext_core import FlextResult
 from decimal import Decimal
 
+
 def validate_transaction(amount: Decimal, account_id: str) -> FlextResult[dict]:
     """Validate transaction parameters."""
     if amount <= 0:
@@ -571,6 +601,7 @@ def validate_transaction(amount: Decimal, account_id: str) -> FlextResult[dict]:
             error_code="INVALID_AMOUNT",
         )
     return FlextResult[dict].ok({"amount": amount, "account_id": account_id})
+
 
 def check_balance(tx_data: dict) -> FlextResult[dict]:
     """Check if account has sufficient balance."""
@@ -588,6 +619,7 @@ def check_balance(tx_data: dict) -> FlextResult[dict]:
     tx_data["balance_before"] = balance
     return FlextResult[dict].ok(tx_data)
 
+
 def execute_transaction(tx_data: dict) -> FlextResult[dict]:
     """Execute the transaction."""
     # Simulate database update
@@ -597,9 +629,11 @@ def execute_transaction(tx_data: dict) -> FlextResult[dict]:
         "status": "completed",
     })
 
+
 # Railway pattern ensures validation before execution
 result = (
-    FlextResult.ok({"amount": Decimal("500"), "account_id": "acc_001"})
+    FlextResult
+    .ok({"amount": Decimal("500"), "account_id": "acc_001"})
     .flat_map(validate_transaction)
     .flat_map(check_balance)
     .flat_map(execute_transaction)
@@ -618,6 +652,7 @@ else:
 from flext_core import FlextResult
 import os
 import json
+
 
 def load_config_file(path: str) -> FlextResult[dict]:
     """Load and parse JSON config file."""
@@ -643,6 +678,7 @@ def load_config_file(path: str) -> FlextResult[dict]:
             error_code="CONFIG_ERROR",
         )
 
+
 def validate_config_schema(config: dict) -> FlextResult[dict]:
     """Validate required config fields."""
     required = ["database_url", "api_key", "log_level"]
@@ -657,6 +693,7 @@ def validate_config_schema(config: dict) -> FlextResult[dict]:
 
     return FlextResult[dict].ok(config)
 
+
 def apply_defaults(config: dict) -> FlextResult[dict]:
     """Apply default values for optional fields."""
     defaults = {
@@ -670,9 +707,11 @@ def apply_defaults(config: dict) -> FlextResult[dict]:
 
     return FlextResult[dict].ok(config)
 
+
 # Load and validate configuration
 result = (
-    FlextResult.ok("config.json")
+    FlextResult
+    .ok("config.json")
     .flat_map(load_config_file)
     .flat_map(validate_config_schema)
     .flat_map(apply_defaults)
@@ -695,6 +734,7 @@ else:
 from flext_core import FlextResult
 from typing import Sequence
 
+
 # Scenario: Process multiple items, fail on first error
 def validate_all_items(items: list[str]) -> FlextResult[list[str]]:
     """Validate each item, short-circuit on first failure."""
@@ -706,6 +746,7 @@ def validate_all_items(items: list[str]) -> FlextResult[list[str]]:
             else FlextResult[str].fail(f"Item too short: {item}")
         ),
     )
+
 
 result = validate_all_items(["valid", "item", "too"])  # Short "too" causes failure
 assert result.is_failure
@@ -720,6 +761,7 @@ assert result.value == ["valid", "item", "check"]
 ```python
 from flext_core import FlextResult
 
+
 def parse_int(value: str) -> FlextResult[int]:
     """Parse string to int."""
     try:
@@ -727,9 +769,11 @@ def parse_int(value: str) -> FlextResult[int]:
     except ValueError:
         return FlextResult[int].fail(f"Cannot parse as int: {value}")
 
+
 # Recover from error with alternative
 result = (
-    FlextResult.ok("not-a-number")
+    FlextResult
+    .ok("not-a-number")
     .flat_map(parse_int)
     .lash(lambda error: FlextResult[int].ok(0))  # Use 0 as default
 )
@@ -743,19 +787,23 @@ assert result.value == 0  # Recovered with default
 ```python
 from flext_core import FlextResult
 
+
 def create_connection():
     """Factory function creating resource."""
     return {"type": "connection", "id": 123}
 
+
 def close_connection(conn):
     """Cleanup function."""
     print(f"Closing connection {conn['id']}")
+
 
 def use_connection(conn) -> FlextResult[dict]:
     """Use the connection."""
     if conn["id"] == 123:
         return FlextResult[dict].ok({"result": "success", "id": conn["id"]})
     return FlextResult[dict].fail("Connection failed")
+
 
 # Automatic resource cleanup
 result = FlextResult.with_resource(
@@ -779,6 +827,7 @@ Automatically retry operations that return FlextResult:
 ```python
 from flext_core import r, d
 
+
 @d.retry(max_attempts=3, delay_seconds=1.0, backoff_strategy="exponential")
 @d.railway(error_code="API_ERROR")
 def fetch_user_data(user_id: str) -> dict:
@@ -788,6 +837,7 @@ def fetch_user_data(user_id: str) -> dict:
     response = api_client.get(f"/users/{user_id}")
     response.raise_for_status()
     return response.json()
+
 
 # Usage - result is automatically wrapped in FlextResult
 result = fetch_user_data("user_123")
@@ -804,6 +854,7 @@ Enforce timeouts on long-running operations:
 ```python
 from flext_core import r, d
 
+
 @d.timeout(timeout_seconds=30.0)
 @d.railway(error_code="TIMEOUT_ERROR")
 def expensive_computation(data: list[float]) -> float:
@@ -814,6 +865,7 @@ def expensive_computation(data: list[float]) -> float:
     for value in data:
         result += complex_calculation(value)
     return result
+
 
 # Usage - timeout protection automatic
 result = expensive_computation([1.0, 2.0, 3.0])
@@ -830,6 +882,7 @@ from flext_core import r, d, FlextLogger
 
 logger = FlextLogger(__name__)
 
+
 @d.retry(max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential")
 @d.timeout(timeout_seconds=60.0)
 @d.railway(error_code="NETWORK_ERROR")
@@ -845,6 +898,7 @@ def fetch_external_data(api_url: str) -> dict:
     response = requests.get(api_url, timeout=55)  # Slightly less than decorator timeout
     response.raise_for_status()
     return response.json()
+
 
 # Usage - all infrastructure automatic
 result = fetch_external_data("https://api.example.com/data")
@@ -867,6 +921,7 @@ Use `@combined` for maximum automation:
 ```python
 from flext_core import d, r
 
+
 @d.combined(
     operation_name="process_order",
     track_perf=True,
@@ -886,6 +941,7 @@ def process_order(order_data: dict) -> dict:
     # - @retry (retry logic)
     return order_processor.execute(order_data)
 
+
 # Usage - single decorator handles everything
 result = process_order({"order_id": "123", "items": [...]})
 if result.is_success:
@@ -899,6 +955,7 @@ FlextResult integrates naturally with decorators:
 ```python
 from flext_core import r, d
 
+
 @d.railway(error_code="VALIDATION_ERROR")
 def validate_order(order: dict) -> dict:
     """Validate order - exceptions become FlextResult.fail()."""
@@ -908,6 +965,7 @@ def validate_order(order: dict) -> dict:
         raise ValueError("Order total must be positive")
     return order
 
+
 @d.retry(max_attempts=3)
 @d.railway(error_code="PROCESSING_ERROR")
 def process_order(order: dict) -> dict:
@@ -916,15 +974,18 @@ def process_order(order: dict) -> dict:
     # @railway ensures result is always FlextResult[dict]
     return order_service.save(order)
 
+
 # Chain with railway composition
 def create_and_process_order(order_data: dict) -> r[dict]:
     """Complete order flow with railway + decorators."""
     return (
-        r.ok(order_data)
+        r
+        .ok(order_data)
         .flat_map(validate_order)  # Returns FlextResult[dict] (from @railway)
-        .flat_map(process_order)    # Returns FlextResult[dict] (from @railway)
+        .flat_map(process_order)  # Returns FlextResult[dict] (from @railway)
         .map_error(lambda e: f"Order processing failed: {e}")
     )
+
 
 # Usage
 result = create_and_process_order({"items": [...], "total": 100.0})
@@ -950,6 +1011,7 @@ def process_user(data: dict):
     if "email" not in data:
         raise ValueError("Email required")  # Exception-based
     return {"user": data}
+
 
 # ✅ CORRECT - Railway pattern
 def process_user(data: dict) -> FlextResult[dict]:
@@ -988,14 +1050,10 @@ def old_way(data):
     step3 = finalize(step2.value)
     return step3
 
+
 # ✅ DECLARATIVE - Railway composition
 def new_way(data):
-    return (
-        FlextResult.ok(data)
-        .flat_map(validate)
-        .flat_map(process)
-        .flat_map(finalize)
-    )
+    return FlextResult.ok(data).flat_map(validate).flat_map(process).flat_map(finalize)
 ```
 
 ### 4. Preserve Success Values
@@ -1003,9 +1061,11 @@ def new_way(data):
 ```python
 # ❌ WRONG - Forgetting to return value
 result = (
-    FlextResult.ok(data)
-    .flat_map(transform)  # If returns FlextResult.ok(...), value is preserved
+    FlextResult.ok(data).flat_map(
+        transform
+    )  # If returns FlextResult.ok(...), value is preserved
 )
+
 
 # ✅ CORRECT - Functions return FlextResult with wrapped value
 def transform(data) -> FlextResult[dict]:
@@ -1034,7 +1094,7 @@ except Exception:
     pass
 
 try:
-    value = failed.data   # Also raises
+    value = failed.data  # Also raises
 except Exception:
     pass
 ```

@@ -63,13 +63,11 @@ class FlextUtilitiesChecker:
         origin_is_dict = cls._is_dict_type(origin_type)
         message_origin_is_dict = cls._is_dict_type(message_origin)
         if origin_is_dict and (
-            message_origin_is_dict
-            or cls._is_dict_type(message_type)
+            message_origin_is_dict or cls._is_dict_type(message_type)
         ):
             return True
-        return (
-            cls._is_dict_type(message_type)
-            and (origin_is_dict or cls._is_dict_type(expected_type))
+        return cls._is_dict_type(message_type) and (
+            origin_is_dict or cls._is_dict_type(expected_type)
         )
 
     @classmethod

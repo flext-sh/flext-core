@@ -39,26 +39,24 @@ class FlextInfraDepsConstants:
         r"^(?:git@github\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?)$",
     )
     PEP621_PATH_RE: Final[re.Pattern[str]] = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
-    SKIP_DIRS: Final[frozenset[str]] = frozenset(
-        {
-            ".archive",
-            ".claude.disabled",
-            ".flext-deps",
-            ".git",
-            ".mypy_cache",
-            ".pytest_cache",
-            ".ruff_cache",
-            ".sisyphus",
-            ".venv",
-            "__pycache__",
-            "build",
-            "dist",
-            "htmlcov",
-            "node_modules",
-            "site",
-            "vendor",
-        }
-    )
+    SKIP_DIRS: Final[frozenset[str]] = frozenset({
+        ".archive",
+        ".claude.disabled",
+        ".flext-deps",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".sisyphus",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "htmlcov",
+        "node_modules",
+        "site",
+        "vendor",
+    })
     DEP_NAME_RE: Final[re.Pattern[str]] = re.compile(r"^\s*([A-Za-z0-9_.-]+)")
     RECENT_LINES_FOR_MARKER: Final[int] = 3
     RECENT_LINES_FOR_DEV_DEP: Final[int] = 4

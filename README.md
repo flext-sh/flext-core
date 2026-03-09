@@ -52,10 +52,12 @@ Replace exception handling with `FlextResult` for predictable control flow.
 ```python
 from flext_core import r
 
+
 def divide(a: int, b: int) -> r[float]:
     if b == 0:
         return r[float].fail("Division by zero")
     return r[float].ok(a / b)
+
 
 result = divide(10, 2)
 if result.is_success:
@@ -75,10 +77,12 @@ from flext_core import FlextContainer, Provide, inject, FlextService
 container = FlextContainer.get_global()
 container.register_factory("db_client", lambda: DatabaseClient())
 
+
 # 2. Inject into functions
 @inject
 def get_user(user_id: str, db=Provide["db_client"]):
     return db.query(user_id)
+
 
 # 3. Inject into Services
 class UserService(FlextService):
@@ -96,16 +100,19 @@ Decouple your business logic using the `FlextDispatcher`.
 from dataclasses import dataclass
 from flext_core import FlextDispatcher, r
 
+
 # 1. Define a Command
 @dataclass
 class CreateUser:
     username: str
     email: str
 
+
 # 2. Define a Handler
 def handle_create_user(cmd: CreateUser) -> r[str]:
     # Business logic here...
     return r[str].ok(f"User {cmd.username} created")
+
 
 # 3. Register and Dispatch
 dispatcher = FlextDispatcher()

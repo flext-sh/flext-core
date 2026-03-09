@@ -56,6 +56,7 @@ is essentially a **Pydantic model with an `execute()` method** that returns
 ```python
 from flext_core import FlextService, FlextResult
 
+
 class CreateUserService(FlextService[User]):
     name: str
     email: str
@@ -137,6 +138,7 @@ class AutoUserService(FlextService[User]):
     def execute(self) -> FlextResult[User]:
         return FlextResult[User].ok(User(name=self.name, email=self.email))
 
+
 # Instantiation returns User directly (not service instance)
 user = AutoUserService(name="Alice", email="alice@example.com")
 print(f"Created user: {user.name}")
@@ -198,7 +200,8 @@ Chain services using `flat_map`:
 ```python
 def process_user(name: str, email: str) -> FlextResult[User]:
     return (
-        ValidateEmailService(email=email).execute()
+        ValidateEmailService(email=email)
+        .execute()
         .flat_map(lambda _: ValidateNameService(name=name).execute())
         .flat_map(lambda _: CreateUserService(name=name, email=email).execute())
     )
@@ -223,6 +226,7 @@ def create_notification_service(
         case _:
             return NoOpNotificationService(message=message)
 
+
 # Usage
 service = create_notification_service("email", "Hello!")
 result = service.execute()
@@ -237,6 +241,7 @@ Services are called by CQRS handlers for domain operations:
 ```python
 from flext_core import FlextHandlers
 from flext_core import r
+
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
@@ -264,6 +269,7 @@ def test_create_user_service_success():
     user = result.value
     assert user.name == "Alice"
     assert user.email == "alice@example.com"
+
 
 def test_create_user_service_invalid_email():
     service = CreateUserService(name="Alice", email="invalid")

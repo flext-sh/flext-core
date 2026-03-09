@@ -114,27 +114,24 @@ user3 = User.model_validate_json('{"user_id": "..."}')
 ```python
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class ApiResponse(BaseModel):
     """API response with strict configuration."""
+
     model_config = ConfigDict(
         # Validation
-        validate_assignment=True,      # Validate on attribute assignment
-        validate_default=True,         # Validate default values
-        use_enum_values=True,          # Use enum values in serialization
-
+        validate_assignment=True,  # Validate on attribute assignment
+        validate_default=True,  # Validate default values
+        use_enum_values=True,  # Use enum values in serialization
         # Serialization
-        ser_json_timedelta="float",    # Serialize timedelta as float
-        ser_json_bytes="utf8",         # Serialize bytes as UTF-8 string
-
+        ser_json_timedelta="float",  # Serialize timedelta as float
+        ser_json_bytes="utf8",  # Serialize bytes as UTF-8 string
         # Extra fields
-        extra="forbid",                # Reject extra fields
-
+        extra="forbid",  # Reject extra fields
         # Aliases
-        populate_by_name=True,         # Allow both field name and alias
-
+        populate_by_name=True,  # Allow both field name and alias
         # Freezing
-        frozen=False,                  # Allow mutation
-
+        frozen=False,  # Allow mutation
         # JSON schema
         json_schema_extra={
             "examples": [
@@ -169,8 +166,10 @@ class ApiResponse(BaseModel):
 ```python
 from pydantic import BaseModel, Field, field_validator
 
+
 class Product(BaseModel):
     """Product with field validation."""
+
     name: str = Field(min_length=1)
     price: float = Field(gt=0)  # Positive number
     sku: str = Field(min_length=5, max_length=20)
@@ -195,6 +194,7 @@ class Product(BaseModel):
             raise ValueError("SKU must be alphanumeric")
         return v.upper()
 
+
 # Usage
 product = Product(
     name="  laptop computer  ",  # Normalized to "Laptop Computer"
@@ -207,6 +207,7 @@ product = Product(
 
 ```python
 from pydantic import field_validator, mode
+
 
 class Config(BaseModel):
     timeout: int = Field(gt=0, le=3600)
@@ -238,6 +239,7 @@ class Config(BaseModel):
                 raise ValueError("Retries must be > 0 in strict mode")
         return result
 
+
 # Usage
 config = Config(
     timeout="300",  # Parsed from string
@@ -250,6 +252,7 @@ config = Config(
 
 ```python
 from pydantic import field_validator
+
 
 class DateRange(BaseModel):
     start_date: date
@@ -269,8 +272,10 @@ class DateRange(BaseModel):
 ```python
 from pydantic import BaseModel, model_validator
 
+
 class PasswordChange(BaseModel):
     """Password change with cross-field validation."""
+
     current_password: str
     new_password: str
     confirm_password: str
@@ -297,8 +302,10 @@ class PasswordChange(BaseModel):
 ```python
 from pydantic import BaseModel, computed_field
 
+
 class Person(BaseModel):
     """Person with computed derived properties."""
+
     first_name: str
     last_name: str
     birth_year: int
@@ -314,7 +321,9 @@ class Person(BaseModel):
     def age(self) -> int:
         """Computed: age based on birth year."""
         from datetime import date
+
         return date.today().year - self.birth_year
+
 
 # Usage
 person = Person(first_name="Alice", last_name="Smith", birth_year=1990)
@@ -340,16 +349,21 @@ from pydantic import BaseModel, Field
 
 # Define semantic types
 UserId = Annotated[str, Field(description="Unique user identifier", example="user_001")]
-Email = Annotated[str, Field(pattern=r'^[^@]+@[^@]+\.[^@]+$', description="Email address")]
+Email = Annotated[
+    str, Field(pattern=r"^[^@]+@[^@]+\.[^@]+$", description="Email address")
+]
 PositiveInt = Annotated[int, Field(gt=0, description="Positive integer")]
 PortNumber = Annotated[int, Field(ge=1, le=65535, description="Network port (1-65535)")]
 
+
 class ServiceConfig(BaseModel):
     """Service configuration using semantic types."""
+
     service_id: UserId
     REDACTED_LDAP_BIND_PASSWORD_email: Email
     worker_count: PositiveInt
     port: PortNumber
+
 
 # Usage - type checker knows constraints
 config = ServiceConfig(
@@ -368,14 +382,16 @@ config = ServiceConfig(
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, SecretStr
 
+
 class Settings(BaseSettings):
     """Application settings with environment variables."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        env_nested_delimiter="__",    # Use __ for nested fields
-        case_sensitive=False,          # Case-insensitive env vars
-        extra="forbid",                # Reject unknown fields
+        env_nested_delimiter="__",  # Use __ for nested fields
+        case_sensitive=False,  # Case-insensitive env vars
+        extra="forbid",  # Reject unknown fields
     )
 
     # Simple fields
@@ -394,6 +410,7 @@ class Settings(BaseSettings):
         name: str
 
     database: Database = Field(default_factory=Database)
+
 
 # Usage - automatically loads from environment
 settings = Settings()
@@ -422,6 +439,7 @@ from pydantic import BaseModel, Field, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from typing import Annotated
 
+
 # Define custom validator type
 def validate_country_code(code: str) -> str:
     """Validate ISO 3166-1 alpha-2 country code."""
@@ -430,10 +448,12 @@ def validate_country_code(code: str) -> str:
         raise ValueError(f"Invalid country code: {code}")
     return code.upper()
 
+
 CountryCode = Annotated[
     str,
     Field(description="ISO 3166-1 alpha-2 country code"),
 ]
+
 
 class Address(BaseModel):
     street: str
@@ -445,6 +465,7 @@ class Address(BaseModel):
     @classmethod
     def validate_country(cls, v):
         return validate_country_code(v)
+
 
 # Usage
 address = Address(
@@ -461,23 +482,30 @@ address = Address(
 from typing import Annotated, Literal, Union
 from pydantic import Discriminator, Field, BaseModel
 
+
 class Tap(BaseModel):
     """Source tap configuration."""
+
     type: Literal["tap"] = "tap"
     name: str
     connector: str
 
+
 class Target(BaseModel):
     """Destination target configuration."""
+
     type: Literal["target"] = "target"
     name: str
     connector: str
 
+
 class Dbt(BaseModel):
     """Data transformation configuration."""
+
     type: Literal["dbt"] = "dbt"
     name: str
     project_path: str
+
 
 # Discriminated union - type-safe polymorphism
 ComponentConfig = Annotated[
@@ -485,9 +513,12 @@ ComponentConfig = Annotated[
     Discriminator("type"),
 ]
 
+
 class Pipeline(BaseModel):
     """Pipeline with multiple component types."""
+
     components: list[ComponentConfig]
+
 
 # Usage - type-safe
 pipeline_data = {
@@ -516,14 +547,17 @@ for component in pipeline.components:
 from pydantic import BaseModel
 from pydantic.json_schema import models_json_schema
 
+
 class User(BaseModel):
     name: str
     email: str
     age: int
 
+
 class Product(BaseModel):
     name: str
     price: float
+
 
 # Generate JSON schemas for multiple models
 schemas = models_json_schema(
@@ -536,6 +570,7 @@ schemas = models_json_schema(
 )
 
 import json
+
 print(json.dumps(schemas, indent=2))
 
 # Output includes:
@@ -563,9 +598,11 @@ Always wrap Pydantic validation in FlextResult:
 from flext_core import FlextResult
 from pydantic import BaseModel, ValidationError
 
+
 class UserModel(BaseModel):
     email: str
     password: str
+
 
 def validate_user(data: dict) -> FlextResult[UserModel]:
     """Validate user data with FlextResult."""
@@ -578,6 +615,7 @@ def validate_user(data: dict) -> FlextResult[UserModel]:
             error_code="USER_VALIDATION_ERROR",
             error_data={"errors": e.errors()},
         )
+
 
 # Usage
 result = validate_user({"email": "user@example.com", "password": "secret123"})
@@ -621,6 +659,7 @@ else:
    ```python
    # Good - strict configuration
    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+
 
    # Avoid - permissive configuration
    class Config:

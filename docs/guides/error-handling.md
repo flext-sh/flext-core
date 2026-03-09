@@ -129,11 +129,13 @@ Once on the failure track, you stay on it until explicitly recovered.
 ```python
 from flext_core import FlextResult
 
+
 def validate_email(email: str) -> FlextResult[str]:
     """Validate email format."""
     if "@" not in email:
         return FlextResult[str].fail("Invalid email format")
     return FlextResult[str].ok(email)
+
 
 def check_email_available(email: str) -> FlextResult[str]:
     """Check if email is available."""
@@ -142,10 +144,12 @@ def check_email_available(email: str) -> FlextResult[str]:
         return FlextResult[str].fail("Email already taken")
     return FlextResult[str].ok(email)
 
+
 def send_confirmation(email: str) -> FlextResult[str]:
     """Send confirmation email."""
     # Pretend this works
     return FlextResult[str].ok(f"Confirmation sent to {email}")
+
 
 # Railway: one failure anywhere stops the flow
 email_result = (
@@ -174,10 +178,11 @@ new_result = result.map(lambda x: x * 2)  # FlextResult[int].ok(10)
 
 # Chain multiple transformations
 result = (
-    FlextResult[int].ok(5)
-    .map(lambda x: x * 2)      # 10
-    .map(lambda x: x + 3)      # 13
-    .map(lambda x: str(x))     # "13"
+    FlextResult[int]
+    .ok(5)
+    .map(lambda x: x * 2)  # 10
+    .map(lambda x: x + 3)  # 13
+    .map(lambda x: str(x))  # "13"
 )
 ```
 
@@ -186,14 +191,16 @@ result = (
 ```python
 from flext_core import FlextResult
 
+
 def divide(a: float, b: float) -> FlextResult[float]:
     if b == 0:
         return FlextResult[float].fail("Division by zero")
     return FlextResult[float].ok(a / b)
 
+
 # Chain operations, one failure stops the flow
 result = (
-    divide(10, 2)              # FlextResult[float].ok(5.0)
+    divide(10, 2)  # FlextResult[float].ok(5.0)
     .flat_map(lambda x: divide(x, 0))  # FlextResult[float].fail("Division by zero")
     .flat_map(lambda x: divide(x, 2))  # Never executes (stayed on failure track)
 )
@@ -210,14 +217,12 @@ result = FlextResult[int].ok(15)
 
 # Add condition to success path
 result = result.filter(
-    lambda x: x > 10,
-    "Value must be greater than 10"
+    lambda x: x > 10, "Value must be greater than 10"
 )  # FlextResult[int].ok(15)
 
 # Failing condition
 result = result.filter(
-    lambda x: x < 10,
-    "Value must be less than 10"
+    lambda x: x < 10, "Value must be less than 10"
 )  # FlextResult[int].fail("Value must be less than 10")
 ```
 
@@ -226,8 +231,10 @@ result = result.filter(
 ```python
 from flext_core import FlextResult
 
+
 def risky_operation() -> FlextResult[str]:
     return FlextResult[str].fail("Database connection failed")
+
 
 result = (
     risky_operation()
@@ -245,6 +252,7 @@ print(result.error)  # "[ERROR] Operation failed: Database connection failed"
 ```python
 from flext_core import FlextResult
 
+
 def validate_username(username: str) -> FlextResult[str]:
     """Validate username."""
     if not username:
@@ -255,11 +263,13 @@ def validate_username(username: str) -> FlextResult[str]:
         return FlextResult[str].fail("Username must be alphanumeric")
     return FlextResult[str].ok(username)
 
+
 def validate_email(email: str) -> FlextResult[str]:
     """Validate email."""
     if "@" not in email or "." not in email:
         return FlextResult[str].fail("Invalid email format")
     return FlextResult[str].ok(email)
+
 
 def validate_password(password: str) -> FlextResult[str]:
     """Validate password."""
@@ -271,6 +281,7 @@ def validate_password(password: str) -> FlextResult[str]:
         return FlextResult[str].fail("Password must contain digit")
     return FlextResult[str].ok(password)
 
+
 # Use validation pipeline
 def register_user(username: str, email: str, password: str) -> FlextResult[str]:
     """Register user with full validation."""
@@ -280,6 +291,7 @@ def register_user(username: str, email: str, password: str) -> FlextResult[str]:
         .flat_map(lambda ue: validate_password(password).map(lambda p: (*ue, p)))
         .map(lambda upe: f"User {upe[0]} ({upe[1]}) registered")
     )
+
 
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
@@ -295,6 +307,7 @@ else:
 from flext_core import FlextResult, FlextLogger
 
 logger = FlextLogger(__name__)
+
 
 class UserRepository:
     """Repository for user data operations."""
@@ -324,11 +337,13 @@ class UserRepository:
             logger.error(f"Save failed: {e}")
             return FlextResult[dict].fail("Failed to save user")
 
+
 # Usage
 repo = UserRepository()
 
 result = (
-    repo.get_user_by_id("1")
+    repo
+    .get_user_by_id("1")
     .map(lambda user: {**user, "name": user["name"].upper()})
     .flat_map(repo.save_user)
 )
@@ -345,6 +360,7 @@ else:
 from flext_core import FlextResult
 import requests
 from typing import Any
+
 
 class ExternalService:
     """Integration with external service."""
@@ -367,10 +383,10 @@ class ExternalService:
 
     def get_user_data(self, user_id: str) -> FlextResult[dict]:
         """Get user data from external service."""
-        return (
-            self.call_api(f"users/{user_id}")
-            .map_error(lambda e: f"Failed to fetch user: {e}")
+        return self.call_api(f"users/{user_id}").map_error(
+            lambda e: f"Failed to fetch user: {e}"
         )
+
 
 # Usage
 service = ExternalService()
@@ -387,11 +403,14 @@ else:
 ```python
 from flext_core import FlextResult
 
+
 def risky_operation() -> FlextResult[str]:
     return FlextResult[str].fail("Primary operation failed")
 
+
 def fallback_operation() -> FlextResult[str]:
     return FlextResult[str].ok("Fallback operation succeeded")
+
 
 # Try primary, fall back on failure
 result = risky_operation()
@@ -401,11 +420,13 @@ if result.is_failure:
 
 print(f"Result: {result.value}")  # "Fallback operation succeeded"
 
+
 # Or use lash pattern (error handling with FlextResult)
 def handle_failure(error: str) -> FlextResult[str]:
     """Handle failure with fallback."""
     print(f"Failed with: {error}, trying fallback...")
     return fallback_operation()
+
 
 result = risky_operation().lash(handle_failure)
 ```
@@ -415,6 +436,7 @@ result = risky_operation().lash(handle_failure)
 ```python
 from flext_core import FlextResult
 from typing import List
+
 
 def process_items(items: List[str]) -> FlextResult[List[str]]:
     """Process multiple items, collecting all results."""
@@ -436,11 +458,13 @@ def process_items(items: List[str]) -> FlextResult[List[str]]:
 
     return FlextResult[List[str]].ok(results)
 
+
 def process_item(item: str) -> FlextResult[str]:
     """Process single item."""
     if not item:
         return FlextResult[str].fail("Empty item")
     return FlextResult[str].ok(f"Processed: {item}")
+
 
 # Usage
 result = process_items(["item1", "item2", "item3"])
@@ -457,6 +481,7 @@ else:
 ```python
 from flext_core import FlextResult
 
+
 def withdraw_from_account(amount: float, balance: float) -> FlextResult[float]:
     """Withdraw from account - domain error."""
     if amount > balance:
@@ -465,6 +490,7 @@ def withdraw_from_account(amount: float, balance: float) -> FlextResult[float]:
             f"Insufficient funds. Available: {balance}, Requested: {amount}"
         )
     return FlextResult[float].ok(balance - amount)
+
 
 # Usage
 result = withdraw_from_account(100, 50)
@@ -478,10 +504,11 @@ if result.is_failure:
 from flext_core import FlextResult
 import os
 
+
 def read_config_file(path: str) -> FlextResult[str]:
     """Read configuration - system error."""
     try:
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return FlextResult[str].ok(f.read())
     except FileNotFoundError:
         return FlextResult[str].fail(f"Configuration file not found: {path}")
@@ -501,6 +528,7 @@ def find_user(user_id: str) -> FlextResult[dict]:
     if user_id not in users_db:
         return FlextResult[dict].fail(f"User {user_id} not found")
     return FlextResult[dict].ok(users_db[user_id])
+
 
 # ❌ WRONG - Using exceptions
 def find_user(user_id: str) -> dict:
@@ -534,9 +562,7 @@ if validation.is_failure:
 
 ```python
 # ✅ CORRECT - Clear, actionable
-return FlextResult[str].fail(
-    "Invalid email format. Expected format: name@domain.com"
-)
+return FlextResult[str].fail("Invalid email format. Expected format: name@domain.com")
 
 # ❌ WRONG - Vague
 return FlextResult[str].fail("Invalid input")
@@ -549,6 +575,7 @@ from flext_core import FlextResult, FlextLogger
 
 logger = FlextLogger(__name__)
 
+
 def api_handler(request) -> dict:
     """Handle API request."""
     result = process_request(request)
@@ -558,6 +585,7 @@ def api_handler(request) -> dict:
     else:
         logger.error(f"Request failed: {result.error}")
         return {"status": "error", "message": result.error}
+
 
 def process_request(request) -> FlextResult[dict]:
     """Business logic - returns FlextResult."""
@@ -572,6 +600,7 @@ from flext_core import FlextLogger, FlextResult
 
 logger = FlextLogger(__name__)
 
+
 def risky_operation() -> FlextResult[str]:
     """Operation that might fail."""
     try:
@@ -579,10 +608,9 @@ def risky_operation() -> FlextResult[str]:
         return FlextResult[str].ok(result)
     except Exception as e:
         # Log with context
-        logger.error("Operation failed", extra={
-            "error": str(e),
-            "error_type": type(e).__name__
-        })
+        logger.error(
+            "Operation failed", extra={"error": str(e), "error_type": type(e).__name__}
+        )
         return FlextResult[str].fail(f"Operation failed: {str(e)}")
 ```
 

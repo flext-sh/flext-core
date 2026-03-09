@@ -246,6 +246,7 @@ def process_user(user_id: str) -> FlextResult[User]:
     user = self.user_repository.get(user_id)
     return FlextResult[User].ok(user)
 
+
 # ❌ WRONG - Missing types, poor naming
 def do_stuff(x):
     if not x:
@@ -265,6 +266,7 @@ def create_user(name: str, email: str) -> FlextResult[User]:
 
     user = User(id=f"user_{name}", name=name, email=email)
     return FlextResult[User].ok(user)
+
 
 # ❌ WRONG - Using exceptions for control flow
 def create_user(name: str, email: str) -> User:
@@ -286,6 +288,7 @@ class UserService(FlextService):
     def _get_logger(self) -> FlextLogger:
         result = self.container.get("logger")
         return result.value if result.is_success else FlextLogger(__name__)
+
 
 # ❌ WRONG - Manual DI or no DI
 class UserService:

@@ -177,6 +177,7 @@ from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
+
 def process_ldif_data(content: str) -> FlextResult[str, Exception]:
     # Parse LDIF
     parse_result = ldif.parse(content)
@@ -192,9 +193,11 @@ def process_ldif_data(content: str) -> FlextResult[str, Exception]:
     except Exception as e:
         return FlextResult.failure(e)
 
+
 def process_entries(entries: list) -> str:
     # Your processing logic here
     return f"Processed {len(entries)} entries"
+
 
 # Usage
 result = process_ldif_data(ldif_content)
@@ -229,14 +232,17 @@ from flext_core import t
 from flext_core import u
 from dataclasses import dataclass
 
+
 @dataclass
 class CreateUserCommand:
     username: str
     email: str
 
+
 @dataclass
 class GetUserQuery:
     user_id: str
+
 
 class UserService:
     def create_user(self, cmd: CreateUserCommand) -> FlextResult[str, Exception]:
@@ -246,6 +252,7 @@ class UserService:
     def get_user(self, query: GetUserQuery) -> FlextResult[str, Exception]:
         # Get user logic
         return FlextResult.success(f"User {query.user_id} data")
+
 
 # Setup dispatcher
 dispatcher = FlextDispatcher()
@@ -282,7 +289,7 @@ config = FlextLdifSettings(
     default_encoding="utf-8",
     strict_validation=True,
     servers_enabled=True,
-    batch_size=1000
+    batch_size=1000,
 )
 
 # Use configuration

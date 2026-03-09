@@ -87,16 +87,14 @@ class ConsolidateGroupsPhase:
             optional = tomlkit.table()
             project[c.Infra.Toml.OPTIONAL_DEPENDENCIES] = optional
         existing = project_dev_groups(doc)
-        merged_dev = dedupe_specs(
-            [
-                *canonical_dev,
-                *existing.get(c.Infra.Toml.DEV, []),
-                *existing.get(c.Infra.Directories.DOCS, []),
-                *existing.get(c.Infra.Gates.SECURITY, []),
-                *existing.get(c.Infra.Toml.TEST, []),
-                *existing.get(c.Infra.Directories.TYPINGS, []),
-            ]
-        )
+        merged_dev = dedupe_specs([
+            *canonical_dev,
+            *existing.get(c.Infra.Toml.DEV, []),
+            *existing.get(c.Infra.Directories.DOCS, []),
+            *existing.get(c.Infra.Gates.SECURITY, []),
+            *existing.get(c.Infra.Toml.TEST, []),
+            *existing.get(c.Infra.Directories.TYPINGS, []),
+        ])
         current_dev = as_string_list(toml_get(optional, c.Infra.Toml.DEV))
         if current_dev != merged_dev:
             optional[c.Infra.Toml.DEV] = array(merged_dev)
@@ -427,6 +425,9 @@ class EnsureRuffConfigPhase:
                 changes.append(
                     f"tool.ruff.lint.isort.known-first-party set to {detected_packages}",
                 )
+        if c.Infra.Toml.LINT_SECTION in doc:
+            del doc[c.Infra.Toml.LINT_SECTION]
+            changes.append("removed stale top-level [lint] section")
         return changes
 
 

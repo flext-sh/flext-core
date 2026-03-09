@@ -206,9 +206,11 @@ class FlextResult:
     class _Implementation:  # Nested helper OK
         pass
 
+
 # ❌ FORBIDDEN
 class FlextResult:
     pass
+
 
 class FlextContainer:  # Second top-level class
     pass

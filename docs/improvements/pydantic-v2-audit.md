@@ -267,6 +267,7 @@ $ grep -n "Annotated\[" src/flext_core/typings.py | head -5
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
 
@@ -339,6 +340,7 @@ class Command(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         frozen=True,
         description="Message type discriminator - always 'command'",
     )
+
 
 # Query class with different Literal
 class Query(BaseModel):

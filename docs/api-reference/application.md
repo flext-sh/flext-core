@@ -28,15 +28,18 @@ Primary components in this layer: `FlextDispatcher`, `h`, `FlextRegistry`, and `
 ```python
 from flext_core import FlextDispatcher
 
+
 # Define messages
 class CreateUserCommand:
     def __init__(self, name: str, email: str):
         self.name = name
         self.email = email
 
+
 class GetUserQuery:
     def __init__(self, user_id: str):
         self.user_id = user_id
+
 
 # Create dispatcher and register handlers
 dispatcher = FlextDispatcher()
@@ -62,6 +65,7 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 ```python
 from flext_core import h
 from flext_core import r
+
 
 class CreateUserHandler(h[CreateUserCommand, bool]):
     def handle(self, message: CreateUserCommand) -> r[bool]:
@@ -107,6 +111,7 @@ summary = registry.register_handlers([
 ```python
 from flext_core import FlextDecorators
 from flext_core import r
+
 
 @FlextDecorators.retry(attempts=3)
 @FlextDecorators.timeout(seconds=2)

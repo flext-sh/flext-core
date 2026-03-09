@@ -67,6 +67,7 @@ def validate_user(data: dict) -> User:
         raise ValueError("Password too short")  # Business error
     return User(**data)
 
+
 # Caller must handle exceptions
 try:
     user = validate_user(data)
@@ -88,6 +89,7 @@ except ValueError as e:
 # ✅ CORRECT - Railway pattern
 from flext_core import FlextResult
 
+
 def validate_user(data: dict) -> FlextResult[User]:
     """Returns FlextResult wrapping success or failure."""
     if "email" not in data:
@@ -95,6 +97,7 @@ def validate_user(data: dict) -> FlextResult[User]:
     if len(data.get("password", "")) < 8:
         return FlextResult[User].fail("Password too short")
     return FlextResult[User].ok(User(**data))
+
 
 # Caller handles results
 result = validate_user(data)
@@ -140,6 +143,7 @@ def load_config() -> dict:
 ```python
 # ✅ CORRECT - Explicit error handling
 from flext_core import FlextResult
+
 
 def load_config() -> FlextResult[dict]:
     """Loads config with explicit error handling."""
@@ -206,6 +210,7 @@ ______________________________________________________________________
 # ❌ ANTI-PATTERN - Disables type checking
 from typing import Any
 
+
 def process_data(data: Any) -> Any:
     """Returns Any - type checker can't help."""
     return data.something()  # IDE doesn't know what methods are available
@@ -226,15 +231,18 @@ from typing import TypeVar, Generic
 
 T = TypeVar("T")
 
+
 def process_data(data: dict[str, object]) -> dict[str, object]:
     """Specific types - type checker validates."""
     return data  # IDE knows dict methods
+
 
 # Or with generics
 class Container(Generic[T]):
     def process(self, data: T) -> T:
         """Generic preserves type."""
         return data
+
 
 # Type checker knows exact type when used
 container = Container[str]()
@@ -287,6 +295,7 @@ def calculate_total(items: list[Item]) -> Decimal:
 ```python
 # ✅ CORRECT - Proper typing
 from decimal import Decimal
+
 
 def calculate_total(items: list[Item]) -> Decimal:
     total = Decimal("0")  # Correct type from start
@@ -359,11 +368,14 @@ from flext_core import t
 class FlextModels:
     pass
 
+
 class DomainModel:  # Second export - WRONG!
     pass
 
+
 class Value:  # Third export - WRONG!
     pass
+
 
 # In __init__.py
 from flext_core import FlextModels, DomainModel, Value
@@ -384,13 +396,17 @@ from flext_core import FlextModels, DomainModel, Value
 # flext_core/models.py
 class FlextModels:
     """Single main class per module."""
+
     class Value:
         """Nested helper - OK."""
+
         pass
 
     class Entity:
         """Nested helper - OK."""
+
         pass
+
 
 # In __init__.py
 from flext_core import FlextModels
@@ -440,21 +456,28 @@ class FlextMeltano:
 # ✅ CORRECT - Separated concerns
 class MeltanoConfig:
     """Handles configuration only."""
+
     def load(self, path: str) -> FlextResult[dict]:
         pass
 
+
 class MeltanoValidator:
     """Handles validation only."""
+
     def validate_config(self, config: dict) -> FlextResult[bool]:
         pass
 
+
 class MeltanoStreamManager:
     """Handles stream operations."""
+
     def load_streams(self, config: dict) -> FlextResult[list]:
         pass
 
+
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
+
     def run_tap(self, config: dict) -> FlextResult[bool]:
         pass
 ```
@@ -473,9 +496,11 @@ def service_a():
     container = FlextContainer()  # New container
     return container.get("logger")
 
+
 def service_b():
     container = FlextContainer()  # DIFFERENT container!
     return container.get("logger")
+
 
 # service_a and service_b get different logger instances!
 ```
@@ -495,9 +520,11 @@ def service_a():
     container = FlextContainer.get_global()  # Same instance
     return container.get("logger")
 
+
 def service_b():
     container = FlextContainer.get_global()  # Same instance!
     return container.get("logger")
+
 
 # Both get same logger instance
 assert service_a() is service_b()
@@ -553,6 +580,7 @@ ______________________________________________________________________
 # ❌ ANTI-PATTERN - Validation via exceptions
 from pydantic import BaseModel
 
+
 class User(BaseModel):
     email: str
     age: int
@@ -569,6 +597,7 @@ class User(BaseModel):
             raise ValueError("Age must be positive")  # Pydantic exception
         return v
 
+
 # Usage - Pydantic raises ValidationError
 try:
     user = User(email="invalid", age=-5)
@@ -583,9 +612,11 @@ except ValidationError as e:
 from flext_core import FlextResult
 from pydantic import BaseModel, ValidationError
 
+
 class User(BaseModel):
     email: str
     age: int
+
 
 def create_user(data: dict) -> FlextResult[User]:
     """Create user with FlextResult validation."""
@@ -598,6 +629,7 @@ def create_user(data: dict) -> FlextResult[User]:
             error_code="USER_VALIDATION_ERROR",
             error_data={"validation_errors": str(e)},
         )
+
 
 # Usage
 result = create_user({"email": "invalid", "age": -5})
@@ -615,9 +647,11 @@ else:
 # ❌ ANTI-PATTERN - Mutable value object
 from flext_core import FlextModels
 
+
 class Money(FlextModels.Value):
     amount: float  # Mutable!
     currency: str
+
 
 money = Money(amount=100.0, currency="USD")
 money.amount = 50.0  # Can be changed - violates value semantics!
@@ -643,10 +677,12 @@ from flext_core import FlextModels
 from pydantic import ConfigDict
 from decimal import Decimal
 
+
 class Money(FlextModels.Value):
     model_config = ConfigDict(frozen=True)  # Immutable
     amount: Decimal
     currency: str
+
 
 money = Money(amount=Decimal("100"), currency="USD")
 money.amount = Decimal("50")  # TypeError: frozen object cannot be modified
@@ -690,6 +726,7 @@ def connect_database():
 from flext_core import FlextSettings
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class DatabaseConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DB_")
 
@@ -699,7 +736,9 @@ class DatabaseConfig(BaseSettings):
     user: str
     password: str  # SecretStr recommended
 
+
 db_config = DatabaseConfig()  # Loads from environment variables
+
 
 def connect_database():
     connection = psycopg2.connect(
@@ -748,6 +787,7 @@ from flext_core import FlextSettings
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
+
 class AppConfig(BaseSettings):
     timeout: int = Field(gt=0, description="Timeout in seconds")
     log_level: str = Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
@@ -759,6 +799,7 @@ class AppConfig(BaseSettings):
         if v > 3600:
             raise ValueError("Timeout cannot exceed 1 hour")
         return v
+
 
 # Pydantic validates automatically on construction
 try:

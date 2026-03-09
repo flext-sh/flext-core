@@ -160,6 +160,7 @@ def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
 
     return FlextResult[ProcessedData].ok(ProcessedData(**data))
 
+
 # ❌ WRONG - Missing type annotations
 def process_data(data):
     return data
@@ -176,6 +177,7 @@ def validate_and_process(data: dict) -> FlextResult[ProcessedData]:
         .map(enrich_data)
         .map_error(handle_error)
     )
+
 
 # ❌ WRONG - Exception-based error handling
 def validate_and_process(data: dict) -> ProcessedData:
@@ -196,9 +198,11 @@ class FlextApiModels:
         result: FlextResult[object]
         status: int
 
+
 # ❌ WRONG - Scattered model definitions
 class ApiRequest(BaseModel):
     data: dict[str, object]
+
 
 class ApiResponse(BaseModel):
     result: object
@@ -245,6 +249,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
+
 
 class TestDataProcessing:
     def test_process_valid_data(self):
@@ -331,6 +336,7 @@ from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
+
 # Main API class
 class FlextNewlib:
     def __init__(self, config: FlextNewlibSettings):
@@ -340,6 +346,7 @@ class FlextNewlib:
         """Process data using FlextResult pattern."""
         # Implementation here
         pass
+
 
 # Models class
 class FlextNewlibModels:

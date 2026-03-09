@@ -146,12 +146,14 @@ Register a factory function that creates instances on-demand:
 ```python
 from flext_core import FlextContainer
 
+
 def create_database_connection():
     """Factory function - called each time service is requested."""
     return {
         "type": "postgresql",
         "connection_id": 123,
     }
+
 
 container = FlextContainer.get_global()
 
@@ -167,11 +169,13 @@ if result.is_success:
 ```python
 from flext_core import FlextContainer, FlextResult
 
+
 def create_service_that_might_fail():
     """Factory that can fail."""
     if condition_not_met:
         raise ValueError("Configuration invalid")
     return ServiceInstance()
+
 
 def safe_factory() -> FlextResult[object]:
     """Wrap potentially-failing factory."""
@@ -180,6 +184,7 @@ def safe_factory() -> FlextResult[object]:
         return FlextResult.ok(service)
     except Exception as e:
         return FlextResult.fail(str(e))
+
 
 container = FlextContainer.get_global()
 result = container.register_factory("safe_service", safe_factory)
@@ -226,15 +231,13 @@ if result.is_success:
 ```python
 from flext_core import FlextContainer, FlextResult, FlextSettings, FlextLogger
 
+
 def initialize_application() -> FlextResult[bool]:
     """Initialize all application services."""
     container = FlextContainer.get_global()
 
     # Load configuration
-    config_result = (
-        FlextResult[bool].ok(True)
-        .flat_map(lambda _: FlextSettings.load())
-    )
+    config_result = FlextResult[bool].ok(True).flat_map(lambda _: FlextSettings.load())
 
     if config_result.is_failure:
         return config_result
@@ -263,6 +266,7 @@ def initialize_application() -> FlextResult[bool]:
     logger.info("✅ Application initialized successfully")
     return FlextResult[bool].ok(True)
 
+
 # Usage
 app_init = initialize_application()
 if app_init.is_failure:
@@ -275,6 +279,7 @@ if app_init.is_failure:
 ```python
 from flext_core import FlextContainer, FlextResult
 
+
 class PaymentService:
     def __init__(self, database, logger, config):
         self.db = database
@@ -286,6 +291,7 @@ class PaymentService:
         self.logger.info(f"Processing payment: {amount}")
         # Use self.db, self.config
         return FlextResult[dict].ok({"status": "complete"})
+
 
 def resolve_payment_service() -> FlextResult[PaymentService]:
     """Resolve PaymentService with all dependencies."""
@@ -315,6 +321,7 @@ def resolve_payment_service() -> FlextResult[PaymentService]:
 
     return FlextResult[PaymentService].ok(service)
 
+
 # Usage
 service_result = resolve_payment_service()
 if service_result.is_success:
@@ -328,6 +335,7 @@ if service_result.is_success:
 from flext_core import FlextContainer
 import time
 
+
 class ExpensiveService:
     def __init__(self):
         print("Initializing expensive service...")
@@ -337,9 +345,11 @@ class ExpensiveService:
     def do_work(self):
         return "Work completed"
 
+
 def create_expensive_service():
     """Factory that creates expensive service."""
     return ExpensiveService()
+
 
 container = FlextContainer.get_global()
 
@@ -366,6 +376,7 @@ assert result1.value is result2.value
 
 ```python
 from flext_core import FlextContainer, FlextResult, FlextSettings
+
 
 def setup_services_based_on_config() -> FlextResult[bool]:
     """Register services conditionally based on configuration."""
@@ -396,6 +407,7 @@ def setup_services_based_on_config() -> FlextResult[bool]:
 ```python
 from flext_core import FlextContainer, FlextResult
 
+
 class DatabaseConnection:
     def __init__(self, url: str):
         self.url = url
@@ -411,6 +423,7 @@ class DatabaseConnection:
         """Close connection."""
         print("Disconnecting database")
         self.connected = False
+
 
 def setup_database_lifecycle() -> FlextResult[bool]:
     """Setup database with lifecycle management."""
@@ -437,6 +450,7 @@ def setup_database_lifecycle() -> FlextResult[bool]:
     # container.register("_cleanup_db", lambda: db.disconnect())
 
     return register_result
+
 
 # Usage
 setup_result = setup_database_lifecycle()
@@ -473,6 +487,7 @@ from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
 
+
 # Try primary service, fallback to alternative
 def resolve_with_fallback():
     primary = container.get("primary_service")
@@ -483,9 +498,11 @@ def resolve_with_fallback():
     fallback = container.get("fallback_service")
     return fallback
 
+
 # Or using railway pattern
 result = (
-    FlextResult[bool].ok(True)
+    FlextResult[bool]
+    .ok(True)
     .flat_map(lambda _: container.get("primary_service"))
     .lash(lambda _: container.get("fallback_service"))
 )
@@ -495,6 +512,7 @@ result = (
 
 ```python
 from flext_core import FlextContainer, FlextResult
+
 
 def validate_all_services() -> FlextResult[bool]:
     """Validate that all registered services work correctly."""
@@ -561,7 +579,10 @@ from flext_core import t
 ServiceName = t.ServiceName
 ServiceType = t.ServiceType
 
-def get_service(name: ServiceName, type_cls: type[ServiceType]) -> FlextResult[ServiceType]:
+
+def get_service(
+    name: ServiceName, type_cls: type[ServiceType]
+) -> FlextResult[ServiceType]:
     container = FlextContainer.get_global()
     return container.get_typed(name, type_cls)
 ```
@@ -572,6 +593,7 @@ def get_service(name: ServiceName, type_cls: type[ServiceType]) -> FlextResult[S
 
 ```python
 from flext_core import FlextContainer, FlextResult
+
 
 class UserHandler:
     def __init__(self, container: FlextContainer):
@@ -595,6 +617,7 @@ class UserHandler:
 
         return FlextResult[dict].ok(user)
 
+
 # Usage
 container = FlextContainer.get_global()
 handler = UserHandler(container)
@@ -606,6 +629,7 @@ result = handler.create_user({"name": "Alice"})
 ```python
 from flext_core import FlextContainer
 import unittest
+
 
 class TestUserService(unittest.TestCase):
     def setUp(self):
@@ -662,11 +686,13 @@ def initialize():
     _ = container.register("logger", FlextLogger())
     _ = container.register("config", FlextSettings.load().value)
 
+
 initialize()
 
 # Later in code
 container = FlextContainer.get_global()
 logger_result = container.get("logger")
+
 
 # ❌ WRONG - Registering late, missing dependencies
 def some_random_function():
@@ -693,6 +719,7 @@ FlextDispatcher provides configurable reliability patterns including circuit bre
 ```python
 from flext_core import FlextSettings, FlextDispatcher
 
+
 # Configure dispatcher reliability settings
 class AppConfig(FlextSettings):
     """Application configuration with dispatcher reliability settings."""
@@ -715,6 +742,7 @@ class AppConfig(FlextSettings):
     enable_timeout_executor: bool = True  # Use executor for timeout enforcement
     executor_workers: int = 4  # Thread pool workers for timeout executor
 
+
 # Initialize dispatcher with configuration
 config = AppConfig()
 dispatcher = FlextDispatcher()  # Uses config via FlextSettings singleton
@@ -727,11 +755,14 @@ Circuit breaker prevents cascading failures by temporarily blocking requests whe
 ```python
 from flext_core import FlextSettings, FlextDispatcher, r
 
+
 class ConfigWithCircuitBreaker(FlextSettings):
     """Configuration with circuit breaker protection."""
+
     circuit_breaker_threshold: int = 5  # Open circuit after 5 failures
     circuit_breaker_recovery_timeout: float = 60.0  # Wait 60s before retry
     circuit_breaker_success_threshold: int = 2  # Close after 2 successes
+
 
 config = ConfigWithCircuitBreaker()
 dispatcher = FlextDispatcher()
@@ -749,10 +780,13 @@ Rate limiting prevents overload by restricting requests per time window:
 ```python
 from flext_core import FlextSettings, FlextDispatcher
 
+
 class ConfigWithRateLimiting(FlextSettings):
     """Configuration with rate limiting."""
+
     rate_limit_max_requests: int = 100  # Max 100 requests
     rate_limit_window_seconds: float = 60.0  # Per 60 seconds
+
 
 config = ConfigWithRateLimiting()
 dispatcher = FlextDispatcher()
@@ -772,10 +806,13 @@ Retry policy automatically retries failed operations with configurable backoff:
 ```python
 from flext_core import FlextSettings, FlextDispatcher
 
+
 class ConfigWithRetry(FlextSettings):
     """Configuration with retry policy."""
+
     max_retry_attempts: int = 3  # Retry up to 3 times
     retry_delay: float = 1.0  # 1 second delay between retries
+
 
 config = ConfigWithRetry()
 dispatcher = FlextDispatcher()
@@ -793,11 +830,14 @@ Timeout enforcement prevents operations from hanging indefinitely:
 ```python
 from flext_core import FlextSettings, FlextDispatcher
 
+
 class ConfigWithTimeout(FlextSettings):
     """Configuration with timeout enforcement."""
+
     dispatcher_timeout_seconds: float = 30.0  # 30 second timeout
     enable_timeout_executor: bool = True  # Use executor for timeout
     executor_workers: int = 4  # Thread pool size
+
 
 config = ConfigWithTimeout()
 dispatcher = FlextDispatcher()
@@ -810,7 +850,7 @@ if result.is_failure and "timeout" in result.error.lower():
 # Per-operation timeout override
 result = dispatcher.dispatch(
     LongRunningCommand(data=large_data),
-    timeout_override=60  # Override default timeout for this operation
+    timeout_override=60,  # Override default timeout for this operation
 )
 ```
 
@@ -818,6 +858,7 @@ result = dispatcher.dispatch(
 
 ```python
 from flext_core import FlextSettings, FlextDispatcher, r
+
 
 class ProductionConfig(FlextSettings):
     """Production configuration with comprehensive reliability settings."""
@@ -840,9 +881,11 @@ class ProductionConfig(FlextSettings):
     enable_timeout_executor: bool = True
     executor_workers: int = 8
 
+
 # Initialize with production settings
 config = ProductionConfig()
 dispatcher = FlextDispatcher()
+
 
 # All operations use these reliability settings
 def process_with_reliability(command):
@@ -862,6 +905,7 @@ Configure reliability settings per environment:
 ```python
 from flext_core import FlextSettings
 import os
+
 
 class Config(FlextSettings):
     """Environment-aware configuration."""

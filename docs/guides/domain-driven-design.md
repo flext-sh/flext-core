@@ -70,8 +70,10 @@ Value objects have **no identity** - they're compared by their values:
 from flext_core import FlextModels
 from decimal import Decimal
 
+
 class Money(FlextModels.Value):
     """Money is a value object - represented by amount and currency."""
+
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
 
@@ -84,6 +86,7 @@ class Money(FlextModels.Value):
     def multiply(self, factor: Decimal) -> "Money":
         """Multiply money by a factor."""
         return Money(amount=self.amount * factor, currency=self.currency)
+
 
 # Value objects compared by value
 money1 = Money(amount=Decimal("100"), currency="USD")
@@ -105,17 +108,23 @@ assert money1 is not money2  # Different objects
 ```python
 from flext_core import FlextModels
 
+
 class Email(FlextModels.Value):
     """Email address - value object."""
+
     address: str
+
 
 class PhoneNumber(FlextModels.Value):
     """Phone number - value object."""
+
     country_code: str
     number: str
 
+
 class Address(FlextModels.Value):
     """Physical address - value object."""
+
     street: str
     city: str
     postal_code: str
@@ -131,8 +140,10 @@ from flext_core import FlextModels
 from decimal import Decimal
 from datetime import datetime
 
+
 class Order(FlextModels.Entity):
     """Order is an entity - identified by order_id."""
+
     order_id: str  # Unique identifier
     customer_id: str
     items: list[dict]
@@ -155,10 +166,32 @@ class Order(FlextModels.Entity):
         """Recalculate order total from items."""
         self.total = sum(item["price"] * item["quantity"] for item in self.items)
 
+
 # Entities compared by identity (order_id)
-order1 = Order(order_id="ORD-001", customer_id="CUST-1", items=[], total=Decimal("0"), status="pending", created_at=datetime.now())
-order2 = Order(order_id="ORD-001", customer_id="CUST-1", items=[], total=Decimal("0"), status="pending", created_at=datetime.now())
-order3 = Order(order_id="ORD-002", customer_id="CUST-1", items=[], total=Decimal("0"), status="pending", created_at=datetime.now())
+order1 = Order(
+    order_id="ORD-001",
+    customer_id="CUST-1",
+    items=[],
+    total=Decimal("0"),
+    status="pending",
+    created_at=datetime.now(),
+)
+order2 = Order(
+    order_id="ORD-001",
+    customer_id="CUST-1",
+    items=[],
+    total=Decimal("0"),
+    status="pending",
+    created_at=datetime.now(),
+)
+order3 = Order(
+    order_id="ORD-002",
+    customer_id="CUST-1",
+    items=[],
+    total=Decimal("0"),
+    status="pending",
+    created_at=datetime.now(),
+)
 
 assert order1 == order2  # Same identity (order_id) = equal
 assert order1 != order3  # Different identity = not equal
@@ -177,8 +210,10 @@ assert order1 is not order2  # Different objects (but same identity)
 from flext_core import FlextModels
 from datetime import datetime
 
+
 class User(FlextModels.Entity):
     """User entity - identified by user_id."""
+
     user_id: str
     username: str
     email: str
@@ -189,8 +224,10 @@ class User(FlextModels.Entity):
         """Business logic: deactivate user."""
         self.is_active = False
 
+
 class Product(FlextModels.Entity):
     """Product entity - identified by sku."""
+
     sku: str
     name: str
     price: Decimal
@@ -212,22 +249,28 @@ from flext_core import FlextModels
 from decimal import Decimal
 from datetime import datetime
 
+
 class OrderItem(FlextModels.Entity):
     """Order line item - part of Order aggregate."""
+
     item_id: str
     product_id: str
     quantity: int
     unit_price: Decimal
 
+
 class ShippingInfo(FlextModels.Value):
     """Shipping address - value object."""
+
     address: str
     city: str
     postal_code: str
     country: str
 
+
 class Order(FlextModels.AggregateRoot):
     """Order aggregate root - maintains invariants."""
+
     order_id: str  # Aggregate identity
     customer_id: str
     items: list[OrderItem]
@@ -248,10 +291,7 @@ class Order(FlextModels.AggregateRoot):
             raise ValueError("Order must have at least one item")
 
         # Invariant 2: Total must match items
-        calculated_total = sum(
-            item.quantity * item.unit_price
-            for item in self.items
-        )
+        calculated_total = sum(item.quantity * item.unit_price for item in self.items)
         if self.total != calculated_total:
             raise ValueError("Order total does not match items")
 
@@ -286,10 +326,8 @@ class Order(FlextModels.AggregateRoot):
 
     def _recalculate_total(self) -> None:
         """Recalculate total from items."""
-        self.total = sum(
-            item.quantity * item.unit_price
-            for item in self.items
-        )
+        self.total = sum(item.quantity * item.unit_price for item in self.items)
+
 
 # Using the aggregate
 order = Order(
@@ -310,7 +348,9 @@ order = Order(
 )
 
 # Add item (aggregate maintains invariants)
-order.add_item(OrderItem(item_id="I2", product_id="P2", quantity=1, unit_price=Decimal("75")))
+order.add_item(
+    OrderItem(item_id="I2", product_id="P2", quantity=1, unit_price=Decimal("75"))
+)
 
 # Total is automatically recalculated
 assert order.total == Decimal("175")
@@ -394,6 +434,7 @@ from decimal import Decimal
 from datetime import datetime
 from enum import Enum
 
+
 class OrderStatus(str, Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
@@ -401,20 +442,26 @@ class OrderStatus(str, Enum):
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
+
 class Money(FlextModels.Value):
     """Money value object."""
+
     amount: Decimal
     currency: str = "USD"
 
+
 class Address(FlextModels.Value):
     """Address value object."""
+
     street: str
     city: str
     postal_code: str
     country: str
 
+
 class OrderLine(FlextModels.Entity):
     """Order line item."""
+
     line_id: str
     product_id: str
     product_name: str
@@ -426,8 +473,10 @@ class OrderLine(FlextModels.Entity):
         amount = self.unit_price.amount * self.quantity
         return Money(amount=amount, currency=self.unit_price.currency)
 
+
 class Order(FlextModels.AggregateRoot):
     """Order aggregate root."""
+
     order_id: str
     customer_id: str
     lines: list[OrderLine]
@@ -451,10 +500,7 @@ class Order(FlextModels.AggregateRoot):
             raise ValueError("Order must have at least one line item")
 
         # Total must match calculation
-        calculated_subtotal = sum(
-            line.subtotal().amount
-            for line in self.lines
-        )
+        calculated_subtotal = sum(line.subtotal().amount for line in self.lines)
         if self.subtotal.amount != calculated_subtotal:
             raise ValueError("Order subtotal calculation mismatch")
 
@@ -529,10 +575,7 @@ class Order(FlextModels.AggregateRoot):
 
     def _recalculate_totals(self):
         """Recalculate order totals."""
-        subtotal_amount = sum(
-            line.subtotal().amount
-            for line in self.lines
-        )
+        subtotal_amount = sum(line.subtotal().amount for line in self.lines)
         self.subtotal = Money(amount=subtotal_amount)
 
         # Tax = 10% of subtotal
@@ -542,6 +585,7 @@ class Order(FlextModels.AggregateRoot):
         # Total = subtotal + tax
         total_amount = subtotal_amount + tax_amount
         self.total = Money(amount=total_amount)
+
 
 # Usage
 order = Order(
@@ -610,17 +654,21 @@ from flext_core import FlextModels, FlextResult
 from datetime import datetime, timedelta
 import re
 
+
 class Email(FlextModels.Value):
     """Email value object."""
+
     address: str
 
     def __init__(self, address: str):
-        if not re.match(r'^[^@]+@[^@]+\.[^@]+$', address):
+        if not re.match(r"^[^@]+@[^@]+\.[^@]+$", address):
             raise ValueError(f"Invalid email: {address}")
         super().__init__(address=address)
 
+
 class Password(FlextModels.Value):
     """Password value object (hashed representation)."""
+
     hash: str
 
     @classmethod
@@ -631,8 +679,10 @@ class Password(FlextModels.Value):
         # In real implementation, use bcrypt or similar
         return cls(hash=f"hashed_{plain}")
 
+
 class User(FlextModels.AggregateRoot):
     """User aggregate root."""
+
     user_id: str
     email: Email
     password_hash: Password
@@ -689,6 +739,7 @@ class User(FlextModels.AggregateRoot):
         self.is_verified = True
         return FlextResult[bool].ok(True)
 
+
 # Usage
 user = User(
     user_id="USER-1",
@@ -720,6 +771,7 @@ Always use `FlextResult` for operations that can fail:
 ```python
 from flext_core import FlextModels, FlextResult
 
+
 class User(FlextModels.Entity):
     username: str
     email: str
@@ -734,6 +786,7 @@ class User(FlextModels.Entity):
 
         self.email = new_email
         return FlextResult[bool].ok(True)
+
 
 # Usage
 user = User(username="alice", email="alice@example.com")
@@ -757,6 +810,7 @@ Commands represent requests to **change state**. They always return `FlextResult
 from flext_core import FlextModels, FlextResult, FlextService
 from dataclasses import dataclass
 
+
 # Command definitions (no logic, just data transfer objects)
 @dataclass
 class CreateUserCommand:
@@ -764,14 +818,17 @@ class CreateUserCommand:
     email: str
     password: str
 
+
 @dataclass
 class UpdateUserEmailCommand:
     user_id: str
     new_email: str
 
+
 @dataclass
 class DeleteUserCommand:
     user_id: str
+
 
 # Command handler in service
 class UserCommandService(FlextService):
@@ -790,7 +847,10 @@ class UserCommandService(FlextService):
         self.add_domain_event(UserCreatedEvent(user.entity_id, user.username))
 
         # Return result
-        return FlextResult[dict].ok({"user_id": user.entity_id, "username": user.username})
+        return FlextResult[dict].ok({
+            "user_id": user.entity_id,
+            "username": user.username,
+        })
 
     def handle_update_email(self, cmd: UpdateUserEmailCommand) -> FlextResult[bool]:
         """Execute update email command."""
@@ -817,19 +877,23 @@ Queries represent requests to **retrieve data**. They return `FlextResult`:
 ```python
 from flext_core import FlextService, FlextResult
 
+
 # Query definitions
 @dataclass
 class GetUserByIdQuery:
     user_id: str
+
 
 @dataclass
 class ListUsersQuery:
     limit: int = 10
     offset: int = 0
 
+
 @dataclass
 class SearchUsersQuery:
     username: str
+
 
 # Query handler in service
 class UserQueryService(FlextService):
@@ -854,10 +918,7 @@ class UserQueryService(FlextService):
 
     def handle_list_users(self, query: ListUsersQuery) -> FlextResult[list]:
         """Execute list users query with pagination."""
-        users = self.user_repository.list(
-            limit=query.limit,
-            offset=query.offset
-        )
+        users = self.user_repository.list(limit=query.limit, offset=query.offset)
 
         return FlextResult[list].ok([
             {
@@ -875,8 +936,7 @@ class UserQueryService(FlextService):
             return FlextResult[list].ok([])  # Empty result is still success
 
         return FlextResult[list].ok([
-            {"id": u.entity_id, "username": u.username}
-            for u in users
+            {"id": u.entity_id, "username": u.username} for u in users
         ])
 ```
 
@@ -893,7 +953,9 @@ dispatcher = FlextDispatcher.get_global()
 # Register command handlers
 command_service = UserCommandService()
 dispatcher.register_command("CreateUserCommand", command_service.handle_create_user)
-dispatcher.register_command("UpdateUserEmailCommand", command_service.handle_update_email)
+dispatcher.register_command(
+    "UpdateUserEmailCommand", command_service.handle_update_email
+)
 
 # Register query handlers
 query_service = UserQueryService(user_repository)
@@ -901,7 +963,9 @@ dispatcher.register_query("GetUserByIdQuery", query_service.handle_get_user)
 dispatcher.register_query("ListUsersQuery", query_service.handle_list_users)
 
 # Usage: Execute command
-create_cmd = CreateUserCommand(username="alice", email="alice@example.com", password="secret")
+create_cmd = CreateUserCommand(
+    username="alice", email="alice@example.com", password="secret"
+)
 result = dispatcher.dispatch_command(create_cmd)
 
 if result.is_success:
@@ -947,6 +1011,7 @@ class Order(FlextModels.AggregateRoot):
         if not self.items:
             raise ValueError("Order must have items")
 
+
 # ❌ WRONG - No invariant protection
 class Order(FlextModels.AggregateRoot):
     items: list[OrderItem]
@@ -961,8 +1026,10 @@ class Money(FlextModels.Value):
     amount: Decimal
     currency: str
 
+
 class Email(FlextModels.Value):
     address: str
+
 
 # ❌ WRONG - Using primitives
 class Order:
@@ -982,6 +1049,7 @@ class ShoppingCart(FlextModels.Entity):
             return FlextResult[bool].fail("Cart is full")
         self.items.append(item)
         return FlextResult[bool].ok(True)
+
 
 # ❌ WRONG - Business logic in caller
 def add_to_cart(cart, item):

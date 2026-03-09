@@ -452,8 +452,10 @@ ______________________________________________________________________
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
+
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_",
         # Environment variable support

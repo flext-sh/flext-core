@@ -107,7 +107,7 @@ def ensure_table(parent: Table, key: str) -> Table:
             return existing
         del parent[key]
         table = tomlkit.table()
-        for k in list(existing.keys()):
+        for k in table_string_keys(existing):
             table[k] = existing[k]
         parent[key] = table
         return table

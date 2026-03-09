@@ -29,6 +29,7 @@ Base classes for entities, value objects, and aggregate roots implemented with P
 from decimal import Decimal
 from flext_core import m, r
 
+
 class Email(m.Value):
     """Immutable value object compared by value."""
 
@@ -78,6 +79,7 @@ Base class for domain services that encapsulate business logic, domain events, a
 ```python
 from flext_core import FlextDispatcher, FlextRegistry, FlextService, r
 
+
 class CreateUser(FlextService.Command):
     """Command payload for creating a user."""
 
@@ -111,7 +113,9 @@ service = UserService()
 registry.register_command(CreateUser, service.handle_create_user)
 registry.register_event(UserCreated, service.handle_user_created)
 
-result = FlextDispatcher(registry=registry).dispatch(CreateUser(email="user@example.com"))
+result = FlextDispatcher(registry=registry).dispatch(
+    CreateUser(email="user@example.com")
+)
 if result.is_success:
     print(f"Created user: {result.value}")
 ```

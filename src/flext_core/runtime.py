@@ -1755,9 +1755,8 @@ class FlextRuntime:
                 return False
             case _:
                 pass
-        if (
-            not isinstance(entity_b, type(entity_a))
-            and not issubclass(type(entity_b), type(entity_a))
+        if not isinstance(entity_b, type(entity_a)) and not issubclass(
+            type(entity_b), type(entity_a)
         ):
             return False
         id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
@@ -1777,9 +1776,8 @@ class FlextRuntime:
             return obj_a == obj_b
         if hasattr(obj_b, "__iter__") and (not hasattr(obj_b, "model_dump")):
             return obj_a == obj_b
-        if (
-            not isinstance(obj_b, type(obj_a))
-            and not issubclass(type(obj_b), type(obj_a))
+        if not isinstance(obj_b, type(obj_a)) and not issubclass(
+            type(obj_b), type(obj_a)
         ):
             return False
         if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):

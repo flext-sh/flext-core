@@ -71,10 +71,13 @@ class UtilityScenarios(TextUtilityContract):
         (20, 20),
         (None, c.Utilities.SHORT_UUID_LENGTH),
     ]
-    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = TextUtilityContract.CLEAN_TEXT_CASES + [
-        ("a    b    c", "a b c"),
-        ("  Test  Text  ", "Test Text"),
-    ]
+    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = (
+        TextUtilityContract.CLEAN_TEXT_CASES
+        + [
+            ("a    b    c", "a b c"),
+            ("  Test  Text  ", "Test Text"),
+        ]
+    )
     TEXT_TRUNCATE_CASES: ClassVar[list[tuple[str, int, bool]]] = [
         ("VeryLongText", 5, True),
         ("Hi", 10, False),
@@ -249,7 +252,9 @@ class Testu(TextUtilityContract):
         ("text", "expected"),
         UtilityScenarios.FORMAT_APP_ID_CASES,
     )
-    def test_text_processor_format_app_id_contract(self, text: str, expected: str) -> None:
+    def test_text_processor_format_app_id_contract(
+        self, text: str, expected: str
+    ) -> None:
         """Reuse shared contract for app-id formatting rules."""
         self.assert_format_app_id(text, expected)
 

@@ -54,11 +54,13 @@ Instead of exceptions, operations return either success or failure:
 ```python
 from flext_core import FlextResult
 
+
 def validate_email(email: str) -> FlextResult[str]:
     """Returns success or failure, never raises exceptions."""
     if "@" not in email:
         return FlextResult[str].fail("Invalid email")
     return FlextResult[str].ok(email)
+
 
 # Safe value extraction
 result = validate_email("user@example.com")
@@ -95,15 +97,20 @@ Model your business domain with explicit boundaries:
 ```python
 from flext_core import FlextModels
 
+
 class Email(m.Value):
     """Immutable value object compared by value."""
+
     address: str
+
 
 class User(FlextModels.Entity):
     """Entity with identity."""
+
     id: str
     name: str
     email: Email
+
 
 # Use your models
 user = User(id="123", name="Alice", email=Email(address="alice@example.com"))
@@ -119,22 +126,27 @@ Chain validations together:
 ```python
 from flext_core import FlextResult
 
+
 def validate_password(password: str) -> FlextResult[str]:
     if len(password) < 8:
         return FlextResult[str].fail("Password too short")
     return FlextResult[str].ok(password)
+
 
 def validate_username(username: str) -> FlextResult[str]:
     if len(username) < 3:
         return FlextResult[str].fail("Username too short")
     return FlextResult[str].ok(username)
 
+
 # Chain validations (railway pattern)
 def register_user(username: str, password: str) -> FlextResult[dict]:
-    return (
-        validate_username(username)
-        .flat_map(lambda u: validate_password(password).map(lambda p: {"username": u, "password": p}))
+    return validate_username(username).flat_map(
+        lambda u: validate_password(password).map(
+            lambda p: {"username": u, "password": p}
+        )
     )
+
 
 # Test it
 result = register_user("alice", "SecurePass123")
@@ -150,6 +162,7 @@ else:
 ```python
 from flext_core import FlextService, FlextResult, FlextContainer
 
+
 class EmailService(FlextService):
     """Example service."""
 
@@ -159,6 +172,7 @@ class EmailService(FlextService):
             return FlextResult[str].fail("Email required")
         # Send email logic here
         return FlextResult[str].ok(f"Email sent to {email}")
+
 
 # Register and use
 container = FlextContainer.get_global()
@@ -180,17 +194,22 @@ if service_result.is_success:
 from pydantic import Field
 from flext_core import FlextModels, FlextService, FlextResult
 
+
 class OrderItem(m.Value):
     """Immutable order item."""
+
     product_id: str
     quantity: int = Field(ge=1)  # >= 1
-    price: float = Field(gt=0)   # > 0
+    price: float = Field(gt=0)  # > 0
+
 
 class Order(FlextModels.Entity):
     """Order with identity."""
+
     id: str
     items: list[OrderItem]
     customer_id: str
+
 
 class OrderService(FlextService):
     """Service with business logic."""
@@ -209,6 +228,7 @@ class OrderService(FlextService):
 
         return FlextResult[Order].ok(order)
 
+
 # Use it
 service = OrderService()
 result = service.create_order(
@@ -216,7 +236,7 @@ result = service.create_order(
     items=[
         {"product_id": "PROD-1", "quantity": 2, "price": 29.99},
         {"product_id": "PROD-2", "quantity": 1, "price": 49.99},
-    ]
+    ],
 )
 
 if result.is_success:
@@ -232,6 +252,7 @@ Route commands through the dispatcher to keep orchestration and side effects con
 
 ```python
 from flext_core import FlextDispatcher, FlextRegistry, FlextResult, FlextService
+
 
 class CreateUser(FlextService.Command):
     """Command payload for creating users."""
@@ -268,6 +289,7 @@ def operation() -> FlextResult[str]:
         return FlextResult[str].fail("Error message")
     return FlextResult[str].ok("Success value")
 
+
 # Check result
 if result.is_success:
     value = result.value
@@ -280,7 +302,8 @@ else:
 ```python
 # Use map() to transform success values
 result = (
-    FlextResult[int].ok(10)
+    FlextResult[int]
+    .ok(10)
     .map(lambda x: x * 2)  # Transform to 20
     .map(lambda x: f"Result: {x}")  # Transform to "Result: 20"
 )
@@ -302,8 +325,7 @@ result = (
 ```python
 # Use map_error() to handle errors
 result = (
-    risky_operation()
-    .map_error(lambda err: f"Failed: {err}")  # Transform error
+    risky_operation().map_error(lambda err: f"Failed: {err}")  # Transform error
 )
 
 # Or provide fallback
@@ -324,11 +346,13 @@ assert result.value == result.data == "test"
 import pytest
 from flext_core import FlextResult
 
+
 def test_validation_success():
     """Test successful validation."""
     result = validate_email("user@example.com")
     assert result.is_success
     assert result.value == "user@example.com"
+
 
 def test_validation_failure():
     """Test failed validation."""
@@ -336,13 +360,10 @@ def test_validation_failure():
     assert not result.is_success
     assert "Invalid" in result.error
 
+
 def test_chained_operations():
     """Test railway pattern chaining."""
-    result = (
-        FlextResult[int].ok(10)
-        .map(lambda x: x * 2)
-        .map(lambda x: x + 5)
-    )
+    result = FlextResult[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5)
     assert result.is_success
     assert result.value == 25
 ```
@@ -380,6 +401,7 @@ async def get_user_async(user_id: str) -> FlextResult[User]:
         return FlextResult[User].fail("User ID required")
     user = await fetch_from_database(user_id)
     return FlextResult[User].ok(user)
+
 
 # Use it
 result = await get_user_async("123")

@@ -98,6 +98,7 @@ abstract `handle()` method:
 from flext_core import FlextHandlers
 from flext_core import r
 
+
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
         # Business logic
@@ -303,7 +304,9 @@ The current handler pattern uses manual metrics and context management:
 class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
     def handle(self, command: UpdateUserCommand) -> r[UserDto]:
         # Manual metrics tracking
-        self._metrics["commands_processed"] = self._metrics.get("commands_processed", 0) + 1
+        self._metrics["commands_processed"] = (
+            self._metrics.get("commands_processed", 0) + 1
+        )
 
         # Manual context management
         self.push_context({"command_id": command.id})

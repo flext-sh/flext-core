@@ -31,15 +31,18 @@ Common architectural patterns used in FLEXT-Core and best practices for applying
 ```python
 from flext_core import FlextResult
 
+
 def validate_email(email: str) -> FlextResult[str]:
     if "@" not in email:
         return FlextResult[str].fail("Invalid email")
     return FlextResult[str].ok(email)
 
+
 def check_available(email: str) -> FlextResult[str]:
     if email in reserved_emails:
         return FlextResult[str].fail("Email taken")
     return FlextResult[str].ok(email)
+
 
 # Railway composition
 result = (
@@ -90,16 +93,19 @@ if logger_result.is_success:
 ```python
 from flext_core import FlextModels, FlextService, FlextResult
 
+
 # Value Object - immutable, compared by value
 class Money(FlextModels.Value):
     amount: float
     currency: str
+
 
 # Entity - has identity
 class Order(FlextModels.Entity):
     customer_id: str
     items: list
     total: Money
+
 
 # Service - encapsulates business logic
 class OrderService(FlextService):
@@ -122,26 +128,32 @@ class OrderService(FlextService):
 ```python
 from flext_core import FlextDispatcher, FlextResult
 
+
 # Command - modifies state
 class CreateUserCommand:
     def __init__(self, name: str, email: str):
         self.name = name
         self.email = email
 
+
 # Query - reads state
 class GetUserQuery:
     def __init__(self, user_id: str):
         self.user_id = user_id
 
+
 dispatcher = FlextDispatcher()
+
 
 def create_user_handler(command: CreateUserCommand) -> FlextResult[User]:
     # Create and return user
     ...
 
+
 def get_user_handler(query: GetUserQuery) -> FlextResult[User]:
     # Retrieve and return user (no modification)
     ...
+
 
 dispatcher.register_handler(CreateUserCommand, create_user_handler)
 dispatcher.register_handler(GetUserQuery, get_user_handler)
@@ -162,10 +174,12 @@ result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
 ```python
 from flext_core import FlextModels, FlextService
 
+
 class UserCreatedEvent:
     def __init__(self, user_id: str, email: str):
         self.user_id = user_id
         self.email = email
+
 
 class UserService(FlextService):
     def create_user(self, name: str, email: str) -> FlextResult[User]:
@@ -175,6 +189,7 @@ class UserService(FlextService):
         self.add_domain_event(UserCreatedEvent(user.entity_id, email))
 
         return FlextResult[User].ok(user)
+
 
 # Subscribers listen to events
 class EmailNotificationSubscriber:
@@ -198,15 +213,18 @@ class EmailNotificationSubscriber:
 # Port - defines interface
 class UserRepository:
     """Port: abstraction for user persistence."""
+
     def save(self, user: User) -> FlextResult[User]:
         raise NotImplementedError
 
     def get_by_id(self, user_id: str) -> FlextResult[User]:
         raise NotImplementedError
 
+
 # Adapter - concrete implementation
 class PostgresUserRepository(UserRepository):
     """Adapter: PostgreSQL implementation."""
+
     def save(self, user: User) -> FlextResult[User]:
         # PostgreSQL-specific implementation
         pass
@@ -214,6 +232,7 @@ class PostgresUserRepository(UserRepository):
     def get_by_id(self, user_id: str) -> FlextResult[User]:
         # PostgreSQL query
         pass
+
 
 # Domain doesn't know about implementation
 class UserService(FlextService):
@@ -238,6 +257,7 @@ class UserService(FlextService):
 ```python
 from flext_core import FlextResult
 import functools
+
 
 class UserService:
     def __init__(self, repository: UserRepository, cache):
@@ -276,6 +296,7 @@ class UserService:
 ```python
 from flext_core import FlextResult
 
+
 def validate_password(password: str) -> FlextResult[str]:
     if len(password) < 8:
         return FlextResult[str].fail("Too short")
@@ -285,10 +306,12 @@ def validate_password(password: str) -> FlextResult[str]:
         return FlextResult[str].fail("Need digit")
     return FlextResult[str].ok(password)
 
+
 def validate_email(email: str) -> FlextResult[str]:
     if "@" not in email:
         return FlextResult[str].fail("Invalid email")
     return FlextResult[str].ok(email)
+
 
 def validate_username(username: str) -> FlextResult[str]:
     if len(username) < 3:
@@ -296,6 +319,7 @@ def validate_username(username: str) -> FlextResult[str]:
     if not username.isalnum():
         return FlextResult[str].fail("Only alphanumeric")
     return FlextResult[str].ok(username)
+
 
 # Pipeline
 def register_user(username: str, email: str, password: str) -> FlextResult[dict]:
@@ -305,6 +329,7 @@ def register_user(username: str, email: str, password: str) -> FlextResult[dict]
         .flat_map(lambda ue: validate_password(password).map(lambda p: (*ue, p)))
         .map(lambda data: {"username": data[0], "email": data[1], "password": data[2]})
     )
+
 
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
@@ -331,12 +356,14 @@ from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
 
+
 @FlextDecorators.retry(attempts=2)
 @FlextDecorators.timeout(seconds=3)
 @FlextDecorators.with_correlation
 def guarded_handler(message):
     logger.info("processing", message=type(message).__name__)
     return handle(message)
+
 
 dispatcher.register_handler(MessageType, guarded_handler)
 ```
@@ -357,6 +384,7 @@ dispatcher.register_handler(MessageType, guarded_handler)
 class UserService:
     def get_logger(self):
         return FlextContainer.get_global().get("logger").value
+
 
 # ✅ PREFER - Dependency Injection
 class UserService:
@@ -380,6 +408,7 @@ class ExternalLogger:
     def log_message(self, msg: str, level: str):
         print(f"[{level}] {msg}")
 
+
 # Adapter to make it compatible
 class LoggerAdapter(FlextLogger):
     def __init__(self, external_logger):
@@ -390,6 +419,7 @@ class LoggerAdapter(FlextLogger):
 
     def error(self, message: str, extra: dict = None):
         self.external.log_message(message, "ERROR")
+
 
 # Use
 external = ExternalLogger()
@@ -409,6 +439,7 @@ logger = LoggerAdapter(external)
 ```python
 from abc import ABC, abstractmethod
 
+
 class UserFactory:
     @staticmethod
     def create_user(user_type: str, **kwargs) -> FlextResult[User]:
@@ -418,6 +449,7 @@ class UserFactory:
             return FlextResult[User].ok(RegularUser(**kwargs))
         else:
             return FlextResult[User].fail(f"Unknown user type: {user_type}")
+
 
 # Usage
 result = UserFactory.create_user("REDACTED_LDAP_BIND_PASSWORD", name="Alice")

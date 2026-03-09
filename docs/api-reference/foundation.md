@@ -106,9 +106,7 @@ Monadic success/failure handling used across services, handlers, and decorators.
 from flext_core import r
 
 result = (
-    r[int].ok(10)
-    .map(lambda value: value * 2)
-    .map(lambda value: f"Result: {value}")
+    r[int].ok(10).map(lambda value: value * 2).map(lambda value: f"Result: {value}")
 )
 ```
 
@@ -135,6 +133,7 @@ Structured exception types with contextual metadata for infrastructure concerns.
 ```python
 from flext_core import c, e
 
+
 class ValidationException(e.BaseError):
     """Raised when domain validation fails."""
 
@@ -152,17 +151,17 @@ FLEXT-Core provides short aliases for frequently used types to keep code concise
 
 ```python
 # ✅ CORRECT - Import short aliases from their modules
-from flext_core import r       # FlextResult alias
-from flext_core import t      # FlextTypes alias
-from flext_core import c    # FlextConstants alias
-from flext_core import m       # FlextModels alias
-from flext_core import p    # FlextProtocols alias
-from flext_core import u    # FlextUtilities alias
-from flext_core import e   # FlextExceptions alias
-from flext_core import x      # FlextContext alias (via mixins)
-from flext_core import s      # FlextService alias
-from flext_core import d   # FlextDecorators alias
-from flext_core import h     # FlextHandlers alias
+from flext_core import r  # FlextResult alias
+from flext_core import t  # FlextTypes alias
+from flext_core import c  # FlextConstants alias
+from flext_core import m  # FlextModels alias
+from flext_core import p  # FlextProtocols alias
+from flext_core import u  # FlextUtilities alias
+from flext_core import e  # FlextExceptions alias
+from flext_core import x  # FlextContext alias (via mixins)
+from flext_core import s  # FlextService alias
+from flext_core import d  # FlextDecorators alias
+from flext_core import h  # FlextHandlers alias
 ```
 
 **Usage Examples**:
@@ -173,6 +172,7 @@ def process(value: str) -> r[str]:
     if not value:
         return r[str].fail("Empty value")
     return r[str].ok(value.upper())
+
 
 # Type annotations
 config_dict: t.ConfigurationDict = {"key": "value"}

@@ -628,9 +628,9 @@ r = FlextResult[int].ok(42)  # Third example
 ```python
 # ✅ CORRECT - Commented
 result = (
-    validate_email(email)      # Validate email format
-    .flat_map(check_available) # Check if available
-    .map(send_confirmation)    # Send confirmation
+    validate_email(email)  # Validate email format
+    .flat_map(check_available)  # Check if available
+    .map(send_confirmation)  # Send confirmation
 )
 
 # ❌ WRONG - No explanation

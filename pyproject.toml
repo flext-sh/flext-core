@@ -169,35 +169,6 @@ cc_min = "B"
 exclude = "tests/*,examples/*"
 mi_min = "B"
 
-[tool.pytest.ini_options]
-addopts = [ "--strict-markers" ]
-enable_assertion_pass_hook = true
-filterwarnings = [
-  "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
-]
-markers = [
-  "advanced: advanced pattern tests",
-  "architecture: architectural pattern tests",
-  "core: core functionality tests",
-  "coverage: coverage-focused tests",
-  "ddd: domain-driven design tests",
-  "docker: tests requiring Docker",
-  "e2e: end-to-end integration tests",
-  "edge_cases: edge case tests",
-  "integration: integration tests",
-  "performance: performance and benchmark tests",
-  "resilience: resilience tests",
-  "slow: slow-running tests",
-  "stress: stress tests",
-  "unit: unit tests",
-]
-minversion = "8.0"
-python_classes = [ "Test*" ]
-python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
-
-# [MANAGED] ruff
-
-# [MANAGED] pyrefly
 [tool.coverage.report]
 fail_under = 45
 
@@ -635,6 +606,36 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
+
+[tool.pytest.ini_options]
+addopts = [ "--strict-markers" ]
+enable_assertion_pass_hook = true
+filterwarnings = [
+  "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
+]
+markers = [
+  "advanced: advanced pattern tests",
+  "architecture: architectural pattern tests",
+  "core: core functionality tests",
+  "coverage: coverage-focused tests",
+  "ddd: domain-driven design tests",
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "resilience: resilience tests",
+  "slow: slow-running tests",
+  "stress: stress tests",
+  "unit: unit tests",
+]
+minversion = "8.0"
+python_classes = [ "Test*" ]
+python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
+# [MANAGED] ruff
+
+# [MANAGED] pyrefly
 [dependency-groups]
 dev = [
   "types-defusedxml (>=0.7.0.20250822)",

@@ -50,19 +50,24 @@ def get_user(user_id: str) -> FlextResult[User]:
     """Get user by ID."""
     pass
 
+
 def process_items(items: list[str], multiplier: int = 1) -> list[int]:
     """Process items."""
     return [len(item) * multiplier for item in items]
+
 
 # ❌ WRONG - Any of these:
 def get_user(user_id):  # Missing parameter type
     pass
 
+
 def get_user(user_id: str):  # Missing return type
     pass
 
+
 def get_user(user_id: str) -> None:  # Wrong return type (should be FlextResult)
     pass
+
 
 def get_user(user_id: str) -> Any:  # NO Any type
     pass
@@ -75,12 +80,15 @@ def get_user(user_id: str) -> Any:  # NO Any type
 def process_users(users: list[User]) -> dict[str, User]:
     pass
 
+
 def get_first_or_default(items: list[str], default: str) -> str:
     pass
+
 
 # ❌ WRONG - Vague
 def process_users(users: list):  # Missing element type
     pass
+
 
 def process_users(users: List[User]):  # Use lowercase list not List
     pass
@@ -91,13 +99,15 @@ def process_users(users: List[User]):  # Use lowercase list not List
 ```python
 from typing import TypeVar
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
+
 
 # ✅ CORRECT
 def map_over(items: list[T], func: callable[[T], U]) -> list[U]:
     """Map function over items."""
     return [func(item) for item in items]
+
 
 # ❌ WRONG
 def map_over(items, func):  # No types
@@ -120,8 +130,11 @@ def very_long_function_name(
     """Function with many parameters."""
     pass
 
+
 # ❌ WRONG - Exceeds 79 chars
-def very_long_function_name(parameter_one: str, parameter_two: int, parameter_three: bool) -> FlextResult[dict]:
+def very_long_function_name(
+    parameter_one: str, parameter_two: int, parameter_three: bool
+) -> FlextResult[dict]:
     pass
 ```
 
@@ -157,16 +170,20 @@ class FlextResult:  # PascalCase for classes
     def unwrap(self) -> Any:  # snake_case for methods
         pass
 
+
 MAXIMUM_RETRIES = 3  # SCREAMING_SNAKE_CASE for constants
 
 variable_name = "value"  # snake_case for variables
+
 
 # ❌ WRONG
 class flextResult:  # lowercase for class
     pass
 
+
 def UnwrapValue():  # PascalCase for function
     pass
+
 
 max_retries = 3  # lowercase for constants
 
@@ -206,9 +223,11 @@ def create_user(
     # Implementation
     pass
 
+
 # ❌ WRONG - Missing docstring
 def create_user(name: str, email: str, age: int) -> FlextResult[User]:
     pass
+
 
 # ❌ WRONG - Poor docstring
 def create_user(name, email, age):
@@ -233,6 +252,7 @@ from flext_core import FlextModels, FlextService
 
 class User(FlextModels.Entity):
     """User entity."""
+
     pass
 ```
 
@@ -246,6 +266,7 @@ def validate_email(email: str) -> FlextResult[str]:
     if "@" not in email:
         return FlextResult[str].fail("Invalid email")
     return FlextResult[str].ok(email)
+
 
 # ❌ WRONG - Raising exceptions
 def validate_email(email: str) -> str:
@@ -285,18 +306,23 @@ except Exception:
 def test_create_user_succeeds_with_valid_data():
     pass
 
+
 def test_create_user_fails_when_name_is_empty():
     pass
 
+
 def test_email_validation_accepts_valid_format():
     pass
+
 
 # ❌ WRONG - Vague
 def test_user():
     pass
 
+
 def test_create():
     pass
+
 
 def test_validate():
     pass
@@ -310,9 +336,11 @@ def test_result_ok_creates_success():
     result = FlextResult[int].ok(42)
     assert result.is_success
 
+
 def test_result_ok_contains_value():
     result = FlextResult[int].ok(42)
     assert result.value == 42
+
 
 # ❌ WRONG - Multiple concepts
 def test_result():
@@ -371,6 +399,7 @@ def add_user(
     new_users.append(user)
     return new_users
 
+
 # ❌ WRONG - Mutable default
 def add_user(users: list[User] = []) -> list[User]:
     users.append(user)  # Changes default!
@@ -385,8 +414,10 @@ class UserService:
     def __init__(self, logger):
         self.logger = logger
 
+
 # ❌ WRONG - Global state
 _logger = None
+
 
 class UserService:
     def get_logger(self):
@@ -416,11 +447,11 @@ for x in numbers:
 
 ```python
 # ✅ CORRECT - Use context manager
-with open('file.txt', 'r') as f:
+with open("file.txt", "r") as f:
     content = f.read()
 
 # ❌ WRONG - Manual cleanup
-f = open('file.txt', 'r')
+f = open("file.txt", "r")
 content = f.read()
 # File might not close if exception
 ```
