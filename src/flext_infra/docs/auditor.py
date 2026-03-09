@@ -19,7 +19,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraPatterns, c, m, output, t, u
+from flext_infra import FlextInfraUtilitiesPatterns, c, m, output, t, u
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -265,8 +265,8 @@ class FlextInfraDocAuditor:
                     continue
                 if in_fenced_code:
                     continue
-                clean_line = FlextInfraPatterns.INLINE_CODE_RE.sub("", line)
-                for raw in FlextInfraPatterns.MARKDOWN_LINK_URL_RE.findall(clean_line):
+                clean_line = FlextInfraUtilitiesPatterns.INLINE_CODE_RE.sub("", line)
+                for raw in FlextInfraUtilitiesPatterns.MARKDOWN_LINK_URL_RE.findall(clean_line):
                     target = self.normalize_link(raw)
                     if not target or target.startswith("#") or self.is_external(target):
                         continue

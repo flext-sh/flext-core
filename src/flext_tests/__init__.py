@@ -27,22 +27,22 @@ if TYPE_CHECKING:
     from flext_tests._validator.bypass import FlextValidatorBypass
     from flext_tests._validator.imports import FlextValidatorImports
     from flext_tests._validator.layer import FlextValidatorLayer
-    from flext_tests._validator.models import FlextValidatorModels
+    from flext_tests._validator.models import FlextValidatorModels, vm
     from flext_tests._validator.settings import FlextValidatorSettings
     from flext_tests._validator.tests import FlextValidatorTests
     from flext_tests._validator.types import FlextValidatorTypes
     from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s
     from flext_tests.builders import FlextTestsBuilders, tb
-    from flext_tests.constants import FlextTestsConstants, FlextTestsConstants as c
+    from flext_tests.constants import FlextTestsConstants, c, tc
     from flext_tests.docker import FlextTestsDocker
     from flext_tests.domains import FlextTestsDomains
     from flext_tests.factories import FlextTestsFactories, tt
     from flext_tests.files import FlextTestsFiles, tf
     from flext_tests.matchers import FlextTestsMatchers, tm
-    from flext_tests.models import FlextTestsModels, FlextTestsModels as m
-    from flext_tests.protocols import FlextTestsProtocols, FlextTestsProtocols as p
-    from flext_tests.typings import FlextTestsTypes, FlextTestsTypes as t
-    from flext_tests.utilities import FlextTestsUtilities, FlextTestsUtilities as u
+    from flext_tests.models import FlextTestsModels, m
+    from flext_tests.protocols import FlextTestsProtocols, p
+    from flext_tests.typings import FlextTestsTypes, t
+    from flext_tests.utilities import FlextTestsUtilities, u
     from flext_tests.validator import FlextTestsValidator, tv
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
@@ -62,29 +62,25 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsUtilityBase": ("flext_tests.base", "FlextTestsUtilityBase"),
     "FlextTestsValidator": ("flext_tests.validator", "FlextTestsValidator"),
     "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
-    "FlextValidatorImports": (
-        "flext_tests._validator.imports",
-        "FlextValidatorImports",
-    ),
+    "FlextValidatorImports": ("flext_tests._validator.imports", "FlextValidatorImports"),
     "FlextValidatorLayer": ("flext_tests._validator.layer", "FlextValidatorLayer"),
     "FlextValidatorModels": ("flext_tests._validator.models", "FlextValidatorModels"),
-    "FlextValidatorSettings": (
-        "flext_tests._validator.settings",
-        "FlextValidatorSettings",
-    ),
+    "FlextValidatorSettings": ("flext_tests._validator.settings", "FlextValidatorSettings"),
     "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
     "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
-    "c": ("flext_tests.constants", "FlextTestsConstants"),
-    "m": ("flext_tests.models", "FlextTestsModels"),
-    "p": ("flext_tests.protocols", "FlextTestsProtocols"),
+    "c": ("flext_tests.constants", "c"),
+    "m": ("flext_tests.models", "m"),
+    "p": ("flext_tests.protocols", "p"),
     "s": ("flext_tests.base", "s"),
-    "t": ("flext_tests.typings", "FlextTestsTypes"),
+    "t": ("flext_tests.typings", "t"),
     "tb": ("flext_tests.builders", "tb"),
+    "tc": ("flext_tests.constants", "tc"),
     "tf": ("flext_tests.files", "tf"),
     "tm": ("flext_tests.matchers", "tm"),
     "tt": ("flext_tests.factories", "tt"),
     "tv": ("flext_tests.validator", "tv"),
-    "u": ("flext_tests.utilities", "FlextTestsUtilities"),
+    "u": ("flext_tests.utilities", "u"),
+    "vm": ("flext_tests._validator.models", "vm"),
 }
 
 __all__ = [
@@ -115,11 +111,13 @@ __all__ = [
     "s",
     "t",
     "tb",
+    "tc",
     "tf",
     "tm",
     "tt",
     "tv",
     "u",
+    "vm",
 ]
 
 

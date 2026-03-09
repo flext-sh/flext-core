@@ -1,3 +1,6 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """Internal utilities package - implementation modules only.
 
 This package contains implementation modules for u.
@@ -10,4 +13,93 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from typing import TYPE_CHECKING, Any
+
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+
+if TYPE_CHECKING:
+    from flext_core._utilities.args import FlextUtilitiesArgs
+    from flext_core._utilities.cache import FlextUtilitiesCache
+    from flext_core._utilities.checker import FlextUtilitiesChecker
+    from flext_core._utilities.collection import FlextUtilitiesCollection
+    from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+    from flext_core._utilities.context import FlextUtilitiesContext
+    from flext_core._utilities.conversion import FlextUtilitiesConversion
+    from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
+    from flext_core._utilities.domain import FlextUtilitiesDomain
+    from flext_core._utilities.enum import FlextUtilitiesEnum
+    from flext_core._utilities.file_ops import FlextUtilitiesFileOps
+    from flext_core._utilities.generators import FlextUtilitiesGenerators
+    from flext_core._utilities.guards import (
+        FlextUtilitiesGuards,
+        validate_pydantic_model,
+    )
+    from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.model import FlextUtilitiesModel
+    from flext_core._utilities.pagination import FlextUtilitiesPagination
+    from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.reliability import FlextUtilitiesReliability
+    from flext_core._utilities.result_helpers import ResultHelpers
+    from flext_core._utilities.text import FlextUtilitiesText
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
+    "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),
+    "FlextUtilitiesChecker": ("flext_core._utilities.checker", "FlextUtilitiesChecker"),
+    "FlextUtilitiesCollection": ("flext_core._utilities.collection", "FlextUtilitiesCollection"),
+    "FlextUtilitiesConfiguration": ("flext_core._utilities.configuration", "FlextUtilitiesConfiguration"),
+    "FlextUtilitiesContext": ("flext_core._utilities.context", "FlextUtilitiesContext"),
+    "FlextUtilitiesConversion": ("flext_core._utilities.conversion", "FlextUtilitiesConversion"),
+    "FlextUtilitiesDeprecation": ("flext_core._utilities.deprecation", "FlextUtilitiesDeprecation"),
+    "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
+    "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
+    "FlextUtilitiesFileOps": ("flext_core._utilities.file_ops", "FlextUtilitiesFileOps"),
+    "FlextUtilitiesGenerators": ("flext_core._utilities.generators", "FlextUtilitiesGenerators"),
+    "FlextUtilitiesGuards": ("flext_core._utilities.guards", "FlextUtilitiesGuards"),
+    "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
+    "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
+    "FlextUtilitiesPagination": ("flext_core._utilities.pagination", "FlextUtilitiesPagination"),
+    "FlextUtilitiesParser": ("flext_core._utilities.parser", "FlextUtilitiesParser"),
+    "FlextUtilitiesReliability": ("flext_core._utilities.reliability", "FlextUtilitiesReliability"),
+    "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
+    "ResultHelpers": ("flext_core._utilities.result_helpers", "ResultHelpers"),
+    "validate_pydantic_model": ("flext_core._utilities.guards", "validate_pydantic_model"),
+}
+
+__all__ = [
+    "FlextUtilitiesArgs",
+    "FlextUtilitiesCache",
+    "FlextUtilitiesChecker",
+    "FlextUtilitiesCollection",
+    "FlextUtilitiesConfiguration",
+    "FlextUtilitiesContext",
+    "FlextUtilitiesConversion",
+    "FlextUtilitiesDeprecation",
+    "FlextUtilitiesDomain",
+    "FlextUtilitiesEnum",
+    "FlextUtilitiesFileOps",
+    "FlextUtilitiesGenerators",
+    "FlextUtilitiesGuards",
+    "FlextUtilitiesMapper",
+    "FlextUtilitiesModel",
+    "FlextUtilitiesPagination",
+    "FlextUtilitiesParser",
+    "FlextUtilitiesReliability",
+    "FlextUtilitiesText",
+    "ResultHelpers",
+    "validate_pydantic_model",
+]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy-load module attributes on first access (PEP 562)."""
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+
+
+def __dir__() -> list[str]:
+    """Return list of available attributes for dir() and autocomplete."""
+    return sorted(__all__)
+
+
+cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

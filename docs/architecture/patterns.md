@@ -1,7 +1,6 @@
 # Architecture Patterns
 
 <!-- TOC START -->
-
 - [Railway-Oriented Programming](#railway-oriented-programming)
 - [Dependency Injection](#dependency-injection)
 - [Domain-Driven Design](#domain-driven-design)
@@ -17,7 +16,6 @@
 - [Summary](#summary)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07

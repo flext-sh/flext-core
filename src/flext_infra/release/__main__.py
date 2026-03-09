@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-from flext_infra import FlextInfraPathResolver, FlextInfraVersioningService, c, output
+from flext_infra import FlextInfraUtilitiesPaths, FlextInfraVersioningService, c, output
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 
@@ -88,7 +88,7 @@ def main() -> int:
     """Orchestrate the release process through configured phases."""
     FlextRuntime.ensure_structlog_configured()
     args = _parse_args()
-    resolver = FlextInfraPathResolver()
+    resolver = FlextInfraUtilitiesPaths()
     root_result = resolver.workspace_root(args.root)
     if root_result.is_failure:
         output.error(root_result.error or "workspace root resolution failed")

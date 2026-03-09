@@ -10,9 +10,9 @@ from pathlib import Path
 from flext_core import r
 from flext_infra import (
     FlextInfraCommandRunner,
-    FlextInfraPatterns,
+    FlextInfraUtilitiesPatterns,
     FlextInfraProjectSelector,
-    FlextInfraTomlService,
+    FlextInfraUtilitiesToml,
     c,
     m,
     p,
@@ -54,7 +54,7 @@ class FlextInfraDependencyDetectionService:
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
         self.selector = FlextInfraProjectSelector()
-        self.toml = FlextInfraTomlService()
+        self.toml = FlextInfraUtilitiesToml()
         self.runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
 
     @staticmethod
@@ -257,7 +257,7 @@ class FlextInfraDependencyDetectionService:
     ) -> str | None:
         """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
-        if root.startswith(FlextInfraPatterns.INTERNAL_PREFIXES):
+        if root.startswith(FlextInfraUtilitiesPatterns.INTERNAL_PREFIXES):
             return None
         typing_libraries = limits.get(c.Infra.Toml.TYPING_LIBRARIES)
         if typing_libraries is not None and isinstance(typing_libraries, Mapping):
@@ -369,12 +369,12 @@ class FlextInfraDependencyDetectionService:
         output = f"{cmd_result.stdout}\n{cmd_result.stderr}"
         hinted = {
             match.group(1).strip()
-            for match in FlextInfraPatterns.MYPY_HINT_RE.finditer(output)
+            for match in FlextInfraUtilitiesPatterns.MYPY_HINT_RE.finditer(output)
             if match.group(1).strip()
         }
         missing = {
             match.group(1).strip()
-            for match in FlextInfraPatterns.MYPY_STUB_RE.finditer(output)
+            for match in FlextInfraUtilitiesPatterns.MYPY_STUB_RE.finditer(output)
             if match.group(1).strip()
         }
         return r[tuple[list[str], list[str]]].ok((sorted(hinted), sorted(missing)))

@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraJsonService, c, m, t
+from flext_infra import FlextInfraUtilitiesIo, c, m, t
 
 
 class FlextInfraInventoryService:
@@ -25,7 +25,7 @@ class FlextInfraInventoryService:
 
     def __init__(self) -> None:
         """Initialize the inventory service."""
-        self._json = FlextInfraJsonService()
+        self._json = FlextInfraUtilitiesIo()
 
     def generate(
         self,

@@ -17,18 +17,35 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_infra.codegen.census import FlextInfraCodegenCensus
+    from flext_infra.codegen.constants_quality_gate import (
+        FlextInfraCodegenConstantsQualityGate,
+    )
+    from flext_infra.codegen.fixer import FlextInfraCodegenFixer
     from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
+    from flext_infra.codegen.py_typed import FlextInfraCodegenPyTyped
+    from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
+    from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraCodegenLazyInit": (
-        "flext_infra.codegen.lazy_init",
-        "FlextInfraCodegenLazyInit",
-    ),
+    "FlextInfraCodegenCensus": ("flext_infra.codegen.census", "FlextInfraCodegenCensus"),
+    "FlextInfraCodegenConstantsQualityGate": ("flext_infra.codegen.constants_quality_gate", "FlextInfraCodegenConstantsQualityGate"),
+    "FlextInfraCodegenFixer": ("flext_infra.codegen.fixer", "FlextInfraCodegenFixer"),
+    "FlextInfraCodegenLazyInit": ("flext_infra.codegen.lazy_init", "FlextInfraCodegenLazyInit"),
+    "FlextInfraCodegenPyTyped": ("flext_infra.codegen.py_typed", "FlextInfraCodegenPyTyped"),
+    "FlextInfraCodegenScaffolder": ("flext_infra.codegen.scaffolder", "FlextInfraCodegenScaffolder"),
+    "FlextInfraCodegenTransforms": ("flext_infra.codegen.transforms", "FlextInfraCodegenTransforms"),
 }
 
 __all__ = [
+    "FlextInfraCodegenCensus",
+    "FlextInfraCodegenConstantsQualityGate",
+    "FlextInfraCodegenFixer",
     "FlextInfraCodegenLazyInit",
+    "FlextInfraCodegenPyTyped",
+    "FlextInfraCodegenScaffolder",
+    "FlextInfraCodegenTransforms",
 ]
 
 

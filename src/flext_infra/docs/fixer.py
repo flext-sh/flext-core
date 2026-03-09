@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, c, m, t, u
+from flext_infra import FlextInfraUtilitiesPatterns, FlextInfraUtilitiesTemplates, c, m, t, u
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -93,7 +93,7 @@ class FlextInfraDocFixer:
     def _build_toc(self, content: str) -> str:
         """Generate a TOC block from ## and ### headings in content."""
         items: list[str] = []
-        for level, title in FlextInfraPatterns.HEADING_H2_H3_RE.findall(content):
+        for level, title in FlextInfraUtilitiesPatterns.HEADING_H2_H3_RE.findall(content):
             anchor = self._anchorize(title)
             if not anchor:
                 continue
@@ -102,9 +102,9 @@ class FlextInfraDocFixer:
         if not items:
             items = ["- No sections found"]
         return (
-            f"{FlextInfraTemplateEngine.TOC_START}\n"
+            f"{FlextInfraUtilitiesTemplates.TOC_START}\n"
             + "\n".join(items)
-            + f"\n{FlextInfraTemplateEngine.TOC_END}"
+            + f"\n{FlextInfraUtilitiesTemplates.TOC_END}"
         )
 
     def _fix_scope(
@@ -196,7 +196,7 @@ class FlextInfraDocFixer:
             link_count += 1
             return f"[{text}]({fixed})"
 
-        updated = FlextInfraPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
+        updated = FlextInfraUtilitiesPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
         updated, toc_changed = self._update_toc(updated)
         if apply and (link_count > 0 or toc_changed > 0) and (updated != original):
             _ = md_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
@@ -211,8 +211,8 @@ class FlextInfraDocFixer:
         """Insert or replace the TOC in content, returning (updated, changed)."""
         toc = self._build_toc(content)
         if (
-            FlextInfraTemplateEngine.TOC_START in content
-            and FlextInfraTemplateEngine.TOC_END in content
+            FlextInfraUtilitiesTemplates.TOC_START in content
+            and FlextInfraUtilitiesTemplates.TOC_END in content
         ):
             updated = re.sub(
                 r"<!-- TOC START -->.*?<!-- TOC END -->",

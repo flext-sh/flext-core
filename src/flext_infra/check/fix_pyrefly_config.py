@@ -18,8 +18,8 @@ from tomlkit import items
 from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraDiscoveryService,
-    FlextInfraJsonService,
-    FlextInfraPathResolver,
+    FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesPaths,
     c,
     t,
 )
@@ -34,13 +34,13 @@ class FlextInfraConfigFixer(s[list[str]]):
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize pyrefly config fixer."""
         super().__init__()
-        self._path_resolver = FlextInfraPathResolver()
+        self._path_resolver = FlextInfraUtilitiesPaths()
         self._discovery = FlextInfraDiscoveryService()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
 
     @staticmethod
     def _to_array(items_list: list[str]) -> items.Array:
-        serialized_result = FlextInfraJsonService().serialize(items_list)
+        serialized_result = FlextInfraUtilitiesIo().serialize(items_list)
         if serialized_result.is_failure:
             return tomlkit.array()
         inline_doc = tomlkit.parse(f"items = {serialized_result.value}\n")

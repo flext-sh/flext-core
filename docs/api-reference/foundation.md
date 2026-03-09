@@ -1,7 +1,6 @@
 # Foundation Layers API Reference
 
 <!-- TOC START -->
-
 - [Architecture Overview](#architecture-overview)
 - [Layer 0: Pure Constants](#layer-0-pure-constants)
   - [FlextConstants - Centralized Defaults](#flextconstants-centralized-defaults)
@@ -16,7 +15,6 @@
 - [Short Alias Reference](#short-alias-reference)
 - [Related Documentation](#related-documentation)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 This reference covers Layers 0, 0.5, and 1: the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.

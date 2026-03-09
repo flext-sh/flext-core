@@ -1,7 +1,6 @@
 # Architecture Decision Records (ADRs)
 
 <!-- TOC START -->
-
 - [ADR-001: 5-Layer Architecture](#adr-001-5-layer-architecture)
   - [Problem - ADR-001](#problem-adr-001)
   - [Decision - ADR-001](#decision-adr-001)
@@ -68,7 +67,6 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Viewing Decisions](#viewing-decisions)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07

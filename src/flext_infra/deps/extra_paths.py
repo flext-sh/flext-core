@@ -11,10 +11,10 @@ from pydantic import TypeAdapter, ValidationError
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
-from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, c, output, t
+from flext_infra import FlextInfraUtilitiesPaths, FlextInfraUtilitiesToml, c, output, t
 from flext_infra.deps.path_sync import extract_dep_name
 
-_resolver = FlextInfraPathResolver()
+_resolver = FlextInfraUtilitiesPaths()
 _root_result = _resolver.workspace_root_from_file(__file__)
 ROOT = (
     _root_result.value
@@ -29,8 +29,8 @@ class FlextInfraExtraPathsManager:
     def __init__(self) -> None:
         """Initialize the extra paths manager with path resolver and TOML service."""
         super().__init__()
-        self.resolver = FlextInfraPathResolver()
-        self.toml = FlextInfraTomlService()
+        self.resolver = FlextInfraUtilitiesPaths()
+        self.toml = FlextInfraUtilitiesToml()
 
 
 _DICT_ADAPTER = TypeAdapter(dict[str, t.ContainerValue])
@@ -153,7 +153,7 @@ def sync_one(
     """Synchronize pyright and mypy paths for single pyproject.toml."""
     if not pyproject_path.exists():
         return r[bool].ok(False)
-    toml_service = FlextInfraTomlService()
+    toml_service = FlextInfraUtilitiesToml()
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
         return r[bool].fail(doc_result.error or f"failed to read {pyproject_path}")

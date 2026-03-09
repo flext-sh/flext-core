@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService, m, p
+from flext_infra import FlextInfraCommandRunner, FlextInfraUtilitiesIo, m, p
 
 
 class FlextInfraWorkflowLinter:
@@ -25,11 +25,11 @@ class FlextInfraWorkflowLinter:
     def __init__(
         self,
         runner: p.Infra.CommandRunner | None = None,
-        json_io: FlextInfraJsonService | None = None,
+        json_io: FlextInfraUtilitiesIo | None = None,
     ) -> None:
         """Initialize the workflow linter."""
         self._runner: p.Infra.CommandRunner = runner or FlextInfraCommandRunner()
-        self._json = json_io or FlextInfraJsonService()
+        self._json = json_io or FlextInfraUtilitiesIo()
 
     def lint(
         self,

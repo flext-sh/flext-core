@@ -14,8 +14,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import c
-from flext_infra import FlextInfraTomlService
+from flext_infra import FlextInfraUtilitiesToml, c
 
 
 class FlextInfraVersioningService(s[str]):
@@ -25,10 +24,10 @@ class FlextInfraVersioningService(s[str]):
     project version management.
     """
 
-    def __init__(self, toml: FlextInfraTomlService | None = None) -> None:
+    def __init__(self, toml: FlextInfraUtilitiesToml | None = None) -> None:
         """Initialize the versioning service."""
         super().__init__()
-        self._toml = toml or FlextInfraTomlService()
+        self._toml = toml or FlextInfraUtilitiesToml()
 
     @staticmethod
     def _extract_project_version_from_text(content: str) -> str | None:

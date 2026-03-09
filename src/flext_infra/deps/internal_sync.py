@@ -14,7 +14,7 @@ from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,
-    FlextInfraTomlService,
+    FlextInfraUtilitiesToml,
     c,
     m,
     output,
@@ -32,7 +32,7 @@ class FlextInfraInternalDependencySyncService:
         """Initialize the internal dependency sync service."""
         self.runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
         self.git = FlextInfraGitService(self.runner)
-        self.toml = FlextInfraTomlService()
+        self.toml = FlextInfraUtilitiesToml()
 
     @staticmethod
     def ensure_symlink(target: Path, source: Path) -> r[bool]:

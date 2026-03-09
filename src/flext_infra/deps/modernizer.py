@@ -8,6 +8,8 @@ from pathlib import Path
 from tomlkit.items import Table
 
 from flext_infra import FlextInfraCommandRunner, c, p
+from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
+from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
 from flext_infra.deps.detector import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,
@@ -21,8 +23,6 @@ from flext_infra.deps.detector import (
     InjectCommentsPhase,
 )
 from flext_infra.deps.tool_config import load_tool_config
-from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
-from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
 
 array = _Toml.array
 as_string_list = _Toml.as_string_list

@@ -1,15 +1,6 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Base.mk template engine service.
-
-Provides services for managing, validating, and rendering base.mk templates
-for workspace build orchestration.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -17,18 +8,17 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
-    from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
+    from tests.benchmarks.test_refactor_nesting_performance import (
+        TestPerformanceBenchmarks,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraBaseMkGenerator": ("flext_infra.basemk.generator", "FlextInfraBaseMkGenerator"),
-    "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk.engine", "FlextInfraBaseMkTemplateEngine"),
+    "TestPerformanceBenchmarks": ("tests.benchmarks.test_refactor_nesting_performance", "TestPerformanceBenchmarks"),
 }
 
 __all__ = [
-    "FlextInfraBaseMkGenerator",
-    "FlextInfraBaseMkTemplateEngine",
+    "TestPerformanceBenchmarks",
 ]
 
 

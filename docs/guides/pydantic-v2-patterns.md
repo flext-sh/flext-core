@@ -1,7 +1,6 @@
 # Pydantic v2 Patterns for FLEXT Ecosystem
 
 <!-- TOC START -->
-
 - [Canonical Rules](#canonical-rules)
 - [Core Principles](#core-principles)
 - [Pattern 1: Basic Model with Constraints](#pattern-1-basic-model-with-constraints)
@@ -24,7 +23,6 @@
   - [Field Validation](#field-validation)
   - [Serialization](#serialization)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Target**: flext-core and dependent projects

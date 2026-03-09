@@ -16,18 +16,20 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
+    from flext_infra.maintenance.python_version import (
+        FlextInfraPythonVersionEnforcer,
+        logger,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraPythonVersionEnforcer": (
-        "flext_infra.maintenance.python_version",
-        "FlextInfraPythonVersionEnforcer",
-    ),
+    "FlextInfraPythonVersionEnforcer": ("flext_infra.maintenance.python_version", "FlextInfraPythonVersionEnforcer"),
+    "logger": ("flext_infra.maintenance.python_version", "logger"),
 }
 
 __all__ = [
     "FlextInfraPythonVersionEnforcer",
+    "logger",
 ]
 
 

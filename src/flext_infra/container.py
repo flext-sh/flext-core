@@ -13,9 +13,9 @@ from __future__ import annotations
 from flext_core import FlextContainer, r
 from flext_infra import (
     FlextInfraCommandRunner,
-    FlextInfraJsonService,
-    FlextInfraPathResolver,
-    FlextInfraTomlService,
+    FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesPaths,
+    FlextInfraUtilitiesToml,
     output,
     t,
 )
@@ -64,10 +64,10 @@ def configure_flext_infra_dependencies() -> None:
 
     Registers the following services:
     - git_service: FlextInfraGitService
-    - json_io: FlextInfraJsonService
-    - toml_io: FlextInfraTomlService
-    - path_resolver: FlextInfraPathResolver
-    - command_runner: FlextInfraCommandRunner
+    - json_io: FlextInfraUtilitiesIo
+    - toml_io: FlextInfraUtilitiesToml
+    - path_resolver: FlextInfraUtilitiesPaths
+    - command_runner: FlextInfraUtilitiesSubprocess
     - discovery: FlextInfraDiscoveryService
     - selection: FlextInfraProjectSelector
     - reporting: FlextInfraReportingService
@@ -89,11 +89,11 @@ def configure_flext_infra_dependencies() -> None:
         lambda: FlextInfraGitService(),
         kind="factory",
     )
-    _ = container.register("json_io", lambda: FlextInfraJsonService(), kind="factory")
-    _ = container.register("toml_io", lambda: FlextInfraTomlService(), kind="factory")
+    _ = container.register("json_io", lambda: FlextInfraUtilitiesIo(), kind="factory")
+    _ = container.register("toml_io", lambda: FlextInfraUtilitiesToml(), kind="factory")
     _ = container.register(
         "path_resolver",
-        lambda: FlextInfraPathResolver(),
+        lambda: FlextInfraUtilitiesPaths(),
         kind="factory",
     )
     _ = container.register(
