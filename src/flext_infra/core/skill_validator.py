@@ -15,8 +15,8 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraCommandRunner,
     FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesSubprocess,
     FlextInfraUtilitiesToml,
     c,
     m,
@@ -46,7 +46,7 @@ class FlextInfraSkillValidator:
     def __init__(self) -> None:
         """Initialize the skill validator."""
         self._json = FlextInfraUtilitiesIo()
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self._toml = FlextInfraUtilitiesToml()
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 

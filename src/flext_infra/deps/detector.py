@@ -12,10 +12,10 @@ from tomlkit.items import Table
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraCommandRunner,
+    FlextInfraReportingService,
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
-    FlextInfraReportingService,
+    FlextInfraUtilitiesSubprocess,
     c,
     m,
     p,
@@ -620,7 +620,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraUtilitiesIo()
         self._deps = FlextInfraDependencyDetectionService()
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:

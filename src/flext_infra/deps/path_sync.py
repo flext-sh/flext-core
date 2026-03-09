@@ -12,7 +12,13 @@ from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraDiscoveryService, FlextInfraUtilitiesToml, c, output, t
+from flext_infra import (
+    FlextInfraDiscoveryService,
+    FlextInfraUtilitiesToml,
+    c,
+    output,
+    t,
+)
 
 logger = FlextLogger.create_module_logger(__name__)
 _STRING_LIST_ADAPTER = TypeAdapter(list[str])

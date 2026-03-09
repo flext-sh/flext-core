@@ -13,7 +13,13 @@ import re
 from pathlib import Path
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraUtilitiesPatterns, FlextInfraUtilitiesTemplates, c, m, u
+from flext_infra import (
+    FlextInfraUtilitiesPatterns,
+    FlextInfraUtilitiesTemplates,
+    c,
+    m,
+    u,
+)
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -106,7 +112,9 @@ class FlextInfraDocGenerator:
     def _build_toc(self, content: str) -> str:
         """Build a markdown TOC from level-2 and level-3 headings."""
         items: list[str] = []
-        for level, title in FlextInfraUtilitiesPatterns.HEADING_H2_H3_RE.findall(content):
+        for level, title in FlextInfraUtilitiesPatterns.HEADING_H2_H3_RE.findall(
+            content
+        ):
             anchor = self._normalize_anchor(title)
             if not anchor:
                 continue

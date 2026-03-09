@@ -12,20 +12,16 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_core import r
 from flext_infra import c
 
 
-class FlextInfraUtilitiesPaths(BaseModel):
+class FlextInfraUtilitiesPaths:
     """Utility class for workspace path resolution.
 
     Provides static methods for path resolution with r-wrapped error handling,
     replacing bare functions from ``scripts/libs/paths.py``.
     """
-
-    model_config = ConfigDict(frozen=True)
 
     @staticmethod
     def workspace_root(path: str | Path = ".") -> r[Path]:

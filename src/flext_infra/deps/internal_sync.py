@@ -12,8 +12,8 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraCommandRunner,
     FlextInfraGitService,
+    FlextInfraUtilitiesSubprocess,
     FlextInfraUtilitiesToml,
     c,
     m,
@@ -30,7 +30,7 @@ class FlextInfraInternalDependencySyncService:
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
-        self.runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self.git = FlextInfraGitService(self.runner)
         self.toml = FlextInfraUtilitiesToml()
 

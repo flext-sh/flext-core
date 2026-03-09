@@ -9,9 +9,9 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraCommandRunner,
-    FlextInfraUtilitiesPatterns,
     FlextInfraProjectSelector,
+    FlextInfraUtilitiesPatterns,
+    FlextInfraUtilitiesSubprocess,
     FlextInfraUtilitiesToml,
     c,
     m,
@@ -55,7 +55,7 @@ class FlextInfraDependencyDetectionService:
         """Initialize the dependency detection service with selector, toml, and runner."""
         self.selector = FlextInfraProjectSelector()
         self.toml = FlextInfraUtilitiesToml()
-        self.runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def classify_issues(issues: list[t.Infra.IssueMap]) -> dm.DeptryIssueGroups:

@@ -18,14 +18,6 @@ from tomlkit.toml_document import TOMLDocument
 from flext_core import FlextLogger, u
 from flext_infra import c, t
 
-_logger = FlextLogger(__name__)
-_CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.ContainerValue]] = TypeAdapter(
-    dict[str, t.ContainerValue],
-)
-_CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.ContainerValue]] = TypeAdapter(
-    list[t.ContainerValue],
-)
-
 
 class FlextInfraUtilitiesToml:
     """TOML utility helpers — normalization, reading, table manipulation.
@@ -38,9 +30,25 @@ class FlextInfraUtilitiesToml:
         doc = u.Infra.Toml.read(some_path)
     """
 
-    CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.ContainerValue]] = (
-        _CONTAINER_LIST_ADAPTER
-    )
+    logger = FlextLogger(__name__)
+
+    # Lazy TypeAdapter initialization to avoid schema generation issues with inheritance
+    _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.ContainerValue]] | None = None
+    _CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.ContainerValue]] | None = None
+
+    def _get_container_dict_adapter() -> TypeAdapter[dict[str, t.ContainerValue]]:
+        """Get or create TypeAdapter for dict[str, ContainerValue]."""
+        global _CONTAINER_DICT_ADAPTER  # noqa: PLW0603
+        if _CONTAINER_DICT_ADAPTER is None:
+            _CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.ContainerValue])
+        return _CONTAINER_DICT_ADAPTER
+
+    def _get_container_list_adapter() -> TypeAdapter[list[t.ContainerValue]]:
+        """Get or create TypeAdapter for list[ContainerValue]."""
+        global _CONTAINER_LIST_ADAPTER  # noqa: PLW0603
+        if _CONTAINER_LIST_ADAPTER is None:
+            _CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.ContainerValue])
+        return _CONTAINER_LIST_ADAPTER
 
     @staticmethod
     def as_toml_mapping(value: t.ContainerValue) -> t.Infra.ContainerDict | None:
@@ -78,7 +86,11 @@ class FlextInfraUtilitiesToml:
         if normalized is None:
             return []
         try:
-            return _CONTAINER_LIST_ADAPTER.validate_python(normalized)
+            return (
+                FlextInfraUtilitiesToml._get_container_list_adapter().validate_python(
+                    normalized
+                )
+            )
         except ValidationError:
             return []
 
@@ -158,12 +170,16 @@ class FlextInfraUtilitiesToml:
         normalized = FlextInfraUtilitiesToml.normalize_container_value(raw_value)
         if isinstance(normalized, dict):
             try:
-                return _CONTAINER_DICT_ADAPTER.validate_python(normalized)
+                return FlextInfraUtilitiesToml._get_container_dict_adapter().validate_python(
+                    normalized
+                )
             except ValidationError:
                 return None
         if isinstance(normalized, list):
             try:
-                return _CONTAINER_LIST_ADAPTER.validate_python(normalized)
+                return FlextInfraUtilitiesToml._get_container_list_adapter().validate_python(
+                    normalized
+                )
             except ValidationError:
                 return None
         if isinstance(
@@ -188,7 +204,7 @@ class FlextInfraUtilitiesToml:
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
         except (OSError, ValueError) as exc:
-            _logger.warning(
+            FlextInfraUtilitiesToml.logger.warning(
                 "Failed to read or parse TOML document",
                 path=str(path),
                 error=str(exc),
@@ -197,4 +213,28 @@ class FlextInfraUtilitiesToml:
             return None
 
 
-__all__ = ["FlextInfraUtilitiesToml"]
+# Module-level aliases for backward compatibility and direct import
+unwrap_item = FlextInfraUtilitiesToml.unwrap_item
+as_string_list = FlextInfraUtilitiesToml.as_string_list
+array = FlextInfraUtilitiesToml.array
+ensure_table = FlextInfraUtilitiesToml.ensure_table
+toml_get = FlextInfraUtilitiesToml.get
+table_string_keys = FlextInfraUtilitiesToml.table_string_keys
+read_doc = FlextInfraUtilitiesToml.read
+as_toml_mapping = FlextInfraUtilitiesToml.as_toml_mapping
+normalize_container_value = FlextInfraUtilitiesToml.normalize_container_value
+as_container_list = FlextInfraUtilitiesToml.as_container_list
+
+__all__ = [
+    "FlextInfraUtilitiesToml",
+    "array",
+    "as_container_list",
+    "as_string_list",
+    "as_toml_mapping",
+    "ensure_table",
+    "normalize_container_value",
+    "read_doc",
+    "table_string_keys",
+    "toml_get",
+    "unwrap_item",
+]

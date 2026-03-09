@@ -14,7 +14,14 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraUtilitiesPatterns, FlextInfraUtilitiesTemplates, c, m, t, u
+from flext_infra import (
+    FlextInfraUtilitiesPatterns,
+    FlextInfraUtilitiesTemplates,
+    c,
+    m,
+    t,
+    u,
+)
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -93,7 +100,9 @@ class FlextInfraDocFixer:
     def _build_toc(self, content: str) -> str:
         """Generate a TOC block from ## and ### headings in content."""
         items: list[str] = []
-        for level, title in FlextInfraUtilitiesPatterns.HEADING_H2_H3_RE.findall(content):
+        for level, title in FlextInfraUtilitiesPatterns.HEADING_H2_H3_RE.findall(
+            content
+        ):
             anchor = self._anchorize(title)
             if not anchor:
                 continue
@@ -196,7 +205,9 @@ class FlextInfraDocFixer:
             link_count += 1
             return f"[{text}]({fixed})"
 
-        updated = FlextInfraUtilitiesPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
+        updated = FlextInfraUtilitiesPatterns.MARKDOWN_LINK_RE.sub(
+            replace_link, original
+        )
         updated, toc_changed = self._update_toc(updated)
         if apply and (link_count > 0 or toc_changed > 0) and (updated != original):
             _ = md_file.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)

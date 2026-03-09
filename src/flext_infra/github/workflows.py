@@ -15,8 +15,8 @@ from typing import TypeAlias
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraUtilitiesIo,
     FlextInfraProjectSelector,
+    FlextInfraUtilitiesIo,
     FlextInfraUtilitiesTemplates,
     c,
     m,

@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraCommandRunner, c, output, u
+from flext_infra import FlextInfraUtilitiesSubprocess, c, output, u
 
 # ---------------------------------------------------------------------------
 # Service class
@@ -297,6 +297,8 @@ def _build_sibling_export_index(
         if py_file.name in {"__init__.py", "__main__.py", "__version__.py"}:
             continue
         if py_file.name.startswith("_"):
+            continue
+        if py_file.stem[0:1].isdigit():
             continue
 
         mod_stem = py_file.stem
@@ -602,7 +604,7 @@ def _generate_file(
 def _run_ruff_fix(path: Path) -> None:
     """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
     with contextlib.suppress(FileNotFoundError):
-        runner = FlextInfraCommandRunner()
+        runner = FlextInfraUtilitiesSubprocess()
         runner.run_checked([
             c.Infra.Cli.RUFF,
             c.Infra.Cli.RuffCmd.CHECK,

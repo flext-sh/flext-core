@@ -16,10 +16,10 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraCommandRunner,
     FlextInfraGitService,
     FlextInfraProjectSelector,
     FlextInfraReportingService,
+    FlextInfraUtilitiesSubprocess,
     c,
     m,
     p,
@@ -41,7 +41,7 @@ class FlextInfraPrWorkspaceManager:
         reporting: FlextInfraReportingService | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
-        self._runner: p.Infra.CommandRunner = runner or FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
         self._git = git or FlextInfraGitService(self._runner)
         self._selector = selector or FlextInfraProjectSelector()
         self._reporting = reporting or FlextInfraReportingService()

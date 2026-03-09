@@ -17,8 +17,8 @@ from pydantic import BaseModel
 from flext_core import r
 from flext_infra import (
     FlextInfraDiscoveryService,
-    FlextInfraUtilitiesIo,
     FlextInfraReportingService,
+    FlextInfraUtilitiesIo,
     c,
     m,
     t,

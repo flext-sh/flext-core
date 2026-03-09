@@ -11,19 +11,15 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_core import r
 
 
-class FlextInfraUtilitiesTemplates(BaseModel):
+class FlextInfraUtilitiesTemplates:
     """Infrastructure service for text template rendering.
 
     Centralizes template constants and provides safe rendering
     with r error handling.
     """
-
-    model_config = ConfigDict(frozen=True)
 
     TOC_START: ClassVar[str] = "<!-- TOC START -->"
     TOC_END: ClassVar[str] = "<!-- TOC END -->"

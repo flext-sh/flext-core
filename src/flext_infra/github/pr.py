@@ -19,8 +19,8 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraCommandRunner,
     FlextInfraGitService,
+    FlextInfraUtilitiesSubprocess,
     FlextInfraVersioningService,
     c,
     output,
@@ -44,7 +44,7 @@ class FlextInfraPrManager:
         versioning: FlextInfraVersioningService | None = None,
     ) -> None:
         """Initialize the PR manager."""
-        self._runner: p.Infra.CommandRunner = runner or FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
         self._git = git or FlextInfraGitService(self._runner)
         self._versioning = versioning or FlextInfraVersioningService()
 

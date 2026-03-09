@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraCommandRunner, c, m, p
+from flext_infra import FlextInfraUtilitiesSubprocess, c, m, p
 
 
 class FlextInfraStubSupplyChain:
@@ -24,7 +24,7 @@ class FlextInfraStubSupplyChain:
 
     def __init__(self) -> None:
         """Initialize the stub supply chain."""
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     def _discover_stub_projects(self, root: Path) -> list[Path]:
         """Discover projects that should participate in stub checks."""

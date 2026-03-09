@@ -12,16 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+import importlib
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_infra._utilities.exceptions import (
-        FlextInfraExceptions,
-        FlextInfraUtilitiesExceptions,
-        e,
-    )
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
     from flext_infra._utilities.output import (
         BLUE,
@@ -53,19 +47,55 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BLUE": ("flext_infra._utilities.output", "BLUE"),
     "BOLD": ("flext_infra._utilities.output", "BOLD"),
-    "FlextInfraExceptions": ("flext_infra._utilities.exceptions", "FlextInfraExceptions"),
-    "FlextInfraUtilitiesExceptions": ("flext_infra._utilities.exceptions", "FlextInfraUtilitiesExceptions"),
+    "FlextInfraExceptions": (
+        "flext_infra._utilities.exceptions",
+        "FlextInfraExceptions",
+    ),
+    "FlextInfraUtilitiesExceptions": (
+        "flext_infra._utilities.exceptions",
+        "FlextInfraUtilitiesExceptions",
+    ),
     "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
-    "FlextInfraUtilitiesOutput": ("flext_infra._utilities.output", "FlextInfraUtilitiesOutput"),
-    "FlextInfraUtilitiesPaths": ("flext_infra._utilities.paths", "FlextInfraUtilitiesPaths"),
-    "FlextInfraUtilitiesPatterns": ("flext_infra._utilities.patterns", "FlextInfraUtilitiesPatterns"),
-    "FlextInfraUtilitiesProtocols": ("flext_infra._utilities.protocols", "FlextInfraUtilitiesProtocols"),
-    "FlextInfraUtilitiesSubprocess": ("flext_infra._utilities.subprocess", "FlextInfraUtilitiesSubprocess"),
-    "FlextInfraUtilitiesTemplates": ("flext_infra._utilities.templates", "FlextInfraUtilitiesTemplates"),
-    "FlextInfraUtilitiesTerminal": ("flext_infra._utilities.terminal", "FlextInfraUtilitiesTerminal"),
-    "FlextInfraUtilitiesToml": ("flext_infra._utilities.toml", "FlextInfraUtilitiesToml"),
-    "FlextInfraUtilitiesTomlParse": ("flext_infra._utilities.toml_parse", "FlextInfraUtilitiesTomlParse"),
-    "FlextInfraUtilitiesYaml": ("flext_infra._utilities.yaml", "FlextInfraUtilitiesYaml"),
+    "FlextInfraUtilitiesOutput": (
+        "flext_infra._utilities.output",
+        "FlextInfraUtilitiesOutput",
+    ),
+    "FlextInfraUtilitiesPaths": (
+        "flext_infra._utilities.paths",
+        "FlextInfraUtilitiesPaths",
+    ),
+    "FlextInfraUtilitiesPatterns": (
+        "flext_infra._utilities.patterns",
+        "FlextInfraUtilitiesPatterns",
+    ),
+    "FlextInfraUtilitiesProtocols": (
+        "flext_infra._utilities.protocols",
+        "FlextInfraUtilitiesProtocols",
+    ),
+    "FlextInfraUtilitiesSubprocess": (
+        "flext_infra._utilities.subprocess",
+        "FlextInfraUtilitiesSubprocess",
+    ),
+    "FlextInfraUtilitiesTemplates": (
+        "flext_infra._utilities.templates",
+        "FlextInfraUtilitiesTemplates",
+    ),
+    "FlextInfraUtilitiesTerminal": (
+        "flext_infra._utilities.terminal",
+        "FlextInfraUtilitiesTerminal",
+    ),
+    "FlextInfraUtilitiesToml": (
+        "flext_infra._utilities.toml",
+        "FlextInfraUtilitiesToml",
+    ),
+    "FlextInfraUtilitiesTomlParse": (
+        "flext_infra._utilities.toml_parse",
+        "FlextInfraUtilitiesTomlParse",
+    ),
+    "FlextInfraUtilitiesYaml": (
+        "flext_infra._utilities.yaml",
+        "FlextInfraUtilitiesYaml",
+    ),
     "GREEN": ("flext_infra._utilities.output", "GREEN"),
     "RED": ("flext_infra._utilities.output", "RED"),
     "RESET": ("flext_infra._utilities.output", "RESET"),
@@ -82,20 +112,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
-    "BLUE",
-    "BOLD",
-    "GREEN",
-    "RED",
-    "RESET",
-    "SYM_ARROW",
-    "SYM_BULLET",
-    "SYM_FAIL",
-    "SYM_OK",
-    "SYM_SKIP",
-    "SYM_WARN",
-    "YELLOW",
-    "FlextInfraExceptions",
-    "FlextInfraUtilitiesExceptions",
     "FlextInfraUtilitiesIo",
     "FlextInfraUtilitiesOutput",
     "FlextInfraUtilitiesPaths",
@@ -113,14 +129,60 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+def __getattr__(name: str) -> object:
+    """Lazy load utility modules on demand."""
+    lazy_imports = {
+        "FlextInfraUtilitiesIo": (
+            "flext_infra._utilities.io",
+            "FlextInfraUtilitiesIo",
+        ),
+        "FlextInfraUtilitiesOutput": (
+            "flext_infra._utilities.output",
+            "FlextInfraUtilitiesOutput",
+        ),
+        "FlextInfraUtilitiesPaths": (
+            "flext_infra._utilities.paths",
+            "FlextInfraUtilitiesPaths",
+        ),
+        "FlextInfraUtilitiesPatterns": (
+            "flext_infra._utilities.patterns",
+            "FlextInfraUtilitiesPatterns",
+        ),
+        "FlextInfraUtilitiesProtocols": (
+            "flext_infra._utilities.protocols",
+            "FlextInfraUtilitiesProtocols",
+        ),
+        "FlextInfraUtilitiesSubprocess": (
+            "flext_infra._utilities.subprocess",
+            "FlextInfraUtilitiesSubprocess",
+        ),
+        "FlextInfraUtilitiesTemplates": (
+            "flext_infra._utilities.templates",
+            "FlextInfraUtilitiesTemplates",
+        ),
+        "FlextInfraUtilitiesTerminal": (
+            "flext_infra._utilities.terminal",
+            "FlextInfraUtilitiesTerminal",
+        ),
+        "FlextInfraUtilitiesToml": (
+            "flext_infra._utilities.toml",
+            "FlextInfraUtilitiesToml",
+        ),
+        "FlextInfraUtilitiesTomlParse": (
+            "flext_infra._utilities.toml_parse",
+            "FlextInfraUtilitiesTomlParse",
+        ),
+        "FlextInfraUtilitiesYaml": (
+            "flext_infra._utilities.yaml",
+            "FlextInfraUtilitiesYaml",
+        ),
+    }
 
+    if name in lazy_imports:
+        module_name, class_name = lazy_imports[name]
 
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
+        module = importlib.import_module(module_name)
+        return getattr(module, class_name)
 
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
