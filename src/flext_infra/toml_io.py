@@ -93,12 +93,24 @@ def array(items: list[str]) -> Array:
 
 
 def ensure_table(parent: Table, key: str) -> Table:
-    """Get or create a TOML table in parent."""
+    """Get or create a TOML table in parent.
+
+    When the key already exists as a dotted-key implicit ("super") table,
+    promote it to an explicit table so that tomlkit serializes sub-tables
+    under the correct parent path instead of creating bare top-level sections.
+    """
     existing: object | None = None
     if key in parent:
         existing = parent[key]
     if isinstance(existing, Table):
-        return existing
+        if not existing.is_super_table():
+            return existing
+        del parent[key]
+        table = tomlkit.table()
+        for k in list(existing.keys()):
+            table[k] = existing[k]
+        parent[key] = table
+        return table
     table = tomlkit.table()
     parent[key] = table
     return table

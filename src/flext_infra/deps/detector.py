@@ -169,7 +169,9 @@ class EnsurePytestConfigPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -218,7 +220,9 @@ class EnsureMypyConfigPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -275,7 +279,9 @@ class EnsurePydanticMypyConfigPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -299,7 +305,9 @@ class EnsurePyrightConfigPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -340,7 +348,9 @@ class EnsureRuffConfigPhase:
     ) -> list[str]:
         _ = workspace_root
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -428,7 +438,9 @@ class EnsurePyreflyConfigPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -479,7 +491,9 @@ class EnsureNamespaceToolingPhase:
         detected = discover_first_party_namespaces(path.parent)
         if not detected:
             return changes
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
@@ -508,7 +522,9 @@ class EnsureFormattingToolingPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
