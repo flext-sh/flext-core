@@ -234,6 +234,38 @@ class FlextInfraOutput(BaseModel):
         line = "  ".join(parts) + f"  {elapsed_str}"
         self._write(line)
 
+    def gate_result(
+        self,
+        gate: str,
+        count: int,
+        passed: bool,
+        elapsed: float,
+    ) -> None:
+        """Write per-gate result during check execution.
+
+        Example::
+
+            ✓ lint         0 errors  (0.45s)
+            ✗ pyrefly    335 errors  (5.23s)
+
+        Args:
+            gate: Gate name (e.g. ``lint``, ``pyrefly``).
+            count: Number of issues found.
+            passed: Whether the gate passed.
+            elapsed: Duration in seconds.
+
+        """
+        if passed:
+            sym = f"{self._green}{self._sym_ok}{self._reset}"
+        else:
+            sym = f"{self._red}{self._sym_fail}{self._reset}"
+        count_str = (
+            f"{count:>5} errors"
+            if count > 0
+            else f"{self._green}    0{self._reset} errors"
+        )
+        self._write(f"    {sym} {gate:<10} {count_str}  ({elapsed:.2f}s)")
+
     def warning(self, message: str) -> None:
         """Write a warning message in yellow.
 

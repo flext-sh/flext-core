@@ -285,58 +285,8 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
-	$(POETRY) run python -m flext_infra check fix-pyrefly-config "$$project_key"; \
-	$(POETRY) run python -m flext_infra check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
-	exit $$?; \
-	if echo "$$gates" | grep -qw lint; then \
-		$(POETRY) run ruff check . --quiet || { echo "FAIL: lint"; exit 1; }; \
-	fi; \
-	if echo "$$gates" | grep -qw format; then \
-		$(POETRY) run ruff format --check . --quiet || { echo "FAIL: format"; exit 1; }; \
-	fi; \
-	check_dirs=""; \
-	for d in src tests examples scripts; do \
-		if [ -d "$$d" ]; then check_dirs="$$check_dirs $$d"; fi; \
-	done; \
-	check_dirs=$${check_dirs:-$(SRC_DIR)}; \
-	if echo "$$gates" | grep -qw pyrefly; then \
-		$(POETRY) run pyrefly check $$check_dirs --config pyproject.toml \
-			--count-errors=0 --summarize-errors=1 --summary full || { echo "FAIL: pyrefly"; exit 1; }; \
-	fi; \
-	if echo "$$gates" | grep -qw mypy; then \
-		$(POETRY) run mypy $$check_dirs --config-file "$(WORKSPACE_ROOT)/pyproject.toml" || { echo "FAIL: mypy"; exit 1; }; \
-	fi; \
-	if echo "$$gates" | grep -qw pyright; then \
-		$(POETRY) run pyright $$check_dirs || { echo "FAIL: pyright"; exit 1; }; \
-	fi; \
-	if echo "$$gates" | grep -qw security; then \
-		$(POETRY) run bandit -r $(SRC_DIR) -q -ll || { echo "FAIL: security"; exit 1; }; \
-	fi; \
-	if echo "$$gates" | grep -qw markdown; then \
-		md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './node_modules/*' ! -path './.flext-deps/*' ! -path './.mypy_cache/*' ! -path './.pytest_cache/*' ! -path './.ruff_cache/*' ! -path './dist/*' ! -path './build/*'); \
-		md_config=""; \
-		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
-		elif [ -f ".markdownlint.json" ]; then \
-			md_config="--config .markdownlint.json"; \
-		fi; \
-		if [ -n "$$md_files" ]; then \
-			markdownlint $$md_config $$md_files || { echo "FAIL: markdown"; exit 1; }; \
-		fi; \
-	fi; \
-	if echo "$$gates" | grep -qw go; then \
-		if [ -f go.mod ]; then \
-			go vet ./... || { echo "FAIL: go"; exit 1; }; \
-			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*')" ]; then \
-				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' -print0 | xargs -0 gofmt -l); \
-				if [ -n "$$gofmt_diff" ]; then \
-					echo "FAIL: gofmt"; \
-					printf '%s\n' "$$gofmt_diff"; \
-					exit 1; \
-				fi; \
-			fi; \
-		fi; \
-	fi
+	FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(POETRY) run python -m flext_infra check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
+	exit $$?
 
 security: ## Run all security checks
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \

@@ -374,7 +374,14 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         for gate in gates:
             runner = runners.get(gate)
             if runner:
-                result.gates[gate] = runner()
+                execution = runner()
+                result.gates[gate] = execution
+                output.gate_result(
+                    gate,
+                    len(execution.issues),
+                    execution.result.passed,
+                    execution.result.duration,
+                )
         return result
 
     def _collect_markdown_files(self, project_dir: Path) -> list[Path]:
