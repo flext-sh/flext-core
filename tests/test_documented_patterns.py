@@ -36,9 +36,9 @@ from flext_core import (
     m,
     t,
 )
-from .test_utils import assertion_helpers
 
 from ._models import EmailResponse
+from .test_utils import assertion_helpers
 
 
 class User(BaseModel):

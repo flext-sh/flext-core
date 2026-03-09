@@ -73,14 +73,16 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
 
 
 def test_batch_fail_collect_flatten_and_progress() -> None:
-    def _success_list(_item: int) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok([1, 2])
+    def _success_list(_item: int) -> t.ContainerValue:
+        return [1, 2]
 
-    def _failure_result(_item: int) -> r[Never]:
-        return r.fail("err")
+    def _failure_result(_item: int) -> t.ContainerValue:
+        msg = "err"
+        raise ValueError(msg)
 
-    def _hard_failure(_item: int) -> r[Never]:
-        return r.fail("hard")
+    def _hard_failure(_item: int) -> t.ContainerValue:
+        msg = "hard"
+        raise ValueError(msg)
 
     def _raise_value_error(_item: int) -> t.ContainerValue:
         msg = "x"
@@ -129,7 +131,8 @@ def test_process_outer_exception_and_coercion_branches() -> None:
         lambda x: x,
     )
     assert processed.is_failure
-    assert u.Collection._coerce_value_to_float(1.5) == 1.5
+    value = u.Collection._coerce_value_to_float(1.5)
+    assert abs(value - 1.5) < 1e-9
     assert u.Collection._coerce_value_to_bool(True) is True
     enum_dict = u.Collection.coerce_dict_to_enum(_Color)({"a": _Color.RED})
     assert enum_dict["a"] is _Color.RED

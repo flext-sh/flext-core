@@ -2065,7 +2065,7 @@ class TestWorkspaceCheckerRuffFormatDuplicates:
     def test_ruff_format_skips_duplicate_files(self, tmp_path: Path) -> None:
         """Test that duplicate files in ruff output are skipped (line 834)."""
         ruff_output = "src/file.py\nsrc/file.py\nsrc/other.py\n"
-        seen = set()
+        seen: set[str] = set()
         for line in ruff_output.splitlines():
             if line in seen:
                 continue

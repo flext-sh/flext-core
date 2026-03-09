@@ -20,7 +20,8 @@ from tests.test_utils import assertion_helpers
 
 def _as_builder_dict(value: object) -> t.Tests.Builders.BuilderDict:
     assert isinstance(value, Mapping)
-    return cast("t.Tests.Builders.BuilderDict", dict(value))
+    typed_mapping = cast("Mapping[str, t.Tests.ContainerValue]", value)
+    return cast("t.Tests.Builders.BuilderDict", dict(typed_mapping))
 
 
 def _as_builder_result(
@@ -205,11 +206,16 @@ class TestFlextTestsBuilders:
 
     def test_add_with_items_and_map(self) -> None:
         """Test add() with items and items_map."""
+
+        def _double_item(item: t.Tests.ContainerValue) -> t.Tests.ContainerValue:
+            assert isinstance(item, int)
+            return item * 2
+
         builder = tb()
         builder.add(
             "doubled",
             items=[1, 2, 3],
-            items_map=cast("t.Tests.ContainerValue", lambda x: cast("int", x) * 2),
+            items_map=cast("t.Tests.ContainerValue", _double_item),
         )
         data = _as_builder_dict(builder.build())
         doubled = cast("list[int]", data["doubled"])
@@ -325,12 +331,18 @@ class TestFlextTestsBuilders:
 
     def test_build_with_validate_with(self) -> None:
         """Test build() with validate_with parameter."""
+
+        def _has_expected_count(
+            data: t.Tests.Builders.BuilderOutputDict,
+        ) -> bool:
+            return data["count"] == 5
+
         builder = tb()
         builder.add("count", 5)
         build_result = builder.build(
             validate_with=cast(
                 "t.Tests.ContainerValue",
-                lambda d: cast("t.Tests.Builders.BuilderOutputDict", d)["count"] == 5,
+                _has_expected_count,
             ),
         )
         if isinstance(build_result, dict):
@@ -344,14 +356,19 @@ class TestFlextTestsBuilders:
 
     def test_build_with_map_result(self) -> None:
         """Test build() with map_result parameter."""
+
+        def _double_x(
+            data: t.Tests.Builders.BuilderOutputDict,
+        ) -> t.Tests.ContainerValue:
+            assert isinstance(data["x"], int)
+            return data["x"] * 2
+
         builder = tb()
         builder.add("x", 1)
         build_result = builder.build(
             map_result=cast(
                 "t.Tests.ContainerValue",
-                lambda d: (
-                    cast("int", cast("t.Tests.Builders.BuilderOutputDict", d)["x"]) * 2
-                ),
+                _double_x,
             ),
         )
         doubled = cast("int", build_result)
@@ -387,12 +404,16 @@ class TestFlextTestsBuilders:
 
     def test_to_result_with_validate(self) -> None:
         """Test to_result() with validate parameter."""
+
+        def _has_count(data: t.Tests.Builders.BuilderDict) -> bool:
+            return data["count"] == 5
+
         builder = tb()
         builder.add("count", 5)
         result_raw = builder.to_result(
             validate=cast(
                 "t.Tests.ContainerValue",
-                lambda d: cast("t.Tests.Builders.BuilderDict", d)["count"] == 5,
+                _has_count,
             ),
         )
         result = _as_builder_result(result_raw)

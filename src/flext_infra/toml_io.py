@@ -143,6 +143,8 @@ def _toml_get(
         return raw_value
     if isinstance(raw_value, (str, int, float, bool, type(None), BaseModel, Path)):
         return raw_value
+    if not isinstance(raw_value, (dict, list, TOMLDocument)):
+        return None
     normalized_mapping = _normalize_container_value(raw_value)
     if isinstance(normalized_mapping, dict):
         try:
