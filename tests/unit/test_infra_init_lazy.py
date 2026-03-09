@@ -149,12 +149,12 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_json_service(self) -> None:
         """Test lazy loading of FlextInfraJsonService."""
-        service = flext_infra.FlextInfraJsonService
+        service = flext_infra.FlextInfraUtilitiesIo
         assert service is not None
 
     def test_lazy_import_toml_service(self) -> None:
         """Test lazy loading of FlextInfraTomlService."""
-        service = flext_infra.FlextInfraTomlService
+        service = flext_infra.FlextInfraUtilitiesToml
         assert service is not None
 
     def test_lazy_import_versioning_service(self) -> None:
@@ -164,7 +164,7 @@ class TestFlextInfraInitLazyLoading:
 
     def test_lazy_import_path_resolver(self) -> None:
         """Test lazy loading of FlextInfraPathResolver."""
-        resolver = flext_infra.FlextInfraPathResolver
+        resolver = flext_infra.FlextInfraUtilitiesPaths
         assert resolver is not None
 
     def test_lazy_import_reporting_service(self) -> None:

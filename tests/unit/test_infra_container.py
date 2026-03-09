@@ -18,14 +18,14 @@ from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraDiscoveryService,
     FlextInfraGitService,
-    FlextInfraJsonService,
+    FlextInfraUtilitiesIo,
     FlextInfraOutput,
-    FlextInfraPathResolver,
+    FlextInfraUtilitiesPaths,
     FlextInfraProjectSelector,
     FlextInfraPythonVersionEnforcer,
     FlextInfraReleaseOrchestrator,
     FlextInfraReportingService,
-    FlextInfraTomlService,
+    FlextInfraUtilitiesToml,
     FlextInfraVersioningService,
     configure_flext_infra_dependencies,
     get_flext_infra_container,
@@ -82,21 +82,21 @@ class TestInfraServiceRegistration:
         result = get_flext_infra_service("json_io")
         assert result.is_success
         service = result.unwrap()
-        assert isinstance(service, FlextInfraJsonService)
+        assert isinstance(service, FlextInfraUtilitiesIo)
 
     def test_toml_io_registered(self) -> None:
         """Verify toml_io is registered and retrievable."""
         result = get_flext_infra_service("toml_io")
         assert result.is_success
         service = result.unwrap()
-        assert isinstance(service, FlextInfraTomlService)
+        assert isinstance(service, FlextInfraUtilitiesToml)
 
     def test_path_resolver_registered(self) -> None:
         """Verify path_resolver is registered and retrievable."""
         result = get_flext_infra_service("path_resolver")
         assert result.is_success
         service = result.unwrap()
-        assert isinstance(service, FlextInfraPathResolver)
+        assert isinstance(service, FlextInfraUtilitiesPaths)
 
     def test_command_runner_registered(self) -> None:
         """Verify command_runner is registered and retrievable."""

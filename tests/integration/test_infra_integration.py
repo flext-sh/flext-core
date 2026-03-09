@@ -28,7 +28,7 @@ from flext_infra.container import (
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.git import FlextInfraGitService
 from flext_infra.output import FlextInfraOutput, output
-from flext_infra.paths import FlextInfraPathResolver
+from flext_infra.paths import FlextInfraUtilitiesPaths
 from flext_infra.subprocess import FlextInfraCommandRunner
 from flext_infra.workspace import (
     FlextInfraOrchestratorService,
@@ -96,7 +96,7 @@ class TestContainerIntegration:
         assert isinstance(result, FlextResult)
         assert result.is_success
         assert result.value is not None
-        assert isinstance(result.value, FlextInfraPathResolver)
+        assert isinstance(result.value, FlextInfraUtilitiesPaths)
 
     @pytest.mark.integration
     def test_container_service_retrieval_failure_returns_error(self) -> None:
@@ -328,11 +328,11 @@ class TestPathResolverDiscoveryFlow:
         """
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
-        path_resolver = FlextInfraPathResolver()
+        path_resolver = FlextInfraUtilitiesPaths()
         discovery = FlextInfraDiscoveryService()
         assert path_resolver is not None
         assert discovery is not None
-        assert isinstance(path_resolver, FlextInfraPathResolver)
+        assert isinstance(path_resolver, FlextInfraUtilitiesPaths)
         assert isinstance(discovery, FlextInfraDiscoveryService)
 
     @pytest.mark.integration
@@ -343,9 +343,9 @@ class TestPathResolverDiscoveryFlow:
         - Path resolver methods return Path objects
         - Paths are properly typed
         """
-        path_resolver = FlextInfraPathResolver()
+        path_resolver = FlextInfraUtilitiesPaths()
         assert path_resolver is not None
-        assert isinstance(path_resolver, FlextInfraPathResolver)
+        assert isinstance(path_resolver, FlextInfraUtilitiesPaths)
 
 
 class TestCrossModuleIntegration:

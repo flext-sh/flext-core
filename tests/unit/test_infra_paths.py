@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import FlextInfraPathResolver
+from flext_infra import FlextInfraUtilitiesPaths
 
 
 class TestFlextInfraPathResolver:
@@ -18,7 +18,7 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_with_current_directory(self) -> None:
         """Test resolving workspace root from current directory."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root(".")
         assert result.is_success
         assert isinstance(result.value, Path)
@@ -26,7 +26,7 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_with_absolute_path(self, tmp_path: Path) -> None:
         """Test resolving workspace root with absolute path."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root(str(tmp_path))
         assert result.is_success
         assert isinstance(result.value, Path)
@@ -34,7 +34,7 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_with_path_object(self, tmp_path: Path) -> None:
         """Test resolving workspace root with Path object."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root(tmp_path)
         assert result.is_success
         assert isinstance(result.value, Path)
@@ -42,7 +42,7 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_from_file_in_workspace(self) -> None:
         """Test resolving workspace root from a file in the workspace."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root_from_file(__file__)
         assert result.is_success
         root = result.value
@@ -51,14 +51,14 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_from_file_with_path_object(self) -> None:
         """Test workspace root resolution with Path object."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root_from_file(Path(__file__))
         assert result.is_success
         assert isinstance(result.value, Path)
 
     def test_workspace_root_from_file_not_found(self, tmp_path: Path) -> None:
         """Test workspace root resolution fails when markers not found."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         test_file = tmp_path / "test.py"
         test_file.write_text("# test")
         result = resolver.workspace_root_from_file(test_file)
@@ -68,7 +68,7 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_from_directory_file(self, tmp_path: Path) -> None:
         """Test workspace root resolution from a directory path."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         (tmp_path / ".git").mkdir()
         (tmp_path / "Makefile").touch()
         (tmp_path / "pyproject.toml").touch()
@@ -78,7 +78,7 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_from_nested_file(self, tmp_path: Path) -> None:
         """Test workspace root resolution from nested file."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         (tmp_path / ".git").mkdir()
         (tmp_path / "Makefile").touch()
         (tmp_path / "pyproject.toml").touch()
@@ -92,13 +92,13 @@ class TestFlextInfraPathResolver:
 
     def test_workspace_root_invalid_path(self) -> None:
         """Test workspace root resolution with invalid path."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root("/nonexistent/path/that/does/not/exist")
         assert result.is_success
 
     def test_workspace_root_from_file_nonexistent(self) -> None:
         """Test workspace root resolution with nonexistent file."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.workspace_root_from_file(
             Path("/nonexistent/impossible/file.py"),
         )
@@ -108,7 +108,7 @@ class TestFlextInfraPathResolver:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
 
         def _raise_type_error(self: Path, strict: bool | None = None) -> Path:
             _ = self
@@ -127,7 +127,7 @@ class TestFlextInfraPathResolver:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
 
         def _raise_type_error(self: Path, strict: bool | None = None) -> Path:
             _ = self
@@ -144,7 +144,7 @@ class TestFlextInfraPathResolver:
 
     def test_execute_returns_current_directory(self) -> None:
         """Test execute method returns current working directory."""
-        resolver = FlextInfraPathResolver()
+        resolver = FlextInfraUtilitiesPaths()
         result = resolver.execute()
         assert result.is_success
         assert isinstance(result.value, Path)
