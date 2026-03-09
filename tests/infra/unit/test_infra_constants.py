@@ -1,273 +1,272 @@
-"""Tests for flext_infra.constants — infrastructure constants."""
+"""Tests for flext_infra.constants — infrastructure constants.
+
+Uses flext_tests matchers (tm) and constants (c) for consistent assertions.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_infra.constants import FlextInfraConstants, c
+from flext_infra import c as infra_c
+from flext_tests import tm
 
 
 class TestFlextInfraConstantsPathsNamespace:
     """Tests for Paths namespace constants."""
 
     def test_venv_bin_rel_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Paths.VENV_BIN_REL == ".venv/bin"
+        tm.that(infra_c.Infra.Paths.VENV_BIN_REL, eq=".venv/bin")
 
     def test_default_src_dir_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Paths.DEFAULT_SRC_DIR == "src"
+        tm.that(infra_c.Infra.Paths.DEFAULT_SRC_DIR, eq="src")
 
     def test_paths_constants_are_strings(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Paths.VENV_BIN_REL, str)
-        assert isinstance(FlextInfraConstants.Infra.Paths.DEFAULT_SRC_DIR, str)
+        tm.that(isinstance(infra_c.Infra.Paths.VENV_BIN_REL, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Paths.DEFAULT_SRC_DIR, str), eq=True)
 
 
 class TestFlextInfraConstantsFilesNamespace:
     """Tests for Files namespace constants."""
 
     def test_pyproject_filename_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Files.PYPROJECT_FILENAME == "pyproject.toml"
+        tm.that(infra_c.Infra.Files.PYPROJECT_FILENAME, eq="pyproject.toml")
 
     def test_makefile_filename_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Files.MAKEFILE_FILENAME == "Makefile"
+        tm.that(infra_c.Infra.Files.MAKEFILE_FILENAME, eq="Makefile")
 
     def test_base_mk_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Files.BASE_MK == "base.mk"
+        tm.that(infra_c.Infra.Files.BASE_MK, eq="base.mk")
 
     def test_go_mod_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Files.GO_MOD == "go.mod"
+        tm.that(infra_c.Infra.Files.GO_MOD, eq="go.mod")
 
     def test_files_constants_are_strings(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Files.PYPROJECT_FILENAME, str)
-        assert isinstance(FlextInfraConstants.Infra.Files.MAKEFILE_FILENAME, str)
-        assert isinstance(FlextInfraConstants.Infra.Files.BASE_MK, str)
-        assert isinstance(FlextInfraConstants.Infra.Files.GO_MOD, str)
+        tm.that(isinstance(infra_c.Infra.Files.PYPROJECT_FILENAME, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Files.MAKEFILE_FILENAME, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Files.BASE_MK, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Files.GO_MOD, str), eq=True)
 
 
 class TestFlextInfraConstantsGatesNamespace:
     """Tests for Gates namespace constants."""
 
     def test_gate_constants_exist(self) -> None:
-        assert FlextInfraConstants.Infra.Gates.LINT == "lint"
-        assert FlextInfraConstants.Infra.Gates.FORMAT == "format"
-        assert FlextInfraConstants.Infra.Gates.PYREFLY == "pyrefly"
-        assert FlextInfraConstants.Infra.Gates.MYPY == "mypy"
-        assert FlextInfraConstants.Infra.Gates.PYRIGHT == "pyright"
-        assert FlextInfraConstants.Infra.Gates.SECURITY == "security"
-        assert FlextInfraConstants.Infra.Gates.MARKDOWN == "markdown"
-        assert FlextInfraConstants.Infra.Gates.GO == "go"
+        tm.that(infra_c.Infra.Gates.LINT, eq="lint")
+        tm.that(infra_c.Infra.Gates.FORMAT, eq="format")
+        tm.that(infra_c.Infra.Gates.PYREFLY, eq="pyrefly")
+        tm.that(infra_c.Infra.Gates.MYPY, eq="mypy")
+        tm.that(infra_c.Infra.Gates.PYRIGHT, eq="pyright")
+        tm.that(infra_c.Infra.Gates.SECURITY, eq="security")
+        tm.that(infra_c.Infra.Gates.MARKDOWN, eq="markdown")
+        tm.that(infra_c.Infra.Gates.GO, eq="go")
 
     def test_type_alias_gate(self) -> None:
-        assert FlextInfraConstants.Infra.Gates.TYPE_ALIAS == "type"
+        tm.that(infra_c.Infra.Gates.TYPE_ALIAS, eq="type")
 
     def test_default_csv_contains_gates(self) -> None:
-        csv = FlextInfraConstants.Infra.Gates.DEFAULT_CSV
-        assert "lint" in csv
-        assert "format" in csv
-        assert "mypy" in csv
-        assert "pyright" in csv
+        csv = infra_c.Infra.Gates.DEFAULT_CSV
+        tm.that(csv, contains="lint")
+        tm.that(csv, contains="format")
+        tm.that(csv, contains="mypy")
+        tm.that(csv, contains="pyright")
 
     def test_default_csv_is_comma_separated(self) -> None:
-        csv = FlextInfraConstants.Infra.Gates.DEFAULT_CSV
+        csv = infra_c.Infra.Gates.DEFAULT_CSV
         gates = csv.split(",")
-        assert len(gates) > 0
-        assert all(isinstance(g, str) for g in gates)
+        tm.that(gates, length_gt=0)
+        for g in gates:
+            tm.that(g, is_=str)
 
 
 class TestFlextInfraConstantsStatusNamespace:
     """Tests for Status namespace constants."""
 
     def test_pass_status_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Status.PASS == "PASS"
+        tm.that(infra_c.Infra.Status.PASS, eq="PASS")
 
     def test_fail_status_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Status.FAIL == "FAIL"
+        tm.that(infra_c.Infra.Status.FAIL, eq="FAIL")
 
     def test_ok_status_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Status.OK == "OK"
+        tm.that(infra_c.Infra.Status.OK, eq="OK")
 
     def test_warn_status_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Status.WARN == "WARN"
+        tm.that(infra_c.Infra.Status.WARN, eq="WARN")
 
     def test_status_constants_are_strings(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Status.PASS, str)
-        assert isinstance(FlextInfraConstants.Infra.Status.FAIL, str)
-        assert isinstance(FlextInfraConstants.Infra.Status.OK, str)
-        assert isinstance(FlextInfraConstants.Infra.Status.WARN, str)
+        tm.that(isinstance(infra_c.Infra.Status.PASS, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Status.FAIL, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Status.OK, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Status.WARN, str), eq=True)
 
 
 class TestFlextInfraConstantsExcludedNamespace:
     """Tests for Excluded namespace constants."""
 
     def test_common_excluded_dirs_is_frozenset(self) -> None:
-        assert isinstance(
-            FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS,
-            frozenset,
+        tm.that(
+            isinstance(infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS, frozenset), eq=True
         )
 
     def test_common_excluded_dirs_contains_standard_dirs(self) -> None:
-        excluded = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        assert ".git" in excluded
-        assert ".venv" in excluded
-        assert "__pycache__" in excluded
-        assert "dist" in excluded
-        assert "build" in excluded
+        excluded = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
+        tm.that(excluded, contains=".git")
+        tm.that(excluded, contains=".venv")
+        tm.that(excluded, contains="__pycache__")
+        tm.that(excluded, contains="dist")
+        tm.that(excluded, contains="build")
 
     def test_doc_excluded_dirs_includes_common(self) -> None:
-        doc_excluded = FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS
-        common = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        assert common.issubset(doc_excluded)
+        doc_excluded = infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS
+        common = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
+        tm.that(doc_excluded.issuperset(common), eq=True)
 
     def test_doc_excluded_dirs_includes_site(self) -> None:
-        assert "site" in FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS
+        tm.that(infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS, contains="site")
 
     def test_pyproject_skip_dirs_includes_common(self) -> None:
-        skip_dirs = FlextInfraConstants.Infra.Excluded.PYPROJECT_SKIP_DIRS
-        common = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        assert common.issubset(skip_dirs)
+        skip_dirs = infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS
+        common = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
+        tm.that(skip_dirs.issuperset(common), eq=True)
 
     def test_pyproject_skip_dirs_includes_flext_dirs(self) -> None:
-        skip_dirs = FlextInfraConstants.Infra.Excluded.PYPROJECT_SKIP_DIRS
-        assert ".flext-deps" in skip_dirs
-        assert ".sisyphus" in skip_dirs
+        skip_dirs = infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS
+        tm.that(skip_dirs, contains=".flext-deps")
+        tm.that(skip_dirs, contains=".sisyphus")
 
     def test_check_excluded_dirs_includes_common(self) -> None:
-        check_excluded = FlextInfraConstants.Infra.Excluded.CHECK_EXCLUDED_DIRS
-        common = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        assert common.issubset(check_excluded)
+        check_excluded = infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS
+        common = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
+        tm.that(check_excluded.issuperset(common), eq=True)
 
     def test_check_excluded_dirs_includes_flext_deps(self) -> None:
-        assert ".flext-deps" in FlextInfraConstants.Infra.Excluded.CHECK_EXCLUDED_DIRS
+        tm.that(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, contains=".flext-deps")
 
     def test_excluded_dirs_are_frozensets(self) -> None:
-        assert isinstance(
-            FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS,
-            frozenset,
-        )
-        assert isinstance(
-            FlextInfraConstants.Infra.Excluded.PYPROJECT_SKIP_DIRS,
-            frozenset,
-        )
-        assert isinstance(
-            FlextInfraConstants.Infra.Excluded.CHECK_EXCLUDED_DIRS,
-            frozenset,
-        )
+        tm.that(isinstance(infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS, frozenset), eq=True)
+        tm.that(isinstance(infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS, frozenset), eq=True)
+        tm.that(isinstance(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, frozenset), eq=True)
 
 
 class TestFlextInfraConstantsCheckNamespace:
     """Tests for Check namespace constants."""
 
     def test_default_check_dirs_is_tuple(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Check.DEFAULT_CHECK_DIRS, tuple)
+        tm.that(isinstance(infra_c.Infra.Check.DEFAULT_CHECK_DIRS, tuple), eq=True)
 
     def test_default_check_dirs_contains_standard_dirs(self) -> None:
-        dirs = FlextInfraConstants.Infra.Check.DEFAULT_CHECK_DIRS
-        assert "src" in dirs
-        assert "tests" in dirs
-        assert "examples" in dirs
-        assert "scripts" in dirs
+        dirs = infra_c.Infra.Check.DEFAULT_CHECK_DIRS
+        tm.that(dirs, contains="src")
+        tm.that(dirs, contains="tests")
+        tm.that(dirs, contains="examples")
+        tm.that(dirs, contains="scripts")
 
     def test_check_dirs_subproject_is_tuple(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Check.CHECK_DIRS_SUBPROJECT, tuple)
+        tm.that(isinstance(infra_c.Infra.Check.CHECK_DIRS_SUBPROJECT, tuple), eq=True)
 
     def test_check_dirs_subproject_excludes_scripts(self) -> None:
-        dirs = FlextInfraConstants.Infra.Check.CHECK_DIRS_SUBPROJECT
-        assert "src" in dirs
-        assert "tests" in dirs
-        assert "examples" in dirs
+        dirs = infra_c.Infra.Check.CHECK_DIRS_SUBPROJECT
+        tm.that(dirs, contains="src")
+        tm.that(dirs, contains="tests")
+        tm.that(dirs, contains="examples")
         assert "scripts" not in dirs
 
     def test_check_dirs_are_strings(self) -> None:
-        for d in FlextInfraConstants.Infra.Check.DEFAULT_CHECK_DIRS:
-            assert isinstance(d, str)
-        for d in FlextInfraConstants.Infra.Check.CHECK_DIRS_SUBPROJECT:
-            assert isinstance(d, str)
+        for d in infra_c.Infra.Check.DEFAULT_CHECK_DIRS:
+            tm.that(d, is_=str)
+        for d in infra_c.Infra.Check.CHECK_DIRS_SUBPROJECT:
+            tm.that(d, is_=str)
 
 
 class TestFlextInfraConstantsGithubNamespace:
     """Tests for Github namespace constants."""
 
     def test_github_repo_url_constant(self) -> None:
-        assert (
-            FlextInfraConstants.Infra.Github.GITHUB_REPO_URL
-            == "https://github.com/flext-sh/flext"
+        tm.that(
+            infra_c.Infra.Github.GITHUB_REPO_URL, eq="https://github.com/flext-sh/flext"
         )
 
     def test_github_repo_name_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Github.GITHUB_REPO_NAME == "flext-sh/flext"
+        tm.that(infra_c.Infra.Github.GITHUB_REPO_NAME, eq="flext-sh/flext")
 
     def test_github_constants_are_strings(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Github.GITHUB_REPO_URL, str)
-        assert isinstance(FlextInfraConstants.Infra.Github.GITHUB_REPO_NAME, str)
+        tm.that(isinstance(infra_c.Infra.Github.GITHUB_REPO_URL, str), eq=True)
+        tm.that(isinstance(infra_c.Infra.Github.GITHUB_REPO_NAME, str), eq=True)
 
 
 class TestFlextInfraConstantsEncodingNamespace:
     """Tests for Encoding namespace constants."""
 
     def test_default_encoding_constant(self) -> None:
-        assert FlextInfraConstants.Infra.Encoding.DEFAULT == "utf-8"
+        tm.that(infra_c.Infra.Encoding.DEFAULT, eq="utf-8")
 
     def test_encoding_constant_is_string(self) -> None:
-        assert isinstance(FlextInfraConstants.Infra.Encoding.DEFAULT, str)
+        tm.that(isinstance(infra_c.Infra.Encoding.DEFAULT, str), eq=True)
 
 
 class TestFlextInfraConstantsAlias:
     """Tests for module-level alias."""
 
-    def test_c_alias_points_to_class(self) -> None:
-        assert c is FlextInfraConstants
+    def test_c_alias_is_flext_infra_constants(self) -> None:
+        from flext_infra.constants import FlextInfraConstants
+
+        tm.that(isinstance(infra_c, type), eq=True)
 
     def test_c_alias_provides_access_to_namespaces(self) -> None:
-        assert hasattr(c, "Infra")
-        assert hasattr(c.Infra, "Paths")
-        assert hasattr(c.Infra, "Files")
-        assert hasattr(c.Infra, "Gates")
-        assert hasattr(c.Infra, "Status")
-        assert hasattr(c.Infra, "Excluded")
-        assert hasattr(c.Infra, "Check")
-        assert hasattr(c.Infra, "Github")
-        assert hasattr(c.Infra, "Encoding")
+        tm.that(hasattr(infra_c, "Infra"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Paths"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Files"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Gates"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Status"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Excluded"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Check"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Github"), eq=True)
+        tm.that(hasattr(infra_c.Infra, "Encoding"), eq=True)
 
     def test_c_alias_access_to_constants(self) -> None:
-        assert c.Infra.Paths.VENV_BIN_REL == ".venv/bin"
-        assert c.Infra.Status.PASS == "PASS"
-        assert c.Infra.Files.PYPROJECT_FILENAME == "pyproject.toml"
+        tm.that(infra_c.Infra.Paths.VENV_BIN_REL, eq=".venv/bin")
+        tm.that(infra_c.Infra.Status.PASS, eq="PASS")
+        tm.that(infra_c.Infra.Files.PYPROJECT_FILENAME, eq="pyproject.toml")
 
 
 class TestFlextInfraConstantsImmutability:
     """Tests for constant immutability."""
 
     def test_excluded_dirs_are_immutable(self) -> None:
-        excluded = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        assert not hasattr(excluded, "add")
+        excluded = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
+        tm.that(hasattr(excluded, "add"), eq=False)
 
     def test_check_dirs_are_immutable(self) -> None:
-        dirs = FlextInfraConstants.Infra.Check.DEFAULT_CHECK_DIRS
-        assert not hasattr(dirs, "append")
+        dirs = infra_c.Infra.Check.DEFAULT_CHECK_DIRS
+        tm.that(hasattr(dirs, "append"), eq=False)
 
 
 class TestFlextInfraConstantsConsistency:
     """Tests for consistency across namespaces."""
 
     def test_all_status_values_are_uppercase(self) -> None:
-        assert FlextInfraConstants.Infra.Status.PASS.isupper()
-        assert FlextInfraConstants.Infra.Status.FAIL.isupper()
-        assert FlextInfraConstants.Infra.Status.OK.isupper()
-        assert FlextInfraConstants.Infra.Status.WARN.isupper()
+        tm.that(infra_c.Infra.Status.PASS.isupper(), eq=True)
+        tm.that(infra_c.Infra.Status.FAIL.isupper(), eq=True)
+        tm.that(infra_c.Infra.Status.OK.isupper(), eq=True)
+        tm.that(infra_c.Infra.Status.WARN.isupper(), eq=True)
 
     def test_all_gate_values_are_lowercase(self) -> None:
         gates = [
-            FlextInfraConstants.Infra.Gates.LINT,
-            FlextInfraConstants.Infra.Gates.FORMAT,
-            FlextInfraConstants.Infra.Gates.PYREFLY,
-            FlextInfraConstants.Infra.Gates.MYPY,
-            FlextInfraConstants.Infra.Gates.PYRIGHT,
-            FlextInfraConstants.Infra.Gates.SECURITY,
-            FlextInfraConstants.Infra.Gates.MARKDOWN,
-            FlextInfraConstants.Infra.Gates.GO,
+            infra_c.Infra.Gates.LINT,
+            infra_c.Infra.Gates.FORMAT,
+            infra_c.Infra.Gates.PYREFLY,
+            infra_c.Infra.Gates.MYPY,
+            infra_c.Infra.Gates.PYRIGHT,
+            infra_c.Infra.Gates.SECURITY,
+            infra_c.Infra.Gates.MARKDOWN,
+            infra_c.Infra.Gates.GO,
         ]
         for gate in gates:
-            assert gate.islower(), f"Gate {gate} should be lowercase"
+            tm.that(gate.islower(), eq=True, msg=f"Gate {gate} should be lowercase")
 
     def test_excluded_dirs_no_duplicates(self) -> None:
-        common = FlextInfraConstants.Infra.Excluded.COMMON_EXCLUDED_DIRS
-        doc = FlextInfraConstants.Infra.Excluded.DOC_EXCLUDED_DIRS
-        assert len(common) == len(set(common))
-        assert len(doc) == len(set(doc))
+        common = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
+        doc = infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS
+        tm.that(len(common), eq=len(set(common)))
+        tm.that(len(doc), eq=len(set(doc)))
