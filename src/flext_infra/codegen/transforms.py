@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from flext_infra import FlextInfraCommandRunner, c
+from flext_infra import FlextInfraUtilitiesSubprocess, c
 
 
 class FlextInfraCodegenTransforms:
@@ -222,7 +222,7 @@ class FlextInfraCodegenTransforms:
     @staticmethod
     def run_ruff_fix(path: Path) -> None:
         """Run ruff check --fix and ruff format on a file."""
-        runner = FlextInfraCommandRunner()
+        runner = FlextInfraUtilitiesSubprocess()
         runner.run_checked([
             c.Infra.Cli.RUFF,
             c.Infra.Cli.RuffCmd.CHECK,

@@ -23,7 +23,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import t
 from flext_infra import c
-from flext_infra._utilities.subprocess import FlextInfraCommandRunner
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
@@ -438,7 +438,7 @@ class FlextInfraUtilitiesCodegen:
 
         """
         with contextlib.suppress(FileNotFoundError):
-            runner = FlextInfraCommandRunner()
+            runner = FlextInfraUtilitiesSubprocess()
             runner.run_checked([
                 c.Infra.Cli.RUFF,
                 c.Infra.Cli.RuffCmd.CHECK,

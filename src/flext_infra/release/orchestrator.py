@@ -15,10 +15,10 @@ from typing import override
 
 from flext_core import FlextLogger, r, s
 from flext_infra import (
-    FlextInfraCommandRunner,
     FlextInfraGitService,
     FlextInfraProjectSelector,
     FlextInfraReportingService,
+    FlextInfraUtilitiesSubprocess,
     FlextInfraVersioningService,
     c,
     m,
@@ -35,7 +35,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     @staticmethod
     def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
-        result = FlextInfraCommandRunner().run_raw([
+        result = FlextInfraUtilitiesSubprocess().run_raw([
             c.Infra.Cli.MAKE,
             "-C",
             str(project_path),
@@ -167,7 +167,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         if dry_run:
             logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
-        return FlextInfraCommandRunner().run_checked(
+        return FlextInfraUtilitiesSubprocess().run_checked(
             [c.Infra.Cli.MAKE, c.Infra.Verbs.VALIDATE, "VALIDATE_SCOPE=workspace"],
             cwd=root,
         )

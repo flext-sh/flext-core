@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Protocol, TextIO, override
 
 from flext_core import r, s
-from flext_infra import FlextInfraCommandRunner, c, m, p, t
+from flext_infra import FlextInfraUtilitiesSubprocess, c, m, p, t
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 
 
@@ -32,7 +32,7 @@ class FlextInfraBaseMkGenerator(s[str]):
     def _get_runner(self) -> p.Infra.CommandRunner:
         """Lazily initialize the command runner."""
         if self._runner is None:
-            self._runner = FlextInfraCommandRunner()
+            self._runner = FlextInfraUtilitiesSubprocess()
         return self._runner
 
     @override

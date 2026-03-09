@@ -19,7 +19,7 @@ from flext_infra.models import m
 from flext_infra.typings import t
 
 
-class FlextInfraUtilitiesProtocols(FlextProtocols):
+class FlextInfraProtocols(FlextProtocols):
     """Structural contracts for flext-infra utilities and services.
 
     All parent protocols (Result, Config, DI, Service, etc.) are inherited
@@ -214,5 +214,5 @@ class FlextInfraUtilitiesProtocols(FlextProtocols):
             ...
 
 
-p = FlextInfraUtilitiesProtocols
-__all__ = ["FlextInfraUtilitiesProtocols", "p"]
+p = FlextInfraProtocols
+__all__ = ["FlextInfraProtocols", "p"]

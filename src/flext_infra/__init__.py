@@ -15,28 +15,24 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
-    from flext_infra._utilities.exceptions import (
-        FlextInfraExceptions,
-        FlextInfraExceptions as e,
-    )
     from flext_infra._utilities.io import (
-        FlextInfraUtilitiesIo as FlextInfraJsonService,
+        FlextInfraUtilitiesIo as FlextInfraUtilitiesIo,
     )
     from flext_infra._utilities.output import (
         FlextInfraUtilitiesOutput as FlextInfraOutput,
         output,
     )
     from flext_infra._utilities.patterns import (
-        FlextInfraUtilitiesPatterns as FlextInfraPatterns,
+        FlextInfraUtilitiesPatterns as FlextInfraUtilitiesPatterns,
     )
     from flext_infra._utilities.protocols import (
         FlextInfraUtilitiesProtocols as p,
     )
     from flext_infra._utilities.subprocess import (
-        FlextInfraUtilitiesSubprocess as FlextInfraCommandRunner,
+        FlextInfraUtilitiesSubprocess as FlextInfraUtilitiesSubprocess,
     )
     from flext_infra._utilities.toml import (
-        FlextInfraUtilitiesToml as FlextInfraTomlService,
+        FlextInfraUtilitiesToml as FlextInfraUtilitiesToml,
     )
     from flext_infra.basemk import (
         FlextInfraBaseMkGenerator,
@@ -55,7 +51,6 @@ if TYPE_CHECKING:
     from flext_infra.core.skill_validator import FlextInfraSkillValidator
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
     from flext_infra.discovery import FlextInfraDiscoveryService
-    from flext_infra.dispatcher import FlextInfraDispatcher
     from flext_infra.git import FlextInfraGitService
     from flext_infra.maintenance import FlextInfraPythonVersionEnforcer
     from flext_infra.models import FlextInfraModels, FlextInfraModels as m
@@ -96,11 +91,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.discovery",
         "FlextInfraDiscoveryService",
     ),
-    "FlextInfraDispatcher": ("flext_infra.dispatcher", "FlextInfraDispatcher"),
-    "FlextInfraExceptions": (
-        "flext_infra._utilities.exceptions",
-        "FlextInfraExceptions",
-    ),
     "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
     "FlextInfraInventoryService": (
         "flext_infra.core.inventory",
@@ -111,14 +101,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraOutput": ("flext_infra._utilities.output", "FlextInfraUtilitiesOutput"),
     "FlextInfraPathResolver": (
         "flext_infra._utilities.paths",
-        "FlextInfraPathResolver",
+        "FlextInfraUtilitiesPaths",
     ),
     "FlextInfraPatterns": (
         "flext_infra._utilities.patterns",
         "FlextInfraUtilitiesPatterns",
     ),
     "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
-    "FlextInfraProtocols": ("flext_infra._utilities.protocols", "FlextInfraProtocols"),
+    "FlextInfraProtocols": (
+        "flext_infra._utilities.protocols",
+        "FlextInfraUtilitiesProtocols",
+    ),
     "FlextInfraPytestDiagExtractor": (
         "flext_infra.core.pytest_diag",
         "FlextInfraPytestDiagExtractor",
@@ -151,6 +144,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraTomlService": ("flext_infra._utilities.toml", "FlextInfraUtilitiesToml"),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
+    "FlextInfraUtilitiesSubprocess": (
+        "flext_infra._utilities.subprocess",
+        "FlextInfraUtilitiesSubprocess",
+    ),
     "FlextInfraVersioningService": (
         "flext_infra.versioning",
         "FlextInfraVersioningService",
@@ -158,10 +155,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),
-    "e": ("flext_infra._utilities.exceptions", "FlextInfraExceptions"),
     "m": ("flext_infra.models", "FlextInfraModels"),
     "output": ("flext_infra._utilities.output", "output"),
-    "p": ("flext_infra._utilities.protocols", "FlextInfraProtocols"),
+    "p": ("flext_infra._utilities.protocols", "FlextInfraUtilitiesProtocols"),
     "t": ("flext_infra.typings", "FlextInfraTypes"),
     "u": ("flext_infra.utilities", "FlextInfraUtilities"),
 }
@@ -176,8 +172,6 @@ __all__ = [
     "FlextInfraCommandRunner",
     "FlextInfraConstants",
     "FlextInfraDiscoveryService",
-    "FlextInfraDispatcher",
-    "FlextInfraExceptions",
     "FlextInfraGitService",
     "FlextInfraInventoryService",
     "FlextInfraJsonService",
@@ -196,11 +190,11 @@ __all__ = [
     "FlextInfraTomlService",
     "FlextInfraTypes",
     "FlextInfraUtilities",
+    "FlextInfraUtilitiesSubprocess",
     "FlextInfraVersioningService",
     "__version__",
     "__version_info__",
     "c",
-    "e",
     "m",
     "output",
     "p",

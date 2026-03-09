@@ -14,13 +14,11 @@ import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_core import r
 from flext_infra import c, m
 
 
-class FlextInfraUtilitiesSubprocess(BaseModel):
+class FlextInfraUtilitiesSubprocess:
     """Subprocess execution helpers with r-wrapped error handling.
 
     All methods are static and do not require instantiation.
@@ -31,8 +29,6 @@ class FlextInfraUtilitiesSubprocess(BaseModel):
 
         result = S.run(["ls", "-la"])
     """
-
-    model_config = ConfigDict(frozen=True)
 
     @staticmethod
     def run_raw(

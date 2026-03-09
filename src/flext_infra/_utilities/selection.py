@@ -12,19 +12,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
-from flext_infra import FlextInfraDiscoveryService, m
+from flext_core import r
+from flext_infra import m
 
 
-class FlextInfraProjectSelector(s[list[m.Infra.Workspace.ProjectInfo]]):
+class FlextInfraUtilitiesSelection:
     """Infrastructure service for project selection and filtering.
 
     Combines project discovery with filtering and resolution capabilities.
     """
-
-    def __init__(self, discovery: FlextInfraDiscoveryService | None = None) -> None:
-        """Initialize the project selector."""
-        self._discovery = discovery or FlextInfraDiscoveryService()
 
     @override
     def execute(self) -> r[list[m.Infra.Workspace.ProjectInfo]]:
@@ -74,4 +70,4 @@ class FlextInfraProjectSelector(s[list[m.Infra.Workspace.ProjectInfo]]):
         )
 
 
-__all__ = ["FlextInfraProjectSelector"]
+__all__ = ["FlextInfraUtilitiesSelection"]

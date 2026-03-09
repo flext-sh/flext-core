@@ -7,7 +7,20 @@ from pathlib import Path
 
 from tomlkit.items import Table
 
-from flext_infra import FlextInfraCommandRunner, c, p
+from flext_infra import FlextInfraUtilitiesSubprocess, c, p
+from flext_infra._utilities.toml import (
+    array,
+    as_string_list,
+    canonical_dev_dependencies,
+    dedupe_specs,
+    dep_name,
+    ensure_table,
+    project_dev_groups,
+    read_doc,
+    table_string_keys,
+    toml_get,
+    unwrap_item,
+)
 from flext_infra.deps.detector import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,
@@ -21,19 +34,6 @@ from flext_infra.deps.detector import (
     InjectCommentsPhase,
 )
 from flext_infra.deps.tool_config import load_tool_config
-from flext_infra.toml_io import (
-    array,
-    as_string_list,
-    canonical_dev_dependencies,
-    dedupe_specs,
-    dep_name,
-    ensure_table,
-    project_dev_groups,
-    read_doc,
-    table_string_keys,
-    toml_get,
-    unwrap_item,
-)
 
 _array = array
 _as_string_list = as_string_list
@@ -74,7 +74,7 @@ class FlextInfraPyprojectModernizer:
         """Initialize pyproject modernizer."""
         super().__init__()
         self.root = root or ROOT
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         tool_config_result = load_tool_config()
         if tool_config_result.is_failure:
             msg = tool_config_result.error or "failed to load deps tool config"

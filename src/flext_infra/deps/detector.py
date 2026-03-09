@@ -12,18 +12,16 @@ from tomlkit.items import Table
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraCommandRunner,
-    FlextInfraJsonService,
-    FlextInfraPathResolver,
     FlextInfraReportingService,
+    FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesPaths,
+    FlextInfraUtilitiesSubprocess,
     c,
     m,
     p,
     t,
 )
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
-from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
-from flext_infra.toml_io import (
+from flext_infra._utilities.toml import (
     array,
     as_string_list,
     dedupe_specs,
@@ -35,6 +33,8 @@ from flext_infra.toml_io import (
     toml_get,
     unwrap_item,
 )
+from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -615,11 +615,11 @@ class FlextInfraRuntimeDevDependencyDetector:
     def __init__(self) -> None:
         """Initialize the detector with path resolver, reporting, JSON, deps, and runner services."""
         super().__init__()
-        self._paths = FlextInfraPathResolver()
+        self._paths = FlextInfraUtilitiesPaths()
         self._reporting = FlextInfraReportingService()
-        self._json = FlextInfraJsonService()
+        self._json = FlextInfraUtilitiesIo()
         self._deps = FlextInfraDependencyDetectionService()
-        self._runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:

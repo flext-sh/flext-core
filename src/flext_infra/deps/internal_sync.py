@@ -12,9 +12,9 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraCommandRunner,
     FlextInfraGitService,
-    FlextInfraTomlService,
+    FlextInfraUtilitiesSubprocess,
+    FlextInfraUtilitiesToml,
     c,
     m,
     output,
@@ -30,9 +30,9 @@ class FlextInfraInternalDependencySyncService:
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
-        self.runner: p.Infra.CommandRunner = FlextInfraCommandRunner()
+        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self.git = FlextInfraGitService(self.runner)
-        self.toml = FlextInfraTomlService()
+        self.toml = FlextInfraUtilitiesToml()
 
     @staticmethod
     def ensure_symlink(target: Path, source: Path) -> r[bool]:

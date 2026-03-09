@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TypeAlias, overload
 
 from flext_core import r
-from flext_infra import FlextInfraCommandRunner, FlextInfraGitService, c, m, p, u
+from flext_infra import FlextInfraGitService, FlextInfraUtilitiesSubprocess, c, m, p, u
 
 RBool: TypeAlias = r[bool]
 RStr: TypeAlias = r[str]
@@ -24,7 +24,7 @@ class FlextInfraRefactorSafetyManager:
         test_command: list[str] | None = None,
     ) -> None:
         """Initialize safety manager with runner, checkpoint path, and test command."""
-        effective_runner = runner or FlextInfraCommandRunner()
+        effective_runner = runner or FlextInfraUtilitiesSubprocess()
         self._runner: p.Infra.SafetyRunner = effective_runner
         self._git = FlextInfraGitService(effective_runner)
         self._checkpoint_path = checkpoint_path or Path(

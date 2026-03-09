@@ -17,7 +17,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
-from flext_infra._utilities.subprocess import FlextInfraCommandRunner
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.typings import FlextInfraTypes as t
@@ -36,7 +36,7 @@ class FlextInfraUtilitiesRefactor:
     @staticmethod
     def capture_output(cmd: Sequence[str]) -> r[str]:
         """Run *cmd* and return stripped stdout as ``r[str]``."""
-        return FlextInfraCommandRunner().capture(cmd)
+        return FlextInfraUtilitiesSubprocess().capture(cmd)
 
     @staticmethod
     def dotted_name(expr: cst.BaseExpression) -> str:

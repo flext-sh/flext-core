@@ -1,7 +1,7 @@
 """Terminal detection helpers for infrastructure output.
 
-Centralizes terminal capability detection (color, unicode) previously
-defined as module-level functions in ``flext_infra.output``.
+Centralizes terminal capability detection (color, unicode).
+All constants (colors, symbols) are in constants.py via c.Infra.Style.*
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,16 +17,19 @@ from typing import TextIO
 class FlextInfraUtilitiesTerminal:
     """Terminal capability detection helpers.
 
+    Centralizes terminal capability detection (color, unicode).
+    Style constants are in c.Infra.Style - import from there.
+
     Usage via namespace::
 
-        from flext_infra import u
+        from flext_infra import c, u
 
-        if u.Infra.Terminal.should_use_color():
-            ...
+        if u.Infra.terminal_should_use_color():
+            print(f"{c.Infra.Style.RED}Error{c.Infra.Style.RESET}")
     """
 
     @staticmethod
-    def should_use_color(stream: TextIO | None = None) -> bool:
+    def terminal_should_use_color(stream: TextIO | None = None) -> bool:
         """Detect whether ANSI colors should be used on the given stream.
 
         Priority chain:
@@ -58,7 +61,7 @@ class FlextInfraUtilitiesTerminal:
         return False
 
     @staticmethod
-    def should_use_unicode() -> bool:
+    def terminal_should_use_unicode() -> bool:
         """Detect whether Unicode symbols are safe to use.
 
         Checks LANG and LC_ALL for UTF-8 indicators. Falls back to ASCII

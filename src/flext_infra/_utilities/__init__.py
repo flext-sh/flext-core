@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_infra._utilities.exceptions import FlextInfraUtilitiesExceptions
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
     from flext_infra._utilities.output import FlextInfraUtilitiesOutput
     from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 __all__ = [
-    "FlextInfraUtilitiesExceptions",
     "FlextInfraUtilitiesIo",
     "FlextInfraUtilitiesOutput",
     "FlextInfraUtilitiesPaths",
@@ -41,14 +40,13 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     """Lazy load utility modules on demand."""
-    _LAZY_IMPORTS = {
-        "FlextInfraUtilitiesExceptions": (
-            "flext_infra._utilities.exceptions",
-            "FlextInfraUtilitiesExceptions",
+    lazy_imports = {
+        "FlextInfraUtilitiesIo": (
+            "flext_infra._utilities.io",
+            "FlextInfraUtilitiesIo",
         ),
-        "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
         "FlextInfraUtilitiesOutput": (
             "flext_infra._utilities.output",
             "FlextInfraUtilitiesOutput",
@@ -91,11 +89,11 @@ def __getattr__(name: str):
         ),
     }
 
-    if name in _LAZY_IMPORTS:
-        module_name, class_name = _LAZY_IMPORTS[name]
-        import importlib
+    if name in lazy_imports:
+        module_name, class_name = lazy_imports[name]
 
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
 
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)

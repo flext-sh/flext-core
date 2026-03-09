@@ -21,11 +21,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
+from flext_core import r
 from flext_infra import c
 
 
-class FlextInfraReportingService(s[Path]):
+class FlextInfraUtilitiesReporting:
     """Infrastructure service for standardized report path management.
 
     Convention::
@@ -126,4 +126,4 @@ class FlextInfraReportingService(s[Path]):
         return self.get_report_dir(root, scope, verb) / filename
 
 
-__all__ = ["FlextInfraReportingService"]
+__all__ = ["FlextInfraUtilitiesReporting"]

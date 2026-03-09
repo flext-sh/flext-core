@@ -13,22 +13,16 @@ import re
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
+from flext_core import r
 from flext_infra import c
-from flext_infra.toml_io import FlextInfraTomlService
 
 
-class FlextInfraVersioningService(s[str]):
+class FlextInfraUtilitiesVersioning:
     """Infrastructure service for semantic versioning operations.
 
     Provides r-wrapped version parsing, bumping, and
     project version management.
     """
-
-    def __init__(self, toml: FlextInfraTomlService | None = None) -> None:
-        """Initialize the versioning service."""
-        super().__init__()
-        self._toml = toml or FlextInfraTomlService()
 
     @staticmethod
     def _extract_project_version_from_text(content: str) -> str | None:
@@ -204,4 +198,4 @@ class FlextInfraVersioningService(s[str]):
         return r[bool].ok(True)
 
 
-__all__ = ["FlextInfraVersioningService"]
+__all__ = ["FlextInfraUtilitiesVersioning"]

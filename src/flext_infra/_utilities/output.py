@@ -15,50 +15,17 @@ from __future__ import annotations
 import sys
 from typing import Final, TextIO
 
+from flext_infra import c
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 
 
-def _should_use_color(stream: TextIO | None = None) -> bool:
-    """Detect whether ANSI colors should be used on the given stream.
-
-    Delegates to ``u.Infra.Terminal.should_use_color()``.
-    """
-    return FlextInfraUtilitiesTerminal.should_use_color(stream)
-
-
-def _should_use_unicode() -> bool:
-    """Detect whether Unicode symbols are safe to use.
-
-    Delegates to ``u.Infra.Terminal.should_use_unicode()``.
-    """
-    return FlextInfraUtilitiesTerminal.should_use_unicode()
-
-
-_USE_COLOR: Final[bool] = _should_use_color()
-_USE_UNICODE: Final[bool] = _should_use_unicode()
-RESET: Final[str] = "\x1b[0m" if _USE_COLOR else ""
-RED: Final[str] = "\x1b[31m" if _USE_COLOR else ""
-GREEN: Final[str] = "\x1b[32m" if _USE_COLOR else ""
-YELLOW: Final[str] = "\x1b[33m" if _USE_COLOR else ""
-BLUE: Final[str] = "\x1b[34m" if _USE_COLOR else ""
-BOLD: Final[str] = "\x1b[1m" if _USE_COLOR else ""
-SYM_OK: Final[str] = "✓" if _USE_UNICODE else "[OK]"
-SYM_FAIL: Final[str] = "✗" if _USE_UNICODE else "[FAIL]"
-SYM_WARN: Final[str] = "⚠" if _USE_UNICODE else "[WARN]"
-SYM_SKIP: Final[str] = "–" if _USE_UNICODE else "[SKIP]"
-SYM_ARROW: Final[str] = "→" if _USE_UNICODE else "->"
-SYM_BULLET: Final[str] = "•" if _USE_UNICODE else "*"
-
-
-class FlextInfraOutput:
+class FlextInfraUtilitiesOutput:
     """Structured terminal output for infrastructure commands.
 
     All methods write to ``sys.stderr`` so that stdout remains clean for
     machine-readable output (JSON, CSV, exit codes).
 
-    The class reads color/unicode settings at construction time but defers
-    to the module-level detection functions so behaviour can be overridden
-    in tests or downstream code.
+    Uses c.Infra.Style for colors and symbols.
     """
 
     def __init__(
@@ -69,31 +36,41 @@ class FlextInfraOutput:
         stream: TextIO | None = None,
     ) -> None:
         """Initialize structured terminal output."""
-        self.use_color = _USE_COLOR if use_color is None else use_color
-        self.use_unicode = _USE_UNICODE if use_unicode is None else use_unicode
+        self.use_color = (
+            FlextInfraUtilitiesTerminal.terminal_should_use_color()
+            if use_color is None
+            else use_color
+        )
+        self.use_unicode = (
+            FlextInfraUtilitiesTerminal.terminal_should_use_unicode()
+            if use_unicode is None
+            else use_unicode
+        )
         self.stream = sys.stderr if stream is None else stream
-        self._reset = "\x1b[0m" if self.use_color else ""
-        self._red = "\x1b[31m" if self.use_color else ""
-        self._green = "\x1b[32m" if self.use_color else ""
-        self._yellow = "\x1b[33m" if self.use_color else ""
-        self._blue = "\x1b[34m" if self.use_color else ""
-        self._bold = "\x1b[1m" if self.use_color else ""
-        self._sym_ok = "✓" if self.use_unicode else "[OK]"
-        self._sym_fail = "✗" if self.use_unicode else "[FAIL]"
-        self._sym_warn = "⚠" if self.use_unicode else "[WARN]"
-        self._sym_skip = "–" if self.use_unicode else "[SKIP]"
+        # Cache style lookups
+        style = c.Infra.Style
+        self._reset = style.RESET if self.use_color else ""
+        self._red = style.RED if self.use_color else ""
+        self._green = style.GREEN if self.use_color else ""
+        self._yellow = style.YELLOW if self.use_color else ""
+        self._blue = style.BLUE if self.use_color else ""
+        self._bold = style.BOLD if self.use_color else ""
+        self._sym_ok = style.OK if self.use_unicode else "[OK]"
+        self._sym_fail = style.FAIL if self.use_unicode else "[FAIL]"
+        self._sym_warn = style.WARN if self.use_unicode else "[WARN]"
+        self._sym_skip = style.SKIP if self.use_unicode else "[SKIP]"
 
     def debug(self, message: str) -> None:
-        """Write an debug message in blue.
+        """Write a debug message.
 
         Args:
-            message: Information text.
+            message: Debug text.
 
         """
         self._write(f"{self._green}DEBUG{self._reset}: {message}")
 
     def error(self, message: str, detail: str | None = None) -> None:
-        """Write an error message in red.
+        """Write an error message.
 
         Args:
             message: Primary error message.
@@ -119,7 +96,7 @@ class FlextInfraOutput:
         self._write(f"{self._bold}{line}{self._reset}")
 
     def info(self, message: str) -> None:
-        """Write an informational message in blue.
+        """Write an informational message.
 
         Args:
             message: Information text.
@@ -214,7 +191,7 @@ class FlextInfraOutput:
         self._write(line)
 
     def warning(self, message: str) -> None:
-        """Write a warning message in yellow.
+        """Write a warning message.
 
         Args:
             message: Warning text.
@@ -228,21 +205,9 @@ class FlextInfraOutput:
         self.stream.flush()
 
 
-output: Final[FlextInfraOutput] = FlextInfraOutput()
-"Module-level singleton for direct use: ``from flext_infra import output``."
+output: Final[FlextInfraUtilitiesOutput] = FlextInfraUtilitiesOutput()
+"Module-level singleton for direct use: ``from flext_infra import output``"
 __all__ = [
-    "BLUE",
-    "BOLD",
-    "GREEN",
-    "RED",
-    "RESET",
-    "SYM_ARROW",
-    "SYM_BULLET",
-    "SYM_FAIL",
-    "SYM_OK",
-    "SYM_SKIP",
-    "SYM_WARN",
-    "YELLOW",
-    "FlextInfraOutput",
+    "FlextInfraUtilitiesOutput",
     "output",
 ]

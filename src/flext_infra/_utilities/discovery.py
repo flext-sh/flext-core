@@ -13,11 +13,11 @@ import re
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
+from flext_core import r
 from flext_infra import c, m
 
 
-class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
+class FlextInfraUtilitiesDiscovery:
     """Infrastructure service for discovering workspace projects.
 
     Structurally satisfies ``InfraProtocols.Discovery``.
@@ -146,4 +146,4 @@ class FlextInfraDiscoveryService(s[list[m.Infra.Workspace.ProjectInfo]]):
             return r[list[Path]].fail(f"pyproject file scan failed: {exc}")
 
 
-__all__ = ["FlextInfraDiscoveryService"]
+__all__ = ["FlextInfraUtilitiesDiscovery"]
