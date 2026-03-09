@@ -11,16 +11,20 @@ from flext_infra import FlextInfraUtilitiesSubprocess, c, p
 from flext_infra._utilities.toml import (
     array,
     as_string_list,
-    canonical_dev_dependencies,
-    dedupe_specs,
-    dep_name,
     ensure_table,
-    project_dev_groups,
     read_doc,
     table_string_keys,
     toml_get,
     unwrap_item,
 )
+from flext_infra._utilities.toml_parse import (
+    FlextInfraUtilitiesTomlParse,
+)
+
+canonical_dev_dependencies = FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
+dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
+dep_name = FlextInfraUtilitiesTomlParse.dep_name
+project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
 from flext_infra.deps.detector import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,
@@ -74,7 +78,7 @@ class FlextInfraPyprojectModernizer:
         """Initialize pyproject modernizer."""
         super().__init__()
         self.root = root or ROOT
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
         tool_config_result = load_tool_config()
         if tool_config_result.is_failure:
             msg = tool_config_result.error or "failed to load deps tool config"

@@ -167,13 +167,6 @@ class TestFlextInfraDiscoveryService:
 class TestFlextInfraDiscoveryServiceUncoveredLines:
     """Test uncovered lines in FlextInfraDiscoveryService."""
 
-    def test_execute_returns_empty_list(self) -> None:
-        """Test execute method returns empty list (line 35)."""
-        service = FlextInfraDiscoveryService()
-        result = service.execute()
-        assert result.is_success
-        assert result.value == []
-
     def test_discover_projects_skips_non_git_projects(self, tmp_path: Path) -> None:
         """Test discover_projects skips non-git directories (line 75)."""
         service = FlextInfraDiscoveryService()

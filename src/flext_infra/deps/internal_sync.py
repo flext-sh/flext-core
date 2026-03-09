@@ -30,7 +30,7 @@ class FlextInfraInternalDependencySyncService:
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
-        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self.runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
         self.git = FlextInfraGitService(self.runner)
         self.toml = FlextInfraUtilitiesToml()
 

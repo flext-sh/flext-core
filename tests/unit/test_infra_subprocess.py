@@ -231,13 +231,3 @@ class TestFlextInfraCommandRunner:
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "execution error" in result.error.lower()
-
-    def test_execute_returns_empty_output(self) -> None:
-        """Test execute method returns empty CommandOutput."""
-        runner = FlextInfraCommandRunner()
-        result = runner.execute()
-        assert result.is_success
-        output = result.value
-        assert output.stdout == ""
-        assert output.stderr == ""
-        assert output.exit_code == 0

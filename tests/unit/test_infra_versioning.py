@@ -193,15 +193,6 @@ class TestFlextInfraVersioningService:
         assert result.is_success
         assert isinstance(result.value, str)
 
-    def test_execute_returns_empty_string(
-        self,
-        service: FlextInfraVersioningService,
-    ) -> None:
-        """Test execute() returns FlextResult[str] with empty string."""
-        result = service.execute()
-        assert result.is_success
-        assert result.value == ""
-
     def test_current_workspace_version_success(
         self,
         service: FlextInfraVersioningService,

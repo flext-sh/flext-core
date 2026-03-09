@@ -19,13 +19,13 @@ class FlextInfraRefactorSafetyManager:
 
     def __init__(
         self,
-        runner: p.Infra.SafetyRunner | None = None,
+        runner: p.SafetyRunner | None = None,
         checkpoint_path: Path | None = None,
         test_command: list[str] | None = None,
     ) -> None:
         """Initialize safety manager with runner, checkpoint path, and test command."""
         effective_runner = runner or FlextInfraUtilitiesSubprocess()
-        self._runner: p.Infra.SafetyRunner = effective_runner
+        self._runner: p.SafetyRunner = effective_runner
         self._git = FlextInfraGitService(effective_runner)
         self._checkpoint_path = checkpoint_path or Path(
             ".sisyphus/refactor/safety-checkpoint.json",

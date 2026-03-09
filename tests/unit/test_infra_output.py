@@ -7,7 +7,15 @@ import re
 from unittest.mock import patch
 
 import flext_infra
-from flext_infra.output import FlextInfraOutput, _should_use_color, _should_use_unicode
+from flext_infra._utilities.output import (
+    FlextInfraUtilitiesOutput,
+    _OutputBackend as FlextInfraOutput,
+    _backend,
+)
+from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
+
+_should_use_color = FlextInfraUtilitiesTerminal.terminal_should_use_color
+_should_use_unicode = FlextInfraUtilitiesTerminal.terminal_should_use_unicode
 
 ANSI_RE = re.compile(r"\033\[\d+m")
 
@@ -246,10 +254,10 @@ class TestModuleSingleton:
     """Tests for module-level output singleton."""
 
     def test_output_singleton_importable(self) -> None:
-        assert isinstance(flext_infra.output, FlextInfraOutput)
+        assert isinstance(flext_infra.output, FlextInfraUtilitiesOutput)
 
     def test_output_writes_to_stderr_by_default(self) -> None:
-        assert flext_infra.output.stream is not None
+        assert _backend.stream is not None
 
 
 class TestInfraOutputEdgeCases:

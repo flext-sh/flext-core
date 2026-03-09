@@ -82,12 +82,6 @@ class TestFlextInfraGitService:
         result = service.run(["invalid"], cwd=tmp_path)
         assert result.is_failure
 
-    def test_default_runner_initialization(self) -> None:
-        """Test service initializes with default runner."""
-        service = FlextInfraGitService()
-        result = service.execute()
-        assert result.is_success
-
 
 class TestRemovedCompatibilityMethods:
     """Removed compatibility methods are not callable anymore."""

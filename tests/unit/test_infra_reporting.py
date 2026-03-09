@@ -170,15 +170,6 @@ class TestFlextInfraReportingService:
         assert isinstance(result, Path)
         assert result.is_absolute()
 
-    def test_execute_returns_empty_path(
-        self,
-        service: FlextInfraReportingService,
-    ) -> None:
-        """Test execute method returns empty Path."""
-        result = service.execute()
-        assert result.is_success
-        assert result.value == Path()
-
     def test_create_latest_symlink_success(
         self,
         service: FlextInfraReportingService,

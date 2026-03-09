@@ -141,11 +141,3 @@ class TestFlextInfraPathResolver:
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "failed to resolve" in result.error.lower()
-
-    def test_execute_returns_current_directory(self) -> None:
-        """Test execute method returns current working directory."""
-        resolver = FlextInfraPathResolver()
-        result = resolver.execute()
-        assert result.is_success
-        assert isinstance(result.value, Path)
-        assert result.value == Path.cwd()

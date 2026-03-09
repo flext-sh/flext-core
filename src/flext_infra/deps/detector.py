@@ -21,10 +21,10 @@ from flext_infra import (
     p,
     t,
 )
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
-from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
 from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
 from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
+from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
 
 array = _Toml.array
 as_string_list = _Toml.as_string_list
@@ -620,7 +620,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraUtilitiesIo()
         self._deps = FlextInfraDependencyDetectionService()
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:

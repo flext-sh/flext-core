@@ -46,7 +46,7 @@ class FlextInfraSkillValidator:
     def __init__(self) -> None:
         """Initialize the skill validator."""
         self._json = FlextInfraUtilitiesIo()
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.CommandRunner = FlextInfraUtilitiesSubprocess()
         self._toml = FlextInfraUtilitiesToml()
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
@@ -225,7 +225,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: p.Infra.CommandOutput = result_wrapper.value
+        result: p.CommandOutput = result_wrapper.value
         if result.exit_code not in {0, 1}:
             return 0
         count = 0
@@ -269,7 +269,7 @@ class FlextInfraSkillValidator:
         )
         if result_wrapper.is_failure:
             return 0
-        result: p.Infra.CommandOutput = result_wrapper.value
+        result: p.CommandOutput = result_wrapper.value
         count = 0
         for raw_line in (result.stdout or "").splitlines():
             line = raw_line.strip()

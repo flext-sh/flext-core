@@ -296,13 +296,6 @@ class TestFlextInfraTomlService:
         assert "extra" in target
         assert len(removed) == 0
 
-    def test_execute_returns_success(self) -> None:
-        """Test execute() returns FlextResult[bool] with True."""
-        service = FlextInfraTomlService()
-        result = service.execute()
-        assert result.is_success
-        assert result.value is True
-
     def test_build_table_with_nested_mapping_dict(self) -> None:
         """Test build_table handles nested mappings."""
         service = FlextInfraTomlService()

@@ -28,6 +28,9 @@ if TYPE_CHECKING:
         FlextInfraUtilitiesOutput as FlextInfraOutput,
         output,
     )
+    from flext_infra._utilities.paths import (
+        FlextInfraUtilitiesPaths as FlextInfraUtilitiesPaths,
+    )
     from flext_infra._utilities.patterns import (
         FlextInfraUtilitiesPatterns as FlextInfraUtilitiesPatterns,
     )
@@ -110,13 +113,22 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraInventoryService",
     ),
     "FlextInfraJsonService": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
+    "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
     "FlextInfraOutput": ("flext_infra._utilities.output", "FlextInfraUtilitiesOutput"),
     "FlextInfraPathResolver": (
         "flext_infra._utilities.paths",
         "FlextInfraUtilitiesPaths",
     ),
+    "FlextInfraUtilitiesPaths": (
+        "flext_infra._utilities.paths",
+        "FlextInfraUtilitiesPaths",
+    ),
     "FlextInfraPatterns": (
+        "flext_infra._utilities.patterns",
+        "FlextInfraUtilitiesPatterns",
+    ),
+    "FlextInfraUtilitiesPatterns": (
         "flext_infra._utilities.patterns",
         "FlextInfraUtilitiesPatterns",
     ),
@@ -161,6 +173,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraTextPatternScanner",
     ),
     "FlextInfraTomlService": ("flext_infra._utilities.toml", "FlextInfraUtilitiesToml"),
+    "FlextInfraUtilitiesToml": (
+        "flext_infra._utilities.toml",
+        "FlextInfraUtilitiesToml",
+    ),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
     "FlextInfraUtilitiesSubprocess": (
@@ -210,7 +226,11 @@ __all__ = [
     "FlextInfraTomlService",
     "FlextInfraTypes",
     "FlextInfraUtilities",
+    "FlextInfraUtilitiesIo",
+    "FlextInfraUtilitiesPatterns",
+    "FlextInfraUtilitiesPaths",
     "FlextInfraUtilitiesSubprocess",
+    "FlextInfraUtilitiesToml",
     "FlextInfraVersioningService",
     "__version__",
     "__version_info__",
