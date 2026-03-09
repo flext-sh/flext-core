@@ -1,7 +1,7 @@
 """I/O helper functions for infrastructure file operations.
 
-Centralizes convenience JSON/TOML I/O helpers previously defined as
-module-level functions in ``flext_infra.json_io`` and ``flext_infra.toml_io``.
+Centralizes JSON I/O operations with r-wrapped APIs for explicit error handling.
+Merged from json_io.py and _utilities/io.py.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,16 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from pathlib import Path
 
+from pydantic import BaseModel, TypeAdapter, ValidationError
+
 from flext_core import r
-from flext_infra import t
-from flext_infra.json_io import FlextInfraJsonService
+from flext_infra import c, t
 
 
 class FlextInfraUtilitiesIo:
-    """I/O convenience helpers for JSON/TOML file operations.
+    """I/O convenience helpers for JSON file operations.
+
+    Provides r-wrapped APIs (read, write, parse, serialize) for explicit
+    error handling. All methods are static and do not require instantiation.
 
     Usage via namespace::
 
@@ -29,22 +34,32 @@ class FlextInfraUtilitiesIo:
 
     @staticmethod
     def read_json(path: Path) -> r[Mapping[str, t.ContainerValue]]:
-        """Read and parse a JSON file (convenience function).
+        """Read and parse a JSON file.
 
         Args:
             path: Source file path.
 
         Returns:
-            r with parsed JSON data. Returns empty mapping
-            if the file does not exist.
-
-        Example:
-            >>> result = u.Infra.Io.read_json(Path("config.json"))
-            >>> if result.is_success:
-            ...     data = result.value
+            r with parsed JSON data. Returns empty mapping if file absent.
 
         """
-        return FlextInfraJsonService().read(path)
+        if not path.exists():
+            return r[t.ConfigurationMapping].ok({})
+        try:
+            loaded_obj: t.ContainerValue = json.loads(
+                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
+            )
+            if not isinstance(loaded_obj, dict):
+                return r[t.ConfigurationMapping].fail("JSON root must be object")
+            parser = TypeAdapter(dict[str, t.ContainerValue])
+            data = parser.validate_python(loaded_obj, strict=True)
+            return r[t.ConfigurationMapping].ok(data)
+        except ValidationError as exc:
+            return r[t.ConfigurationMapping].fail(
+                f"JSON object validation error: {exc}",
+            )
+        except (json.JSONDecodeError, OSError) as exc:
+            return r[t.ConfigurationMapping].fail(f"JSON read error: {exc}")
 
     @staticmethod
     def write_json(
@@ -53,8 +68,9 @@ class FlextInfraUtilitiesIo:
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
+        indent: int = 2,
     ) -> r[bool]:
-        """Write a JSON payload to a file (convenience function).
+        """Write a JSON payload to a file.
 
         Creates parent directories as needed.
 
@@ -63,26 +79,47 @@ class FlextInfraUtilitiesIo:
             payload: Data to serialize as JSON.
             sort_keys: If True, sort dictionary keys alphabetically.
             ensure_ascii: If True, escape non-ASCII characters.
+            indent: JSON indentation level (default 2).
 
         Returns:
             r[bool] with True on success.
 
-        Example:
-            >>> result = u.Infra.Io.write_json(Path("output.json"), {"key": "value"})
-            >>> assert result.is_success
-
         """
-        return FlextInfraJsonService().write(
-            path,
-            payload,
-            sort_keys=sort_keys,
-            ensure_ascii=ensure_ascii,
-        )
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            raw_payload: t.ContainerValue = (
+                payload.model_dump() if isinstance(payload, BaseModel) else payload
+            )
+            content = (
+                json.dumps(
+                    raw_payload,
+                    indent=indent,
+                    sort_keys=sort_keys,
+                    ensure_ascii=ensure_ascii,
+                )
+                + "\n"
+            )
+            _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
+        except (TypeError, OSError) as exc:
+            return r[bool].fail(f"JSON write error: {exc}")
+        return r[bool].ok(True)
 
     @staticmethod
     def parse(text: str) -> r[t.ContainerValue]:
-        """Parse a JSON string via canonical infra JSON service."""
-        return FlextInfraJsonService().parse(text)
+        """Parse a JSON string.
+
+        Args:
+            text: Raw JSON string.
+
+        Returns:
+            r with parsed JSON value.
+
+        """
+        try:
+            parsed: t.ContainerValue = json.loads(text)
+            return r[t.ContainerValue].ok(parsed)
+        except (json.JSONDecodeError, ValueError) as exc:
+            return r[t.ContainerValue].fail(f"JSON parse error: {exc}")
 
     @staticmethod
     def serialize(
@@ -92,13 +129,32 @@ class FlextInfraUtilitiesIo:
         ensure_ascii: bool = False,
         indent: int | None = 2,
     ) -> r[str]:
-        """Serialize a JSON-compatible value via canonical infra JSON service."""
-        return FlextInfraJsonService().serialize(
-            data,
-            sort_keys=sort_keys,
-            ensure_ascii=ensure_ascii,
-            indent=indent,
-        )
+        """Serialize a Python object to a JSON string.
+
+        Args:
+            data: JSON-serializable container value.
+            sort_keys: If True, sort dictionary keys alphabetically.
+            ensure_ascii: If True, escape non-ASCII characters.
+            indent: JSON indentation level (None for compact output).
+
+        Returns:
+            r with JSON string.
+
+        """
+        try:
+            raw_data: t.ContainerValue = (
+                data.model_dump() if isinstance(data, BaseModel) else data
+            )
+            return r[str].ok(
+                json.dumps(
+                    raw_data,
+                    indent=indent,
+                    sort_keys=sort_keys,
+                    ensure_ascii=ensure_ascii,
+                ),
+            )
+        except (TypeError, ValueError) as exc:
+            return r[str].fail(f"JSON serialize error: {exc}")
 
 
 __all__ = ["FlextInfraUtilitiesIo"]
