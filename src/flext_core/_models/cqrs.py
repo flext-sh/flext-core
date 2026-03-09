@@ -174,7 +174,7 @@ class FlextModelsCqrs:
                 if (
                     pagination_cls_attr is not None
                     and isinstance(pagination_cls_attr, type)
-                    and (FlextModelsCqrs.Pagination in pagination_cls_attr.__mro__)
+                    and issubclass(pagination_cls_attr, FlextModelsCqrs.Pagination)
                 ):
                     result_cls: type[FlextModelsCqrs.Pagination] = pagination_cls_attr
                     return result_cls

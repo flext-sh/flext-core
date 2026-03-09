@@ -137,7 +137,7 @@ class _ProtocolIntrospection:
             or (m in {"metadata_extra", "sealed"})
         }
         all_annotations: set[str] = set()
-        for base in target_cls.__mro__:
+        for base in target_cls.mro():
             base_annotations: dict[str, object] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )

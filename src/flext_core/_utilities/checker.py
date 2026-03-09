@@ -29,6 +29,16 @@ class FlextUtilitiesChecker:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
+    @staticmethod
+    def _is_subclass_of(candidate: object, parent: type[object]) -> bool:
+        """Safe subclass check that never raises TypeError."""
+        return isinstance(candidate, type) and issubclass(candidate, parent)
+
+    @classmethod
+    def _is_dict_type(cls, candidate: object) -> bool:
+        """Check if candidate is ``dict`` or a subclass of ``dict``."""
+        return cls._is_subclass_of(candidate, dict)
+
     @classmethod
     def _check_dict_compatibility(
         cls,
@@ -49,22 +59,16 @@ class FlextUtilitiesChecker:
             True if dict compatible, False if not dict types
 
         """
-        origin_is_dict = isinstance(origin_type, type) and dict in origin_type.__mro__
-        message_origin_is_dict = (
-            isinstance(message_origin, type) and dict in message_origin.__mro__
-        )
+        origin_is_dict = cls._is_dict_type(origin_type)
+        message_origin_is_dict = cls._is_dict_type(message_origin)
         if origin_is_dict and (
             message_origin_is_dict
-            or (isinstance(message_type, type) and dict in message_type.__mro__)
+            or cls._is_dict_type(message_type)
         ):
             return True
         return (
-            isinstance(message_type, type)
-            and dict in message_type.__mro__
-            and (
-                origin_is_dict
-                or (isinstance(expected_type, type) and dict in expected_type.__mro__)
-            )
+            cls._is_dict_type(message_type)
+            and (origin_is_dict or cls._is_dict_type(expected_type))
         )
 
     @classmethod
@@ -240,9 +244,8 @@ class FlextUtilitiesChecker:
         """
         try:
             if isinstance(origin_type, type):
-                return isinstance(message_type, origin_type) or (
-                    isinstance(message_type, type)
-                    and origin_type in message_type.__mro__
+                return isinstance(message_type, origin_type) or cls._is_subclass_of(
+                    message_type, origin_type
                 )
             return True
         except TypeError:
@@ -271,8 +274,8 @@ class FlextUtilitiesChecker:
         try:
             if hasattr(message_type, "__origin__"):
                 return message_origin is origin_type
-            if isinstance(message_type, type) and isinstance(origin_type, type):
-                return origin_type in message_type.__mro__
+            if isinstance(origin_type, type):
+                return cls._is_subclass_of(message_type, origin_type)
             return message_type is expected_type
         except TypeError:
             return message_type is expected_type

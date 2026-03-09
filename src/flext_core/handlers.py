@@ -69,7 +69,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         ...         self, data: t.Scalar | BaseModel | Sequence[t.Scalar]
         ...     ) -> r[bool]:
         ...         # Custom validation logic
-        ...         if not (UserCommand in data.__class__.__mro__):
+        ...         if not isinstance(data, UserCommand):
         ...             return r[bool].fail("Invalid message type")
         ...         return r[bool].ok(True)
     """
@@ -147,7 +147,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         abstract_methods = getattr(cls, "__abstractmethods__", abstract_methods_default)
         if abstract_methods:
             return
-        for klass in cls.__mro__:
+        for klass in cls.mro():
             if klass is FlextHandlers:
                 msg = f"{cls.__qualname__} must implement a handle() method"
                 raise TypeError(msg)
@@ -356,7 +356,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         """
         if self._expected_message_type is None:
             return True
-        return self._expected_message_type in message_type.__mro__
+        return issubclass(message_type, self._expected_message_type)
 
     def dispatch_message(
         self,

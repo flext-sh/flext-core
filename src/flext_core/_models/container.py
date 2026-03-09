@@ -35,11 +35,7 @@ _MetadataInput = (
 def _is_metadata_instance(
     v: _MetadataInput,
 ) -> TypeGuard[FlextModelFoundation.Metadata]:
-    return (
-        v is not None
-        and hasattr(v, "model_dump")
-        and (FlextModelFoundation.Metadata in v.__class__.__mro__)
-    )
+    return isinstance(v, FlextModelFoundation.Metadata)
 
 
 def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
