@@ -17,8 +17,6 @@ from typing import override
 from flext_core import r, s
 from flext_infra import c, output
 
-__all__ = ["FlextInfraCodegenPyTyped"]
-
 _PY_TYPED_FILENAME = "py.typed"
 
 
@@ -84,3 +82,6 @@ def _dir_has_py_files(dirpath: Path) -> bool:
         for f in dirpath.iterdir()
         if f.is_file()
     )
+
+
+__all__ = ["FlextInfraCodegenPyTyped"]

@@ -17,8 +17,6 @@ from flext_infra import FlextInfraDiscoveryService, c, m, u
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
-__all__ = ["FlextInfraCodegenScaffolder"]
-
 
 class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
     """Generates missing base modules in src/ and tests/ directories."""
@@ -138,3 +136,6 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
             u.write_file(filepath, content, encoding=c.Infra.Encoding.DEFAULT)
             FlextInfraCodegenTransforms.run_ruff_fix(filepath)
             files_created.append(str(filepath))
+
+
+__all__ = ["FlextInfraCodegenScaffolder"]

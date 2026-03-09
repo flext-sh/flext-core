@@ -19,8 +19,6 @@ from flext_infra import FlextInfraDiscoveryService, c, m
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
-__all__ = ["FlextInfraCodegenFixer"]
-
 
 class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
     """AST-based auto-fixer for namespace violations (Rules 1-2)."""
@@ -489,3 +487,6 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         if actually_moved:
             self._write_tree(source_file, tree)
             self._write_tree(target_path, target_tree)
+
+
+__all__ = ["FlextInfraCodegenFixer"]

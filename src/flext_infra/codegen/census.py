@@ -17,8 +17,6 @@ from flext_core import r, s
 from flext_infra import FlextInfraDiscoveryService, c, m, p
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
-__all__ = ["FlextInfraCodegenCensus"]
-
 
 class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
     """Read-only census service for namespace violation counting."""
@@ -113,3 +111,6 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
             total=len(violations),
             fixable=sum(1 for v in violations if v.fixable),
         )
+
+
+__all__ = ["FlextInfraCodegenCensus"]

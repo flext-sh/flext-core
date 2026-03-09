@@ -21,10 +21,6 @@ from flext_infra._utilities.toml_parse import (
     FlextInfraUtilitiesTomlParse,
 )
 
-canonical_dev_dependencies = FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
-dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
-dep_name = FlextInfraUtilitiesTomlParse.dep_name
-project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
 from flext_infra.deps.detector import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,
@@ -38,6 +34,11 @@ from flext_infra.deps.detector import (
     InjectCommentsPhase,
 )
 from flext_infra.deps.tool_config import load_tool_config
+
+canonical_dev_dependencies = FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
+dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
+dep_name = FlextInfraUtilitiesTomlParse.dep_name
+project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
 
 _array = array
 _as_string_list = as_string_list

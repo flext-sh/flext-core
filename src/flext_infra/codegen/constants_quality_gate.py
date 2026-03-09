@@ -8,8 +8,6 @@ from pathlib import Path
 from flext_infra import c, t, u
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
-__all__ = ["FlextInfraCodegenConstantsQualityGate"]
-
 
 class FlextInfraCodegenConstantsQualityGate:
     """Run final constants migration checks with before/after comparison."""
@@ -143,3 +141,6 @@ class FlextInfraCodegenConstantsQualityGate:
     def is_success_verdict(verdict: str) -> bool:
         """Return True for verdicts that should exit with status 0."""
         return verdict in FlextInfraCodegenConstantsQualityGate._PASS_VERDICTS
+
+
+__all__ = ["FlextInfraCodegenConstantsQualityGate"]
