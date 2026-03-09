@@ -100,7 +100,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(
         TypeError, match="Value must be a dictionary or Metadata"
     ) as exc_info:
-        FlextModelsContext.ContextData.validate_dict_serializable(
+        _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
@@ -110,7 +110,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(
         TypeError, match="Value must be a dictionary or Metadata"
     ) as exc_info2:
-        FlextModelsContext.ContextData.validate_dict_serializable(
+        _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
@@ -166,7 +166,7 @@ def test_context_export_serializable_and_validators() -> None:
             cast("t.ContainerValue", {"x": object()})
         )
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        FlextModelsContext.ContextExport.validate_dict_serializable(
+        _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),

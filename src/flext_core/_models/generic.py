@@ -253,7 +253,8 @@ class FlextGenericModels:
             """
 
             converted: list[t.ContainerValue] = Field(
-                default_factory=list, description="Converted items"
+                default_factory=lambda: list[t.ContainerValue](),
+                description="Converted items",
             )
             errors: list[str] = Field(
                 default_factory=list, description="Error messages"
@@ -262,7 +263,8 @@ class FlextGenericModels:
                 default_factory=list, description="Warning messages"
             )
             skipped: list[t.ContainerValue] = Field(
-                default_factory=list, description="Skipped items"
+                default_factory=lambda: list[t.ContainerValue](),
+                description="Skipped items",
             )
             start_time: datetime | None = Field(default=None, description="Start time")
             end_time: datetime | None = Field(default=None, description="End time")

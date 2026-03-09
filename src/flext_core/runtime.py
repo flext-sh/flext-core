@@ -56,8 +56,6 @@ import typing
 import uuid
 from collections.abc import (
     Callable,
-    ItemsView,
-    KeysView,
     Mapping,
     MutableMapping,
     Sequence,
@@ -69,7 +67,7 @@ from typing import ClassVar, Self, TypeGuard, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
@@ -487,40 +485,10 @@ class FlextRuntime:
             case _:
                 if value is None:
                     return False
-                keys = getattr(value, "keys", None)
-                items = getattr(value, "items", None)
-                get = getattr(value, "get", None)
-                if not (callable(keys) and callable(items) and callable(get)):
-                    return False
                 try:
-                    keys_result = keys()
-                    items_result = items()
-                    tuple_entry_size = 2
-                    keys_values: Sequence[t.ContainerValue]
-                    item_values: Sequence[t.ContainerValue]
-                    if isinstance(keys_result, Sequence):
-                        keys_values = keys_result
-                    elif isinstance(keys_result, KeysView):
-                        keys_values = tuple(keys_result)
-                    else:
-                        return False
-                    if isinstance(items_result, Sequence):
-                        item_values = items_result
-                    elif isinstance(items_result, ItemsView):
-                        item_values = tuple(items_result)
-                    else:
-                        return False
-                    for key in keys_values:
-                        if not isinstance(key, str):
-                            return False
-                    for entry in item_values:
-                        if not isinstance(entry, tuple):
-                            return False
-                        typed_entry: tuple[t.ContainerValue, ...] = entry
-                        if len(typed_entry) != tuple_entry_size:
-                            return False
+                    FlextModelsContainers.ConfigMap.model_validate(value)
                     return True
-                except (AttributeError, TypeError):
+                except (ValidationError, TypeError, ValueError, AttributeError):
                     return False
 
     @staticmethod
@@ -839,10 +807,8 @@ class FlextRuntime:
             bridge = cls.BridgeContainer()
             service_module = containers.DynamicContainer()
             resource_module = containers.DynamicContainer()
-            services_provider: providers.DependenciesContainer = bridge.services
-            resources_provider: providers.DependenciesContainer = bridge.resources
-            services_provider.override(service_module)
-            resources_provider.override(resource_module)
+            bridge.services = providers.Object(service_module)
+            bridge.resources = providers.Object(resource_module)
             cls.bind_configuration_provider(bridge.config, config)
             return (bridge, service_module, resource_module)
 

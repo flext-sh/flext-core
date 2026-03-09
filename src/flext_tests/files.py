@@ -29,7 +29,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, overload
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from yaml import YAMLError, dump as yaml_dump, safe_load as yaml_safe_load
 
 from flext_core import FlextRuntime, r
@@ -42,6 +42,7 @@ _OperationLiteral = Literal["create", "read", "delete"]
 _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
+_OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
 
 
 def _yaml_safe_load(raw: str) -> t.ContainerValue | list[t.ContainerValue]:
@@ -1319,7 +1320,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
-        sequence_value: Sequence[object] = value
+        try:
+            sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
+        except ValidationError:
+            return False
         if len(sequence_value) == 0:
             return False
         for row_raw in sequence_value:
@@ -1480,10 +1484,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             mapping_value = {str(key): item for key, item in value.items()}
             return self._mapping_to_payload(mapping_value)
         if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
-            sequence_value: Sequence[object] = value
-            payload_items: list[t.Tests.ContainerValue] = []
-            for item_raw in sequence_value:
-                payload_items.append(self._to_payload_value(item_raw))
+            try:
+                sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
+            except ValidationError:
+                return []
+            payload_items: list[t.Tests.ContainerValue] = [
+                self._to_payload_value(item_raw) for item_raw in sequence_value
+            ]
             return payload_items
         return str(value)
 

@@ -29,7 +29,8 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):
-            return self.root == dict(other.items())
+            other_mapping = FlextModelsContainers.ConfigMap.model_validate(other).root
+            return self.root == other_mapping
         return super().__eq__(other)
 
     __hash__ = FlextModelsContainers.ConfigMap.__hash__

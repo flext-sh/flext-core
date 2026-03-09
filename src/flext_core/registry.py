@@ -583,16 +583,12 @@ class FlextRegistry(s[bool]):
                 )
             else:
                 protocol_value = protocol_result.value
-                if isinstance(protocol_value, m.HandlerRegistrationResult):
-                    normalized_result = protocol_value
-                elif isinstance(protocol_value, BaseModel):
-                    normalized_result = m.HandlerRegistrationResult.model_validate(
-                        protocol_value.model_dump()
-                    )
-                else:
-                    normalized_result = m.HandlerRegistrationResult.model_validate(
-                        protocol_value
-                    )
+                _ = protocol_value
+                normalized_result = m.HandlerRegistrationResult(
+                    handler_name=key,
+                    status=c.Cqrs.CommonStatus.RUNNING,
+                    mode="explicit",
+                )
                 registration_result = r[m.HandlerRegistrationResult].ok(
                     normalized_result
                 )

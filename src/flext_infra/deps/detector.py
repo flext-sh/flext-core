@@ -505,6 +505,7 @@ class FlextInfraRuntimeDevDependencyDetector:
 
     def __init__(self) -> None:
         """Initialize the detector with path resolver, reporting, JSON, deps, and runner services."""
+        super().__init__()
         self._paths = FlextInfraPathResolver()
         self._reporting = FlextInfraReportingService()
         self._json = FlextInfraJsonService()

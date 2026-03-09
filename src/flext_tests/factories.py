@@ -1143,9 +1143,7 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                     parent_result = super().validate_business_rules()
                 except AttributeError:
                     return r[bool].ok(value=True)
-                if isinstance(parent_result, r):
-                    return parent_result
-                return r[bool].ok(value=True)
+                return parent_result
 
             def validate_config(self) -> r[bool]:
                 """Validate config for complex service."""

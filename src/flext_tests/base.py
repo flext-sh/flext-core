@@ -87,7 +87,7 @@ class FlextTestsUtilityBase(FlextService[T]):
     @override
     def execute(self) -> r[T]:
         """Default utility execution — subclasses should override with specific logic."""
-        return r.fail(f"{type(self).__name__} must implement execute()")
+        return r[T].fail(f"{type(self).__name__} must implement execute()")
 
 
 s = FlextTestsServiceBase

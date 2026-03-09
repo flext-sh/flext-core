@@ -39,7 +39,9 @@ class _ProtocolIntrospection:
 
     @classmethod
     def check_implements_protocol(
-        cls, instance: t.ContainerValue, protocol: type
+        cls,
+        instance: FlextProtocols.BaseProtocol | t.ContainerValue,
+        protocol: type,
     ) -> bool:
         """Check if an instance implements a protocol."""
         registered_protocols = cls.get_class_protocols(instance.__class__)
@@ -1341,7 +1343,10 @@ class FlextProtocols:
             )
 
     @staticmethod
-    def check_implements_protocol(instance: t.ContainerValue, protocol: type) -> bool:
+    def check_implements_protocol(
+        instance: FlextProtocols.BaseProtocol | t.ContainerValue,
+        protocol: type,
+    ) -> bool:
         """Check if an instance's class implements a protocol.
 
         Args:
@@ -1396,7 +1401,8 @@ class FlextProtocols:
             setattr(cls, "__protocols__", tuple(protocols))
 
             def _instance_implements_protocol(
-                self: t.ContainerValue, protocol: type
+                self: FlextProtocols.BaseProtocol | t.ContainerValue,
+                protocol: type,
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 

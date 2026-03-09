@@ -183,8 +183,6 @@ class FlextModelsContext:
 
             """
             contextvars_data = structlog.contextvars.get_contextvars()
-            if not isinstance(contextvars_data, Mapping):
-                return self._default
             structlog_context: Mapping[str, t.ContainerValue] = contextvars_data
             if self._key not in structlog_context:
                 return self._default
@@ -342,43 +340,31 @@ class FlextModelsContext:
             None.
             """
             working_value: MutableMapping[str, t.ContainerValue]
+            normalized_mapping: Mapping[str, t.ContainerValue]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                dumped_metadata = v.model_dump()
-                attrs_dict: dict[str, t.ContainerValue] = dict(
-                    dumped_metadata.get("attributes", {})
-                )
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    attrs_dict
-                )
+                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
+                    v.attributes
+                ).root
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
-                if not isinstance(dump_result, dict):
-                    type_name = v.__class__.__name__
-                    msg = f"Value must be a dictionary or Metadata, got {type_name}"
-                    raise TypeError(msg)
-                dump_dict = dict(dump_result)
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    dump_dict
-                )
+                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
+                    dump_result
+                ).root
             elif isinstance(v, Mapping):
-                mapping_dict: dict[str, t.ContainerValue] = dict(v)
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    mapping_dict
-                )
+                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
+                    v
+                ).root
             else:
                 type_name = v.__class__.__name__
                 msg = f"Value must be a dictionary or Metadata, got {type_name}"
-                raise TypeError(msg)
-            if not isinstance(normalized, Mapping):
-                msg = "Normalized value must be dict"
                 raise TypeError(msg)
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
                     val
                 )
-                for k, val in normalized.items()
+                for k, val in normalized_mapping.items()
             }
             FlextModelsContext.ContextData.check_json_serializable(working_value)
             return dict(working_value)
@@ -460,43 +446,31 @@ class FlextModelsContext:
             None.
             """
             working_value: MutableMapping[str, t.ContainerValue]
+            normalized_mapping: Mapping[str, t.ContainerValue]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                dumped_metadata = v.model_dump()
-                attrs_dict: dict[str, t.ContainerValue] = dict(
-                    dumped_metadata.get("attributes", {})
-                )
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    attrs_dict
-                )
+                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
+                    v.attributes
+                ).root
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
-                if not isinstance(dump_result, dict):
-                    type_name = v.__class__.__name__
-                    msg = f"Value must be a dict or Pydantic model, got {type_name}"
-                    raise TypeError(msg)
-                dump_dict = dict(dump_result)
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    dump_dict
-                )
+                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
+                    dump_result
+                ).root
             elif isinstance(v, Mapping):
-                mapping_dict: dict[str, t.ContainerValue] = dict(v)
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    mapping_dict
-                )
+                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
+                    v
+                ).root
             else:
                 type_name = v.__class__.__name__
                 msg = f"Value must be a dict or Pydantic model, got {type_name}"
-                raise TypeError(msg)
-            if not isinstance(normalized, Mapping):
-                msg = "Normalized value must be dict"
                 raise TypeError(msg)
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
                     val
                 )
-                for k, val in normalized.items()
+                for k, val in normalized_mapping.items()
             }
             FlextModelsContext.ContextData.check_json_serializable(working_value)
             return dict(working_value)

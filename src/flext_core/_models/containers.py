@@ -218,8 +218,12 @@ class FlextModelsContainers:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True, extra="forbid"
         )
-        results: list[t.Scalar | None] = Field(default_factory=list)
-        errors: list[tuple[int, str]] = Field(default_factory=list)
+        results: list[t.Scalar | None] = Field(
+            default_factory=lambda: list[t.Scalar | None]()
+        )
+        errors: list[tuple[int, str]] = Field(
+            default_factory=lambda: list[tuple[int, str]]()
+        )
         total: int = Field(
             default=0, description="Total number of batch items processed."
         )

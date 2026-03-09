@@ -722,7 +722,7 @@ class FlextDecorators:
                 logger = FlextDecorators._resolve_logger(args, func)
                 retry_func = func
                 retry_config = m.RetryConfiguration(
-                    max_retries=attempts,
+                    max_attempts=attempts,
                     initial_delay_seconds=delay,
                     exponential_backoff=strategy
                     == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,

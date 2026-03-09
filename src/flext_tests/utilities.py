@@ -27,7 +27,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Protocol, override
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import (
     FlextContext,
@@ -39,6 +39,9 @@ from flext_core import (
     t as core_t,
 )
 from flext_tests import c, m, p, t
+
+_PAYLOAD_MAPPING_ADAPTER = TypeAdapter(dict[str, object])
+_PAYLOAD_SEQUENCE_ADAPTER = TypeAdapter(list[object])
 
 
 def _to_scalar(value: object) -> core_t.Scalar:
@@ -69,16 +72,22 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
     if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
+        try:
+            mapping_value = _PAYLOAD_MAPPING_ADAPTER.validate_python(value)
+        except ValidationError:
+            return {}
         payload_map: dict[str, t.Tests.ContainerValue] = {}
-        for key_raw, item_raw in value.items():
-            item_obj: object = item_raw
+        for key_raw, item_obj in mapping_value.items():
             payload_map[str(key_raw)] = _to_payload(item_obj)
         return payload_map
     if isinstance(value, Iterable):
-        payload_items: list[t.Tests.ContainerValue] = []
-        for item_raw in value:
-            item_obj: object = item_raw
-            payload_items.append(_to_payload(item_obj))
+        try:
+            iterable_items = _PAYLOAD_SEQUENCE_ADAPTER.validate_python(value)
+        except ValidationError:
+            return []
+        payload_items: list[t.Tests.ContainerValue] = [
+            _to_payload(item_obj) for item_obj in iterable_items
+        ]
         return payload_items
     return str(value)
 

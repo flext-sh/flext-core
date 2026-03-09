@@ -29,7 +29,7 @@ from typing import ClassVar, Protocol
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_tests import c, m
@@ -60,6 +60,7 @@ class _WhalesDockerClientProtocol(Protocol):
 
 docker: _WhalesDockerClientProtocol | None = _whales_docker
 logger: FlextLogger = FlextLogger(__name__)
+_HOST_BINDINGS_ADAPTER = TypeAdapter(list[dict[str, str]])
 
 
 class FlextTestsDocker:
@@ -142,16 +143,21 @@ class FlextTestsDocker:
         return c.Tests.Docker.SHARED_CONTAINERS
 
     @staticmethod
-    def _extract_host_port(bindings: list[dict[str, str]] | None) -> str:
+    def _extract_host_port(bindings: Sequence[Mapping[str, str]] | None) -> str:
         if not isinstance(bindings, Sequence) or isinstance(bindings, str | bytes):
             return ""
         if not bindings:
             return ""
         first_binding = bindings[0]
-        if not isinstance(first_binding, Mapping):
-            return ""
         host_port = first_binding.get("HostPort", "")
         return str(host_port)
+
+    @staticmethod
+    def _normalize_bindings(bindings: object) -> list[dict[str, str]]:
+        try:
+            return _HOST_BINDINGS_ADAPTER.validate_python(bindings)
+        except ValidationError:
+            return []
 
     def cleanup_dirty_containers(self) -> r[list[str]]:
         """Clean up all dirty containers by recreating them with fresh volumes."""
@@ -249,13 +255,15 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(container_name)
-            ports_raw = container.ports
+            ports_raw: Mapping[str, object] = TypeAdapter(
+                Mapping[str, object]
+            ).validate_python(container.ports)
             ports: dict[str, str] = {}
-            if isinstance(ports_raw, Mapping):
-                for container_port, host_bindings in ports_raw.items():
-                    host_port = self._extract_host_port(host_bindings)
-                    if host_port:
-                        ports[str(container_port)] = host_port
+            for container_port, host_bindings in ports_raw.items():
+                normalized_bindings = self._normalize_bindings(host_bindings)
+                host_port = self._extract_host_port(normalized_bindings)
+                if host_port:
+                    ports[str(container_port)] = host_port
             status_val = str(container.status)
             image_obj = container.image
             image_tags_raw = image_obj.tags if image_obj is not None else ()

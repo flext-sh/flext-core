@@ -47,15 +47,10 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
         return FlextModelFoundation.Metadata(attributes={})
     if _is_metadata_instance(value):
         return value
-    if not FlextRuntime.is_dict_like(value):
+    if not isinstance(value, Mapping):
         msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
-    if isinstance(value, FlextModelsContainers.ConfigMap):
-        items_iter = value.root.items()
-    elif isinstance(value, FlextModelFoundation.Metadata):
-        items_iter = value.model_dump().items()
-    else:
-        items_iter = value.items()
+    items_iter = value.items()
     normalized_attrs: dict[str, t.MetadataValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in items_iter
@@ -123,9 +118,11 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                return v
+                mapping_value = FlextModelsContainers.ConfigMap.model_validate(v).root
+                return mapping_value
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                return v
+                sequence_value = FlextModelsContainers.ObjectList.model_validate(v).root
+                return sequence_value
             if hasattr(v, "__dict__"):
                 return v
             if hasattr(v, "bind") and hasattr(v, "info"):

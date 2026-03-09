@@ -141,7 +141,7 @@ def test_mixins_result_and_model_conversion_paths(
             raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
-        x.to_dict(_BadMap())
+        _ = x.to_dict(_BadMap())
 
 
 def test_mixins_runtime_bootstrap_and_track_paths(

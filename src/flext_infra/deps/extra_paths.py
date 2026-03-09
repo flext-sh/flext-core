@@ -28,6 +28,7 @@ class FlextInfraExtraPathsManager:
 
     def __init__(self) -> None:
         """Initialize the extra paths manager with path resolver and TOML service."""
+        super().__init__()
         self.resolver = FlextInfraPathResolver()
         self.toml = FlextInfraTomlService()
 

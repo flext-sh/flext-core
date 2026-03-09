@@ -25,10 +25,10 @@ class Ex06FlextContext(Examples):
         self.check("create.instance", type(ctx).__name__)
         self.check("create.has.operation", ctx.has(c.Context.KEY_OPERATION_ID))
         self.check("create.has.user", ctx.has(c.Context.KEY_USER_ID))
-        self.check("set.success", ctx.set("k1", "v1").is_success)
+        self.check("set.success", (_ := ctx.set("k1", "v1")).is_success)
         seed = FlextContext.create()
-        seed.set("k2", 2)
-        seed.set("k3", True)
+        _ = seed.set("k2", 2)
+        _ = seed.set("k3", True)
         payload = seed.iter_scope_vars()[c.Context.SCOPE_GLOBAL].get()
         self.check(
             "set_all.success", ctx.set(payload or m.ConfigMap(root={})).is_success
@@ -95,7 +95,7 @@ class Ex06FlextContext(Examples):
 
     def _exercise_variables_and_domains(self) -> None:
         self.section("variables_and_domains")
-        FlextContext.create()
+        _ = FlextContext.create()
         self.check(
             "var.correlation_id",
             type(FlextContext.Variables.Correlation.CORRELATION_ID).__name__,

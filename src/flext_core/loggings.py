@@ -754,6 +754,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         **kw: t.ContainerValue | Exception,
     ) -> None: ...
 
+    @overload
+    def critical(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool] | None: ...
+
     @override
     def critical(
         self,
@@ -791,6 +799,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _return_result: Literal[False] = ...,
         **kw: t.ContainerValue | Exception,
     ) -> None: ...
+
+    @overload
+    def debug(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue | Exception,
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool] | None: ...
 
     @override
     def debug(
@@ -830,6 +846,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         **kw: t.ContainerValue | Exception,
     ) -> None: ...
 
+    @overload
+    def error(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool] | None: ...
+
     @override
     def error(
         self,
@@ -867,6 +891,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _return_result: Literal[False] = ...,
         **kw: t.ContainerValue | Exception,
     ) -> None: ...
+
+    @overload
+    def exception(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool] | None: ...
 
     @override
     def exception(
@@ -939,6 +971,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _return_result: Literal[False] = ...,
         **kw: t.ContainerValue | Exception,
     ) -> None: ...
+
+    @overload
+    def info(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool] | None: ...
 
     @override
     def info(
@@ -1085,6 +1125,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         **kw: t.ContainerValue | Exception,
     ) -> None: ...
 
+    @overload
+    def warning(
+        self,
+        msg: str | t.ContainerValue,
+        *args: t.ContainerValue,
+        **kw: t.ContainerValue | Exception,
+    ) -> r[bool] | None: ...
+
     @override
     def warning(
         self,
@@ -1203,14 +1251,17 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if not is_success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
                 context["exception_message"] = str(exc_val) if exc_val else ""
-            protocol_logger: p.Log.StructlogLogger = self.logger
             if is_success:
-                _ = protocol_logger.info(
-                    f"{self._operation_name} {status}", **context.root
+                _ = self.logger.info(
+                    f"{self._operation_name} {status}",
+                    _return_result=False,
+                    **context.root,
                 )
             else:
-                _ = protocol_logger.error(
-                    f"{self._operation_name} {status}", **context.root
+                _ = self.logger.error(
+                    f"{self._operation_name} {status}",
+                    _return_result=False,
+                    **context.root,
                 )
 
     class ResultAdapter:
@@ -1295,8 +1346,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 exc_info=exc_info,
                 context=normalized_context,
             )
-            protocol_logger: p.Log.StructlogLogger = self._base_logger
-            _ = protocol_logger.error(message, **context.root)
+            _ = self._base_logger.error(
+                message,
+                _return_result=False,
+                **context.root,
+            )
             return r[bool].ok(value=True)
 
         def info(

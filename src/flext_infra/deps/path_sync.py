@@ -35,6 +35,7 @@ class FlextInfraDependencyPathSync:
 
     def __init__(self) -> None:
         """Initialize the dependency path sync service with TOML service."""
+        super().__init__()
         self._toml = FlextInfraTomlService()
 
 

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, ClassVar, Self
 
 from pydantic import (
     BaseModel,
@@ -55,7 +55,7 @@ class FlextModelsHandler:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
-            return cast("t.HandlerCallable", v)
+            return v
 
         @model_validator(mode="after")
         def validate_handler_interface(self) -> Self:

@@ -99,12 +99,13 @@ class FlextTestsDomains:
             List of user dictionaries
 
         """
-        users = []
+        users: list[MutableMapping[str, str | bool]] = []
         for i in range(count):
-            user_overrides_copy = user_overrides.copy()
+            user_overrides_copy: dict[str, str | bool] = dict(user_overrides)
             user_overrides_copy["username"] = f"testuser{i}"
             user_overrides_copy["email"] = f"testuser{i}@example.com"
-            users.append(FlextTestsDomains.create_user(**user_overrides_copy))
+            user_data = FlextTestsDomains.create_user(**user_overrides_copy)
+            users.append(user_data)
         return users
 
     @staticmethod

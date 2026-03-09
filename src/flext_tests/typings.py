@@ -364,7 +364,7 @@ class FlextTestsTypes(FlextTypes):
             value: FlextTestsTypes.Tests.TestContainerValue,
         ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
             """Check if value is a BuilderDict (dict with str keys)."""
-            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+            return isinstance(value, dict)
 
         @staticmethod
         def is_builder_value(

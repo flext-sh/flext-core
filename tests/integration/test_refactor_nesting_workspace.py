@@ -19,7 +19,7 @@ class TestWorkspaceLevelRefactor:
             src_dir = tmp_path / proj / "src" / proj.replace("-", "_")
             src_dir.mkdir(parents=True)
             test_file = src_dir / "models.py"
-            test_file.write_text(
+            _ = test_file.write_text(
                 f"\nclass {proj.replace('-', '').title()}Model:\n    pass\n",
             )
         scanner = FlextInfraRefactorLooseClassScanner()
@@ -46,7 +46,7 @@ class TestWorkspaceLevelRefactor:
         (proj_a / "core.py").write_text("\nclass CoreService:\n    pass\n")
         proj_b = tmp_path / "project-b" / "src" / "project_b"
         proj_b.mkdir(parents=True)
-        (proj_b / "consumer.py").write_text(
+        _ = (proj_b / "consumer.py").write_text(
             "\nfrom project_a.core import CoreService\n\ndef use_service(svc: CoreService) -> None:\n    pass\n",
         )
         analyzer = DependencyAnalyzer(tmp_path)
@@ -61,8 +61,8 @@ class TestWorkspaceLevelRefactor:
         for proj in projects:
             src_dir = tmp_path / proj / "src" / proj
             src_dir.mkdir(parents=True)
-            (src_dir / "__init__.py").write_text("")
-            (src_dir / "utils.py").write_text(
+            _ = (src_dir / "__init__.py").write_text("")
+            _ = (src_dir / "utils.py").write_text(
                 '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n',
             )
         scanner = FlextInfraRefactorLooseClassScanner()
