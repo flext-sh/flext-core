@@ -51,6 +51,8 @@ def test_implements_decorator_validation_error_message() -> None:
         class _Invalid:
             pass
 
+        _ = _Invalid
+
 
 def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
 
@@ -71,7 +73,7 @@ def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
 
 
 def test_protocol_model_and_settings_methods() -> None:
-    model = _ProtocolModel(name="n")
+    model = _ProtocolModel()
     settings = _SettingsModel(app_name="a")
     assert model.implements_protocol(_NamedProtocol) is True
     assert model.get_protocols() == (_NamedProtocol,)

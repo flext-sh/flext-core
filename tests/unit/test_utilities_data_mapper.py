@@ -29,7 +29,8 @@ class TestMapperMapDictKeys:
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
         result = FlextUtilities.Mapper.map_dict_keys(source_raw, mapping)
-        tm.ok(result, eq={mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2})
+        mapped = assertion_helpers.assert_flext_result_success(result)
+        assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2}
 
     def test_keep_unmapped_true(self) -> None:
         """Test keeping unmapped keys."""
@@ -41,7 +42,8 @@ class TestMapperMapDictKeys:
             mapping,
             keep_unmapped=True,
         )
-        tm.ok(result, eq={mc.NEW_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2})
+        mapped = assertion_helpers.assert_flext_result_success(result)
+        assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
 
     def test_keep_unmapped_false(self) -> None:
         """Test discarding unmapped keys."""
@@ -53,7 +55,8 @@ class TestMapperMapDictKeys:
             mapping,
             keep_unmapped=False,
         )
-        tm.ok(result, eq={mc.NEW_KEY: mc.VALUE1})
+        mapped = assertion_helpers.assert_flext_result_success(result)
+        assert mapped == {mc.NEW_KEY: mc.VALUE1}
 
     def test_exception_handling(self) -> None:
         """Test exception handling with bad dict."""

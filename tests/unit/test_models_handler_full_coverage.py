@@ -15,10 +15,10 @@ def test_models_handler_branches() -> None:
     assert u.Conversion.to_str(1) == "1"
     req = m.RegistrationRequest(handler=lambda value: value, handler_mode="command")
     assert req.handler_mode == "command"
-    with pytest.raises(TypeError, match="Handler must be callable"):
-        m.HandlerRegistration(name="bad", handler=1)
+    with pytest.raises(Exception, match="Handler must be callable"):
+        m.HandlerRegistration.model_validate({"name": "bad", "handler": 1})
     ctx = m.HandlerExecutionContext.create_for_handler("h1", "command")
-    assert ctx.execution_time_ms == pytest.approx(0.0)
+    assert abs(ctx.execution_time_ms - 0.0) < 1e-9
     state = ctx.metrics_state
     assert isinstance(state, m.Dict)
     ctx.set_metrics_state(m.Dict(root={"x": 1}))

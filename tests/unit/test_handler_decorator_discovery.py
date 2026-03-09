@@ -22,8 +22,6 @@ import types
 from collections.abc import Callable
 from typing import ClassVar, cast, override
 
-import pytest
-
 from flext_core import FlextService, c, h, m, p, r, t
 
 type _TestCallable = Callable[..., r[str]]
@@ -195,7 +193,8 @@ class TestHandlerDecoratorMetadata:
 
         method = TestService.handle_user
         config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
-        assert config.timeout == pytest.approx(5.0)
+        assert config.timeout is not None
+        assert abs(config.timeout - 5.0) < 1e-9
 
     def test_decorator_default_timeout(self) -> None:
         """Decorator should use default timeout from constants."""
@@ -348,6 +347,8 @@ class TestHandlerDiscoveryModule:
         @_test_handler(command=UserCreateCommand)
         def _private_handler(cmd: UserCreateCommand) -> r[str]:
             return r[str].ok("private")
+
+        _ = _private_handler
 
         current_module = sys.modules[__name__]
         handlers = h.Discovery.scan_module(current_module)

@@ -119,7 +119,7 @@ def configure_flext_infra_dependencies() -> None:
         lambda: FlextInfraVersioningService(),
         kind="factory",
     )
-    _ = container.register("output", lambda: output.info, kind="factory")
+    _ = container.register("output", lambda: output, kind="singleton")
     _ = container.register(
         "basemk_engine",
         lambda: FlextInfraBaseMkTemplateEngine(),

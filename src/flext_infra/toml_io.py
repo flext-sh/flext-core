@@ -130,20 +130,37 @@ def ensure_table(parent: Table, key: str) -> Table:
 
 def _toml_get(
     container: TOMLDocument | Table,
-    key: object,
-) -> t.ContainerValue | Item | None:
+    key: t.ContainerValue,
+) -> t.ContainerValue | None:
     if not isinstance(key, str):
         return None
-    raw_value: object | None = None
+    raw_value: t.ContainerValue | None = None
     if key in container:
-        raw_value = container[key]
+        candidate = container[key]
+        if isinstance(
+            candidate,
+            (
+                Item,
+                TOMLDocument,
+                dict,
+                list,
+                str,
+                int,
+                float,
+                bool,
+                type(None),
+                BaseModel,
+                Path,
+            ),
+        ):
+            raw_value = _normalize_container_value(candidate)
+        else:
+            return None
     if raw_value is None:
         return None
-    if isinstance(raw_value, Item):
-        return raw_value
     if isinstance(raw_value, (str, int, float, bool, type(None), BaseModel, Path)):
         return raw_value
-    if not isinstance(raw_value, (dict, list, TOMLDocument)):
+    if not isinstance(raw_value, (dict, list)):
         return None
     normalized_mapping = _normalize_container_value(raw_value)
     if isinstance(normalized_mapping, dict):

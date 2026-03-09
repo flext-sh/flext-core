@@ -28,10 +28,12 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
         TypeError,
         match="Domain event data must be a dictionary or None",
     ):
-        FlextModelsEntity.DomainEvent(
-            event_type="evt",
-            aggregate_id="agg",
-            data=object(),
+        FlextModelsEntity.DomainEvent.model_validate(
+            {
+                "event_type": "evt",
+                "aggregate_id": "agg",
+                "data": 1,
+            },
         )
     entry = FlextModelsEntity.Entry(unique_id="e1")
     bad = entry.add_domain_events_bulk(

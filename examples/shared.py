@@ -53,6 +53,7 @@ class Examples:
 
     def __init__(self, caller_file: str) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
+        super().__init__()
         self._results: list[str] = []
         self._caller = Path(caller_file)
         self._counter = 0

@@ -192,7 +192,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         raise ValueError(msg)
 
     cfg = m.RetryConfiguration(
-        max_attempts=2,
+        max_retries=2,
         initial_delay_seconds=0.01,
         exponential_backoff=False,
     )
@@ -555,7 +555,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
         raise KeyError(msg)
 
     cfg = m.RetryConfiguration(
-        max_attempts=2,
+        max_retries=2,
         initial_delay_seconds=0.01,
         exponential_backoff=True,
     )

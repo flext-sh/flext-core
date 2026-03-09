@@ -50,7 +50,9 @@ class TestFlextContext:
             msg = f"Expected {'login'}, got {context['operation']}"
             raise AssertionError(msg)
         expected_duration_ms: float = 150.5
-        assert context["duration_ms"] == pytest.approx(expected_duration_ms)
+        duration_ms = context["duration_ms"]
+        assert isinstance(duration_ms, float)
+        assert abs(duration_ms - expected_duration_ms) < 1e-9
 
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
@@ -88,14 +90,20 @@ class TestFlextContext:
             "cpu_percent": 75.2,
         }
         expected_duration_ms_ctx: float = 250.0
-        if context["duration_ms"] != pytest.approx(expected_duration_ms_ctx):
-            msg = f"Expected {250.0}, got {context['duration_ms']}"
+        duration_ms_ctx = context["duration_ms"]
+        assert isinstance(duration_ms_ctx, float)
+        if abs(duration_ms_ctx - expected_duration_ms_ctx) >= 1e-9:
+            msg = f"Expected {250.0}, got {duration_ms_ctx}"
             raise AssertionError(msg)
         expected_memory_mb: float = 128.5
-        assert context["memory_mb"] == pytest.approx(expected_memory_mb)
+        memory_mb = context["memory_mb"]
+        assert isinstance(memory_mb, float)
+        assert abs(memory_mb - expected_memory_mb) < 1e-9
         expected_cpu_percent: float = 75.2
-        if context["cpu_percent"] != pytest.approx(expected_cpu_percent):
-            msg = f"Expected {75.2}, got {context['cpu_percent']}"
+        cpu_percent = context["cpu_percent"]
+        assert isinstance(cpu_percent, float)
+        if abs(cpu_percent - expected_cpu_percent) >= 1e-9:
+            msg = f"Expected {75.2}, got {cpu_percent}"
             raise AssertionError(msg)
 
     def test_context_error_fields(self) -> None:

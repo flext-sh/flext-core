@@ -21,7 +21,7 @@ class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
 
 class _QueryHandler(_Handler):
     @override
-    def validate_query(self, query: t.JsonValue) -> FlextResult[bool]:
+    def validate(self, query: t.JsonValue) -> FlextResult[bool]:
         _ = query
         return r[bool].ok(True)
 

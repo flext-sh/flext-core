@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from flext_core import c
 from flext_core._dispatcher.reliability import (
     CircuitBreakerManager,
@@ -67,7 +65,7 @@ def test_rate_limiter_jitter_application() -> None:
         window_seconds=1.0,
         jitter_factor=0.0,
     )
-    assert limiter_zero._apply_jitter(0.5) == pytest.approx(0.5)
+    assert abs(limiter_zero._apply_jitter(0.5) - 0.5) < 1e-9
 
 
 def test_retry_policy_behavior() -> None:
@@ -78,10 +76,11 @@ def test_retry_policy_behavior() -> None:
     assert not policy.should_retry(2)
     assert policy.is_retriable_error("Temporary failure - try again later")
     assert not policy.is_retriable_error(None)
-    assert policy.get_retry_delay() == pytest.approx(0.1)
+    assert abs(policy.get_retry_delay() - 0.1) < 1e-9
     assert policy.get_max_attempts() == 3
-    assert policy.get_exponential_delay(0) == pytest.approx(0.1)
-    assert policy.get_exponential_delay(2) == pytest.approx(min(0.1 * 2.0**2, 300.0))
+    assert abs(policy.get_exponential_delay(0) - 0.1) < 1e-9
+    expected_delay = min(0.1 * 2.0**2, 300.0)
+    assert abs(policy.get_exponential_delay(2) - expected_delay) < 1e-9
     policy.record_attempt("cmd")
     policy.reset("cmd")
     policy.cleanup()

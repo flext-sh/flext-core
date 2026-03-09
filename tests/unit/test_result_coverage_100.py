@@ -44,9 +44,8 @@ class _ResultAssertions:
         assert not result.is_success
 
     @staticmethod
-    def assert_success_with_value(result: object, expected: object) -> None:
+    def assert_success_with_value[T](result: r[T], expected: T) -> None:
         _ResultAssertions.assert_success(result)
-        assert isinstance(result, r)
         assert result.value == expected
 
     @staticmethod
@@ -481,9 +480,7 @@ class TestrCoverage:
             return resource
 
         def operation(resource: m.ConfigMap) -> r[str]:
-            if isinstance(resource, m.ConfigMap):
-                return r[str].ok("success")
-            return r[str].fail("Invalid resource")
+            return r[str].ok("success")
 
         result = r[str].with_resource(factory, operation)
         _ResultAssertions.assert_success_with_value(result, "success")

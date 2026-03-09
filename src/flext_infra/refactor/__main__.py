@@ -279,8 +279,7 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         f"created_typings_files={centralize_summary['created_typings_files']}\n",
     )
     _ = sys.stdout.write(
-        "skipped_non_necessary_apply="
-        f"{centralize_summary.get('skipped_non_necessary_apply', 0)}\n",
+        f"skipped_non_necessary_apply={centralize_summary.get('skipped_non_necessary_apply', 0)}\n",
     )
     _ = sys.stdout.write(
         f"skipped_nonpackage_apply={centralize_summary['skipped_nonpackage_apply']}\n",
@@ -302,8 +301,7 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         f"namespace_cyclic_imports={namespace_report.total_cyclic_imports}\n",
     )
     _ = sys.stdout.write(
-        "namespace_runtime_alias_violations="
-        f"{namespace_report.total_runtime_alias_violations}\n",
+        f"namespace_runtime_alias_violations={namespace_report.total_runtime_alias_violations}\n",
     )
     _ = sys.stdout.write(
         f"namespace_missing_future={namespace_report.total_future_violations}\n",

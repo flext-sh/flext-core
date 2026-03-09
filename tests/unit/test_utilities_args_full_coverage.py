@@ -41,10 +41,13 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    def _mock_get_type_hints(_func: object) -> dict[str, object]:
+        return {"mode": Annotated[c.Cqrs.HandlerType, "meta"]}
+
     monkeypatch.setattr(
         args_module,
         "get_type_hints",
-        lambda _func: {"mode": Annotated[c.Cqrs.HandlerType, "meta"]},
+        _mock_get_type_hints,
     )
     params = u.Args.get_enum_params(cast("p.CallableWithHints", _no_op_func))
     assert params["mode"] is c.Cqrs.HandlerType

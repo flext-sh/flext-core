@@ -65,7 +65,9 @@ class UtilitiesService(FlextService[m.ConfigMap]):
                 f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}"
             )
         )
-        assert parse_result.is_success
+        if not parse_result.is_success:
+            msg = "Collection operations parsing failed"
+            raise RuntimeError(msg)
 
     @staticmethod
     def _demonstrate_conversions() -> None:
@@ -77,7 +79,9 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         delimited_result = parser.parse_delimited("a,b,c", ",").map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
-        assert delimited_result.is_success
+        if not delimited_result.is_success:
+            msg = "Delimited conversion demonstration failed"
+            raise RuntimeError(msg)
         print(f"✅ String to int concept: '{number_str}' → int")
         print(f"✅ String to float concept: '{float_str}' → float")
         print("✅ Safe conversion with error handling available")
@@ -125,11 +129,15 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         delimited_result = parser.parse_delimited("a, b, c", ",", options=options).map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
-        assert delimited_result.is_success
+        if not delimited_result.is_success:
+            msg = "String parsing demonstration failed"
+            raise RuntimeError(msg)
         split_result = parser.split_on_char_with_escape(
             "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
         ).map(lambda split: print(f"✅ Escaped split: {split}"))
-        assert split_result.is_success
+        if not split_result.is_success:
+            msg = "Escaped split demonstration failed"
+            raise RuntimeError(msg)
 
     @staticmethod
     def _demonstrate_type_checking() -> None:
@@ -256,7 +264,9 @@ def main() -> None:
         return FlextResult[None].ok(value=None)
 
     chain_result = result.map(handle_success).lash(handle_error)
-    assert chain_result.is_success
+    if not chain_result.is_success:
+        msg = "Utility composition chain failed"
+        raise RuntimeError(msg)
     print("\n" + "=" * 60)
     print("🎯 Utility Categories: Validation, ID Generation, Conversion")
     print("🎯 Advanced Features: Caching, Reliability, Composition")

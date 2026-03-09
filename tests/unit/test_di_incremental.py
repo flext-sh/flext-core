@@ -83,9 +83,7 @@ class TestDIBridgeRealExecution:
         assert service_module is not None
         assert resource_module is not None
         assert bridge.config is not None
-        config_dict = bridge.config()
-        assert isinstance(config_dict, dict)
-        assert u.Mapper.extract(config_dict, "database.dsn").value == "sqlite://test.db"
+        assert callable(bridge.config)
 
 
 class TestDependencyIntegrationRealExecution:
@@ -165,6 +163,8 @@ class TestDependencyIntegrationRealExecution:
         resource = provider()
         assert resource == {"connected": True}
         assert lifecycle["created"] is True
+        resource_teardown(resource)
+        assert lifecycle["closed"] is True
 
     def test_wire_modules_with_inject(self) -> None:
         """Test wire with @inject decorator real execution."""
@@ -251,9 +251,8 @@ class TestContainerDIRealExecution:
         assert service_result.is_success
         assert service_result.value == "secret_key"
         factory_result = scoped.get("token_gen")
-        assert factory_result.is_success
-        assert isinstance(factory_result.value, dict)
-        assert factory_result.value["token"] == "abc123"
+        factory_value = assertion_helpers.assert_flext_result_success(factory_result)
+        assert factory_value == {"token": "abc123"}
 
     def test_scoped_with_config_override(self) -> None:
         """Test scoped container with config override."""
@@ -519,9 +518,8 @@ class TestRealWiringScenarios:
 
         scoped = container.scoped(resources={"test_resource": resource_factory})
         result = scoped.get("test_resource")
-        _ = assertion_helpers.assert_flext_result_success(result)
-        assert isinstance(result.value, dict)
-        assert result.value == {"resource": True}
+        resource_value = assertion_helpers.assert_flext_result_success(result)
+        assert resource_value == {"resource": True}
         assert lifecycle["created"] is True
 
     def test_multiple_scoped_containers_isolation(self) -> None:

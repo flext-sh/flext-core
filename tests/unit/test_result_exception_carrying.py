@@ -71,7 +71,10 @@ class TestFailWithException:
     def test_fail_with_exception_and_error_data(self) -> None:
         """Verify fail() carries exception with error_data."""
         error_msg = "Validation failed"
-        error_data = {"field": "email", "reason": "invalid format"}
+        error_data: dict[str, m.ContainerValue] = {
+            "field": "email",
+            "reason": "invalid format",
+        }
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
             error_msg,

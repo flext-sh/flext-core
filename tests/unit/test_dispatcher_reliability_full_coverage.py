@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import c, m, r, u
 from flext_core._dispatcher import reliability as disp_rel
 
@@ -24,6 +22,6 @@ def test_dispatcher_reliability_branch_paths() -> None:
     assert cb.get_state("x") == c.Reliability.CircuitBreakerState.OPEN
     rl = disp_rel.RateLimiterManager(max_requests=1, window_seconds=1.5)
     assert rl.get_max_requests() == 1
-    assert rl.get_window_seconds() == pytest.approx(1.5)
+    assert abs(rl.get_window_seconds() - 1.5) < 1e-9
     rp = disp_rel.RetryPolicy(max_attempts=1, retry_delay=0.0)
-    assert rp.get_exponential_delay(1) == pytest.approx(0.0)
+    assert abs(rp.get_exponential_delay(1) - 0.0) < 1e-9

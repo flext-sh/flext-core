@@ -13,6 +13,8 @@ from collections import UserDict
 from datetime import UTC, datetime
 from typing import cast, override
 
+from pydantic import BaseModel, Field
+
 from flext_core import t, u
 
 from ._models import _FrozenEntity, _SampleEntity
@@ -35,7 +37,7 @@ class TestDomainHashValue:
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
 
-        class EntityWithDate:
+        class EntityWithDate(BaseModel):
             unique_id: str = "test"
             created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
@@ -46,9 +48,9 @@ class TestDomainHashValue:
     def test_hash_with_non_hashable_value(self) -> None:
         """Non-hashable value in model_dump uses repr (line 159)."""
 
-        class EntityWithList:
+        class EntityWithList(BaseModel):
             unique_id: str = "test"
-            tags: list[str] = ["a", "b"]  # noqa: RUF012  # Test double; fixed value for hash test
+            tags: list[str] = Field(default_factory=lambda: ["a", "b"])
 
         entity = EntityWithList()
         result = u.Domain.hash_value_object_by_value(entity)

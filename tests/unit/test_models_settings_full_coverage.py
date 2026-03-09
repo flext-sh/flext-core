@@ -6,11 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
 import pytest
 
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 from flext_core._models.settings import FlextModelsConfig
 
 
@@ -31,11 +31,11 @@ def test_models_settings_branch_paths() -> None:
     with pytest.raises(TypeError, match="Validator must be callable"):
         FlextModelsConfig.ValidationConfiguration(custom_validators=[1])
     with pytest.raises(ValueError, match="less than or equal to 1000"):
-        FlextModelsConfig.BatchProcessingConfig(batch_size=100000)
+        FlextModelsConfig.BatchProcessingConfig(batch_size=100000, data_items=[])
 
 
 def test_models_settings_context_validator_and_non_standard_status_input() -> None:
-    req = FlextModelsConfig.ProcessingRequest(context={})
+    req = FlextModelsConfig.ProcessingRequest(context=m.ConfigMap(root={}))
     assert "trace_id" in req.context
 
     class _CodeObj:
@@ -43,11 +43,12 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
         def __repr__(self) -> str:
             return "503"
 
-    converted = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy(
-        cast("list[int]", [_CodeObj()]),
-    )
-    assert converted == [503]
-    converted_str = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy([
-        "503",
+    converted = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy([
+        str(_CodeObj()),
     ])
+    assert converted == [503]
+    status_codes: list[t.Scalar] = ["503"]
+    converted_str = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy(
+        status_codes,
+    )
     assert converted_str == [503]

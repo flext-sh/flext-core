@@ -193,16 +193,15 @@ class TestRuntimeTypeChecking:
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = False
-            additional_processors: ClassVar[list[t.ContainerValue]] = []
+            additional_processors: ClassVar[list[object]] = []
             wrapper_class_factory: ClassVar[object | None] = None
             logger_factory: ClassVar[object | None] = None
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        additional_processors_typed: Sequence[t.ContainerValue] = (
-            cast("Sequence[t.ContainerValue]", config.additional_processors)
-            if isinstance(config.additional_processors, Sequence)
-            else []
+        additional_processors_typed: Sequence[t.ContainerValue] = cast(
+            "Sequence[t.ContainerValue]",
+            config.additional_processors,
         )
         wrapper_class_factory_typed: t.ContainerValue | None = (
             cast("t.ContainerValue", config.wrapper_class_factory)
@@ -338,10 +337,9 @@ class TestRuntimeTypeChecking:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        additional_processors_typed: Sequence[t.ContainerValue] = (
-            cast("Sequence[t.ContainerValue]", config.additional_processors)
-            if isinstance(config.additional_processors, Sequence)
-            else []
+        additional_processors_typed: Sequence[t.ContainerValue] = cast(
+            "Sequence[t.ContainerValue]",
+            config.additional_processors,
         )
         wrapper_class_factory_typed: t.ContainerValue | None = (
             cast("t.ContainerValue", config.wrapper_class_factory)
