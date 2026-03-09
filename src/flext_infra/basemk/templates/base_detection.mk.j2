@@ -5,8 +5,13 @@ PROJECT_ROOT := $(CURDIR)
 ifeq ($(FLEXT_STANDALONE),1)
 FLEXT_MODE := standalone
 else
-DETECTED_MODE := $(shell python -m flext_infra workspace detect --project-root "$(PROJECT_ROOT)" 2>/dev/null || printf 'standalone')
-FLEXT_MODE := $(DETECTED_MODE)
+# Pure Make detection: if base.mk lives in a parent dir, we are inside a workspace.
+# No Python dependency — shell/Make only until venv is ready.
+ifneq ($(BASE_MK_DIR),$(PROJECT_ROOT))
+FLEXT_MODE := workspace
+else
+FLEXT_MODE := standalone
+endif
 endif
 
 ifeq ($(FLEXT_MODE),workspace)

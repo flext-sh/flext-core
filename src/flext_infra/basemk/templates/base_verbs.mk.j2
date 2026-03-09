@@ -1,25 +1,37 @@
 help: ## Show commands
-	$(Q)echo "$(PROJECT_NAME) - FLEXT Project"
+	$(Q)echo "================================================"
+	$(Q)echo "  $(PROJECT_NAME)"
+	$(Q)echo "================================================"
 	$(Q)echo ""
 	$(Q)echo "Core verbs:"
-	$(Q)echo "  setup      Install dependencies and hooks (with automatic md/go adjustment)"
-	$(Q)echo "  build      Build distributable artifacts"
-	$(Q)echo "  check      Run the 8 lint gates"
-	$(Q)echo "  security   Run all security checks"
-	$(Q)echo "  format     Run all formatting (including automatic md/go adjustment)"
-	$(Q)echo "  docs       Build docs"
-	$(Q)echo "  test       Run pytest only"
-	$(Q)echo "  validate   Run validate gates only (use FIX=1 to auto-fix first)"
-	$(Q)echo "  pr         Manage this repository PR (default: status)"
-	$(Q)echo "  clean      Clean build/test/type artifacts"
+	$(Q)printf "  %-14s %s\n" "setup"     "Install dependencies and hooks"
+	$(Q)printf "  %-14s %s\n" "build"     "Build distributable artifacts"
+	$(Q)printf "  %-14s %s\n" "check"     "Run lint gates (CHECK_GATES= to select)"
+	$(Q)printf "  %-14s %s\n" "security"  "Run all security checks"
+	$(Q)printf "  %-14s %s\n" "format"    "Run all formatting"
+	$(Q)printf "  %-14s %s\n" "docs"      "Build docs (DOCS_PHASE= to select)"
+	$(Q)printf "  %-14s %s\n" "test"      "Run pytest (PYTEST_ARGS= for options)"
+	$(Q)printf "  %-14s %s\n" "validate"  "Run validate gates (FIX=1 to auto-fix)"
+	$(Q)printf "  %-14s %s\n" "clean"     "Clean build/test/type artifacts"
+	$(Q)echo ""
+	$(Q)echo "Daemon management:"
+	$(Q)printf "  %-16s %s\n" "daemon-start"   "Start all daemons (mypy + pyright)"
+	$(Q)printf "  %-16s %s\n" "daemon-stop"    "Stop all daemons"
+	$(Q)printf "  %-16s %s\n" "daemon-status"  "Show status of all daemons"
+	$(Q)printf "  %-16s %s\n" "daemon-restart" "Restart all daemons"
+	$(Q)echo "  Also: daemon-{start,stop,status}-{mypy,pyright}"
+	$(Q)echo ""
+	$(Q)echo "Other:"
+	$(Q)printf "  %-14s %s\n" "check-fast" "Parallel lint (make -j4 check-fast)"
+	$(Q)printf "  %-14s %s\n" "pr"         "Manage PRs (PR_ACTION=status)"
 	$(Q)echo ""
 	$(Q)echo "PR variables:"
 	$(Q)echo "  PR_ACTION=status|create|view|checks|merge|close"
-	$(Q)echo "  PR_BASE=main PR_HEAD=<branch> PR_NUMBER=<id>"
-	$(Q)echo "  PR_TITLE='title' PR_BODY='body' PR_DRAFT=0|1"
-	$(Q)echo "  PR_MERGE_METHOD=squash|merge|rebase PR_AUTO=0|1 PR_DELETE_BRANCH=0|1"
-	$(Q)echo "  PR_CHECKS_STRICT=0|1 (checks: fail command only when strict=1)"
-	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1 (merge: dispatch release workflow when branch maps to semver)"
+	$(Q)echo "  PR_BASE=main  PR_HEAD=<branch>  PR_NUMBER=<id>"
+	$(Q)echo "  PR_TITLE='...'  PR_BODY='...'  PR_DRAFT=0|1"
+	$(Q)echo "  PR_MERGE_METHOD=squash|merge|rebase  PR_AUTO=0|1"
+	$(Q)echo "  PR_DELETE_BRANCH=0|1  PR_CHECKS_STRICT=0|1"
+	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1"
 
 setup: ## Complete setup
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
@@ -39,10 +51,14 @@ setup: ## Complete setup
 build: ## Build distributable artifacts
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		mkdir -p .reports/build; \
+		build_start=$$(date +%s); \
 		go build -o .reports/build/$(PROJECT_NAME) ./...; \
+		echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"; \
 		exit 0; \
 	fi
-	$(Q)$(POETRY) build
+	$(Q)build_start=$$(date +%s); \
+	$(POETRY) build; \
+	echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"
 
 check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type to select)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
@@ -62,8 +78,8 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 			golangci-lint run || { echo "FAIL: lint"; exit 1; }; \
 		fi; \
 		if echo "$$gates" | grep -qw format; then \
-			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*')" ]; then \
-				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' -print0 | xargs -0 gofmt -l); \
+			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*')" ]; then \
+				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' -print0 | xargs -0 gofmt -l); \
 				if [ -n "$$gofmt_diff" ]; then \
 					echo "FAIL: gofmt"; \
 					printf '%s\n' "$$gofmt_diff"; \
@@ -75,14 +91,18 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 			gosec ./... || { echo "FAIL: security"; exit 1; }; \
 		fi; \
 		if echo "$$gates" | grep -qw markdown; then \
-			md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './node_modules/*' ! -path './.flext-deps/*' ! -path './.mypy_cache/*' ! -path './.pytest_cache/*' ! -path './.ruff_cache/*' ! -path './dist/*' ! -path './build/*'); \
+			if git rev-parse --git-dir >/dev/null 2>&1; then \
+				md_files=$$(git ls-files -- '*.md' ':!vendor/'); \
+			else \
+				md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
+			fi; \
 			md_config=""; \
 			if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
 				md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
 			elif [ -f ".markdownlint.json" ]; then \
 				md_config="--config .markdownlint.json"; \
 			fi; \
-			if [ -n "$$md_files" ]; then markdownlint $$md_config $$md_files || { echo "FAIL: markdown"; exit 1; }; fi; \
+			if [ -n "$$md_files" ]; then echo "$$md_files" | xargs markdownlint $$md_config || { echo "FAIL: markdown"; exit 1; }; fi; \
 		fi; \
 		if echo "$$gates" | grep -qw go; then \
 			go vet ./... || { echo "FAIL: go"; exit 1; }; \
@@ -165,31 +185,39 @@ security: ## Run all security checks
 	fi
 	$(Q)$(POETRY) run bandit -r $(SRC_DIR) -q -ll
 
-format: ## Run all formatting
+format: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*')" ]; then \
-			find . -type f -name '*.go' ! -path './.git/*' -print0 | xargs -0 gofmt -w; \
+		go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
+		if [ -n "$$go_files" ]; then \
+			printf '%s\n' "$$go_files" | xargs gofmt -w; \
 			if command -v goimports >/dev/null 2>&1; then \
-				find . -type f -name '*.go' ! -path './.git/*' -print0 | xargs -0 goimports -w; \
+				printf '%s\n' "$$go_files" | xargs goimports -w; \
+			fi; \
+		fi; \
+	else \
+		$(POETRY) run ruff format . --quiet; \
+		if [ -f go.mod ]; then \
+			go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
+			if [ -n "$$go_files" ]; then \
+				printf '%s\n' "$$go_files" | xargs gofmt -w; \
 			fi; \
 		fi; \
 	fi
-	$(Q)if [ "$(CORE_STACK)" != "go" ]; then $(POETRY) run ruff format . --quiet; fi
-	$(Q)md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './node_modules/*' ! -path './.flext-deps/*' ! -path './.mypy_cache/*' ! -path './.pytest_cache/*' ! -path './.ruff_cache/*' ! -path './dist/*' ! -path './build/*'); \
-	md_config=""; \
-	if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-		md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
-	elif [ -f ".markdownlint.json" ]; then \
-		md_config="--config .markdownlint.json"; \
+	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
+		md_files=$$(git ls-files -- '*.md' ':!vendor/' && git ls-files --others --exclude-standard -- '*.md' ':!vendor/'); \
+	else \
+		md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
 	fi; \
 	if [ -n "$$md_files" ]; then \
-		mkdir -p .reports/preflight; \
-		printf '%s\n' "$$md_files" | xargs -r mdformat 2>>.reports/preflight/mdformat.log || true; \
-		markdownlint --fix $$md_config $$md_files || true; \
+		md_config=""; \
+		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
+			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+		elif [ -f ".markdownlint.json" ]; then \
+			md_config="--config .markdownlint.json"; \
+		fi; \
+		echo "$$md_files" | xargs markdownlint --fix $$md_config 2>/dev/null || true; \
 	fi
-	$(Q)if [ -f go.mod ] && [ -n "$$(find . -type f -name '*.go' ! -path './.git/*')" ]; then \
-		find . -type f -name '*.go' ! -path './.git/*' -print0 | xargs -0 gofmt -w; \
-	fi
+	$(Q)echo "Format complete: $(PROJECT_NAME)"
 
 docs: ## Build docs
 	$(Q)if python3 -c "import flext_infra.docs" >/dev/null 2>&1; then \

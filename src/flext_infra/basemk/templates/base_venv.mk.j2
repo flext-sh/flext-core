@@ -11,6 +11,9 @@ POETRY := {{ config.package_manager }}
 # Quality tool (flext-quality with fallback)
 QUALITY_CMD ?= flext-quality
 QUALITY_AVAILABLE := $(shell command -v $(QUALITY_CMD) 2>/dev/null)
+DMPY_SOCKET := .dmypy/socket.$(PROJECT_NAME)
+PYRIGHT_PIDFILE := .pyright/daemon.pid
+PYRIGHT_LOG := .pyright/daemon.log
 
 # Export for subprocesses
 export PROJECT_NAME PYTHON_VERSION
