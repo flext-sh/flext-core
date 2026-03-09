@@ -6,47 +6,11 @@ import fnmatch
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
-import libcst as cst
-
 from flext_core import r
 from flext_infra import c, m, t, u
+from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
-
-
-class FlextInfraRefactorRule:
-    """Base class for flext_infra refactor rules."""
-
-    def __init__(self, config: Mapping[str, t.ContainerValue]) -> None:
-        """Initialize rule metadata from rule config."""
-        self.config = dict(config)
-        rule_id = self.config.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)
-        self.rule_id = str(rule_id)
-        name_raw = self.config.get(c.Infra.Toml.NAME, self.rule_id)
-        self.name = str(name_raw)
-        description_raw = self.config.get("description", "")
-        self.description = description_raw if isinstance(description_raw, str) else ""
-        enabled_raw = self.config.get(c.Infra.ReportKeys.ENABLED, True)
-        self.enabled = bool(enabled_raw)
-        severity_raw = self.config.get("severity", c.Infra.Severity.WARNING)
-        self.severity = str(severity_raw)
-
-    def apply(
-        self,
-        tree: cst.Module,
-        _file_path: Path | None = None,
-    ) -> tuple[cst.Module, list[str]]:
-        """Apply the rule to a CST module and return transformed tree plus changes."""
-        return (tree, [])
-
-    def matches_filter(self, filter_pattern: str) -> bool:
-        """Return whether the rule matches a case-insensitive filter string."""
-        pattern_lower = filter_pattern.lower()
-        return (
-            pattern_lower in (self.rule_id or "").lower()
-            or pattern_lower in (self.name or "").lower()
-            or pattern_lower in (self.description or "").lower()
-        )
 
 
 class FlextInfraRefactorRuleLoader:

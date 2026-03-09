@@ -282,7 +282,7 @@ class MultiOperationService(FlextService[m.ConfigMap]):
 
 
 def _service_result[T_Value](service: FlextService[T_Value]) -> T_Value:
-    return service.result()
+    return service.result
 
 
 def _value_lt_100(data: m.ConfigMap) -> bool:

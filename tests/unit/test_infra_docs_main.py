@@ -99,7 +99,7 @@ class TestRunAudit:
             mock_auditor.audit.return_value = r[
                 list[m.Infra.Docs.DocsPhaseReport]
             ].fail("audit error")
-            with patch("flext_infra.docs.__main__.output.error"):
+            with patch("flext_infra.docs.__main__.output"):
                 result = _run_audit(args)
             assert result == 1
 
@@ -218,7 +218,7 @@ class TestRunFix:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
             mock_fixer.fix.return_value = r[list[object]].fail("fix error")
-            with patch("flext_infra.docs.__main__.output.error"):
+            with patch("flext_infra.docs.__main__.output"):
                 result = _run_fix(args)
             assert result == 1
 
@@ -291,7 +291,7 @@ class TestRunBuild:
             mock_builder = Mock()
             mock_builder_class.return_value = mock_builder
             mock_builder.build.return_value = r[list[object]].fail("build error")
-            with patch("flext_infra.docs.__main__.output.error"):
+            with patch("flext_infra.docs.__main__.output"):
                 result = _run_build(args)
             assert result == 1
 
@@ -330,7 +330,7 @@ class TestRunGenerate:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
             mock_gen.generate.return_value = r[list[object]].fail("generate error")
-            with patch("flext_infra.docs.__main__.output.error"):
+            with patch("flext_infra.docs.__main__.output"):
                 result = _run_generate(args)
             assert result == 1
 
@@ -411,7 +411,7 @@ class TestRunValidate:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
             mock_val.validate.return_value = r[list[object]].fail("validate error")
-            with patch("flext_infra.docs.__main__.output.error"):
+            with patch("flext_infra.docs.__main__.output"):
                 result = _run_validate(args)
             assert result == 1
 

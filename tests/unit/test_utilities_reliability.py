@@ -171,9 +171,6 @@ class TestFlextUtilitiesReliability:
             def should_retry(attempt: int, error: str | None) -> bool:
                 return attempt == 0 and error == retry_error
 
-            def cleanup() -> None:
-                cleanups.append("done")
-
             return (op, should_retry, attempts, cleanups)
 
     @pytest.mark.parametrize(

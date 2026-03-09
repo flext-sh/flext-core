@@ -393,14 +393,12 @@ class TestConsolidateGroupsPhase:
 
     def test_consolidate_groups_removes_old_groups(self) -> None:
         """Test removing old optional-dependency groups."""
-        doc = tomlkit.document()
-        doc["project"] = {
-            "optional-dependencies": {
-                "dev": ["pytest"],
-                "docs": ["sphinx"],
-                "test": ["coverage"],
-            },
-        }
+        doc = tomlkit.parse(
+            "[project.optional-dependencies]\n"
+            'dev = ["pytest"]\n'
+            'docs = ["sphinx"]\n'
+            'test = ["coverage"]\n'
+        )
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, ["pytest"])
         assert any("removed" in c for c in changes)

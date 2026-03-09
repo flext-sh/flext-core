@@ -88,7 +88,8 @@ class DependencyAnalyzer:
                 parsed = self._parse_imports(fp)
                 if parsed.is_failure:
                     continue
-                for mod_root in parsed.value.imported_modules:
+                file_data: m.Infra.Refactor.FileImportData = parsed.value
+                for mod_root in file_data.imported_modules:
                     if mod_root in self._stdlib_roots:
                         continue
                     dep = self._pkg_index.get(mod_root)
@@ -106,7 +107,8 @@ class DependencyAnalyzer:
                 parsed = self._parse_imports(fp)
                 if parsed.is_failure:
                     continue
-                if class_name in parsed.value.imported_symbols:
+                file_data = parsed.value
+                if class_name in file_data.imported_symbols:
                     consumers.add(fp)
         return r[list[Path]].ok(sorted(consumers))
 
@@ -115,11 +117,12 @@ class DependencyAnalyzer:
         graph_result = self.build_import_graph()
         if graph_result.is_failure:
             return r[list[str]].fail(graph_result.error or "graph build failed")
-        graph = graph_result.value
+        graph: dict[str, list[str]] = graph_result.value
         if not graph:
             return r[list[str]].ok([])
         try:
-            return r[list[str]].ok(list(TopologicalSorter(graph).static_order()))
+            sorter: TopologicalSorter[str] = TopologicalSorter(graph)
+            return r[list[str]].ok(list(sorter.static_order()))
         except CycleError:
             return r[list[str]].ok(sorted(graph))
 
@@ -172,7 +175,8 @@ class DependencyAnalyzer:
     ) -> list[Path]:
         grep_files = self._scan_import_files_with_ast_grep(project.src_path)
         if grep_files.is_success and grep_files.value:
-            return sorted(grep_files.value)
+            path_set: set[Path] = grep_files.value
+            return sorted(path_set)
         return sorted(self._iter_python_files(project.src_path))
 
     def _iter_python_files(self, src_path: Path) -> list[Path]:
@@ -188,7 +192,8 @@ class DependencyAnalyzer:
             result = self._run_ast_grep(src_path, pattern)
             if result.is_failure:
                 return r[set[Path]].fail(result.error or "ast-grep failed")
-            for entry in result.value:
+            entries: list[m.Infra.Refactor.AstGrepMatchEnvelope] = result.value
+            for entry in entries:
                 fp = Path(entry.file)
                 if not fp.is_absolute():
                     fp = (src_path / fp).resolve()
@@ -218,11 +223,13 @@ class DependencyAnalyzer:
         if not capture.value:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok([])
         try:
-            return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok(
+            json_raw: str | bytes | bytearray = capture.value
+            envelopes: list[m.Infra.Refactor.AstGrepMatchEnvelope] = (
                 TypeAdapter(list[m.Infra.Refactor.AstGrepMatchEnvelope]).validate_json(
-                    capture.value,
-                ),
+                    json_raw,
+                )
             )
+            return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].ok(envelopes)
         except ValidationError as exc:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(str(exc))
 

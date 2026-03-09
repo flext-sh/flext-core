@@ -10,9 +10,8 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextService, FlextSettings, c, m, p, r, u
+from flext_core import FlextContext, FlextService, FlextSettings, c, m, p, r, u
 from flext_core._models.service import FlextModelsService
-from flext_core.context import FlextContext
 
 
 class _Svc(FlextService[bool]):

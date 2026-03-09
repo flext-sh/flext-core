@@ -39,7 +39,7 @@ from pydantic import ConfigDict
 from flext_core import FlextResult, m, r, t
 
 
-class Examples:
+class Examples(object):
     """Base class for golden-file example scripts.
 
     Subclass once per ``ex_*.py`` module.  Implement ``exercise()`` to

@@ -6,7 +6,6 @@ from pathlib import Path
 
 from flext_infra.refactor.namespace_enforcer import (
     FlextInfraNamespaceEnforcer,
-    NamespaceEnforcementModels,
 )
 
 
@@ -94,14 +93,10 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     )
 
     assert report.total_manual_protocol_violations == 1
-    project_report: NamespaceEnforcementModels.ProjectEnforcementReport = (
-        report.projects[0]
-    )
-    violations: list[NamespaceEnforcementModels.ManualProtocolViolation] = (
-        project_report.manual_protocol_violations
-    )
+    project_report = report.projects[0]
+    violations = project_report.manual_protocol_violations
     assert len(violations) == 1
-    violation: NamespaceEnforcementModels.ManualProtocolViolation = violations[0]
+    violation = violations[0]
     assert violation.name == "ServiceContract"
     rendered = FlextInfraNamespaceEnforcer.render_text(report)
     assert "Manual protocols: 1" in rendered

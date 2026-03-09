@@ -136,26 +136,7 @@ def _toml_get(
         return None
     raw_value: t.ContainerValue | None = None
     if key in container:
-        candidate = container[key]
-        if isinstance(
-            candidate,
-            (
-                Item,
-                TOMLDocument,
-                dict,
-                list,
-                str,
-                int,
-                float,
-                bool,
-                type(None),
-                BaseModel,
-                Path,
-            ),
-        ):
-            raw_value = _normalize_container_value(candidate)
-        else:
-            return None
+        raw_value = _normalize_container_value(container[key])
     if raw_value is None:
         return None
     if isinstance(raw_value, (str, int, float, bool, type(None), BaseModel, Path)):
@@ -234,24 +215,30 @@ def discover_first_party_namespaces(project_dir: Path) -> list[str]:
 
 def _project_dev_groups(doc: tomlkit.TOMLDocument) -> dict[str, list[str]]:
     """Extract optional-dependencies groups from project table."""
-    project = _toml_get(doc, c.Infra.Toml.PROJECT)
-    if project is None or not isinstance(project, Table):
+    project_raw: object | None = None
+    if c.Infra.Toml.PROJECT in doc:
+        project_raw = doc[c.Infra.Toml.PROJECT]
+    if not isinstance(project_raw, (Table, dict)):
         return {}
-    optional = _toml_get(project, c.Infra.Toml.OPTIONAL_DEPENDENCIES)
-    if optional is None or not isinstance(optional, Table):
+    optional_raw: object | None = None
+    if c.Infra.Toml.OPTIONAL_DEPENDENCIES in project_raw:
+        optional_raw = project_raw[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
+    if not isinstance(optional_raw, (Table, dict)):
         return {}
+    opt_deps: Table | dict[str, t.ContainerValue] = optional_raw
+
+    def _group_values(group_key: str) -> list[str]:
+        value: t.ContainerValue | Item | None = None
+        if group_key in opt_deps:
+            value = opt_deps[group_key]
+        return _as_string_list(value)
+
     return {
-        c.Infra.Toml.DEV: _as_string_list(_toml_get(optional, c.Infra.Toml.DEV)),
-        c.Infra.Directories.DOCS: _as_string_list(
-            _toml_get(optional, c.Infra.Toml.DOCS),
-        ),
-        c.Infra.Gates.SECURITY: _as_string_list(
-            _toml_get(optional, c.Infra.Toml.SECURITY),
-        ),
-        c.Infra.Toml.TEST: _as_string_list(_toml_get(optional, c.Infra.Toml.TEST)),
-        c.Infra.Directories.TYPINGS: _as_string_list(
-            _toml_get(optional, c.Infra.Directories.TYPINGS),
-        ),
+        c.Infra.Toml.DEV: _group_values(c.Infra.Toml.DEV),
+        c.Infra.Directories.DOCS: _group_values(c.Infra.Toml.DOCS),
+        c.Infra.Gates.SECURITY: _group_values(c.Infra.Toml.SECURITY),
+        c.Infra.Toml.TEST: _group_values(c.Infra.Toml.TEST),
+        c.Infra.Directories.TYPINGS: _group_values(c.Infra.Directories.TYPINGS),
     }
 
 

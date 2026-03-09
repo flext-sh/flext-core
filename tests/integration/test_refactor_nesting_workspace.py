@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
-from flext_infra import t
+from flext_infra import m
 from flext_infra.refactor.dependency_analyzer import DependencyAnalyzer
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
@@ -29,8 +28,14 @@ class TestWorkspaceLevelRefactor:
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success
-            files_scanned += cast("int", result.value["files_scanned"])
-            violations_count += cast("int", result.value["violations_count"])
+            raw_files = result.value.get("files_scanned", 0)
+            files_scanned += (
+                int(raw_files) if isinstance(raw_files, (int, float)) else 0
+            )
+            raw_violations = result.value.get("violations_count", 0)
+            violations_count += (
+                int(raw_violations) if isinstance(raw_violations, (int, float)) else 0
+            )
         assert files_scanned >= 3
         assert violations_count >= 0
 
@@ -61,14 +66,17 @@ class TestWorkspaceLevelRefactor:
                 '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n',
             )
         scanner = FlextInfraRefactorLooseClassScanner()
-        all_violations: list[t.Infra.ContainerDict] = []
+        all_violations: list[m.Infra.Refactor.LooseClassViolation] = []
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success
-            all_violations.extend(
-                cast("list[t.Infra.ContainerDict]", result.value.get("violations", [])),
-            )
+            violations_raw = result.value.get("violations", [])
+            if isinstance(violations_raw, list):
+                all_violations.extend(
+                    v_item
+                    for v_item in violations_raw
+                    if isinstance(v_item, m.Infra.Refactor.LooseClassViolation)
+                )
         assert len(all_violations) >= 3
         for v in all_violations:
-            confidence = v.get("confidence")
-            assert confidence in {"high", "medium", "low"}
+            assert v.confidence in {"high", "medium", "low"}

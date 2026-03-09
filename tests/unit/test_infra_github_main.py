@@ -31,7 +31,7 @@ def _orchestration_result(
         total=total,
         success=max(total - fail, 0),
         fail=fail,
-        results=[],
+        results=(),
     )
 
 

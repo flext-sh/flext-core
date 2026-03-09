@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator
 from types import SimpleNamespace
 from typing import cast, override
 
@@ -140,9 +140,8 @@ def test_mixins_result_and_model_conversion_paths(
             msg = "boom"
             raise RuntimeError(msg)
 
-    with pytest.raises(RuntimeError, match="boom") as exc_info:
-        _ = x.to_dict(cast("Mapping[str, t.ContainerValue]", _BadMap()))
-    assert exc_info.value is not None
+    with pytest.raises(RuntimeError, match="boom"):
+        x.to_dict(_BadMap())
 
 
 def test_mixins_runtime_bootstrap_and_track_paths(

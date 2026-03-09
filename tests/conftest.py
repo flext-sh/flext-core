@@ -485,7 +485,7 @@ def reset_global_container() -> Generator[None]:
     due to shared global state.
     """
     yield
-    FlextContainer._global_instance = None
+    FlextContainer.reset_for_testing()
     FlextSettings.reset_for_testing()
 
 

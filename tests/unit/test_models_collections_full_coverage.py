@@ -28,9 +28,13 @@ class _Results(m.CollectionsResults):
     data: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
 
+def _default_tags() -> list[str]:
+    return []
+
+
 class _Options(m.CollectionsOptions):
     score: int | float | bool | None = None
-    tags: list[t.ContainerValue] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=_default_tags)
 
 
 class _Config(m.CollectionsConfig):

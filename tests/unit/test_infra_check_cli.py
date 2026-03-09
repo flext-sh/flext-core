@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 from _pytest.monkeypatch import MonkeyPatch
 
-from flext_core import FlextResult as r
+from flext_core import r
 from flext_infra.check.services import FlextInfraWorkspaceChecker, run_cli
 
 

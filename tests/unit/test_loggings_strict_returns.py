@@ -248,19 +248,25 @@ class TestProtocolComplianceStructlogLogger:
     def test_all_protocol_methods_return_result_bool(self) -> None:
         """Verify all protocol methods return r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
-        protocol_methods = [
-            "debug",
-            "info",
-            "warning",
-            "error",
-            "critical",
-            "exception",
+        protocol_calls = [
+            ("debug", logger.debug("test debug message")),
+            ("info", logger.info("test info message")),
+            ("warning", logger.warning("test warning message")),
+            ("error", logger.error("test error message")),
+            ("critical", logger.critical("test critical message")),
         ]
-        for method_name in protocol_methods:
-            method = getattr(logger, method_name, None)
-            assert method is not None, f"Logger should have {method_name} method"
-            assert callable(method), f"{method_name} should be callable"
-            result = method(f"test {method_name} message")
+        exception_message = "test exception message"
+        try:
+            raise ValueError(exception_message)
+        except ValueError:
+            protocol_calls.append((
+                "exception",
+                logger.exception(exception_message),
+            ))
+        for method_name, result in protocol_calls:
+            assert result is not None, (
+                f"{method_name}() should return r[bool], not None"
+            )
             assert isinstance(result, r), (
                 f"{method_name}() should return r[bool], got {type(result)}"
             )

@@ -13,8 +13,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import Final, TextIO
+from typing import Final, TextIO, override
 
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, SkipValidation
+
+from flext_core import t
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 
 
@@ -50,7 +53,7 @@ SYM_ARROW: Final[str] = "→" if _USE_UNICODE else "->"
 SYM_BULLET: Final[str] = "•" if _USE_UNICODE else "*"
 
 
-class FlextInfraOutput:
+class FlextInfraOutput(BaseModel):
     """Structured terminal output for infrastructure commands.
 
     All methods write to ``sys.stderr`` so that stdout remains clean for
@@ -61,17 +64,35 @@ class FlextInfraOutput:
     in tests or downstream code.
     """
 
-    def __init__(
-        self,
-        *,
-        use_color: bool | None = None,
-        use_unicode: bool | None = None,
-        stream: TextIO | None = None,
-    ) -> None:
-        """Initialize structured terminal output."""
-        self.use_color = _USE_COLOR if use_color is None else use_color
-        self.use_unicode = _USE_UNICODE if use_unicode is None else use_unicode
-        self.stream = sys.stderr if stream is None else stream
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    use_color: bool = Field(
+        default_factory=lambda: _USE_COLOR,
+        description="Whether to use ANSI colors in output",
+    )
+    use_unicode: bool = Field(
+        default_factory=lambda: _USE_UNICODE,
+        description="Whether to use Unicode symbols in output",
+    )
+    stream: SkipValidation[TextIO] = Field(
+        default_factory=lambda: sys.stderr,
+        description="Output stream for writing messages",
+        exclude=True,
+    )
+    _reset: str = PrivateAttr(default="")
+    _red: str = PrivateAttr(default="")
+    _green: str = PrivateAttr(default="")
+    _yellow: str = PrivateAttr(default="")
+    _blue: str = PrivateAttr(default="")
+    _bold: str = PrivateAttr(default="")
+    _sym_ok: str = PrivateAttr(default="")
+    _sym_fail: str = PrivateAttr(default="")
+    _sym_warn: str = PrivateAttr(default="")
+    _sym_skip: str = PrivateAttr(default="")
+
+    @override
+    def model_post_init(self, __context: t.ContainerValue, /) -> None:
+        """Initialize ANSI escape sequences based on color and unicode settings."""
         self._reset = "\x1b[0m" if self.use_color else ""
         self._red = "\x1b[31m" if self.use_color else ""
         self._green = "\x1b[32m" if self.use_color else ""

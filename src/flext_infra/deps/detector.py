@@ -73,11 +73,16 @@ class ConsolidateGroupsPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument, canonical_dev: list[str]) -> list[str]:
         changes: list[str] = []
-        project = toml_get(doc, c.Infra.Toml.PROJECT)
+        project: object | None = None
+        if c.Infra.Toml.PROJECT in doc:
+            project = doc[c.Infra.Toml.PROJECT]
         if not isinstance(project, Table):
             project = tomlkit.table()
             doc[c.Infra.Toml.PROJECT] = project
-        optional = toml_get(project, c.Infra.Toml.OPTIONAL_DEPENDENCIES)
+
+        optional: object | None = None
+        if c.Infra.Toml.OPTIONAL_DEPENDENCIES in project:
+            optional = project[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
         if not isinstance(optional, Table):
             optional = tomlkit.table()
             project[c.Infra.Toml.OPTIONAL_DEPENDENCIES] = optional
@@ -103,14 +108,17 @@ class ConsolidateGroupsPhase:
             if old_key in optional:
                 del optional[old_key]
                 changes.append(f"project.optional-dependencies.{old_key} removed")
-        tool = toml_get(doc, c.Infra.Toml.TOOL)
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         poetry = ensure_table(tool, c.Infra.Toml.POETRY)
-        poetry_group = toml_get(poetry, c.Infra.Toml.GROUP)
-        if not isinstance(poetry_group, Table):
-            poetry_group = None
+        poetry_group_raw: object | None = None
+        if c.Infra.Toml.GROUP in poetry:
+            poetry_group_raw = poetry[c.Infra.Toml.GROUP]
+        poetry_group = poetry_group_raw if isinstance(poetry_group_raw, Table) else None
         poetry_dev_table: Table | None = None
         for old_group in (
             c.Infra.Toml.DOCS,
@@ -120,10 +128,14 @@ class ConsolidateGroupsPhase:
         ):
             if poetry_group is None:
                 continue
-            old_group_table = toml_get(poetry_group, old_group)
+            old_group_table: object | None = None
+            if old_group in poetry_group:
+                old_group_table = poetry_group[old_group]
             if not isinstance(old_group_table, Table):
                 continue
-            old_deps = toml_get(old_group_table, c.Infra.Toml.DEPENDENCIES)
+            old_deps: object | None = None
+            if c.Infra.Toml.DEPENDENCIES in old_group_table:
+                old_deps = old_group_table[c.Infra.Toml.DEPENDENCIES]
             if isinstance(old_deps, Table):
                 if poetry_dev_table is None:
                     poetry_dev_table = ensure_table(

@@ -1054,10 +1054,10 @@ def test_main_with_changes_and_dry_run(tmp_path: Path) -> None:
                     "  PEP621: old -> new",
                 ]),
             ):
-                with patch("flext_infra.deps.path_sync.output.info") as mock_info:
+                with patch("flext_infra.deps.path_sync.output") as mock_output:
                     result = main()
                     assert result == 0
-                    calls = [str(call) for call in mock_info.call_args_list]
+                    calls = [str(call) for call in mock_output.info.call_args_list]
                     assert any("[DRY-RUN]" in str(call) for call in calls)
 
 
@@ -1074,10 +1074,10 @@ def test_main_with_changes_no_dry_run(tmp_path: Path) -> None:
                     "  PEP621: old -> new",
                 ]),
             ):
-                with patch("flext_infra.deps.path_sync.output.info") as mock_info:
+                with patch("flext_infra.deps.path_sync.output") as mock_output:
                     result = main()
                     assert result == 0
-                    calls = [str(call) for call in mock_info.call_args_list]
+                    calls = [str(call) for call in mock_output.info.call_args_list]
                     assert len(calls) > 0
 
 
@@ -1102,7 +1102,7 @@ def test_main_project_obj_not_dict_first_loop(tmp_path: Path) -> None:
                 "flext_infra.deps.path_sync.FlextInfraTomlService.read",
                 return_value=r[dict[str, object]].ok({"project": "not-a-dict"}),
             ):
-                with patch("flext_infra.deps.path_sync.output.info"):
+                with patch("flext_infra.deps.path_sync.output"):
                     result = main()
                     assert result == 0
 
@@ -1125,6 +1125,6 @@ def test_main_project_obj_not_dict_second_loop(tmp_path: Path) -> None:
                 "flext_infra.deps.path_sync.FlextInfraTomlService.read",
                 return_value=r[dict[str, object]].ok({"project": "not-a-dict"}),
             ):
-                with patch("flext_infra.deps.path_sync.output.info"):
+                with patch("flext_infra.deps.path_sync.output"):
                     result = main()
                     assert result == 0

@@ -43,8 +43,9 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
         def __repr__(self) -> str:
             return "503"
 
+    code_str: t.Scalar = str(_CodeObj())
     converted = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy([
-        str(_CodeObj()),
+        code_str,
     ])
     assert converted == [503]
     status_codes: list[t.Scalar] = ["503"]

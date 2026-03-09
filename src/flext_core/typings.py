@@ -14,6 +14,7 @@ from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
+from types import ModuleType
 from typing import Annotated, Literal, ParamSpec, TypeAlias, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -103,7 +104,9 @@ class FlextTypes:
     TYPE_CHECKING: TypeAlias = bool
     Dict: TypeAlias = Mapping[str, ContainerValue]
     # Return type for PEP 562 __getattr__ on packages; avoids Any/object.
-    ModuleExport: TypeAlias = type | Callable[..., ContainerValue] | ContainerValue
+    ModuleExport: TypeAlias = (
+        type | ModuleType | Callable[..., ContainerValue] | ContainerValue
+    )
 
     class Validation:
         """Validation type aliases with Pydantic constraints."""

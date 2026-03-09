@@ -50,56 +50,56 @@ class TestMainHelpAndErrors:
     def test_main_with_help_flag(self) -> None:
         """Test main with -h flag."""
         with patch("sys.argv", ["prog", "-h"]):
-            with patch("flext_infra.deps.__main__.output.info") as mock_info:
+            with patch("flext_infra.deps.__main__.output") as mock_output:
                 with patch(
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
-                    mock_info.assert_called()
+                    mock_output.info.assert_called()
 
     def test_main_with_help_long_flag(self) -> None:
         """Test main with --help flag."""
         with patch("sys.argv", ["prog", "--help"]):
-            with patch("flext_infra.deps.__main__.output.info") as mock_info:
+            with patch("flext_infra.deps.__main__.output") as mock_output:
                 with patch(
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 0
-                    mock_info.assert_called()
+                    mock_output.info.assert_called()
 
     def test_main_with_no_arguments(self) -> None:
         """Test main with no arguments."""
         with patch("sys.argv", ["prog"]):
-            with patch("flext_infra.deps.__main__.output.info") as mock_info:
+            with patch("flext_infra.deps.__main__.output") as mock_output:
                 with patch(
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 1
-                    mock_info.assert_called()
+                    mock_output.info.assert_called()
 
     def test_main_with_unknown_subcommand(self) -> None:
         """Test main with unknown subcommand."""
         with patch("sys.argv", ["prog", "unknown"]):
-            with patch("flext_infra.deps.__main__.output.error") as mock_error:
+            with patch("flext_infra.deps.__main__.output") as mock_output:
                 with patch(
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     result = main()
                     assert result == 1
-                    mock_error.assert_called()
+                    mock_output.error.assert_called()
 
     def test_main_help_lists_subcommands(self) -> None:
         """Test main help output lists all subcommands."""
         with patch("sys.argv", ["prog", "-h"]):
-            with patch("flext_infra.deps.__main__.output.info") as mock_info:
+            with patch("flext_infra.deps.__main__.output") as mock_output:
                 with patch(
                     "flext_infra.deps.__main__.FlextRuntime.ensure_structlog_configured",
                 ):
                     main()
-                    calls = [str(call) for call in mock_info.call_args_list]
+                    calls = [str(call) for call in mock_output.info.call_args_list]
                     assert any("detect" in str(call) for call in calls)
 
 

@@ -106,6 +106,35 @@ class FlextInfraPyprojectModernizer:
         changes: list[str] = []
         if shared_written:
             changes.append(f"generated {shared_path.relative_to(path.parent)}")
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
+        if isinstance(tool, Table):
+            poetry: object | None = None
+            if c.Infra.Toml.POETRY in tool:
+                poetry = tool[c.Infra.Toml.POETRY]
+            if isinstance(poetry, Table):
+                group: object | None = None
+                if c.Infra.Toml.GROUP in poetry:
+                    group = poetry[c.Infra.Toml.GROUP]
+                if isinstance(group, Table):
+                    empty_groups: list[str] = []
+                    for name in _table_string_keys(group):
+                        group_item: object | None = None
+                        if name in group:
+                            group_item = group[name]
+                        if isinstance(group_item, Table):
+                            deps: object | None = None
+                            if c.Infra.Toml.DEPENDENCIES in group_item:
+                                deps = group_item[c.Infra.Toml.DEPENDENCIES]
+                            if isinstance(deps, Table) and len(deps) == 0:
+                                empty_groups.append(name)
+                    for name in empty_groups:
+                        del group[name]
+                        changes.append(f"removed empty poetry group '{name}'")
+                    if len(group) == 0:
+                        del poetry[c.Infra.Toml.GROUP]
+                        changes.append("removed empty poetry group container")
         changes.extend(ConsolidateGroupsPhase().apply(doc, canonical_dev))
         changes.extend(EnsurePytestConfigPhase().apply(doc))
         changes.extend(EnsurePyreflyConfigPhase().apply(doc, is_root=is_root))
@@ -117,25 +146,6 @@ class FlextInfraPyprojectModernizer:
             EnsureRuffConfigPhase().apply(doc, path=path, workspace_root=self.root),
         )
         changes.extend(EnsurePyrightConfigPhase().apply(doc, is_root=is_root))
-        tool = _toml_get(doc, c.Infra.Toml.TOOL)
-        if isinstance(tool, Table):
-            poetry = _toml_get(tool, c.Infra.Toml.POETRY)
-            if isinstance(poetry, Table):
-                group = _toml_get(poetry, c.Infra.Toml.GROUP)
-                if isinstance(group, Table):
-                    empty_groups: list[str] = []
-                    for name in _table_string_keys(group):
-                        group_item = _toml_get(group, name)
-                        if isinstance(group_item, Table):
-                            deps = _toml_get(group_item, c.Infra.Toml.DEPENDENCIES)
-                            if isinstance(deps, Table) and len(deps) == 0:
-                                empty_groups.append(name)
-                    for name in empty_groups:
-                        del group[name]
-                        changes.append(f"removed empty poetry group '{name}'")
-                    if len(group) == 0:
-                        del poetry[c.Infra.Toml.GROUP]
-                        changes.append("removed empty poetry group container")
         rendered = doc.as_string()
         if not skip_comments:
             rendered, comment_changes = InjectCommentsPhase().apply(rendered)

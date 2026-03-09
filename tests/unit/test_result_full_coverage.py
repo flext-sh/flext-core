@@ -20,6 +20,12 @@ class _ValidationLikeError(ValueError):
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
+def test_validation_like_error_structure() -> None:
+    err = _ValidationLikeError("validation")
+    details = err.errors()
+    assert details[0]["msg"] == "bad value"
+
+
 def test_type_guards_and_protocol_name() -> None:
     ok_res = r[int].ok(1)
     fail_res: r[int] = cast("r[int]", r.fail("x"))

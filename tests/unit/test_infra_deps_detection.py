@@ -470,9 +470,10 @@ class TestLoadDependencyLimits:
         """Test unconvertible values are skipped."""
         service = FlextInfraDependencyDetectionService()
         service.toml = Mock()
+        bad_values: set[str] = set()
         service.toml.read.return_value = r[dict[str, t.Any]].ok({
             "good": "val",
-            "bad": set(),
+            "bad": bad_values,
         })
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         assert "good" in result

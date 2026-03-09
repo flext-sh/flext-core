@@ -80,9 +80,8 @@ class _BrokenDumpModel(BaseModel):
         if name == "model_dump":
 
             def _broken_dump(
-                value: t.Tests.TestContainerValue,
+                _value: t.Tests.TestContainerValue = None,
             ) -> bool:
-                _ = value
                 return True
 
             return _broken_dump

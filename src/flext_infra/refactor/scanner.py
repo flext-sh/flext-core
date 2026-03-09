@@ -5,13 +5,19 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
-from typing import override
+from typing import TypeAlias, override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, m, t, u
+
+RConfigMapping: TypeAlias = r[t.ConfigurationMapping]
+RListPath: TypeAlias = r[list[Path]]
+RPath: TypeAlias = r[Path]
+RListClassOccurrence: TypeAlias = r[list[m.Infra.Refactor.ClassOccurrence]]
+RDictPathGrep: TypeAlias = r[dict[Path, dict[str, int]]]
 
 
 class TopLevelClassCollector(cst.CSTVisitor):
@@ -40,13 +46,14 @@ class TopLevelClassCollector(cst.CSTVisitor):
 class FlextInfraRefactorLooseClassScanner:
     """Scan a project tree and report top-level classes lacking namespace prefixes."""
 
-    def scan(self, project_root: Path) -> r[t.ConfigurationMapping]:
+    def scan(self, project_root: Path) -> RConfigMapping:
         """Scan *project_root*/src and return a violation report dict."""
         files_result = self._discover_python_files(project_root)
         if files_result.is_failure:
-            return r[t.ConfigurationMapping].fail(
+            out: RConfigMapping = r[t.ConfigurationMapping].fail(
                 files_result.error or "discovery failed",
             )
+            return out
         discovered_files: list[Path] = files_result.value
         grep_result = self._scan_with_ast_grep(project_root)
         grep_index: dict[Path, dict[str, int]] = (
@@ -73,7 +80,7 @@ class FlextInfraRefactorLooseClassScanner:
                 if viol.class_name in targets_found:
                     targets_found[viol.class_name] = True
         counters = Counter(v.confidence for v in violations)
-        return r[t.ConfigurationMapping].ok({
+        out2: RConfigMapping = r[t.ConfigurationMapping].ok({
             "rule": c.Infra.ReportKeys.CLASS_NESTING,
             "files_scanned": len(discovered_files),
             "classes_scanned": classes_scanned,
@@ -82,6 +89,7 @@ class FlextInfraRefactorLooseClassScanner:
             "required_targets": targets_found,
             c.Infra.ReportKeys.VIOLATIONS: violations,
         })
+        return out2
 
     def _build_violation(
         self,
@@ -119,16 +127,19 @@ class FlextInfraRefactorLooseClassScanner:
             return "high"
         return "medium" if parts else c.Infra.Severity.LOW
 
-    def _discover_python_files(self, project_root: Path) -> r[list[Path]]:
+    def _discover_python_files(self, project_root: Path) -> RListPath:
         src = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         if not src.is_dir():
-            return r[list[Path]].fail(f"src not found: {src}")
-        return r[list[Path]].ok([
+            out: RListPath = r[list[Path]].fail(f"src not found: {src}")
+            return out
+        file_list: list[Path] = [
             fp
             for fp in sorted(src.rglob(c.Infra.Extensions.PYTHON_GLOB))
             if "__pycache__" not in fp.parts
             and (not (fp.name.startswith("__") and fp.name != c.Infra.Files.INIT_PY))
-        ])
+        ]
+        out2: RListPath = r[list[Path]].ok(file_list)
+        return out2
 
     def _expected_prefix_for_module(self, rel_path: Path) -> str:
         parts = rel_path.parts
@@ -146,27 +157,36 @@ class FlextInfraRefactorLooseClassScanner:
         norm = c.Infra.Refactor.CLASS_PATTERN.sub(" ", value.replace("_", " "))
         return "".join(w.capitalize() for w in norm.split())
 
-    def _relative_module_path(self, project_root: Path, file_path: Path) -> r[Path]:
+    def _relative_module_path(self, project_root: Path, file_path: Path) -> RPath:
         src = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
         try:
-            return r[Path].ok(file_path.relative_to(src))
+            rel: Path = file_path.relative_to(src)
+            out: RPath = r[Path].ok(rel)
+            return out
         except ValueError as exc:
-            return r[Path].fail(str(exc))
+            out2: RPath = r[Path].fail(str(exc))
+            return out2
 
     def _scan_file_with_libcst(
         self,
         file_path: Path,
-    ) -> r[list[m.Infra.Refactor.ClassOccurrence]]:
+    ) -> RListClassOccurrence:
         try:
             src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
             tree = cst.parse_module(src)
             col = TopLevelClassCollector()
             tree.visit(col)
-            return r[list[m.Infra.Refactor.ClassOccurrence]].ok(col.classes)
+            out: RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]].ok(
+                col.classes,
+            )
+            return out
         except (OSError, UnicodeDecodeError, cst.ParserSyntaxError) as exc:
-            return r[list[m.Infra.Refactor.ClassOccurrence]].fail(f"{file_path}: {exc}")
+            out2: RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]].fail(
+                f"{file_path}: {exc}"
+            )
+            return out2
 
-    def _scan_with_ast_grep(self, project_root: Path) -> r[dict[Path, dict[str, int]]]:
+    def _scan_with_ast_grep(self, project_root: Path) -> RDictPathGrep:
         cmd = [
             "sg",
             "--pattern",
@@ -178,17 +198,21 @@ class FlextInfraRefactorLooseClassScanner:
         ]
         capture = u.Infra.Refactor.capture_output(cmd)
         if capture.is_failure:
-            return r[dict[Path, dict[str, int]]].fail(
+            out: RDictPathGrep = r[dict[Path, dict[str, int]]].fail(
                 capture.error or "ast-grep failed",
             )
+            return out
         if not capture.value:
-            return r[dict[Path, dict[str, int]]].ok({})
+            out2: RDictPathGrep = r[dict[Path, dict[str, int]]].ok({})
+            return out2
         try:
+            json_raw: str | bytes | bytearray = capture.value
             entries = TypeAdapter(
                 list[m.Infra.Refactor.AstGrepMatchEnvelope],
-            ).validate_json(capture.value)
+            ).validate_json(json_raw)
         except ValidationError as exc:
-            return r[dict[Path, dict[str, int]]].fail(str(exc))
+            out3: RDictPathGrep = r[dict[Path, dict[str, int]]].fail(str(exc))
+            return out3
         idx: dict[Path, dict[str, int]] = {}
         for entry in entries:
             name = entry.symbol_name
@@ -201,7 +225,8 @@ class FlextInfraRefactorLooseClassScanner:
             if not fp.is_absolute():
                 fp = (project_root / fp).resolve()
             idx.setdefault(fp, {}).setdefault(name, line)
-        return r[dict[Path, dict[str, int]]].ok(idx)
+        out4: RDictPathGrep = r[dict[Path, dict[str, int]]].ok(idx)
+        return out4
 
 
 __all__ = ["FlextInfraRefactorLooseClassScanner"]

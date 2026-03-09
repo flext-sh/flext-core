@@ -28,7 +28,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult as r, m, t
+from flext_core import m, r, t
 from flext_tests import t as tests_t, u
 from tests.constants import TestsFlextConstants
 from tests.models import m as tm

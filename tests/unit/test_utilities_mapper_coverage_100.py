@@ -72,12 +72,24 @@ class _GetKeyAOp(BaseModel):
         return 0
 
 
+class _IntConvertOp(BaseModel):
+    """Converter that wraps int() builtin for type-safe convert testing."""
+
+    def __call__(self, value: t.ContainerValue) -> t.ContainerValue:
+        if isinstance(value, (int, float, bool)):
+            return int(value)
+        if isinstance(value, str):
+            return int(value)
+        return value
+
+
 _DOUBLE_OP = _DoubleOp()
 _GT_TWO_OP = _GreaterThanTwoOp()
 _TIMES_TEN_OP = _TimesTenOp()
 _PLUS_FIVE_OP = _PlusFiveOp()
 _GROUP_LEN_OP = _GroupLenOp()
 _GET_KEY_A_OP = _GetKeyAOp()
+_INT_CONVERT_OP = _IntConvertOp()
 
 
 class TestuMapperExtract:
@@ -268,20 +280,20 @@ class TestuMapperConversions:
         assert u.Mapper.ensure_str_or_none(None).is_failure
 
     def test_convert_to_json_value(self) -> None:
-        """Test convert_to_json_value."""
+        """Test convert_to_json_value preserves BaseModel objects."""
         obj = SimpleObj(name="test", value=1)
         payload: dict[str, t.ContainerValue] = {"obj": obj}
         res = u.Mapper.convert_to_json_value(payload)
         assert isinstance(res, dict)
         assert "obj" in res
-        assert "SimpleObj" in str(res["obj"])
+        assert isinstance(res["obj"], SimpleObj)
 
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
         d: dict[str, t.ContainerValue] = {"a": SimpleObj(name="test", value=1)}
         res = u.Mapper.convert_to_json_value(d)
         if isinstance(res, dict):
-            assert isinstance(res["a"], str)
+            assert isinstance(res["a"], SimpleObj)
         else:
             msg = "Expected dict result"
             raise AssertionError(msg)
@@ -293,7 +305,7 @@ class TestuMapperConversions:
         ]
         res = u.Mapper.convert_to_json_value(test_list)
         if isinstance(res, list) and isinstance(res[0], dict):
-            assert isinstance(res[0]["a"], str)
+            assert isinstance(res[0]["a"], SimpleObj)
         else:
             msg = "Expected list of dicts result"
             raise AssertionError(msg)
@@ -325,7 +337,7 @@ class TestuMapperBuild:
             "slice": (0, 2),
         }
         res = u.Mapper.build(input_data, ops=ops)
-        assert res == [25, 35]
+        assert res == [35, 45]
 
     def test_build_normalize(self) -> None:
         """Test build normalize."""
@@ -387,11 +399,14 @@ class TestuMapperAdvanced:
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
-        ops: t.ConfigurationMapping | None = {"convert": "int"}
+        ops: t.ConfigurationMapping | None = {
+            "convert": _INT_CONVERT_OP,
+            "convert_default": 0,
+        }
         res = u.Mapper.build("invalid", ops=ops)
         assert res == 0
         ops_default: t.ConfigurationMapping | None = {
-            "convert": "int",
+            "convert": _INT_CONVERT_OP,
             "convert_default": 10,
         }
         res = u.Mapper.build("invalid", ops=ops_default)

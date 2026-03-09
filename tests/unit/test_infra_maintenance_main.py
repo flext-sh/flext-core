@@ -58,7 +58,7 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail("error message")
-            with patch("flext_infra.maintenance.__main__.output.error"):
+            with patch("flext_infra.maintenance.__main__.output"):
                 result = main([])
             assert result == 1
 
@@ -70,11 +70,11 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail(None)
-            with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
+            with patch("flext_infra.maintenance.__main__.output") as mock_output:
                 result = main([])
             assert result == 1
-            mock_error.assert_called_once()
-            call_args = mock_error.call_args[0][0]
+            mock_output.error.assert_called_once()
+            call_args = mock_output.error.call_args[0][0]
             assert "maintenance failed" in call_args
 
     def test_main_with_check_flag(self) -> None:
@@ -198,9 +198,9 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail("test error")
-            with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
+            with patch("flext_infra.maintenance.__main__.output") as mock_output:
                 main([])
-            mock_error.assert_called_once()
+            mock_output.error.assert_called_once()
 
     def test_main_error_output_not_called_on_success(self) -> None:
         """Test main() does not call output.error on success."""
@@ -210,9 +210,9 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].ok(0)
-            with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
+            with patch("flext_infra.maintenance.__main__.output") as mock_output:
                 main([])
-            mock_error.assert_not_called()
+            mock_output.error.assert_not_called()
 
     def test_main_with_empty_argv_list(self) -> None:
         """Test main() with empty argv list."""
@@ -261,9 +261,9 @@ class TestMaintenanceMain:
             mock_enforcer = Mock()
             mock_enforcer_class.return_value = mock_enforcer
             mock_enforcer.execute.return_value = r[int | None].fail(error_msg)
-            with patch("flext_infra.maintenance.__main__.output.error") as mock_error:
+            with patch("flext_infra.maintenance.__main__.output") as mock_output:
                 main([])
-            mock_error.assert_called_once_with(error_msg)
+            mock_output.error.assert_called_once_with(error_msg)
 
     def test_main_calls_sys_exit(self) -> None:
         """Test main() calls sys.exit."""

@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict
 
 from flext_core import r
 from flext_tests import u
-from tests.test_utils import assertion_helpers
 
 
 class TestFlextTestsUtilitiesResult:
@@ -124,19 +123,19 @@ class TestFlextTestsUtilitiesFactory:
     def test_create_result_success(self) -> None:
         """Test create_result with value."""
         result = u.Tests.Factory.create_result("test_value")
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert result.value == "test_value"
 
     def test_create_result_failure(self) -> None:
         """Test create_result with error."""
         result: r[str] = u.Tests.Factory.create_result(None, error="test error")
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        assert result.is_failure
         assert result.error == "test error"
 
     def test_create_result_no_args(self) -> None:
         """Test create_result with no arguments returns failure."""
         result: r[str] = u.Tests.Factory.create_result(None)
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        assert result.is_failure
         assert result.error == "No value or error provided"
 
     def test_create_test_data(self) -> None:

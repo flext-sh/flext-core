@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import tomlkit
 
-from flext_core import FlextResult as r
+from flext_core import r
 from flext_infra import m
 from flext_infra.check.__main__ import main as check_main
 from flext_infra.check.fix_pyrefly_config import main as fix_pyrefly_main
@@ -554,7 +554,9 @@ class TestRunCLI:
 
     def test_run_cli_run_command_success(self) -> None:
         """Test run_cli with run command success."""
-        with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
@@ -566,7 +568,9 @@ class TestRunCLI:
 
     def test_run_cli_run_command_failure(self) -> None:
         """Test run_cli with run command failure."""
-        with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=False)
@@ -578,7 +582,9 @@ class TestRunCLI:
 
     def test_run_cli_run_command_error(self) -> None:
         """Test run_cli with run command error."""
-        with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
             mock.run_projects.return_value = r[list[_ProjectResult]].fail("error")
@@ -587,7 +593,9 @@ class TestRunCLI:
 
     def test_run_cli_fix_pyrefly_config_success(self) -> None:
         """Test run_cli with fix-pyrefly-config command success."""
-        with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraConfigFixer"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
             exit_code = run_cli(["fix-pyrefly-config"])
@@ -595,7 +603,9 @@ class TestRunCLI:
 
     def test_run_cli_fix_pyrefly_config_failure(self) -> None:
         """Test run_cli with fix-pyrefly-config command failure."""
-        with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraConfigFixer"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].fail("error")
             exit_code = run_cli(["fix-pyrefly-config"])
@@ -608,7 +618,9 @@ class TestRunCLI:
 
     def test_run_cli_with_relative_reports_dir(self, tmp_path: Path) -> None:
         """Test run_cli resolves relative reports directory."""
-        with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker"
+        ) as mock_cls:
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 mock = mock_cls.return_value
                 mock.parse_gate_csv.return_value = ["lint"]
@@ -631,7 +643,9 @@ class TestRunCLI:
 
     def test_run_cli_with_fail_fast_flag(self) -> None:
         """Test run_cli passes fail_fast flag."""
-        with patch("flext_infra.check.services.FlextInfraWorkspaceChecker") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.parse_gate_csv.return_value = ["lint"]
             gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
@@ -652,7 +666,9 @@ class TestRunCLI:
 
     def test_run_cli_fix_pyrefly_with_dry_run(self) -> None:
         """Test run_cli fix-pyrefly-config with dry_run flag."""
-        with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraConfigFixer"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
             exit_code = run_cli(["fix-pyrefly-config", "--dry-run"])
@@ -662,7 +678,9 @@ class TestRunCLI:
 
     def test_run_cli_fix_pyrefly_with_verbose(self) -> None:
         """Test run_cli fix-pyrefly-config with verbose flag."""
-        with patch("flext_infra.check.services.FlextInfraConfigFixer") as mock_cls:
+        with patch(
+            "flext_infra.check.workspace_check.FlextInfraConfigFixer"
+        ) as mock_cls:
             mock = mock_cls.return_value
             mock.run.return_value = r[list[str]].ok([])
             exit_code = run_cli(["fix-pyrefly-config", "--verbose"])
@@ -1212,7 +1230,7 @@ class TestWorkspaceCheckerRunCommand:
         """Test _run returns command output on success."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         with patch(
-            "flext_infra.check.services.FlextInfraCommandRunner.run_raw",
+            "flext_infra.check.workspace_check.FlextInfraCommandRunner.run_raw",
         ) as mock_run:
             mock_run.return_value = r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0),
@@ -1225,7 +1243,7 @@ class TestWorkspaceCheckerRunCommand:
         """Test _run handles command execution failure."""
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         with patch(
-            "flext_infra.check.services.FlextInfraCommandRunner.run_raw",
+            "flext_infra.check.workspace_check.FlextInfraCommandRunner.run_raw",
         ) as mock_run:
             mock_run.return_value = r[m.Infra.Core.CommandOutput].fail(
                 "execution failed",

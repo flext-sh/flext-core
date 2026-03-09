@@ -9,7 +9,7 @@ from collections import Counter
 from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
-from typing import override
+from typing import TypeAlias, override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
@@ -19,6 +19,10 @@ from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.models import FlextInfraModels as m
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 from flext_infra.utilities import FlextInfraUtilities as u
+
+_ClassNestingMappingIndex: TypeAlias = dict[
+    tuple[str, str], m.Infra.Refactor.ClassNestingMapping
+]
 
 
 class ImportDependencyCollector(cst.CSTVisitor):
@@ -498,8 +502,9 @@ class FlextInfraRefactorClassNestingAnalyzer:
             )
         scanner = FlextInfraRefactorLooseClassScanner()
         mapping_result = cls._load_mapping_index()
-        empty: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping] = {}
-        mapping_index = mapping_result.value if mapping_result.is_success else empty
+        mapping_index: _ClassNestingMappingIndex = (
+            mapping_result.value if mapping_result.is_success else {}
+        )
         confidence_counts: Counter[str] = Counter()
         per_file_counts: Counter[str] = Counter()
         violations: list[m.Infra.Refactor.ClassNestingViolation] = []
@@ -507,7 +512,8 @@ class FlextInfraRefactorClassNestingAnalyzer:
             scan_result = scanner.scan(project_root)
             if scan_result.is_failure:
                 continue
-            raw_violations = scan_result.value.get(c.Infra.ReportKeys.VIOLATIONS, [])
+            report: Mapping[str, object] = scan_result.value
+            raw_violations = report.get(c.Infra.ReportKeys.VIOLATIONS, [])
             if not isinstance(raw_violations, list):
                 continue
             parsed_violations: list[m.Infra.Refactor.LooseClassViolation] = [
@@ -592,30 +598,24 @@ class FlextInfraRefactorClassNestingAnalyzer:
         return relative.as_posix()
 
     @classmethod
-    def _load_mapping_index(
-        cls,
-    ) -> r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]]:
+    def _load_mapping_index(cls) -> r[_ClassNestingMappingIndex]:
         mapping_path = (
             Path(__file__).resolve().parent / c.Infra.Refactor.MAPPINGS_RELATIVE_PATH
         )
         try:
             typed_doc = u.Infra.Yaml.safe_load_yaml(mapping_path)
         except (OSError, TypeError) as exc:
-            return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].fail(
-                str(exc),
-            )
+            return r[_ClassNestingMappingIndex].fail(str(exc))
         raw_nesting = typed_doc.get(c.Infra.ReportKeys.CLASS_NESTING)
         if not isinstance(raw_nesting, list):
-            return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].ok({})
+            return r[_ClassNestingMappingIndex].ok({})
         try:
             entries = TypeAdapter(
                 list[m.Infra.Refactor.ClassNestingMapping],
             ).validate_python(raw_nesting)
         except ValidationError as exc:
-            return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].fail(
-                str(exc),
-            )
-        index: dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping] = {}
+            return r[_ClassNestingMappingIndex].fail(str(exc))
+        index: _ClassNestingMappingIndex = {}
         for entry in entries:
             scope = cls._normalize_rewrite_scope(entry.rewrite_scope)
             norm = cls._normalize_module_path(entry.current_file)
@@ -628,7 +628,7 @@ class FlextInfraRefactorClassNestingAnalyzer:
                 target_name=entry.target_name,
                 reason=entry.reason,
             )
-        return r[dict[tuple[str, str], m.Infra.Refactor.ClassNestingMapping]].ok(index)
+        return r[_ClassNestingMappingIndex].ok(index)
 
     @classmethod
     def _normalize_module_path(cls, raw_path: str) -> str:

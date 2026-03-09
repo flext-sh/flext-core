@@ -11,7 +11,7 @@ from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c, m, t, u
-from flext_infra.refactor.rule import FlextInfraRefactorRule
+from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.class_reconstructor import (
     FlextInfraRefactorClassReconstructor,
 )

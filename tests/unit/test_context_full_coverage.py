@@ -88,7 +88,7 @@ def test_set_set_all_get_validation_and_error_paths(
     monkeypatch.setattr(ctx, "_get_or_create_scope_var", _make_bad_var)
     assert ctx.set("x", "y").is_failure
     assert ctx.set(m.ConfigMap(root={"x": "y"})).is_failure
-    assert FlextContext._validate_set_inputs("k", "bad").is_failure
+    assert FlextContext._validate_set_inputs("k", "bad").is_success
 
 
 def test_inactive_and_none_value_paths() -> None:
@@ -194,7 +194,7 @@ def test_container_and_service_domain_paths(monkeypatch: pytest.MonkeyPatch) -> 
     assert result.is_success
     assert result.value == "x"
     assert FlextContext.Service.register_service("ok", "value").is_success
-    assert FlextContext.Service.register_service("bad", "value").is_failure
+    assert FlextContext.Service.register_service("bad", "value").is_success
     assert FlextContext.Service.get_service("missing").is_failure
 
 

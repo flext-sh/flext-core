@@ -51,4 +51,4 @@ def test_service_request_timeout_post_validator_messages() -> None:
         method_name="op",
         timeout_seconds=1.0,
     )
-    assert req.timeout_seconds == pytest.approx(1.0)
+    assert abs(req.timeout_seconds - 1.0) < 1e-9

@@ -265,56 +265,24 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     )
     _ = sys.stdout.write(f"moved_classes={centralize_summary['moved_classes']}\n")
     _ = sys.stdout.write(f"moved_aliases={centralize_summary['moved_aliases']}\n")
-    _ = sys.stdout.write(
-        f"created_model_files={centralize_summary['created_model_files']}\n",
-    )
-    _ = sys.stdout.write(
-        f"parse_syntax_errors={centralize_summary['parse_syntax_errors']}\n",
-    )
-    _ = sys.stdout.write(
-        f"parse_encoding_errors={centralize_summary['parse_encoding_errors']}\n",
-    )
+    _ = sys.stdout.write(f"created_model_files={centralize_summary['created_model_files']}\n")
+    _ = sys.stdout.write(f"parse_syntax_errors={centralize_summary['parse_syntax_errors']}\n")
+    _ = sys.stdout.write(f"parse_encoding_errors={centralize_summary['parse_encoding_errors']}\n")
     _ = sys.stdout.write(f"parse_io_errors={centralize_summary['parse_io_errors']}\n")
-    _ = sys.stdout.write(
-        f"created_typings_files={centralize_summary['created_typings_files']}\n",
-    )
-    _ = sys.stdout.write(
-        f"skipped_non_necessary_apply={centralize_summary.get('skipped_non_necessary_apply', 0)}\n",
-    )
-    _ = sys.stdout.write(
-        f"skipped_nonpackage_apply={centralize_summary['skipped_nonpackage_apply']}\n",
-    )
-    _ = sys.stdout.write(
-        f"mro_remaining_violations={mro_report.remaining_violations}\n",
-    )
+    _ = sys.stdout.write(f"created_typings_files={centralize_summary['created_typings_files']}\n")
+    _ = sys.stdout.write(f"skipped_non_necessary_apply={centralize_summary.get('skipped_non_necessary_apply', 0)}\n")
+    _ = sys.stdout.write(f"skipped_nonpackage_apply={centralize_summary['skipped_nonpackage_apply']}\n")
+    _ = sys.stdout.write(f"mro_remaining_violations={mro_report.remaining_violations}\n")
     _ = sys.stdout.write(f"mro_failures={mro_report.mro_failures}\n")
-    _ = sys.stdout.write(
-        f"namespace_missing_facades={namespace_report.total_facades_missing}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_loose_objects={namespace_report.total_loose_objects}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_import_violations={namespace_report.total_import_violations}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_cyclic_imports={namespace_report.total_cyclic_imports}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_runtime_alias_violations={namespace_report.total_runtime_alias_violations}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_missing_future={namespace_report.total_future_violations}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_manual_protocols={namespace_report.total_manual_protocol_violations}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_manual_typing_aliases={namespace_report.total_manual_typing_violations}\n",
-    )
-    _ = sys.stdout.write(
-        f"namespace_compatibility_aliases={namespace_report.total_compatibility_alias_violations}\n",
-    )
+    _ = sys.stdout.write(f"namespace_missing_facades={namespace_report.total_facades_missing}\n")
+    _ = sys.stdout.write(f"namespace_loose_objects={namespace_report.total_loose_objects}\n")
+    _ = sys.stdout.write(f"namespace_import_violations={namespace_report.total_import_violations}\n")
+    _ = sys.stdout.write(f"namespace_cyclic_imports={namespace_report.total_cyclic_imports}\n")
+    _ = sys.stdout.write(f"namespace_runtime_alias_violations={namespace_report.total_runtime_alias_violations}\n")
+    _ = sys.stdout.write(f"namespace_missing_future={namespace_report.total_future_violations}\n")
+    _ = sys.stdout.write(f"namespace_manual_protocols={namespace_report.total_manual_protocol_violations}\n")
+    _ = sys.stdout.write(f"namespace_manual_typing_aliases={namespace_report.total_manual_typing_violations}\n")
+    _ = sys.stdout.write(f"namespace_compatibility_aliases={namespace_report.total_compatibility_alias_violations}\n")
     if len(mro_report.errors) > 0:
         for error in mro_report.errors:
             _ = sys.stderr.write(f"ERROR: {error}\n")

@@ -105,6 +105,7 @@ class FlextService[TDomainResult = t.ContainerValue](
         )
 
     @computed_field
+    @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
         if self._execution_result is None:

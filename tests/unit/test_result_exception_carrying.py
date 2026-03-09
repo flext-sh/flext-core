@@ -26,8 +26,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 from returns.io import IO, IOSuccess
 
-from flext_core import m, p, r, t
-from flext_core.exceptions import e
+from flext_core import e, m, p, r, t
 
 
 class TestFailNoExceptionBackwardCompat:
