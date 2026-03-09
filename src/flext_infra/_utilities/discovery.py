@@ -1,7 +1,6 @@
-"""Project discovery service for workspace scanning.
+"""Project discovery utilities for workspace scanning.
 
-Wraps project discovery logic with r error handling,
-replacing bare functions with a service class.
+All methods are static — exposed via u.Infra.discover_projects() through MRO.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,16 +10,16 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import override
 
 from flext_core import r
 from flext_infra import c, m
 
 
 class FlextInfraUtilitiesDiscovery:
-    """Infrastructure service for discovering workspace projects.
+    """Static discovery utilities for workspace project scanning.
 
-    Structurally satisfies ``InfraProtocols.Discovery``.
+    All methods are ``@staticmethod`` — no instantiation required.
+    Exposed via ``u.Infra.discover_projects()`` through MRO.
     """
 
     @staticmethod
@@ -40,8 +39,8 @@ class FlextInfraUtilitiesDiscovery:
             return set()
         return set(re.findall(r"^\s*path\s*=\s*(.+?)\s*$", content, re.MULTILINE))
 
+    @staticmethod
     def discover_projects(
-        self,
         workspace_root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         """Discover all subprojects in the workspace.
@@ -58,7 +57,7 @@ class FlextInfraUtilitiesDiscovery:
         """
         try:
             projects: list[m.Infra.Workspace.ProjectInfo] = []
-            submodules = self._submodule_names(workspace_root)
+            submodules = FlextInfraUtilitiesDiscovery._submodule_names(workspace_root)
             for entry in sorted(workspace_root.iterdir(), key=lambda v: v.name):
                 if (
                     not entry.is_dir()
@@ -66,7 +65,7 @@ class FlextInfraUtilitiesDiscovery:
                     or entry.name.startswith(".")
                 ):
                     continue
-                if not self._is_git_project(entry):
+                if not FlextInfraUtilitiesDiscovery._is_git_project(entry):
                     continue
                 if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
                     continue
@@ -91,18 +90,8 @@ class FlextInfraUtilitiesDiscovery:
                 f"project discovery failed: {exc}",
             )
 
-    @override
-    def execute(self) -> r[list[m.Infra.Workspace.ProjectInfo]]:
-        """Execute discovery of all projects in workspace.
-
-        Returns:
-            r with list of discovered ProjectInfo models.
-
-        """
-        return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
-
+    @staticmethod
     def find_all_pyproject_files(
-        self,
         workspace_root: Path,
         *,
         skip_dirs: frozenset[str] | None = None,
@@ -122,11 +111,11 @@ class FlextInfraUtilitiesDiscovery:
         try:
             if project_paths:
                 selected: list[Path] = []
-                for p in project_paths:
+                for proj_path in project_paths:
                     target = (
-                        p
-                        if p.name == c.Infra.Files.PYPROJECT_FILENAME
-                        else p / c.Infra.Files.PYPROJECT_FILENAME
+                        proj_path
+                        if proj_path.name == c.Infra.Files.PYPROJECT_FILENAME
+                        else proj_path / c.Infra.Files.PYPROJECT_FILENAME
                     )
                     if target.exists() and target.is_file():
                         selected.append(target)
@@ -137,9 +126,11 @@ class FlextInfraUtilitiesDiscovery:
                 else c.Infra.Excluded.PYPROJECT_SKIP_DIRS
             )
             result = [
-                p
-                for p in sorted(workspace_root.rglob(c.Infra.Files.PYPROJECT_FILENAME))
-                if not any(skip in p.parts for skip in effective_skip)
+                found
+                for found in sorted(
+                    workspace_root.rglob(c.Infra.Files.PYPROJECT_FILENAME),
+                )
+                if not any(skip in found.parts for skip in effective_skip)
             ]
             return r[list[Path]].ok(result)
         except OSError as exc:

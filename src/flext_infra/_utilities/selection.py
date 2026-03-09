@@ -1,7 +1,6 @@
-"""Project selection and filtering service.
+"""Project selection and filtering utilities.
 
-Wraps project selection logic with r error handling,
-replacing bare functions with a service class.
+All methods are static — exposed via u.Infra.resolve_projects() through MRO.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,30 +9,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
 
 from flext_core import r
 from flext_infra import m
+from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 
 
 class FlextInfraUtilitiesSelection:
-    """Infrastructure service for project selection and filtering.
+    """Static project selection and filtering utilities.
 
-    Combines project discovery with filtering and resolution capabilities.
+    All methods are ``@staticmethod`` — no instantiation required.
+    Delegates discovery to ``FlextInfraUtilitiesDiscovery`` directly.
     """
 
-    @override
-    def execute(self) -> r[list[m.Infra.Workspace.ProjectInfo]]:
-        """Execute project selection (default: empty list).
-
-        Returns:
-            r with empty list by default.
-
-        """
-        return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
-
+    @staticmethod
     def resolve_projects(
-        self,
         workspace_root: Path,
         names: list[str],
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
@@ -47,7 +37,9 @@ class FlextInfraUtilitiesSelection:
             r with sorted list of resolved projects.
 
         """
-        discover_result = self._discovery.discover_projects(workspace_root)
+        discover_result = FlextInfraUtilitiesDiscovery.discover_projects(
+            workspace_root,
+        )
         if discover_result.is_failure:
             return r[list[m.Infra.Workspace.ProjectInfo]].fail(
                 discover_result.error or "discovery failed",
@@ -55,9 +47,9 @@ class FlextInfraUtilitiesSelection:
         projects = discover_result.value
         if not names:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok(
-                sorted(projects, key=lambda p: p.name),
+                sorted(projects, key=lambda proj: proj.name),
             )
-        by_name = {p.name: p for p in projects}
+        by_name = {proj.name: proj for proj in projects}
         missing = [name for name in names if name not in by_name]
         if missing:
             missing_text = ", ".join(sorted(missing))
@@ -66,7 +58,7 @@ class FlextInfraUtilitiesSelection:
             )
         resolved = [by_name[name] for name in names]
         return r[list[m.Infra.Workspace.ProjectInfo]].ok(
-            sorted(resolved, key=lambda p: p.name),
+            sorted(resolved, key=lambda proj: proj.name),
         )
 
 
