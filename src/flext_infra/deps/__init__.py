@@ -9,24 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-_DETECTOR_MODULE = "flext_infra.deps.detector"
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionModels,
         FlextInfraDependencyDetectionService,
         dm,
     )
-    from flext_infra.deps.detector import (
-        FlextInfraDependencyDetectorModels,
-        FlextInfraRuntimeDevDependencyDetector,
-        ddm,
-        main,
-    )
+    from flext_infra.deps.detector import main
     from flext_infra.deps.extra_paths import (
         ROOT as EXTRA_PATHS_ROOT,
         FlextInfraExtraPathsManager,
@@ -42,41 +35,16 @@ if TYPE_CHECKING:
         extract_dep_name,
         rewrite_dep_paths,
     )
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EXTRA_PATHS_ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
-    "FlextInfraDependencyDetectionModels": (
-        "flext_infra.deps.detection",
-        "FlextInfraDependencyDetectionModels",
-    ),
-    "FlextInfraDependencyDetectionService": (
-        "flext_infra.deps.detection",
-        "FlextInfraDependencyDetectionService",
-    ),
-    "FlextInfraDependencyDetectorModels": (
-        _DETECTOR_MODULE,
-        "FlextInfraDependencyDetectorModels",
-    ),
-    "FlextInfraDependencyPathSync": (
-        "flext_infra.deps.path_sync",
-        "FlextInfraDependencyPathSync",
-    ),
-    "FlextInfraExtraPathsManager": (
-        "flext_infra.deps.extra_paths",
-        "FlextInfraExtraPathsManager",
-    ),
-    "FlextInfraInternalDependencySyncService": (
-        "flext_infra.deps.internal_sync",
-        "FlextInfraInternalDependencySyncService",
-    ),
-    "FlextInfraPyprojectModernizer": (
-        "flext_infra.deps.modernizer",
-        "FlextInfraPyprojectModernizer",
-    ),
-    "FlextInfraRuntimeDevDependencyDetector": (
-        _DETECTOR_MODULE,
-        "FlextInfraRuntimeDevDependencyDetector",
-    ),
-    "ddm": (_DETECTOR_MODULE, "ddm"),
+    "FlextInfraDependencyDetectionModels": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
+    "FlextInfraDependencyDetectionService": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
+    "FlextInfraDependencyPathSync": ("flext_infra.deps.path_sync", "FlextInfraDependencyPathSync"),
+    "FlextInfraExtraPathsManager": ("flext_infra.deps.extra_paths", "FlextInfraExtraPathsManager"),
+    "FlextInfraInternalDependencySyncService": ("flext_infra.deps.internal_sync", "FlextInfraInternalDependencySyncService"),
+    "FlextInfraPyprojectModernizer": ("flext_infra.deps.modernizer", "FlextInfraPyprojectModernizer"),
     "detect_mode": ("flext_infra.deps.path_sync", "detect_mode"),
     "dm": ("flext_infra.deps.detection", "dm"),
     "extract_dep_name": ("flext_infra.deps.path_sync", "extract_dep_name"),
@@ -86,6 +54,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "sync_extra_paths": ("flext_infra.deps.extra_paths", "sync_extra_paths"),
     "sync_one": ("flext_infra.deps.extra_paths", "sync_one"),
 }
+
 __all__ = [
     "EXTRA_PATHS_ROOT",
     "FlextInfraDependencyDetectionModels",
@@ -108,7 +77,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

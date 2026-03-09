@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
@@ -11,17 +11,20 @@ if TYPE_CHECKING:
         FlextInfraConfigFixer,
         FlextInfraWorkspaceChecker,
     )
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
-    "FlextInfraWorkspaceChecker": (
-        "flext_infra.check.services",
-        "FlextInfraWorkspaceChecker",
-    ),
+    "FlextInfraWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
 }
-__all__ = ["FlextInfraConfigFixer", "FlextInfraWorkspaceChecker"]
+
+__all__ = [
+    "FlextInfraConfigFixer",
+    "FlextInfraWorkspaceChecker",
+]
 
 
-def __getattr__(name: str) -> dict[str, tuple[str, str]]:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

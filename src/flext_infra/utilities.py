@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from flext_core import FlextUtilities
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
+from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra._utilities.toml import FlextInfraUtilitiesToml
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
@@ -46,6 +47,9 @@ class FlextInfraUtilities(FlextUtilities):
 
         class Io(FlextInfraUtilitiesIo):
             """I/O convenience helpers — real inheritance."""
+
+        class Patterns(FlextInfraUtilitiesPatterns):
+            """Regex patterns for infrastructure operations — real inheritance."""
 
         class Yaml(FlextInfraUtilitiesYaml):
             """YAML loading and validation — real inheritance."""

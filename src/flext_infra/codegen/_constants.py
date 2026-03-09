@@ -75,6 +75,19 @@ class FlextInfraCodegenConstants:
     "Stdlib modules to skip in lazy-init import derivation."
     MAX_LINE_LENGTH: Final[int] = 88
     "Maximum line length for generated import lines."
+    AUTOGEN_HEADER: Final[str] = (
+        "# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.\n"
+        "# Regenerate with: make codegen\n"
+        "#"
+    )
+    "Header prepended to every auto-generated ``__init__.py`` file."
+    ALL_SCAN_PATTERNS: Final[tuple[str, ...]] = (
+        "src/**/__init__.py",
+        "tests/**/__init__.py",
+        "examples/**/__init__.py",
+        "scripts/**/__init__.py",
+    )
+    "Glob patterns for all directories the lazy-init generator scans."
 
     class QualityGate:
         """Constants used by constants quality gate analysis/reporting."""

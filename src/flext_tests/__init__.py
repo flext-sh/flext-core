@@ -16,12 +16,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
     from flext_tests._validator.bypass import FlextValidatorBypass
     from flext_tests._validator.imports import FlextValidatorImports
     from flext_tests._validator.layer import FlextValidatorLayer
@@ -42,6 +41,8 @@ if TYPE_CHECKING:
     from flext_tests.typings import FlextTestsTypes, FlextTestsTypes as t
     from flext_tests.utilities import FlextTestsUtilities, FlextTestsUtilities as u
     from flext_tests.validator import FlextTestsValidator, tv
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsBuilders": ("flext_tests.builders", "FlextTestsBuilders"),
     "FlextTestsConstants": ("flext_tests.constants", "FlextTestsConstants"),
@@ -58,16 +59,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsUtilityBase": ("flext_tests.base", "FlextTestsUtilityBase"),
     "FlextTestsValidator": ("flext_tests.validator", "FlextTestsValidator"),
     "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
-    "FlextValidatorImports": (
-        "flext_tests._validator.imports",
-        "FlextValidatorImports",
-    ),
+    "FlextValidatorImports": ("flext_tests._validator.imports", "FlextValidatorImports"),
     "FlextValidatorLayer": ("flext_tests._validator.layer", "FlextValidatorLayer"),
     "FlextValidatorModels": ("flext_tests._validator.models", "FlextValidatorModels"),
-    "FlextValidatorSettings": (
-        "flext_tests._validator.settings",
-        "FlextValidatorSettings",
-    ),
+    "FlextValidatorSettings": ("flext_tests._validator.settings", "FlextValidatorSettings"),
     "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
     "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
     "c": ("flext_tests.constants", "FlextTestsConstants"),
@@ -82,6 +77,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "tv": ("flext_tests.validator", "tv"),
     "u": ("flext_tests.utilities", "FlextTestsUtilities"),
 }
+
 __all__ = [
     "FlextTestsBuilders",
     "FlextTestsConstants",
@@ -118,7 +114,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

@@ -9,23 +9,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
     from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraReleaseOrchestrator": (
-        "flext_infra.release.orchestrator",
-        "FlextInfraReleaseOrchestrator",
-    ),
+    "FlextInfraReleaseOrchestrator": ("flext_infra.release.orchestrator", "FlextInfraReleaseOrchestrator"),
 }
-__all__ = ["FlextInfraReleaseOrchestrator"]
+
+__all__ = [
+    "FlextInfraReleaseOrchestrator",
+]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

@@ -1,0 +1,90 @@
+"""Consolidated regex patterns for infrastructure scripts.
+
+Merges patterns from ``scripts/libs/patterns.py`` and
+``scripts/libs/doc_patterns.py`` into a single namespace.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import re
+from typing import ClassVar
+
+
+class FlextInfraUtilitiesPatterns:
+    """Centralized regex patterns for infrastructure operations.
+
+    Consolidates tooling patterns (mypy, stubs) and documentation
+    patterns (markdown links, headings, TOC) into a single class.
+
+    Usage via namespace::
+
+        from flext_infra import u
+
+        if u.Infra.Patterns.matches("MYPY_HINT_RE", text):
+            ...
+    """
+
+    MYPY_HINT_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r'note: Hint: "python3 -m pip install ([^"]+)"',
+    )
+    """Match mypy install hint messages, capturing the package name."""
+
+    MYPY_STUB_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r'Library stubs not installed for "([^"]+)"',
+    )
+    """Match mypy missing stub messages, capturing the library name."""
+
+    INTERNAL_PREFIXES: ClassVar[tuple[str, ...]] = ("flext_",)
+    """Prefixes identifying internal FLEXT packages."""
+
+    MARKDOWN_LINK_RE: ClassVar[re.Pattern[str]] = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+    """Match markdown links capturing text (group 1) and URL (group 2)."""
+
+    MARKDOWN_LINK_URL_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\[[^\]]+\]\(([^)]+)\)"
+    )
+    """Match markdown links capturing only the URL (group 1)."""
+
+    HEADING_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE
+    )
+    """Match any markdown heading (h1-h6), capturing the text."""
+
+    HEADING_H2_H3_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"^(##|###)\s+(.+?)\s*$",
+        re.MULTILINE,
+    )
+    """Match h2/h3 headings, capturing level (group 1) and text (group 2)."""
+
+    ANCHOR_LINK_RE: ClassVar[re.Pattern[str]] = re.compile(r"\[([^\]]+)\]\(#([^)]+)\)")
+    """Match internal anchor links, capturing text and anchor."""
+
+    INLINE_CODE_RE: ClassVar[re.Pattern[str]] = re.compile(r"`[^`]*`")
+    """Match inline code spans for stripping before analysis."""
+
+    @staticmethod
+    def matches(pattern_name: str, text: str) -> bool:
+        """Check if a pattern matches text.
+
+        Args:
+            pattern_name: Name of the pattern (e.g., 'MYPY_HINT_RE').
+            text: Text to match against.
+
+        Returns:
+            True if the pattern matches, False otherwise.
+
+        Example:
+            >>> FlextInfraUtilitiesPatterns.matches("MYPY_HINT_RE", text)
+            True
+
+        """
+        pattern = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
+        if pattern is None or not isinstance(pattern, re.Pattern):
+            return False
+        return pattern.search(text) is not None
+
+
+__all__ = ["FlextInfraUtilitiesPatterns"]

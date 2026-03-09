@@ -43,19 +43,21 @@ class FlextInfraCodegenLazyInit(s[int]):
         """Execute the lazy-init generation process."""
         return r[int].ok(self.run(check_only=False))
 
-    def run(self, *, check_only: bool = False, scan_tests: bool = False) -> int:
+    def run(self, *, check_only: bool = False, scan_tests: bool = True) -> int:
         """Process all ``__init__.py`` files in the workspace.
+
+        Scans ``src/``, ``tests/``, ``examples/``, and ``scripts/`` directories
+        for ``__init__.py`` files that declare ``__all__`` and generates PEP 562
+        lazy-import versions.
 
         Args:
             check_only: If True, only report unmapped exports without writing.
-            scan_tests: If True, also scan ``tests/**/__init__.py`` files.
+            scan_tests: Deprecated — all directories are always scanned.
 
         Returns the number of files that had unmapped exports (0 = perfect).
 
         """
-        patterns = ["src/**/__init__.py"]
-        if scan_tests:
-            patterns.append("tests/**/__init__.py")
+        patterns = list(c.Infra.Codegen.ALL_SCAN_PATTERNS)
         init_files: list[Path] = []
         for pattern in patterns:
             init_files.extend(
@@ -116,11 +118,10 @@ class FlextInfraCodegenLazyInit(s[int]):
         filtered = {k: v for k, v in lazy_map.items() if k in exports_set}
         for k in inline_constants:
             filtered.pop(k, None)
-        if not existing_lazy:
-            pkg_dir = path.parent
-            _resolve_unmapped(exports_set, filtered, current_pkg, pkg_dir)
-            for k in inline_constants:
-                filtered.pop(k, None)
+        pkg_dir = path.parent
+        _resolve_unmapped(exports_set, filtered, current_pkg, pkg_dir)
+        for k in inline_constants:
+            filtered.pop(k, None)
         if check_only:
             n_mapped = len(filtered) + len(inline_constants)
             return len(exports_set) - n_mapped
@@ -378,7 +379,7 @@ def _generate_file(
     for export_name in sorted(filtered):
         mod, attr = filtered[export_name]
         groups[mod].append((export_name, attr))
-    out: list[str] = []
+    out: list[str] = [c.Infra.Codegen.AUTOGEN_HEADER]
     if docstring_source:
         out.extend([docstring_source, ""])
     if current_pkg == c.Infra.Packages.CORE_UNDERSCORE:

@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes, FlextTypes as t, m
@@ -22,11 +22,10 @@ if TYPE_CHECKING:
         RetryPolicy,
     )
     from flext_core._dispatcher.timeout import TimeoutEnforcer
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "CircuitBreakerManager": (
-        "flext_core._dispatcher.reliability",
-        "CircuitBreakerManager",
-    ),
+    "CircuitBreakerManager": ("flext_core._dispatcher.reliability", "CircuitBreakerManager"),
     "FlextTypes": ("flext_core", "FlextTypes"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
@@ -34,6 +33,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "m": ("flext_core", "m"),
     "t": ("flext_core", "FlextTypes"),
 }
+
 __all__ = [
     "CircuitBreakerManager",
     "FlextTypes",
@@ -45,7 +45,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
