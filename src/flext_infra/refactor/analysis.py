@@ -9,7 +9,7 @@ from collections import Counter
 from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import libcst as cst
 from pydantic import TypeAdapter, ValidationError
@@ -512,17 +512,16 @@ class FlextInfraRefactorClassNestingAnalyzer:
             scan_result = scanner.scan(project_root)
             if scan_result.is_failure:
                 continue
-            report: Mapping[str, object] = cast(
-                "Mapping[str, object]", scan_result.value
-            )
-            raw_violations_val = report.get(c.Infra.ReportKeys.VIOLATIONS, [])
-            if not isinstance(raw_violations_val, list):
+            try:
+                parsed_violations: list[m.Infra.Refactor.LooseClassViolation] = (
+                    TypeAdapter(
+                        list[m.Infra.Refactor.LooseClassViolation],
+                    ).validate_python(
+                        scan_result.value.get(c.Infra.ReportKeys.VIOLATIONS, [])
+                    )
+                )
+            except ValidationError:
                 continue
-            parsed_violations: list[m.Infra.Refactor.LooseClassViolation] = [
-                violation_item
-                for violation_item in raw_violations_val
-                if isinstance(violation_item, m.Infra.Refactor.LooseClassViolation)
-            ]
             for parsed_violation in parsed_violations:
                 normalized_file = cls._normalize_module_path(parsed_violation.file)
                 if target_files and normalized_file not in target_files:

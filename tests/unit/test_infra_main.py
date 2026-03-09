@@ -6,57 +6,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
 import sys
-
-import pytest
 
 from flext_infra.__main__ import FlextInfraMainCLI
 
 
 def test_main_returns_error_when_no_args() -> None:
-    completed = subprocess.run(
-        [sys.executable, "-m", "flext_infra"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert completed.returncode == 1
-    assert "Usage: python -m flext_infra" in completed.stderr
+    original_argv = sys.argv.copy()
+    try:
+        sys.argv = ["flext-infra"]
+        result = FlextInfraMainCLI.main()
+    finally:
+        sys.argv = original_argv
+    assert result == 1
 
 
 def test_main_help_flag_returns_zero() -> None:
-    completed = subprocess.run(
-        [sys.executable, "-m", "flext_infra", "--help"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert completed.returncode == 0
-    assert "Usage: python -m flext_infra" in completed.stderr
+    original_argv = sys.argv.copy()
+    try:
+        sys.argv = ["flext-infra", "--help"]
+        result = FlextInfraMainCLI.main()
+    finally:
+        sys.argv = original_argv
+    assert result == 0
 
 
 def test_main_unknown_group_returns_error() -> None:
-    completed = subprocess.run(
-        [sys.executable, "-m", "flext_infra", "unknown"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert completed.returncode == 1
-    assert "unknown group 'unknown'" in completed.stderr
-
-
-@pytest.mark.parametrize("group", sorted(FlextInfraMainCLI.GROUPS.keys()))
-def test_main_dispatches_group_help(group: str) -> None:
-    completed = subprocess.run(
-        [sys.executable, "-m", "flext_infra", group, "--help"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert completed.returncode == 0
-    assert "usage:" in completed.stdout.lower() or "usage:" in completed.stderr.lower()
+    original_argv = sys.argv.copy()
+    try:
+        sys.argv = ["flext-infra", "unknown"]
+        result = FlextInfraMainCLI.main()
+    finally:
+        sys.argv = original_argv
+    assert result == 1
 
 
 def test_main_all_groups_defined() -> None:

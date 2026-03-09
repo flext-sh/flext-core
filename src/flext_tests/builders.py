@@ -679,7 +679,9 @@ class FlextTestsBuilders:
             return current
         if isinstance(current, Mapping):
             return {str(k): self._to_payload_value(v) for k, v in current.items()}
-        return [self._to_payload_value(item) for item in current]
+        if isinstance(current, (list, tuple)):
+            return [self._to_payload_value(item) for item in current]
+        return str(current)
 
     def merge_from(
         self,

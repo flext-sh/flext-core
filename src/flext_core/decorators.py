@@ -721,12 +721,12 @@ class FlextDecorators:
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
                 retry_func = func
-                retry_config = m.RetryConfiguration(
-                    max_attempts=attempts,
-                    initial_delay_seconds=delay,
-                    exponential_backoff=strategy
+                retry_config = m.RetryConfiguration.model_validate({
+                    "max_retries": attempts,
+                    "initial_delay_seconds": delay,
+                    "exponential_backoff": strategy
                     == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
-                )
+                })
                 try:
                     retry_args: tuple[object, ...] = tuple(args)
                     retry_kwargs: Mapping[str, object] = dict(kwargs)

@@ -20,7 +20,6 @@ import argparse
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextRuntime
 from flext_infra import c, m, output, t, u
@@ -150,10 +149,7 @@ def _run_scan(args: argparse.Namespace) -> int:
         match_mode=args.match,
     )
     if result.is_success:
-        data: Mapping[str, t.ContainerValue] = cast(
-            "Mapping[str, t.ContainerValue]",
-            result.value,
-        )
+        data: Mapping[str, t.Scalar] = result.value
         violation_count = data.get("violation_count", 0)
         return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
     output.error(result.error or "unknown error")

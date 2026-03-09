@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import typing
 from collections.abc import Callable, ItemsView, KeysView, Mapping, ValuesView
-from typing import Annotated, ClassVar
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
@@ -218,11 +218,11 @@ class FlextModelsContainers:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True, extra="forbid"
         )
-        results: Annotated[list[t.Scalar | None], Field(default_factory=list)] = Field(
-            default_factory=list
+        results: list[t.Scalar | None] = Field(
+            default=[], description="Batch result values."
         )
-        errors: Annotated[list[tuple[int, str]], Field(default_factory=list)] = Field(
-            default_factory=list
+        errors: list[tuple[int, str]] = Field(
+            default=[], description="Batch error tuples (index, message)."
         )
         total: int = Field(
             default=0, description="Total number of batch items processed."

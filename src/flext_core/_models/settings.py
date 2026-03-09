@@ -119,15 +119,11 @@ class FlextModelsConfig:
             ge=float(c.Reliability.RETRY_COUNT_MIN),
             description="Backoff multiplier for exponential backoff",
         )
-        retry_on_exceptions: Annotated[
-            list[type[BaseException]],
-            Field(default_factory=list, description="Exception types to retry on"),
-        ] = Field(default_factory=list, description="Exception types to retry on")
-        retry_on_status_codes: Annotated[
-            list[int],
-            Field(default_factory=list),
-        ] = Field(
-            default_factory=list,
+        retry_on_exceptions: list[type[BaseException]] = Field(
+            default=[], description="Exception types to retry on"
+        )
+        retry_on_status_codes: list[int] = Field(
+            default=[],
             max_length=c.Validation.MAX_RETRY_STATUS_CODES,
             description="HTTP status codes to retry on",
         )
@@ -405,11 +401,8 @@ class FlextModelsConfig:
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: Annotated[
-            list[p.VariadicCallable[t.ContainerValue]],
-            Field(default_factory=list),
-        ] = Field(
-            default_factory=list,
+        additional_processors: list[p.VariadicCallable[t.ContainerValue]] = Field(
+            default=[],
             description="Optional extra processors after standard FLEXT processors",
         )
         wrapper_class_factory: Callable[[], type] | None = Field(

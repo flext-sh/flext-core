@@ -97,9 +97,7 @@ def test_context_data_normalize_and_json_checks() -> None:
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:
-    with pytest.raises(
-        TypeError, match="Value must be a dictionary or Metadata"
-    ) as exc_info:
+    with pytest.raises(TypeError) as exc_info:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
@@ -107,9 +105,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
             )
         )
     assert exc_info.value is not None
-    with pytest.raises(
-        TypeError, match="Value must be a dictionary or Metadata"
-    ) as exc_info2:
+    with pytest.raises(TypeError) as exc_info2:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
@@ -165,7 +161,7 @@ def test_context_export_serializable_and_validators() -> None:
         FlextModelsContext.ContextData.check_json_serializable(
             cast("t.ContainerValue", {"x": object()})
         )
-    with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
+    with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
@@ -200,7 +196,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
         as_mapping
     )
     assert result_mapping == {"k": "v"}
-    with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
+    with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",

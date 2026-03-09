@@ -42,7 +42,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, c, p, r, t
 
@@ -236,11 +236,19 @@ class FlextUtilitiesCache:
         if isinstance(component, t.Primitives) or component is None:
             return component
         if isinstance(component, set):
+            try:
+                set_items = TypeAdapter(set[t.ContainerValue]).validate_python(
+                    component,
+                    strict=False,
+                )
+            except ValidationError:
+                fallback_items = TypeAdapter(set[str]).validate_python(
+                    component,
+                    strict=False,
+                )
+                return tuple(fallback_items)
             normalized_items: list[t.ContainerValue] = [
-                FlextUtilitiesCache.normalize_component(item)
-                if FlextRuntime.is_general_value_type(item)
-                else str(item)
-                for item in component
+                FlextUtilitiesCache.normalize_component(item) for item in set_items
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):

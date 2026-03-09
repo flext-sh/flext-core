@@ -51,6 +51,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
 from flext_core._models.containers import FlextModelsContainers
+from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 class FlextUtilitiesConfiguration:
@@ -219,7 +220,7 @@ class FlextUtilitiesConfiguration:
             (True, value) if key exists, (False, None) if not dict-like or missing
 
         """
-        if isinstance(obj, Mapping) and parameter in obj:
+        if parameter in obj:
             return (True, obj[parameter])
         return FlextUtilitiesConfiguration._NOT_FOUND
 
@@ -231,8 +232,8 @@ class FlextUtilitiesConfiguration:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict = model_dump_attr()
-            if isinstance(obj_dict, Mapping) and parameter in obj_dict:
+            obj_dict: object = model_dump_attr()
+            if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
                 raw_value = obj_dict[parameter]
                 if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
                     return (True, raw_value)
@@ -373,13 +374,8 @@ class FlextUtilitiesConfiguration:
                 base_options = default_factory()
             if not kwargs:
                 return r[T_Model].ok(base_options)
-            model_fields_attr = getattr(model_class, "model_fields", {})
-            if FlextRuntime.is_dict_like(model_fields_attr):
-                valid_field_names = {
-                    str(field_name) for field_name in model_fields_attr
-                }
-            else:
-                valid_field_names = set()
+            base_class: type[BaseModel] = model_class
+            valid_field_names: set[str] = set(base_class.model_fields.keys())
             valid_kwargs = FlextModelsContainers.ConfigMap(root={})
             invalid_kwargs: list[str] = []
             for key, value in kwargs.items():

@@ -958,10 +958,11 @@ class FlextTestsMatchers:
                 )
             )
         if isinstance(subject_payload, (list, tuple)):
+            seq_value: list[t.Tests.ContainerValue] = []
             try:
                 seq_value = _TEST_PAYLOAD_LIST_ADAPTER.validate_python(subject_payload)
             except ValidationError:
-                seq_value: list[t.Tests.ContainerValue] = []
+                pass
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -1079,12 +1080,13 @@ class FlextTestsMatchers:
                         params.msg or "Sequence contains duplicate items"
                     )
         if isinstance(subject_payload, Mapping):
+            mapping_value: dict[str, t.Tests.ContainerValue] = {}
             try:
                 mapping_value = _TEST_PAYLOAD_DICT_ADAPTER.validate_python(
                     subject_payload
                 )
             except ValidationError:
-                mapping_value: dict[str, t.Tests.ContainerValue] = {}
+                pass
             if params.keys is not None:
                 key_set: set[object] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
@@ -1134,40 +1136,40 @@ class FlextTestsMatchers:
                                 or f"Key {key!r}: expected {expected_obj!r}, got {mapping_value[key]!r}"
                             )
         if params.attrs is not None:
-            value_obj: object = value
+            attrs_target: object = value
             if isinstance(params.attrs, str):
                 attr_list: list[str] = [params.attrs]
             else:
                 attr_list = list(params.attrs)
             for attr in attr_list:
-                if not hasattr(value_obj, attr):
+                if not hasattr(attrs_target, attr):
                     raise AssertionError(
                         params.msg or f"Object missing attribute: {attr}"
                     )
         if params.methods is not None:
-            value_obj: object = value
+            methods_target: object = value
             if isinstance(params.methods, str):
                 method_list: list[str] = [params.methods]
             else:
                 method_list = list(params.methods)
             for method in method_list:
-                if not hasattr(value_obj, method):
+                if not hasattr(methods_target, method):
                     raise AssertionError(
                         params.msg or f"Object missing method: {method}"
                     )
-                if not callable(getattr(value_obj, method)):
+                if not callable(getattr(methods_target, method)):
                     raise AssertionError(
                         params.msg or f"Object attribute {method} is not callable"
                     )
         if params.attr_eq is not None:
-            value_obj: object = value
+            attr_eq_target: object = value
             if isinstance(params.attr_eq, tuple) and len(params.attr_eq) == 2:
                 attr, expected_val = params.attr_eq
-                if not hasattr(value_obj, attr):
+                if not hasattr(attr_eq_target, attr):
                     raise AssertionError(
                         params.msg or f"Object missing attribute: {attr}"
                     )
-                actual_val = getattr(value_obj, attr)
+                actual_val = getattr(attr_eq_target, attr)
                 if actual_val != expected_val:
                     raise AssertionError(
                         params.msg
@@ -1175,11 +1177,11 @@ class FlextTestsMatchers:
                     )
             elif u.is_type(params.attr_eq, "mapping"):
                 for attr, expected_val in params.attr_eq.items():
-                    if not hasattr(value_obj, attr):
+                    if not hasattr(attr_eq_target, attr):
                         raise AssertionError(
                             params.msg or f"Object missing attribute: {attr}"
                         )
-                    actual_val = getattr(value_obj, attr)
+                    actual_val = getattr(attr_eq_target, attr)
                     if actual_val != expected_val:
                         raise AssertionError(
                             params.msg

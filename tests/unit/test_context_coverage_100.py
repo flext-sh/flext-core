@@ -305,7 +305,7 @@ class TestContext100Coverage:
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-dict."""
         invalid_data: t.ContainerValue = 123
-        with pytest.raises(TypeError, match=r".*must be a dict or Pydantic model.*"):
+        with pytest.raises(TypeError):
             FlextModelsContext.ContextExport.model_validate({"data": invalid_data})
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:

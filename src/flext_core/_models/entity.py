@@ -53,7 +53,7 @@ class FlextModelsEntity:
         """
 
         domain_events: list[FlextModelsDomainEvent.Entry] = Field(
-            default_factory=list,
+            default=[],
             description="List of uncommitted domain events for event sourcing",
         )
 

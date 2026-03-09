@@ -200,36 +200,38 @@ class FlextDispatcher:
         """
         result_raw: p.ResultLike[t.ContainerValue] | t.ContainerValue | None = None
         try:
-            match handler:
-                case DispatchMessageProtocol():
-                    result_raw = handler.dispatch_message(message)
-                case HandleProtocol():
-                    result_raw = handler.handle(message)
-                case ExecuteProtocol():
-                    result_raw = handler.execute(message)
-                case _ if callable(handler):
-                    result_raw = handler(message)
-            match result_raw:
-                case p.ResultLike() as result_like if result_like.is_failure:
-                    error_data_value = result_like.error_data
+            if isinstance(handler, DispatchMessageProtocol):
+                result_raw = handler.dispatch_message(message)
+            elif isinstance(handler, HandleProtocol):
+                result_raw = handler.handle(message)
+            elif isinstance(handler, ExecuteProtocol):
+                result_raw = handler.execute(message)
+            elif callable(handler):
+                result_raw = handler(message)
+            else:
+                return r[t.ContainerValue].fail(
+                    f"Handler for {route_name} is not callable or dispatchable",
+                    error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
+                )
+            if isinstance(result_raw, p.ResultLike):
+                if result_raw.is_failure:
+                    error_data_value = result_raw.error_data
                     return r[t.ContainerValue].fail(
-                        result_like.error or "Handler failed",
-                        error_code=result_like.error_code,
+                        result_raw.error or "Handler failed",
+                        error_code=result_raw.error_code,
                         error_data=error_data_value
                         if isinstance(error_data_value, BaseModel)
                         else None,
                     )
-                case p.ResultLike() as result_like:
-                    value = result_like.value
-                    if value is None:
-                        return r[t.ContainerValue].fail(
-                            "Handler returned None in success result"
-                        )
-                    return r[t.ContainerValue].ok(value)
-                case None:
-                    return r[t.ContainerValue].fail("Handler returned None")
-                case _:
-                    return r[t.ContainerValue].ok(result_raw)
+                value = result_raw.value
+                if value is None:
+                    return r[t.ContainerValue].fail(
+                        "Handler returned None in success result"
+                    )
+                return r[t.ContainerValue].ok(value)
+            if result_raw is None:
+                return r[t.ContainerValue].fail("Handler returned None")
+            return r[t.ContainerValue].ok(result_raw)
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)
             return r[t.ContainerValue].fail(
@@ -255,26 +257,23 @@ class FlextDispatcher:
 
     def _resolve_route(self, msg: p.Routable | type[p.Routable] | str) -> str:
         """Resolve route name strictly from Routable attributes or string."""
-        match msg:
-            case str() as route:
-                return route
-            case _:
-                pass
+        if isinstance(msg, str):
+            return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            match getattr(msg, attr, None):
-                case str() as val if val:
-                    return val
-        if isinstance(msg, type) and hasattr(msg, "model_fields"):
-            model_fields = getattr(msg, "model_fields", None)
-            if model_fields:
-                for attr in route_attrs:
-                    if attr in model_fields:
-                        field = model_fields[attr]
-                        match getattr(field, "default", None):
-                            case str() as default_val if (
-                                default_val and default_val != "PydanticUndefined"
-                            ):
-                                return default_val
+            attr_val: object = getattr(msg, attr, None)
+            if isinstance(attr_val, str) and attr_val:
+                return attr_val
+        if isinstance(msg, type) and issubclass(msg, BaseModel):
+            for attr in route_attrs:
+                if attr in msg.model_fields:
+                    field_info = msg.model_fields[attr]
+                    default_val = field_info.default
+                    if (
+                        isinstance(default_val, str)
+                        and default_val
+                        and default_val != "PydanticUndefined"
+                    ):
+                        return default_val
         msg_type_error = f"Message {msg} does not provide a valid route via command_type, query_type, or event_type"
         raise TypeError(msg_type_error)

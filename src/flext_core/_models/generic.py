@@ -19,7 +19,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Literal
 
 from pydantic import Field
 
@@ -252,12 +252,8 @@ class FlextGenericModels:
             Used by: flext-ldif conversion, data transformations, ETL.
             """
 
-            converted: Annotated[
-                list[t.ContainerValue],
-                Field(default_factory=list),
-            ] = Field(
-                default_factory=list,
-                description="Converted items",
+            converted: list[t.ContainerValue] = Field(
+                default=[], description="Converted items"
             )
             errors: list[str] = Field(
                 default_factory=list, description="Error messages"
@@ -265,12 +261,8 @@ class FlextGenericModels:
             warnings: list[str] = Field(
                 default_factory=list, description="Warning messages"
             )
-            skipped: Annotated[
-                list[t.ContainerValue],
-                Field(default_factory=list),
-            ] = Field(
-                default_factory=list,
-                description="Skipped items",
+            skipped: list[t.ContainerValue] = Field(
+                default=[], description="Skipped items"
             )
             start_time: datetime | None = Field(default=None, description="Start time")
             end_time: datetime | None = Field(default=None, description="End time")

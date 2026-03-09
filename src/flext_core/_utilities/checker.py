@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import get_origin, get_type_hints
+from typing import get_args, get_origin, get_type_hints
 
 from flext_core import FlextRuntime, c, p, r, t
+from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 class FlextUtilitiesChecker:
@@ -126,15 +127,13 @@ class FlextUtilitiesChecker:
 
         """
         message_types: list[t.MessageTypeSpecifier] = []
-        orig_bases = (
-            handler_class.__orig_bases__
-            if hasattr(handler_class, "__orig_bases__")
-            else ()
-        )
-        for base in orig_bases:
+        raw_bases: object = getattr(handler_class, "__orig_bases__", ())
+        if not FlextUtilitiesGuards.is_object_tuple(raw_bases):
+            return message_types
+        for base in raw_bases:
             origin = get_origin(base)
-            if origin and origin.__name__ in {"h", "FlextHandlers"}:
-                args = FlextRuntime.extract_generic_args(base)
+            if origin is not None and origin.__name__ in {"h", "FlextHandlers"}:
+                args = get_args(base)
                 if args:
                     message_types.append(args[0])
         return message_types

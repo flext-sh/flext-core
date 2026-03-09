@@ -145,6 +145,15 @@ class NamespaceEnforcementRewriter:
                 match = deep_import_re.match(line.rstrip())
                 if match:
                     indent = match.group(1)
+                    if len(indent) > 0:
+                        new_lines.append(line)
+                        continue
+                    stripped_line = line.strip()
+                    if (
+                        "(" in stripped_line and ")" not in stripped_line
+                    ) or stripped_line.endswith("\\"):
+                        new_lines.append(line)
+                        continue
                     pkg = match.group(2)
                     replacement = alias_map.get(pkg)
                     if replacement and replacement not in seen_replacements:
@@ -221,11 +230,16 @@ class NamespaceEnforcementRewriter:
                 lines[insert_idx].startswith('"""')
                 or lines[insert_idx].startswith("'''")
             ):
+                docstring_single_line_quote_count = 2
                 quote = lines[insert_idx][:3]
-                for idx in range(insert_idx + 1, len(lines)):
-                    if quote in lines[idx]:
-                        insert_idx = idx + 1
-                        break
+                line_text = lines[insert_idx]
+                if line_text.count(quote) >= docstring_single_line_quote_count:
+                    insert_idx += 1
+                else:
+                    for idx in range(insert_idx + 1, len(lines)):
+                        if quote in lines[idx]:
+                            insert_idx = idx + 1
+                            break
             new_lines = (
                 lines[:insert_idx]
                 + ["", "from __future__ import annotations", ""]

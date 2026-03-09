@@ -108,7 +108,7 @@ class FlextUtilitiesCollection:
             and FlextUtilitiesCollection._is_general_value_dict(value)
         ):
             merged = FlextUtilitiesCollection.merge(current_val, value, strategy="deep")
-            if merged.is_success and merged.value is not None:
+            if merged.is_success:
                 result[key] = merged.value
                 return r[bool].ok(value=True)
             return r[bool].fail(
@@ -176,16 +176,20 @@ class FlextUtilitiesCollection:
                     result_value = getattr(result_raw, "value", None)
                     result_error = getattr(result_raw, "error", None)
                     if is_success:
-                        if do_flatten and isinstance(result_value, list):
-                            for item in result_value:
-                                if FlextUtilitiesGuards.is_general_value_type(item):
+                        if do_flatten and FlextUtilitiesGuards.is_object_list(
+                            result_value
+                        ):
+                            for inner_item in result_value:
+                                if FlextUtilitiesGuards.is_general_value_type(
+                                    inner_item
+                                ):
                                     results.append(
                                         FlextUtilitiesCollection._coerce_guard_value(
-                                            item
+                                            inner_item
                                         )
                                     )
                                 else:
-                                    results.append(str(item))
+                                    results.append(str(inner_item))
                             continue
                         value = FlextUtilitiesCollection._coerce_guard_value(
                             result_value
@@ -207,14 +211,16 @@ class FlextUtilitiesCollection:
                             errors.append((processed - 1, str(error_msg)))
                     continue
                 try:
-                    if do_flatten and isinstance(result_raw, list):
-                        for item in result_raw:
-                            if FlextUtilitiesGuards.is_general_value_type(item):
+                    if do_flatten and FlextUtilitiesGuards.is_object_list(result_raw):
+                        for inner_item in result_raw:
+                            if FlextUtilitiesGuards.is_general_value_type(inner_item):
                                 results.append(
-                                    FlextUtilitiesCollection._coerce_guard_value(item)
+                                    FlextUtilitiesCollection._coerce_guard_value(
+                                        inner_item
+                                    )
                                 )
                             else:
-                                results.append(str(item))
+                                results.append(str(inner_item))
                         continue
                     if FlextUtilitiesGuards.is_general_value_type(result_raw):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
@@ -223,7 +229,8 @@ class FlextUtilitiesCollection:
                     else:
                         direct_result = str(result_raw)
                 except (TypeError, ValueError):
-                    direct_result = str(result_raw)
+                    raw_obj: object = result_raw
+                    direct_result = str(raw_obj)
                 if do_flatten and FlextUtilitiesCollection._is_general_value_list(
                     direct_result
                 ):

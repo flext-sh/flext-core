@@ -352,14 +352,8 @@ class FlextModelsContext:
                 normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
                     dump_result
                 ).root
-            elif isinstance(v, Mapping):
-                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
-                    v
-                ).root
             else:
-                type_name = v.__class__.__name__
-                msg = f"Value must be a dictionary or Metadata, got {type_name}"
-                raise TypeError(msg)
+                normalized_mapping = dict(v)
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
                     val
@@ -458,14 +452,8 @@ class FlextModelsContext:
                 normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
                     dump_result
                 ).root
-            elif isinstance(v, Mapping):
-                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
-                    v
-                ).root
             else:
-                type_name = v.__class__.__name__
-                msg = f"Value must be a dict or Pydantic model, got {type_name}"
-                raise TypeError(msg)
+                normalized_mapping = dict(v)
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
                     val

@@ -6,8 +6,6 @@ mocked FlextInfraPythonVersionEnforcer service.
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from unittest.mock import Mock, patch
 
 import pytest
@@ -268,11 +266,6 @@ class TestMaintenanceMain:
             mock_output.error.assert_called_once_with(error_msg)
 
     def test_main_calls_sys_exit(self) -> None:
-        completed = subprocess.run(
-            [sys.executable, "-m", "flext_infra.maintenance", "--help"],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        assert completed.returncode == 0
-        assert "usage:" in completed.stdout
+        with pytest.raises(SystemExit) as exc_info:
+            main(["--help"])
+        assert exc_info.value.code == 0

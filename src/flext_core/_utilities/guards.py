@@ -73,17 +73,24 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _is_list_or_tuple(
-        value: t.ContainerValue,
+        value: object,
     ) -> TypeGuard[list[t.ContainerValue] | tuple[t.ContainerValue, ...]]:
         """Check if value is list or tuple."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def _is_mapping(
-        value: t.ContainerValue,
+        value: object,
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
-        """Check if value is a Mapping (dict-like)."""
         return isinstance(value, Mapping)
+
+    @staticmethod
+    def is_object_list(value: object) -> TypeGuard[list[object]]:
+        return isinstance(value, list)
+
+    @staticmethod
+    def is_object_tuple(value: object) -> TypeGuard[tuple[object, ...]]:
+        return isinstance(value, tuple)
 
     @staticmethod
     def _is_none(value: t.ContainerValue) -> TypeGuard[None]:
@@ -272,14 +279,12 @@ class FlextUtilitiesGuards:
             return True
         if value is True or value is False:
             return True
-        if isinstance(value, (list, tuple)):
-            item: t.ContainerValue
+        if FlextUtilitiesGuards._is_list_or_tuple(value):
             for item in value:
                 if not FlextUtilitiesGuards.is_general_value_type(item):
                     return False
             return True
-        if isinstance(value, Mapping):
-            v: t.Primitives | None
+        if FlextUtilitiesGuards._is_mapping(value):
             for v in value.values():
                 if not FlextUtilitiesGuards.is_general_value_type(v):
                     return False
@@ -345,7 +350,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_mapping(
-        value: t.ContainerValue,
+        value: object,
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         """Check if value is ConfigurationMapping (Mapping[str, t.ContainerValue])."""
         return isinstance(value, Mapping)
@@ -684,9 +689,9 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _is_type_tuple(value: object) -> TypeGuard[tuple[type, ...]]:
-        return isinstance(value, tuple) and all(
-            isinstance(item, type) for item in value
-        )
+        if not FlextUtilitiesGuards.is_object_tuple(value):
+            return False
+        return all(isinstance(item, type) for item in value)
 
     @staticmethod
     def chk(
@@ -897,7 +902,7 @@ class FlextUtilitiesGuards:
             if isinstance(validator, type):
                 if isinstance(value, validator):
                     return guarded_value if return_value else True
-            elif isinstance(validator, tuple):
+            elif FlextUtilitiesGuards.is_object_tuple(validator):
                 tuple_types = tuple(
                     item for item in validator if isinstance(item, type)
                 )
@@ -1112,7 +1117,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def validate_port_number(port: int, field_name: str = "port") -> r[int]:
         """Return success when ``port`` is a valid port number (1-65535)."""
-        if not isinstance(port, int) or isinstance(port, bool):
+        if isinstance(port, bool):
             return r[int].fail(f"{field_name} must be an integer")
         max_port = 65535
         if port < 1 or port > max_port:

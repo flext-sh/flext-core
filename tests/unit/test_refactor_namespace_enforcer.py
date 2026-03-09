@@ -250,3 +250,103 @@ def test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future(
     assert rewritten_lines[0] == "#!/usr/bin/env python3"
     assert rewritten_lines[1] == "# -*- coding: utf-8 -*-"
     assert "from __future__ import annotations" in rewritten_lines
+
+
+def test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    tests_dir = project / "tests"
+    pkg.mkdir(parents=True)
+    tests_dir.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    target_file = tests_dir / "base_improved.py"
+    _ = target_file.write_text(
+        '"""Improved test base with high automation and real functionality."""\n'
+        "from pathlib import Path\n"
+        "\n"
+        "class AlgarOudMigTestBase:\n"
+        '    """Highly automated test base with real functionality patterns."""\n'
+        "    temp_dir: Path\n",
+        encoding="utf-8",
+    )
+
+    _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=True,
+    )
+
+    rewritten_lines = target_file.read_text(encoding="utf-8").splitlines()
+    assert rewritten_lines[0].startswith('"""Improved test base')
+    assert rewritten_lines[2] == "from __future__ import annotations"
+
+
+def test_namespace_enforcer_does_not_rewrite_indented_import_aliases(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    pkg.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    service_file = pkg / "service.py"
+    _ = service_file.write_text(
+        "from __future__ import annotations\n\n"
+        "def runner() -> None:\n"
+        "    from flext_core.constants import System\n"
+        "    _ = System\n",
+        encoding="utf-8",
+    )
+
+    _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=True,
+    )
+
+    service_source = service_file.read_text(encoding="utf-8")
+    assert "    from flext_core.constants import System" in service_source
+
+
+def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    pkg.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    module_file = pkg / "constants.py"
+    _ = module_file.write_text(
+        "from __future__ import annotations\n"
+        "from flext_infra._constants import (\n"
+        "    FlextInfraCoreConstants,\n"
+        "    FlextInfraSharedInfraConstants,\n"
+        ")\n"
+        "\n"
+        "class DemoConstants:\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+
+    _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=True,
+    )
+
+    module_source = module_file.read_text(encoding="utf-8")
+    assert "from flext_infra._constants import (" in module_source
+    assert "FlextInfraCoreConstants" in module_source

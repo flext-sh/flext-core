@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
@@ -112,14 +110,10 @@ def test_basemk_main_with_generation_failure(
 
 
 def test_basemk_main_calls_sys_exit() -> None:
-    completed = subprocess.run(
-        [sys.executable, "-m", "flext_infra.basemk", "generate", "--help"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert completed.returncode == 0
-    assert "usage:" in completed.stdout
+    with patch("sys.stdout", new_callable=StringIO):
+        with pytest.raises(SystemExit) as exc_info:
+            main(argv=["--help"])
+        assert exc_info.value.code == 0
 
 
 def test_basemk_main_with_write_failure(

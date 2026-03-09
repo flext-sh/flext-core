@@ -461,6 +461,19 @@ class FlextRuntime:
                 return False
 
     @staticmethod
+    def _has_dict_protocol(obj: object) -> bool:
+        if not (hasattr(obj, "keys") and hasattr(obj, "items") and hasattr(obj, "get")):
+            return False
+        try:
+            items_fn = getattr(obj, "items", None)
+            if items_fn is not None and callable(items_fn):
+                items_fn()
+                return True
+        except (AttributeError, TypeError):
+            pass
+        return False
+
+    @staticmethod
     def is_dict_like(
         value: t.ContainerValue | t.MetadataValue,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
@@ -485,6 +498,8 @@ class FlextRuntime:
             case _:
                 if value is None:
                     return False
+                if FlextRuntime._has_dict_protocol(value):
+                    return True
                 try:
                     FlextModelsContainers.ConfigMap.model_validate(value)
                     return True
@@ -715,8 +730,8 @@ class FlextRuntime:
             """Declarative container grouping config and resource modules."""
 
             config = providers.Configuration()
-            services = providers.DependenciesContainer()
-            resources = providers.DependenciesContainer()
+            services = providers.Object(containers.DynamicContainer())
+            resources = providers.Object(containers.DynamicContainer())
 
         Provide = wiring.Provide
         inject = staticmethod(wiring.inject)

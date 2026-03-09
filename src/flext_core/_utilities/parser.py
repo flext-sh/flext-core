@@ -169,17 +169,13 @@ class FlextUtilitiesParser:
             String key if found, None otherwise.
 
         """
-        try:
-            mapping_data: Mapping[str, t.ContainerValue] = TypeAdapter(
-                t.ConfigurationMapping
-            ).validate_python(obj)
-        except ValidationError:
+        if not FlextUtilitiesGuards.is_mapping(obj):
             return r[str].fail("Object is not a valid mapping")
         for key in ("name", "id"):
-            if key in mapping_data:
-                value = mapping_data[key]
-                if isinstance(value, str):
-                    return r[str].ok(value)
+            if key in obj:
+                map_value = obj[key]
+                if isinstance(map_value, str):
+                    return r[str].ok(map_value)
         return r[str].fail("No key field found in mapping")
 
     @staticmethod
@@ -273,16 +269,12 @@ class FlextUtilitiesParser:
         strict: bool,
     ) -> r[TModel]:
         """Parse Pydantic BaseModel. Returns None if not model."""
-        try:
-            mapping_value: Mapping[str, t.ContainerValue] = TypeAdapter(
-                t.ConfigurationMapping
-            ).validate_python(value)
-        except ValidationError:
+        if not FlextUtilitiesGuards.is_mapping(value):
             return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}"
             )
         value_dict_data: dict[str, t.JsonValue] = {}
-        for k, v in mapping_value.items():
+        for k, v in value.items():
             key = str(k)
             value_dict_data[key] = FlextUtilitiesParser._to_json_value(v)
         scalar_data: dict[str, t.JsonValue] = {}
