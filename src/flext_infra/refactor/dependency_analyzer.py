@@ -725,6 +725,12 @@ class CyclicImportDetector:
                     continue
                 tree = parsed.tree
                 for stmt in tree.body:
+                    if isinstance(stmt, ast.Import):
+                        for alias in stmt.names:
+                            imported = alias.name
+                            root_pkg = imported.split(".")[0]
+                            if root_pkg in package_roots:
+                                graph[module_name].add(imported)
                     if isinstance(stmt, ast.ImportFrom) and stmt.module:
                         imported = stmt.module
                         root_pkg = imported.split(".")[0]
@@ -772,6 +778,12 @@ class CyclicImportDetector:
                     continue
                 if entry.is_dir() and (entry / "__init__.py").is_file():
                     roots.add(entry.name)
+                elif (
+                    entry.is_file()
+                    and entry.suffix == c.Infra.Extensions.PYTHON
+                    and entry.stem != "__init__"
+                ):
+                    roots.add(entry.stem)
         return roots
 
     @staticmethod

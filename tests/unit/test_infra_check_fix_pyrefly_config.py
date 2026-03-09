@@ -1,22 +1,20 @@
 """Tests for flext_infra.check.fix_pyrefly_config module.
 
-Tests the main entry point and sys.exit behavior.
+Tests the real CLI entry point.
 """
 
 from __future__ import annotations
 
-from unittest.mock import patch
+import subprocess
+import sys
 
-from flext_infra.check.fix_pyrefly_config import main as main_func
 
-
-def test_fix_pyrefly_config_main_calls_sys_exit() -> None:
-    """Test main() calls sys.exit."""
-    with patch("sys.argv", ["fix-pyrefly-config"]):
-        with patch("flext_infra.check.fix_pyrefly_config.main") as mock_main:
-            mock_main.return_value = 0
-            with patch("sys.exit") as _mock_exit:
-                try:
-                    main_func()
-                except SystemExit:
-                    pass
+def test_fix_pyrefly_config_main_executes_real_cli_help() -> None:
+    completed = subprocess.run(
+        [sys.executable, "-m", "flext_infra.check", "fix-pyrefly-config", "--help"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0
+    assert "usage:" in completed.stdout

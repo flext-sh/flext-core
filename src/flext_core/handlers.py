@@ -142,7 +142,9 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
 
         """
         super().__init_subclass__(**kwargs)
-        if getattr(cls, "__abstractmethods__", frozenset()):
+        abstract_methods_default: frozenset[str] = frozenset()
+        abstract_methods = getattr(cls, "__abstractmethods__", abstract_methods_default)
+        if abstract_methods:
             return
         for klass in cls.__mro__:
             if klass is FlextHandlers:
@@ -409,7 +411,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         """
         validation = self.validate(message)
         if validation.is_failure:
-            return r.fail(validation.error or "Validation failed")
+            return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
 
     def handle(self, message: MessageT_contra) -> r[ResultT]:
@@ -561,17 +563,17 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         }
         if operation != handler_mode and operation in valid_operations:
             error_msg = f"Handler with mode '{handler_mode}' cannot execute {operation} pipelines"
-            return r.fail(error_msg)
+            return r[ResultT].fail(error_msg)
         message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
-            return r.fail(error_msg)
+            return r[ResultT].fail(error_msg)
         validation = self.validate(message)
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"
-            return r.fail(error_msg)
+            return r[ResultT].fail(error_msg)
         self._execution_context.start_execution()
         _ = self.push_context(self._execution_context)
         try:
@@ -582,7 +584,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
             self.logger.warning("Critical handler pipeline failure", exc_info=exc)
             self._record_execution_metrics(success=False, error=str(exc))
             error_msg = f"Critical handler failure: {exc}"
-            return r.fail(error_msg)
+            return r[ResultT].fail(error_msg)
         finally:
             _ = self.pop_context()
 

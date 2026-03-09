@@ -511,7 +511,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     read_result = self.read(path, model_cls=None)
                     if read_result.is_success:
                         return path
-                    return r[Path].fail(read_result.error or f"Failed to read {name}")
+                    return r[t.ContainerValue].fail(
+                        read_result.error or f"Failed to read {name}"
+                    )
                 case "delete":
                     path = (
                         Path(content)
@@ -1317,12 +1319,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
-        if len(value) == 0:
+        sequence_value: Sequence[object] = value
+        if len(sequence_value) == 0:
             return False
-        return all(
-            isinstance(row, Sequence) and (not isinstance(row, str | bytes))
-            for row in value
-        )
+        for row_raw in sequence_value:
+            if not isinstance(row_raw, Sequence) or isinstance(row_raw, str | bytes):
+                return False
+        return True
 
     def _mapping_to_payload(
         self, mapping: Mapping[str, object]
@@ -1477,7 +1480,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             mapping_value = {str(key): item for key, item in value.items()}
             return self._mapping_to_payload(mapping_value)
         if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
-            return [self._to_payload_value(item) for item in value]
+            sequence_value: Sequence[object] = value
+            payload_items: list[t.Tests.ContainerValue] = []
+            for item_raw in sequence_value:
+                payload_items.append(self._to_payload_value(item_raw))
+            return payload_items
         return str(value)
 
     def _try_deep_compare(

@@ -182,7 +182,7 @@ class NamespaceEnforcementRewriter:
                 if isinstance(node, ast.ClassDef)
                 and node.name.endswith(expected_suffix)
             ]
-            if len(class_candidates) == 0:
+            if len(class_candidates) != 1:
                 continue
             target_class = class_candidates[0]
             lines = source.splitlines()
@@ -211,9 +211,18 @@ class NamespaceEnforcementRewriter:
             if len(lines) == 0:
                 continue
             insert_idx = 0
-            if lines[0].startswith('"""') or lines[0].startswith("'''"):
-                quote = lines[0][:3]
-                for idx in range(1, len(lines)):
+            if lines[0].startswith("#!"):
+                insert_idx = 1
+            if insert_idx < len(lines) and re.match(
+                r"^#.*coding[:=]", lines[insert_idx]
+            ):
+                insert_idx += 1
+            if insert_idx < len(lines) and (
+                lines[insert_idx].startswith('"""')
+                or lines[insert_idx].startswith("'''")
+            ):
+                quote = lines[insert_idx][:3]
+                for idx in range(insert_idx + 1, len(lines)):
                     if quote in lines[idx]:
                         insert_idx = idx + 1
                         break

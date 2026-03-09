@@ -51,7 +51,7 @@ def _to_scalar(value: object) -> core_t.Scalar:
         ScalarValue (str | int | float | bool | datetime | None)
 
     """
-    if isinstance(value, t.Primitives) and value is not None:
+    if isinstance(value, t.Primitives):
         return value
     return str(value)
 
@@ -69,9 +69,17 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
     if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
-        return {str(k): _to_payload(v) for k, v in value.items()}
+        payload_map: dict[str, t.Tests.ContainerValue] = {}
+        for key_raw, item_raw in value.items():
+            item_obj: object = item_raw
+            payload_map[str(key_raw)] = _to_payload(item_obj)
+        return payload_map
     if isinstance(value, Iterable):
-        return [_to_payload(item) for item in value]
+        payload_items: list[t.Tests.ContainerValue] = []
+        for item_raw in value:
+            item_obj: object = item_raw
+            payload_items.append(_to_payload(item_obj))
+        return payload_items
     return str(value)
 
 
@@ -1522,8 +1530,7 @@ class FlextTestsUtilities(FlextUtilities):
                         writer.writerow(headers)
                     if isinstance(content, list):
                         for row in content:
-                            if isinstance(row, list):
-                                writer.writerow(row)
+                            writer.writerow(row)
 
         class Validator:
             """Validator utilities for architecture validation (tv.* methods).

@@ -107,9 +107,8 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
             )
         )
     assert exc_info.value is not None
-    exc_type: type[BaseException] = TypeError
     with pytest.raises(
-        exc_type, match="Value must be a dictionary or Metadata"
+        TypeError, match="Value must be a dictionary or Metadata"
     ) as exc_info2:
         FlextModelsContext.ContextData.validate_dict_serializable(
             cast(

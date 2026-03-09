@@ -54,7 +54,14 @@ import sys
 import threading
 import typing
 import uuid
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    ItemsView,
+    KeysView,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
@@ -489,19 +496,28 @@ class FlextRuntime:
                     keys_result = keys()
                     items_result = items()
                     tuple_entry_size = 2
-                    if not isinstance(keys_result, Sequence):
+                    keys_values: Sequence[t.ContainerValue]
+                    item_values: Sequence[t.ContainerValue]
+                    if isinstance(keys_result, Sequence):
+                        keys_values = keys_result
+                    elif isinstance(keys_result, KeysView):
+                        keys_values = tuple(keys_result)
+                    else:
                         return False
-                    if not isinstance(items_result, Sequence):
+                    if isinstance(items_result, Sequence):
+                        item_values = items_result
+                    elif isinstance(items_result, ItemsView):
+                        item_values = tuple(items_result)
+                    else:
                         return False
-                    keys_values: Sequence[object] = keys_result
-                    item_values: Sequence[object] = items_result
                     for key in keys_values:
                         if not isinstance(key, str):
                             return False
                     for entry in item_values:
                         if not isinstance(entry, tuple):
                             return False
-                        if len(entry) != tuple_entry_size:
+                        typed_entry: tuple[t.ContainerValue, ...] = entry
+                        if len(typed_entry) != tuple_entry_size:
                             return False
                     return True
                 except (AttributeError, TypeError):
@@ -672,7 +688,7 @@ class FlextRuntime:
         if FlextRuntime.is_list_like(val):
             result_list: list[t.Scalar] = []
             for item in val:
-                if FlextRuntime._is_scalar(item) and item is not None:
+                if FlextRuntime._is_scalar(item):
                     result_list.append(item)
                 else:
                     result_list.append(str(item) if item is not None else "")
@@ -823,8 +839,8 @@ class FlextRuntime:
             bridge = cls.BridgeContainer()
             service_module = containers.DynamicContainer()
             resource_module = containers.DynamicContainer()
-            services_provider = bridge.services
-            resources_provider = bridge.resources
+            services_provider: providers.DependenciesContainer = bridge.services
+            resources_provider: providers.DependenciesContainer = bridge.resources
             services_provider.override(service_module)
             resources_provider.override(resource_module)
             cls.bind_configuration_provider(bridge.config, config)

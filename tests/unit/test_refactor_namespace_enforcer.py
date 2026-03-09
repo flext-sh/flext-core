@@ -219,3 +219,34 @@ def test_namespace_enforcer_detects_missing_runtime_alias_outside_src(
     )
 
     assert report.total_runtime_alias_violations >= 1
+
+
+def test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    project = workspace / "sample-proj"
+    pkg = project / "src" / "sample_pkg"
+    scripts_dir = project / "scripts"
+    pkg.mkdir(parents=True)
+    scripts_dir.mkdir(parents=True)
+    _ = (project / "pyproject.toml").write_text(
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
+    )
+    _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
+    script_file = scripts_dir / "run.py"
+    _ = script_file.write_text(
+        "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\nprint('ok')\n",
+        encoding="utf-8",
+    )
+
+    _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
+        apply_changes=True,
+    )
+
+    rewritten_lines = script_file.read_text(encoding="utf-8").splitlines()
+    assert rewritten_lines[0] == "#!/usr/bin/env python3"
+    assert rewritten_lines[1] == "# -*- coding: utf-8 -*-"
+    assert "from __future__ import annotations" in rewritten_lines

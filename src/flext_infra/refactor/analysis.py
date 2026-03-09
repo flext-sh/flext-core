@@ -515,13 +515,13 @@ class FlextInfraRefactorClassNestingAnalyzer:
             report: Mapping[str, object] = cast(
                 "Mapping[str, object]", scan_result.value
             )
-            raw_violations = report.get(c.Infra.ReportKeys.VIOLATIONS, [])
-            if not isinstance(raw_violations, list):
+            raw_violations_val = report.get(c.Infra.ReportKeys.VIOLATIONS, [])
+            if not isinstance(raw_violations_val, list):
                 continue
             parsed_violations: list[m.Infra.Refactor.LooseClassViolation] = [
-                v
-                for v in raw_violations
-                if isinstance(v, m.Infra.Refactor.LooseClassViolation)
+                violation_item
+                for violation_item in raw_violations_val
+                if isinstance(violation_item, m.Infra.Refactor.LooseClassViolation)
             ]
             for parsed_violation in parsed_violations:
                 normalized_file = cls._normalize_module_path(parsed_violation.file)

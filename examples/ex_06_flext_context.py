@@ -21,7 +21,7 @@ class Ex06FlextContext(Examples):
     def _exercise_core_context_methods(self) -> None:
         self.section("core_context_methods")
         ctx = FlextContext.create(operation_id="op-demo", user_id="user-1")
-        ctx.set("meta_from_create", "v")
+        _ = ctx.set("meta_from_create", "v")
         self.check("create.instance", type(ctx).__name__)
         self.check("create.has.operation", ctx.has(c.Context.KEY_OPERATION_ID))
         self.check("create.has.user", ctx.has(c.Context.KEY_USER_ID))

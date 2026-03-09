@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
-from flext_infra.check.__main__ import main as main_func
+import subprocess
+import sys
 
 
 def test_check_main_executes_real_cli() -> None:
-    exit_code = main_func()
-    assert isinstance(exit_code, int)
-    assert exit_code in {0, 1, 2, 3}
+    completed = subprocess.run(
+        [sys.executable, "-m", "flext_infra.check", "run", "--help"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0
+    assert "usage:" in completed.stdout
