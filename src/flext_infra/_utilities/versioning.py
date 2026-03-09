@@ -1,7 +1,6 @@
-"""Versioning service for semantic version management.
+"""Versioning utilities for semantic version management.
 
-Wraps versioning operations with r error handling,
-replacing bare functions with a service class.
+All methods are static — exposed via u.Infra.parse_semver() etc. through MRO.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,17 +10,16 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import override
 
 from flext_core import r
-from flext_infra import c
+from flext_infra.constants import FlextInfraConstants as c
 
 
 class FlextInfraUtilitiesVersioning:
-    """Infrastructure service for semantic versioning operations.
+    """Static versioning utilities for semantic version management.
 
-    Provides r-wrapped version parsing, bumping, and
-    project version management.
+    All methods are ``@staticmethod`` — no instantiation required.
+    Exposed via ``u.Infra.parse_semver()`` etc. through MRO.
     """
 
     @staticmethod
@@ -72,7 +70,8 @@ class FlextInfraUtilitiesVersioning:
             return None
         return "".join(updated_lines)
 
-    def bump_version(self, version: str, bump_type: str) -> r[str]:
+    @staticmethod
+    def bump_version(version: str, bump_type: str) -> r[str]:
         """Bump a semantic version string.
 
         Args:
@@ -85,7 +84,7 @@ class FlextInfraUtilitiesVersioning:
         """
         if bump_type not in c.Infra.Versioning.VALID_BUMP_TYPES:
             return r[str].fail(f"invalid bump type: {bump_type}")
-        result = self.parse_semver(version)
+        result = FlextInfraUtilitiesVersioning.parse_semver(version)
         if result.is_failure:
             return r[str].fail(result.error or "parse failed")
         major, minor, patch = result.value
@@ -100,7 +99,8 @@ class FlextInfraUtilitiesVersioning:
             patch += 1
         return r[str].ok(f"{major}.{minor}.{patch}")
 
-    def current_workspace_version(self, workspace_root: Path) -> r[str]:
+    @staticmethod
+    def current_workspace_version(workspace_root: Path) -> r[str]:
         """Read the current version from the main pyproject.toml.
 
         Args:
@@ -115,22 +115,15 @@ class FlextInfraUtilitiesVersioning:
             content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"read failed: {exc}")
-        version = self._extract_project_version_from_text(content)
+        version = FlextInfraUtilitiesVersioning._extract_project_version_from_text(
+            content,
+        )
         if version is None or not version.strip():
             return r[str].fail("version not found in pyproject.toml")
         return r[str].ok(version)
 
-    @override
-    def execute(self) -> r[str]:
-        """Execute versioning (default: empty string).
-
-        Returns:
-            r with empty string by default.
-
-        """
-        return r[str].ok("")
-
-    def parse_semver(self, version: str) -> r[tuple[int, int, int]]:
+    @staticmethod
+    def parse_semver(version: str) -> r[tuple[int, int, int]]:
         """Parse a semantic version string into (major, minor, patch).
 
         Args:
@@ -149,7 +142,8 @@ class FlextInfraUtilitiesVersioning:
             int(match.group(3)),
         ))
 
-    def release_tag_from_branch(self, branch: str) -> r[str]:
+    @staticmethod
+    def release_tag_from_branch(branch: str) -> r[str]:
         """Extract a release tag name from a branch name.
 
         Supports ``release/X.Y.Z`` and ``X.Y.Z-dev`` patterns.
@@ -170,7 +164,8 @@ class FlextInfraUtilitiesVersioning:
             return r[str].ok(f"v{match.group(1)}")
         return r[str].fail(f"branch '{branch}' does not match release pattern")
 
-    def replace_project_version(self, project_path: Path, version: str) -> r[bool]:
+    @staticmethod
+    def replace_project_version(project_path: Path, version: str) -> r[bool]:
         """Update the version field in a project's pyproject.toml.
 
         Args:
@@ -186,13 +181,16 @@ class FlextInfraUtilitiesVersioning:
             content = pyproject.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"read failed: {exc}")
-        if not self._has_project_table(content):
+        if not FlextInfraUtilitiesVersioning._has_project_table(content):
             return r[bool].fail(f"missing [project] table in {pyproject}")
-        updated_content = self._replace_project_version_in_text(content, version)
-        if updated_content is None:
+        updated = FlextInfraUtilitiesVersioning._replace_project_version_in_text(
+            content,
+            version,
+        )
+        if updated is None:
             return r[bool].fail(f"missing [project] version in {pyproject}")
         try:
-            _ = pyproject.write_text(updated_content, encoding=c.Infra.Encoding.DEFAULT)
+            _ = pyproject.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"write failed: {exc}")
         return r[bool].ok(True)

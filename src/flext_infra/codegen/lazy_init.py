@@ -25,7 +25,9 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import FlextInfraUtilitiesSubprocess, c, output, u
+from flext_infra._utilities.output import output
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
+from flext_infra.constants import FlextInfraConstants as c
 
 # ---------------------------------------------------------------------------
 # Service class
@@ -206,7 +208,7 @@ class FlextInfraCodegenLazyInit(s[int]):
                 inline_constants,
                 current_pkg,
             )
-            u.write_file(init_path, generated, encoding=c.Infra.Encoding.DEFAULT)
+            init_path.write_text(generated, encoding=c.Infra.Encoding.DEFAULT)
             _run_ruff_fix(init_path)
         except (OSError, ValueError) as exc:
             output.error(f"generating {init_path}: {exc}")

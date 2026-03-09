@@ -12,7 +12,8 @@ import re
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m
+from flext_infra.constants import FlextInfraConstants as c
+from flext_infra.models import FlextInfraModels as m
 
 
 class FlextInfraUtilitiesDiscovery:

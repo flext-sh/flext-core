@@ -1,13 +1,6 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Example scripts for FLEXT core components.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -15,79 +8,6 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from examples.00_single_import_demo import (
-        demonstrate_exceptions,
-        demonstrate_utilities,
-        execute_demonstrations,
-        execute_service_operations,
-        execute_validation_chain,
-        identity,
-        identity_result,
-        ignore_and_return_none,
-        process_user_data,
-        validate_transform_user,
-    )
-    from examples.01_basic_result import (
-        DemonstrationResult,
-        RailwayService,
-        RunDemonstrationCommand,
-    )
-    from examples.02_dependency_injection import (
-        CacheService,
-        DependencyInjectionService,
-        EmailService,
-    )
-    from examples.03_models_basics import (
-        DomainModelService,
-        Email,
-        Money,
-        OrderItem,
-        demonstrate_advanced_pydantic_mixins,
-        demonstrate_enhanced_generic_models,
-    )
-    from examples.04_config_basics import (
-        AppConfig,
-        ConfigManagementService,
-        demonstrate_file_config,
-        run_main,
-    )
-    from examples.05_utilities_advanced import (
-        AdvancedUtilitiesService,
-        StatusEnum,
-        UserModel,
-    )
-    from examples.06_decorators_complete import DecoratorsService
-    from examples.07_registry_dispatcher import (
-        CreateUserHandler,
-        GetUserHandler,
-        RegistryDispatcherService,
-        UserCreatedEvent,
-    )
-    from examples.08_integration_complete import IntegrationService, Order, User
-    from examples.09_context_management import (
-        ContextManagementService,
-        demonstrate_context_features,
-    )
-    from examples.12_utilities_comprehensive import (
-        TEST_DATA,
-        UtilitiesService,
-        demonstrate_utility_composition,
-    )
-    from examples.14_flext_handlers_complete import (
-        CommandHandler,
-        CreateUserCommand,
-        GetUserQuery,
-        HandlersService,
-        QueryHandler,
-        UserDTO,
-        demonstrate_cqrs_architecture,
-    )
-    from examples.15_automation_showcase import (
-        AutomationService,
-        OrderService,
-        PaymentService,
-        UserService,
-    )
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
@@ -161,22 +81,7 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "AdvancedUtilitiesService": ("examples.05_utilities_advanced", "AdvancedUtilitiesService"),
-    "AppConfig": ("examples.04_config_basics", "AppConfig"),
-    "AutomationService": ("examples.15_automation_showcase", "AutomationService"),
-    "CacheService": ("examples.02_dependency_injection", "CacheService"),
-    "CommandHandler": ("examples.14_flext_handlers_complete", "CommandHandler"),
-    "ConfigManagementService": ("examples.04_config_basics", "ConfigManagementService"),
-    "ContextManagementService": ("examples.09_context_management", "ContextManagementService"),
-    "CreateUserCommand": ("examples.14_flext_handlers_complete", "CreateUserCommand"),
-    "CreateUserHandler": ("examples.07_registry_dispatcher", "CreateUserHandler"),
     "DatabaseService": ("examples.logging_config_once_pattern", "DatabaseService"),
-    "DecoratorsService": ("examples.06_decorators_complete", "DecoratorsService"),
-    "DemonstrationResult": ("examples.01_basic_result", "DemonstrationResult"),
-    "DependencyInjectionService": ("examples.02_dependency_injection", "DependencyInjectionService"),
-    "DomainModelService": ("examples.03_models_basics", "DomainModelService"),
-    "Email": ("examples.03_models_basics", "Email"),
-    "EmailService": ("examples.02_dependency_injection", "EmailService"),
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
     "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
     "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
@@ -223,75 +128,22 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ExConfigAppConfig": ("examples._models.exconfig", "ExConfigAppConfig"),
     "Examples": ("examples.shared", "Examples"),
     "FlextCoreExampleModels": ("examples.models", "FlextCoreExampleModels"),
-    "GetUserHandler": ("examples.07_registry_dispatcher", "GetUserHandler"),
-    "GetUserQuery": ("examples.14_flext_handlers_complete", "GetUserQuery"),
-    "HandlersService": ("examples.14_flext_handlers_complete", "HandlersService"),
-    "IntegrationService": ("examples.08_integration_complete", "IntegrationService"),
     "MigrationService": ("examples.logging_config_once_pattern", "MigrationService"),
-    "Money": ("examples.03_models_basics", "Money"),
-    "Order": ("examples.08_integration_complete", "Order"),
-    "OrderItem": ("examples.03_models_basics", "OrderItem"),
-    "OrderService": ("examples.15_automation_showcase", "OrderService"),
-    "PaymentService": ("examples.15_automation_showcase", "PaymentService"),
-    "QueryHandler": ("examples.14_flext_handlers_complete", "QueryHandler"),
-    "RailwayService": ("examples.01_basic_result", "RailwayService"),
-    "RegistryDispatcherService": ("examples.07_registry_dispatcher", "RegistryDispatcherService"),
-    "RunDemonstrationCommand": ("examples.01_basic_result", "RunDemonstrationCommand"),
-    "StatusEnum": ("examples.05_utilities_advanced", "StatusEnum"),
-    "TEST_DATA": ("examples.12_utilities_comprehensive", "TEST_DATA"),
-    "User": ("examples.08_integration_complete", "User"),
-    "UserCreatedEvent": ("examples.07_registry_dispatcher", "UserCreatedEvent"),
-    "UserDTO": ("examples.14_flext_handlers_complete", "UserDTO"),
     "UserInput": ("examples.models", "UserInput"),
-    "UserModel": ("examples.05_utilities_advanced", "UserModel"),
     "UserProfile": ("examples.models", "UserProfile"),
-    "UserService": ("examples.15_automation_showcase", "UserService"),
-    "UtilitiesService": ("examples.12_utilities_comprehensive", "UtilitiesService"),
     "d": ("examples.ex_09_flext_decorators", "Ex09FlextDecorators"),
-    "demonstrate_advanced_pydantic_mixins": ("examples.03_models_basics", "demonstrate_advanced_pydantic_mixins"),
-    "demonstrate_context_features": ("examples.09_context_management", "demonstrate_context_features"),
-    "demonstrate_cqrs_architecture": ("examples.14_flext_handlers_complete", "demonstrate_cqrs_architecture"),
-    "demonstrate_enhanced_generic_models": ("examples.03_models_basics", "demonstrate_enhanced_generic_models"),
-    "demonstrate_exceptions": ("examples.00_single_import_demo", "demonstrate_exceptions"),
-    "demonstrate_file_config": ("examples.04_config_basics", "demonstrate_file_config"),
-    "demonstrate_utilities": ("examples.00_single_import_demo", "demonstrate_utilities"),
-    "demonstrate_utility_composition": ("examples.12_utilities_comprehensive", "demonstrate_utility_composition"),
     "e": ("examples.ex_07_flext_exceptions", "Ex07FlextExceptions"),
     "em": ("examples.models", "em"),
-    "execute_demonstrations": ("examples.00_single_import_demo", "execute_demonstrations"),
-    "execute_service_operations": ("examples.00_single_import_demo", "execute_service_operations"),
-    "execute_validation_chain": ("examples.00_single_import_demo", "execute_validation_chain"),
     "h": ("examples.ex_10_flext_handlers", "Ex10FlextHandlers"),
-    "identity": ("examples.00_single_import_demo", "identity"),
-    "identity_result": ("examples.00_single_import_demo", "identity_result"),
-    "ignore_and_return_none": ("examples.00_single_import_demo", "ignore_and_return_none"),
     "m": ("examples.models", "FlextCoreExampleModels"),
     "main": ("examples.logging_config_once_pattern", "main"),
-    "process_user_data": ("examples.00_single_import_demo", "process_user_data"),
     "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "run_main": ("examples.04_config_basics", "run_main"),
     "s": ("examples._models.ex02", "Ex02DatabaseService"),
-    "validate_transform_user": ("examples.00_single_import_demo", "validate_transform_user"),
     "x": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
 }
 
 __all__ = [
-    "AdvancedUtilitiesService",
-    "AppConfig",
-    "AutomationService",
-    "CacheService",
-    "CommandHandler",
-    "ConfigManagementService",
-    "ContextManagementService",
-    "CreateUserCommand",
-    "CreateUserHandler",
     "DatabaseService",
-    "DecoratorsService",
-    "DemonstrationResult",
-    "DependencyInjectionService",
-    "DomainModelService",
-    "Email",
-    "EmailService",
     "Ex00UserInput",
     "Ex00UserProfile",
     "Ex01DemonstrationResult",
@@ -338,55 +190,17 @@ __all__ = [
     "ExConfigAppConfig",
     "Examples",
     "FlextCoreExampleModels",
-    "GetUserHandler",
-    "GetUserQuery",
-    "HandlersService",
-    "IntegrationService",
     "MigrationService",
-    "Money",
-    "Order",
-    "OrderItem",
-    "OrderService",
-    "PaymentService",
-    "QueryHandler",
-    "RailwayService",
-    "RegistryDispatcherService",
-    "RunDemonstrationCommand",
-    "StatusEnum",
-    "TEST_DATA",
-    "User",
-    "UserCreatedEvent",
-    "UserDTO",
     "UserInput",
-    "UserModel",
     "UserProfile",
-    "UserService",
-    "UtilitiesService",
     "d",
-    "demonstrate_advanced_pydantic_mixins",
-    "demonstrate_context_features",
-    "demonstrate_cqrs_architecture",
-    "demonstrate_enhanced_generic_models",
-    "demonstrate_exceptions",
-    "demonstrate_file_config",
-    "demonstrate_utilities",
-    "demonstrate_utility_composition",
     "e",
     "em",
-    "execute_demonstrations",
-    "execute_service_operations",
-    "execute_validation_chain",
     "h",
-    "identity",
-    "identity_result",
-    "ignore_and_return_none",
     "m",
     "main",
-    "process_user_data",
     "r",
-    "run_main",
     "s",
-    "validate_transform_user",
     "x",
 ]
 
