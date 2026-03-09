@@ -1,0 +1,29 @@
+src/flext_tests/matchers.py
+  7a8702a10615611c 485-486,964,1189
+tests/integration/patterns/test_patterns_testing.py
+  7a8702a10615611c 76
+tests/unit/test_exceptions.py
+  7a8702a10615611c 462
+src/flext_infra/refactor/namespace_rewriter.py
+  7a8702a10615611c 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "4162b6dabaee72835a13b3708f403e6e03746121",
+  "prompts": {
+    "7a8702a10615611c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3304f0500ffeBJ0y3REuww4EtV",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 29,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
