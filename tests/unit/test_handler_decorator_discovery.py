@@ -193,8 +193,9 @@ class TestHandlerDecoratorMetadata:
 
         method = TestService.handle_user
         config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
-        assert config.timeout is not None
-        assert abs(config.timeout - 5.0) < 1e-9
+        timeout = config.timeout
+        assert timeout is not None
+        assert abs(timeout - 5.0) < 1e-9
 
     def test_decorator_default_timeout(self) -> None:
         """Decorator should use default timeout from constants."""

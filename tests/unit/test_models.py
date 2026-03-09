@@ -810,7 +810,7 @@ class TestFlextModels:
     def test_batch_processing_config_model(self) -> None:
         """Test BatchProcessingConfig model — source has recursion bug in validate_cross_fields."""
         with pytest.raises(RecursionError) as exc_info:
-            m.BatchProcessingConfig(
+            _ = m.BatchProcessingConfig(
                 batch_size=100,
                 continue_on_error=True,
                 data_items=[1, 2, 3],

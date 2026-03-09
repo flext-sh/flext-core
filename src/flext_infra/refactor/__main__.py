@@ -307,16 +307,13 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         f"namespace_missing_future={namespace_report.total_future_violations}\n",
     )
     _ = sys.stdout.write(
-        "namespace_manual_protocols="
-        f"{namespace_report.total_manual_protocol_violations}\n",
+        f"namespace_manual_protocols={namespace_report.total_manual_protocol_violations}\n",
     )
     _ = sys.stdout.write(
-        "namespace_manual_typing_aliases="
-        f"{namespace_report.total_manual_typing_violations}\n",
+        f"namespace_manual_typing_aliases={namespace_report.total_manual_typing_violations}\n",
     )
     _ = sys.stdout.write(
-        "namespace_compatibility_aliases="
-        f"{namespace_report.total_compatibility_alias_violations}\n",
+        f"namespace_compatibility_aliases={namespace_report.total_compatibility_alias_violations}\n",
     )
     if len(mro_report.errors) > 0:
         for error in mro_report.errors:

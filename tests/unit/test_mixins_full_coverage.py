@@ -141,7 +141,7 @@ def test_mixins_result_and_model_conversion_paths(
             raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom") as exc_info:
-        x.to_dict(cast("Mapping[str, t.ContainerValue]", _BadMap()))
+        _ = x.to_dict(cast("Mapping[str, t.ContainerValue]", _BadMap()))
     assert exc_info.value is not None
 
 

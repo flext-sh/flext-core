@@ -18,7 +18,11 @@ def test_models_handler_branches() -> None:
     with pytest.raises(Exception, match="Handler must be callable"):
         m.HandlerRegistration.model_validate({"name": "bad", "handler": 1})
     ctx = m.HandlerExecutionContext.create_for_handler("h1", "command")
-    assert abs(ctx.execution_time_ms - 0.0) < 1e-9
+    raw_execution_time = ctx.execution_time_ms
+    execution_time_ms = (
+        raw_execution_time() if callable(raw_execution_time) else raw_execution_time
+    )
+    assert abs(execution_time_ms - 0.0) < 1e-9
     state = ctx.metrics_state
     assert isinstance(state, m.Dict)
     ctx.set_metrics_state(m.Dict(root={"x": 1}))

@@ -70,9 +70,5 @@ class TestWorkspaceLevelRefactor:
             )
         assert len(all_violations) >= 3
         for v in all_violations:
-            confidence = (
-                v.get("confidence")
-                if isinstance(v, dict)
-                else getattr(v, "confidence", None)
-            )
+            confidence = v.get("confidence")
             assert confidence in {"high", "medium", "low"}

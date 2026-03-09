@@ -45,13 +45,16 @@ def test_implements_decorator_validation_error_message() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap(root={}), m.ConfigMap)
     assert isinstance(u.Conversion.to_str_list(1), list)
-    with pytest.raises(TypeError, match="does not implement required members"):
 
+    def _create_invalid() -> type:
         @p.implements(_RequirePing)
         class _Invalid:
             pass
 
-        _ = _Invalid
+        return _Invalid
+
+    with pytest.raises(TypeError, match="does not implement required members"):
+        _create_invalid()
 
 
 def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
