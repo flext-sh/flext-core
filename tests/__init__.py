@@ -1,3 +1,6 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """flext-core comprehensive test suite.
 
 This package contains all tests for flext-core components.
@@ -9,16 +12,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import e
+from typing import TYPE_CHECKING, Any
 
-from .base import TestsFlextServiceBase
-from .constants import TestsFlextConstants, c
-from .models import TestsFlextModels, m
-from .protocols import TestsFlextProtocols, p
-from .typings import TestsFlextTypes
-from .utilities import TestsFlextUtilities, u
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-t = TestsFlextTypes
+if TYPE_CHECKING:
+    from flext_core import e
+    from tests.base import TestsFlextServiceBase
+    from tests.constants import TestsFlextConstants, TestsFlextConstants as c
+    from tests.models import TestsFlextModels, TestsFlextModels as m
+    from tests.protocols import TestsFlextProtocols, TestsFlextProtocols as p
+    from tests.typings import TestsFlextTypes, TestsFlextTypes as t
+    from tests.utilities import TestsFlextUtilities, TestsFlextUtilities as u
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "TestsFlextConstants": ("tests.constants", "TestsFlextConstants"),
+    "TestsFlextModels": ("tests.models", "TestsFlextModels"),
+    "TestsFlextProtocols": ("tests.protocols", "TestsFlextProtocols"),
+    "TestsFlextServiceBase": ("tests.base", "TestsFlextServiceBase"),
+    "TestsFlextTypes": ("tests.typings", "TestsFlextTypes"),
+    "TestsFlextUtilities": ("tests.utilities", "TestsFlextUtilities"),
+    "c": ("tests.constants", "TestsFlextConstants"),
+    "e": ("flext_core", "e"),
+    "m": ("tests.models", "TestsFlextModels"),
+    "p": ("tests.protocols", "TestsFlextProtocols"),
+    "t": ("tests.typings", "TestsFlextTypes"),
+    "u": ("tests.utilities", "TestsFlextUtilities"),
+}
 
 __all__ = [
     "TestsFlextConstants",
@@ -34,3 +55,16 @@ __all__ = [
     "t",
     "u",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy-load module attributes on first access (PEP 562)."""
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+
+
+def __dir__() -> list[str]:
+    """Return list of available attributes for dir() and autocomplete."""
+    return sorted(__all__)
+
+
+cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

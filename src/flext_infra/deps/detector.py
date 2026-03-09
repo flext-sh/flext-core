@@ -23,18 +23,19 @@ from flext_infra import (
 )
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
-from flext_infra.toml_io import (
-    array,
-    as_string_list,
-    dedupe_specs,
-    discover_first_party_namespaces,
-    ensure_pyright_execution_envs,
-    ensure_table,
-    project_dev_groups,
-    table_string_keys,
-    toml_get,
-    unwrap_item,
-)
+from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
+from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
+
+array = _Toml.array
+as_string_list = _Toml.as_string_list
+ensure_table = _Toml.ensure_table
+table_string_keys = _Toml.table_string_keys
+toml_get = _Toml.get
+unwrap_item = _Toml.unwrap_item
+dedupe_specs = _TomlParse.dedupe_specs
+discover_first_party_namespaces = _TomlParse.discover_first_party_namespaces
+ensure_pyright_execution_envs = _TomlParse.ensure_pyright_execution_envs
+project_dev_groups = _TomlParse.project_dev_groups
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -838,7 +839,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                 return r[int].fail(f"failed to create report directory: {exc}")
             out_path = report_dir / "detect-runtime-dev-latest.json"
         if out_path is not None and (not args.dry_run):
-            write_result = self._json.write(out_path, report_payload)
+            write_result = self._json.write_json(out_path, report_payload)
             if write_result.is_failure:
                 return r[int].fail(write_result.error or "failed to write report")
             if not args.quiet:

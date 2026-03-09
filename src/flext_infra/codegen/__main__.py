@@ -26,6 +26,7 @@ from flext_infra.codegen.constants_quality_gate import (
 )
 from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
+from flext_infra.codegen.py_typed import FlextInfraCodegenPyTyped
 from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 
 
@@ -98,9 +99,24 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Report what would be fixed without modifying files",
     )
+    py_typed_parser = subparsers.add_parser(
+        "py-typed",
+        help="Create/remove PEP 561 py.typed markers in package directories",
+    )
+    _ = py_typed_parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    _ = py_typed_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check mode — report changes without writing files",
+    )
     pipeline_parser = subparsers.add_parser(
         "pipeline",
-        help="Run full codegen pipeline: census → scaffold → auto-fix → lazy-init → census",
+        help="Run full codegen pipeline: py-typed → census → scaffold → auto-fix → lazy-init → census",
     )
     _ = pipeline_parser.add_argument(
         "--workspace",
@@ -153,6 +169,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "lazy-init":
         return _handle_lazy_init(args)
+    if args.command == "py-typed":
+        return _handle_py_typed(args)
     if args.command == "census":
         return _handle_census(args)
     if args.command == "scaffold":
@@ -168,12 +186,18 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _handle_lazy_init(args: argparse.Namespace) -> int:
-    """Handle the ``lazy-init`` subcommand."""
     root = args.root.resolve()
     generator = FlextInfraCodegenLazyInit(workspace_root=root)
-    unmapped = generator.run(check_only=args.check, scan_tests=False)
+    unmapped = generator.run(check_only=args.check)
     if args.check and unmapped > 0:
         output.warning(f"{unmapped} files have unmapped exports")
+    return 0
+
+
+def _handle_py_typed(args: argparse.Namespace) -> int:
+    root = args.root.resolve()
+    service = FlextInfraCodegenPyTyped(workspace_root=root)
+    service.run(check_only=args.check)
     return 0
 
 
@@ -238,8 +262,9 @@ def _handle_auto_fix(args: argparse.Namespace) -> int:
 
 
 def _handle_pipeline(args: argparse.Namespace) -> int:
-    """Handle the ``pipeline`` subcommand (full codegen cycle)."""
     workspace = args.workspace.resolve()
+    py_typed = FlextInfraCodegenPyTyped(workspace_root=workspace)
+    py_typed.run()
     census = FlextInfraCodegenCensus(workspace_root=workspace)
     reports_before = census.run()
     scaffolder = FlextInfraCodegenScaffolder(workspace_root=workspace)
@@ -247,7 +272,7 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
     fixer = FlextInfraCodegenFixer(workspace_root=workspace)
     fix_results = fixer.run()
     generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
-    generator.run(check_only=args.dry_run, scan_tests=True)
+    generator.run(check_only=args.dry_run)
     reports_after = census.run()
     if args.output_format == "json":
         _ = {

@@ -23,9 +23,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import t
 from flext_infra import c
-from flext_infra._utilities.subprocess import FlextInfraCommandRunner
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
+from flext_infra.subprocess import FlextInfraCommandRunner
 
 
 class FlextInfraUtilitiesCodegen:
@@ -378,7 +378,7 @@ class FlextInfraUtilitiesCodegen:
         for export_name in sorted(filtered):
             mod, attr = filtered[export_name]
             groups[mod].append((export_name, attr))
-        out: list[str] = []
+        out: list[str] = [c.Infra.Codegen.AUTOGEN_HEADER]
         if docstring_source:
             out.extend([docstring_source, ""])
         if current_pkg == c.Infra.Packages.CORE_UNDERSCORE:
@@ -414,7 +414,7 @@ class FlextInfraUtilitiesCodegen:
         out.extend(f'    "{exp}",' for exp in sorted(exports))
         out.extend(["]", "", ""])
         out.extend([
-            "def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/",
+            "def __getattr__(name: str) -> Any:",
             '    """Lazy-load module attributes on first access (PEP 562)."""',
             "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
             "",

@@ -15,7 +15,7 @@ from typing import override
 
 from flext_core import r, s
 from flext_infra import c
-from flext_infra.toml_io import FlextInfraTomlService
+from flext_infra import FlextInfraTomlService
 
 
 class FlextInfraVersioningService(s[str]):

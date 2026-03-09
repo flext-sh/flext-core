@@ -257,7 +257,7 @@ class FlextInfraWorkflowSyncer:
                 for op in operations
             ],
         }
-        self._json.write(report_path, payload, sort_keys=True)
+        self._json.write_json(report_path, payload, sort_keys=True)
 
 
 __all__ = ["FlextInfraWorkflowSyncer", "SyncOperation"]

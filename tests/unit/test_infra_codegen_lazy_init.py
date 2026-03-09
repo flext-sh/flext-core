@@ -461,6 +461,8 @@ class TestLazyInitEdgeCases:
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
+        # Sibling .py required so _dir_has_py_files() does not skip the directory
+        (src_dir / "models.py").write_text('"""Models."""\n')
         init_file = src_dir / "__init__.py"
         init_file.write_text(
             '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]',
@@ -473,6 +475,8 @@ class TestLazyInitEdgeCases:
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
+        # Sibling .py required so _dir_has_py_files() does not skip the directory
+        (src_dir / "models.py").write_text('"""Models."""\n')
         init_file = src_dir / "__init__.py"
         init_file.write_text(
             '"""Test."""\nfrom module import Test\n__all__ = ["Test", "Unmapped"]',
