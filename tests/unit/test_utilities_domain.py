@@ -27,8 +27,8 @@ import pytest
 from pydantic import BaseModel
 
 from flext_tests import t, u
-from tests.constants import c
-from tests.models import m
+from tests.constants import c  # pyright: ignore[reportMissingTypeStubs]
+from tests.models import m  # pyright: ignore[reportMissingTypeStubs]
 
 from ._models import InputPayloadMap, TestCaseMap
 

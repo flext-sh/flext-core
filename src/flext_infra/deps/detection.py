@@ -142,7 +142,7 @@ class FlextInfraDependencyDetectionService:
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
         """Extract currently declared typing packages from project pyproject.toml."""
         pyproject = project_path / c.Infra.Files.PYPROJECT_FILENAME
-        read_result = u.Infra.read_plain(pyproject)
+        read_result = self.toml.read_plain(pyproject)
         if read_result.is_failure:
             return []
         data: t.Infra.ContainerDict = read_result.value
@@ -239,7 +239,7 @@ class FlextInfraDependencyDetectionService:
     ) -> Mapping[str, t.Infra.InfraValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or Path(__file__).resolve().parent / "dependency_limits.toml"
-        result = u.Infra.read_plain(path)
+        result = self.toml.read_plain(path)
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.InfraValue] = {}

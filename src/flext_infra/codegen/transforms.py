@@ -161,7 +161,12 @@ class FlextInfraCodegenTransforms:
 
     @staticmethod
     def is_used_in_context(node: ast.stmt, tree: ast.Module) -> bool:
-        """Check if TypeVar/TypeAlias name is used in class header context."""
+        """Check if TypeVar/TypeAlias name is referenced anywhere in the module.
+
+        Checks all statements (class headers, function signatures, annotations,
+        body code) — not just class bases. A name that appears anywhere beyond
+        its own definition line is considered "in context" and should not be moved.
+        """
         name: str | None = None
         if isinstance(node, ast.Assign):
             for target in node.targets:
@@ -172,26 +177,12 @@ class FlextInfraCodegenTransforms:
             name = node.target.id
         if name is None:
             return False
-        for stmt in ast.walk(tree):
-            if isinstance(stmt, ast.ClassDef):
-                bases_module = ast.fix_missing_locations(
-                    ast.Module(
-                        body=[ast.Expr(value=base) for base in stmt.bases],
-                        type_ignores=[],
-                    ),
-                )
-                for base_node in ast.walk(bases_module):
-                    if isinstance(base_node, ast.Name) and base_node.id == name:
-                        return True
-                keywords_module = ast.fix_missing_locations(
-                    ast.Module(
-                        body=[ast.Expr(value=kw.value) for kw in stmt.keywords],
-                        type_ignores=[],
-                    ),
-                )
-                for kw_node in ast.walk(keywords_module):
-                    if isinstance(kw_node, ast.Name) and kw_node.id == name:
-                        return True
+        for stmt in tree.body:
+            if stmt is node:
+                continue
+            for child in ast.walk(stmt):
+                if isinstance(child, ast.Name) and child.id == name:
+                    return True
         return False
 
     @staticmethod

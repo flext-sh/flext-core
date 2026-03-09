@@ -119,6 +119,57 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         for i, imp in enumerate(imports_to_add):
             target_tree.body.insert(last_import_idx + i, imp)
 
+    @classmethod
+    def _needs_first_party_import(
+        cls,
+        node: ast.stmt,
+        source_tree: ast.Module,
+        target_tree: ast.Module,
+    ) -> bool:
+        """Check if moving node to target would require a first-party import.
+
+        First-party imports (from flext_*) into typings.py create circular
+        import chains because typings.py is imported by result.py, runtime.py,
+        and other foundational modules. If the node depends on names that come
+        from first-party imports and those names are NOT already available in
+        the target module, moving the node is unsafe.
+        """
+        names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
+        node_name = FlextInfraCodegenTransforms.get_node_name(node)
+        names_used = frozenset(n for n in names_used if n != node_name)
+        if not names_used:
+            return False
+        target_available: set[str] = set(dir(_builtins_module))
+        for stmt in target_tree.body:
+            if isinstance(stmt, ast.Import):
+                for alias in stmt.names:
+                    target_available.add((alias.asname or alias.name).split(".")[0])
+            elif isinstance(stmt, ast.ImportFrom):
+                for alias in stmt.names:
+                    imported = alias.asname or alias.name
+                    if imported != "*":
+                        target_available.add(imported)
+            else:
+                found = FlextInfraCodegenTransforms.get_node_name(stmt)
+                if found:
+                    target_available.add(found)
+        missing = names_used - target_available
+        if not missing:
+            return False
+        for stmt in source_tree.body:
+            if isinstance(stmt, ast.ImportFrom) and stmt.module:
+                if stmt.module.startswith("flext"):
+                    for alias in stmt.names:
+                        imported = alias.asname or alias.name
+                        if imported in missing:
+                            return True
+            elif isinstance(stmt, ast.Import):
+                for alias in stmt.names:
+                    top = (alias.asname or alias.name).split(".")[0]
+                    if top.startswith("flext") and top in missing:
+                        return True
+        return False
+
     @staticmethod
     def _find_package_dir(project_root: Path) -> Path | None:
         """Find the first Python package under src/."""
@@ -446,6 +497,16 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                     rule="NS-002",
                     line=move_node.lineno,
                     message=f"'{target_name}' already in typings.py — skipped",
+                    fixable=False,
+                )
+                violations_skipped.append(violation)
+                continue
+            if self._needs_first_party_import(move_node, tree, target_tree):
+                violation = m.Infra.Codegen.CensusViolation(
+                    module=str(source_file),
+                    rule="NS-002",
+                    line=move_node.lineno,
+                    message=f"'{target_name}' needs first-party import — circular risk, skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
